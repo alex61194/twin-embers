@@ -6,7 +6,12 @@ online account, telemetry or game content is included.
 
 ## Graphical interface (Windows)
 
-From the `builder` folder, use either:
+Download `TwinEmbersBuilder.exe` from the
+[latest release](https://github.com/alex61194/twin-embers/releases/latest) and open it.
+The SHA-256 hash is listed in the release notes. No Python installation is needed
+for this prebuilt application.
+
+To run from source instead, from the `builder` folder use either:
 
 ```powershell
 py -3 launch_gui.py
@@ -67,8 +72,9 @@ python -m unittest discover -s tests -v
 
 GUI-service tests are synthetic; no copyrighted game data is required.
 
-The Windows `TwinEmbersBuilder.exe` is built by CI with PyInstaller (see
-`.github/workflows/private-windows-gui.yml`):
+The Windows `TwinEmbersBuilder.exe` can be packaged locally with PyInstaller.
+The packaging workflow `.github/workflows/private-windows-gui.yml` is disabled
+in this public repository; it does not currently produce public CI artifacts:
 
 ```powershell
 # from the repository root
@@ -83,6 +89,11 @@ exact-version license notices (Python, Tcl/Tk, PyInstaller and this project),
 failing on any unknown file; ship those notices with the EXE.
 `TwinEmbersBuilder.exe --self-test` checks the embedded recipe without a display.
 The EXE does not contain or download a game executable, ROM or `.pak`, and
-needs no administrator rights. No EXE is published yet.
-Game-binary publication remains deliberately BLOCKED by
-`tools/source_audit.py --release`; the Builder does not change that policy.
+needs no administrator rights. The prebuilt EXE is published with `v0.1.0-beta.1`.
+
+The game-binary publication policy is separate from Builder operation.
+`tools/source_audit.py --release` validates the owner decision record; add
+`--asset PATH` for each binary to check its exact SHA-256 against that record.
+Without a valid record, or with a mismatched supplied binary, publication is blocked.
+An owner decision does not verify third-party rights; see
+[docs/DISTRIBUTION.md](../docs/DISTRIBUTION.md).

@@ -36,8 +36,16 @@ the second compiles, links and checks the executable. The result is:
 
     build/upstream/3ds_port/twinembers.3dsx
 
-If the bootstrap says the inputs changed, delete the `build/upstream` folder and
-run it again. Add `-j4` (or your CPU's core count) to `make` to build faster.
+If the bootstrap says the inputs changed, preserve the old workspace and choose
+a fresh folder under `build/`, for example:
+
+```sh
+"$PY" tools/bootstrap.py --dir build/upstream-new
+make -C build/upstream-new/3ds_port CLEAN_RELEASE=1 PYTHON="$PY" verify-game-3dsx
+```
+
+The executable is then in `build/upstream-new/3ds_port/`. Add `-j4` (or your CPU's
+core count) to `make` to build faster.
 
 ## 3. Install
 
@@ -47,5 +55,7 @@ then copy both files to the SD card:
     /3ds/twinembers/twinembers.3dsx
     /3ds/twinembers/twinembers.pak
 
-Do not share the executable you built, the ROM or the data pack: they contain or are
-derived from copyrighted game material.
+Never share your ROM, data pack or saves. Building an executable does not grant
+rights to distribute its compiled game code. The published binary is covered by
+the recorded owner decision for its exact hash; a locally built binary may differ.
+See [DISTRIBUTION.md](DISTRIBUTION.md) for the publication policy.

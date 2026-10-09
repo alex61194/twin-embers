@@ -1,8 +1,9 @@
 # Contributing
 
-This repository is private while the owner prepares its documentation and
-presentation. Do not publish it, create releases, or upload binary artifacts as
-part of a contribution. Keep the existing architecture and binary release block.
+This is the public source repository for Twin Embers Port. Contributions are
+welcome through issues and pull requests. Creating releases and uploading binary
+artifacts are maintainer responsibilities, outside an ordinary contribution.
+Keep the existing architecture and release-decision checks.
 
 Contributions must not contain ROMs, `.pak`, `.3dsx`, ELF/CIA, saves, game
 screenshots, extracted Pokémon graphics, sprites, audio/music/cries, maps,
