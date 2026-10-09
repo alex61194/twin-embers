@@ -163,8 +163,6 @@ To report a problem, see [Reporting problems](#reporting-problems).
 ## Known issues
 
 - Only FireRed (USA) revision 0 is supported.
-- Saves from other emulators are not converted. The game reads standard 128 KiB
-  FireRed flash saves in its own folder.
 - In-game hints still say "Press START to open the MENU". In this port the menu is
   on the lower screen, and START controls turbo.
 - Before you receive the Pokédex, its lower-screen button can look active while
