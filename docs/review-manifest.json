@@ -1659,11 +1659,11 @@
   },
   {
    "path": "README.md",
-   "sha256": "a58339cb3fcd8c3e3c5fa75031d586a88b85ec1b59da5d6ff2c36ac5910fd7b1",
+   "sha256": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Pinned 96f95e0 Git blob verified; reviewed port-only text, no media/payload; inherited notices and external-game scope preserved; test fixtures synthetic; Reviewed 2026-10-09: documentation aligned with public two-executable release, published hashes, current owner-decision gate and preserved build workspaces; no binary or media changes",
+   "basis": "Pinned 96f95e0 Git blob verified; reviewed port-only text, no media/payload; inherited notices and external-game scope preserved; test fixtures synthetic; Reviewed 2026-10-09: documentation aligned with public two-executable release, published hashes, current owner-decision gate and preserved build workspaces; no binary or media changes; Reviewed 2026-10-09: original README restructuring with explicit AI-development credit and preserved third-party copyright notices.",
    "source_repository": "alex61194/pokemon-firered-3ds-clean",
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "58fd063752fe9559c3e04bcfd66f6ba08a76da02",
@@ -1671,7 +1671,7 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "public_readme_review": "Public user README: links release status to DISTRIBUTION.md and HARDWARE-ACCEPTANCE.md; removes the fixed error-screen limitation; no media or payload",
    "build_guide_review": "README points users to the local build guide docs/BUILDING.md; no prebuilt executable is offered",
-   "public_docs_review": "README: screenshot gallery restored, images hosted in the separate media release; documentation only",
+   "public_docs_review": "Reviewed 2026-10-09: entirely original FireRed-focused README presentation, existing media/release links, explicit Claude and OpenAI Codex AI-development disclosure, preserved Zallax/pret/SDK and game-rightsholder attribution; documentation only; no ROM, pack or binary changes.",
    "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
    "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged"
   },
