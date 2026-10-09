@@ -24,6 +24,33 @@ pack on your own computer from **your own** FireRed cartridge dump.
 > **Beta.** Download `twinembers.3dsx` and `TwinEmbersBuilder.exe` from the
 > [latest release](https://github.com/alex61194/twin-embers/releases/latest). Back up your save before updating.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/01-title.png" width="320" alt="Title screen"><br><sub>Title screen</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/02-overworld-pallet-town.png" width="320" alt="Pallet Town with the PokéTouch lower screen"><br><sub>400×240 overworld and PokéTouch</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/03-battle-menu.png" width="320" alt="Battle menu"><br><sub>Native battle interface</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/04-battle-moves.png" width="320" alt="Move selection"><br><sub>Move cards with type, power and PP</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/05-party.png" width="320" alt="Party screen"><br><sub>Party</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/06-summary.png" width="320" alt="Pokémon Summary"><br><sub>Pokémon Summary</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/07-trainer-card.png" width="320" alt="Trainer Card"><br><sub>Trainer Card</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/08-options.png" width="320" alt="OPTIONS screen"><br><sub>OPTIONS</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/09-pokedex.png" width="320" alt="Pokédex"><br><sub>Pokédex</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/10-fly-two-island.png" width="320" alt="Flying to Two Island"><br><sub>Fly</sub></td>
+  </tr>
+</table>
+
+<sub>Captured in the Azahar emulator and on a New 3DS-family console (400×240 top screen, 320×240 bottom).</sub>
+
 ## Download
 
 Get both files from the [latest release](../../releases/latest). They are separate
