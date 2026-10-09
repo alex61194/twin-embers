@@ -57,15 +57,18 @@ jobs:
         run: python3 tools/test_audio_quality.py
       - name: First rival lower-screen controller and field portrait geometry
         run: python3 -m unittest discover -s tools -p test_first_battle.py -v
-      - name: Confirm binary publication remains blocked
+      - name: Confirm the release gate follows the owner decision record
         run: |
+          python3 tools/source_audit.py --release | tee /tmp/release-gate.txt
+          grep -q 'NOT independently verified' /tmp/release-gate.txt
+          python3 -c "import json; assert json.load(open('docs/release-decision.json'))['rights_verified'] is False"
+          mkdir /tmp/no-decision
           set +e
-          python3 tools/source_audit.py --release > /tmp/release-gate.txt 2>&1
+          python3 tools/source_audit.py --root /tmp/no-decision --release > /tmp/blocked.txt 2>&1
           result=$?
           set -e
-          cat /tmp/release-gate.txt
           test "$result" -eq 2
-          grep -q 'BINARY RELEASE BLOCKED' /tmp/release-gate.txt
+          grep -q 'BINARY RELEASE BLOCKED' /tmp/blocked.txt
       - name: Reject release events
         if: github.event_name == 'release'
         run: python3 tools/source_audit.py --release

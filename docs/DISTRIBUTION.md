@@ -41,12 +41,16 @@ payloads. It is a supplemental exact-byte detector, not a rights determination.
 `TwinEmbersBuilder.exe` to the GitHub release `v0.1.0-beta.1`. The executable contains compiled game logic from
 `pret/pokefirered`; no licence, rightsholder permission or legal opinion for it has been identified, so
 its rights are **not independently verified**: this is the owner's decision and risk, not a
-clearance. The gate below is unchanged and still reports blocked, because it records verified approval only.
+clearance. The decision is recorded in `docs/release-decision.json`.
 
-`tools/source_audit.py --release` is a separate fail-closed publication policy:
-it always returns status 2 with `BINARY RELEASE BLOCKED`. Passing a technical
-binary audit does not lift this policy. CI verifies that exact blocked outcome,
-uses no real ROM, and neither uploads artifacts nor creates releases.
+`tools/source_audit.py --release` is a separate fail-closed publication policy. It returns status 2
+with `BINARY RELEASE BLOCKED` unless `docs/release-decision.json` exists, is complete, has kind
+`owner-risk-acceptance`, states `rights_verified: false`, and (with `--asset FILE`) names the exact
+SHA-256 of each binary. With such a record it returns status 0 and prints that rights are **not
+independently verified**. A decision can never claim verified rights, and
+`binary_release_approved` in the manifest stays `false`, because that flag is reserved for independently
+verified clearance. Passing a technical binary audit alone does not open the gate. CI checks both
+outcomes, uses no real ROM, and neither uploads artifacts nor creates releases.
 
 Before lifting the gate, record evidence tied to the new binary hash: complete
 ROM-to-pack byte equivalence, REX pointer verification and engine-exception review,

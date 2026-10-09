@@ -129,16 +129,52 @@ def history(root,windows=None):
         check(*snapshot(root,commit),windows,supplements=by_commit.get(commit,()))
     return len(commits)
 
+DECISION='docs/release-decision.json'
+DECISION_KEYS={'schema','kind','decided_by','date','release_tag','rights_verified','third_party_authorization','statement','assets'}
+
+def release_gate(root,assets=()):
+    """Binary publication gate. Returns (exit status, message).
+
+    Open only when the owner's recorded decision names the exact binaries by SHA-256. The decision is an
+    owner risk acceptance: it never states or implies that third-party rights are verified, and
+    `binary_release_approved` stays false because that flag is reserved for verified clearance."""
+    path=root/DECISION
+    if not path.is_file():
+        return 2,'BINARY RELEASE BLOCKED: no owner release decision (docs/release-decision.json); binary audit, ROM scan, linked licenses and hardware acceptance not approved'
+    try:
+        doc=json.loads(path.read_text(encoding='utf-8'))
+        if set(doc)!=DECISION_KEYS or doc['schema']!=1 or doc['kind']!='owner-risk-acceptance':
+            raise ValueError('unexpected fields or kind')
+        if doc['rights_verified'] is not False:
+            raise ValueError('an owner decision may not claim verified rights')
+        if not all(isinstance(doc[k],str) and doc[k] for k in ('decided_by','date','release_tag','third_party_authorization','statement')):
+            raise ValueError('incomplete decision')
+        if not re.fullmatch(r'v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?',doc['release_tag']):
+            raise ValueError('invalid release tag')
+        listed=doc['assets']
+        if not isinstance(listed,dict) or not listed or not all(re.fullmatch('[0-9a-f]{64}',h) for h in listed.values()):
+            raise ValueError('assets must map file names to SHA-256 hashes')
+        for asset in assets:
+            digest=hashlib.sha256(Path(asset).read_bytes()).hexdigest()
+            if listed.get(Path(asset).name)!=digest:
+                raise ValueError(f'{Path(asset).name} is not the binary named in the decision')
+    except (ValueError,KeyError,OSError,UnicodeError) as exc:
+        return 2,f'BINARY RELEASE BLOCKED: invalid owner release decision: {exc}'
+    return 0,(f"RELEASE ALLOWED BY OWNER DECISION ({doc['kind']}, {doc['decided_by']}, {doc['date']}, {doc['release_tag']}): "
+              'third-party rights are NOT independently verified; this is not a clearance')
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--root',type=Path,default=ROOT)
     ap.add_argument('--history',action='store_true')
     ap.add_argument('--release',action='store_true')
+    ap.add_argument('--asset',type=Path,action='append',default=[],help='with --release: a binary that must match the owner decision')
     ap.add_argument('--rom',type=Path,help='optional own-ROM scan; never uploaded')
     args=ap.parse_args()
     if args.release:
-        print('BINARY RELEASE BLOCKED: binary audit, ROM scan, linked licenses and hardware acceptance not approved',file=sys.stderr)
-        return 2
+        status,message=release_gate(args.root,args.asset)
+        print(message,file=sys.stderr if status else sys.stdout)
+        return status
     windows=None
     if args.rom:
         sys.path.insert(0,str(ROOT/'builder'))

@@ -82,7 +82,8 @@ need a bootstrapped tree take `--tree build/upstream`, for example
 `python tools/test_save_prompt.py --tree build/upstream`.
 
 `tools/source_audit.py --release` is the publication gate. It reports
-`BINARY RELEASE BLOCKED` until a binary release is approved. See
+`BINARY RELEASE BLOCKED` unless `docs/release-decision.json` records the owner's decision for the exact
+binaries; the decision never claims that third-party rights are verified. See
 [DISTRIBUTION.md](DISTRIBUTION.md) and [VALIDATION.md](VALIDATION.md).
 
 ## Provenance

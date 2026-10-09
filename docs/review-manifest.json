@@ -46,7 +46,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "6e6085c8754a69085a39195ab12b9ee8bf2e0662569a990bbd430f5b4b5a372b",
+   "sha256": "544a12484d986ec4734011250f2d2749323d077318f7b20e72e60b84262e879e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -56,7 +56,8 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "field_ui_review": "Reviewed complete Flash WIN0H scanline composition, native window restoration, strict cave preview viewport and synthetic regression tests",
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
-   "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context."
+   "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": ".gitignore",
@@ -2137,13 +2138,14 @@
   },
   {
    "path": "docs/DISTRIBUTION.md",
-   "sha256": "09a46b6973dd000cb90fddc1b1d02567f03e0800e68d6553589db5435dbdc18b",
+   "sha256": "d1d0505819328cd22d89025962f17067ea66b734e18e67264ac16e3b81df9b3d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
-   "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged"
+   "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "docs/ENGINE_EXCEPTIONS.md",
@@ -2218,11 +2220,12 @@
   },
   {
    "path": "docs/RNG-INITIALIZATION.md",
-   "sha256": "283231b3ffac5bf0e2289a80b88ea0ae6d2f6b159cdb9d197b048194724d4cae",
+   "sha256": "ada764b864a3ba1adff6a12bbdb707eb044d810309fd1eeebd3f5507018c7c62",
    "review_status": "reviewed",
    "credit": "alex61194 (original owned port work with disclosed AI assistance)",
    "license": "MIT for original owned contributions; external game/SDK rights unchanged",
-   "basis": "Reviewed original entropy source and synthetic tests or documentation; recipe holds only local line references, port additions and source hashes; external FireRed functions supplied at test runtime by ignored pinned tree; no ROM, save, game payload, upstream context or binary; release gate unchanged."
+   "basis": "Reviewed original entropy source and synthetic tests or documentation; recipe holds only local line references, port additions and source hashes; external FireRed functions supplied at test runtime by ignored pinned tree; no ROM, save, game payload, upstream context or binary; release gate unchanged.",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "docs/SD-LAYOUT-VALIDATION.md",
@@ -2247,12 +2250,13 @@
   },
   {
    "path": "docs/TECHNICAL-NOTES.md",
-   "sha256": "5077d17d55c11aa5fbb8cdab79c0378f9ec954407178b676732eefc2806c97a9",
+   "sha256": "6ff3a6de4d7235b9a50d8435b3b7952f63e377524e10963bf51ca275a651d860",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
-   "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories; documentation only"
+   "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories; documentation only",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "docs/VALIDATION.md",
@@ -2289,6 +2293,15 @@
    "credit": "alex61194 (new distribution review with disclosed AI assistance)",
    "license": "MIT for original metadata; referenced identities retain original rights",
    "basis": "Explicit per-file exclusion inventory; hashes and paths only, no excluded file payloads"
+  },
+  {
+   "path": "docs/release-decision.json",
+   "sha256": "cca372bc90fc3f3369db6eece04dcac5b92c1e0348c81b36e78044623f7c84dc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (owner decision recorded with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only record; no payloads. States rights_verified false; it is not a clearance",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "licenses/ZallaxDev-LICENSE-PORT.md",
@@ -3994,12 +4007,13 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "10c59007b743d77d05eead6142818ec8b7abdd6adf0cc1421ed40dcff5b740e4",
+   "sha256": "9c621454dd8902d9c50894488d6fa1e8641953880609882f9304d0fc6f802640",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only; exact commit/blob retrospective review with rejection fixtures",
-   "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
+   "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "tools/split_recipe.py",
@@ -4197,12 +4211,13 @@
   },
   {
    "path": "tools/test_source_audit.py",
-   "sha256": "c35c3c19c9b22fbe6f742bda0a01d0097f8b925ee09601e1497612a2c222e346",
+   "sha256": "223343c3e986197493df54252383548af917a2c7844062bda12feddf669a1d13",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only; exact commit/blob retrospective review with rejection fixtures",
-   "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
+   "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
   },
   {
    "path": "tools/test_storage_controller.py",

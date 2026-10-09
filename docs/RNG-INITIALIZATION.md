@@ -73,7 +73,7 @@ python3 tools/source_audit.py --history
 python3 tools/source_audit.py --release
 ```
 
-The final command must still exit 2 with **BINARY RELEASE BLOCKED**.
+The final command follows `docs/release-decision.json`: it exits 0 and prints that rights are not independently verified. Without that file it exits 2 with **BINARY RELEASE BLOCKED**.
 Windows needs the interpreter/devkitPro paths described in BUILDING.md.
 
 Controlled tests cover 66 folding vectors (including high clock/random bits),

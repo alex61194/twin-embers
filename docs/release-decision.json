@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "kind": "owner-risk-acceptance",
+  "decided_by": "alex61194",
+  "date": "2026-10-09",
+  "release_tag": "v0.1.0-beta.1",
+  "rights_verified": false,
+  "third_party_authorization": "none identified: no licence for pret/pokefirered, no rightsholder permission, no legal opinion",
+  "statement": "The project owner decided to publish twinembers.3dsx and TwinEmbersBuilder.exe with release v0.1.0-beta.1. The 3DSX contains compiled game logic from pret/pokefirered, which has no licence. The owner accepts the legal risk. This record is not a clearance and grants nothing on behalf of Nintendo, Game Freak, Creatures, The Pokemon Company or pret contributors.",
+  "assets": {
+    "twinembers.3dsx": "48428cc6338e7336595e593d17ad57712519d39a145c3397c1e5024d974fd760",
+    "TwinEmbersBuilder.exe": "bac359beb3194fadc9bdbc2ec1774b1f0481c64a0c8f4cd0c029570835721ada"
+  }
+}

@@ -165,9 +165,38 @@ class Rejections(unittest.TestCase):
                 path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(raw)
             git('add','-A'); git('commit','-qm','synthetic deletion')
             with self.assertRaises(ValueError): audit.history(root)
-    def test_binary_policy_exit_is_explicit(self):
-        result=subprocess.run([__import__('sys').executable,str(Path(audit.__file__)),'--release'],capture_output=True,text=True)
+    def run_gate(self,root,*extra):
+        return subprocess.run([__import__('sys').executable,str(Path(audit.__file__)),'--root',str(root),'--release',*extra],capture_output=True,text=True)
+    def decision(self,**changes):
+        doc=json.loads((Path(audit.__file__).resolve().parents[1]/audit.DECISION).read_text(encoding='utf-8')); doc.update(changes); return doc
+    def test_binary_policy_blocks_without_owner_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result=self.run_gate(tmp)
         self.assertEqual(result.returncode,2)
         self.assertIn('BINARY RELEASE BLOCKED',result.stderr)
+    def test_repository_decision_opens_gate_without_claiming_rights(self):
+        result=subprocess.run([__import__('sys').executable,str(Path(audit.__file__)),'--release'],capture_output=True,text=True)
+        self.assertEqual(result.returncode,0)
+        self.assertIn('NOT independently verified',result.stdout)
+        self.assertNotIn('BLOCKED',result.stdout+result.stderr)
+        manifest=json.loads((Path(audit.__file__).resolve().parents[1]/audit.MANIFEST).read_text(encoding='utf-8'))
+        self.assertIs(manifest['binary_release_approved'],False)
+    def test_decision_must_not_claim_verified_rights_and_must_be_complete(self):
+        for bad in (self.decision(rights_verified=True),self.decision(kind='verified-authorization'),self.decision(assets={}),
+                    self.decision(release_tag='latest'),self.decision(statement='')):
+            with tempfile.TemporaryDirectory() as tmp:
+                path=Path(tmp)/audit.DECISION; path.parent.mkdir(parents=True); path.write_text(json.dumps(bad),encoding='utf-8')
+                result=self.run_gate(tmp)
+            self.assertEqual(result.returncode,2); self.assertIn('BINARY RELEASE BLOCKED',result.stderr)
+    def test_decision_pins_the_exact_binary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); (root/'docs').mkdir()
+            good=root/'twinembers.3dsx'; good.write_bytes(b'binary one')
+            doc=self.decision(assets={'twinembers.3dsx':hashlib.sha256(b'binary one').hexdigest()})
+            (root/audit.DECISION).write_text(json.dumps(doc),encoding='utf-8')
+            self.assertEqual(self.run_gate(root,'--asset',str(good)).returncode,0)
+            good.write_bytes(b'binary two')
+            result=self.run_gate(root,'--asset',str(good))
+            self.assertEqual(result.returncode,2); self.assertIn('not the binary named',result.stderr)
 
 if __name__=='__main__': unittest.main()
