@@ -20,25 +20,45 @@ the START menu with **PokéTouch**, a set of touch menus.
 No game data ships with this project. The **Twin Embers Builder** makes the data
 pack on your own computer from **your own** FireRed cartridge dump.
 
-> [!IMPORTANT]
-> **Current status: source only, beta.** No prebuilt `twinembers.3dsx` is published.
-> You compile it yourself with [docs/BUILDING.md](docs/BUILDING.md). Distribution of
-> a prebuilt executable is on hold until its rights question is settled, and testing
-> on real 3DS hardware is still in progress
-> ([details](docs/DISTRIBUTION.md)).
+> [!NOTE]
+> **Beta.** The Builder is available from the [latest release](https://github.com/alex61194/twin-embers/releases/latest).
+> The game executable `twinembers.3dsx` is not distributed: you build it yourself with
+> [docs/BUILDING.md](docs/BUILDING.md) ([details](docs/DISTRIBUTION.md)). Back up your save before updating.
 
 ## Screenshots
 
-Gameplay screenshots are not published yet; they will be added here once their use
-has been cleared.
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/01-title.png" width="320" alt="Title screen"><br><sub>Title screen</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/02-overworld-pallet-town.png" width="320" alt="Pallet Town with the PokéTouch lower screen"><br><sub>400×240 overworld and PokéTouch</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/03-battle-menu.png" width="320" alt="Battle menu"><br><sub>Native battle interface</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/04-battle-moves.png" width="320" alt="Move selection"><br><sub>Move cards with type, power and PP</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/05-party.png" width="320" alt="Party screen"><br><sub>Party</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/06-summary.png" width="320" alt="Pokémon Summary"><br><sub>Pokémon Summary</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/07-trainer-card.png" width="320" alt="Trainer Card"><br><sub>Trainer Card</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/08-options.png" width="320" alt="OPTIONS screen"><br><sub>OPTIONS</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/09-pokedex.png" width="320" alt="Pokédex"><br><sub>Pokédex</sub></td>
+    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/10-fly-two-island.png" width="320" alt="Flying to Two Island"><br><sub>Fly</sub></td>
+  </tr>
+</table>
+
+<sub>Captured in the Azahar emulator and on a New 3DS-family console (400×240 top screen, 320×240 bottom).</sub>
 
 ## Download
 
 | What | Where |
 |---|---|
-| Source code (this repository) | **Code → Download ZIP**, or `git clone` |
+| `TwinEmbersBuilder.exe` (makes the data pack from your own ROM) | [Latest release](https://github.com/alex61194/twin-embers/releases/latest) |
 | `twinembers.3dsx` (the game) | Not distributed. Build it yourself: [docs/BUILDING.md](docs/BUILDING.md) |
-| `TwinEmbersBuilder.exe` (data pack maker) | Not published yet. Run it from source: [builder/README.md](builder/README.md) |
+| Source code (this repository) | **Code → Download ZIP**, or `git clone` |
 | Pokémon FireRed ROM | **Not provided.** Use a dump of your own cartridge |
 
 The game and the Builder are always two separate programs. The Builder only makes
@@ -47,8 +67,8 @@ the data pack: it does not contain, download or create the game executable.
 ## Features
 
 Everything below is implemented in the current source. It has been played in the
-Azahar emulator and covered by automated host tests. Real-hardware acceptance is
-pending (see [Compatibility](#compatibility)).
+Azahar emulator and covered by automated host tests. It was also tested on a New 3DS-family
+console by the author (see [Compatibility](#compatibility)).
 
 | | |
 |---|---|
@@ -71,8 +91,7 @@ pending (see [Compatibility](#compatibility)).
 
 - **Systems:** the Nintendo 3DS and 2DS family (3DS, 3DS XL, 2DS, New 3DS, New 3DS XL,
   New 2DS XL) through the **Homebrew Launcher**.
-- **Real hardware:** acceptance testing is in progress and no results are recorded
-  yet. Speed on original (non-"New") models has not been measured.
+- **Real hardware:** tested by the author on a New 3DS-family console. Other models are not reported yet.
 - **Emulator:** played in Azahar from a new game through the first rival battle and a
   wild battle on Route 1. This covered Party, Summary, Bag, the Trainer Card,
   OPTIONS, SAVE, Continue and turbo. PC storage is covered by host tests. The
@@ -163,15 +182,9 @@ To report a problem, see [Reporting problems](#reporting-problems).
 
 ## Known issues
 
-- Real Nintendo 3DS hardware acceptance has not been completed for this version.
 - Only FireRed (USA) revision 0 is supported.
 - Saves from other emulators are not converted. The game reads standard 128 KiB
   FireRed flash saves in its own folder.
-- New games now get a varying Trainer ID and random seed from 3DS entropy, at FireRed's
-  original sampling points. Automated and emulator checks are in
-  [docs/RNG-INITIALIZATION.md](docs/RNG-INITIALIZATION.md). One tester reports it working
-  on a New 3DS-family console; Old 3DS and other models are untested. Saves made
-  earlier keep the ID they already have, including 00000.
 - In-game hints still say "Press START to open the MENU". In this port the menu is
   on the lower screen, and START controls turbo.
 - Before you receive the Pokédex, its lower-screen button can look active while

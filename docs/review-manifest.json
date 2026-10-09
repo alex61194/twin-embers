@@ -1657,7 +1657,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "37a23c4253d3d51b0a05e67268051b80124c0deb725eaa6eea0f70a0ff7a2053",
+   "sha256": "098fdce00b7a29be4fe4afbd6bb1821ff6f127b6b727d6b449680df43035be51",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1669,7 +1669,7 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "public_readme_review": "Public user README: links release status to DISTRIBUTION.md and HARDWARE-ACCEPTANCE.md; removes the fixed error-screen limitation; no media or payload",
    "build_guide_review": "README points users to the local build guide docs/BUILDING.md; no prebuilt executable is offered",
-   "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories, emulator-observed known issues; documentation only",
+   "public_docs_review": "README: screenshot gallery linking release assets, hardware status and RNG issue updated per owner; documentation only",
    "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context."
   },
   {
