@@ -93,3 +93,10 @@ of the game mixer are excluded. The font is read from the user's pack; the intro
 uses original pack-backed data; the mixer remains external upstream code in the
 private local build. Credits do not license the pack or derivative game logic.
 See PROVENANCE.md and docs/import-exclusions.json for exact scope.
+
+## Notices for libraries linked into `twinembers.3dsx`
+
+The exact licence texts of the versions used (libctru 2.7.0, citro2d 1.7.0, citro3d 1.7.1 and the
+devkitPro newlib 4.6.0 build) are in [licenses/](licenses/): `libctru-v2.7.0-README-License.txt`,
+`citro2d-v1.7.0-LICENSE.txt`, `citro3d-v1.7.1-LICENSE.txt` and
+`newlib-4.6.0-devkitPro-57bd8e1-COPYING.NEWLIB.txt`.

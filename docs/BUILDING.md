@@ -1,7 +1,7 @@
 # Building twinembers.3dsx yourself (Windows)
 
-No prebuilt `.3dsx` is distributed. You build the executable on your own computer
-from this source and the `pret/pokefirered` decompilation, which the bootstrap
+A prebuilt `twinembers.3dsx` is attached to the releases. If you prefer to build the executable on your
+own computer, use this source and the `pret/pokefirered` decompilation, which the bootstrap
 downloads from its official GitHub repository at a pinned commit. Game data is not
 compiled in: it comes from the data pack the Builder makes from your own ROM.
 

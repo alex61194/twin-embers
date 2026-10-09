@@ -21,48 +21,23 @@ No game data ships with this project. The **Twin Embers Builder** makes the data
 pack on your own computer from **your own** FireRed cartridge dump.
 
 > [!NOTE]
-> **Beta.** The Builder is available from the [latest release](https://github.com/alex61194/twin-embers/releases/latest).
-> The game executable `twinembers.3dsx` is not distributed: you build it yourself with
-> [docs/BUILDING.md](docs/BUILDING.md) ([details](docs/DISTRIBUTION.md)). Back up your save before updating.
-
-## Screenshots
-
-<table>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/01-title.png" width="320" alt="Title screen"><br><sub>Title screen</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/02-overworld-pallet-town.png" width="320" alt="Pallet Town with the PokéTouch lower screen"><br><sub>400×240 overworld and PokéTouch</sub></td>
-  </tr>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/03-battle-menu.png" width="320" alt="Battle menu"><br><sub>Native battle interface</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/04-battle-moves.png" width="320" alt="Move selection"><br><sub>Move cards with type, power and PP</sub></td>
-  </tr>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/05-party.png" width="320" alt="Party screen"><br><sub>Party</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/06-summary.png" width="320" alt="Pokémon Summary"><br><sub>Pokémon Summary</sub></td>
-  </tr>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/07-trainer-card.png" width="320" alt="Trainer Card"><br><sub>Trainer Card</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/08-options.png" width="320" alt="OPTIONS screen"><br><sub>OPTIONS</sub></td>
-  </tr>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/09-pokedex.png" width="320" alt="Pokédex"><br><sub>Pokédex</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/10-fly-two-island.png" width="320" alt="Flying to Two Island"><br><sub>Fly</sub></td>
-  </tr>
-</table>
-
-<sub>Captured in the Azahar emulator and on a New 3DS-family console (400×240 top screen, 320×240 bottom).</sub>
+> **Beta.** Download `twinembers.3dsx` and `TwinEmbersBuilder.exe` from the
+> [latest release](https://github.com/alex61194/twin-embers/releases/latest). Back up your save before updating.
 
 ## Download
 
-| What | Where |
-|---|---|
-| `TwinEmbersBuilder.exe` (makes the data pack from your own ROM) | [Latest release](https://github.com/alex61194/twin-embers/releases/latest) |
-| `twinembers.3dsx` (the game) | Not distributed. Build it yourself: [docs/BUILDING.md](docs/BUILDING.md) |
-| Source code (this repository) | **Code → Download ZIP**, or `git clone` |
-| Pokémon FireRed ROM | **Not provided.** Use a dump of your own cartridge |
+Get both files from the [latest release](../../releases/latest). They are separate
+downloads:
 
-The game and the Builder are always two separate programs. The Builder only makes
-the data pack: it does not contain, download or create the game executable.
+| File | What it is |
+|---|---|
+| **`twinembers.3dsx`** | The game, for the Homebrew Launcher |
+| **`TwinEmbersBuilder.exe`** | Windows tool that makes the game's data pack from your own ROM |
+| `SHA256SUMS.txt` | Checksums to verify both downloads |
+| `TwinEmbers-licenses.zip` | License notices for the game and the Builder |
+
+The Builder only makes the data pack: it does not contain, download or create the
+game. No ROM is provided; use a dump of your own cartridge.
 
 ## Features
 
@@ -103,14 +78,15 @@ console by the author (see [Compatibility](#compatibility)).
 You need a 3DS with the **Homebrew Launcher**, a Windows PC, and a dump of your own
 **Pokémon FireRed (USA)** cartridge ([supported ROM](#supported-rom)).
 
-1. **Build the game.** Follow [docs/BUILDING.md](docs/BUILDING.md) once. It produces
-   `twinembers.3dsx`. This takes about 15 minutes, most of it waiting.
-2. **Make the data pack.** Start the Builder ([builder/README.md](builder/README.md)),
-   choose your ROM, click **SD folder…** and select the **root** of your SD card,
-   then click **Build Data Pack**. It checks your ROM, then creates and verifies
-   `/3ds/twinembers/twinembers.pak`.
-3. **Copy the game.** Put `twinembers.3dsx` into the same folder, `/3ds/twinembers/`.
-4. **Play.** Insert the SD card, open the Homebrew Launcher and start **Twin Embers**.
+1. **Download** `twinembers.3dsx` and `TwinEmbersBuilder.exe` from the
+   [latest release](../../releases/latest).
+2. **Make the data pack.** Put the SD card in your PC and open
+   `TwinEmbersBuilder.exe`. Choose your ROM, click **SD folder…** and select the
+   **root** of the SD card, then click **Build Data Pack**. It checks your ROM, then
+   creates and verifies `/3ds/twinembers/twinembers.pak`.
+3. **Copy the game** `twinembers.3dsx` into the same folder, `/3ds/twinembers/`.
+4. **Play.** Put the SD card back in the 3DS, open the Homebrew Launcher and start
+   **Twin Embers**.
 
 Your SD card should then look like this:
 
@@ -127,6 +103,10 @@ SD card
 **Sound:** if the game is silent, your SD card has no `/3ds/dspfirm.cdc` yet. Run the
 **DSP1** homebrew once on your 3DS to create it. Most custom-firmware setups already
 have this file.
+
+If Windows SmartScreen warns about the Builder, choose **More info → Run anyway**
+only if the file's SHA-256 matches `SHA256SUMS.txt`. The Builder needs no
+administrator rights and no internet connection.
 
 ## Controls
 
@@ -158,8 +138,8 @@ cartridge.
 
 ## Updating the game
 
-1. Build the new `twinembers.3dsx` and replace the old one in `/3ds/twinembers/`.
-2. Run the new Builder again, because each version needs its matching pack. When it
+1. Download the new `twinembers.3dsx` and replace the old one in `/3ds/twinembers/`.
+2. Run the new `TwinEmbersBuilder.exe` again, because each version needs its matching pack. When it
    asks to replace the existing pack, choose **Yes**; the old pack is kept until the
    new one is verified.
 3. Leave `twinembers.sav` where it is. Your progress carries over.
@@ -189,11 +169,10 @@ To report a problem, see [Reporting problems](#reporting-problems).
   on the lower screen, and START controls turbo.
 - Before you receive the Pokédex, its lower-screen button can look active while
   another menu is open. Tapping it just returns to the main lower screen.
-- No prebuilt executable is distributed (see the status note at the top).
 
 ## Building from source
 
-- **Game:** [docs/BUILDING.md](docs/BUILDING.md) gives step-by-step Windows
+- **Game (optional):** [docs/BUILDING.md](docs/BUILDING.md) gives step-by-step Windows
   instructions with devkitPro and Python.
 - **Builder:** [builder/README.md](builder/README.md) covers the GUI, the command line
   and the tests.
@@ -202,8 +181,7 @@ To report a problem, see [Reporting problems](#reporting-problems).
 - **Release checks:** [docs/VALIDATION.md](docs/VALIDATION.md) and
   [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md).
 
-Never share the executable you built, your ROM or your data pack: they contain or
-are derived from copyrighted game material.
+Never share your ROM, data pack or saves.
 
 ## Reporting problems
 
@@ -239,6 +217,9 @@ Pokémon FireRed and all related names, characters and content are the property 
 their respective owners. Nintendo 3DS is a trademark of Nintendo. These names are used
 only to identify compatibility.
 
-This repository contains no ROM, game graphics, audio, game tables, data pack or game
-executable. No license to the game, the ROM or the decompiled game source is granted
-or implied.
+This repository contains no ROM, game graphics, audio, game tables or data pack. The
+`twinembers.3dsx` attached to the release contains compiled code built from the
+`pret/pokefirered` decompilation, which has no license; the author distributes it on their own
+responsibility, and its rights have not been independently verified (see
+[docs/DISTRIBUTION.md](docs/DISTRIBUTION.md)). No license to the game, the ROM or the decompiled
+game source is granted or implied.

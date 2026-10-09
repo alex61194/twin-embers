@@ -37,6 +37,12 @@ pack path. A local supported ROM and finished 3DSX are mandatory for release
 verification; the scan checks nontrivial 32-byte windows of reconstructed
 payloads. It is a supplemental exact-byte detector, not a rights determination.
 
+**Owner decision (2026-10-09).** The project owner decided to attach `twinembers.3dsx` and
+`TwinEmbersBuilder.exe` to the GitHub release `v0.1.0-beta.1`. The executable contains compiled game logic from
+`pret/pokefirered`; no licence, rightsholder permission or legal opinion for it has been identified, so
+its rights are **not independently verified**: this is the owner's decision and risk, not a
+clearance. The gate below is unchanged and still reports blocked, because it records verified approval only.
+
 `tools/source_audit.py --release` is a separate fail-closed publication policy:
 it always returns status 2 with `BINARY RELEASE BLOCKED`. Passing a technical
 binary audit does not lift this policy. CI verifies that exact blocked outcome,
