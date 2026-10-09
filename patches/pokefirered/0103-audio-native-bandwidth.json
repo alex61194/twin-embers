@@ -1,0 +1,55 @@
+{
+ "schema": 1,
+ "technical_reference": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
+ "files": [
+  {
+   "path": "src/m4a.c",
+   "before_sha256": "44796dbe165a2ffb80da4be9b0422a554c9de15450b8751556d816b428aa8367",
+   "after_sha256": "83151bdf1fe4c6a67d0f222e841883a282e04af9f361441b06d7d1c36dae87b1",
+   "lines": [
+    {
+     "span": [
+      0,
+      82
+     ]
+    },
+    {
+     "port": "    m4aSoundMode(SOUND_MODE_DA_BIT_8\n"
+    },
+    {
+     "port": "#ifdef PLATFORM_3DS\n"
+    },
+    {
+     "port": "               /* 528 samples x 3 slices exactly fit the existing PCM ring.\n"
+    },
+    {
+     "port": "                * Recover treble bandwidth without changing gain or tempo. */\n"
+    },
+    {
+     "port": "               | SOUND_MODE_FREQ_31536\n"
+    },
+    {
+     "port": "#else\n"
+    },
+    {
+     "port": "               | SOUND_MODE_FREQ_13379\n"
+    },
+    {
+     "port": "#endif\n"
+    },
+    {
+     "port": "               | (12 << SOUND_MODE_MASVOL_SHIFT)\n"
+    },
+    {
+     "port": "               | (5 << SOUND_MODE_MAXCHN_SHIFT));\n"
+    },
+    {
+     "span": [
+      86,
+      1732
+     ]
+    }
+   ]
+  }
+ ]
+}

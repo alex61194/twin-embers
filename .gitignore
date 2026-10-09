@@ -1,0 +1,13 @@
+/build/
+**/build/
+**/romfs/
+__pycache__/
+*.pyc
+*.gba
+*.pak
+*.3dsx
+*.elf
+*.smdh
+*.sav
+*.o
+*.exe

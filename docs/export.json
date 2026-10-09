@@ -1,0 +1,8 @@
+{
+ "schema": 1,
+ "source": "Twin Embers Port private development repository",
+ "source_commit": "898c27334842967733c00a2e447278e8bce22316",
+ "files": 368,
+ "content_sha256": "f18c685d773993c4cdb52094473041d4df447f618a4578ca013f7b244c64fd5a",
+ "note": "Reviewed source snapshot with a new Git root; no development history is included."
+}

@@ -1,0 +1,20 @@
+Twin Embers Builder for Windows — third-party notices
+
+No ROM, game graphics/audio, generated data pack, 3DS game executable or save
+is included in this executable. It contains the Twin Embers Builder, a Python
+runtime with its standard library, the Tcl/Tk GUI toolkit, OpenSSL (used for
+hashing), the Microsoft C runtime, and the PyInstaller bootloader that starts it.
+No internet connection is used by the application.
+
+Original Twin Embers contributions are MIT licensed (TwinEmbers-LICENSE-PORT.md).
+Portions inherited from ZallaxDev and the Pokémon Emerald 3Ds Dual Screen
+contributors keep their MIT notices (TwinEmbers-ZallaxDev-*.txt/.md).
+
+The versions, inventory and license texts below were generated from this exact
+executable by builder/package_notices.py during the build. The Python license file
+also contains the bzip2, libffi, OpenSSL (Apache License 2.0) and Tcl/Tk texts and
+the conditions for the Microsoft Distributable Code. The PyInstaller bootloader is
+GPL-2.0-or-later with an exception that permits distributing the bundled program.
+
+Distributing this Builder does not authorize distribution of the game, a ROM or
+any material derived from it.

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firered3ds-builder"
+version = "1.0.0"
+description = "Builds twinembers.pak for FireRed 3DS from your own Pokemon FireRed ROM"
+requires-python = ">=3.11"
+# No third-party dependencies: the Builder only needs the standard library.
+
+[project.scripts]
+firered3ds-builder = "firered3ds_builder.cli:main"
+
+[project.gui-scripts]
+firered3ds-builder-gui = "firered3ds_builder.gui:main"
+
+[tool.setuptools]
+packages = ["firered3ds_builder"]
+
+[tool.setuptools.package-data]
+firered3ds_builder = ["recipes/*.json", "recipes/*/*.json"]

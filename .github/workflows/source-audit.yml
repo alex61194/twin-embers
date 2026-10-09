@@ -1,0 +1,71 @@
+name: Source audit
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [created, published, prereleased, edited]
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    env:
+      DEVKITARM: /usr
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reviewed source and every reachable commit
+        run: python3 tools/source_audit.py --history
+      - name: Synthetic ARM object toolchain
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi
+      - name: Builder, pack reader/writer and partition integrity
+        run: python3 -m unittest discover -s builder/tests -v
+      - name: Source and binary audit rejection tests
+        run: |
+          python3 -m unittest discover -s tools -p test_source_audit.py -v
+          python3 -m unittest discover -s tools -p test_audit_clean_release.py -v
+      - name: REX transformation, actual ARM link and C runtime
+        run: python3 -m unittest discover -s tools -p test_rex_pipeline.py -v
+      - name: Synthetic save migration and injected I/O failures
+        run: python3 tools/test_flash_migration.py
+      - name: Controlled entropy, original RNG and Trainer ID save compatibility
+        run: |
+          python3 tools/bootstrap.py --dir build/rng-test-upstream
+          python3 tools/test_rng_initialization.py --tree build/rng-test-upstream -v
+      - name: Field menus, Flash masks and cave transition geometry
+        run: python3 -m unittest discover -s tools -p test_field_presentation.py -v
+      - name: Fly actors, exact OAM publication and invocation strip
+        run: python3 -m unittest discover -s tools -p test_fly_presentation.py -v
+      - name: Graphics externalization and runtime boundaries
+        run: |
+          python3 tools/test_asset_bundle.py
+          python3 tools/test_assets_runtime.py --cc gcc
+          python3 tools/test_data_runtime.py --cc gcc
+      - name: Synthetic PokeTouch icons, geometry and unchanged viewports
+        run: python3 -m unittest discover -s tools -p test_poketouch_render.py -v
+      - name: Oak presentation sampling and GPU geometry
+        run: python3 -m unittest discover -s tools -p test_oak_presentation.py -v
+      - name: Storage touch geometry and route tests (no emulator)
+        run: |
+          python3 tools/test_storage_touch.py
+          python3 tools/test_storage_controller.py
+          python3 tools/test_mail_wait.py
+      - name: Native audio rate, ring cadence and treble bandwidth (synthetic)
+        run: python3 tools/test_audio_quality.py
+      - name: First rival lower-screen controller and field portrait geometry
+        run: python3 -m unittest discover -s tools -p test_first_battle.py -v
+      - name: Confirm binary publication remains blocked
+        run: |
+          set +e
+          python3 tools/source_audit.py --release > /tmp/release-gate.txt 2>&1
+          result=$?
+          set -e
+          cat /tmp/release-gate.txt
+          test "$result" -eq 2
+          grep -q 'BINARY RELEASE BLOCKED' /tmp/release-gate.txt
+      - name: Reject release events
+        if: github.event_name == 'release'
+        run: python3 tools/source_audit.py --release

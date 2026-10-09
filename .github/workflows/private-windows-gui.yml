@@ -1,0 +1,63 @@
+name: Private Windows GUI build
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'builder/**'
+      - '.github/workflows/private-windows-gui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  package-builder:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Check out reviewed source (no game data)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11 for the Windows GUI
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install GUI package and frozen application builder
+        shell: pwsh
+        run: |
+          python -m pip install --no-deps ./builder
+          python -m pip install pyinstaller==6.16.0
+      - name: Check GUI operations with synthetic data only
+        shell: pwsh
+        run: python -m unittest discover -s builder/tests -p 'test_gui*.py' -v
+      - name: Build portable EXE without game ROM, data or pack
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --onefile --windowed --clean --name TwinEmbersBuilder --collect-data firered3ds_builder --exclude-module _decimal --exclude-module _lzma builder/launch_gui.py
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
+      - name: Validate frozen executable on Windows (headless recipe test)
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path "dist/TwinEmbersBuilder.exe").Path
+          $proc = Start-Process -FilePath $exe -ArgumentList "--self-test" -WindowStyle Hidden -Wait -PassThru
+          if ($proc.ExitCode -ne 0) { throw "Frozen recipe/ABI self-test failed with $($proc.ExitCode)" }
+          $hash = Get-FileHash $exe -Algorithm SHA256
+          Write-Host "EXE SHA-256 $($hash.Hash.ToLowerInvariant())"
+          "$($hash.Hash.ToLowerInvariant())  TwinEmbersBuilder.exe" | Set-Content dist/SHA256SUMS.txt
+          Write-Host "EXE bytes $((Get-Item $exe).Length)"
+      - name: Exact-version third-party notices from the frozen bundle
+        shell: pwsh
+        run: |
+          python builder/package_notices.py --exe dist/TwinEmbersBuilder.exe --out dist/notices
+          if ($LASTEXITCODE -ne 0) { throw "Unreviewed bundle content or missing license text" }
+      - name: Upload GUI-only private testing artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TwinEmbersBuilder-Windows-private
+          path: |
+            dist/TwinEmbersBuilder.exe
+            dist/notices/
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

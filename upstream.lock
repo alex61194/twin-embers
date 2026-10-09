@@ -1,0 +1,13 @@
+[pokefirered]
+repository = "https://github.com/pret/pokefirered.git"
+commit = "037335f4c725d7c9aecdac87066f2002b4bd7e14"
+[dualscreen_reference]
+repository = "https://github.com/ZallaxDev/pokeemerald-3Ds-dualscreen.git"
+commit = "1f3812d2fe4e53e76bbd528ccb8426e880dfc76b"
+[technical_reference]
+repository = "https://github.com/alex61194/pokemon-firered-3ds-clean.git"
+commit = "96f95e015af9f5f38e4a8aefca7cab29a78b030d"
+[rom]
+sha1 = "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc"
+[pack]
+schema = 1

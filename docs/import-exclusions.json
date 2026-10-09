@@ -1,0 +1,1068 @@
+{
+  "schema": 1,
+  "technical_reference": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
+  "old_distribution_code_imported": false,
+  "old_history_imported": false,
+  "excluded_categories": [
+    "ROMs",
+    "PNG/WAV and game assets",
+    "intro_native",
+    "generated font pixels",
+    "modern sprite prototypes",
+    "PAK/3DSX/ELF/RomFS/builds/saves",
+    "unverified provenance blobs",
+    "old repository Git objects/history"
+  ],
+  "excluded_reference_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "source_blob": "a400a29366775da6aed9658778b187182ec75b23",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/.gitignore",
+      "source_blob": "a9b45837569ef5f0684525865bc71e758ac98946",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/CONTROLS_BACKDROP_CHECKPOINT.md",
+      "source_blob": "f4542d6019c8451ffa6884abd29c9031b7178511",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/MENU_CHECKPOINT.md",
+      "source_blob": "cbc1ffb41321c5f9d9eb55dcb93ba376113164d7",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/NEW_GAME_GRAPHICS_CHECKPOINT.md",
+      "source_blob": "cbf31a09206485879fa12c37a5660b0eab11f662",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/README.md",
+      "source_blob": "bc6835be388fb1b32c43abd68836f16d0d2e0e01",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/SAVE_LOAD_CHECKPOINT.md",
+      "source_blob": "9a6227e63f348c9a6a3bcce970caa6969ccbd12e",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/boot_copyright.png",
+      "source_blob": "39981de04f09bb88b68e3c3ba208ca1375ad0fb1",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_big0.png",
+      "source_blob": "c7af159d6a4d6ee9c3deac93f7bef900b69c4c7a",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_big1.png",
+      "source_blob": "daf430b59cf6ae86577be7224f4e70bb5f106645",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_big2.png",
+      "source_blob": "6ddc881466eea71174a3f5f95ca79f083533f9e6",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_big3.png",
+      "source_blob": "9054317672f0504c777f736695a0e7d106dd44b8",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_logo.png",
+      "source_blob": "201ce6233858463a4bc0ca148b0f5055cfb119c2",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_presents.png",
+      "source_blob": "643e6b0775525d363a1b3150e89e9cfdde68a096",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_small0.png",
+      "source_blob": "9eb8a8f31d524b5dcd6dc0066b7cf228730198ef",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_small1.png",
+      "source_blob": "b14f89f55257100c463deff3a2716eda147f1ed2",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_small2.png",
+      "source_blob": "8fa5b61ed5093f9647499dd4bc50196f76212020",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_small3.png",
+      "source_blob": "cf694f66afdc52f1db4414fd5f3aaba778d58088",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_star.png",
+      "source_blob": "38ca5edae9e94339c27040eb0316b0bbac4f9978",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/gf_text.png",
+      "source_blob": "769c316ebdeb0f00fe6c0d3cd6373a40dc4ede2a",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/inventory.json",
+      "source_blob": "eca1045861e7ab870a86fa60c0665958c191c1fc",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/manifest.json",
+      "source_blob": "eed251a3d4ba2e86ff9079593bc7abe8842312ca",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_bg0.png",
+      "source_blob": "d64405fe667ccfaac3fc5f8e4f27361276ed4370",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_bg1.png",
+      "source_blob": "4ff68bbf04b901f9ac5921254786e899e12903cb",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_bg2.png",
+      "source_blob": "46c389bd87c670326c5daceab9021af3afd61ec6",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_grass0.png",
+      "source_blob": "f53bddf56f9cea73760898026cba682872942e4d",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_grass1.png",
+      "source_blob": "183948eeab305a308a821bfb7b8006cc5adaeb24",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s1_grass2.png",
+      "source_blob": "681a604223451b6af42983a590080491ccc0f66c",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_forest.png",
+      "source_blob": "b9739570264261533e043504f8c078027bc904f9",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_gengar.png",
+      "source_blob": "71d1eb9c8c238bd7e75e5b1bd6b641cc09407bd2",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_gengar_close.png",
+      "source_blob": "936453b27ffbd16a6751f58d732ab81a72f688bd",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_nidorino.png",
+      "source_blob": "4cd387636510ae466d3b6e1253f2da005dde40f4",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_nidorino_close.png",
+      "source_blob": "6353ea8452437276f2b53a5268ad1d42ac6c30be",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s2_plants.png",
+      "source_blob": "681a9dcaa59e2ff6e91f2ccb63990aae55f5e5f6",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom0.png",
+      "source_blob": "84b5d18f3ada73acbaf989d9f58770d41e68faaf",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom1.png",
+      "source_blob": "9a03e4289b6430e1cef8eb3f09ecc93721865ecf",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom2.png",
+      "source_blob": "861777546830f6f3538c5e71a05aa726ef627ed2",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom3.png",
+      "source_blob": "706b12f306381f0176bb284ce12b87c2b7d4b4e7",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom4.png",
+      "source_blob": "c32c52efbda29d050086e93d0a8e34ff87dc99a8",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom5.png",
+      "source_blob": "76b6408a61dd9e0244ca9fd02f4c0012af852830",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom6.png",
+      "source_blob": "7019ebc6392d734beae4ede3c32c03254c68b02c",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom7.png",
+      "source_blob": "0de772989f1125e1a9ac4f7afa690384bce0ff28",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_back_zoom8.png",
+      "source_blob": "6f45e93551eccc548201c56a71c1adba3dd95d13",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_dust0.png",
+      "source_blob": "1829b024e8fa88bbe59487a7d67c53d0ed842d91",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_dust1.png",
+      "source_blob": "f3e3fa51a4cf641c983ca78795709d5231c53555",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_dust2.png",
+      "source_blob": "4e48c9e6da49b9b468d103469316fb7e5fa38ba1",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_dust3.png",
+      "source_blob": "6ee1c2086044343e83cb56b8bef3fdfed8e58daa",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_forest.png",
+      "source_blob": "0133576f15d3b1611a666e501221688ae0271c92",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_gengar0.png",
+      "source_blob": "84b5d18f3ada73acbaf989d9f58770d41e68faaf",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_gengar1.png",
+      "source_blob": "1acca8a9b474d7c74afa8fb420cc42202502d04e",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_gengar2.png",
+      "source_blob": "f45ef493691fe36bc661163b4731088b61316f37",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_gengar3.png",
+      "source_blob": "efde9510b4a23b30041f77a8671db89d3de3732f",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_grass0.png",
+      "source_blob": "b75f8f41a981d698a985068957bd895945eebb80",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_grass1.png",
+      "source_blob": "cf17af5decf529381e7e9ce95d4cf895b09645bb",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom1.png",
+      "source_blob": "e3a1ed547aeac2f514f2eb05e7519c5d510fe75a",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom2.png",
+      "source_blob": "39a5237129af50db0cd3187109b1d63f101f264d",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom3.png",
+      "source_blob": "2e8119daf626a7779075803eb0742db7f9490ccc",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom4.png",
+      "source_blob": "a05406225824ee0cfd8d642db47c516329d699a7",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom5.png",
+      "source_blob": "f50387aa9c7807abe510488c1a06869e117df711",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom6.png",
+      "source_blob": "dd46d62fc65fcb56c556208b1e07c99b288f3281",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom7.png",
+      "source_blob": "8347601d4b9832e62b9436520689bad64823a575",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nido_zoom8.png",
+      "source_blob": "36dc2ca6f8286c4f8fe559c497be53ca253385b6",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nidorino0.png",
+      "source_blob": "f5b134e8a7935ee58d8dd64e502e177366186f48",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nidorino1.png",
+      "source_blob": "49da3900a47797175709eedcbeb7d462d878286b",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nidorino2.png",
+      "source_blob": "228b8825d845c6c3dc5a56aa61d12341496aac2e",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nidorino3.png",
+      "source_blob": "fbd3a9187a97111bd6f9e681766af35b7a2d3a67",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_nidorino4.png",
+      "source_blob": "06a57576354865f93d49d8ad81a1dcab2e576763",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_swipe_bottom0.png",
+      "source_blob": "908a3c4848ea3b0c44e2f635c72a603eb30ef8e0",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_swipe_bottom1.png",
+      "source_blob": "3b45fd12de0d77d64c1ea8dafb89565e8584dab8",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_swipe_top0.png",
+      "source_blob": "cbd52825d0c6ed4c4f19bb5714c6d2fc9b7a44d0",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/s3_swipe_top1.png",
+      "source_blob": "7cfc594f3cec38a051734ad8ae3768b6e643f86e",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_background.png",
+      "source_blob": "4ee38294a79625a023bd0a3262db7697cf2d656a",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_charizard.png",
+      "source_blob": "8579c5697f59063ec86543fe3870e9faed3dda4c",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_copyright.png",
+      "source_blob": "dd9a4a53f57b2b470ba6f704e2760f3b96a6a2f3",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame0.png",
+      "source_blob": "cff69cdb6b9dfd999db29c96a47f394fac10061f",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame1.png",
+      "source_blob": "9bacca18dc3f66086e114b89749123811f85d83a",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame2.png",
+      "source_blob": "cad6206814465ddde3587e4f150f0e6728d10d15",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame3.png",
+      "source_blob": "3c359e7af31544ac567a1e19443258b798bca0bc",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame4.png",
+      "source_blob": "14b6d0917ef2af0f0d2971f1403ed159eafdb19c",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame5.png",
+      "source_blob": "6aee4b1ebdb0eb1c6748bf95e84a03854979d127",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame6.png",
+      "source_blob": "bda125d09bb6fdbeefa72f31d6fac366e42b17b9",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame7.png",
+      "source_blob": "65d83d2c834badab8b35b674280abc0203e7e825",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame8.png",
+      "source_blob": "3fa2c040ac6344b631e0424f41ca41b4f0061818",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_flame9.png",
+      "source_blob": "fe4d4249b1c94869ef65d128c194c48ce7ae7155",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_pokemon.png",
+      "source_blob": "47994cf42ab85dbd321fa40c106e0e11ac204ca8",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_press_start.png",
+      "source_blob": "a086f0e6a31e920c91b60e1beba34aaab9c83723",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_slash.png",
+      "source_blob": "7ea78ad77b92c24b7a867c6217172383020558cb",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/intro_native/title_version.png",
+      "source_blob": "7473a3da4e6f39ac7dc502ada530d2de5a05a6db",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_bag.png",
+      "source_blob": "cb6d398dde75b561fe039ab8faeef07c873ea16c",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_card.png",
+      "source_blob": "466ed0fde33044bcaa6e7c95a1c837499eebd947",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_options.png",
+      "source_blob": "026aff25dbc84b7b242c3caacfd1f5bc2620ff16",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_pokedex.png",
+      "source_blob": "8235fc84d2c8ede9d5b6eb1f8d7ef189be307d31",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_pokemon.png",
+      "source_blob": "d0962c815766e04ea370a6a8171650405f2c5cbb",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_save.png",
+      "source_blob": "86d7968afd1f3b46447b0244e924bcc1088f8921",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/assets/poketouch/icon_shoes.png",
+      "source_blob": "70a573fa96c5d000c16faf31b4c5a40766ef4654",
+      "reason": "Media/game-derived or unverified re-authored assets excluded; no pixels or asset manifests imported"
+    },
+    {
+      "path": "3ds_port/src/3ds_intro_native.inc",
+      "source_blob": "b20d3305b596f5a4f36e23f2755c05ee9bbbc9c0",
+      "reason": "Requires excluded re-authored bitmaps; replaced by an original asset-free fallback"
+    },
+    {
+      "path": "3ds_port/src/3ds_m4a_mixer.c",
+      "source_blob": "2804efdccc9b33cef8d22fe6c789eafd809960ba",
+      "reason": "Reference describes a C translation of game assembly; excluded for rights/provenance, external original mixer used locally"
+    },
+    {
+      "path": "AI_DISCLOSURE.md",
+      "source_blob": "41762eedf01e16354db1b44278816abbdbf0cb87",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "LICENSE-PORT.md",
+      "source_blob": "e5a179552f71f84d364789208d3e47b8de851d12",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "NOTICE.md",
+      "source_blob": "4e6e9a26f6cab39854c63e1a14e14f5dec9269b5",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/AUDIO_QUALITY.md",
+      "source_blob": "956d8da4642e80acd02f6a2ecbee72cd1e921e58",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/AUDIO_WORKER.md",
+      "source_blob": "f1cb173ae7a49f29614758c89eed58c420e1fdd8",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/BOOT_REGRESSION_FIX.md",
+      "source_blob": "4675ce874ce329513f324a79108d422bc386d8c5",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/CENTER_RFU_FIX.md",
+      "source_blob": "7229b99c345a8bc6c6ab6bc8fe949b7c46b0b694",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/CLEAN_RELEASE_AUDIT.md",
+      "source_blob": "404b2c2195a8781bf90fbfbd19c3790d27d9b0be",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/FAST_FORWARD.md",
+      "source_blob": "3f8b52b431bfa7a54100c049f29ac17f3875c874",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/FLY_REGION_MAP_FIX.md",
+      "source_blob": "d4b197e2522fda08c16479714c72c9f7325faee5",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/INTRO_1TO1.md",
+      "source_blob": "7cea846024a7fa884603257839b9266f87539403",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/INTRO_ASSET_READ_AUDIT.md",
+      "source_blob": "518dbac5cf0498220de4d9972974e81794bfd098",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/MIGRATION_INVENTORY.md",
+      "source_blob": "b1c1861eceda9f9af3e8f07cc9cdadaeb9003061",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/NATIVE_400.md",
+      "source_blob": "1fc1b8b6fc1eee17bd113e914d2c0a52ff68a821",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PARTY_LOWER_INVESTIGATION.md",
+      "source_blob": "72def4d54bdb431b6154a3f339cf9f2736f21f78",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PERF_BASELINE.md",
+      "source_blob": "8fd1eb3d9781f6a4725105b4c9815601ab5e558f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PHASE2A.md",
+      "source_blob": "f4898df13c2a9f4664334a004f92fe918f321454",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PHASE2A_BATTLE_PARTY_CANCEL.md",
+      "source_blob": "2e107dcabdf43ea181a0f1afc9a5d316bd169aaa",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PHASE2A_MENU_STABILIZATION.md",
+      "source_blob": "22ea774c24f26d20e8cd714aa50d1a435b823a50",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/POKETOUCH_BATTLE_INTEGRATION.md",
+      "source_blob": "3f8be04d940258e6a5e5b13582419e50ace31e83",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/POKETOUCH_HOME.md",
+      "source_blob": "d2ba30e7c8c9e574ea455da4610660e67b662358",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PRESENTATION_360.md",
+      "source_blob": "4a16428e11f4718a66ed8695ad0c805579a15b29",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/PROVENANCE.md",
+      "source_blob": "0169509138a20061b8b913731788288238266bdd",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/RESUME_AND_SPEEDUP.md",
+      "source_blob": "9e507970b5b510195a73c5b8e1dac25a476a2679",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "source_blob": "5c6c4b3fd2869db7754f2d7a28ed2f6728ec241e",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/STORAGE_PRIORITY_FIX.md",
+      "source_blob": "348c4b583f330a6b2370eb093aeffa9ec9f4cb3d",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/TM_SELECTOR_DIAGNOSIS.md",
+      "source_blob": "6d237ffbe0e8e6541e4575c2daecf7ccb9d993c2",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/VRAM_TRACKING.md",
+      "source_blob": "3a32a664a4e7ec9f8033c9ff25b041e53ef553dc",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/WARP_FREEZE_DIAGNOSIS.md",
+      "source_blob": "dc4e92072f11c74a6d1b75f17a5c27c66cd1da8a",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "docs/backend-checkpoint.json",
+      "source_blob": "5ca46f6d40acacde12030067aa79d20965a4c94e",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "licenses/ZallaxDev-MIT.txt",
+      "source_blob": "1d10699f88b7c8b4b20df9f9ec56bb152fb9453b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/analyze_intro_perf.py",
+      "source_blob": "bdbc9776f135ff6f759443762ff4a000bd47dccb",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/author_intro_art.py",
+      "source_blob": "52a12cfd8c38ed4ce8e95783041d3d0f78d3b80b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/author_intro_original.py",
+      "source_blob": "b8dc41ea6d2d5a170168a071f98ac8520a3f1dd1",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/author_poketouch_icons.py",
+      "source_blob": "bee33f4a75305d5dfe18ee1ef7c98fe6932b731c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/bench_bottom_ui.py",
+      "source_blob": "982c0ff33c173a2438598f3b9f587974afd93167",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/build_reference_rom.py",
+      "source_blob": "5be6b363445a82b5622ef127264503bea4e6ded1",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/gen_psg_blep.py",
+      "source_blob": "f6bc5053c6556f1911d8161c3bbfb233cd5273ab",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/inventory_intro.py",
+      "source_blob": "0637c2d527ae2c8d3f25baa5f63e8c513aa71878",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/pack_intro_native.py",
+      "source_blob": "aad22d271bb015248758699fe6759553b08ff4e8",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/pack_poketouch.py",
+      "source_blob": "c9774e19fc0879a0fe541e8a0cba43feadf9644c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/preview_bottom_ui.py",
+      "source_blob": "9087756be9c5f2997cf6b14a6d7e3ae96db1e88d",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/private_push.py",
+      "source_blob": "03ea238256c55d7193cc0c2fc0a1965b4cfe5da9",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/release_audit.py",
+      "source_blob": "177f27537f35e8ad66151185e4722a4b0b06d3a2",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/seed_asset_cache.py",
+      "source_blob": "3340cc985432e5e6c2ee5fe0c3c5765be0c5366b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_battle_box_middle.py",
+      "source_blob": "99e27594811c56daca45ff3fa9b1bde392ea6cfc",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_battle_dpad_graph.py",
+      "source_blob": "6ceb4ac5bf3cc027ae650719b5870d4b3ef00de7",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_battle_target_safari.py",
+      "source_blob": "4332b7c669b9d05420d1fbaf7f3fcc4aff03c363",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_battle_transition_view.py",
+      "source_blob": "522c986a5e0a525d7e87f6b95670b3ea23916569",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_battle_upper_menus.py",
+      "source_blob": "c16e19f30e01fb849bcb572c7ad91e074f656598",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_bootstrap.py",
+      "source_blob": "d95e264ddceec4c293c68881cd99745660b0942c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_bottom_dirty.py",
+      "source_blob": "c3c91f4a83213ca91d867ec5215dc0f15c3e325c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_bottom_party.py",
+      "source_blob": "f9f315a828446ab2b7109e99a8f54db2e39b7fca",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_deferred_logger.py",
+      "source_blob": "5bc20fa5be561d484166c96483b082b7faddb3a6",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_depth_slots.py",
+      "source_blob": "d7fb0cdde8a0b144403b93686fef72d2116e0f7a",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_field_barn_door.py",
+      "source_blob": "30145a33469d6e85cc8174725745afc77db88783",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_1to1.py",
+      "source_blob": "2859d72655321af1d1037142b99e676e8dc0137d",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_canvas.py",
+      "source_blob": "9116f9c274e2812804dd3af49448842604bf60c9",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_actors.py",
+      "source_blob": "08eb649f9412a722a2edb012e19dd791e8dbe9eb",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_arm11.py",
+      "source_blob": "5818bd2c76713b110e7dd16722b20db6e0c1700a",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_art.py",
+      "source_blob": "b600bb1a3c8ba32ef4cf12b51eb2508ff1978260",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_bg.py",
+      "source_blob": "f83b3461cf2d3cf5ca2ff480f8767d90035d7f4c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_scene3.py",
+      "source_blob": "2512d9c147eb5bef05b8af3874530b0353cbcdfa",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_native_title.py",
+      "source_blob": "a28d3f8053873c1bc28f9a97841ad2acf5e43b7a",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_original.py",
+      "source_blob": "0c612adc324801baaad56c46a2fb527f4e5ad464",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_intro_real_map.py",
+      "source_blob": "4cb980151951a8eec7ea2dc82265c27d3d4c3d22",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_layer_vram.py",
+      "source_blob": "6896ba01578621a011f49cfec7234ef1d4331c9b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_map_name_popup.py",
+      "source_blob": "d90f895cd5c5c1fa081348d88a1aabf2ee53aebd",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_native_ui_bg.py",
+      "source_blob": "e8b7151c8a55f1af7e0958309fdc02171ddab6ed",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_native_windows.py",
+      "source_blob": "8db0e6ced0198d0e0ab94da362e3b6ca5732c363",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_plane_clear.py",
+      "source_blob": "eb97161b678e2d4f0d0bc903b9c5f5492c17d304",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_poketouch.py",
+      "source_blob": "e146207475d5d62ddb76f241140787c146e8a9f3",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_poketouch_battle.py",
+      "source_blob": "e19a6243a9a4f8457b4d5bae25d6d05725961a8b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_poketouch_options.py",
+      "source_blob": "578cf871d856719a5349a95baec0999eed900962",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_poketouch_route.py",
+      "source_blob": "eefd6304f01dbf0f2026ead57fd5f52f3864a3ff",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_poketouch_save.py",
+      "source_blob": "b75129d1e2847bd8cdcc233cec0798daa154cdcf",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_premium_ui.py",
+      "source_blob": "4ed4199ad0b0e0b08ba18fa0c6d35c5167270a84",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_presentation.py",
+      "source_blob": "1227f743ce3ef340e97871177c71d5377624ffe9",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_quest_log_idle_wait.py",
+      "source_blob": "5f37ae92c7d574d7dd7d2f2f3b7ce806b1ec0a8e",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_quest_log_layout.py",
+      "source_blob": "76caceaacb6321666fadf1aeb508fbcf61f60b7f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_quest_log_playback.py",
+      "source_blob": "2b72f241cefeb70a5116cf6f233c3d58e9628fd0",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_quest_log_wild_event.py",
+      "source_blob": "64abc68485da633a5a654fcfed451fb64fc28ee2",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_stage_tracking.py",
+      "source_blob": "082f7c308c1f4712fe9368f7bd6991a69f80cb06",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_start_menu_disabled.py",
+      "source_blob": "09653f9cc92f417910e26af44b3aea75129761d2",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_stereo_planes.py",
+      "source_blob": "4eb625467208336891b244ce233637437c7ac98f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_summary_origin.py",
+      "source_blob": "7b7df1586c52cc7f202c802bc6f3c2903d106521",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_tile_cache_reset.py",
+      "source_blob": "dc236efa3513bd83e6cca24ce8d228921487150d",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/test_trainer_card_real.py",
+      "source_blob": "8a788f3879f7b80baef995603be879f37110d36c",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/tidy_intro_masters.py",
+      "source_blob": "b71649dacf44fe612fd67606cedb17ea7d71499f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_back_arm11.py",
+      "source_blob": "75356f1787467d7771e65596c9f462e484378aa6",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_battle_party_cancel_arm11.py",
+      "source_blob": "dc1b4396f024bc433458fcf14450bea96376f2e6",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_bottom_bag_arm11.py",
+      "source_blob": "de961d064faaf87a5a9ccbed0a0860c811a25fc9",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_bottom_party_arm11.py",
+      "source_blob": "81bf0156ee5ae462d8bc7c55358928e728cf4002",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_bottom_summary_arm11.py",
+      "source_blob": "34c4b00bf0b75bbdaa0516de601e405d47d96690",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_field_exit_transition.py",
+      "source_blob": "76e551a24d450f38bfe79ecd93091315a8b8faeb",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_fly_region_map_arm11.py",
+      "source_blob": "8b5167c5105932fa6592b3f1ebe3bb16c6a3e760",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_home_map_arm11.py",
+      "source_blob": "08d7c0f445b05d4dd455201c177f16b92a16d014",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_intro_assets_arm11.py",
+      "source_blob": "f47f83ed6cff5ce7f12e3b531408fed52545d17b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_intro_profiler.py",
+      "source_blob": "0c1fb741403cb7ec476f58c85da9d95b6a21c214",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_m4a_mixer_arm11.py",
+      "source_blob": "8f718589f31061920e618ea3b4bdc3f8a6bde3e5",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_menu_exit_assets_arm11.py",
+      "source_blob": "8704098e60014dcbb2e09c52befe7825be0ef0b1",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_menu_init_arm11.py",
+      "source_blob": "009d0376a352f26f1e6d4fa7b4cac1d907069677",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_native_backdrop.py",
+      "source_blob": "ece99a82ccb87a4e19ba45e3ffb6ffe4fbf8dace",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_native_viewport_arm11.py",
+      "source_blob": "5e9a322e92eb72388015a4d43400e68b468649e0",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_new_game_bg_arm11.py",
+      "source_blob": "533a645bf869371c9d8fe04fd2ba43bfe764b7c9",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_pokemon_center_warp_arm11.py",
+      "source_blob": "7a48afd76c1f62a443a66f5efe83314a4aa46663",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_poketouch_arm11.py",
+      "source_blob": "e3845ff01558749ed0ca2d3c1987ce36e118b9eb",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_save_load_arm11.py",
+      "source_blob": "b0048eb53d04d6dc4e4c81877e8205660610433f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_save_storage_boot.py",
+      "source_blob": "14639d9d55e891de83bdcdb5749ed18a3db00e36",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_storage_scroll_arm11.py",
+      "source_blob": "08d9a98e5e2bb592c81c3688d429ec22f04ad00b",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_tm_learning_arm11.py",
+      "source_blob": "9054d8744ee799259baefb743a9d33b6bce015ea",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "tools/verify_trainer_card_exit_arm11.py",
+      "source_blob": "b4717613db3cfa5b31760bb50209d6845894c481",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    },
+    {
+      "path": "upstream.lock",
+      "source_blob": "12d82e3bba8f765ba6beeb8ba8744fb6e60bc47f",
+      "reason": "Not needed for the reviewed clean pipeline; excluded by default, including laboratory CI/docs/private/development-only helpers"
+    }
+  ]
+}

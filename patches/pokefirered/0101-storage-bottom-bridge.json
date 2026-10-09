@@ -1,0 +1,538 @@
+{
+ "schema": 1,
+ "technical_reference": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
+ "files": [
+  {
+   "path": "src/pokemon_storage_system_tasks.c",
+   "before_sha256": "43b76a9c88533f835a0dabd9e4bd2da630675ad1fbafcaf803c91afdca77d511",
+   "after_sha256": "6f3766d8b8a921bf425da2a9f99ad9a13f6d607abb13a8f322110afb956ffa42",
+   "lines": [
+    {
+     "span": [
+      0,
+      2793
+     ]
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "#include \"3ds_storage_bridge.h\"\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "/* Native lower PC view: observe the real controller, never mutate box data.\n"
+    },
+    {
+     "port": " * Task_PokeStorageMain/state 0 is the only stable state for direct cursor taps. */\n"
+    },
+    {
+     "port": "int CtrBottomStorage_BoxOpen(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return gStorage != NULL && gMain.callback2 == CB2_PokeStorage;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_BoxReady(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_BoxOpen() && !gPaletteFade.active\n"
+    },
+    {
+     "port": "        && gStorage->taskId < NUM_TASKS\n"
+    },
+    {
+     "port": "        && gTasks[gStorage->taskId].isActive\n"
+    },
+    {
+     "port": "        && gTasks[gStorage->taskId].func == Task_PokeStorageMain\n"
+    },
+    {
+     "port": "        && gStorage->state == 0;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextMenu(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    TaskFunc fn;\n"
+    },
+    {
+     "port": "    if (!CtrBottomStorage_BoxOpen() || gStorage->taskId >= NUM_TASKS\n"
+    },
+    {
+     "port": "        || !gTasks[gStorage->taskId].isActive || gPaletteFade.active)\n"
+    },
+    {
+     "port": "        return 0;\n"
+    },
+    {
+     "port": "    fn = gTasks[gStorage->taskId].func;\n"
+    },
+    {
+     "port": "    return (fn == Task_OnSelectedMon && gStorage->state == 2)\n"
+    },
+    {
+     "port": "        || (fn == Task_HandleBoxOptions && gStorage->state == 2)\n"
+    },
+    {
+     "port": "        || (fn == Task_HandleWallpapers && (gStorage->state == 2 || gStorage->state == 4));\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextCount(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_YesNo() ? 2 : CtrBottomStorage_ContextMenu() ? gStorage->menuItemsCount : 0;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextCursor(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return (CtrBottomStorage_ContextMenu() || CtrBottomStorage_YesNo()) ? Menu_GetCursorPos() : -1;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextX(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_ContextMenu() ? 8 * gStorage->menuWindow.tilemapLeft : -1;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextY(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_ContextMenu() ? 8 * gStorage->menuWindow.tilemapTop : -1;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "int CtrBottomStorage_ContextW(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_ContextMenu() ? 8 * gStorage->menuWindow.width : 0;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_BoxChoose(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    TaskFunc fn;\n"
+    },
+    {
+     "port": "    if (!CtrBottomStorage_BoxOpen() || gStorage->taskId >= NUM_TASKS\n"
+    },
+    {
+     "port": "        || !gTasks[gStorage->taskId].isActive\n"
+    },
+    {
+     "port": "        || gPaletteFade.active || gStorage->state != 1)\n"
+    },
+    {
+     "port": "        return 0;\n"
+    },
+    {
+     "port": "    fn = gTasks[gStorage->taskId].func;\n"
+    },
+    {
+     "port": "    return fn == Task_DepositMenu || fn == Task_JumpBox;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_YesNo(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    TaskFunc fn;\n"
+    },
+    {
+     "port": "    if (!CtrBottomStorage_BoxOpen() || gStorage->taskId >= NUM_TASKS\n"
+    },
+    {
+     "port": "        || !gTasks[gStorage->taskId].isActive || gPaletteFade.active)\n"
+    },
+    {
+     "port": "        return 0;\n"
+    },
+    {
+     "port": "    fn = gTasks[gStorage->taskId].func;\n"
+    },
+    {
+     "port": "    return ((fn == Task_ReleaseMon || fn == Task_CloseBoxWhileHoldingItem) && gStorage->state == 1)\n"
+    },
+    {
+     "port": "        || ((fn == Task_OnCloseBoxPressed || fn == Task_OnBPressed) && gStorage->state == 2);\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "/* Zero means busy; nonzero identifies the stable input controller. Cursor\n"
+    },
+    {
+     "port": " * animations retain the same identity when the controller becomes ready. */\n"
+    },
+    {
+     "port": "int CtrBottomStorage_InputContext(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    TaskFunc fn;\n"
+    },
+    {
+     "port": "    if (!CtrBottomStorage_BoxReady() && !CtrBottomStorage_ContextMenu()\n"
+    },
+    {
+     "port": "        && !CtrBottomStorage_YesNo() && !CtrBottomStorage_BoxChoose())\n"
+    },
+    {
+     "port": "        return 0;\n"
+    },
+    {
+     "port": "    fn = gTasks[gStorage->taskId].func;\n"
+    },
+    {
+     "port": "    if (fn == Task_PokeStorageMain) return 1;\n"
+    },
+    {
+     "port": "    if (fn == Task_OnSelectedMon) return 2;\n"
+    },
+    {
+     "port": "    if (fn == Task_HandleBoxOptions) return 3;\n"
+    },
+    {
+     "port": "    if (fn == Task_HandleWallpapers) return gStorage->state == 2 ? 4 : 5;\n"
+    },
+    {
+     "port": "    if (fn == Task_DepositMenu) return 6;\n"
+    },
+    {
+     "port": "    if (fn == Task_JumpBox) return 7;\n"
+    },
+    {
+     "port": "    if (fn == Task_ReleaseMon) return 8;\n"
+    },
+    {
+     "port": "    if (fn == Task_CloseBoxWhileHoldingItem) return 9;\n"
+    },
+    {
+     "port": "    if (fn == Task_OnCloseBoxPressed) return 10;\n"
+    },
+    {
+     "port": "    if (fn == Task_OnBPressed) return 11;\n"
+    },
+    {
+     "port": "    return 0;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_BoxPresented(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    TaskFunc fn;\n"
+    },
+    {
+     "port": "    if (!CtrBottomStorage_BoxOpen() || gStorage->taskId >= NUM_TASKS\n"
+    },
+    {
+     "port": "        || !gTasks[gStorage->taskId].isActive || gPaletteFade.active)\n"
+    },
+    {
+     "port": "        return 0;\n"
+    },
+    {
+     "port": "    fn = gTasks[gStorage->taskId].func;\n"
+    },
+    {
+     "port": "    return fn != Task_InitPokeStorage && fn != Task_ShowPokeStorage\n"
+    },
+    {
+     "port": "        && fn != Task_ReshowPokeStorage;\n"
+    },
+    {
+     "port": "}\n"
+    }
+   ]
+  },
+  {
+   "path": "src/pokemon_storage_system_menu.c",
+   "before_sha256": "7eacb5d69e36877c20ba2867dcd39c32388626345bec883d84021843a7c47625",
+   "after_sha256": "e08ba8fc9234d56e888d2e6eee48e9b08e050facae5bd586eaf67c189a6b3abd",
+   "lines": [
+    {
+     "span": [
+      0,
+      667
+     ]
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "#include \"3ds_storage_bridge.h\"\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "/* The PC's initial field menu and the one returned to after closing a box.\n"
+    },
+    {
+     "port": " * Identify its real live task rather than estimating from map/scene state. */\n"
+    },
+    {
+     "port": "static int CtrBottomStorage_MenuTask(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    int i;\n"
+    },
+    {
+     "port": "    for (i = 0; i < NUM_TASKS; ++i)\n"
+    },
+    {
+     "port": "        if (gTasks[i].isActive && gTasks[i].func == Task_PCMainMenu)\n"
+    },
+    {
+     "port": "            return i;\n"
+    },
+    {
+     "port": "    return -1;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "int CtrBottomStorage_PCMenu(void) { return CtrBottomStorage_MenuTask() >= 0; }\n"
+    },
+    {
+     "port": "int CtrBottomStorage_PCMenuReady(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    int i = CtrBottomStorage_MenuTask();\n"
+    },
+    {
+     "port": "    return i >= 0 && (gTasks[i].tState == STATE_HANDLE_INPUT\n"
+    },
+    {
+     "port": "                       || gTasks[i].tState == STATE_ERROR_MSG);\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "int CtrBottomStorage_PCMenuCursor(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    int i = CtrBottomStorage_MenuTask();\n"
+    },
+    {
+     "port": "    return i >= 0 ? gTasks[i].tSelectedOption : -1;\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "int CtrBottomStorage_PCMenuCount(void) { return OPTIONS_COUNT; }\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "int CtrBottomStorage_PCInputContext(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    /* ERROR_MSG and HANDLE_INPUT are the same root menu. An arrow dismisses\n"
+    },
+    {
+     "port": "     * the error and moves its cursor; the plan must finish in that menu. */\n"
+    },
+    {
+     "port": "    return CtrBottomStorage_PCMenuReady() ? 12 : 0;\n"
+    },
+    {
+     "port": "}\n"
+    }
+   ]
+  },
+  {
+   "path": "src/pokemon_storage_system_data.c",
+   "before_sha256": "08dea49153f98ecec05e8ad52d9673da0d6f8fe4ffb472e50f5f6bc157adef83",
+   "after_sha256": "f2508cdfb2cfbaf783a10504f1b1b093ec7d8055547d5afb4ba606f06851a732",
+   "lines": [
+    {
+     "span": [
+      0,
+      2165
+     ]
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "#include \"3ds_storage_bridge.h\"\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "/* The real PC's cursor lives here, not in a second 3DS selection model. */\n"
+    },
+    {
+     "port": "int CtrBottomStorage_CursorArea(void) { return sCursorArea; }\n"
+    },
+    {
+     "port": "int CtrBottomStorage_CursorPos(void) { return sCursorPosition; }\n"
+    },
+    {
+     "port": "int CtrBottomStorage_MultiMove(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return gStorage != NULL && (sInMultiMoveMode\n"
+    },
+    {
+     "port": "        || gStorage->inBoxMovingMode != MOVE_MODE_NORMAL);\n"
+    },
+    {
+     "port": "}\n"
+    }
+   ]
+  },
+  {
+   "path": "src/naming_screen.c",
+   "before_sha256": "53e9827ae0353fd0d5512af861ac4596a2947fb005278d78fd020bac609c6f01",
+   "after_sha256": "577953b794ec9e57c3dae7d86a8671cd7a43cb75776d2bf3499a2053ac6719c1",
+   "lines": [
+    {
+     "span": [
+      0,
+      2517
+     ]
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "#include \"3ds_storage_bridge.h\"\n"
+    },
+    {
+     "port": "/* A box-name child is present only after its real setup and fade have ended. */\n"
+    },
+    {
+     "port": "int CtrBottomStorage_NamingPresented(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    return sNamingScreen != NULL && gMain.callback2 == CB2_NamingScreen\n"
+    },
+    {
+     "port": "        && sNamingScreen->templateNum == NAMING_SCREEN_BOX\n"
+    },
+    {
+     "port": "        && sNamingScreen->state >= STATE_HANDLE_INPUT && !gPaletteFade.active;\n"
+    },
+    {
+     "port": "}\n"
+    }
+   ]
+  }
+ ]
+}

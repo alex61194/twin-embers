@@ -1,0 +1,85 @@
+{
+ "schema": 1,
+ "technical_reference": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
+ "files": [
+  {
+   "path": "src/mail.c",
+   "before_sha256": "0721a9f8ce60d6484bc9dcfead8454e5c6d4a2ef1d8f0f860f3dc458d3b717fc",
+   "after_sha256": "6eed169fee92b17366dd2e251fd3051cb97c72a30eebf7514f5f9aad5bc2d2c7",
+   "lines": [
+    {
+     "span": [
+      0,
+      623
+     ]
+    },
+    {
+     "port": "static void CB2_InitMailView(void)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    do\n"
+    },
+    {
+     "port": "    {\n"
+    },
+    {
+     "port": "#ifdef PLATFORM_3DS\n"
+    },
+    {
+     "port": "        u8 previousState = gMain.state;\n"
+    },
+    {
+     "port": "#endif\n"
+    },
+    {
+     "port": "        if (DoInitMailView() == TRUE)\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            SetMainCallback2(CB2_RunShowMailCB);\n"
+    },
+    {
+     "port": "            break;\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "#ifdef PLATFORM_3DS\n"
+    },
+    {
+     "port": "        /* DMA and link progress run at the native VBlank boundary after this\n"
+    },
+    {
+     "port": "         * callback returns. A stalled init step must yield rather than spin. */\n"
+    },
+    {
+     "port": "        if (gMain.state == previousState)\n"
+    },
+    {
+     "port": "            break;\n"
+    },
+    {
+     "port": "#endif\n"
+    },
+    {
+     "port": "    } while (MenuHelpers_IsLinkActive() != TRUE);\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "span": [
+      634,
+      100
+     ]
+    }
+   ]
+  }
+ ]
+}
