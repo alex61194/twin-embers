@@ -17,7 +17,7 @@
 ---
 
 > [!IMPORTANT]
-> **First beta: v0.1.0-alpha** Download the **3DS game** and **Windows Builder** as two separate files from the [latest GitHub Release](https://github.com/alex61194/twin-embers/releases/latest). You need a dump of your own supported FireRed cartridge to generate the game-data pack. Back up your saves before updating.
+> **First alpha: v0.1.0-alpha** Download the **3DS game** and **Windows Builder** as two separate files from the [latest GitHub Release](https://github.com/alex61194/twin-embers/releases/latest). You need a dump of your own supported FireRed cartridge to generate the game-data pack. Back up your saves before updating.
 
 ## What is Twin Embers?
 
