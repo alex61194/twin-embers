@@ -16,7 +16,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
-- **Status:** beta. Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.1.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
@@ -58,10 +58,10 @@ OPTIONS holds FireRed's own settings plus a switch for an on-screen FPS counter.
 
 Setup is a one-time job of about five minutes. You need three things on the SD card, and only one of them comes from you.
 
-**1. Get the two downloads** from the [v0.1.0-beta.1 release](https://github.com/alex61194/twin-embers/releases/tag/v0.1.0-beta.1):
+**1. Get the two downloads** from the [v0.1.0 Alpha release](https://github.com/alex61194/twin-embers/releases/tag/alpha). They are separate files:
 
-- [`twinembers.3dsx`](https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/twinembers.3dsx), the game itself.
-- [`TwinEmbersBuilder.exe`](https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/TwinEmbersBuilder.exe), the Windows tool.
+- `twinembers.3dsx`, the game itself.
+- `TwinEmbersBuilder.exe`, the Windows tool.
 
 **2. Make the data pack.** Put the SD card in your PC and start the Builder. Choose your FireRed ROM, press **SD folder…** and pick the *root* of the card, then press **Build Data Pack**. The Builder checks the ROM, writes `3ds/twinembers/twinembers.pak` and verifies what it wrote. It needs no internet and no administrator rights.
 
