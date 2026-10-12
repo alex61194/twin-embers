@@ -1,194 +1,161 @@
-<div align="center">
+# Twin Embers
 
-# Twin Embers Port
+Pokémon FireRed, rebuilt to use both screens of a Nintendo 3DS.
 
-### A new home for Kanto. Two screens, one adventure.
+Most of the work in this project comes down to one question: what should the second screen *do* in a game that was designed for one? The answer here is that the top screen stops being a postage stamp and the bottom screen stops being dead weight. Kanto fills the full 400 × 240 panel above, and everything you used to dig through the START menu for now sits under your thumb below.
 
-**A native Pokémon FireRed port for Nintendo 3DS, designed around its two displays.**
+It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has no ROM inside it and never will; you bring your own cartridge dump and a small Windows tool turns it into the data file the game reads at startup.
 
-400 × 240 overworld · PokéTouch lower-screen controls · Native battles
-
-[**Get the game**](#play-on-your-3ds) · [**See it in action**](#kanto-on-two-screens) · [**Controls**](#controls) · [**Support**](#help-and-known-issues)
-
-**Developed with AI assistance** — including Claude (Anthropic) and OpenAI Codex, under the direction and review of the project maintainer. [How AI was used](#development-and-ai-assistance).
-
-</div>
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/02-overworld-pallet-town.png" width="400" alt="Pallet Town filling the top screen, with the touch menu underneath">
 
 ---
 
-> [!IMPORTANT]
-> **First alpha: v0.1.0-alpha** Download the **3DS game** and **Windows Builder** as two separate files from the [latest GitHub Release](https://github.com/alex61194/twin-embers/releases/latest). You need a dump of your own supported FireRed cartridge to generate the game-data pack. Back up your saves before updating.
+## The short version
 
-## What is Twin Embers?
+- **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher.
+- **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
+- **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
+- **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
+- **Status:** alpha (v0.1.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
-Twin Embers brings Pokémon FireRed to the Nintendo 3DS as a **native ARM11 port**, not a GBA emulator.
+---
 
-The upper screen expands Kanto's overworld to **400 × 240**. The lower touch screen hosts **PokéTouch**: a home for your Pokémon, Bag, Pokédex, Trainer Card, Town Map, saving, options and battle commands. You can keep exploring without the original START-menu workflow.
+## A tour of the two screens
 
-The game executable and its assets are separate: the **Twin Embers Builder** reads your own compatible ROM locally and creates `twinembers.pak`. The project does not provide a ROM or a pre-generated data pack.
+### Walking around
 
-## Kanto on two screens
+The overworld is drawn at the 3DS's native top-screen size instead of the GBA's 240 × 160, so you see more of every town and route before you reach its edge. Beyond a map's edge the game continues terrain such as shoreline and cliff where that looks natural, and otherwise keeps the original border.
 
-<table>
-  <tr>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/02-overworld-pallet-town.png" width="320" alt="Pallet Town on the top screen and PokéTouch below"><br><sub><b>Exploration</b> — expanded overworld and PokéTouch</sub></td>
-    <td align="center" width="50%"><img src="https://github.com/alex61194/twin-embers/releases/download/media/03-battle-menu.png" width="320" alt="Touchscreen battle commands"><br><sub><b>Battles</b> — touch-driven commands</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/04-battle-moves.png" width="320" alt="Move selection with type power and PP"><br><sub>Move selection</sub></td>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/05-party.png" width="320" alt="Pokémon party menu"><br><sub>Party</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/06-summary.png" width="320" alt="Pokémon Summary on the lower screen"><br><sub>Pokémon Summary</sub></td>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/07-trainer-card.png" width="320" alt="Trainer Card"><br><sub>Trainer Card</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/09-pokedex.png" width="320" alt="Pokédex"><br><sub>Pokédex</sub></td>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/08-options.png" width="320" alt="Options screen"><br><sub>Options</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/01-title.png" width="320" alt="FireRed title screen"><br><sub>Title</sub></td>
-    <td align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/10-fly-two-island.png" width="320" alt="Fly sequence at Two Island"><br><sub>Travel</sub></td>
-  </tr>
-</table>
+The lower screen is **PokéTouch**, a home screen with tiles for your party, Bag, Pokédex, Trainer Card, Town Map, saving and options. Tapping a tile opens that screen directly. The original START menu is no longer needed.
 
-<sub>Genuine captures from Azahar and a New 3DS-family console. Native displays: 400 × 240 above and 320 × 240 below. Game imagery remains the property of its respective rightsholders.</sub>
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/01-title.png" width="300" alt="Title screen"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/10-fly-two-island.png" width="300" alt="Flying to Two Island">
 
-## Play on your 3DS
+### Fighting
 
-### You will need
+Battle commands move to the touch screen: FIGHT, BAG, POKéMON and RUN. Picking FIGHT shows each move as a card with its type, power and remaining PP, so you can choose without remembering the numbers.
 
-- A Nintendo 3DS or 2DS with **Homebrew Launcher**.
-- A Windows computer and your console's SD card.
-- Your own dump of **Pokémon FireRed (USA), Revision 0**. Other regions and revisions are not supported.
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/03-battle-menu.png" width="300" alt="Battle commands on the touch screen"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/04-battle-moves.png" width="300" alt="Move cards with type, power and PP">
 
-### Install in four steps
+### Looking after your team
 
-**1 — Download the two files separately** from [Twin Embers v0.1.0-beta.1](https://github.com/alex61194/twin-embers/releases/tag/v0.1.0-beta.1):
+The party list, Pokémon Summary and Trainer Card each get a full lower-screen page. PC storage is touch-driven as well: move, withdraw and deposit by tapping.
 
-| Download | Use |
-|---|---|
-| [`twinembers.3dsx`](https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/twinembers.3dsx) | The Nintendo 3DS executable |
-| [`TwinEmbersBuilder.exe`](https://github.com/alex61194/twin-embers/releases/download/v0.1.0-beta.1/TwinEmbersBuilder.exe) | Windows tool to make the data pack from your ROM |
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/05-party.png" width="300" alt="Party"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/06-summary.png" width="300" alt="Pokémon Summary">
 
-**2 — Build your data pack.** Connect the SD card to your PC, open the Builder, select your FireRed ROM, click **SD folder…** and choose the **root of the SD card**. Click **Build Data Pack**. The tool checks the ROM and writes and verifies `/3ds/twinembers/twinembers.pak`.
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/07-trainer-card.png" width="300" alt="Trainer Card"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/09-pokedex.png" width="300" alt="Pokédex">
 
-**3 — Copy the executable.** Put `twinembers.3dsx` next to the pack in `SD:/3ds/twinembers/`.
+### Settings
 
-**4 — Launch.** Return the card to your console, open Homebrew Launcher and select **Twin Embers**.
+OPTIONS holds FireRed's own settings plus a switch for an on-screen FPS counter.
 
-Your SD card will look like this:
+<img src="https://github.com/alex61194/twin-embers/releases/download/media/08-options.png" width="300" alt="Options">
+
+<sub>All images are real captures from Azahar and a New 3DS-family console. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
+
+---
+
+## Set it up
+
+Setup is a one-time job of about five minutes. You need three things on the SD card, and only one of them comes from you.
+
+**1. Get the two downloads** from the [v0.1.0 Alpha release](https://github.com/alex61194/twin-embers/releases/tag/alpha). They are separate files:
+
+- `twinembers.3dsx`, the game itself.
+- `TwinEmbersBuilder.exe`, the Windows tool.
+
+**2. Make the data pack.** Put the SD card in your PC and start the Builder. Choose your FireRed ROM, press **SD folder…** and pick the *root* of the card, then press **Build Data Pack**. The Builder checks the ROM, writes `3ds/twinembers/twinembers.pak` and verifies what it wrote. It needs no internet and no administrator rights.
+
+**3. Copy the game next to it.** Place `twinembers.3dsx` in `3ds/twinembers/`.
+
+Put the card back in the console and launch **Twin Embers** from Homebrew Launcher. The first run creates the save. When you are done the card looks like this:
 
 ```text
-SD:/
-└── 3ds/
-    ├── dspfirm.cdc
-    └── twinembers/
-        ├── twinembers.3dsx
-        ├── twinembers.pak
-        └── twinembers.sav  (created by the game)
+SD:/3ds/
+├── dspfirm.cdc            (needed for sound; most custom firmware already has it)
+└── twinembers/
+    ├── twinembers.3dsx    you copied this
+    ├── twinembers.pak     the Builder made this from your ROM
+    └── twinembers.sav     the game creates this
 ```
 
-**Sound:** if the game is silent, check that `SD:/3ds/dspfirm.cdc` exists. You can generate it with the DSP1 homebrew. Most custom-firmware setups already have it.
+If Windows SmartScreen warns about the Builder, compare its SHA-256 with the one in the release notes before running it. A matching hash proves it is the published file, not that the file is safe; only run what you trust.
 
-**Windows warning:** the Builder does not require administrator privileges or an internet connection. If SmartScreen warns about the executable, check its SHA-256 against the [release notes](https://github.com/alex61194/twin-embers/releases/tag/v0.1.0-beta.1) and only run software you trust. A matching hash is not a safety certification.
+### The ROM it accepts
 
-The Builder **does not include, download or create the 3DSX**. No ROM or ready-made PAK is distributed.
-
-## What you can do
-
-| Feature | Experience |
+| | |
 |---|---|
-| **Wider Kanto** | Explore FireRed's original story, towns and routes with a 400 × 240 upper-screen overworld |
-| **PokéTouch** | Use the lower screen for Pokémon, Bag, Summary, Pokédex, Trainer Card, Town Map, SAVE and OPTIONS |
-| **Touchscreen battles** | FIGHT, BAG, POKéMON and RUN, with move cards showing type, power and PP |
-| **PC storage** | Move, withdraw and deposit Pokémon with touch controls |
-| **Turbo** | Cycle **2× → 3× → 4× → normal** with START during exploration and battles |
-| **FPS display** | Optional counter in OPTIONS |
-| **Save continuity** | Use `twinembers.sav`; a legacy `/3ds/pokefirered/` save can be copied without modifying the original |
-| **Pack checks** | Missing or incompatible data packs show a clear error screen instead of proceeding |
-
-### Controls
-
-| Button | Action |
-|---|---|
-| Circle Pad / D-Pad | Move and navigate |
-| A | Interact / confirm |
-| B | Cancel; hold to run after you obtain Running Shoes |
-| START | Cycle turbo: 2×, 3×, 4×, off |
-| SELECT, L, R | Original FireRed functions |
-| X | Use registered item |
-| Y | Bicycle |
-| Touch screen | PokéTouch menus, battle commands and PC storage |
-
-The lower-screen menu replaces the original START menu. Some original in-game hints have not yet been updated.
-
-## Supported systems and ROM
-
-| Requirement | Details |
-|---|---|
-| Hardware | Nintendo 3DS and 2DS family, via Homebrew Launcher |
-| Console testing | Author-reported testing on a New 3DS-family console; other models are not yet covered |
-| Emulator | Azahar: a new game through the first rival battle and a Route 1 wild battle, plus several menus, saving, Continue and turbo |
-| Accepted ROM | **Pokémon FireRed (USA), Revision 0**, 16 MiB (16,777,216 bytes) |
+| Game | Pokémon FireRed, USA, **Revision 0** |
+| Size | 16,777,216 bytes |
 | SHA-1 | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` |
 
-The Builder rejects Revision 1, LeafGreen, other languages, modified ROMs and trimmed dumps. No ROM download links are provided.
+Revision 1, LeafGreen, other languages, modified ROMs and trimmed dumps are refused. No ROM links are provided here or anywhere in this project.
 
-Some UI systems have automated test coverage but have not been fully exercised end-to-end on all real console models. See [validation](docs/VALIDATION.md) and the [hardware checklist](docs/HARDWARE-ACCEPTANCE.md).
+### Coming from an older version
 
-## Updating without losing your save
+Copy `twinembers.sav` somewhere safe first. Replace the `.3dsx`, rebuild the pack with the Builder *from the same release* if asked (the old pack is kept until the new one is verified), and leave the save where it is. A save from the earlier `/3ds/pokefirered/` layout is copied across on first launch; the original is not modified.
 
-1. Back up `SD:/3ds/twinembers/twinembers.sav` to your PC.
-2. Replace the old `twinembers.3dsx` with the one from the new release.
-3. Use the **matching release's** Builder to regenerate the PAK if required. Confirm replacement when prompted; the old verified pack is kept until the new one is ready.
-4. Leave the save in place and launch the game.
+---
 
-## Help and known issues
+## Using it
 
-| Problem | What to check |
+| Input | What it does |
 |---|---|
-| The game is missing in Homebrew Launcher | Check `SD:/3ds/twinembers/twinembers.3dsx` |
-| “Data pack missing” | Use **SD folder…** and choose the SD card's root in the Builder |
-| Pack does not match the engine | Rebuild it with the Builder from the same release |
-| “Unsupported ROM” | Verify FireRed USA Revision 0 and the SHA-1 above |
-| Card is full or locked | Free at least 32 MiB and check the write-protect switch |
-| No sound | Check `SD:/3ds/dspfirm.cdc` |
-| Save read/write error | Check the SD card; preserve your backup |
+| Circle Pad, D-Pad | Move, navigate |
+| A / B | Confirm, interact / cancel, and hold B to run once you have the Running Shoes |
+| START | Turbo: each press steps 2×, 3×, 4×, back to normal |
+| X | Use your registered item |
+| Y | Get on or off the Bicycle |
+| SELECT, L, R | As in the original game |
+| Touch | PokéTouch screens, battle commands, PC storage |
 
-**Known limitations:** only the listed FireRed revision is supported. Some original messages still instruct you to use START for the menu. Before receiving the Pokédex, its lower-screen button can appear active inside another menu; tapping it returns to the main lower screen.
+Turbo works while exploring and in battle. It skips drawing frames, not game logic, so the game still plays correctly at speed.
 
-To report a bug, [open an issue](https://github.com/alex61194/twin-embers/issues) with your 3DS model (or emulator), steps to reproduce and any exact on-screen errors. Creating an empty `/3ds/twinembers/debug.txt` enables `port.log` diagnostics. **Never attach ROMs, PAKs, save files or other game data.**
+---
 
-## Development and AI assistance
+## When something goes wrong
 
-**Twin Embers Port was developed with substantial AI assistance.** Claude (Anthropic) and OpenAI Codex were used during development for code implementation and adaptation, debugging, tests, reviews and documentation. The project is directed and maintained by **[alex61194](https://github.com/alex61194)**; AI-assisted work is reviewed and tested as part of the project workflow.
+- **Not listed in Homebrew Launcher.** The file must be exactly `SD:/3ds/twinembers/twinembers.3dsx`.
+- **"Data pack missing."** In the Builder, press **SD folder…** and choose the root of the card, not the `3ds` folder.
+- **Pack does not match the engine.** Rebuild it with the Builder from the same release as the `.3dsx`.
+- **"Unsupported ROM."** Check it is FireRed USA Revision 0 against the SHA-1 above.
+- **Builder cannot write.** Free at least 32 MiB and check the card's write-protect switch.
+- **No sound.** Look for `SD:/3ds/dspfirm.cdc`.
+- **Save error.** Leave the card alone, keep your backup, and report it.
 
-AI assistance does **not** replace attribution to original human authors and does not confer rights to third-party code or Pokémon material. Details are recorded in [AI_DISCLOSURE.md](AI_DISCLOSURE.md).
+Known gaps: some original dialogue still tells you to use START for a menu that no longer exists, and before you own the Pokédex its lower-screen tile can look active inside another menu (tapping it takes you back home).
 
-### Source and technical documentation
+To report a bug, [open an issue](https://github.com/alex61194/twin-embers/issues) with your console model or emulator, the steps that trigger it and any text the screen showed. Creating an empty `/3ds/twinembers/debug.txt` makes the game write `port.log`. **Never attach a ROM, a pack, a save or any other game data.**
+
+---
+
+## What is verified, and what is not
+
+Automated tests cover the pack format, the Builder, save handling and its failure cases, the rendering paths for the touch screens and the map edge, and the audio mixer. A fresh build is also checked to confirm it embeds no game data.
+
+Real-hardware coverage is narrower. One New 3DS-family console and Azahar have been used to play through a new game to the first rival battle, a Route 1 wild battle, saving, Continue and turbo. Older 3DS and 2DS models, long play sessions and late-game content have not been systematically tested. The [validation notes](docs/VALIDATION.md) and [hardware checklist](docs/HARDWARE-ACCEPTANCE.md) list exactly what has and has not been exercised.
+
+## How it is put together
+
+The pret/pokefirered decompilation is fetched at a pinned commit when you build from source and is patched by small, structured edit recipes kept in `patches/`, so this repository holds the changes and not the upstream code. The 3DS side (`3ds_port/`) supplies the display compositor, input, audio and file access. The game's graphics, sound and data are not compiled in; they are read at runtime from the pack the Builder produces from your ROM.
 
 - [Build the 3DSX from source](docs/BUILDING.md)
-- [Windows Builder usage and tests](builder/README.md)
-- [Technical details: pack format, ABI and saves](docs/TECHNICAL-NOTES.md)
-- [Validation](docs/VALIDATION.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+- [Windows Builder](builder/README.md)
+- [Pack format, ABI and saves](docs/TECHNICAL-NOTES.md)
+- [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-The source archives attached automatically to the `v0.1.0-beta.1` tag describe that tagged snapshot; documentation on `main` may be newer.
+---
 
-## Credits, licenses and copyright
+## Who made this, and under what terms
 
-This README has its **own presentation and organization**. Credits below acknowledge actual code, tools and rights, not a template for the README.
+Twin Embers is directed and maintained by [alex61194](https://github.com/alex61194). **A large share of the code, tests and documentation was written with AI assistance** from Claude (Anthropic) and OpenAI Codex, then reviewed and tested by the maintainer; see [AI_DISCLOSURE.md](AI_DISCLOSURE.md). AI assistance does not stand in for the original authors' credit and gives no rights to anyone else's code or to Pokémon material.
 
-- **Original Twin Embers contributions:** [alex61194](https://github.com/alex61194), with [disclosed AI assistance](AI_DISCLOSURE.md). The [port's MIT license](LICENSE-PORT.md) applies only to original contributions the maintainer owns.
-- **Inherited and adapted dual-screen implementation:** **ZallaxDev and the Pokémon Emerald 3Ds Dual Screen contributors** created MIT-licensed backend, compositor, input/decoding and data/pack components used in this port. Their original copyright notices and applicable license terms remain intact in [NOTICE.md](NOTICE.md), [CREDITS.md](CREDITS.md) and [licenses/](licenses/).
-- **Game decompilation:** **pret/pokefirered contributors** provide the upstream code fetched at a pinned commit when building locally. No general redistribution license for the game's decompiled source was identified. The port's MIT license does not relicense that code.
-- **Toolchains and runtimes:** **devkitPro, libctru, citro2d, citro3d, GCC/newlib, Python, Tcl/Tk and PyInstaller** retain their respective notices. See [NOTICE.md](NOTICE.md), [PROVENANCE.md](PROVENANCE.md) and the [Builder's notices](builder/Windows-GUI-THIRD-PARTY.txt).
-- **Pokémon intellectual property:** Pokémon FireRed, its characters, artwork, music and trademarks belong to their respective rightsholders, including Nintendo, Game Freak, Creatures and The Pokémon Company.
+Credit where the work is not ours:
 
-For precise attribution and licensing scope, consult **[CREDITS.md](CREDITS.md)**, **[NOTICE.md](NOTICE.md)**, **[LICENSE-PORT.md](LICENSE-PORT.md)**, **[PROVENANCE.md](PROVENANCE.md)** and **[licenses/](licenses/)**. These notices are not optional.
+- **ZallaxDev and the Pokémon Emerald 3Ds Dual Screen contributors** wrote the MIT-licensed backend, compositor, input and pack components this port builds on. Their notices are preserved in [NOTICE.md](NOTICE.md), [CREDITS.md](CREDITS.md) and [licenses/](licenses/).
+- **pret/pokefirered contributors** wrote the decompilation. No general redistribution licence for that code was identified, and this project's MIT licence does not cover it.
+- **devkitPro, libctru, citro2d, citro3d, GCC/newlib, Python, Tcl/Tk and PyInstaller** keep their own notices ([NOTICE.md](NOTICE.md), [PROVENANCE.md](PROVENANCE.md), [Builder notices](builder/Windows-GUI-THIRD-PARTY.txt)).
+- **Pokémon FireRed**, its characters, art, music and trademarks belong to Nintendo, Game Freak, Creatures and The Pokémon Company.
 
-### Unofficial-project disclaimer
+The [port's MIT licence](LICENSE-PORT.md) applies only to original contributions the maintainer owns. Full scope is in [CREDITS.md](CREDITS.md), [PROVENANCE.md](PROVENANCE.md) and [licenses/](licenses/); those notices are not optional.
 
-Twin Embers Port is an independent, unofficial fan project and is **not affiliated with or endorsed by Nintendo, Game Freak, Creatures or The Pokémon Company**.
-
-The repository does not include any ROM, extracted game graphics/audio/data pack or user save. The independently downloadable `twinembers.3dsx` contains compiled code from the `pret/pokefirered` decompilation, whose redistribution rights have **not been independently verified**. Publication records the maintainer's decision and does not imply rightsholder permission; see [distribution policy](docs/DISTRIBUTION.md). No license to the original game or its decompiled game code is granted or implied.
+Twin Embers is an unofficial fan project, not affiliated with or endorsed by any of the companies above. This repository contains no ROM, extracted graphics or audio, data pack or save. The separately downloadable `twinembers.3dsx` does contain compiled code derived from the pret/pokefirered decompilation, whose redistribution rights have not been independently verified; publishing it records the maintainer's decision, not anyone's permission. See the [distribution policy](docs/DISTRIBUTION.md). No licence to the original game or its decompiled code is granted or implied.
