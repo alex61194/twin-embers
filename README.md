@@ -1,4 +1,6 @@
-# Twin Embers
+<h1 align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/twin-embers-banner.png" width="600" alt="Twin Embers"></h1>
+
+<p align="center"><sub>Logo by <b>@xsh3d0r_</b> (Discord)</sub></p>
 
 Pokémon FireRed, rebuilt to use both screens of a Nintendo 3DS.
 
@@ -12,11 +14,11 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 ## The short version
 
-- **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher.
+- **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.1.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.1.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
@@ -58,10 +60,11 @@ OPTIONS holds FireRed's own settings plus a switch for an on-screen FPS counter.
 
 Setup is a one-time job of about five minutes. You need three things on the SD card, and only one of them comes from you.
 
-**1. Get the two downloads** from the [v0.1.0 Alpha release](https://github.com/alex61194/twin-embers/releases/tag/alpha). They are separate files:
+**1. Get the downloads** from the [latest release](https://github.com/alex61194/twin-embers/releases/latest). They are separate files:
 
 - `twinembers.3dsx`, the game itself.
 - `TwinEmbersBuilder.exe`, the Windows tool.
+- `TwinEmbers-Forwarder.cia`, optional: a HOME Menu shortcut (see below).
 
 **2. Make the data pack.** Put the SD card in your PC and start the Builder. Choose your FireRed ROM, press **SD folder…** and pick the *root* of the card, then press **Build Data Pack**. The Builder checks the ROM, writes `3ds/twinembers/twinembers.pak` and verifies what it wrote. It needs no internet and no administrator rights.
 
@@ -77,6 +80,10 @@ SD:/3ds/
     ├── twinembers.pak     the Builder made this from your ROM
     └── twinembers.sav     the game creates this
 ```
+
+### HOME Menu shortcut (optional)
+
+`TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx`, so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
 
 If Windows SmartScreen warns about the Builder, compare its SHA-256 with the one in the release notes before running it. A matching hash proves it is the published file, not that the file is safe; only run what you trust.
 
@@ -152,6 +159,8 @@ Twin Embers is directed and maintained by [alex61194](https://github.com/alex611
 Credit where the work is not ours:
 
 - **ZallaxDev and the Pokémon Emerald 3Ds Dual Screen contributors** wrote the MIT-licensed backend, compositor, input and pack components this port builds on. Their notices are preserved in [NOTICE.md](NOTICE.md), [CREDITS.md](CREDITS.md) and [licenses/](licenses/).
+- **@xsh3d0r_** (Discord) drew the Twin Embers logo used for this README and the HOME Menu banner.
+- **kwak8709** made the HOME Menu forwarder for Twin Embers.
 - **pret/pokefirered contributors** wrote the decompilation. No general redistribution licence for that code was identified, and this project's MIT licence does not cover it.
 - **devkitPro, libctru, citro2d, citro3d, GCC/newlib, Python, Tcl/Tk and PyInstaller** keep their own notices ([NOTICE.md](NOTICE.md), [PROVENANCE.md](PROVENANCE.md), [Builder notices](builder/Windows-GUI-THIRD-PARTY.txt)).
 - **Pokémon FireRed**, its characters, art, music and trademarks belong to Nintendo, Game Freak, Creatures and The Pokémon Company.
