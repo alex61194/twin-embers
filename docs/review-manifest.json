@@ -1659,11 +1659,11 @@
   },
   {
    "path": "README.md",
-   "sha256": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "sha256": "975a5eddd8278aede00798c857478dd94ea304c2045e45552267ced184ed1828",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Pinned 96f95e0 Git blob verified; reviewed port-only text, no media/payload; inherited notices and external-game scope preserved; test fixtures synthetic; Reviewed 2026-10-09: documentation aligned with public two-executable release, published hashes, current owner-decision gate and preserved build workspaces; no binary or media changes; Reviewed 2026-10-09: original README restructuring with explicit AI-development credit and preserved third-party copyright notices.",
+   "basis": "Pinned 96f95e0 Git blob verified; reviewed port-only text, no media/payload; inherited notices and external-game scope preserved; test fixtures synthetic; Reviewed 2026-10-09: documentation aligned with public two-executable release, published hashes, current owner-decision gate and preserved build workspaces; no binary or media changes; Reviewed 2026-10-09: original README restructuring with explicit AI-development credit and preserved third-party copyright notices.; Reviewed 2026-10-17: logo banner hosted as a media release asset (no media in the repository), v0.1.1 status and latest-release links, optional HOME Menu forwarder instructions, credit to @xsh3d0r_ (logo) and kwak8709 (forwarder); documentation only.",
    "source_repository": "alex61194/pokemon-firered-3ds-clean",
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "58fd063752fe9559c3e04bcfd66f6ba08a76da02",
@@ -4352,6 +4352,58 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  }
+ ],
+ "historical_reviews": [
+  {
+   "commit": "801c92da0baa77ce79b0b208b34525b60f9966f1",
+   "path": "README.md",
+   "sha256": "02760d1619eee49d812675be4d24c16ad603b6fc6f4ebf60f9ef07fb19876ef7",
+   "supersedes": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
+  },
+  {
+   "commit": "a68bd875fa20b0461dbec5cc8b6d83cace2fda0b",
+   "path": "README.md",
+   "sha256": "bff00cfb8d048a71bd527b5113fadc6671a32b4851801e924c6f150d9691412a",
+   "supersedes": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
+  },
+  {
+   "commit": "911b214ee894b21c24620cfa790b13acdade08fe",
+   "path": "README.md",
+   "sha256": "8ba599c02ba5135f167cc892b672931182b8b8fc2ddf00b4a0b903d350f77751",
+   "supersedes": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
+  },
+  {
+   "commit": "133dc3a4f6284d58b954b927d96e84a8dad762ce",
+   "path": "README.md",
+   "sha256": "8c98e50c9a751c322f762613a49769314eb8d368e0c053e40f87d3ecaf760394",
+   "supersedes": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
+  },
+  {
+   "commit": "32be736c81968b09c35863dd2bd183d87dad3b58",
+   "path": "README.md",
+   "sha256": "8c98e50c9a751c322f762613a49769314eb8d368e0c053e40f87d3ecaf760394",
+   "supersedes": "eb60e0b597cc0bf93d78e185fc638091369882216ab4527b654dc9a39ebe5b81",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
   }
  ]
 }
