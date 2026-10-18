@@ -1,4 +1,4 @@
-<h1 align="center"><img src="https://github.com/alex61194/twin-embers/releases/download/media/twin-embers-banner.png" width="600" alt="Twin Embers"></h1>
+<h1 align="center"><img src="docs/media/twin-embers-banner.png" width="600" alt="Twin Embers"></h1>
 
 <p align="center"><sub>Logo by <b>@xsh3d0r_</b> (Discord)</sub></p>
 
@@ -8,7 +8,7 @@ Most of the work in this project comes down to one question: what should the sec
 
 It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has no ROM inside it and never will; you bring your own cartridge dump and a small Windows tool turns it into the data file the game reads at startup.
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/02-overworld-pallet-town.png" width="400" alt="Pallet Town filling the top screen, with the touch menu underneath">
+<img src="docs/media/02-overworld-pallet-town.png" width="400" alt="Pallet Town filling the top screen, with the touch menu underneath">
 
 ---
 
@@ -30,27 +30,27 @@ The overworld is drawn at the 3DS's native top-screen size instead of the GBA's 
 
 The lower screen is **PokéTouch**, a home screen with tiles for your party, Bag, Pokédex, Trainer Card, Town Map, saving and options. Tapping a tile opens that screen directly. The original START menu is no longer needed.
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/01-title.png" width="300" alt="Title screen"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/10-fly-two-island.png" width="300" alt="Flying to Two Island">
+<img src="docs/media/01-title.png" width="300" alt="Title screen"> <img src="docs/media/10-fly-two-island.png" width="300" alt="Flying to Two Island">
 
 ### Fighting
 
 Battle commands move to the touch screen: FIGHT, BAG, POKéMON and RUN. Picking FIGHT shows each move as a card with its type, power and remaining PP, so you can choose without remembering the numbers.
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/03-battle-menu.png" width="300" alt="Battle commands on the touch screen"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/04-battle-moves.png" width="300" alt="Move cards with type, power and PP">
+<img src="docs/media/03-battle-menu.png" width="300" alt="Battle commands on the touch screen"> <img src="docs/media/04-battle-moves.png" width="300" alt="Move cards with type, power and PP">
 
 ### Looking after your team
 
 The party list, Pokémon Summary and Trainer Card each get a full lower-screen page. PC storage is touch-driven as well: move, withdraw and deposit by tapping.
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/05-party.png" width="300" alt="Party"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/06-summary.png" width="300" alt="Pokémon Summary">
+<img src="docs/media/05-party.png" width="300" alt="Party"> <img src="docs/media/06-summary.png" width="300" alt="Pokémon Summary">
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/07-trainer-card.png" width="300" alt="Trainer Card"> <img src="https://github.com/alex61194/twin-embers/releases/download/media/09-pokedex.png" width="300" alt="Pokédex">
+<img src="docs/media/07-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/09-pokedex.png" width="300" alt="Pokédex">
 
 ### Settings
 
 OPTIONS holds FireRed's own settings plus a switch for an on-screen FPS counter.
 
-<img src="https://github.com/alex61194/twin-embers/releases/download/media/08-options.png" width="300" alt="Options">
+<img src="docs/media/08-options.png" width="300" alt="Options">
 
 <sub>All images are real captures from Azahar and a New 3DS-family console. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
 

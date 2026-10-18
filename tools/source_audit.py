@@ -9,17 +9,48 @@ MANIFEST_LIMIT=512*1024
 REFERENCE='96f95e015af9f5f38e4a8aefca7cab29a78b030d'
 EXTENSIONS={'.c','.h','.py','.md','.txt','.json','.toml','.lock','.yml'}
 NAMES={'Makefile','.gitignore','.gitattributes'}
+# README images: only directly in docs/media, only these formats, each a single
+# well-formed image with nothing appended, hashed byte for byte in the manifest.
+MEDIA_DIR='docs/media'
+MEDIA_LIMIT=1024*1024
+MEDIA_EXTENSIONS={'.png','.jpg','.jpeg','.webp'}
 FORBIDDEN={'assets','intro_native','graphics','sound','romfs','upstream','build','work','dist','.git','__pycache__','node_modules','.codex','.agents'}
 
 def git(root,*args):
     return subprocess.check_output(['git','-C',str(root),*args])
 
+def is_media(name):
+    p=PurePosixPath(name)
+    return str(p.parent)==MEDIA_DIR and p.suffix in MEDIA_EXTENSIONS
+
+def size_limit(name):
+    return MANIFEST_LIMIT if name==MANIFEST else MEDIA_LIMIT if is_media(name) else LIMIT
+
 def validate_name(name):
     p=PurePosixPath(name)
     if p.is_absolute() or '..' in p.parts or '\\' in name or ':' in name or any(x.lower() in FORBIDDEN for x in p.parts):
         raise ValueError(f'Forbidden source path: {name}')
-    if p.name not in NAMES and p.suffix not in EXTENSIONS:
+    if p.name not in NAMES and p.suffix not in EXTENSIONS and not is_media(name):
         raise ValueError(f'Unapproved source file type: {name}')
+
+def check_media(name,raw):
+    """One complete PNG, JPEG or WebP image: right signature, and the file ends
+    where the image ends, so no other data can ride along after it."""
+    suffix=PurePosixPath(name).suffix
+    if suffix=='.png':
+        if not raw.startswith(b'\x89PNG\r\n\x1a\n'): raise ValueError(f'Not a PNG image: {name}')
+        pos=8
+        while True:
+            if pos+12>len(raw): raise ValueError(f'Truncated PNG image: {name}')
+            length=int.from_bytes(raw[pos:pos+4],'big'); kind=raw[pos+4:pos+8]
+            pos+=12+length
+            if kind==b'IEND': break
+        valid=pos==len(raw)
+    elif suffix in ('.jpg','.jpeg'):
+        valid=raw.startswith(b'\xff\xd8\xff') and raw.endswith(b'\xff\xd9')
+    else:
+        valid=raw[:4]==b'RIFF' and raw[8:12]==b'WEBP' and int.from_bytes(raw[4:8],'little')+8==len(raw)
+    if not valid: raise ValueError(f'Malformed image or data after it: {name}')
 
 def check(files,modes=None,windows=None,supplements=()):
     doc=json.loads(files[MANIFEST])
@@ -62,6 +93,14 @@ def check(files,modes=None,windows=None,supplements=()):
         validate_name(name)
         # Governance metadata grows with the reviewed file inventory. Its
         # bound is separate; every source file keeps the original 256 KiB cap.
+        if is_media(name):
+            if len(raw)>MEDIA_LIMIT: raise ValueError(f'Oversized image: {name}')
+            check_media(name,raw)
+            if modes and modes.get(name)!='100644': raise ValueError(f'Non-source Git mode: {name}')
+            if hashlib.sha256(raw).hexdigest()!=entries[name]['sha256']: raise ValueError(f'Changed without review: {name}')
+            if windows and any(raw[n:n+64] in windows for n in range(len(raw)-63)):
+                raise ValueError(f'Exact ROM fragment: {name}')
+            continue
         limit=MANIFEST_LIMIT if name==MANIFEST else LIMIT
         if len(raw)>limit or b'\0' in raw: raise ValueError(f'Binary or oversized file: {name}')
         text=raw.decode('utf-8')
@@ -94,8 +133,7 @@ def snapshot(root,commit=None):
             mode,kind,blob=metadata.decode().split()
             if kind!='blob': raise ValueError('Non-source Git object')
             name=path.decode(); validate_name(name)
-            limit=MANIFEST_LIMIT if name==MANIFEST else LIMIT
-            if int(git(root,'cat-file','-s',blob))>limit: raise ValueError('Oversized historical blob')
+            if int(git(root,'cat-file','-s',blob))>size_limit(name): raise ValueError('Oversized historical blob')
             files[name]=git(root,'cat-file','blob',blob); modes[name]=mode
     else:
         for record in git(root,'ls-files','--stage','-z').split(b'\0'):
