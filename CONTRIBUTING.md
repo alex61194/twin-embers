@@ -11,6 +11,9 @@ ROM-derived binary blobs, copied pret source context, Base64 game/media payloads
 build artifacts or files of uncertain origin. Do not attach those materials to
 issues, pull requests, comments, logs or CI artifacts.
 
+The README's own images in `docs/media/` (the logo and the project's screenshots) are
+added only by the maintainer, as an owner decision; contributions do not add or change them.
+
 For every proposed reused component, identify:
 
 - Code origin and upstream repository.

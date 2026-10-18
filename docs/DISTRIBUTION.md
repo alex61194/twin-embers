@@ -22,6 +22,13 @@ as its reviewed file records grow. Its schema, provenance entries, exact
 source hashes, text/payload checks and every historical snapshot are still
 validated; this allowance does not apply to other files or binary content.
 
+The only binary files admitted are the README images, by owner decision: PNG, JPEG or
+WebP files placed directly in `docs/media/`, at most 1 MiB each. Each must be one
+well-formed image with nothing after its end (PNG ends at `IEND`, JPEG at `FFD9`, WebP at
+its RIFF length), is hashed byte for byte in the manifest, keeps mode 100644 and is still
+compared against `--rom`. `.gitattributes` marks `docs/media/*` as binary so Git never
+rewrites their bytes. An image anywhere else, or any other binary type, is refused.
+
 `tools/source_audit.py --history` verifies every reachable commit against its
 own reviewed manifest. Paths, file types, Git modes, text encoding, sizes,
 encoded payload patterns and reviewed hashes are checked. Optional `--rom`

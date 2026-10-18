@@ -10,6 +10,10 @@ def reviewed(files):
             'credit':'Synthetic test author','license':'MIT','basis':'Generated synthetic fixture','review_status':'reviewed'})
     return dict(files,**{audit.MANIFEST:json.dumps(doc).encode()})
 
+def synthetic_png(data=b'synthetic'):
+    def chunk(kind,body): return len(body).to_bytes(4,'big')+kind+body+b'\0\0\0\0'
+    return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',b'\0'*13)+chunk(b'IDAT',data*8)+chunk(b'IEND',b'')
+
 class Rejections(unittest.TestCase):
     def test_inventory_manifest_has_a_separate_bounded_size(self):
         files=reviewed({'README.md':b'a\n'})
@@ -142,6 +146,42 @@ class Rejections(unittest.TestCase):
             with self.assertRaises(ValueError): audit.check(reviewed({name:raw}))
         files=reviewed({'data.py':b'print(1)\n'})
         with self.assertRaises(ValueError): audit.check(files,{name:'100755' for name in files})
+    def test_media_images_only_in_docs_media(self):
+        png=synthetic_png()
+        jpg=b'\xff\xd8\xff\xe0'+b'\x10'*60+b'\xff\xd9'
+        webp=b'RIFF'+(4+30).to_bytes(4,'little')+b'WEBP'+b'\x01'*30
+        files=reviewed({'docs/media/a.png':png,'docs/media/b.jpg':jpg,'docs/media/c.webp':webp})
+        self.assertEqual(audit.check(files),4)
+        # Same image elsewhere, a nested folder, or another format: refused.
+        for name in ('README.png','docs/a.png','docs/media/sub/a.png','docs/media/a.gif','docs/media/a.bin'):
+            with self.assertRaises(ValueError): audit.check(reviewed({name:png}))
+    def test_media_must_be_one_well_formed_image(self):
+        png=synthetic_png()
+        for name,raw in [('docs/media/a.png',png+b'trailing payload'),('docs/media/a.png',png[:-4]),
+                         ('docs/media/a.png',b'GIF89a'+png[6:]),('docs/media/a.png',b'\0'*(audit.MEDIA_LIMIT+1)),
+                         ('docs/media/a.jpg',b'\xff\xd8\xff\xe0'+b'x'*20+b'\xff\xd9payload'),
+                         ('docs/media/a.webp',b'RIFF'+(40).to_bytes(4,'little')+b'WEBP'+b'\x01'*30),
+                         ('docs/media/a.png',b'\x89PNG\r\n\x1a\n')]:
+            with self.assertRaises(ValueError,msg=f'{name} {len(raw)}'): audit.check(reviewed({name:raw}))
+    def test_media_hash_mode_and_rom_window(self):
+        png=synthetic_png()
+        files=reviewed({'docs/media/a.png':png})
+        changed=dict(files); changed['docs/media/a.png']=synthetic_png(b'other')
+        with self.assertRaisesRegex(ValueError,'without review'): audit.check(changed)
+        with self.assertRaises(ValueError): audit.check(files,{name:'100755' for name in files})
+        with self.assertRaisesRegex(ValueError,'ROM fragment'): audit.check(files,windows={png[8:72]})
+    def test_media_survives_git_with_repository_attributes(self):
+        # The PNG signature holds \r\n: without the docs/media rule in
+        # .gitattributes, Git's eol=lf would rewrite it on add.
+        attributes=(Path(audit.__file__).resolve().parents[1]/'.gitattributes').read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def git(*args): return audit.git(root,*args)
+            git('init','-q'); git('config','user.name','Synthetic'); git('config','user.email','synthetic@example.invalid')
+            for name,raw in reviewed({'.gitattributes':attributes,'docs/media/a.png':synthetic_png(b'\r\n')}).items():
+                path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(raw)
+            git('add','.'); git('commit','-qm','synthetic image')
+            self.assertEqual(audit.history(root),1)
     def test_source_directive_rejected(self):
         with self.assertRaises(ValueError): audit.check(reviewed({'data.c':b'const u8 game[] = INCBIN_U8("x.bin");\n'}))
     def test_local_rom_window(self):
