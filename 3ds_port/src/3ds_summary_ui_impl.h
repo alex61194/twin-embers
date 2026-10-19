@@ -280,10 +280,10 @@ static void SMoveCard(const CtrSummaryUiView *v, int i)
     int dy;
 
     if (!d->moves[i]) {
-        BCardFrame(&r, 0, NULL, 0);
+        BCardFrame(&r, 0, -1, NULL, 0);
         return;
     }
-    dy = BCardFrame(&r, UiTypeColor(d->moveTypeIds[i]), d->moveNames[i], v->pressed == SUI_HIT_MOVE + i ? UI_PRESSED : 0);
+    dy = BCardFrame(&r, UiTypeColor(d->moveTypeIds[i]), d->moveTypeIds[i], d->moveNames[i], v->pressed == SUI_HIT_MOVE + i ? UI_PRESSED : 0);
     {
         CtrPokeTouchRect badge = {(int16_t)(r.x + 8), (int16_t)(r.y + 27 + dy), 52, 14};
         unsigned pp = SNumber(d->pp[i], 0), max = SNumber(d->pp[i], 1);

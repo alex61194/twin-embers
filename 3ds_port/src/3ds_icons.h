@@ -43,29 +43,23 @@ static int PokeTouch_PackIcon24(const char *art, uint8_t pixels[24 * 24], uint16
     return 1;
 }
 
-/* The battle's icons, all 24x24 so every label sits at the same height: the game's own Bag and Poke Ball at their full
- * size from the pack (the 12x12 menu samples, doubled, when it has none), the port's own burst, shoe, rock and bait. */
+/* The battle's icons: high-resolution native icons imported from the reference mockups,
+ * with fallbacks to the game pack or 12x12 samples. */
 enum { BI_BAG, BI_POKEBALL, BI_SHOE, BI_BURST, BI_ROCK, BI_BAIT, BI_COUNT };
 static struct {
     PtImage image;
-    uint8_t pixels[24 * 24];
-    int scale;                  /* 1 for 24x24 art, 2 for the 12x12 samples used as a fallback */
+    uint8_t pixels[48 * 48];
+    int scale;                  /* 1 for full art, 2 for the 12x12 samples used as a fallback */
 } sBImg[BI_COUNT];
 
-static void BArt(int i, const char (*rows)[25], const uint16_t *pal, int n)
+static void BArt(int i, int w, int h, const uint8_t *px, const uint16_t *pal, int n)
 {
-    sBImg[i].image.w = sBImg[i].image.h = 24;
+    sBImg[i].image.w = (uint8_t)w;
+    sBImg[i].image.h = (uint8_t)h;
     sBImg[i].image.pixels = sBImg[i].pixels;
     memcpy(sBImg[i].image.pal, pal, (size_t)n * sizeof(uint16_t));
     sBImg[i].scale = 1;
-    for (int y = 0; y < 24; ++y)
-        for (int x = 0; x < 24; ++x) {
-            char ch = rows[y][x];
-            uint8_t val = (uint8_t)(ch >= 'a' && ch <= 'f' ? ch - 'a' + 10 :
-                                    ch >= 'A' && ch <= 'F' ? ch - 'A' + 10 :
-                                    ch >= '0' && ch <= '9' ? ch - '0' : 0);
-            sBImg[i].pixels[y * 24 + x] = val;
-        }
+    memcpy(sBImg[i].pixels, px, (size_t)w * h);
 }
 
 static void BIconsPrepare(void)
@@ -76,12 +70,12 @@ static void BIconsPrepare(void)
         return;
     ready = 1;
     TwinIconsPrepare();
-    BArt(BI_BAG, sBArtBag, sBArtBagPal, 9);
-    BArt(BI_POKEBALL, sBArtPokeBall, sBArtPokeBallPal, 10);
-    BArt(BI_SHOE, sBArtShoe, sBArtShoePal, 10);
-    BArt(BI_BURST, sBArtBurst, sBArtBurstPal, 7);
-    BArt(BI_ROCK, sBArtRock, sBArtRockPal, 6);
-    BArt(BI_BAIT, sBArtBait, sBArtBaitPal, 7);
+    BArt(BI_BAG, SBARTBAG_W, SBARTBAG_H, sBArtBagPx, sBArtBagPal, 16);
+    BArt(BI_POKEBALL, SBARTPOKEBALL_W, SBARTPOKEBALL_H, sBArtPokeBallPx, sBArtPokeBallPal, 16);
+    BArt(BI_SHOE, SBARTSHOE_W, SBARTSHOE_H, sBArtShoePx, sBArtShoePal, 16);
+    BArt(BI_BURST, SBARTBURST_W, SBARTBURST_H, sBArtBurstPx, sBArtBurstPal, 16);
+    BArt(BI_ROCK, SBARTROCK_W, SBARTROCK_H, sBArtRockPx, sBArtRockPal, 6);
+    BArt(BI_BAIT, SBARTBAIT_W, SBARTBAIT_H, sBArtBaitPx, sBArtBaitPal, 7);
 }
 
 static void BIconAt(int i, int x, int y)

@@ -293,7 +293,7 @@ static void BActionButton(int i, const CtrBattleView *v)
 
     BIconsPrepare();
     if (i == BUI_ACT_FIGHT) {
-        int top = UiButtonLabelTop(r, state, 3), w = UiTextWidth(label[i], 3), x = r->x + (r->w - w + 38) / 2;
+        int top = UiButtonLabelTop(r, state, 3), w = UiTextWidth(label[i], 3), x = r->x + (r->w - w + 54) / 2;
 
         UiButton(r, sStyle[i], state);
         if (!dy) {
@@ -305,7 +305,7 @@ static void BActionButton(int i, const CtrBattleView *v)
         Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[0]);
         if (state & UI_FOCUSED)
             BFocusGlowBrackets(r);
-        BIconAt(BI_BURST, x - 38, top + 2);
+        BIconAt(BI_BURST, x - 54, top - 11);
         UiText(label[i], x + 1, top + 2, UI_RGB(60, 6, 8), UI_RGB(60, 6, 8), 3, r->x + r->w);
         UiText(label[i], x, top, UI_TEXT, UI_RGB(60, 6, 8), 3, r->x + r->w);
     } else {
@@ -397,7 +397,7 @@ static void BMoveCategoryIcon(int x, int y, uint8_t type, uint16_t ink, uint16_t
 
 /* A card of the battle (a move, a target): raised, its header band in `color` with `title`, the body a dark tint of
  * the same colour. Returns the vertical offset of its content (1 while pressed). An empty slot is a dark socket. */
-static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *title, int state)
+static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const char *title, int state)
 {
     int pressed = (state & UI_PRESSED) != 0, dy = pressed ? 1 : 0;
     uint16_t head = pressed ? UiMix(color, UIS_OUTLINE, 2) : color;
@@ -412,14 +412,15 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *tit
     if (!pressed)
         UiRoundFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_RADIUS_BUTTON - 1, UiMix(color, UIS_OUTLINE, 5));
 
-    /* Vertical shading gradient across the card body */
+    /* Vertical shading gradient across the card body with rich element-tinted background */
     {
         int bodyY = r->y + 21 + dy;
         int bodyH = (r->y + 1 + dy + bottom) - bodyY;
         if (bodyH > 0) {
-            uint16_t c_top = UiMix(UIS_PANEL, color, pressed ? 2 : 4);
-            uint16_t c_mid = UiMix(UIS_PANEL, color, pressed ? 1 : 2);
-            uint16_t c_bot = UiMix(UIS_PANEL, color, 1);
+            uint16_t base = type >= 0 ? UiMix(UI_RGB(16, 14, 20), color, 3) : UIS_PANEL;
+            uint16_t c_top = UiMix(base, color, pressed ? 2 : 4);
+            uint16_t c_mid = UiMix(base, color, pressed ? 1 : 2);
+            uint16_t c_bot = UiMix(base, UI_RGB(6, 4, 8), 2);
             int h1 = bodyH * 2 / 5;
             int h2 = bodyH * 3 / 5;
 
@@ -439,19 +440,78 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *tit
     Fill(r->x + 1, r->y + 19 + dy, r->w - 2, 1, UiMix(head, UIS_OUTLINE, 3));
     Fill(r->x + 1, r->y + 20 + dy, r->w - 2, 1, UIS_OUTLINE);
 
-    /* Move Title with bold perimeter shadow for arcade pop */
+    /* Background element silhouette textures across the header band */
+    if (type >= 0) {
+        int tx0 = r->x + r->w - 58, ty0 = r->y + 3 + dy;
+        if (type == 10) { /* Fire: rising flame tongues */
+            uint16_t c1 = UiMix(head, UI_RGB(255, 60, 20), 4);
+            uint16_t c2 = UiMix(head, UI_RGB(255, 215, 60), 3);
+            static const int8_t flm[38] = {
+                1, 2, 4, 7, 10, 12, 11, 8, 4, 2, 1, 3, 6, 9, 13, 14, 12, 8, 5, 2, 1, 3, 5, 8, 11, 10, 7, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            for (int dx = 0; dx < 38; ++dx) {
+                int ht = flm[dx];
+                for (int d = 0; d < ht; ++d)
+                    Px(tx0 + dx, ty0 + 14 - d, d >= ht - 2 ? c2 : c1);
+            }
+        } else if (type == 11) { /* Water: rhythmic ocean wave ripples */
+            uint16_t cw1 = UiMix(head, UI_RGB(30, 215, 255), 4);
+            uint16_t cw2 = UiMix(head, UI_RGB(12, 60, 160), 4);
+            static const int8_t wv[38] = {
+                7, 8, 9, 10, 11, 10, 9, 8, 7, 6, 5, 4, 3, 4, 5, 6, 7, 8, 9, 10, 11, 10, 9, 8, 7, 6, 5, 4, 3, 4, 5, 6, 7, 8, 9, 10, 10, 9
+            };
+            for (int dx = 0; dx < 38; ++dx) {
+                int y = wv[dx];
+                Px(tx0 + dx, ty0 + y, cw1);
+                Px(tx0 + dx, ty0 + y + 1, cw2);
+                if (y > 4 && y < 11)
+                    Px(tx0 + dx, ty0 + y - 4, cw1);
+            }
+        } else if (type == 4 || type == 5) { /* Ground / Rock: desert dune strata */
+            uint16_t cd1 = UiMix(head, UI_RGB(255, 220, 140), 3);
+            uint16_t cd2 = UiMix(head, UI_RGB(70, 45, 10), 4);
+            for (int dx = 0; dx < 38; ++dx) {
+                int y1 = 4 + (dx * 6) / 38;
+                int y2 = 8 + ((38 - dx) * 5) / 38;
+                Px(tx0 + dx, ty0 + y1, cd1);
+                Px(tx0 + dx, ty0 + y1 + 1, cd2);
+                Px(tx0 + dx, ty0 + y2, cd1);
+                Px(tx0 + dx, ty0 + y2 + 1, cd2);
+            }
+        } else if (type == 12) { /* Grass: stylized vine contours */
+            uint16_t cg1 = UiMix(head, UI_RGB(120, 255, 90), 3);
+            uint16_t cg2 = UiMix(head, UI_RGB(30, 90, 20), 4);
+            for (int dx = 0; dx < 38; ++dx) {
+                int y = 5 + (dx % 12 < 6 ? dx % 12 : 12 - dx % 12);
+                Px(tx0 + dx, ty0 + y, cg1);
+                Px(tx0 + dx, ty0 + y + 1, cg2);
+            }
+        } else if (type == 13) { /* Electric: lightning sparks */
+            uint16_t ce1 = UI_RGB(255, 255, 180);
+            uint16_t ce2 = UiMix(head, UI_RGB(255, 120, 10), 4);
+            static const int8_t spk[38] = {
+                2, 3, 5, 7, 9, 8, 6, 4, 7, 10, 13, 11, 8, 5, 2, 0, 0, 3, 6, 8, 11, 10, 7, 4, 6, 9, 12, 9, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0
+            };
+            for (int dx = 0; dx < 38; ++dx) {
+                int y = spk[dx];
+                if (y > 0) {
+                    Px(tx0 + dx, ty0 + y, ce1);
+                    Px(tx0 + dx, ty0 + y + 1, ce2);
+                }
+            }
+        }
+    }
+
+    /* Move Title with bold high-contrast ink and subtle bevel relief */
     {
         uint16_t ink = UiInkOn(head);
-        uint16_t sh = ink == UI_TEXT ? UIS_OUTLINE : UiMix(head, UI_TEXT, 4);
+        uint16_t titleInk = type >= 0 ? UiMix(color, UI_RGB(10, 6, 12), 1) : ink;
+        uint16_t relief = UiMix(head, UI_TEXT, 3);
         int tx = r->x + 8, ty = r->y + 7 + dy;
 
-        if (ink == UI_TEXT) {
-            UiText(title, tx - 1, ty, sh, sh, 1, r->x + r->w - 18);
-            UiText(title, tx + 1, ty, sh, sh, 1, r->x + r->w - 18);
-            UiText(title, tx, ty - 1, sh, sh, 1, r->x + r->w - 18);
-            UiText(title, tx, ty + 1, sh, sh, 1, r->x + r->w - 18);
-        }
-        UiText(title, tx, ty, ink, sh, 1, r->x + r->w - 18);
+        UiText(title, tx, ty + 1, relief, relief, 1, r->x + r->w - 18);
+        UiText(title, tx + 1, ty, relief, relief, 1, r->x + r->w - 18);
+        UiText(title, tx, ty, titleInk, titleInk, 1, r->x + r->w - 18);
     }
     if (state & UI_FOCUSED)
         BFocusGlowBrackets(r);
@@ -522,11 +582,11 @@ static void BCard(int i, const CtrBattleView *v)
     int dy;
 
     if (!m->present) {
-        BCardFrame(r, 0, NULL, 0);
+        BCardFrame(r, 0, -1, NULL, 0);
         return;
     }
     color = UiTypeColor(m->type);
-    dy = BCardFrame(r, color, m->name, state);
+    dy = BCardFrame(r, color, m->type, m->name, state);
     head = (state & UI_PRESSED) ? UiMix(color, UIS_OUTLINE, 2) : color;
     ink = UiInkOn(head);
     sh = ink == UI_TEXT ? UiMix(color, UIS_OUTLINE, 6) : UiMix(head, UI_TEXT, 3);
@@ -639,10 +699,10 @@ static void BTargetCard(int i, const CtrBattleView *v)
     int dy;
 
     if (!t->present) {
-        BCardFrame(r, 0, NULL, 0);
+        BCardFrame(r, 0, -1, NULL, 0);
         return;
     }
-    dy = BCardFrame(r, t->side ? sAlly.body : sFoe.body, t->name, state);
+    dy = BCardFrame(r, t->side ? sAlly.body : sFoe.body, -1, t->name, state);
     {
         char level[12], hp[20];
         CtrPokeTouchRect tag = {(int16_t)(r->x + r->w - 46), (int16_t)(r->y + 27 + dy), 38, 14};
