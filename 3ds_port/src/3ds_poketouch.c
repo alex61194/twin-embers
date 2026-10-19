@@ -291,7 +291,7 @@ static void ChromeButton(const CtrPokeTouchRect *r, int state)
     }
     if ((state & UI_SELECTED) && !(state & UI_DISABLED)) {
         CtrPokeTouchRect rim = UiInset(r, 1);
-        UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, PT_RED_LIGHT);
+        UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, UI_RGB(255, 220, 80));
     }
 }
 
@@ -737,8 +737,22 @@ static void SaveButtons(const CtrPokeTouchView *v)
         int selected = v->saveState != SAVE_CONFIRM || v->saveSel == which - PT_SAVE_FIRST;
         int state = (selected ? UI_FOCUSED : 0) | (v->savePressed == which ? UI_PRESSED : 0);
         const char *label = v->saveState == SAVE_CONFIRM ? sConfirm[which - PT_SAVE_FIRST] : "OK";
-        ChromeButton(&r, state);
-        UiTextCentered(label, &r, UiButtonLabelTop(&r, state, 1), UiLabelColor(state), UI_TEXT_SH, 1);
+
+        if (which == PT_SAVE_FIRST && v->saveState == SAVE_CONFIRM) {
+            static const UiButtonStyle sYes = {UI_RGB(34, 150, 68), UI_RGB(90, 220, 120), UI_RGB(16, 70, 30)};
+            UiButton(&r, &sYes, state);
+            if (selected) {
+                uint16_t gold = UI_RGB(255, 224, 80);
+                Fill(r.x + 1, r.y + 1, 5, 2, gold); Fill(r.x + 1, r.y + 1, 2, 5, gold);
+                Fill(r.x + r.w - 6, r.y + 1, 5, 2, gold); Fill(r.x + r.w - 3, r.y + 1, 2, 5, gold);
+                Fill(r.x + 1, r.y + r.h - 3, 5, 2, gold); Fill(r.x + 1, r.y + r.h - 6, 2, 5, gold);
+                Fill(r.x + r.w - 6, r.y + r.h - 3, 5, 2, gold); Fill(r.x + r.w - 3, r.y + r.h - 6, 2, 5, gold);
+            }
+            UiTextCentered("YES", &r, UiButtonLabelTop(&r, state, 1), UI_TEXT, sYes.shade, 1);
+        } else {
+            ChromeButton(&r, state);
+            UiTextCentered(label, &r, UiButtonLabelTop(&r, state, 1), UiLabelColor(state), UI_TEXT_SH, 1);
+        }
     }
 }
 
@@ -917,10 +931,18 @@ static void Button(int id, const CtrPokeTouchView *v)
         KeyBadge(id == PT_REGISTERED ? 'X' : 'Y', r->x + 3, r->y + 3 + dy, on ? sAccent[id] : UI_TEXT_OFF);
         break;
     case PT_RUN:
-        Fill(r->x + 3, r->y + 9 + dy, 2, 12, on ? (selected ? UI_OK : UI_TEXT_DIM) : UI_TEXT_OFF);
-        UiText("RUN", r->x + 9, r->y + 11 + dy, ink, UI_TEXT_SH, 1, r->x + 40);
-        BIconsPrepare();
-        UiImage(sBImg[BI_SHOE].image.pixels, sBImg[BI_SHOE].image.pal, 24, 24, 24, r->x + 40, r->y + 4 + dy, 1, on);
+        {
+            int pillX = r->x + 5, pillY = r->y + 10 + dy;
+            uint16_t pillBg = selected ? UI_RGB(34, 150, 68) : UI_RGB(60, 64, 72);
+            CtrPokeTouchRect pill = {(int16_t)pillX, (int16_t)pillY, 18, 11};
+
+            UiRoundFill(pillX, pillY, 18, 11, 2, pillBg);
+            UiRoundRect(&pill, 2, selected ? UI_RGB(80, 220, 120) : UI_RGB(100, 104, 112));
+            UiTextCentered(selected ? "ON" : "OFF", &pill, pillY + 2, UI_TEXT, 0, 1);
+            UiText("RUN", r->x + 25, r->y + 11 + dy, ink, UI_TEXT_SH, 1, r->x + 46);
+            BIconsPrepare();
+            UiImage(sBImg[BI_SHOE].image.pixels, sBImg[BI_SHOE].image.pal, 24, 24, 24, r->x + 44, r->y + 4 + dy, 1, on);
+        }
         break;
     }
 }
