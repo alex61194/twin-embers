@@ -180,6 +180,38 @@ static void BallDraw(int cx, int cy, int kind)
         }
 }
 
+/* Subtle circular watermark Pokéball, strictly clipped within `clip` */
+static void BWatermarkBallIn(const CtrPokeTouchRect *clip, int cx, int cy, int rad, uint16_t color)
+{
+    int r2_out = rad * rad;
+    int r2_in = (rad - 1) * (rad - 1);
+    int r_c = rad / 4;
+    int r2_c_out = (r_c + 1) * (r_c + 1);
+    int r2_c_in = (r_c - 1) * (r_c - 1);
+    int r2_dot = (r_c / 2) * (r_c / 2);
+
+    for (int dy = -rad; dy <= rad; ++dy) {
+        int py = cy + dy;
+        if (clip && (py < clip->y || py >= clip->y + clip->h)) continue;
+        if (py < 0 || py >= 240) continue;
+        for (int dx = -rad; dx <= rad; ++dx) {
+            int px = cx + dx;
+            if (clip && (px < clip->x || px >= clip->x + clip->w)) continue;
+            if (px < 0 || px >= 320) continue;
+            int d2 = dx * dx + dy * dy;
+            if (d2 <= r2_out && d2 >= r2_in) {
+                Px(px, py, color);
+            } else if (d2 <= r2_out && (dy == 0 || dy == -1) && (dx < -r_c || dx > r_c)) {
+                Px(px, py, color);
+            } else if (d2 <= r2_c_out && d2 >= r2_c_in) {
+                Px(px, py, color);
+            } else if (d2 <= r2_dot) {
+                Px(px, py, color);
+            }
+        }
+    }
+}
+
 /* Exactly six slots, one for each of the player's party places, on a dark strip. */
 static void BStrip(const CtrBattleView *v)
 {
@@ -196,17 +228,29 @@ static void BStrip(const CtrBattleView *v)
     Px(sBStrip.x + 3, sBStrip.y + sBStrip.h - 4, UIS_PANEL_LO); Px(sBStrip.x + 4, sBStrip.y + sBStrip.h - 5, UIS_BORDER_LIT);
     Px(sBStrip.x + sBStrip.w - 4, sBStrip.y + sBStrip.h - 4, UIS_PANEL_LO); Px(sBStrip.x + sBStrip.w - 5, sBStrip.y + sBStrip.h - 5, UIS_BORDER_LIT);
 
+    /* Decorative watermark Pokéballs on the far left and right edges */
+    BWatermarkBallIn(&sBStrip, sBStrip.x + 15, 18, 9, UI_RGB(68, 14, 18));
+    BWatermarkBallIn(&sBStrip, sBStrip.x + sBStrip.w - 15, 18, 9, UI_RGB(68, 14, 18));
+
     for (int i = 0; i < 6; ++i) {
         if (v->party[i] && i == 0) {
             /* Active Pokémon golden aura ring */
-            for (int dy = -12; dy <= 12; ++dy)
-                for (int dx = -12; dx <= 12; ++dx) {
+            for (int dy = -13; dy <= 13; ++dy)
+                for (int dx = -13; dx <= 13; ++dx) {
                     int d2 = dx * dx + dy * dy;
-                    if (d2 >= 10 * 10 && d2 <= 12 * 12)
-                        Px(xs[i] + dx, 18 + dy, d2 <= 11 * 11 ? UI_RGB(255, 230, 90) : UI_RGB(200, 140, 20));
+                    if (d2 >= 11 * 11 && d2 <= 13 * 13)
+                        Px(xs[i] + dx, 18 + dy, d2 <= 12 * 12 ? UI_RGB(255, 230, 90) : UI_RGB(200, 140, 20));
                 }
         }
         BallDraw(xs[i], 18, v->party[i]);
+        if (v->party[i] == 3) {
+            /* Yellow [PAR] status condition pill badge */
+            int px = xs[i] + 1, py = 18 + 2;
+            CtrPokeTouchRect pill = {(int16_t)px, (int16_t)py, 20, 8};
+            UiRoundFill(pill.x, pill.y, pill.w, pill.h, 2, UI_RGB(240, 180, 20));
+            UiRoundRect(&pill, 2, UI_RGB(255, 235, 90));
+            UiText("PAR", px + 2, py + 1, UI_RGB(60, 35, 0), 0, 1, px + 20);
+        }
     }
 }
 
@@ -293,28 +337,64 @@ static void BActionButton(int i, const CtrBattleView *v)
 
     BIconsPrepare();
     if (i == BUI_ACT_FIGHT) {
-        int top = UiButtonLabelTop(r, state, 3), w = UiTextWidth(label[i], 3), x = r->x + (r->w - w + 54) / 2;
-
         UiButton(r, sStyle[i], state);
         if (!dy) {
             Fill(r->x + 2, r->y + 24, r->w - 4, 25, UI_RGB(200, 28, 22));
-            Fill(r->x + 2, r->y + 49, r->w - 4, 30, UI_RGB(165, 20, 18));
+            Fill(r->x + 2, r->y + 49, r->w - 4, 44, UI_RGB(165, 20, 18));
         }
+        /* Diagonal pinstripes across the crimson FIGHT face */
+        for (int sy = r->y + 10; sy < r->y + r->h - 5; ++sy) {
+            for (int sx = r->x + 4; sx < r->x + r->w - 4; ++sx) {
+                if ((sx + sy) % 10 < 3)
+                    Px(sx, sy + dy, UI_RGB(145, 16, 16));
+            }
+        }
+        /* Giant watermark Pokéball on the right half */
+        BWatermarkBallIn(r, r->x + 215, r->y + 52 + dy, 36, UI_RGB(192, 24, 22));
+
         /* Golden top neon bar across FIGHT */
-        Fill(r->x + 8, r->y + 5 + dy, r->w - 16, 3, sLight[0]);
+        UiRoundFill(r->x + 6, r->y + 5 + dy, r->w - 12, 4, 2, sLight[0]);
         Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[0]);
+
         if (state & UI_FOCUSED)
             BFocusGlowBrackets(r);
-        BIconAt(BI_BURST, x - 54, top - 11);
-        UiText(label[i], x + 1, top + 2, UI_RGB(60, 6, 8), UI_RGB(60, 6, 8), 3, r->x + r->w);
-        UiText(label[i], x, top, UI_TEXT, UI_RGB(60, 6, 8), 3, r->x + r->w);
+
+        /* Fiery starburst icon */
+        int burstX = r->x + 36, burstY = r->y + (r->h - 46) / 2 + dy;
+        BIconAt(BI_BURST, burstX, burstY);
+
+        /* Huge bold white arcade FIGHT label with solid black drop shadow */
+        int tx = r->x + 115, ty = r->y + (r->h - UI_TEXT_H * 3) / 2 + dy;
+        UiText("FIGHT", tx + 2, ty + 2, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
+        UiText("FIGHT", tx + 1, ty + 1, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
+        UiText("FIGHT", tx, ty, UI_TEXT, UIS_OUTLINE, 3, r->x + r->w);
     } else {
-        UiIconButton(r, sStyle[i], state, &sBImg[sIcon[i]].image, sBImg[sIcon[i]].scale, label[i], 2);
-        /* Colored full-width top neon lightbars on BAG, POKeMON, RUN */
-        Fill(r->x + 6, r->y + 5 + dy, r->w - 12, 3, sLight[i]);
-        Fill(r->x + 10, r->y + 6 + dy, r->w - 20, 1, sSpec[i]);
+        UiButton(r, sStyle[i], state);
+
+        /* Watermark Pokéball behind icon */
+        uint16_t wm = i == BUI_ACT_RUN ? UI_RGB(56, 66, 82) : UI_RGB(160, 18, 20);
+        BWatermarkBallIn(r, r->x + r->w / 2, r->y + 36 + dy, 20, wm);
+
+        /* Colored top neon lightbar */
+        UiRoundFill(r->x + 8, r->y + 5 + dy, r->w - 16, 4, 2, sLight[i]);
+        Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[i]);
+
         if (state & UI_FOCUSED)
             BFocusGlowBrackets(r);
+
+        /* Centered high-resolution icons */
+        int iconW = sBImg[sIcon[i]].image.w, iconH = sBImg[sIcon[i]].image.h;
+        int ix = r->x + (r->w - iconW) / 2;
+        int iy = r->y + 14 + (44 - iconH) / 2 + dy;
+        BIconAt(sIcon[i], ix, iy);
+
+        /* Bold white arcade label with black drop shadow */
+        int lw = UiTextWidth(label[i], 2);
+        int lx = r->x + (r->w - lw) / 2;
+        int ly = r->y + r->h - UI_TEXT_H * 2 - 8 + dy;
+        UiText(label[i], lx + 2, ly + 2, UIS_OUTLINE, UIS_OUTLINE, 2, r->x + r->w);
+        UiText(label[i], lx + 1, ly + 1, UIS_OUTLINE, UIS_OUTLINE, 2, r->x + r->w);
+        UiText(label[i], lx, ly, UI_TEXT, UIS_OUTLINE, 2, r->x + r->w);
     }
 }
 
@@ -395,6 +475,24 @@ static void BMoveCategoryIcon(int x, int y, uint8_t type, uint16_t ink, uint16_t
             }
 }
 
+/* Deep saturated elemental background tone for the card body */
+static uint16_t BCardBodyColor(int type)
+{
+    switch (type) {
+    case 10: return UI_RGB(58, 8, 14);   /* Fire: deep saturated crimson */
+    case 4:  return UI_RGB(50, 34, 14);  /* Ground: deep earthy gold-brown */
+    case 5:  return UI_RGB(50, 42, 18);  /* Rock: deep mineral bronze */
+    case 11: return UI_RGB(12, 30, 68);  /* Water: deep ocean indigo */
+    case 12: return UI_RGB(14, 48, 18);  /* Grass: deep jungle green */
+    case 13: return UI_RGB(54, 46, 10);  /* Electric: deep amber gold */
+    case 14: return UI_RGB(54, 12, 38);  /* Psychic: deep magenta */
+    case 15: return UI_RGB(16, 48, 58);  /* Ice: deep glacier cyan */
+    case 16: return UI_RGB(34, 16, 68);  /* Dragon: deep royal violet */
+    case 17: return UI_RGB(28, 24, 28);  /* Dark: deep slate charcoal */
+    default: return UI_RGB(36, 32, 40);  /* Normal/other: dark neutral slate */
+    }
+}
+
 /* A card of the battle (a move, a target): raised, its header band in `color` with `title`, the body a dark tint of
  * the same colour. Returns the vertical offset of its content (1 while pressed). An empty slot is a dark socket. */
 static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const char *title, int state)
@@ -409,17 +507,15 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
         UiTextCentered("-", r, -1, UI_TEXT_OFF, UIS_TEXT_SH, 1);
         return 0;
     }
-    if (!pressed)
-        UiRoundFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_RADIUS_BUTTON - 1, UiMix(color, UIS_OUTLINE, 5));
 
-    /* Vertical shading gradient across the card body with rich element-tinted background */
+    /* Card body with deep saturated elemental tone */
     {
         int bodyY = r->y + 21 + dy;
         int bodyH = (r->y + 1 + dy + bottom) - bodyY;
         if (bodyH > 0) {
-            uint16_t base = type >= 0 ? UiMix(UI_RGB(16, 14, 20), color, 3) : UIS_PANEL;
-            uint16_t c_top = UiMix(base, color, pressed ? 2 : 4);
-            uint16_t c_mid = UiMix(base, color, pressed ? 1 : 2);
+            uint16_t base = type >= 0 ? BCardBodyColor(type) : UIS_PANEL;
+            uint16_t c_top = UiMix(base, color, pressed ? 2 : 3);
+            uint16_t c_mid = base;
             uint16_t c_bot = UiMix(base, UI_RGB(6, 4, 8), 2);
             int h1 = bodyH * 2 / 5;
             int h2 = bodyH * 3 / 5;
@@ -428,93 +524,54 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
             Fill(r->x + 1, bodyY, r->w - 2, h1, c_top);
             Fill(r->x + 1, bodyY + h1, r->w - 2, h2 - h1, c_mid);
             Fill(r->x + 1, bodyY, 1, bodyH - 2, UiMix(c_mid, UI_TEXT, 2));
-            Fill(r->x + 1, bodyY, r->w - 2, 1, UiMix(color, UIS_OUTLINE, 6));
+            Fill(r->x + 1, bodyY, r->w - 2, 1, UIS_OUTLINE);
         }
     }
 
-    /* Glossy Header */
+    /* Glossy Header Band */
     UiRoundBand(r->x + 1, r->y + 1 + dy, r->w - 2, 21, UI_RADIUS_BUTTON - 1, 1, 0, head);
     Fill(r->x + 3, r->y + 1 + dy, r->w - 6, 1, UiMix(head, UI_TEXT, 5));
     Fill(r->x + 2, r->y + 2 + dy, r->w - 4, 1, UiMix(head, UI_TEXT, 3));
-    Fill(r->x + 2, r->y + 3 + dy, r->w - 4, 6, UiMix(head, UI_TEXT, 2));
+    Fill(r->x + 2, r->y + 3 + dy, r->w - 4, 5, UiMix(head, UI_TEXT, 2));
     Fill(r->x + 1, r->y + 19 + dy, r->w - 2, 1, UiMix(head, UIS_OUTLINE, 3));
     Fill(r->x + 1, r->y + 20 + dy, r->w - 2, 1, UIS_OUTLINE);
 
-    /* Background element silhouette textures across the header band */
-    if (type >= 0) {
-        int tx0 = r->x + r->w - 58, ty0 = r->y + 3 + dy;
-        if (type == 10) { /* Fire: rising flame tongues */
-            uint16_t c1 = UiMix(head, UI_RGB(255, 60, 20), 4);
-            uint16_t c2 = UiMix(head, UI_RGB(255, 215, 60), 3);
-            static const int8_t flm[38] = {
-                1, 2, 4, 7, 10, 12, 11, 8, 4, 2, 1, 3, 6, 9, 13, 14, 12, 8, 5, 2, 1, 3, 5, 8, 11, 10, 7, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0
-            };
-            for (int dx = 0; dx < 38; ++dx) {
-                int ht = flm[dx];
-                for (int d = 0; d < ht; ++d)
-                    Px(tx0 + dx, ty0 + 14 - d, d >= ht - 2 ? c2 : c1);
-            }
-        } else if (type == 11) { /* Water: rhythmic ocean wave ripples */
-            uint16_t cw1 = UiMix(head, UI_RGB(30, 215, 255), 4);
-            uint16_t cw2 = UiMix(head, UI_RGB(12, 60, 160), 4);
-            static const int8_t wv[38] = {
-                7, 8, 9, 10, 11, 10, 9, 8, 7, 6, 5, 4, 3, 4, 5, 6, 7, 8, 9, 10, 11, 10, 9, 8, 7, 6, 5, 4, 3, 4, 5, 6, 7, 8, 9, 10, 10, 9
-            };
-            for (int dx = 0; dx < 38; ++dx) {
-                int y = wv[dx];
-                Px(tx0 + dx, ty0 + y, cw1);
-                Px(tx0 + dx, ty0 + y + 1, cw2);
-                if (y > 4 && y < 11)
-                    Px(tx0 + dx, ty0 + y - 4, cw1);
-            }
-        } else if (type == 4 || type == 5) { /* Ground / Rock: desert dune strata */
-            uint16_t cd1 = UiMix(head, UI_RGB(255, 220, 140), 3);
-            uint16_t cd2 = UiMix(head, UI_RGB(70, 45, 10), 4);
-            for (int dx = 0; dx < 38; ++dx) {
-                int y1 = 4 + (dx * 6) / 38;
-                int y2 = 8 + ((38 - dx) * 5) / 38;
-                Px(tx0 + dx, ty0 + y1, cd1);
-                Px(tx0 + dx, ty0 + y1 + 1, cd2);
-                Px(tx0 + dx, ty0 + y2, cd1);
-                Px(tx0 + dx, ty0 + y2 + 1, cd2);
-            }
-        } else if (type == 12) { /* Grass: stylized vine contours */
-            uint16_t cg1 = UiMix(head, UI_RGB(120, 255, 90), 3);
-            uint16_t cg2 = UiMix(head, UI_RGB(30, 90, 20), 4);
-            for (int dx = 0; dx < 38; ++dx) {
-                int y = 5 + (dx % 12 < 6 ? dx % 12 : 12 - dx % 12);
-                Px(tx0 + dx, ty0 + y, cg1);
-                Px(tx0 + dx, ty0 + y + 1, cg2);
-            }
-        } else if (type == 13) { /* Electric: lightning sparks */
-            uint16_t ce1 = UI_RGB(255, 255, 180);
-            uint16_t ce2 = UiMix(head, UI_RGB(255, 120, 10), 4);
-            static const int8_t spk[38] = {
-                2, 3, 5, 7, 9, 8, 6, 4, 7, 10, 13, 11, 8, 5, 2, 0, 0, 3, 6, 8, 11, 10, 7, 4, 6, 9, 12, 9, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0
-            };
-            for (int dx = 0; dx < 38; ++dx) {
-                int y = spk[dx];
-                if (y > 0) {
-                    Px(tx0 + dx, ty0 + y, ce1);
-                    Px(tx0 + dx, ty0 + y + 1, ce2);
-                }
-            }
+    /* Diagonal 45° pinstripes across the header band */
+    for (int hy = 2; hy < 20; ++hy) {
+        int py = r->y + hy + dy;
+        uint16_t stripe = UiMix(head, UI_RGB(255, 255, 255), 2);
+        for (int hx = 2; hx < r->w - 2; ++hx) {
+            if ((hx + hy) % 7 < 2)
+                Px(r->x + hx, py, stripe);
         }
     }
 
-    /* Move Title with bold high-contrast ink and subtle bevel relief */
-    {
-        uint16_t ink = UiInkOn(head);
-        uint16_t titleInk = type >= 0 ? UiMix(color, UI_RGB(10, 6, 12), 1) : ink;
-        uint16_t relief = UiMix(head, UI_TEXT, 3);
-        int tx = r->x + 8, ty = r->y + 7 + dy;
-
-        UiText(title, tx, ty + 1, relief, relief, 1, r->x + r->w - 18);
-        UiText(title, tx + 1, ty, relief, relief, 1, r->x + r->w - 18);
-        UiText(title, tx, ty, titleInk, titleInk, 1, r->x + r->w - 18);
+    /* Left mini emblem box for elemental icon */
+    if (type >= 0) {
+        int ibX = r->x + 5, ibY = r->y + 4 + dy;
+        CtrPokeTouchRect ibox = {(int16_t)ibX, (int16_t)ibY, 14, 13};
+        UiRoundFill(ibox.x, ibox.y, ibox.w, ibox.h, 2, UI_RGB(20, 6, 8));
+        UiRoundRect(&ibox, 2, UI_RGB(64, 20, 24));
+        BTypeIcon(ibox.x + 5, ibox.y + 4, type, UI_TEXT);
     }
+
+    /* Move Title in BOLD WHITE arcade font with solid 1px black outline */
+    {
+        int tx = type >= 0 ? r->x + 23 : r->x + 8;
+        int ty = r->y + 7 + dy;
+        int limit = r->x + r->w - 18;
+
+        UiText(title, tx - 1, ty, UIS_OUTLINE, 0, 1, limit);
+        UiText(title, tx + 1, ty, UIS_OUTLINE, 0, 1, limit);
+        UiText(title, tx, ty - 1, UIS_OUTLINE, 0, 1, limit);
+        UiText(title, tx, ty + 1, UIS_OUTLINE, 0, 1, limit);
+        UiText(title, tx + 1, ty + 1, UIS_OUTLINE, 0, 1, limit);
+        UiText(title, tx, ty, UI_TEXT, 0, 1, limit);
+    }
+
     if (state & UI_FOCUSED)
         BFocusGlowBrackets(r);
+
     return dy;
 }
 
@@ -578,7 +635,7 @@ static void BCard(int i, const CtrBattleView *v)
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleMove *m = &v->move[i];
     int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
-    uint16_t color, head, ink, sh;
+    uint16_t color;
     int dy;
 
     if (!m->present) {
@@ -587,31 +644,28 @@ static void BCard(int i, const CtrBattleView *v)
     }
     color = UiTypeColor(m->type);
     dy = BCardFrame(r, color, m->type, m->name, state);
-    head = (state & UI_PRESSED) ? UiMix(color, UIS_OUTLINE, 2) : color;
-    ink = UiInkOn(head);
-    sh = ink == UI_TEXT ? UiMix(color, UIS_OUTLINE, 6) : UiMix(head, UI_TEXT, 3);
-    BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, ink, sh);
+
+    /* Category icon on right corner of header */
+    BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, UI_TEXT, UIS_OUTLINE);
+
     {
         CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), 52, 14};
         char pp[12];
 
         UiTypeBadge(&badge, m->type, m->typeName);
-        BTypeIcon(badge.x + 3, badge.y + 4, m->type, ink);
+        BTypeIcon(badge.x + 3, badge.y + 4, m->type, UI_TEXT);
         BMatchupTag(m->matchup, r->x + 63, r->y + 28 + dy);
-        if (m->accuracy[0]) {
-            UiText("PWR", r->x + r->w - 52, r->y + 25 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
-            UiTextRight(m->power, r->x + r->w - 8, r->y + 25 + dy, UI_TEXT, UIS_TEXT_SH, 1);
-            UiText("ACC", r->x + r->w - 52, r->y + 37 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
-            UiTextRight(m->accuracy, r->x + r->w - 8, r->y + 37 + dy, UI_TEXT, UIS_TEXT_SH, 1);
-        } else {
-            UiText("PWR", r->x + r->w - 52, r->y + 31 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
-            UiTextRight(m->power, r->x + r->w - 8, r->y + 31 + dy, UI_TEXT, UIS_TEXT_SH, 1);
-        }
-        UiText("PP", r->x + 8, r->y + 48 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + 30);
-        snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
-        UiText(pp, r->x + 24, r->y + 48 + dy, BPpColor(m->pp, m->maxPp), UIS_TEXT_SH, 1, r->x + 68);
 
-        /* Neon Capsule Energy Gauge */
+        /* PWR in light blue-grey (#a0b4cc) and value in bold white */
+        UiText("PWR", r->x + r->w - 52, r->y + 28 + dy, UI_RGB(160, 180, 204), UIS_TEXT_SH, 1, r->x + r->w);
+        UiTextRight(m->power, r->x + r->w - 8, r->y + 28 + dy, UI_TEXT, UIS_TEXT_SH, 1);
+
+        /* PP in #a0b4cc and count in bold white */
+        UiText("PP", r->x + 8, r->y + 48 + dy, UI_RGB(160, 180, 204), UIS_TEXT_SH, 1, r->x + 30);
+        snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
+        UiText(pp, r->x + 24, r->y + 48 + dy, UI_TEXT, UIS_TEXT_SH, 1, r->x + 68);
+
+        /* Segmented Cyan Neon Capsule Energy Gauge */
         {
             CtrPokeTouchRect bar = {(int16_t)(r->x + 66), (int16_t)(r->y + 50 + dy), (int16_t)(r->w - 74), 6};
             int fill = m->maxPp ? (int)((unsigned long)m->pp * (bar.w - 2) / m->maxPp) : 0;
@@ -624,13 +678,13 @@ static void BCard(int i, const CtrBattleView *v)
                            : m->pp * 2 <= m->maxPp ? UI_RGB(255, 245, 180)
                            : UI_RGB(210, 250, 255);
 
-            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(14, 10, 16));
-            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(24, 18, 28));
+            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(12, 10, 16));
+            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(20, 16, 24));
             if (fill > 0) {
                 Fill(bar.x + 1, bar.y + 1, fill, bar.h - 2, neon);
                 Fill(bar.x + 1, bar.y + 1, fill, 1, shine);
                 for (int seg = 7; seg < fill; seg += 7)
-                    Fill(bar.x + 1 + seg, bar.y + 1, 1, bar.h - 2, UI_RGB(14, 10, 16));
+                    Fill(bar.x + 1 + seg, bar.y + 1, 1, bar.h - 2, UI_RGB(12, 10, 16));
             }
         }
     }
@@ -639,9 +693,23 @@ static void BCard(int i, const CtrBattleView *v)
 /* Sculpted CANCEL button with an inner metallic bevel ring. */
 static void BCancel(const CtrPokeTouchRect *r, int pressed)
 {
+    int state = pressed ? UI_PRESSED : 0;
     CtrPokeTouchRect rim = UiInset(r, 1);
 
-    UiLabelButton(r, &sUiS->cancel, pressed ? UI_PRESSED : 0, "CANCEL", r->h >= 28 ? 2 : 1);
+    UiLabelButton(r, &sUiS->cancel, state, "CANCEL", r->h >= 28 ? 2 : 1);
+    if (r->h >= 36) {
+        int dy = pressed ? 1 : 0;
+        BWatermarkBallIn(r, r->x + r->w / 2, r->y + r->h / 2 + dy, 14,
+                         pressed ? UI_RGB(110, 12, 14) : UI_RGB(155, 18, 20));
+        /* Bold white text with black drop shadow over the watermark */
+        int scale = 2;
+        int top = UiButtonLabelTop(r, state, scale);
+        int tw = UiTextWidth("CANCEL", scale);
+        int tx = r->x + (r->w - tw) / 2;
+        UiText("CANCEL", tx + 2, top + 2, UIS_OUTLINE, UIS_OUTLINE, scale, r->x + r->w);
+        UiText("CANCEL", tx + 1, top + 1, UIS_OUTLINE, UIS_OUTLINE, scale, r->x + r->w);
+        UiText("CANCEL", tx, top, UI_TEXT, UIS_OUTLINE, scale, r->x + r->w);
+    }
     UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, pressed ? sUiS->cancel.body : UIS_BORDER_LIT);
 }
 
@@ -662,21 +730,27 @@ static void BMoveFooter(const CtrBattleView *v)
     }
     {
         char stats[64];
-        snprintf(stats, sizeof(stats), "PWR: %s  ACC: %s%%", m->power[0] ? m->power : "-", m->accuracy[0] ? m->accuracy : "--");
-        UiText(stats, r->x + 8, r->y + 5, UI_RGB(240, 200, 100), UIS_TEXT_SH, 1, r->x + 145);
+        const char *pwr = m->power[0] ? m->power : "-";
+        const char *acc = m->accuracy[0] ? m->accuracy : "--";
+        snprintf(stats, sizeof(stats), "PWR %s  ACC %s%%", pwr, acc);
+        UiText(stats, r->x + 8, r->y + 4, UI_RGB(240, 205, 100), UIS_TEXT_SH, 1, r->x + r->w - 70);
         if (m->matchup == CTR_FX_DOUBLE || m->matchup == CTR_FX_QUADRUPLE) {
-            CtrPokeTouchRect stab = {(int16_t)(r->x + r->w - 66), (int16_t)(r->y + 4), 60, 12};
+            CtrPokeTouchRect stab = {(int16_t)(r->x + r->w - 66), (int16_t)(r->y + 3), 60, 11};
             UiRoundFill(stab.x, stab.y, stab.w, stab.h, 2, UI_RGB(236, 174, 36));
             UiRoundRect(&stab, 2, UI_RGB(255, 220, 80));
             UiTextCentered("STAB x1.5", &stab, -1, UI_RGB(60, 40, 0), 0, 1);
         }
     }
+    /* Crimson divider line across panel */
+    Fill(r->x + 6, r->y + 16, r->w - 12, 1, UI_RGB(160, 24, 28));
+    Fill(r->x + 6, r->y + 17, r->w - 12, 1, UI_RGB(24, 4, 6));
+
     if (m->desc[0]) {
-        BDescribeN(m->desc, r->x + 8, r->y + 18, r->w - 14, 2, UI_TEXT);
+        BDescribeN(m->desc, r->x + 8, r->y + 20, r->w - 16, 2, UI_TEXT);
     } else {
         const char *cat = m->type < 10 ? "PHYSICAL MOVE" : "SPECIAL MOVE";
-        UiText(m->name, r->x + 8, r->y + 18, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 6);
-        UiText(cat, r->x + 8, r->y + 30, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
+        UiText(m->name, r->x + 8, r->y + 20, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 6);
+        UiText(cat, r->x + 8, r->y + 31, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
     }
 }
 
