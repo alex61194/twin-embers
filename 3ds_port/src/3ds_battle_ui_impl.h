@@ -826,12 +826,17 @@ static void BSafariButton(int i, const CtrBattleView *v)
     static const uint16_t sSafariAccent[4] = {UI_RGB(70, 172, 255), UI_RGB(236, 112, 140), UI_RGB(190, 182, 170), UI_RGB(72, 206, 104)};
     const CtrPokeTouchRect *r = &sBSafari[i];
     int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
-    int dy = (state & UI_PRESSED) ? 1 : 0, cx = r->x + r->w / 2, cy = r->y + 30 + dy;
+    int dy = (state & UI_PRESSED) ? 1 : 0, cx = r->x + r->w / 2;
 
     BIconsPrepare();
     UiButton(r, sStyle[i], state);
     BAccent(r, dy, sSafariAccent[i]);
-    BIconAt(sSafariIcon[i], cx - 12, cy - 12 + 4);
+    {
+        /* centred by its own size (BALL is 34x34, RUN 42x34), in the 38 pixels between the accent and the label */
+        int w = sBImg[sSafariIcon[i]].image.w * sBImg[sSafariIcon[i]].scale, h = sBImg[sSafariIcon[i]].image.h * sBImg[sSafariIcon[i]].scale;
+
+        BIconAt(sSafariIcon[i], cx - w / 2, r->y + 12 + (38 - h) / 2 + dy);
+    }
     UiText(label[i], cx - UiTextWidth(label[i], 2) / 2, r->y + 52 + dy, UI_TEXT, sStyle[i]->shade, 2, r->x + r->w);
 }
 

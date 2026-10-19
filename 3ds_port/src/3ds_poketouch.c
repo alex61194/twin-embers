@@ -880,6 +880,52 @@ static void SoftIconsPrepare(void)
         PokeTouch_SoftIcon(sMenuItemArt[n], &sSoft[n]);
 }
 
+/* The RUN tile's shoe: the battle's 42x34 art (3ds_icons.h) halved to 21x17 by 2x2 boxes, a box opaque when two of its four
+ * pixels are, its colour the mean of those. The tile once drew the full art as if it were 24x24 and showed noise. */
+#define RUN_SHOE_W ((SBARTSHOE_W + 1) / 2)
+#define RUN_SHOE_H ((SBARTSHOE_H + 1) / 2)
+static void RunShoe(int x, int y, int on)
+{
+    static uint16_t px[RUN_SHOE_W * RUN_SHOE_H];
+    static uint8_t solid[RUN_SHOE_W * RUN_SHOE_H];
+    static int ready;
+
+    if (!ready) {
+        const uint8_t *src;
+        const uint16_t *pal;
+
+        BIconsPrepare();
+        src = sBImg[BI_SHOE].image.pixels;
+        pal = sBImg[BI_SHOE].image.pal;
+        for (int oy = 0; oy < RUN_SHOE_H; ++oy)
+            for (int ox = 0; ox < RUN_SHOE_W; ++ox) {
+                int n = 0, r = 0, g = 0, b = 0;
+
+                for (int dy = 0; dy < 2; ++dy)
+                    for (int dx = 0; dx < 2; ++dx) {
+                        int sx = ox * 2 + dx, sy = oy * 2 + dy;
+                        uint8_t v = sx < SBARTSHOE_W && sy < SBARTSHOE_H ? src[sy * SBARTSHOE_W + sx] : 0;
+
+                        if (v) {
+                            ++n;
+                            r += pal[v] >> 11;
+                            g += (pal[v] >> 5) & 63;
+                            b += pal[v] & 31;
+                        }
+                    }
+                if (n >= 2) {
+                    solid[oy * RUN_SHOE_W + ox] = 1;
+                    px[oy * RUN_SHOE_W + ox] = (uint16_t)((r / n) << 11 | (g / n) << 5 | (b / n));
+                }
+            }
+        ready = 1;
+    }
+    for (int oy = 0; oy < RUN_SHOE_H; ++oy)
+        for (int ox = 0; ox < RUN_SHOE_W; ++ox)
+            if (solid[oy * RUN_SHOE_W + ox])
+                Px(x + ox, y + oy, Tone(px[oy * RUN_SHOE_W + ox], on));
+}
+
 static void Button(int id, const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchRects[id];
@@ -940,8 +986,7 @@ static void Button(int id, const CtrPokeTouchView *v)
             UiRoundRect(&pill, 2, selected ? UI_RGB(80, 220, 120) : UI_RGB(100, 104, 112));
             UiTextCentered(selected ? "ON" : "OFF", &pill, pillY + 2, UI_TEXT, 0, 1);
             UiText("RUN", r->x + 25, r->y + 11 + dy, ink, UI_TEXT_SH, 1, r->x + 46);
-            BIconsPrepare();
-            UiImage(sBImg[BI_SHOE].image.pixels, sBImg[BI_SHOE].image.pal, 24, 24, 24, r->x + 44, r->y + 4 + dy, 1, on);
+            RunShoe(r->x + 47, r->y + 6 + dy, on);
         }
         break;
     }
