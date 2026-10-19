@@ -118,6 +118,9 @@ extern int CtrBattle_MoveType(unsigned move);
 extern void CtrBattle_TypeName(int type, char *out, int size);
 extern unsigned CtrBattle_MovePower(unsigned move);
 extern int CtrBattle_MoveMatchup(unsigned move);
+extern int CtrBattle_MoveStab(unsigned move);
+extern unsigned CtrBattle_MoveEffectChance(unsigned move);
+extern int CtrBattle_MovePriority(unsigned move);
 extern unsigned CtrBattle_MoveAccuracy(unsigned move);
 extern int CtrBattle_TargetMatchup(int target);
 extern int CtrBattle_MovePP(int slot, int *pp, int *maxPp);
@@ -996,6 +999,9 @@ static void BattleFill(CtrBattleView *v)
             m->matchup = (uint8_t)CtrBattle_MoveMatchup(move);
         else
             m->matchup = CTR_FX_NONE;
+        m->stab = (uint8_t)(CtrBattle_MoveStab(move) != 0);
+        m->effectChance = (uint8_t)CtrBattle_MoveEffectChance(move);
+        m->priority = (int8_t)CtrBattle_MovePriority(move);
         power = CtrBattle_MovePower(move);
         if (power)
             snprintf(m->power, sizeof(m->power), "%u", power > 999 ? 999 : power);

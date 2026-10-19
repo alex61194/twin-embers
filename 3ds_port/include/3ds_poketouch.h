@@ -172,6 +172,9 @@ typedef struct {
     char accuracy[5];               /* "100", or "-" for a move that does not check accuracy */
     uint8_t pp, maxPp;              /* what the controller's own move list holds (CtrBattle_MovePP) */
     uint8_t matchup;                /* against the foe: a CTR_FX_* (3ds_type_chart.h), CTR_FX_NONE draws nothing */
+    uint8_t stab;                   /* the move is of one of the attacker's own types (same-type attack bonus) */
+    uint8_t effectChance;           /* percent chance of its extra effect, 0 for none */
+    int8_t priority;                /* the move's priority bracket, 0 for most */
     char desc[BUI_DESC_LEN];        /* FireRed's description, wrapped when drawn */
 } CtrBattleMove;
 enum { BUI_BAG_TAB = 100, BUI_BAG_ROW = 200, BUI_BAG_MENU = 300, BUI_BAG_CANCEL = 400, BUI_BAG_MESSAGE = 500,

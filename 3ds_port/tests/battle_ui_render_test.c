@@ -280,10 +280,13 @@ int main(int argc, char **argv)
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
 #ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MATCHUPS")) {
-        /* The matchup tags (opt-in: the baseline comparison above does not draw them). A tag's fill is read back
-         * next to its left edge: green for x2 and x4, orange for x1/2, red for x0. */
+        /* The matchup tags (opt-in: the baseline comparison above does not draw them). A tag is a 40x14 rounded fill
+         * that starts right after the type pill, between x+37 and x+98 of its card, on the row y+28..y+42: its fill
+         * colour is counted along the row y+35 (x2 green, x4 lime inside a gold rim, x1/2 orange, x0 red). */
         static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        static const uint16_t fill[4] = {UI_RGB(40, 150, 70), UI_RGB(204, 84, 24), UI_RGB(190, 40, 40), UI_RGB(110, 245, 30)};
         CtrBattleView w = v;
+        int gold;
 
         for (k = 0; k < 4; ++k) {
             w.move[k] = v.move[k < 3 ? k : 0];
@@ -292,31 +295,36 @@ int main(int argc, char **argv)
         }
         w.showCursor = 0;
         settle(&old, &w); old = w; put(out, "03b_move_matchups");
-        int greens[4];
-
         for (k = 0; k < 4; ++k) {
             const CtrPokeTouchRect *r = &sBCard[k];
-            unsigned c = at(r->x + 63 + 3, r->y + 28 + 7);
-            int red = (int)(c >> 11) << 3, green = (int)((c >> 5) & 63) << 2;
+            int found = 0;
 
-            greens[k] = green;
+            for (int x = r->x + 37; x < r->x + 98; ++x)
+                found += at(x, r->y + 35) == fill[k];
+            assert(found >= 18);           /* the tag's fill is there, in the colour of its meaning */
+            for (int c = 0; c < 4; ++c)
+                if (c != k && fill[c] != fill[k]) {
+                    int other = 0;
 
-            if (fx[k] == CTR_FX_DOUBLE || fx[k] == CTR_FX_QUADRUPLE)
-                assert(green > red + 30);
-            else if (fx[k] == CTR_FX_HALF)
-                assert(red > green + 30 && green > 90);
-            else
-                assert(red > green + 60 && green < 90);
+                    for (int x = r->x + 37; x < r->x + 98; ++x)
+                        other += at(x, r->y + 35) == fill[c];
+                    assert(other == 0);    /* and in no other */
+                }
         }
-        assert(greens[3] > greens[0] + 16);    /* x4 is a brighter green than x2 */
-        /* A neutral hit draws nothing: that spot is the card's own again. */
+        gold = 0;
+        for (int x = sBCard[3].x + 37; x < sBCard[3].x + 98; ++x)
+            gold += at(x, sBCard[3].y + 35 - 6) == UI_RGB(255, 224, 102) || at(x, sBCard[3].y + 28) == UI_RGB(255, 224, 102);
+        assert(gold > 0);                  /* the x4 has its gold rim */
+        /* A neutral hit draws nothing: the row of the first card has no fill of its tag any more. */
         {
             const CtrPokeTouchRect *r = &sBCard[0];
-            unsigned tagged = at(r->x + 66, r->y + 35);
+            int left = 0;
 
             w.move[0].matchup = CTR_FX_NONE;
             settle(&old, &w); old = w;
-            assert(at(r->x + 66, r->y + 35) != tagged);
+            for (int x = r->x + 37; x < r->x + 98; ++x)
+                left += at(x, r->y + 35) == fill[0];
+            assert(left == 0);
         }
         settle(&old, &v); old = v;       /* and back to the cards without tags */
     }

@@ -12,10 +12,10 @@
 static const CtrPokeTouchRect sBStrip = {3, 3, 314, 31};
 static const CtrPokeTouchRect sBBody = {3, 34, 314, 203};
 static const CtrPokeTouchRect sBAction[4] = {      /* by the controller's action number */
-    {8, 40, 304, 98},               /* FIGHT */
-    {8, 144, 98, 84},               /* BAG */
-    {214, 144, 98, 84},             /* POKeMON */
-    {111, 144, 98, 84},             /* RUN */
+    {8, 40, 304, 104},              /* FIGHT: the priority, a little taller than the row */
+    {8, 150, 98, 78},               /* BAG */
+    {214, 150, 98, 78},             /* POKeMON */
+    {111, 150, 98, 78},             /* RUN */
 };
 static const CtrPokeTouchRect sBCard[4] = {{6, 40, 151, 68}, {163, 40, 151, 68}, {6, 114, 151, 69}, {163, 114, 151, 69}};
 static const CtrPokeTouchRect sBMoveFooter = {6, 188, 218, 44};
@@ -290,25 +290,37 @@ static void BFocusGlowBrackets(const CtrPokeTouchRect *r)
     Px(r->x + r->w - 3, r->y + r->h - 3, bright);
 }
 
-/* 5x6 pixel mini elemental icons inside type badges. */
+/* 8x8 silhouettes for FireRed's 18 types (its type numbers 0-17: Normal, Fighting, Flying, Poison, Ground, Rock, Bug,
+ * Ghost, Steel, ???, Fire, Water, Grass, Electric, Psychic, Ice, Dragon, Dark), one byte a row, the high bit the left
+ * pixel. Hand-drawn for this port. */
 static void BTypeIcon(int x, int y, uint8_t type, uint16_t ink)
 {
-    static const uint8_t sFlame[6] = {0x04, 0x0E, 0x1F, 0x1E, 0x1F, 0x0E};   /* Fire (10) */
-    static const uint8_t sDrop[6]  = {0x04, 0x0E, 0x0E, 0x1F, 0x1F, 0x0E};   /* Water (11) */
-    static const uint8_t sLeaf[6]  = {0x03, 0x07, 0x0F, 0x1E, 0x1C, 0x08};   /* Grass (12) */
-    static const uint8_t sBolt[6]  = {0x06, 0x0C, 0x1F, 0x06, 0x0C, 0x08};   /* Electric (13) */
-    static const uint8_t sRock[6]  = {0x0E, 0x1F, 0x1F, 0x1F, 0x1F, 0x0E};   /* Ground/Rock (4/5) */
-    const uint8_t *pat = type == 10 ? sFlame
-                       : type == 11 ? sDrop
-                       : type == 12 ? sLeaf
-                       : type == 13 ? sBolt
-                       : (type == 4 || type == 5) ? sRock : NULL;
+    static const uint8_t sIcon[18][8] = {
+        {0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C},   /* Normal: a ring */
+        {0x78, 0x7C, 0x7F, 0x7F, 0x7E, 0x3E, 0x3C, 0x3C},   /* Fighting: a fist */
+        {0x03, 0x0F, 0x3F, 0x7F, 0xFF, 0x66, 0x24, 0x00},   /* Flying: a wing */
+        {0x38, 0x7C, 0x6C, 0x7C, 0x38, 0x28, 0x10, 0x00},   /* Poison: a skull */
+        {0x00, 0x08, 0x1C, 0x3E, 0x7F, 0xFF, 0xFF, 0xFF},   /* Ground: a mountain */
+        {0x00, 0x3C, 0x7E, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C},   /* Rock: a boulder */
+        {0x99, 0x5A, 0x3C, 0x7E, 0x7E, 0x3C, 0x5A, 0x99},   /* Bug: a beetle */
+        {0x3C, 0x7E, 0xDB, 0xFF, 0xFF, 0xFF, 0xFF, 0xAA},   /* Ghost: a sheet with eyes */
+        {0x18, 0x5A, 0x3C, 0xE7, 0xE7, 0x3C, 0x5A, 0x18},   /* Steel: a cog */
+        {0x3C, 0x66, 0x06, 0x0C, 0x18, 0x00, 0x18, 0x00},   /* ???: a question mark */
+        {0x10, 0x18, 0x38, 0x3C, 0x7E, 0x7F, 0x7F, 0x3E},   /* Fire: a flame */
+        {0x10, 0x10, 0x38, 0x38, 0x7C, 0x7C, 0x7C, 0x38},   /* Water: a drop */
+        {0x03, 0x0F, 0x3F, 0x7F, 0x7E, 0xBC, 0x30, 0x40},   /* Grass: a leaf */
+        {0x0C, 0x18, 0x30, 0x7E, 0x0C, 0x18, 0x30, 0x20},   /* Electric: a bolt */
+        {0x3C, 0x42, 0x99, 0xA5, 0xA5, 0x99, 0x42, 0x3C},   /* Psychic: a spiral */
+        {0x10, 0x92, 0x54, 0x38, 0xFE, 0x38, 0x54, 0x92},   /* Ice: a snowflake */
+        {0x40, 0x60, 0x70, 0x78, 0x7C, 0x3C, 0x18, 0x08},   /* Dragon: a fang */
+        {0x3C, 0x78, 0xF0, 0xF0, 0xF0, 0xF0, 0x78, 0x3C},   /* Dark: a crescent */
+    };
 
-    if (!pat)
+    if (type > 17)
         return;
-    for (int r = 0; r < 6; ++r)
-        for (int c = 0; c < 5; ++c)
-            if (pat[r] & (1u << (4 - c)))
+    for (int r = 0; r < 8; ++r)
+        for (int c = 0; c < 8; ++c)
+            if (sIcon[type][r] & (0x80u >> c))
                 Px(x + c, y + r, ink);
 }
 
@@ -326,7 +338,9 @@ static void BAccent(const CtrPokeTouchRect *r, int dy, uint16_t color)
 
 static void BActionButton(int i, const CtrBattleView *v)
 {
-    const UiButtonStyle *sStyle[4] = {&sUiS->fight, &sUiS->bag, &sUiS->pokemon, &sUiS->run};
+    /* FIGHT keeps the chrome's bright crimson; the three below wear colours of their own (BAG a leather brown,
+     * POKeMON a deep wine, RUN the slate) so that only FIGHT is the saturated red. */
+    UiButtonStyle sStyle[4];
     static const char *const label[4] = {"FIGHT", "BAG", "POK\xC3\xA9MON", "RUN"};
     static const int sIcon[4] = {BI_BURST, BI_BAG, BI_POKEBALL, BI_SHOE};
     const CtrPokeTouchRect *r = &sBAction[i];
@@ -335,45 +349,58 @@ static void BActionButton(int i, const CtrBattleView *v)
     static const uint16_t sLight[4] = {UI_RGB(255, 205, 55), UI_RGB(65, 225, 110), UI_RGB(60, 190, 255), UI_RGB(255, 225, 60)};
     static const uint16_t sSpec[4]  = {UI_RGB(255, 255, 215), UI_RGB(200, 255, 215), UI_RGB(210, 245, 255), UI_RGB(255, 255, 210)};
 
+    sStyle[0] = sUiS->fight;
+    sStyle[1] = sUiS->bag;
+    sStyle[2] = sUiS->pokemon;
+    sStyle[3] = sUiS->run;
+    if (sUiS == &sUiRed) {
+        sStyle[1] = (UiButtonStyle){UI_RGB(138, 74, 28), UI_RGB(186, 112, 52), UI_RGB(86, 42, 14)};
+        sStyle[2] = (UiButtonStyle){UI_RGB(110, 22, 48), UI_RGB(160, 52, 84), UI_RGB(68, 12, 30)};
+    }
     BIconsPrepare();
     if (i == BUI_ACT_FIGHT) {
-        UiButton(r, sStyle[i], state);
+        int top = 24, mid = 49;     /* where the two flat bands of the face start, from the button's top */
+
+        UiButton(r, &sStyle[i], state);
         if (!dy) {
-            Fill(r->x + 2, r->y + 24, r->w - 4, 25, UI_RGB(200, 28, 22));
-            Fill(r->x + 2, r->y + 49, r->w - 4, 44, UI_RGB(165, 20, 18));
+            Fill(r->x + 2, r->y + top, r->w - 4, mid - top, UI_RGB(200, 28, 22));
+            Fill(r->x + 2, r->y + mid, r->w - 4, r->h - mid - 5, UI_RGB(165, 20, 18));
         }
-        /* Diagonal pinstripes across the crimson FIGHT face */
-        for (int sy = r->y + 10; sy < r->y + r->h - 5; ++sy) {
+        /* Fine diagonal pinstripes, over the upper band only: one pixel in six, a touch lighter than the face. */
+        for (int sy = r->y + 10; sy < r->y + mid; ++sy) {
             for (int sx = r->x + 4; sx < r->x + r->w - 4; ++sx) {
-                if ((sx + sy) % 10 < 3)
-                    Px(sx, sy + dy, UI_RGB(145, 16, 16));
+                if ((sx + sy) % 6 == 0)
+                    Px(sx, sy + dy, UI_RGB(207, 56, 51));
             }
         }
-        /* Giant watermark Pokéball on the right half */
-        BWatermarkBallIn(r, r->x + 215, r->y + 52 + dy, 36, UI_RGB(192, 24, 22));
+        /* Giant watermark Pokeball on the right half */
+        BWatermarkBallIn(r, r->x + 215, r->y + r->h / 2 + dy, 36, UI_RGB(192, 24, 22));
 
-        /* Golden top neon bar across FIGHT */
-        UiRoundFill(r->x + 6, r->y + 5 + dy, r->w - 12, 4, 2, sLight[0]);
-        Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[0]);
+        /* Golden top neon bar across FIGHT, clear of the corner brackets */
+        UiRoundFill(r->x + 18, r->y + 5 + dy, r->w - 36, 4, 2, sLight[0]);
+        Fill(r->x + 24, r->y + 6 + dy, r->w - 48, 1, sSpec[0]);
 
-        if (state & UI_FOCUSED)
-            BFocusGlowBrackets(r);
+        if (state & UI_FOCUSED) {
+            CtrPokeTouchRect inside = UiInset(r, 2);     /* inside the golden frame, so all four corners show */
+
+            BFocusGlowBrackets(&inside);
+        }
 
         /* Fiery starburst icon */
         int burstX = r->x + 36, burstY = r->y + (r->h - 46) / 2 + dy;
         BIconAt(BI_BURST, burstX, burstY);
 
-        /* Huge bold white arcade FIGHT label with solid black drop shadow */
+        /* Huge bold white arcade FIGHT label with a solid black drop shadow (two pixels at 3x) */
         int tx = r->x + 115, ty = r->y + (r->h - UI_TEXT_H * 3) / 2 + dy;
         UiText("FIGHT", tx + 2, ty + 2, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
         UiText("FIGHT", tx + 1, ty + 1, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
         UiText("FIGHT", tx, ty, UI_TEXT, UIS_OUTLINE, 3, r->x + r->w);
     } else {
-        UiButton(r, sStyle[i], state);
+        UiButton(r, &sStyle[i], state);
 
-        /* Watermark Pokéball behind icon */
-        uint16_t wm = i == BUI_ACT_RUN ? UI_RGB(56, 66, 82) : UI_RGB(160, 18, 20);
-        BWatermarkBallIn(r, r->x + r->w / 2, r->y + 36 + dy, 20, wm);
+        /* Watermark Pokeball behind icon */
+        uint16_t wm = i == BUI_ACT_RUN ? UI_RGB(56, 66, 82) : i == BUI_ACT_BAG ? UI_RGB(118, 60, 22) : UI_RGB(92, 16, 40);
+        BWatermarkBallIn(r, r->x + r->w / 2, r->y + 32 + dy, 20, wm);
 
         /* Colored top neon lightbar */
         UiRoundFill(r->x + 8, r->y + 5 + dy, r->w - 16, 4, 2, sLight[i]);
@@ -382,17 +409,16 @@ static void BActionButton(int i, const CtrBattleView *v)
         if (state & UI_FOCUSED)
             BFocusGlowBrackets(r);
 
-        /* Centered high-resolution icons */
+        /* Centered high-resolution icons, in the 40 pixels between the bar and the label */
         int iconW = sBImg[sIcon[i]].image.w, iconH = sBImg[sIcon[i]].image.h;
         int ix = r->x + (r->w - iconW) / 2;
-        int iy = r->y + 14 + (44 - iconH) / 2 + dy;
+        int iy = r->y + 12 + (40 - iconH) / 2 + dy;
         BIconAt(sIcon[i], ix, iy);
 
-        /* Bold white arcade label with black drop shadow */
+        /* Bold white arcade label with a one-pixel drop shadow (two pixels would swallow a 2x letter) */
         int lw = UiTextWidth(label[i], 2);
         int lx = r->x + (r->w - lw) / 2;
-        int ly = r->y + r->h - UI_TEXT_H * 2 - 8 + dy;
-        UiText(label[i], lx + 2, ly + 2, UIS_OUTLINE, UIS_OUTLINE, 2, r->x + r->w);
+        int ly = r->y + r->h - UI_TEXT_H * 2 - 7 + dy;
         UiText(label[i], lx + 1, ly + 1, UIS_OUTLINE, UIS_OUTLINE, 2, r->x + r->w);
         UiText(label[i], lx, ly, UI_TEXT, UIS_OUTLINE, 2, r->x + r->w);
     }
@@ -517,12 +543,13 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
             uint16_t c_top = UiMix(base, color, pressed ? 2 : 3);
             uint16_t c_mid = base;
             uint16_t c_bot = UiMix(base, UI_RGB(6, 4, 8), 2);
-            int h1 = bodyH * 2 / 5;
-            int h2 = bodyH * 3 / 5;
+            int seam = r->y + 45 + dy - bodyY;     /* between the badge row (to y+42) and the PP row (from y+48) */
 
+            if (seam < 1 || seam > bodyH - 3)
+                seam = bodyH * 2 / 3;
             UiRoundBand(r->x + 1, bodyY, r->w - 2, bodyH, UI_RADIUS_BUTTON - 1, 0, 1, c_bot);
-            Fill(r->x + 1, bodyY, r->w - 2, h1, c_top);
-            Fill(r->x + 1, bodyY + h1, r->w - 2, h2 - h1, c_mid);
+            Fill(r->x + 1, bodyY, r->w - 2, seam, c_top);
+            Fill(r->x + 1, bodyY + seam, r->w - 2, bodyH - seam - 2, c_mid);
             Fill(r->x + 1, bodyY, 1, bodyH - 2, UiMix(c_mid, UI_TEXT, 2));
             Fill(r->x + 1, bodyY, r->w - 2, 1, UIS_OUTLINE);
         }
@@ -552,7 +579,7 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
         CtrPokeTouchRect ibox = {(int16_t)ibX, (int16_t)ibY, 14, 13};
         UiRoundFill(ibox.x, ibox.y, ibox.w, ibox.h, 2, UI_RGB(20, 6, 8));
         UiRoundRect(&ibox, 2, UI_RGB(64, 20, 24));
-        BTypeIcon(ibox.x + 5, ibox.y + 4, type, UI_TEXT);
+        BTypeIcon(ibox.x + 3, ibox.y + 2, (uint8_t)type, UI_TEXT);
     }
 
     /* Move Title in BOLD WHITE arcade font with solid 1px black outline */
@@ -581,51 +608,36 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
     return pp == 0 ? UI_HP_LOW : pp * 4 <= max ? UI_WARN : pp * 2 <= max ? UI_HP_MID : UI_TEXT;
 }
 
-/* The matchup tag between the type badge and the power: what the move does to the foe's types (x2 green, x4 a
- * brighter lime; x1/2, x1/4 orange; x0 red). A neutral hit has no tag. */
+/* The matchup tag beside the type badge: what the move does to the foe's types. x2 green, x4 lime with a gold rim,
+ * x1/2 and x1/4 orange, x0 red; an arrow or a cross says it again without colour. A neutral hit has no tag. 40x14: the
+ * 5-pixel glyph at +4, the text to end 4 from the right edge (x1/2 is the widest, 24 wide, so they never meet). */
+#define BTAG_W 40
 static void BMatchupTag(uint8_t matchup, int x, int y)
 {
     static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
-    static const uint16_t kColor[] = {0, UI_HP_LOW, UI_WARN, UI_WARN, UI_HP_HIGH, UI_RGB(110, 245, 30)};
-    CtrPokeTouchRect tag = {(int16_t)x, (int16_t)y, 35, 14};
+    static const uint16_t kColor[] = {0, UI_RGB(190, 40, 40), UI_RGB(168, 62, 26), UI_RGB(204, 84, 24),
+                                      UI_RGB(40, 150, 70), UI_RGB(110, 245, 30)};
+    static const uint8_t kUp[5] = {0x04, 0x0E, 0x1F, 0x0E, 0x0E};          /* x2, x4 */
+    static const uint8_t kDown[5] = {0x0E, 0x0E, 0x1F, 0x0E, 0x04};        /* x1/2, x1/4 */
+    static const uint8_t kCross[5] = {0x11, 0x0A, 0x04, 0x0A, 0x11};       /* x0 */
+    CtrPokeTouchRect tag = {(int16_t)x, (int16_t)y, BTAG_W, 14};
+    const uint8_t *glyph;
+    uint16_t ink;
 
     if (matchup == CTR_FX_NONE || matchup > CTR_FX_QUADRUPLE)
         return;
-    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UIS_OUTLINE);
+    ink = matchup == CTR_FX_QUADRUPLE ? UI_RGB(15, 35, 5) : UI_TEXT;
+    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, matchup == CTR_FX_QUADRUPLE ? UI_RGB(255, 224, 102) : UIS_OUTLINE);
     UiRoundFill(tag.x + 1, tag.y + 1, tag.w - 2, tag.h - 2, 2, kColor[matchup]);
     Fill(tag.x + 2, tag.y + 1, tag.w - 4, 1, UiMix(kColor[matchup], UI_TEXT, 3));
 
-    /* Tactical arrow / symbol */
-    uint16_t symInk = matchup == CTR_FX_QUADRUPLE ? UI_RGB(15, 35, 5) : UI_TEXT;
-    uint16_t textInk = matchup == CTR_FX_QUADRUPLE ? UI_RGB(15, 35, 5) : UI_TEXT;
-
-    if (matchup == CTR_FX_DOUBLE) {
-        static const uint8_t arr[5] = {0x04, 0x0E, 0x1F, 0x0E, 0x0E};
-        for (int r = 0; r < 5; ++r)
-            for (int c = 0; c < 5; ++c)
-                if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 4 + r, symInk);
-    } else if (matchup == CTR_FX_QUADRUPLE) {
-        static const uint8_t arr[5] = {0x15, 0x15, 0x1F, 0x0A, 0x0A};
-        for (int r = 0; r < 5; ++r)
-            for (int c = 0; c < 5; ++c)
-                if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 3 + c, tag.y + 4 + r, symInk);
-    } else if (matchup == CTR_FX_HALF || matchup == CTR_FX_QUARTER) {
-        static const uint8_t arr[5] = {0x0E, 0x0E, 0x1F, 0x0E, 0x04};
-        for (int r = 0; r < 5; ++r)
-            for (int c = 0; c < 5; ++c)
-                if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 5 + r, symInk);
-    } else if (matchup == CTR_FX_IMMUNE) {
-        static const uint8_t arr[5] = {0x11, 0x0A, 0x04, 0x0A, 0x11};
-        for (int r = 0; r < 5; ++r)
-            for (int c = 0; c < 5; ++c)
-                if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 4 + r, symInk);
-    }
-
-    UiTextRight(kText[matchup], tag.x + tag.w - 4, tag.y + 3, textInk, matchup == CTR_FX_QUADRUPLE ? 0 : UIS_TEXT_SH, 1);
+    glyph = matchup == CTR_FX_IMMUNE ? kCross : (matchup == CTR_FX_HALF || matchup == CTR_FX_QUARTER) ? kDown : kUp;
+    for (int r = 0; r < 5; ++r)
+        for (int c = 0; c < 5; ++c)
+            if (glyph[r] & (1u << (4 - c)))
+                Px(tag.x + 4 + c, tag.y + 4 + r, ink);
+    UiTextRight(kText[matchup], tag.x + tag.w - 4, tag.y + (tag.h - UI_TEXT_H) / 2 + 1, ink,
+                matchup == CTR_FX_QUADRUPLE ? 0 : UIS_TEXT_SH, 1);
 }
 
 /* A move card: the name and Physical/Special icon on the type's colour, the type badge, the matchup, power (and
@@ -649,12 +661,12 @@ static void BCard(int i, const CtrBattleView *v)
     BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, UI_TEXT, UIS_OUTLINE);
 
     {
-        CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), 52, 14};
+        int pill = UiTextWidth(m->typeName, 1) + 8;
+        CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), (int16_t)(pill < 34 ? 34 : pill > 46 ? 46 : pill), 14};
         char pp[12];
 
         UiTypeBadge(&badge, m->type, m->typeName);
-        BTypeIcon(badge.x + 3, badge.y + 4, m->type, UI_TEXT);
-        BMatchupTag(m->matchup, r->x + 63, r->y + 28 + dy);
+        BMatchupTag(m->matchup, badge.x + badge.w + 3, r->y + 28 + dy);   /* at most to x+97: PWR stays at w-52 */
 
         /* PWR in light blue-grey (#a0b4cc) and value in bold white */
         UiText("PWR", r->x + r->w - 52, r->y + 28 + dy, UI_RGB(160, 180, 204), UIS_TEXT_SH, 1, r->x + r->w);
@@ -665,26 +677,27 @@ static void BCard(int i, const CtrBattleView *v)
         snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
         UiText(pp, r->x + 24, r->y + 48 + dy, UI_TEXT, UIS_TEXT_SH, 1, r->x + 68);
 
-        /* Segmented Cyan Neon Capsule Energy Gauge */
+        /* Segmented neon capsule: ten segments of six pixels and a one-pixel gap, lit by the share of PP left (rounded up,
+         * so one PP left still shows one). Cyan, then amber at half, orange at a quarter, a dim red at none. */
         {
-            CtrPokeTouchRect bar = {(int16_t)(r->x + 66), (int16_t)(r->y + 50 + dy), (int16_t)(r->w - 74), 6};
-            int fill = m->maxPp ? (int)((unsigned long)m->pp * (bar.w - 2) / m->maxPp) : 0;
+            CtrPokeTouchRect bar = {(int16_t)(r->x + r->w - 8 - 71), (int16_t)(r->y + 50 + dy), 71, 6};
+            int lit = m->maxPp ? (int)(((unsigned)m->pp * 10 + m->maxPp - 1) / m->maxPp) : 0;
             uint16_t neon = m->pp == 0 ? UI_RGB(160, 30, 20)
-                          : m->pp * 4 <= m->maxPp ? UI_RGB(255, 95, 30)
-                          : m->pp * 2 <= m->maxPp ? UI_RGB(255, 195, 40)
-                          : UI_RGB(45, 220, 255);
+                          : m->pp * 4 <= m->maxPp ? UI_RGB(255, 90, 46)
+                          : m->pp * 2 <= m->maxPp ? UI_RGB(255, 194, 51)
+                          : UI_RGB(53, 208, 255);
             uint16_t shine = m->pp == 0 ? UI_RGB(210, 80, 70)
                            : m->pp * 4 <= m->maxPp ? UI_RGB(255, 190, 140)
                            : m->pp * 2 <= m->maxPp ? UI_RGB(255, 245, 180)
-                           : UI_RGB(210, 250, 255);
+                           : UI_RGB(155, 234, 255);
 
-            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(12, 10, 16));
-            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(20, 16, 24));
-            if (fill > 0) {
-                Fill(bar.x + 1, bar.y + 1, fill, bar.h - 2, neon);
-                Fill(bar.x + 1, bar.y + 1, fill, 1, shine);
-                for (int seg = 7; seg < fill; seg += 7)
-                    Fill(bar.x + 1 + seg, bar.y + 1, 1, bar.h - 2, UI_RGB(12, 10, 16));
+            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(11, 31, 58));
+            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(15, 27, 51));
+            for (int seg = 0; seg < 10; ++seg) {
+                if (seg < lit) {
+                    Fill(bar.x + 1 + seg * 7, bar.y + 1, 6, bar.h - 2, neon);
+                    Fill(bar.x + 1 + seg * 7, bar.y + 1, 6, 1, shine);
+                }
             }
         }
     }
@@ -730,11 +743,15 @@ static void BMoveFooter(const CtrBattleView *v)
     }
     {
         char stats[64];
-        const char *pwr = m->power[0] ? m->power : "-";
-        const char *acc = m->accuracy[0] ? m->accuracy : "--";
-        snprintf(stats, sizeof(stats), "PWR %s  ACC %s%%", pwr, acc);
-        UiText(stats, r->x + 8, r->y + 4, UI_RGB(240, 205, 100), UIS_TEXT_SH, 1, r->x + r->w - 70);
-        if (m->matchup == CTR_FX_DOUBLE || m->matchup == CTR_FX_QUADRUPLE) {
+        const char *acc = m->accuracy[0] && m->accuracy[0] != '-' ? m->accuracy : "--";
+        int n = snprintf(stats, sizeof(stats), "ACC %s%s", acc, acc[0] == '-' ? "" : "%");
+
+        if (m->effectChance && n > 0 && (size_t)n < sizeof(stats))
+            n += snprintf(stats + n, sizeof(stats) - (size_t)n, "  EFF %u%%", m->effectChance);
+        if (m->priority && n > 0 && (size_t)n < sizeof(stats))
+            snprintf(stats + n, sizeof(stats) - (size_t)n, "  PRI %+d", m->priority);
+        UiText(stats, r->x + 8, r->y + 4, UI_RGB(240, 205, 100), UIS_TEXT_SH, 1, r->x + r->w - (m->stab ? 70 : 8));
+        if (m->stab) {
             CtrPokeTouchRect stab = {(int16_t)(r->x + r->w - 66), (int16_t)(r->y + 3), 60, 11};
             UiRoundFill(stab.x, stab.y, stab.w, stab.h, 2, UI_RGB(236, 174, 36));
             UiRoundRect(&stab, 2, UI_RGB(255, 220, 80));
@@ -784,7 +801,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
 
         snprintf(level, sizeof(level), "Lv%u", t->level);
         UiText(level, r->x + 8, r->y + 30 + dy, UI_TEXT, UIS_TEXT_SH, 1, r->x + 60);
-        BMatchupTag(t->matchup, r->x + r->w - 84, r->y + 27 + dy);
+        BMatchupTag(t->matchup, r->x + r->w - 90, r->y + 27 + dy);
         UiBadge(&tag, t->side ? sAlly.shade : sFoe.shade, t->side ? "ALLY" : "FOE");
         UiHpBar(&bar, t->hp, t->maxHp);
         if (t->side) {
