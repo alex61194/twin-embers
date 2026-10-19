@@ -680,7 +680,7 @@ static void SaveDraw(const CtrPokeTouchView *v)
             Fill(84, sLabels[f].y + 15, 148, 1, PT_RED_RULE);
         SaveFieldDraw(f, v);
     }
-    UiTextCentered("Your progress is written to the save file.", &sSavePanel, 142, PT_RED_DIM, UI_TEXT_SH, 1);
+    UiTextCentered("Your progress will be saved.", &sSavePanel, 142, PT_RED_DIM, UI_TEXT_SH, 1);
 }
 
 static int SaveFieldChanged(int f, const CtrPokeTouchView *a, const CtrPokeTouchView *b)

@@ -59,31 +59,27 @@ static void BArt(int i, const char (*rows)[25], const uint16_t *pal, int n)
     memcpy(sBImg[i].image.pal, pal, (size_t)n * sizeof(uint16_t));
     sBImg[i].scale = 1;
     for (int y = 0; y < 24; ++y)
-        for (int x = 0; x < 24; ++x)
-            sBImg[i].pixels[y * 24 + x] = (uint8_t)(rows[y][x] - '0');
+        for (int x = 0; x < 24; ++x) {
+            char ch = rows[y][x];
+            uint8_t val = (uint8_t)(ch >= 'a' && ch <= 'f' ? ch - 'a' + 10 :
+                                    ch >= 'A' && ch <= 'F' ? ch - 'A' + 10 :
+                                    ch >= '0' && ch <= '9' ? ch - '0' : 0);
+            sBImg[i].pixels[y * 24 + x] = val;
+        }
 }
 
 static void BIconsPrepare(void)
 {
     static int ready;
-    static const char *const pack[2] = {"berry_pouch", "poke_ball"};
 
     if (ready)
         return;
     ready = 1;
     TwinIconsPrepare();
-    for (int i = 0; i < 2; ++i) {
-        if (PokeTouch_PackIcon24(pack[i], sBImg[i].pixels, sBImg[i].image.pal)) {
-            sBImg[i].image.w = sBImg[i].image.h = 24;
-            sBImg[i].image.pixels = sBImg[i].pixels;
-            sBImg[i].scale = 1;
-        } else {
-            sBImg[i].image = i == BI_BAG ? sPt_icon_bag : sPt_icon_pokemon;
-            sBImg[i].scale = 2;
-        }
-    }
-    BArt(BI_SHOE, sBArtShoe, sBArtShoePal, 9);
-    BArt(BI_BURST, sBArtBurst, sBArtBurstPal, 4);
+    BArt(BI_BAG, sBArtBag, sBArtBagPal, 9);
+    BArt(BI_POKEBALL, sBArtPokeBall, sBArtPokeBallPal, 10);
+    BArt(BI_SHOE, sBArtShoe, sBArtShoePal, 10);
+    BArt(BI_BURST, sBArtBurst, sBArtBurstPal, 7);
     BArt(BI_ROCK, sBArtRock, sBArtRockPal, 6);
     BArt(BI_BAIT, sBArtBait, sBArtBaitPal, 7);
 }

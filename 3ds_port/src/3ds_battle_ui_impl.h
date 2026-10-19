@@ -288,23 +288,27 @@ static void BActionButton(int i, const CtrBattleView *v)
     const CtrPokeTouchRect *r = &sBAction[i];
     int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
     int dy = (state & UI_PRESSED) ? 1 : 0;
+    static const uint16_t sLight[4] = {UI_RGB(255, 205, 55), UI_RGB(65, 225, 110), UI_RGB(60, 190, 255), UI_RGB(255, 225, 60)};
+    static const uint16_t sSpec[4]  = {UI_RGB(255, 255, 215), UI_RGB(200, 255, 215), UI_RGB(210, 245, 255), UI_RGB(255, 255, 210)};
 
     BIconsPrepare();
     if (i == BUI_ACT_FIGHT) {
-        int top = UiButtonLabelTop(r, state, 3), w = UiTextWidth(label[i], 3), x = r->x + (r->w - w + 34) / 2;
+        int top = UiButtonLabelTop(r, state, 3), w = UiTextWidth(label[i], 3), x = r->x + (r->w - w + 38) / 2;
 
         UiButton(r, sStyle[i], state);
+        if (!dy) {
+            Fill(r->x + 2, r->y + 24, r->w - 4, 25, UI_RGB(200, 28, 22));
+            Fill(r->x + 2, r->y + 49, r->w - 4, 30, UI_RGB(165, 20, 18));
+        }
         /* Golden top neon bar across FIGHT */
-        Fill(r->x + 8, r->y + 5 + dy, r->w - 16, 3, UI_RGB(255, 200, 50));
-        Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, UI_RGB(255, 255, 190));
+        Fill(r->x + 8, r->y + 5 + dy, r->w - 16, 3, sLight[0]);
+        Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[0]);
         if (state & UI_FOCUSED)
             BFocusGlowBrackets(r);
-        BIconAt(BI_BURST, x - 34, top + 2);
-        UiText(label[i], x, top, UI_TEXT, sStyle[i]->shade, 3, r->x + r->w);
+        BIconAt(BI_BURST, x - 38, top + 2);
+        UiText(label[i], x + 1, top + 2, UI_RGB(60, 6, 8), UI_RGB(60, 6, 8), 3, r->x + r->w);
+        UiText(label[i], x, top, UI_TEXT, UI_RGB(60, 6, 8), 3, r->x + r->w);
     } else {
-        static const uint16_t sLight[4] = {0, UI_RGB(72, 216, 110), UI_RGB(70, 180, 255), UI_RGB(246, 214, 80)};
-        static const uint16_t sSpec[4]  = {0, UI_RGB(160, 255, 180), UI_RGB(180, 230, 255), UI_RGB(255, 255, 190)};
-
         UiIconButton(r, sStyle[i], state, &sBImg[sIcon[i]].image, sBImg[sIcon[i]].scale, label[i], 2);
         /* Colored full-width top neon lightbars on BAG, POKeMON, RUN */
         Fill(r->x + 6, r->y + 5 + dy, r->w - 12, 3, sLight[i]);
@@ -407,16 +411,47 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *tit
     }
     if (!pressed)
         UiRoundFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_RADIUS_BUTTON - 1, UiMix(color, UIS_OUTLINE, 5));
-    UiRoundFill(r->x + 1, r->y + 1 + dy, r->w - 2, bottom, UI_RADIUS_BUTTON - 1, UiMix(UIS_PANEL, color, pressed ? 1 : 2));
-    UiRoundFill(r->x + 1, r->y + 1 + dy, r->w - 2, 20, UI_RADIUS_BUTTON - 1, head);
-    Fill(r->x + 1, r->y + 18 + dy, r->w - 2, 3, head);
-    Fill(r->x + 3, r->y + 2 + dy, r->w - 6, 8, UiMix(head, UI_TEXT, 2));
-    Fill(r->x + 1, r->y + 21 + dy, r->w - 2, 1, UiMix(color, UIS_OUTLINE, 4));
+
+    /* Vertical shading gradient across the card body */
+    {
+        int bodyY = r->y + 21 + dy;
+        int bodyH = (r->y + 1 + dy + bottom) - bodyY;
+        if (bodyH > 0) {
+            uint16_t c_top = UiMix(UIS_PANEL, color, pressed ? 2 : 4);
+            uint16_t c_mid = UiMix(UIS_PANEL, color, pressed ? 1 : 2);
+            uint16_t c_bot = UiMix(UIS_PANEL, color, 1);
+            int h1 = bodyH * 2 / 5;
+            int h2 = bodyH * 3 / 5;
+
+            UiRoundBand(r->x + 1, bodyY, r->w - 2, bodyH, UI_RADIUS_BUTTON - 1, 0, 1, c_bot);
+            Fill(r->x + 1, bodyY, r->w - 2, h1, c_top);
+            Fill(r->x + 1, bodyY + h1, r->w - 2, h2 - h1, c_mid);
+            Fill(r->x + 1, bodyY, 1, bodyH - 2, UiMix(c_mid, UI_TEXT, 2));
+            Fill(r->x + 1, bodyY, r->w - 2, 1, UiMix(color, UIS_OUTLINE, 6));
+        }
+    }
+
+    /* Glossy Header */
+    UiRoundBand(r->x + 1, r->y + 1 + dy, r->w - 2, 21, UI_RADIUS_BUTTON - 1, 1, 0, head);
+    Fill(r->x + 3, r->y + 1 + dy, r->w - 6, 1, UiMix(head, UI_TEXT, 5));
+    Fill(r->x + 2, r->y + 2 + dy, r->w - 4, 1, UiMix(head, UI_TEXT, 3));
+    Fill(r->x + 2, r->y + 3 + dy, r->w - 4, 6, UiMix(head, UI_TEXT, 2));
+    Fill(r->x + 1, r->y + 19 + dy, r->w - 2, 1, UiMix(head, UIS_OUTLINE, 3));
+    Fill(r->x + 1, r->y + 20 + dy, r->w - 2, 1, UIS_OUTLINE);
+
+    /* Move Title with bold perimeter shadow for arcade pop */
     {
         uint16_t ink = UiInkOn(head);
+        uint16_t sh = ink == UI_TEXT ? UIS_OUTLINE : UiMix(head, UI_TEXT, 4);
+        int tx = r->x + 8, ty = r->y + 7 + dy;
 
-        UiText(title, r->x + 8, r->y + 7 + dy, ink, ink == UI_TEXT ? UiMix(color, UIS_OUTLINE, 6) : UiMix(head, UI_TEXT, 3), 1,
-               r->x + r->w - 18);
+        if (ink == UI_TEXT) {
+            UiText(title, tx - 1, ty, sh, sh, 1, r->x + r->w - 18);
+            UiText(title, tx + 1, ty, sh, sh, 1, r->x + r->w - 18);
+            UiText(title, tx, ty - 1, sh, sh, 1, r->x + r->w - 18);
+            UiText(title, tx, ty + 1, sh, sh, 1, r->x + r->w - 18);
+        }
+        UiText(title, tx, ty, ink, sh, 1, r->x + r->w - 18);
     }
     if (state & UI_FOCUSED)
         BFocusGlowBrackets(r);
@@ -434,41 +469,46 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
 static void BMatchupTag(uint8_t matchup, int x, int y)
 {
     static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
-    static const uint16_t kColor[] = {0, UI_HP_LOW, UI_WARN, UI_WARN, UI_HP_HIGH, UI_RGB(128, 240, 40)};
+    static const uint16_t kColor[] = {0, UI_HP_LOW, UI_WARN, UI_WARN, UI_HP_HIGH, UI_RGB(110, 245, 30)};
     CtrPokeTouchRect tag = {(int16_t)x, (int16_t)y, 35, 14};
 
     if (matchup == CTR_FX_NONE || matchup > CTR_FX_QUADRUPLE)
         return;
-    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UiMix(UIS_PANEL, kColor[matchup], 7));
+    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UIS_OUTLINE);
+    UiRoundFill(tag.x + 1, tag.y + 1, tag.w - 2, tag.h - 2, 2, kColor[matchup]);
+    Fill(tag.x + 2, tag.y + 1, tag.w - 4, 1, UiMix(kColor[matchup], UI_TEXT, 3));
 
     /* Tactical arrow / symbol */
+    uint16_t symInk = matchup == CTR_FX_QUADRUPLE ? UI_RGB(15, 35, 5) : UI_TEXT;
+    uint16_t textInk = matchup == CTR_FX_QUADRUPLE ? UI_RGB(15, 35, 5) : UI_TEXT;
+
     if (matchup == CTR_FX_DOUBLE) {
         static const uint8_t arr[5] = {0x04, 0x0E, 0x1F, 0x0E, 0x0E};
         for (int r = 0; r < 5; ++r)
             for (int c = 0; c < 5; ++c)
                 if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 4 + r, UI_TEXT);
+                    Px(tag.x + 4 + c, tag.y + 4 + r, symInk);
     } else if (matchup == CTR_FX_QUADRUPLE) {
         static const uint8_t arr[5] = {0x15, 0x15, 0x1F, 0x0A, 0x0A};
         for (int r = 0; r < 5; ++r)
             for (int c = 0; c < 5; ++c)
                 if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 3 + c, tag.y + 4 + r, UI_TEXT);
+                    Px(tag.x + 3 + c, tag.y + 4 + r, symInk);
     } else if (matchup == CTR_FX_HALF || matchup == CTR_FX_QUARTER) {
         static const uint8_t arr[5] = {0x0E, 0x0E, 0x1F, 0x0E, 0x04};
         for (int r = 0; r < 5; ++r)
             for (int c = 0; c < 5; ++c)
                 if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 5 + r, UI_TEXT);
+                    Px(tag.x + 4 + c, tag.y + 5 + r, symInk);
     } else if (matchup == CTR_FX_IMMUNE) {
         static const uint8_t arr[5] = {0x11, 0x0A, 0x04, 0x0A, 0x11};
         for (int r = 0; r < 5; ++r)
             for (int c = 0; c < 5; ++c)
                 if (arr[r] & (1u << (4 - c)))
-                    Px(tag.x + 4 + c, tag.y + 4 + r, UI_TEXT);
+                    Px(tag.x + 4 + c, tag.y + 4 + r, symInk);
     }
 
-    UiTextRight(kText[matchup], tag.x + tag.w - 4, tag.y + 3, UI_TEXT, UIS_TEXT_SH, 1);
+    UiTextRight(kText[matchup], tag.x + tag.w - 4, tag.y + 3, textInk, matchup == CTR_FX_QUADRUPLE ? 0 : UIS_TEXT_SH, 1);
 }
 
 /* A move card: the name and Physical/Special icon on the type's colour, the type badge, the matchup, power (and
@@ -493,29 +533,45 @@ static void BCard(int i, const CtrBattleView *v)
     BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, ink, sh);
     {
         CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), 52, 14};
-        CtrPokeTouchRect bar = {(int16_t)(r->x + 70), (int16_t)(r->y + 51 + dy), (int16_t)(r->w - 78), 5};
         char pp[12];
 
         UiTypeBadge(&badge, m->type, m->typeName);
         BTypeIcon(badge.x + 3, badge.y + 4, m->type, ink);
         BMatchupTag(m->matchup, r->x + 63, r->y + 28 + dy);
         if (m->accuracy[0]) {
-            UiText("PWR", r->x + r->w - 50, r->y + 25 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiText("PWR", r->x + r->w - 52, r->y + 25 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
             UiTextRight(m->power, r->x + r->w - 8, r->y + 25 + dy, UI_TEXT, UIS_TEXT_SH, 1);
-            UiText("ACC", r->x + r->w - 50, r->y + 37 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiText("ACC", r->x + r->w - 52, r->y + 37 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
             UiTextRight(m->accuracy, r->x + r->w - 8, r->y + 37 + dy, UI_TEXT, UIS_TEXT_SH, 1);
         } else {
-            UiText("PWR", r->x + r->w - 50, r->y + 31 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiText("PWR", r->x + r->w - 52, r->y + 31 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + r->w);
             UiTextRight(m->power, r->x + r->w - 8, r->y + 31 + dy, UI_TEXT, UIS_TEXT_SH, 1);
         }
-        UiText("PP", r->x + 8, r->y + 48 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + 30);
+        UiText("PP", r->x + 8, r->y + 48 + dy, UI_RGB(245, 205, 95), UIS_TEXT_SH, 1, r->x + 30);
         snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
         UiText(pp, r->x + 24, r->y + 48 + dy, BPpColor(m->pp, m->maxPp), UIS_TEXT_SH, 1, r->x + 68);
-        UiProgressBar(&bar, m->pp, m->maxPp, m->pp * 4 <= m->maxPp ? UI_WARN : UI_RGB(50, 210, 245));
+
+        /* Neon Capsule Energy Gauge */
         {
+            CtrPokeTouchRect bar = {(int16_t)(r->x + 66), (int16_t)(r->y + 50 + dy), (int16_t)(r->w - 74), 6};
             int fill = m->maxPp ? (int)((unsigned long)m->pp * (bar.w - 2) / m->maxPp) : 0;
-            for (int seg = 7; seg < fill; seg += 7)
-                Fill(bar.x + 1 + seg, bar.y + 1, 1, bar.h - 2, UIS_OUTLINE);
+            uint16_t neon = m->pp == 0 ? UI_RGB(160, 30, 20)
+                          : m->pp * 4 <= m->maxPp ? UI_RGB(255, 95, 30)
+                          : m->pp * 2 <= m->maxPp ? UI_RGB(255, 195, 40)
+                          : UI_RGB(45, 220, 255);
+            uint16_t shine = m->pp == 0 ? UI_RGB(210, 80, 70)
+                           : m->pp * 4 <= m->maxPp ? UI_RGB(255, 190, 140)
+                           : m->pp * 2 <= m->maxPp ? UI_RGB(255, 245, 180)
+                           : UI_RGB(210, 250, 255);
+
+            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(14, 10, 16));
+            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(24, 18, 28));
+            if (fill > 0) {
+                Fill(bar.x + 1, bar.y + 1, fill, bar.h - 2, neon);
+                Fill(bar.x + 1, bar.y + 1, fill, 1, shine);
+                for (int seg = 7; seg < fill; seg += 7)
+                    Fill(bar.x + 1 + seg, bar.y + 1, 1, bar.h - 2, UI_RGB(14, 10, 16));
+            }
         }
     }
 }
