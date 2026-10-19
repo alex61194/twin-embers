@@ -9,6 +9,331 @@
 #include "3ds_icons.h"
 #include "3ds_type_chart.h"
 
+/* Arcade HUD Font: 8-pixel tall, high-impact bold typography */
+static const uint8_t sArcadeGlyphs[96][8] = {
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 32: ' ' */
+    {0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x03, 0x03}, /* 33: '!' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 34: '"' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 35: '#' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 36: '$' */
+    {0x19, 0x1B, 0x06, 0x0C, 0x0C, 0x18, 0x1B, 0x03}, /* 37: '%' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 38: '&' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 39: '\'' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 40: '(' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 41: ')' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 42: '*' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 43: '+' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 44: ',' */
+    {0x00, 0x00, 0x00, 0x1F, 0x1F, 0x00, 0x00, 0x00}, /* 45: '-' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x03}, /* 46: '.' */
+    {0x01, 0x03, 0x06, 0x06, 0x0C, 0x0C, 0x18, 0x10}, /* 47: '/' */
+    {0x0E, 0x19, 0x1B, 0x1D, 0x19, 0x19, 0x19, 0x0E}, /* 48: '0' */
+    {0x0C, 0x1C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x1F}, /* 49: '1' */
+    {0x0E, 0x19, 0x01, 0x02, 0x06, 0x0C, 0x18, 0x1F}, /* 50: '2' */
+    {0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x01, 0x1E}, /* 51: '3' */
+    {0x06, 0x0E, 0x1A, 0x1A, 0x1F, 0x02, 0x02, 0x02}, /* 52: '4' */
+    {0x1F, 0x18, 0x18, 0x1E, 0x01, 0x01, 0x19, 0x0E}, /* 53: '5' */
+    {0x0E, 0x18, 0x18, 0x1E, 0x19, 0x19, 0x19, 0x0E}, /* 54: '6' */
+    {0x1F, 0x01, 0x02, 0x06, 0x04, 0x0C, 0x0C, 0x08}, /* 55: '7' */
+    {0x0E, 0x19, 0x19, 0x0E, 0x19, 0x19, 0x19, 0x0E}, /* 56: '8' */
+    {0x0E, 0x19, 0x19, 0x0F, 0x01, 0x01, 0x19, 0x0E}, /* 57: '9' */
+    {0x00, 0x03, 0x03, 0x00, 0x00, 0x03, 0x03, 0x00}, /* 58: ':' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 59: ';' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 60: '<' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 61: '=' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 62: '>' */
+    {0x0E, 0x19, 0x01, 0x02, 0x04, 0x00, 0x04, 0x04}, /* 63: '?' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 64: '@' */
+    {0x04, 0x0E, 0x0E, 0x1B, 0x1B, 0x1F, 0x1B, 0x1B}, /* 65: 'A' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x19, 0x19, 0x19, 0x1E}, /* 66: 'B' */
+    {0x0F, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x0F}, /* 67: 'C' */
+    {0x1E, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x1E}, /* 68: 'D' */
+    {0x1F, 0x18, 0x18, 0x1E, 0x18, 0x18, 0x18, 0x1F}, /* 69: 'E' */
+    {0x1F, 0x18, 0x18, 0x1E, 0x18, 0x18, 0x18, 0x18}, /* 70: 'F' */
+    {0x0F, 0x18, 0x18, 0x18, 0x1B, 0x19, 0x19, 0x0F}, /* 71: 'G' */
+    {0x1B, 0x1B, 0x1B, 0x1F, 0x1B, 0x1B, 0x1B, 0x1B}, /* 72: 'H' */
+    {0x07, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x07}, /* 73: 'I' */
+    {0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x12, 0x0C}, /* 74: 'J' */
+    {0x1B, 0x1A, 0x1C, 0x1C, 0x1E, 0x1B, 0x19, 0x19}, /* 75: 'K' */
+    {0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x1F}, /* 76: 'L' */
+    {0x63, 0x77, 0x77, 0x7F, 0x6B, 0x63, 0x63, 0x63}, /* 77: 'M' */
+    {0x31, 0x39, 0x39, 0x3D, 0x35, 0x37, 0x33, 0x31}, /* 78: 'N' */
+    {0x0E, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x0E}, /* 79: 'O' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x18, 0x18, 0x18, 0x18}, /* 80: 'P' */
+    {0x1C, 0x32, 0x32, 0x32, 0x32, 0x36, 0x32, 0x1D}, /* 81: 'Q' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x1C, 0x1A, 0x19, 0x19}, /* 82: 'R' */
+    {0x0F, 0x18, 0x18, 0x0E, 0x03, 0x03, 0x03, 0x1E}, /* 83: 'S' */
+    {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}, /* 84: 'T' */
+    {0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x0E}, /* 85: 'U' */
+    {0x1B, 0x1B, 0x1B, 0x1B, 0x0E, 0x0E, 0x04, 0x04}, /* 86: 'V' */
+    {0x63, 0x63, 0x63, 0x6B, 0x6B, 0x7F, 0x3E, 0x22}, /* 87: 'W' */
+    {0x1B, 0x1B, 0x0E, 0x04, 0x04, 0x0E, 0x1B, 0x1B}, /* 88: 'X' */
+    {0x1B, 0x1B, 0x1B, 0x0E, 0x04, 0x04, 0x04, 0x04}, /* 89: 'Y' */
+    {0x1F, 0x03, 0x06, 0x0C, 0x0C, 0x18, 0x18, 0x1F}, /* 90: 'Z' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 91: '[' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 92: '\\' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 93: ']' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 94: '^' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 95: '_' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 96: '`' */
+    {0x04, 0x0E, 0x0E, 0x1B, 0x1B, 0x1F, 0x1B, 0x1B}, /* 97: 'a' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x19, 0x19, 0x19, 0x1E}, /* 98: 'b' */
+    {0x0F, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x0F}, /* 99: 'c' */
+    {0x1E, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x1E}, /* 100: 'd' */
+    {0x1F, 0x18, 0x18, 0x1E, 0x18, 0x18, 0x18, 0x1F}, /* 101: 'e' */
+    {0x1F, 0x18, 0x18, 0x1E, 0x18, 0x18, 0x18, 0x18}, /* 102: 'f' */
+    {0x0F, 0x18, 0x18, 0x18, 0x1B, 0x19, 0x19, 0x0F}, /* 103: 'g' */
+    {0x1B, 0x1B, 0x1B, 0x1F, 0x1B, 0x1B, 0x1B, 0x1B}, /* 104: 'h' */
+    {0x07, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x07}, /* 105: 'i' */
+    {0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x12, 0x0C}, /* 106: 'j' */
+    {0x1B, 0x1A, 0x1C, 0x1C, 0x1E, 0x1B, 0x19, 0x19}, /* 107: 'k' */
+    {0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x1F}, /* 108: 'l' */
+    {0x63, 0x77, 0x77, 0x7F, 0x6B, 0x63, 0x63, 0x63}, /* 109: 'm' */
+    {0x31, 0x39, 0x39, 0x3D, 0x35, 0x37, 0x33, 0x31}, /* 110: 'n' */
+    {0x0E, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x0E}, /* 111: 'o' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x18, 0x18, 0x18, 0x18}, /* 112: 'p' */
+    {0x1C, 0x32, 0x32, 0x32, 0x32, 0x36, 0x32, 0x1D}, /* 113: 'q' */
+    {0x1E, 0x19, 0x19, 0x1E, 0x1C, 0x1A, 0x19, 0x19}, /* 114: 'r' */
+    {0x0F, 0x18, 0x18, 0x0E, 0x03, 0x03, 0x03, 0x1E}, /* 115: 's' */
+    {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}, /* 116: 't' */
+    {0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x0E}, /* 117: 'u' */
+    {0x1B, 0x1B, 0x1B, 0x1B, 0x0E, 0x0E, 0x04, 0x04}, /* 118: 'v' */
+    {0x63, 0x63, 0x63, 0x6B, 0x6B, 0x7F, 0x3E, 0x22}, /* 119: 'w' */
+    {0x1B, 0x1B, 0x0E, 0x04, 0x04, 0x0E, 0x1B, 0x1B}, /* 120: 'x' */
+    {0x1B, 0x1B, 0x1B, 0x0E, 0x04, 0x04, 0x04, 0x04}, /* 121: 'y' */
+    {0x1F, 0x03, 0x06, 0x0C, 0x0C, 0x18, 0x18, 0x1F}, /* 122: 'z' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 123: '{' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 124: '|' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 125: '}' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 126: '~' */
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* 127: '\x7f' */
+};
+
+static const uint8_t sArcadeWidths[96] = {
+    3, /* 32 */
+    2, /* 33 */
+    4, /* 34 */
+    4, /* 35 */
+    4, /* 36 */
+    5, /* 37 */
+    4, /* 38 */
+    4, /* 39 */
+    4, /* 40 */
+    4, /* 41 */
+    4, /* 42 */
+    4, /* 43 */
+    4, /* 44 */
+    5, /* 45 */
+    2, /* 46 */
+    5, /* 47 */
+    5, /* 48 */
+    5, /* 49 */
+    5, /* 50 */
+    5, /* 51 */
+    5, /* 52 */
+    5, /* 53 */
+    5, /* 54 */
+    5, /* 55 */
+    5, /* 56 */
+    5, /* 57 */
+    2, /* 58 */
+    4, /* 59 */
+    4, /* 60 */
+    4, /* 61 */
+    4, /* 62 */
+    5, /* 63 */
+    4, /* 64 */
+    5, /* 65 */
+    5, /* 66 */
+    5, /* 67 */
+    5, /* 68 */
+    5, /* 69 */
+    5, /* 70 */
+    5, /* 71 */
+    5, /* 72 */
+    3, /* 73 */
+    5, /* 74 */
+    5, /* 75 */
+    5, /* 76 */
+    7, /* 77 */
+    6, /* 78 */
+    5, /* 79 */
+    5, /* 80 */
+    6, /* 81 */
+    5, /* 82 */
+    5, /* 83 */
+    5, /* 84 */
+    5, /* 85 */
+    5, /* 86 */
+    7, /* 87 */
+    5, /* 88 */
+    5, /* 89 */
+    5, /* 90 */
+    4, /* 91 */
+    4, /* 92 */
+    4, /* 93 */
+    4, /* 94 */
+    4, /* 95 */
+    4, /* 96 */
+    5, /* 97 */
+    5, /* 98 */
+    5, /* 99 */
+    5, /* 100 */
+    5, /* 101 */
+    5, /* 102 */
+    5, /* 103 */
+    5, /* 104 */
+    3, /* 105 */
+    5, /* 106 */
+    5, /* 107 */
+    5, /* 108 */
+    7, /* 109 */
+    6, /* 110 */
+    5, /* 111 */
+    5, /* 112 */
+    6, /* 113 */
+    5, /* 114 */
+    5, /* 115 */
+    5, /* 116 */
+    5, /* 117 */
+    5, /* 118 */
+    7, /* 119 */
+    5, /* 120 */
+    5, /* 121 */
+    5, /* 122 */
+    4, /* 123 */
+    4, /* 124 */
+    4, /* 125 */
+    4, /* 126 */
+    4, /* 127 */
+};
+
+static int BArcadeCharWidth(char c)
+{
+    unsigned char uc = (unsigned char)c;
+    if (uc >= 'a' && uc <= 'z') uc -= ('a' - 'A');
+    if (uc >= 32 && uc < 128)
+        return sArcadeWidths[uc - 32];
+    return 4;
+}
+
+static int BArcadeTextWidth(const char *s, int scale)
+{
+    int w = 0;
+    while (*s) {
+        if ((unsigned char)s[0] == 0xC3 && (unsigned char)s[1] == 0xA9) {
+            w += (sArcadeWidths['E' - 32] + 1) * scale;
+            s += 2;
+            continue;
+        }
+        w += (BArcadeCharWidth(*s) + 1) * scale;
+        ++s;
+    }
+    return w > 0 ? w - scale : 0;
+}
+
+static void BArcadeDrawChar(char c, int x, int y, uint16_t color, int scale, int limit, int isAccent)
+{
+    unsigned char uc = (unsigned char)c;
+    if (uc >= 'a' && uc <= 'z') uc -= ('a' - 'A');
+    if (uc < 32 || uc >= 128) uc = '?';
+    const uint8_t *rows = sArcadeGlyphs[uc - 32];
+    int w = sArcadeWidths[uc - 32];
+
+    for (int r = 0; r < 8; ++r) {
+        uint8_t row_bits = rows[r];
+        int py = y + r * scale;
+        if (py < 0 || py >= 240) continue;
+        for (int b = 0; b < w; ++b) {
+            int px = x + b * scale;
+            if (px < 0 || px + scale > limit || px >= 320) continue;
+            if (row_bits & (1u << (w - 1 - b))) {
+                if (scale == 1)
+                    Px(px, py, color);
+                else
+                    Fill(px, py, scale, scale, color);
+            }
+        }
+    }
+    if (isAccent) {
+        /* Acute accent mark for Ã© (é/É) */
+        int ax = x + (w - 2) * scale, ay = y - 2 * scale;
+        if (scale == 1) {
+            if (ax >= 0 && ax < limit && ay >= 0 && ay < 240) Px(ax, ay, color);
+            if (ax + 1 >= 0 && ax + 1 < limit && ay - 1 >= 0 && ay - 1 < 240) Px(ax + 1, ay - 1, color);
+        } else {
+            if (ax >= 0 && ax + scale <= limit && ay >= 0 && ay + scale <= 240) Fill(ax, ay, scale, scale, color);
+            if (ax + scale >= 0 && ax + 2 * scale <= limit && ay - scale >= 0 && ay <= 240) Fill(ax + scale, ay - scale, scale, scale, color);
+        }
+    }
+}
+
+static void BArcadeDrawText(const char *s, int x, int y, uint16_t fg, uint16_t shadow, int scale, int limit, int dropShadow)
+{
+    if (dropShadow > 0) {
+        for (int d = dropShadow; d >= 1; --d) {
+            int cx = x + d;
+            int cy = y + d;
+            const char *p = s;
+            while (*p) {
+                if ((unsigned char)p[0] == 0xC3 && (unsigned char)p[1] == 0xA9) {
+                    BArcadeDrawChar('E', cx, cy, shadow, scale, limit, 1);
+                    cx += (sArcadeWidths['E' - 32] + 1) * scale;
+                    p += 2;
+                    continue;
+                }
+                char ch = *p++;
+                BArcadeDrawChar(ch, cx, cy, shadow, scale, limit, 0);
+                cx += (BArcadeCharWidth(ch) + 1) * scale;
+            }
+        }
+    }
+    {
+        int cx = x;
+        int cy = y;
+        const char *p = s;
+        while (*p) {
+            if ((unsigned char)p[0] == 0xC3 && (unsigned char)p[1] == 0xA9) {
+                BArcadeDrawChar('E', cx, cy, fg, scale, limit, 1);
+                cx += (sArcadeWidths['E' - 32] + 1) * scale;
+                p += 2;
+                continue;
+            }
+            char ch = *p++;
+            BArcadeDrawChar(ch, cx, cy, fg, scale, limit, 0);
+            cx += (BArcadeCharWidth(ch) + 1) * scale;
+        }
+    }
+}
+
+static void BHudDrawMoveTitle(const char *title, int x, int y, int limit)
+{
+    static const int8_t dxs[8] = {-1,  0,  1, -1, 1, -1, 0, 1};
+    static const int8_t dys[8] = {-1, -1, -1,  0, 0,  1, 1, 1};
+
+    for (int d = 0; d < 8; ++d) {
+        int cx = x + dxs[d];
+        int cy = y + dys[d];
+        const char *p = title;
+        while (*p) {
+            char ch = *p++;
+            BArcadeDrawChar(ch, cx, cy, UIS_OUTLINE, 1, limit, 0);
+            cx += BArcadeCharWidth(ch) + 1;
+        }
+    }
+    {
+        int cx = x;
+        int cy = y;
+        const char *p = title;
+        while (*p) {
+            char ch = *p++;
+            BArcadeDrawChar(ch, cx, cy, UI_TEXT, 1, limit, 0);
+            cx += BArcadeCharWidth(ch) + 1;
+        }
+    }
+}
+
+
 static const CtrPokeTouchRect sBStrip = {3, 3, 314, 31};
 static const CtrPokeTouchRect sBBody = {3, 34, 314, 203};
 static const CtrPokeTouchRect sBAction[4] = {      /* by the controller's action number */
@@ -390,11 +715,9 @@ static void BActionButton(int i, const CtrBattleView *v)
         int burstX = r->x + 36, burstY = r->y + (r->h - 46) / 2 + dy;
         BIconAt(BI_BURST, burstX, burstY);
 
-        /* Huge bold white arcade FIGHT label with a solid black drop shadow (two pixels at 3x) */
-        int tx = r->x + 115, ty = r->y + (r->h - UI_TEXT_H * 3) / 2 + dy;
-        UiText("FIGHT", tx + 2, ty + 2, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
-        UiText("FIGHT", tx + 1, ty + 1, UIS_OUTLINE, UIS_OUTLINE, 3, r->x + r->w);
-        UiText("FIGHT", tx, ty, UI_TEXT, UIS_OUTLINE, 3, r->x + r->w);
+        /* Huge bold white arcade FIGHT label with solid black drop shadow */
+        int tx = r->x + 115, ty = r->y + (r->h - 8 * 3) / 2 + dy;
+        BArcadeDrawText("FIGHT", tx, ty, UI_TEXT, UIS_OUTLINE, 3, r->x + r->w - 4, 3);
     } else {
         UiButton(r, &sStyle[i], state);
 
@@ -415,12 +738,11 @@ static void BActionButton(int i, const CtrBattleView *v)
         int iy = r->y + 12 + (40 - iconH) / 2 + dy;
         BIconAt(sIcon[i], ix, iy);
 
-        /* Bold white arcade label with a one-pixel drop shadow (two pixels would swallow a 2x letter) */
-        int lw = UiTextWidth(label[i], 2);
+        /* Bold white arcade label with black drop shadow */
+        int lw = BArcadeTextWidth(label[i], 2);
         int lx = r->x + (r->w - lw) / 2;
-        int ly = r->y + r->h - UI_TEXT_H * 2 - 7 + dy;
-        UiText(label[i], lx + 1, ly + 1, UIS_OUTLINE, UIS_OUTLINE, 2, r->x + r->w);
-        UiText(label[i], lx, ly, UI_TEXT, UIS_OUTLINE, 2, r->x + r->w);
+        int ly = r->y + r->h - 8 * 2 - 8 + dy;
+        BArcadeDrawText(label[i], lx, ly, UI_TEXT, UIS_OUTLINE, 2, r->x + r->w - 2, 2);
     }
 }
 
@@ -588,12 +910,7 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
         int ty = r->y + 7 + dy;
         int limit = r->x + r->w - 18;
 
-        UiText(title, tx - 1, ty, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx + 1, ty, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty - 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty + 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx + 1, ty + 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty, UI_TEXT, 0, 1, limit);
+        BHudDrawMoveTitle(title, tx, ty, limit);
     }
 
     if (state & UI_FOCUSED)
@@ -707,22 +1024,19 @@ static void BCard(int i, const CtrBattleView *v)
 static void BCancel(const CtrPokeTouchRect *r, int pressed)
 {
     int state = pressed ? UI_PRESSED : 0;
+    int dy = pressed ? 1 : 0;
     CtrPokeTouchRect rim = UiInset(r, 1);
 
-    UiLabelButton(r, &sUiS->cancel, state, "CANCEL", r->h >= 28 ? 2 : 1);
+    UiButton(r, &sUiS->cancel, state);
     if (r->h >= 36) {
-        int dy = pressed ? 1 : 0;
         BWatermarkBallIn(r, r->x + r->w / 2, r->y + r->h / 2 + dy, 14,
                          pressed ? UI_RGB(110, 12, 14) : UI_RGB(155, 18, 20));
-        /* Bold white text with black drop shadow over the watermark */
-        int scale = 2;
-        int top = UiButtonLabelTop(r, state, scale);
-        int tw = UiTextWidth("CANCEL", scale);
-        int tx = r->x + (r->w - tw) / 2;
-        UiText("CANCEL", tx + 2, top + 2, UIS_OUTLINE, UIS_OUTLINE, scale, r->x + r->w);
-        UiText("CANCEL", tx + 1, top + 1, UIS_OUTLINE, UIS_OUTLINE, scale, r->x + r->w);
-        UiText("CANCEL", tx, top, UI_TEXT, UIS_OUTLINE, scale, r->x + r->w);
     }
+    int scale = r->h >= 28 ? 2 : 1;
+    int tw = BArcadeTextWidth("CANCEL", scale);
+    int tx = r->x + (r->w - tw) / 2;
+    int ty = r->y + (r->h - 8 * scale) / 2 + dy;
+    BArcadeDrawText("CANCEL", tx, ty, UI_TEXT, UIS_OUTLINE, scale, r->x + r->w - 2, scale);
     UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, pressed ? sUiS->cancel.body : UIS_BORDER_LIT);
 }
 
