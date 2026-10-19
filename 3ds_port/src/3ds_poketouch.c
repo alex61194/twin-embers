@@ -168,6 +168,7 @@ const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
 static const CtrPokeTouchRect sMenuFrame = {2, 2, 244, 164};
 static const CtrPokeTouchRect sBar = {2, 168, 244, 70};
 const CtrPokeTouchRect gCtrPokeTouchBack = {176, 207, 64, 25};
+const CtrPokeTouchRect gCtrPokeTouchOptPage = {176, 177, 64, 25};
 
 /* The palette and components are the lower screen's design system (3ds_ui_theme.h / .inc). The only colour of
  * its own is the empty viewport's. */
@@ -785,6 +786,20 @@ static void Back(const CtrPokeTouchView *v)
     UiText("BACK", x + 9, top, ink, UI_TEXT_SH, 1, r->x + r->w);
 }
 
+/* PAGE: switches between OPTIONS pages (PAGE 1/2, PAGE 2/2) right above BACK in the contextual bar. */
+static void OptPageButton(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
+    int state = v->optPagePressed ? UI_PRESSED : 0;
+    int top = UiButtonLabelTop(r, state, 1);
+    uint16_t ink = UiLabelColor(state);
+    char label[16];
+
+    snprintf(label, sizeof(label), "PAGE %u/%u", (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
+    ChromeButton(r, state);
+    UiTextCentered(label, r, top, ink, UI_TEXT_SH, 1);
+}
+
 /* The contextual bar: up to three lines, 18 pixels apart, the block centred on the bar's middle line (y = 181 / 199 /
  * 217 with three); the first line is the subject (white), the others what is known about it (dim). A blue edge on the
  * left marks it as the screen's caption. */
@@ -792,6 +807,7 @@ static void Bar(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sBar;
     int lines = 0;
+    int hasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     ChromePanel(r);
     Fill(r->x + 2, r->y + 6, 2, r->h - 12, PT_RED_EDGE);
@@ -799,11 +815,13 @@ static void Bar(const CtrPokeTouchView *v)
         if (v->bar[i][0])
             lines = i + 1;
     int top = 203 - ((lines - 1) * 18 + 9) / 2;
-    /* The text stops short of BACK, or of SAVE's buttons, when they are there. */
-    int limit = v->backVisible ? gCtrPokeTouchBack.x - 4
+    /* The text stops short of BACK, PAGE, or of SAVE's buttons, when they are there. */
+    int limit = (v->backVisible || hasPage) ? gCtrPokeTouchBack.x - 4
               : v->save && v->saveState != SAVE_WRITING ? sSaveButtons.x - 2 : r->x + r->w - 8;
     for (int i = 0; i < lines; ++i)
         UiText(v->bar[i], 10, top + i * 18, i == 0 ? UI_TEXT : (v->save || v->options) && !v->viewport ? PT_RED_DIM : UI_TEXT_DIM, UI_TEXT_SH, 1, limit);
+    if (hasPage)
+        OptPageButton(v);
     if (v->backVisible)
         Back(v);
     if (v->save)
@@ -868,9 +886,19 @@ static void Button(int id, const CtrPokeTouchView *v)
             [PT_POKEDEX] = "POK\xc3\xa9" "DEX", [PT_POKEMON] = "POK\xc3\xa9MON", [PT_BAG] = "BAG",
             [PT_CARD] = "CARD", [PT_SAVE] = "SAVE", [PT_OPTIONS] = "OPTIONS",
         };
-        /* The Trainer Card is the player's own: it carries their name (7 characters at most). */
-        const char *label = id == PT_CARD && v->playerName[0] ? v->playerName : sLabels[id];
+        /* The Trainer Card is the player's own: it carries their name in uppercase to match the sidebar. */
+        char cardName[16];
+        const char *label = sLabels[id];
         int mid = r->y + 1 + dy + face / 2;
+
+        if (id == PT_CARD && v->playerName[0]) {
+            for (int c = 0; c < (int)sizeof(cardName) - 1 && v->playerName[c]; ++c) {
+                char ch = v->playerName[c];
+                cardName[c] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
+                cardName[c + 1] = 0;
+            }
+            label = cardName;
+        }
 
         SoftIconsPrepare();
         Fill(r->x + 3, mid - 6, 2, 12, on ? sAccent[id] : UI_TEXT_OFF);
@@ -900,6 +928,13 @@ static void Button(int id, const CtrPokeTouchView *v)
 bool CtrPokeTouch_HitBack(int x, int y)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchBack;
+
+    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
+}
+
+bool CtrPokeTouch_HitOptPage(int x, int y)
+{
+    const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
 
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
 }
@@ -955,8 +990,13 @@ static void Mark(CtrDirtyList *dirty, const CtrPokeTouchRect *r)
 
 void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty)
 {
+    int oldHasPage = old->options && !old->viewport && old->optPageCount > 1;
+    int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
+
     sCanvas = canvas;
-    if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
+    if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
+        || (v->options && !v->viewport && old->optCount != v->optCount)
+        || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
     } else if (v->home && !v->viewport && (old->playerX != v->playerX || old->playerY != v->playerY
@@ -1007,16 +1047,24 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
             }
         }
     }
-    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->backVisible != v->backVisible || old->save != v->save) {
+    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->backVisible != v->backVisible || old->save != v->save
+        || oldHasPage != newHasPage) {
         Bar(v);
         Mark(dirty, &sBar);
-    } else if (v->backVisible && (old->backEnabled != v->backEnabled || old->backPressed != v->backPressed)) {
-        Back(v);                        /* a press or a state: only BACK's rectangle */
-        Mark(dirty, &gCtrPokeTouchBack);
-    } else if (v->save && (old->saveState != v->saveState || old->saveSel != v->saveSel
-                           || old->savePressed != v->savePressed)) {
-        SaveButtons(v);                 /* the selection or a press: only the buttons' area */
-        Mark(dirty, &sSaveButtons);
+    } else {
+        if (newHasPage && (old->optPage != v->optPage || old->optPageCount != v->optPageCount
+                           || old->optPagePressed != v->optPagePressed)) {
+            OptPageButton(v);
+            Mark(dirty, &gCtrPokeTouchOptPage);
+        }
+        if (v->backVisible && (old->backEnabled != v->backEnabled || old->backPressed != v->backPressed)) {
+            Back(v);                        /* a press or a state: only BACK's rectangle */
+            Mark(dirty, &gCtrPokeTouchBack);
+        } else if (v->save && (old->saveState != v->saveState || old->saveSel != v->saveSel
+                               || old->savePressed != v->savePressed)) {
+            SaveButtons(v);                 /* the selection or a press: only the buttons' area */
+            Mark(dirty, &sSaveButtons);
+        }
     }
     for (int i = 0; i < PT_COUNT; ++i) {
         if (!Changed(i, old, v))

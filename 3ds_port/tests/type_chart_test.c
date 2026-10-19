@@ -38,6 +38,10 @@ int main(void)
     CHECK(EFFECT(NORMAL, ROCK, ROCK) == CTR_FX_HALF, "normal on rock");
     CHECK(EFFECT(WATER, GRASS, GROUND) == CTR_FX_NONE, "x1/2 and x2 cancel");
     CHECK(EFFECT(ICE, DRAGON, FLYING) == CTR_FX_QUADRUPLE, "ice on dragon flying");
+    CHECK(CtrTypeChart_EffectEx(kChart, NORMAL, GHOST, GHOST, 1, 0) == CTR_FX_NONE, "Foresight lets Normal hit Ghost");
+    CHECK(CtrTypeChart_EffectEx(kChart, FIGHTING, GHOST, NORMAL, 1, 0) == CTR_FX_DOUBLE, "Foresight lets Fighting hit Ghost/Normal");
+    CHECK(CtrTypeChart_EffectEx(kChart, GROUND, FIRE, FIRE, 0, 1) == CTR_FX_IMMUNE, "Levitate makes Ground immune");
+    CHECK(CtrTypeChart_EffectEx(kChart, FIRE, GRASS, GRASS, 0, 1) == CTR_FX_DOUBLE, "Levitate does not affect non-Ground");
 
     if (failures) { printf("%d failures\n", failures); return 1; }
     puts("PASS type chart");

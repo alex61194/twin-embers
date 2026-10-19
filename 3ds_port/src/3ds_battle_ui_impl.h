@@ -18,6 +18,8 @@ static const CtrPokeTouchRect sBAction[4] = {      /* by the controller's action
     {111, 144, 98, 84},             /* RUN */
 };
 static const CtrPokeTouchRect sBCard[4] = {{6, 40, 151, 68}, {163, 40, 151, 68}, {6, 114, 151, 69}, {163, 114, 151, 69}};
+static const CtrPokeTouchRect sBMoveFooter = {6, 188, 218, 44};
+static const CtrPokeTouchRect sBMoveCancel = {228, 188, 86, 44};
 static const CtrPokeTouchRect sBCancel = {6, 190, 308, 30};
 /* The Safari Zone's four actions in the controller's 2x2 order (BALL, BAIT, ROCK, RUN). */
 static const CtrPokeTouchRect sBSafari[4] = {{8, 42, 150, 90}, {162, 42, 150, 90}, {8, 138, 150, 90}, {162, 138, 150, 90}};
@@ -77,7 +79,7 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
         for (int i = 0; i < 4; ++i)
             if (v->move[i].present && BIn(&sBCard[i], x, y))
                 return i;
-        if (BIn(&sBCancel, x, y))
+        if (BIn(&sBMoveCancel, x, y))
             return BUI_CANCEL;
     }
     if (v->state == BUI_TARGET) {
@@ -149,11 +151,12 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
     return -1;
 }
 
-/* A Poke Ball of the party strip: red and white for a Pokemon that can battle, grey for one that fainted, an empty
- * socket for no Pokemon. */
+/* A Poke Ball of the party strip: red and white for a healthy Pokemon, amber-gold for one with a status condition
+ * (kind == 3), grey for one that fainted (kind == 2), an empty socket for no Pokemon (kind == 0). */
 static void BallDraw(int cx, int cy, int kind)
 {
-    const uint16_t sTop[3] = {UIS_PANEL_LO, UI_RGB(226, 62, 52), UI_RGB(120, 128, 146)};
+    const uint16_t sTop[4] = {UIS_PANEL_LO, UI_RGB(226, 62, 52), UI_RGB(120, 128, 146), UI_RGB(236, 174, 36)};
+    int k = kind >= 0 && kind <= 3 ? kind : 0;
 
     for (int dy = -10; dy < 10; ++dy)
         for (int dx = -10; dx < 10; ++dx) {
@@ -162,16 +165,17 @@ static void BallDraw(int cx, int cy, int kind)
 
             if (d2 > 20 * 20)
                 continue;
-            if (kind == 0)
+            if (k == 0)
                 c = d2 > 17 * 17 ? UIS_BORDER : UIS_PANEL_LO;
             else if (d2 > 17 * 17 || (dy >= -1 && dy < 1))
                 c = UIS_OUTLINE;
             else if (d2 < 6 * 6)
                 c = d2 < 3 * 3 ? UI_TEXT : UIS_OUTLINE;
             else if (dy < 0)
-                c = dx < -2 && dy < -4 && kind == 1 ? UI_RGB(255, 140, 120) : sTop[kind];
+                c = dx < -2 && dy < -4 && k == 1 ? UI_RGB(255, 140, 120)
+                  : dx < -2 && dy < -4 && k == 3 ? UI_RGB(255, 228, 120) : sTop[k];
             else
-                c = kind == 2 ? UI_RGB(170, 176, 190) : UI_RGB(236, 240, 246);
+                c = k == 2 ? UI_RGB(170, 176, 190) : UI_RGB(236, 240, 246);
             Px(cx + dx, cy + dy, c);
         }
 }
@@ -282,6 +286,25 @@ static void BDescribeN(const char *text, int x, int y, int width, int maxLines, 
         UiText(line, x, y + lines * UI_LINE_H, color, UIS_TEXT_SH, 1, x + width);
 }
 
+/* Gen 3 Physical (type < 10: 9x9 starburst) vs Special (type >= 10: 9x9 concentric rings) icon in the move header. */
+static void BMoveCategoryIcon(int x, int y, uint8_t type, uint16_t ink, uint16_t sh)
+{
+    static const uint16_t sPhys[9] = {
+        0x020, 0x0A8, 0x070, 0x0FA, 0x1FF, 0x0FA, 0x070, 0x0A8, 0x020
+    };
+    static const uint16_t sSpec[9] = {
+        0x070, 0x088, 0x124, 0x154, 0x154, 0x154, 0x124, 0x088, 0x070
+    };
+    const uint16_t *rows = type < 10 ? sPhys : sSpec;
+
+    for (int ry = 0; ry < 9; ++ry)
+        for (int rx = 0; rx < 9; ++rx)
+            if (rows[ry] & (1u << (8 - rx))) {
+                Px(x + rx + 1, y + ry + 1, sh);
+                Px(x + rx, y + ry, ink);
+            }
+}
+
 /* A card of the battle (a move, a target): raised, its header band in `color` with `title`, the body a dark tint of
  * the same colour. Returns the vertical offset of its content (1 while pressed). An empty slot is a dark socket. */
 static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *title, int state)
@@ -307,7 +330,7 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, const char *tit
         uint16_t ink = UiInkOn(head);
 
         UiText(title, r->x + 8, r->y + 7 + dy, ink, ink == UI_TEXT ? UiMix(color, UIS_OUTLINE, 6) : UiMix(head, UI_TEXT, 3), 1,
-               r->x + r->w - 6);
+               r->x + r->w - 18);
     }
     if (state & UI_FOCUSED)
         UiFocus(r);
@@ -322,40 +345,54 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
 
 /* The matchup tag between the type badge and the power: what the move does to the foe's types (x2 green, x4 a
  * brighter lime; x1/2, x1/4 orange; x0 red). A neutral hit has no tag. */
-static void BMatchup(const CtrBattleMove *m, int x, int y)
+static void BMatchupTag(uint8_t matchup, int x, int y)
 {
     static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
     static const uint16_t kColor[] = {0, UI_HP_LOW, UI_WARN, UI_WARN, UI_HP_HIGH, UI_RGB(128, 240, 40)};
     CtrPokeTouchRect tag = {(int16_t)x, (int16_t)y, 34, 14};
 
-    if (m->matchup == CTR_FX_NONE || m->matchup > CTR_FX_QUADRUPLE)
+    if (matchup == CTR_FX_NONE || matchup > CTR_FX_QUADRUPLE)
         return;
-    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UiMix(UIS_PANEL, kColor[m->matchup], 7));
-    UiTextRight(kText[m->matchup], tag.x + tag.w - 4, tag.y + 3, UI_TEXT, UIS_TEXT_SH, 1);
+    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UiMix(UIS_PANEL, kColor[matchup], 7));
+    UiTextRight(kText[matchup], tag.x + tag.w - 4, tag.y + 3, UI_TEXT, UIS_TEXT_SH, 1);
 }
 
-/* A move card: the name on the type's colour, the type badge, the matchup and the power, the PP left (number and bar). */
+/* A move card: the name and Physical/Special icon on the type's colour, the type badge, the matchup, power (and
+ * accuracy when populated), and the PP left (number and bar). */
 static void BCard(int i, const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleMove *m = &v->move[i];
     int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
+    uint16_t color, head, ink, sh;
     int dy;
 
     if (!m->present) {
         BCardFrame(r, 0, NULL, 0);
         return;
     }
-    dy = BCardFrame(r, UiTypeColor(m->type), m->name, state);
+    color = UiTypeColor(m->type);
+    dy = BCardFrame(r, color, m->name, state);
+    head = (state & UI_PRESSED) ? UiMix(color, UIS_OUTLINE, 2) : color;
+    ink = UiInkOn(head);
+    sh = ink == UI_TEXT ? UiMix(color, UIS_OUTLINE, 6) : UiMix(head, UI_TEXT, 3);
+    BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, ink, sh);
     {
         CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), 52, 14};
         CtrPokeTouchRect bar = {(int16_t)(r->x + 70), (int16_t)(r->y + 51 + dy), (int16_t)(r->w - 78), 5};
         char pp[12];
 
         UiTypeBadge(&badge, m->type, m->typeName);
-        BMatchup(m, r->x + 63, r->y + 28 + dy);
-        UiText("PWR", r->x + r->w - 50, r->y + 31 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
-        UiTextRight(m->power, r->x + r->w - 8, r->y + 31 + dy, UI_TEXT, UIS_TEXT_SH, 1);
+        BMatchupTag(m->matchup, r->x + 63, r->y + 28 + dy);
+        if (m->accuracy[0]) {
+            UiText("PWR", r->x + r->w - 50, r->y + 25 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiTextRight(m->power, r->x + r->w - 8, r->y + 25 + dy, UI_TEXT, UIS_TEXT_SH, 1);
+            UiText("ACC", r->x + r->w - 50, r->y + 37 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiTextRight(m->accuracy, r->x + r->w - 8, r->y + 37 + dy, UI_TEXT, UIS_TEXT_SH, 1);
+        } else {
+            UiText("PWR", r->x + r->w - 50, r->y + 31 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
+            UiTextRight(m->power, r->x + r->w - 8, r->y + 31 + dy, UI_TEXT, UIS_TEXT_SH, 1);
+        }
         UiText("PP", r->x + 8, r->y + 48 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + 30);
         snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
         UiText(pp, r->x + 24, r->y + 48 + dy, BPpColor(m->pp, m->maxPp), UIS_TEXT_SH, 1, r->x + 68);
@@ -363,21 +400,49 @@ static void BCard(int i, const CtrBattleView *v)
     }
 }
 
+/* Sculpted CANCEL button with an inner metallic bevel ring. */
 static void BCancel(const CtrPokeTouchRect *r, int pressed)
 {
+    CtrPokeTouchRect rim = UiInset(r, 1);
+
     UiLabelButton(r, &sUiS->cancel, pressed ? UI_PRESSED : 0, "CANCEL", r->h >= 28 ? 2 : 1);
+    UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, pressed ? sUiS->cancel.body : UIS_BORDER_LIT);
+}
+
+/* Live move description footer on the left of the compact CANCEL button in BUI_MOVE. */
+static void BMoveFooter(const CtrBattleView *v)
+{
+    const CtrPokeTouchRect *r = &sBMoveFooter;
+    int sel = v->cursor >= 0 && v->cursor < 4 && v->move[v->cursor].present ? v->cursor : 0;
+    const CtrBattleMove *m = &v->move[sel];
+    uint16_t accent = m->present ? UiTypeColor(m->type) : UIS_BORDER_LIT;
+
+    UiPanel(r, UIS_PANEL_LO, UIS_BORDER);
+    Fill(r->x + 3, r->y + 1, r->w - 6, 1, UIS_BORDER_LIT);
+    Fill(r->x + 2, r->y + 5, 2, r->h - 10, accent);
+    if (!m->present) {
+        UiText("Select a move.", r->x + 9, r->y + 16, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
+        return;
+    }
+    if (m->desc[0]) {
+        BDescribeN(m->desc, r->x + 8, r->y + 7, r->w - 14, 2, UI_TEXT);
+    } else {
+        const char *cat = m->type < 10 ? "PHYSICAL MOVE" : "SPECIAL MOVE";
+        UiText(m->name, r->x + 8, r->y + 8, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 6);
+        UiText(cat, r->x + 8, r->y + 23, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
+    }
 }
 
 static void BMove(const CtrBattleView *v)
 {
     for (int i = 0; i < 4; ++i)
         BCard(i, v);
-    BCancel(&sBCancel, v->pressed == BUI_CANCEL);
+    BMoveFooter(v);
+    BCancel(&sBMoveCancel, v->pressed == BUI_CANCEL);
 }
 
 /* Aiming a move in a double battle: a card for each battler FireRed lets it be aimed at, the opposing ones on top in
- * FIGHT's red, the player's below in POKeMON's blue: the name, the level, the side and the HP bar (the numbers too for
- * the player's own). */
+ * FIGHT's red, the player's below in POKeMON's blue: the name, the level, the matchup badge, the side and the HP bar. */
 static void BTargetCard(int i, const CtrBattleView *v)
 {
     static const UiButtonStyle sFoe = UI_STYLE_FIGHT, sAlly = UI_STYLE_POKEMON;
@@ -398,6 +463,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
 
         snprintf(level, sizeof(level), "Lv%u", t->level);
         UiText(level, r->x + 8, r->y + 30 + dy, UI_TEXT, UIS_TEXT_SH, 1, r->x + 60);
+        BMatchupTag(t->matchup, r->x + r->w - 84, r->y + 27 + dy);
         UiBadge(&tag, t->side ? sAlly.shade : sFoe.shade, t->side ? "ALLY" : "FOE");
         UiHpBar(&bar, t->hp, t->maxHp);
         if (t->side) {
@@ -414,25 +480,28 @@ static void BTarget(const CtrBattleView *v)
     BCancel(&sBCancel, v->pressed == BUI_CANCEL);
 }
 
-/* The Safari Zone's menu: BALL, BAIT, ROCK, RUN (the words of FireRed's gText_SafariZoneMenu), as MAIN's buttons. */
-static void BSafari(const CtrBattleView *v)
+static void BSafariButton(int i, const CtrBattleView *v)
 {
     const UiButtonStyle *sStyle[4] = {&sUiS->fight, &sUiS->bag, &sUiS->pokemon, &sUiS->run};
     static const char *const label[4] = {"BALL", "BAIT", "ROCK", "RUN"};
     static const int sSafariIcon[4] = {BI_POKEBALL, BI_BAIT, BI_ROCK, BI_SHOE};
     static const uint16_t sSafariAccent[4] = {UI_RGB(70, 172, 255), UI_RGB(236, 112, 140), UI_RGB(190, 182, 170), UI_RGB(72, 206, 104)};
+    const CtrPokeTouchRect *r = &sBSafari[i];
+    int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
+    int dy = (state & UI_PRESSED) ? 1 : 0, cx = r->x + r->w / 2, cy = r->y + 30 + dy;
 
     BIconsPrepare();
-    for (int i = 0; i < 4; ++i) {
-        const CtrPokeTouchRect *r = &sBSafari[i];
-        int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
-        int dy = (state & UI_PRESSED) ? 1 : 0, cx = r->x + r->w / 2, cy = r->y + 30 + dy;
+    UiButton(r, sStyle[i], state);
+    BAccent(r, dy, sSafariAccent[i]);
+    BIconAt(sSafariIcon[i], cx - 12, cy - 12 + 4);
+    UiText(label[i], cx - UiTextWidth(label[i], 2) / 2, r->y + 52 + dy, UI_TEXT, sStyle[i]->shade, 2, r->x + r->w);
+}
 
-        UiButton(r, sStyle[i], state);
-        BAccent(r, dy, sSafariAccent[i]);
-        BIconAt(sSafariIcon[i], cx - 12, cy - 12 + 4);
-        UiText(label[i], cx - UiTextWidth(label[i], 2) / 2, r->y + 52 + dy, UI_TEXT, sStyle[i]->shade, 2, r->x + r->w);
-    }
+/* The Safari Zone's menu: BALL, BAIT, ROCK, RUN (the words of FireRed's gText_SafariZoneMenu), as MAIN's buttons. */
+static void BSafari(const CtrBattleView *v)
+{
+    for (int i = 0; i < 4; ++i)
+        BSafariButton(i, v);
 }
 
 /* The battle Party: a header, the six Pokemon in two columns of three, CANCEL. */
@@ -563,7 +632,7 @@ static void BParty(const CtrBattleView *v)
     BPartyOverlay(v);
 }
 
-/* Item icons: FireRed's 24x24 icon of an item, decoded once and kept for the few that are on screen. */
+/* Item icons: FireRed's 24x24 icon of an item, decoded once into a collision-free 12-slot FIFO cache. */
 #define BICONS 12
 static struct {
     unsigned item;
@@ -571,17 +640,28 @@ static struct {
     uint8_t pixels[24 * 24];
     uint16_t pal[16];
 } sBIcon[BICONS];
+static int sBIconNext;
 
 static int BItemIcon(unsigned item)
 {
     static unsigned char tiles[0x200];
     static unsigned short pal[16];
-    int slot = (int)(item % BICONS);
+    int slot = -1;
 
     if (item == 0)
         return -1;
-    if (sBIcon[slot].item == item)
-        return sBIcon[slot].ok ? slot : -1;
+    for (int i = 0; i < BICONS; ++i)
+        if (sBIcon[i].item == item)
+            return sBIcon[i].ok ? i : -1;
+    for (int i = 0; i < BICONS; ++i)
+        if (sBIcon[i].item == 0) {
+            slot = i;
+            break;
+        }
+    if (slot < 0) {
+        slot = sBIconNext;
+        sBIconNext = (sBIconNext + 1) % BICONS;
+    }
     memset(tiles, 0, sizeof(tiles));
     sBIcon[slot].item = item;
     sBIcon[slot].ok = CtrPokeTouch_ItemIcon(item, tiles, pal);
@@ -737,6 +817,17 @@ static void BMark(CtrDirtyList *dirty, const CtrPokeTouchRect *r)
     CtrDirty_Add(dirty, r->x, r->y, r->x + r->w, r->y + r->h);
 }
 
+/* Whether two Party views differ only by `cursor` (with no modal open), so only the affected slot panels need redraw. */
+static int BPartySlotsOnly(const CtrBattleParty *a, const CtrBattleParty *b)
+{
+    CtrBattleParty copy = *a;
+
+    if (a->panel != BUI_PTY_NONE || b->panel != BUI_PTY_NONE)
+        return 0;
+    copy.cursor = b->cursor;
+    return memcmp(&copy, b, sizeof(copy)) == 0;
+}
+
 void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBattleView *v, CtrDirtyList *dirty)
 {
     sCanvas = canvas;
@@ -747,27 +838,60 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
         BMark(dirty, &sBStrip);
     }
     if (old->state != v->state || (v->state == BUI_MOVE && memcmp(old->move, v->move, sizeof(v->move)))
-        || (v->state == BUI_BAG && memcmp(&old->bag, &v->bag, sizeof(v->bag)))
-        || (v->state == BUI_BAG && old->pressed != v->pressed)
-        || (v->state == BUI_PARTY && (memcmp(&old->pty, &v->pty, sizeof(v->pty)) || old->pressed != v->pressed))
-        || ((v->state == BUI_TARGET || v->state == BUI_SAFARI)
-            && (memcmp(old->target, v->target, sizeof(v->target)) || old->pressed != v->pressed
-                || old->cursor != v->cursor || old->showCursor != v->showCursor))) {
+        || (v->state == BUI_BAG && (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || old->pressed != v->pressed))
+        || (v->state == BUI_PARTY && !BPartySlotsOnly(&old->pty, &v->pty))
+        || (v->state == BUI_TARGET && memcmp(old->target, v->target, sizeof(v->target)))) {
         BBody(v);
         BMark(dirty, &sBBody);
     } else if (v->state == BUI_MOVE && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
-        /* The cards and CANCEL do not overlap and each draws only inside its rectangle: only the ones that look
-         * different (pressed or focused, or no longer) are redrawn and presented. */
         for (int i = 0; i < 4; ++i)
             if (BLooksChanged(old, v, i)) {
                 Fill(sBCard[i].x, sBCard[i].y, sBCard[i].w, sBCard[i].h, UIS_BG);
                 BCard(i, v);
                 BMark(dirty, &sBCard[i]);
             }
+        if (old->cursor != v->cursor) {
+            Fill(sBMoveFooter.x, sBMoveFooter.y, sBMoveFooter.w, sBMoveFooter.h, UIS_BG);
+            BMoveFooter(v);
+            BMark(dirty, &sBMoveFooter);
+        }
+        if ((old->pressed == BUI_CANCEL) != (v->pressed == BUI_CANCEL)) {
+            Fill(sBMoveCancel.x, sBMoveCancel.y, sBMoveCancel.w, sBMoveCancel.h, UIS_BG);
+            BCancel(&sBMoveCancel, v->pressed == BUI_CANCEL);
+            BMark(dirty, &sBMoveCancel);
+        }
+    } else if (v->state == BUI_TARGET && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
+        for (int i = 0; i < 4; ++i)
+            if (BLooksChanged(old, v, i)) {
+                Fill(sBCard[i].x, sBCard[i].y, sBCard[i].w, sBCard[i].h, UIS_BG);
+                BTargetCard(i, v);
+                BMark(dirty, &sBCard[i]);
+            }
         if ((old->pressed == BUI_CANCEL) != (v->pressed == BUI_CANCEL)) {
             Fill(sBCancel.x, sBCancel.y, sBCancel.w, sBCancel.h, UIS_BG);
             BCancel(&sBCancel, v->pressed == BUI_CANCEL);
             BMark(dirty, &sBCancel);
+        }
+    } else if (v->state == BUI_SAFARI && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
+        for (int i = 0; i < 4; ++i)
+            if (BLooksChanged(old, v, i)) {
+                Fill(sBSafari[i].x, sBSafari[i].y, sBSafari[i].w, sBSafari[i].h, UIS_BG);
+                BSafariButton(i, v);
+                BMark(dirty, &sBSafari[i]);
+            }
+    } else if (v->state == BUI_PARTY && (old->pressed != v->pressed || old->pty.cursor != v->pty.cursor)) {
+        for (int i = 0; i < 6; ++i)
+            if ((old->pty.cursor == i) != (v->pty.cursor == i)
+                || (old->pressed == BUI_PTY_SLOT + i) != (v->pressed == BUI_PTY_SLOT + i)) {
+                CtrPokeTouchRect r = BPanel(i);
+                Fill(r.x, r.y, r.w, r.h, UIS_BG);
+                BPartyPanel(i, v);
+                BMark(dirty, &r);
+            }
+        if (v->pty.mode != BUI_PTY_FORCED && (old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)) {
+            Fill(sBPCancel.x, sBPCancel.y, sBPCancel.w, sBPCancel.h, UIS_BG);
+            BCancel(&sBPCancel, v->pressed == BUI_PTY_CANCEL);
+            BMark(dirty, &sBPCancel);
         }
     } else if (v->state == BUI_ACTION
                && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {

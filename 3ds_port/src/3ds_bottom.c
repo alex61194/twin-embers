@@ -117,6 +117,8 @@ extern int CtrBattle_MoveType(unsigned move);
 extern void CtrBattle_TypeName(int type, char *out, int size);
 extern unsigned CtrBattle_MovePower(unsigned move);
 extern int CtrBattle_MoveMatchup(unsigned move);
+extern unsigned CtrBattle_MoveAccuracy(unsigned move);
+extern int CtrBattle_TargetMatchup(int target);
 extern int CtrBattle_MovePP(int slot, int *pp, int *maxPp);
 extern int CtrPokeTouch_PlayerFemale(void);
 extern int CtrPokeTouch_Enabled(int entry);
@@ -318,10 +320,10 @@ typedef struct {
 static void SummaryFill(CtrSummaryUiView *v);
 static int NavPending(int mode);
 
-/* The premium Summary is the battle's alone: a Summary opened from the field's Party stays FireRed's own. */
+/* The premium Summary is used for battle Party, or when enabled for field Party via Options. */
 static int SummaryPremium(void)
 {
-    return CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY;
+    return CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY || CtrOptions_FieldSummary() == 0;
 }
 
 /* Latched action list: kept while the selection menu is closed so the panel
@@ -401,6 +403,7 @@ static void OpenSave(void);
 static struct {
     int sel;
     int down, row, zone, inside;
+    int pageDown, pageInside;
 } sOpt;
 /* The native roots: PokeTouch screens over the live field with no real menu
  * behind them. (The TRAINER CARD and the POKeDEX are real FireRed screens, sessions
@@ -805,8 +808,16 @@ static void BattleCommon(CtrBattleView *v)
     memset(v, 0, sizeof(*v));
     v->pressed = (int16_t)(sBat.down && sBat.inside ? sBat.btn : -1);
     v->cursor = -1;
-    for (int i = 0; i < 6; ++i)
-        v->party[i] = CtrBottomParty_SlotEmpty(i) ? 0 : CtrBottomParty_HP(i) == 0 && !CtrBottomParty_IsEgg(i) ? 2 : 1;
+    for (int i = 0; i < 6; ++i) {
+        if (CtrBottomParty_SlotEmpty(i))
+            v->party[i] = 0;
+        else if (CtrBottomParty_HP(i) == 0 && !CtrBottomParty_IsEgg(i))
+            v->party[i] = 2;
+        else if (CtrBottomParty_Status(i) != 0 && !CtrBottomParty_IsEgg(i))
+            v->party[i] = 3;
+        else
+            v->party[i] = 1;
+    }
 }
 
 /* The battle Bag as it is now: its pocket, its items (the save's own), the selected one's detail, the open menu or the
@@ -937,6 +948,7 @@ static void BattleFill(CtrBattleView *v)
             t->level = (uint8_t)(level > 255 ? 255 : level);
             t->hp = (uint16_t)hp;
             t->maxHp = (uint16_t)maxHp;
+            t->matchup = (uint8_t)CtrBattle_TargetMatchup(b);
             if (b == cursor)
                 v->cursor = (int8_t)i;
         }
@@ -959,7 +971,7 @@ static void BattleFill(CtrBattleView *v)
     for (int i = 0; i < 4; ++i) {
         unsigned move = CtrBattle_Move(i);
         CtrBattleMove *m = &v->move[i];
-        unsigned power;
+        unsigned power, acc;
 
         if (move == 0)
             continue;
@@ -967,7 +979,10 @@ static void BattleFill(CtrBattleView *v)
         m->type = (uint8_t)CtrBattle_MoveType(move);
         CtrBattle_MoveName(move, m->name, sizeof(m->name));
         CtrBattle_TypeName(m->type, m->typeName, sizeof(m->typeName));
-        CtrBattle_MoveDescription(move, m->desc, sizeof(m->desc));
+        if (CtrOptions_MoveDetails())
+            CtrBattle_MoveDescription(move, m->desc, sizeof(m->desc));
+        else
+            m->desc[0] = 0;
         {
             int pp, maxPp;
 
@@ -976,12 +991,20 @@ static void BattleFill(CtrBattleView *v)
                 m->maxPp = (uint8_t)(maxPp < 0 ? 0 : maxPp > 255 ? 255 : maxPp);
             }
         }
-        m->matchup = (uint8_t)CtrBattle_MoveMatchup(move);
+        if (CtrOptions_TypeMatchup())
+            m->matchup = (uint8_t)CtrBattle_MoveMatchup(move);
+        else
+            m->matchup = CTR_FX_NONE;
         power = CtrBattle_MovePower(move);
         if (power)
             snprintf(m->power, sizeof(m->power), "%u", power > 999 ? 999 : power);
         else
             snprintf(m->power, sizeof(m->power), "-");
+        acc = CtrBattle_MoveAccuracy(move);
+        if (acc)
+            snprintf(m->accuracy, sizeof(m->accuracy), "%u", acc > 999 ? 999 : acc);
+        else
+            snprintf(m->accuracy, sizeof(m->accuracy), "-");
     }
 }
 
@@ -1162,8 +1185,9 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->touch.backEnabled = (uint8_t)BackEnabled(mode);
             s->touch.backPressed = (uint8_t)(sBack.inside != 0);
             CtrOptions_Fill(&s->touch, sOpt.sel);
-            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? sOpt.row : -1);
+            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row % PT_OPT_MAX) : -1);
             s->touch.optZone = (uint8_t)(sOpt.down && sOpt.inside ? sOpt.zone : PT_OPT_ZONE_NONE);
+            s->touch.optPagePressed = (uint8_t)(sOpt.pageDown && sOpt.pageInside);
             return;
         }
         HomeMapState(s);
@@ -2342,32 +2366,55 @@ static int FieldEnabled(int id)
     return 1;
 }
 
-/* A touch on an OPTIONS row (the viewport shows no map then): selected on
+/* A touch on an OPTIONS row or the PAGE switcher button (the viewport shows no map then): selected on
  * touch-down, one step on release over the same zone ("<" back, the value or
  * ">" forward; the label only selects). Moving off cancels it; a held
  * physical button cancels it too. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
-    int row, zone, on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
-                                                               CtrOptions_RowCount(), &row, &zone);
+    int page = sOpt.sel / PT_OPT_MAX;
+    int base = page * PT_OPT_MAX;
+    int total = CtrOptions_RowCount();
+    int pageCount = (total + PT_OPT_MAX - 1) / PT_OPT_MAX;
+    int pageRows = total - base > PT_OPT_MAX ? PT_OPT_MAX : total - base;
+    int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
+    int relRow, zone;
+    int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
+                                                       pageRows, &relRow, &zone);
+    int globalRow = base + relRow;
 
     if (in->held & 0x3ffu) {
         sOpt.down = sOpt.inside = 0;
+        sOpt.pageDown = sOpt.pageInside = 0;
         return;
     }
     if (in->touchDown) {
+        sOpt.pageDown = sOpt.pageInside = hitPage;
         sOpt.down = sOpt.inside = on;
         if (on) {
-            sOpt.row = row;
+            sOpt.row = globalRow;
             sOpt.zone = zone;
-            sOpt.sel = row;
+            sOpt.sel = globalRow;
+        }
+        return;
+    }
+    if (sOpt.pageDown) {
+        if (in->touchActive) {
+            sOpt.pageInside = hitPage;
+            return;
+        }
+        int pageInside = sOpt.pageInside;
+        sOpt.pageDown = sOpt.pageInside = 0;
+        if (pageInside) {
+            int next = ((page + 1) % pageCount) * PT_OPT_MAX;
+            sOpt.sel = next;
         }
         return;
     }
     if (!sOpt.down)
         return;
     if (in->touchActive) {
-        sOpt.inside = on && row == sOpt.row && zone == sOpt.zone;
+        sOpt.inside = on && globalRow == sOpt.row && zone == sOpt.zone;
         return;
     }
     if (sOpt.inside && sOpt.zone != PT_OPT_ZONE_LABEL)

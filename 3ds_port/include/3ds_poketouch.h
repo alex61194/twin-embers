@@ -87,8 +87,11 @@ typedef struct {
     int8_t cursorX, cursorY;    /* the selected cell (FireRed's cursor icon), -1: none */
     uint8_t cursorFrame;        /* which of the cursor's two blink frames (0 with none) */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
-    uint8_t optCount;           /* its rows */
-    uint8_t optSelected;        /* the row the bar describes */
+    uint8_t optPage;            /* 0-based page index in OPTIONS */
+    uint8_t optPageCount;       /* total pages in OPTIONS */
+    uint8_t optPagePressed;     /* the PAGE button is under a held touch */
+    uint8_t optCount;           /* its rows on the current page */
+    uint8_t optSelected;        /* the row the bar describes (within the current page) */
     int8_t optPressed;          /* the row under a held touch, or -1, and where on it: PT_OPT_ZONE_* */
     uint8_t optZone;
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
@@ -116,8 +119,10 @@ extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
 /* BACK: a shell control in the bar's bottom-right corner, outside the viewport. It
  * stands for the B button of the open screen (3ds_bottom.c sends the real B). */
 extern const CtrPokeTouchRect gCtrPokeTouchBack;
-/* Whether a bottom-screen pixel is on BACK's rectangle. */
+extern const CtrPokeTouchRect gCtrPokeTouchOptPage;
+/* Whether a bottom-screen pixel is on BACK's or OPTIONS PAGE's rectangle. */
 bool CtrPokeTouch_HitBack(int x, int y);
+bool CtrPokeTouch_HitOptPage(int x, int y);
 
 /* The OPTIONS row and zone (PT_OPT_ZONE_*) under a bottom-screen pixel; false when none. */
 bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone);
@@ -164,6 +169,7 @@ typedef struct {
     char name[BUI_NAME_LEN];
     char typeName[10];
     char power[5];                  /* "90", or "-" for a move with no power */
+    char accuracy[5];               /* "100", or "-" for a move that does not check accuracy */
     uint8_t pp, maxPp;              /* what the controller's own move list holds (CtrBattle_MovePP) */
     uint8_t matchup;                /* against the foe: a CTR_FX_* (3ds_type_chart.h), CTR_FX_NONE draws nothing */
     char desc[BUI_DESC_LEN];        /* FireRed's description, wrapped when drawn */
@@ -219,6 +225,7 @@ typedef struct {
     int8_t battler;                 /* the battle's battler number: what the controller's cursor is on */
     uint8_t side;                   /* 0 opposing, 1 the player's */
     uint8_t level;
+    uint8_t matchup;                /* CTR_FX_* effectiveness of the chosen move against this battler */
     uint16_t hp, maxHp;
     char name[BUI_NAME_LEN];
 } CtrBattleTarget;
@@ -227,7 +234,7 @@ typedef struct {
     int16_t pressed;                /* the button held under a touch, or -1 */
     int8_t cursor;                  /* the controller's own cursor, drawn only while showCursor (the last input was a button) */
     uint8_t showCursor;
-    uint8_t party[6];               /* 0 no Pokemon, 1 able, 2 fainted */
+    uint8_t party[6];               /* 0 no Pokemon, 1 able, 2 fainted, 3 status condition */
     CtrBattleMove move[4];
     CtrBattleBag bag;
     CtrBattleParty pty;

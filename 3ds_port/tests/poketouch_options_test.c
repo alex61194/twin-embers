@@ -48,12 +48,15 @@ int main(void)
     CtrPokeTouchView view;
     char small[4];
 
-    CHECK(CtrOptions_RowCount() == 7, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
-    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX, "more rows than the screen holds");
-    CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is the last row");
+    CHECK(CtrOptions_RowCount() == 10, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
+    CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
+    CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
+    CHECK(strcmp(CtrOptions_Row(8)->label, "MOVE DETAILS") == 0, "MOVE DETAILS is row 8");
+    CHECK(strcmp(CtrOptions_Row(9)->label, "FIELD SUMMARY") == 0, "FIELD SUMMARY is row 9");
 
     /* Valid values: the names FireRed uses, FRAME as TYPE1..TYPE10. */
-    for (int row = 0; row < CtrOptions_RowCount(); ++row) {
+    for (int row = 0; row < 7; ++row) {
         int game = CtrOptions_Row(row)->game;
 
         for (int v = 0; v < sCounts[game]; ++v) {
@@ -65,6 +68,23 @@ int main(void)
         }
         sStored[game] = 0;
     }
+    /* Page 2 port options. */
+    CHECK(CtrOptions_TypeMatchup() == 1 && CtrOptions_MoveDetails() == 1 && CtrOptions_FieldSummary() == 0,
+          "default port options");
+    CtrOptions_Step(7, 1);
+    Text(7, "OFF");
+    CHECK(CtrOptions_TypeMatchup() == 0, "TYPE MATCHUP stepped to OFF");
+    CtrOptions_Step(7, -1);
+    Text(7, "ON");
+    CtrOptions_Step(9, 1);
+    Text(9, "GBA");
+    CHECK(CtrOptions_FieldSummary() == 1, "FIELD SUMMARY stepped to GBA");
+    CtrOptions_Step(9, 1);
+    Text(9, "3DS");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 8);
+    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 3 && view.optSelected == 1
+          && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
 
     /* Stepping wraps both ways through the valid values. */
     sStored[PT_OPT_TEXT_SPEED] = 2;
