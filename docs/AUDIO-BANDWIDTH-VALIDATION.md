@@ -69,3 +69,35 @@ output device as the validated previous candidate. Check for harshness,
 clicks, missing channels or new dropouts. Any later tuning should be a
 separate reversible change. Source/structural audit success does not approve
 binary publication; the private output includes its exact hash and CI result.
+
+## Fixed-pitch voices at the GBA rate (patch 0116)
+
+The 31536-Hz mode above made FireRed's 81 fixed-pitch instruments
+(`voice_directsound_no_resample`: kicks, snares, claps, cymbals) play 2.36
+times too fast and about 15 semitones high. In `SoundMainRAM` a fixed-pitch
+voice takes one source sample per mixed sample (`tst r0, 0x8` and the
+`ldrsb r0, [r3], 0x1` loop), so its speed is the mixer's rate, and the game's
+samples are made for 13379 Hz. Zallax's pokeemerald-3Ds-dualscreen found the
+same defect in its own mixer (6da8434, 1bc0a53); the implementation here is the
+port's own.
+
+- `SampleFreqSet` computes `gCtrFixedPitchStep`, 224 source samples a frame
+  (FireRed's 13379-Hz mode) over the mode's samples a frame, in 9.23 fixed point.
+  At 13379 Hz it is exactly one sample a mix, and the original loop runs unchanged.
+- Otherwise a fixed-pitch voice goes through `CtrFixedPitchHold`: the resampling
+  loop of `SoundMainRAM` with that step and each source sample held instead of
+  blended with the next, as the GBA's DAC holds it (blending dulls cymbals).
+  Same registers, frame loop, wave loop and end of sample. Resampled voices,
+  cries and the PSG are unchanged; compressed or reversed fixed voices (none in
+  FireRed) keep the old path.
+- The variable is zero-initialised (no data in the image) and 0 reads as one
+  sample a mix.
+
+`tools/test_m4a_fixed_pitch.py --elf 3ds_port/build/firered_game.elf` runs the
+linked game's real `SampleFreqSet` and `SoundMain` in unicorn with a synthetic
+channel and ramp: bit-exact output at 13379 Hz; 224 samples a frame and each
+sample held at 31536 Hz; end of sample mid-frame; a looping sample across four
+frames against a model; resampled voices unchanged; a step of 0 is the original
+path. Before the change the same test measures 528 samples a frame.
+Needs hardware listening: drums should sound as on the GBA, with the brighter
+melodic voices kept.

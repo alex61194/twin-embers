@@ -165,6 +165,7 @@ typedef struct {
     char typeName[10];
     char power[5];                  /* "90", or "-" for a move with no power */
     uint8_t pp, maxPp;              /* what the controller's own move list holds (CtrBattle_MovePP) */
+    uint8_t matchup;                /* against the foe: a CTR_FX_* (3ds_type_chart.h), CTR_FX_NONE draws nothing */
     char desc[BUI_DESC_LEN];        /* FireRed's description, wrapped when drawn */
 } CtrBattleMove;
 enum { BUI_BAG_TAB = 100, BUI_BAG_ROW = 200, BUI_BAG_MENU = 300, BUI_BAG_CANCEL = 400, BUI_BAG_MESSAGE = 500,

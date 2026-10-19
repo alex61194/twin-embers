@@ -123,6 +123,15 @@ static void SetError(const char *title, const char *detail)
     CtrLog_Write(CTR_LOG_ERROR, "data: %s", title);
 }
 
+static unsigned long sRomfsFailure;   /* romfsInit's error, 0 when it worked */
+
+void CtrData_SetRomfsResult(unsigned long failure)
+{
+    sRomfsFailure = failure;
+    if (failure != 0)
+        CtrLog_Write(CTR_LOG_ERROR, "data: romfsInit failed %08lx", failure);
+}
+
 static void ReadEngineAbi(void)
 {
     FILE *file = fopen(CTR_DATA_ROMFS_DIR ENGINE_ABI_PATH, "rb");
@@ -273,7 +282,21 @@ bool CtrData_Init(void)
     ReadEngineProfile();
     if (sEngineAbi == 0)
     {
-        SetError("Engine ABI is missing.", "Rebuild this private development image.");
+        char detail[256];
+
+        if (sRomfsFailure != 0)
+        {
+            /* The 3DSX's own files could not be opened: it was not started as the file it is. */
+            snprintf(detail, sizeof(detail),
+                     "Start twinembers.3dsx from the Homebrew Launcher or the HOME Menu shortcut, as\n"
+                     "  /3ds/twinembers/twinembers.3dsx\n"
+                     "without renaming or moving it.\n\nError 0x%08lX", sRomfsFailure);
+            SetError("The game's own files can't be opened.", detail);
+        }
+        else
+            SetError("This twinembers.3dsx has no engine data.",
+                     "Its RomFS lacks engine/abi.bin. Download the 3DSX again, or build it with:\n"
+                     "  make CLEAN_RELEASE=1 verify-game-3dsx");
         return false;
     }
     mkdir("sdmc:/3ds", 0777);

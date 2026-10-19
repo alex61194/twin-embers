@@ -1369,10 +1369,26 @@ static void DrawBattleText(unsigned bg)
 }
 
 /*
+ * The level-up box (battle_script_commands.c, Cmd_drawlvlupbox) puts BG1 in
+ * front of BG0 while it is up; no other battle screen does (the animations
+ * that raise BG1 leave BG0 at the same priority). Magnified with the scene,
+ * the box ran past the bottom of the screen and the text box, drawn after the
+ * scene, covered it: while BG1 is in front, it goes with the text box instead,
+ * at 1:1 over it. From Zallax's pokeemerald-3Ds-dualscreen (76da700).
+ */
+static unsigned BattleBoxLayers(void)
+{
+    if (!sBattle || !(Reg(0) & 0x200) || (Reg(0xa) & 3) >= (Reg(8) & 3))
+        return 0;
+    return 1u << 1;
+}
+
+/*
  * The text box is not magnified: it keeps its own pixels on the bottom 48
  * lines, under a scene composed at CTR_BATTLE_ZOOM. The rectangle being
  * composed is carried from the scene's coordinates to the box's through the
- * screen, drawn there, and put back.
+ * screen, drawn there, and put back. The level-up box the same way, whole,
+ * its right edge on the screen's as the GBA's is on the text box's.
  */
 static void DrawBattleTextLayer(unsigned bg)
 {
@@ -1391,7 +1407,10 @@ static void DrawBattleTextLayer(unsigned bg)
     sClipX1 = (int)roundf((clipX1 + viewX) * zoom + offX) - sViewX;
     sClipY0 = (int)roundf((clipY0 + viewY) * zoom + offY) - sViewY;
     sClipY1 = (int)roundf((clipY1 + viewY) * zoom + offY) - sViewY;
-    DrawBattleText(bg);
+    if (bg == 0)
+        DrawBattleText(bg);
+    else
+        DrawBattleCut(bg, VIEW_RIGHT - 240, VIEW_RIGHT, 0, 160, VIEW_RIGHT - 240);
     C2D_Flush();
     sZoom = zoom;
     sOffX = offX;
@@ -2891,7 +2910,7 @@ static void Layers(unsigned mask)
                 else if ((Reg(8 + bg * 2) & 0x40) && (Reg(0x4c) & 0xff))
                     DrawMosaicBg(bg, (mode == 1 && bg == 2) || mode == 2);
                 else if ((mode == 1 && bg == 2) || mode == 2) DrawAffineBg(bg);
-                else if (sBattle && bg == 0) DrawBattleTextLayer(bg);
+                else if (sBattle && (bg == 0 || (BattleBoxLayers() & (1u << bg)))) DrawBattleTextLayer(bg);
                 else if (sFieldLayers && bg == 0) DrawFieldUi(bg);
                 else if (sStageUi)
                 {
@@ -4080,7 +4099,7 @@ static void RenderBattleScene(uint32_t clear)
     C2D_TargetClear(sScene, 0);
     C2D_SceneBegin(sScene);
     Blend(5, false, false);
-    sLayerExclude = 1;
+    sLayerExclude = 1 | BattleBoxLayers();
     if (!(Reg(0) & 128)) Compose();
     sLayerExclude = 0;
     C2D_Flush();
@@ -4145,7 +4164,7 @@ static void ComposeLogical(uint32_t clear, float parallax)
     }
     StageUnderlay();
     /* After a scene composed on its own, only the text box is left. */
-    if (scene) sLayerExclude = 63 & ~(1u | 32u);
+    if (scene) sLayerExclude = 63 & ~(1u | 32u | BattleBoxLayers());
     if (!(Reg(0) & 128)) Compose();
     sLayerExclude = 0;
     C2D_Flush();

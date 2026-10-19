@@ -18,7 +18,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.1.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.1.2). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
@@ -34,7 +34,7 @@ The lower screen is **PokéTouch**, a home screen with tiles for your party, Bag
 
 ### Fighting
 
-Battle commands move to the touch screen: FIGHT, BAG, POKéMON and RUN. Picking FIGHT shows each move as a card with its type, power and remaining PP, so you can choose without remembering the numbers.
+Battle commands move to the touch screen: FIGHT, BAG, POKéMON and RUN. Picking FIGHT shows each move as a card with its type, power and remaining PP, so you can choose without remembering the numbers. In a single battle each damaging move also shows how it hits the foe's types: `x2` or `x4` in green, `x1/2` or `x1/4` in orange, `x0` in red.
 
 <img src="docs/media/03-battle-menu.png" width="300" alt="Battle commands on the touch screen"> <img src="docs/media/04-battle-moves.png" width="300" alt="Move cards with type, power and PP">
 

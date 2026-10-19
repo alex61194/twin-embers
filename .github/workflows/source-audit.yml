@@ -53,6 +53,7 @@ jobs:
           python3 tools/test_storage_touch.py
           python3 tools/test_storage_controller.py
           python3 tools/test_mail_wait.py
+          python3 tools/test_item_pc_wait.py
       - name: Native audio rate, ring cadence and treble bandwidth (synthetic)
         run: python3 tools/test_audio_quality.py
       - name: First rival lower-screen controller and field portrait geometry

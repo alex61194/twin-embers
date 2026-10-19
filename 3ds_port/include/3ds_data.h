@@ -54,6 +54,8 @@ typedef enum
 /* Chooses and validates the backend. On failure CtrData_ErrorTitle and
  * CtrData_ErrorDetail describe what the player has to do. */
 bool CtrData_Init(void);
+/* romfsInit's failure (0 when it worked), so a missing engine ABI says why. Call before CtrData_Init. */
+void CtrData_SetRomfsResult(unsigned long failure);
 void CtrData_Shutdown(void);
 CtrDataBackend CtrData_GetBackend(void);
 const char *CtrData_BackendName(void);

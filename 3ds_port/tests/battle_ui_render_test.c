@@ -278,6 +278,49 @@ int main(int argc, char **argv)
     }
     v.move[3].present = 0;
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
+#ifndef BATTLE_UI_BEFORE
+    if (getenv("BATTLE_UI_MATCHUPS")) {
+        /* The matchup tags (opt-in: the baseline comparison above does not draw them). A tag's fill is read back
+         * next to its left edge: green for x2 and x4, orange for x1/2, red for x0. */
+        static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        CtrBattleView w = v;
+
+        for (k = 0; k < 4; ++k) {
+            w.move[k] = v.move[k < 3 ? k : 0];
+            w.move[k].present = 1;
+            w.move[k].matchup = fx[k];
+        }
+        w.showCursor = 0;
+        settle(&old, &w); old = w; put(out, "03b_move_matchups");
+        int greens[4];
+
+        for (k = 0; k < 4; ++k) {
+            const CtrPokeTouchRect *r = &sBCard[k];
+            unsigned c = at(r->x + 63 + 3, r->y + 28 + 7);
+            int red = (int)(c >> 11) << 3, green = (int)((c >> 5) & 63) << 2;
+
+            greens[k] = green;
+
+            if (fx[k] == CTR_FX_DOUBLE || fx[k] == CTR_FX_QUADRUPLE)
+                assert(green > red + 30);
+            else if (fx[k] == CTR_FX_HALF)
+                assert(red > green + 30 && green > 90);
+            else
+                assert(red > green + 60 && green < 90);
+        }
+        assert(greens[3] > greens[0] + 16);    /* x4 is a brighter green than x2 */
+        /* A neutral hit draws nothing: that spot is the card's own again. */
+        {
+            const CtrPokeTouchRect *r = &sBCard[0];
+            unsigned tagged = at(r->x + 66, r->y + 35);
+
+            w.move[0].matchup = CTR_FX_NONE;
+            settle(&old, &w); old = w;
+            assert(at(r->x + 66, r->y + 35) != tagged);
+        }
+        settle(&old, &v); old = v;       /* and back to the cards without tags */
+    }
+#endif
     v.pressed = 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
     v.pressed = BUI_CANCEL; settle(&old, &v); old = v; put(out, "04_moves_cancel_pressed");
     v.pressed = -1; v.cursor = 0; settle(&old, &v); old = v;

@@ -16,6 +16,7 @@ uint64_t CtrPlatform_Milliseconds(void)
 }
 
 #define CTR_LOG_PATH "sdmc:/3ds/twinembers/port.log"
+#define CTR_LOG_PREV_PATH "sdmc:/3ds/twinembers/port-prev.log"
 #define CTR_LOG_QUEUE_BYTES (64u * 1024u)
 
 /*
@@ -32,7 +33,8 @@ uint64_t CtrPlatform_Milliseconds(void)
  * Diagnostics are opt-in. With none of sdmc:/3ds/twinembers/debug.txt,
  * log.sync, warp.trace or tm.trace present nothing is written and no thread
  * exists. Any of them enables the async logger; creating log.sync restores
- * the synchronous per-line writes for crash diagnosis before a fault.
+ * the synchronous per-line writes for crash diagnosis before a fault. Each start
+ * moves the previous port.log to port-prev.log.
  */
 enum { LOG_UNINIT, LOG_OFF, LOG_SYNC, LOG_ASYNC };
 static int sLogMode = LOG_UNINIT;
@@ -124,6 +126,13 @@ static void LogInit(void)
         return;
     mkdir("sdmc:/3ds", 0777);
     mkdir("sdmc:/3ds/twinembers", 0777);
+    /* The previous session is kept as port-prev.log, so a crash is still on the card after the next start
+     * (the log is appended to, and used to grow across sessions). A FAT rename needs the target gone. */
+    if (FileExists(CTR_LOG_PATH))
+    {
+        remove(CTR_LOG_PREV_PATH);
+        rename(CTR_LOG_PATH, CTR_LOG_PREV_PATH);
+    }
     sLogMode = LOG_SYNC;
     if (sync) return;
     LightLock_Init(&sLogLock);
