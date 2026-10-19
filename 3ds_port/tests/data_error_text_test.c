@@ -82,6 +82,18 @@ int main(void)
     assert(!strcmp(s.rows[6], "or does not match this engine. Rebuild"));
     assert(!strcmp(s.rows[8], "the data pack."));
 
+    /* The two engine-data messages: RomFS not opened (with its error), and a 3DSX without engine data. */
+    Layout(&s, "The game's own files can't be opened.",
+           "Start twinembers.3dsx from the Homebrew Launcher or the HOME Menu shortcut, as\n"
+           "  /3ds/twinembers/twinembers.3dsx\n"
+           "without renaming or moving it.\n\nError 0xC8804478");
+    CheckScreen(&s);
+    assert(!strcmp(s.rows[4], "Start twinembers.3dsx from the Homebrew"));
+    Layout(&s, "This twinembers.3dsx has no engine data.",
+           "Its RomFS lacks engine/abi.bin. Download the 3DSX again, or build it with:\n"
+           "  make CLEAN_RELEASE=1 verify-game-3dsx");
+    CheckScreen(&s);
+
     /* A word longer than a row is split rather than overflowing. */
     Layout(&s, "x", "/3ds/twinembers/an/unusually/long/path/without/any/spaces.pak");
     CheckScreen(&s);

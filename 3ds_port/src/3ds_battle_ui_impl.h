@@ -7,6 +7,7 @@
  * here moves or resizes a rectangle. */
 
 #include "3ds_icons.h"
+#include "3ds_type_chart.h"
 
 static const CtrPokeTouchRect sBStrip = {3, 3, 314, 31};
 static const CtrPokeTouchRect sBBody = {3, 34, 314, 203};
@@ -319,7 +320,21 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
     return pp == 0 ? UI_HP_LOW : pp * 4 <= max ? UI_WARN : pp * 2 <= max ? UI_HP_MID : UI_TEXT;
 }
 
-/* A move card: the name on the type's colour, the type badge and the power, the PP left (number and bar). */
+/* The matchup tag between the type badge and the power: what the move does to the foe's types (x2 green, x4 a
+ * brighter lime; x1/2, x1/4 orange; x0 red). A neutral hit has no tag. */
+static void BMatchup(const CtrBattleMove *m, int x, int y)
+{
+    static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
+    static const uint16_t kColor[] = {0, UI_HP_LOW, UI_WARN, UI_WARN, UI_HP_HIGH, UI_RGB(128, 240, 40)};
+    CtrPokeTouchRect tag = {(int16_t)x, (int16_t)y, 34, 14};
+
+    if (m->matchup == CTR_FX_NONE || m->matchup > CTR_FX_QUADRUPLE)
+        return;
+    UiRoundFill(tag.x, tag.y, tag.w, tag.h, 3, UiMix(UIS_PANEL, kColor[m->matchup], 7));
+    UiTextRight(kText[m->matchup], tag.x + tag.w - 4, tag.y + 3, UI_TEXT, UIS_TEXT_SH, 1);
+}
+
+/* A move card: the name on the type's colour, the type badge, the matchup and the power, the PP left (number and bar). */
 static void BCard(int i, const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = &sBCard[i];
@@ -338,6 +353,7 @@ static void BCard(int i, const CtrBattleView *v)
         char pp[12];
 
         UiTypeBadge(&badge, m->type, m->typeName);
+        BMatchup(m, r->x + 63, r->y + 28 + dy);
         UiText("PWR", r->x + r->w - 50, r->y + 31 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w);
         UiTextRight(m->power, r->x + r->w - 8, r->y + 31 + dy, UI_TEXT, UIS_TEXT_SH, 1);
         UiText("PP", r->x + 8, r->y + 48 + dy, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + 30);

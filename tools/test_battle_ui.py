@@ -66,6 +66,16 @@ class BattleUi(unittest.TestCase):
             self.assertEqual(pick(now, 'hits'), pick(before, 'hits'), 'a button answers to different points')
             self.assertEqual(pick(now, 'mask'), pick(before, 'mask'), 'a state\'s silhouette moved')
 
+    def test_move_cards_draw_the_matchup_tags(self):
+        """x2 and x4 green, x1/2 orange, x0 red, a neutral hit nothing; incremental redraws equal full ones."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            exe = tmp / ('battle-ui.exe' if os.name == 'nt' else 'battle-ui')
+            build(exe, [], [ROOT / '3ds_port/include', ROOT / '3ds_port/src'])
+            run = subprocess.run([str(exe)], capture_output=True, text=True, env=dict(os.environ, BATTLE_UI_MATCHUPS='1'))
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertIn('PASS battle ui', run.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()

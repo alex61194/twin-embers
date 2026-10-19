@@ -116,6 +116,7 @@ extern void CtrBattle_MoveDescription(unsigned move, char *out, int size);
 extern int CtrBattle_MoveType(unsigned move);
 extern void CtrBattle_TypeName(int type, char *out, int size);
 extern unsigned CtrBattle_MovePower(unsigned move);
+extern int CtrBattle_MoveMatchup(unsigned move);
 extern int CtrBattle_MovePP(int slot, int *pp, int *maxPp);
 extern int CtrPokeTouch_PlayerFemale(void);
 extern int CtrPokeTouch_Enabled(int entry);
@@ -975,6 +976,7 @@ static void BattleFill(CtrBattleView *v)
                 m->maxPp = (uint8_t)(maxPp < 0 ? 0 : maxPp > 255 ? 255 : maxPp);
             }
         }
+        m->matchup = (uint8_t)CtrBattle_MoveMatchup(move);
         power = CtrBattle_MovePower(move);
         if (power)
             snprintf(m->power, sizeof(m->power), "%u", power > 999 ? 999 : power);

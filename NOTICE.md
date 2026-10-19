@@ -18,6 +18,16 @@ The inherited MIT notice remains in
 [licenses/ZallaxDev-MIT.txt](licenses/ZallaxDev-MIT.txt).
 Attribution covers inherited/adapted backend, headers, tools and tests, not just
 files with a Zallax comment. File-level treatment is recorded in the review manifest.
+Later history of the same repository was reviewed up to revision
+`e80ba61e56fea170213cb23cca1039a9a3c3b6f6`, which has the same LICENSE-PORT.md blob
+([docs/ZALLAX-UPSTREAM-REVIEW.md](docs/ZALLAX-UPSTREAM-REVIEW.md)). The battle level-up
+box layering in `3ds_port/src/3ds_video.c` is adapted from its commit `76da700`. The Hyper
+Beam animation, fixed-pitch voice rate and evolution-scene fixes address defects Zallax
+identified (`c10e391`, `6da8434`, `7f0b1bf`) with the port's own implementation.
+The HOME Menu forwarder (`3ds_port/forwarder`: `source/main.c`, `Makefile`,
+`forwarder-rsf.yml`) is adapted from that repository's `3ds_port/forwarder`; kwak8709 made it
+for Twin Embers. No artwork is stored: the CIA's banner uses the Twin Embers logo by @xsh3d0r_
+(Discord), supplied at build time, and `make_art.py` draws a fallback (docs/FORWARDER.md).
 
 ## External game upstream
 

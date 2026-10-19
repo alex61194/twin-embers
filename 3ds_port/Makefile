@@ -57,7 +57,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/palette_fade_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/palette_fade_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -71,6 +71,8 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/obj_window_test.exe
 	./build/map_edge_test.exe
 	./build/poketouch_options_test.exe
+	./build/forwarder_test.exe
+	./build/type_chart_test.exe
 	./build/audio_cadence_test.exe
 	./build/audio_catchup_test.exe
 	./build/vram_track_test.exe
@@ -352,6 +354,14 @@ build/map_edge_test.exe: tests/map_edge_test.c include/3ds_map_edge.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/map_edge_test.c -o $@
 
+build/forwarder_test.exe: tests/forwarder_test.c include/3ds_forwarder.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/forwarder_test.c -o $@
+
+build/type_chart_test.exe: tests/type_chart_test.c include/3ds_type_chart.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/type_chart_test.c -o $@
+
 build/poketouch_options_test.exe: tests/poketouch_options_test.c src/3ds_poketouch_options.c include/3ds_poketouch_options.h include/3ds_poketouch.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/poketouch_options_test.c src/3ds_poketouch_options.c -o $@
@@ -407,7 +417,9 @@ CTR_GBA_CENTRED_NAMES := region_map main_menu naming_screen pokemon_summary_scre
     trainer_card option_menu learn_move help_system mail shop teachy_tv fame_checker \
     berry_pouch pokemon_special_anim hall_of_fame diploma seagallop slot_machine \
     trade trade_scene battle_records \
-    party_menu item_menu tm_case
+    party_menu item_menu tm_case evolution_scene
+# evolution_scene: a 240x160 battle-style screen (battle BGs, text box, the mon at
+# 120,64) that registered no callback class and was drawn as the 400x240 field.
 CTR_GBA_CENTRED_OBJS := $(addprefix build/game/,$(addsuffix .o,$(CTR_GBA_CENTRED_NAMES)))
 # The native 400x240 TOP Party/Bag/TM attempt (d88c94b) is abandoned: those
 # menus use the stable centred 240x160 fallback while the bottom screen owns

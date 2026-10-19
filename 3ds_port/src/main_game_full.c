@@ -14,6 +14,7 @@
 #include "3ds_data.h"
 #include "3ds_dma.h"
 #include "3ds_flash.h"
+#include "3ds_forwarder.h"
 #include "3ds_input.h"
 #include "3ds_log.h"
 #include "3ds_platform.h"
@@ -64,8 +65,29 @@ TRACED_EXIT(ExitData, CtrData_Shutdown())
 TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
 
+/* Started by the HOME Menu forwarder (3ds_port/forwarder, 3ds_forwarder.h): it
+ * made its own title Luma3DS's 3DSX title and passed the previous one. Put that
+ * back first, so the forwarder runs its own code next time and the usual
+ * Homebrew Launcher entry keeps working; Luma applies the selected title when
+ * this process exits. Without the forwarder's argument nothing is written. */
+extern int __system_argc;
+extern char **__system_argv;
+
+static uint64_t RestoreLumaHbldrTitle(void)
+{
+    uint64_t tid = CtrForwarder_RestoreTid(__system_argc, __system_argv);
+    s64 luma;
+
+    if (tid == 0 || R_FAILED(svcGetSystemInfo(&luma, 0x10000, 0)))
+        return 0;
+    *(volatile uint64_t *)(OS_SHAREDCFG_VADDR + CTR_FORWARDER_LUMA_SELECTED_TID_OFFSET) = tid;
+    return tid;
+}
+
 int main(void)
 {
+    uint64_t restoredTid = RestoreLumaHbldrTitle();
+
     /* New 3DS: the application core at 804 MHz with its L2 cache. Ignored by
      * an Old 3DS. Frame pacing stays on the VBlank, so only headroom grows. */
     osSetSpeedupEnable(true);
@@ -76,6 +98,9 @@ int main(void)
         bool isNew3ds = false;
         APT_CheckNew3DS(&isNew3ds);
         CtrLog_Write(CTR_LOG_BOOT, "console: %s", isNew3ds ? "New 3DS, 804 MHz + L2 requested" : "Old 3DS");
+        if (restoredTid != 0)
+            CtrLog_Write(CTR_LOG_BOOT, "started by the HOME Menu forwarder; Luma 3DSX title %016llX restored",
+                         (unsigned long long)restoredTid);
     }
     GbaShadow_Reset();
     CtrDma_Reset();
@@ -104,7 +129,11 @@ int main(void)
      * fallback when bottom is disabled or fails. First FIELD redraw overwrites
      * the console framebuffer. */
     CtrBottom_Init();
-    romfsInit();
+    {
+        Result romfs = romfsInit();
+
+        CtrData_SetRomfsResult(R_FAILED(romfs) ? (unsigned long)romfs : 0);
+    }
     if (!CtrData_Init())
         CtrPlatform_ShowDataError(CtrData_ErrorTitle(), CtrData_ErrorDetail());
     atexit(ExitData);
