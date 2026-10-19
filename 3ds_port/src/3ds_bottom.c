@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "3ds_bottom.h"
+#include "3ds_type_chart.h"
 #include "3ds_battle_nav.h"
 #include "3ds_storage_touch.h"
 #include "3ds_storage_bridge.h"
