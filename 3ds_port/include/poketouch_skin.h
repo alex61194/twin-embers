@@ -36,13 +36,13 @@ static const TsPic kTsRunOnPic = {252, 208, 68, 29, &kTsRunOn[0][0]};
 static const TsPic kTsRunOffPic = {252, 208, 68, 29, &kTsRunOff[0][0]};
 static const TsPic kTsYesPic = {168, 179, 62, 29, &kTsYes[0][0]};
 static const TsPic kTsNoPic = {174, 208, 51, 24, &kTsNo[0][0]};
-static const TsPic kTsDotsPic = {146, 94, 57, 2, &kTsDots[0][0]};
-static const TsPic kTsPortraitPic = {23, 52, 56, 80, &kTsPortrait[0][0]};
-static const TsPic kTsBadge0Pic = {147, 69, 14, 16, &kTsBadge0[0][0]};
-static const TsPic kTsBadge1Pic = {161, 69, 14, 16, &kTsBadge1[0][0]};
-static const TsPic kTsBadge2Pic = {175, 69, 14, 16, &kTsBadge2[0][0]};
-static const TsPic kTsBadge3Pic = {189, 69, 13, 16, &kTsBadge3[0][0]};
-static const TsPic kTsBadge4Pic = {202, 69, 12, 16, &kTsBadge4[0][0]};
+static const TsPic kTsDotsPic = {141, 96, 57, 2, &kTsDots[0][0]};
+static const TsPic kTsPortraitPic = {18, 54, 56, 80, &kTsPortrait[0][0]};
+static const TsPic kTsBadge0Pic = {142, 71, 14, 16, &kTsBadge0[0][0]};
+static const TsPic kTsBadge1Pic = {156, 71, 14, 16, &kTsBadge1[0][0]};
+static const TsPic kTsBadge2Pic = {170, 71, 14, 16, &kTsBadge2[0][0]};
+static const TsPic kTsBadge3Pic = {184, 71, 13, 16, &kTsBadge3[0][0]};
+static const TsPic kTsBadge4Pic = {197, 71, 12, 16, &kTsBadge4[0][0]};
 /* The YES and NO lettering as painted: cover 0..15, drawn white with a dark outline on either button. */
 typedef struct { int16_t x, y, w, h; const uint8_t *cover; } TsMask;
 static const uint8_t kTsYesMask[15][24] = {
@@ -92,17 +92,13 @@ static const TsPic *const kTsBadge[5] = {&kTsBadge0Pic, &kTsBadge1Pic, &kTsBadge
 /* The save card's values: their dotted leader (from x, top row), the value's top row, its right column, ink;
  * and the area each one is drawn in (x0, y0, x1, y1, exclusive). The name stops short of x = y + TS_DIAGONAL. */
 static const struct { int16_t dotsX, dotsY, top, right; uint8_t ink[3]; int16_t area[4]; } kTsValue[5] = {
-    {143, 61, 53, 184, {248, 252, 248}, {141, 50, 192, 65}},
-    {146, 94, 86, 211, {248, 252, 248}, {143, 68, 214, 98}},
-    {149, 112, 103, 211, {248, 252, 248}, {146, 101, 214, 116}},
-    {159, 130, 121, 211, {248, 252, 248}, {155, 118, 214, 134}},
-    {134, 148, 139, 211, {248, 252, 152}, {130, 136, 214, 152}},
+    {138, 63, 55, 205, {248, 252, 248}, {136, 52, 213, 67}},
+    {141, 96, 88, 232, {248, 252, 248}, {138, 70, 235, 100}},
+    {144, 114, 105, 232, {248, 252, 248}, {141, 103, 235, 118}},
+    {154, 132, 123, 232, {248, 252, 248}, {150, 120, 235, 136}},
+    {129, 150, 141, 232, {248, 252, 152}, {125, 138, 235, 154}},
 };
-#define TS_DIAGONAL 136
-#define TS_PORTRAIT_X0 23
-#define TS_PORTRAIT_Y0 52
-#define TS_PORTRAIT_X1 79
-#define TS_PORTRAIT_Y1 132
+#define TS_DIAGONAL 29
 /* The lettering, 10 rows, up to 7 wide, cover 0..15 per pixel: " !'-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZ", then U+00A5, U+00E9. */
 static const char kTsTenChars[] = " !'-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const uint16_t kTsTenLatin[2] = {0x00A5, 0x00E9};

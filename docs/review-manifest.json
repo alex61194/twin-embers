@@ -823,7 +823,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin.h",
-   "sha256": "e577eaecfd2bb6b560e625c35d0ff2383cda410d9252fda214727c0571e33bf6",
+   "sha256": "10a570691a9b72df1ca4e65be6fa51eb4603be9f05ba7f3001f80a55d10abf58",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -831,7 +831,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_bg0.h",
-   "sha256": "27af5037fc281bda498342745dda651899816e8af35aa97c4e5a6b674352253c",
+   "sha256": "68eae0eddc36998279fc3182e7f6676ebb12709a06f7fc88ff8fb94ca0966616",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -839,7 +839,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_bg1.h",
-   "sha256": "b29e3e0df0d2f00fd5396603730286696a7ee8eaa87a34cebba3a8bfee745a04",
+   "sha256": "7209c6a44ba038a2933771ecb806f4407b5d7d5b1104ae6d1ed1bfc46d21286d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -847,7 +847,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_bg2.h",
-   "sha256": "dcf6e3946a5b1b03430c342c8a8f233391200ff4db011ab1463dae3795d96436",
+   "sha256": "9b8f575058790c40ca8cb450b52ad1e2aac3a352d434a8b8b55282b7615aebc0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -855,7 +855,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_bg3.h",
-   "sha256": "f8b0d548dc82fa5d02e618619f67f95a9fa9c39de370eb9087277358ad8b5a2a",
+   "sha256": "cdb74377175fb92d7b142678dba649d5858f40bfb63d3a6d8ae7a466ec68f90d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4328,7 +4328,7 @@
   },
   {
    "path": "tools/make_touch_skin.py",
-   "sha256": "0261e3d1c389e499b0122b4dca9e9c3457d596b88188b7e33a0b4debf5a8ea95",
+   "sha256": "85cb4d67a6e65b0848e6c854257ca3ada08c6081b7b74829110f449b5c5e34bc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

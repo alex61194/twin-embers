@@ -56,6 +56,18 @@ VALUES = [  # dots from x, dots top, value top, value right (inclusive), ink
     (134, 148, 139, 211, (248, 252, 152)),                    # money
 ]
 HOLES = [(141, 50, 192, 65), (143, 68, 214, 98), (146, 101, 214, 116), (155, 118, 214, 134), (130, 136, 214, 152)]
+# The save card fills the GBA picture's place (240x160 at (4, 4)): the artwork's card, its thick bezel trimmed, widened by
+# repeating a flat column of each row and made 5 rows taller by repeating a flat row of the gap between title and panel.
+CARD_SRC = (9, 7, 223, 162)                                   # x0, y0, x1, y1 (exclusive) of the artwork's card
+CARD_DST = (4, 4, 244, 164)
+CARD_INS_ROWS = (40, 5)                                       # repeat this row 5 times
+def card_ins(y):
+    """The columns repeated on row y (where the row is flat) and how many times each."""
+    return [(40, 13), (190, 13)] if y < 42 else [(170, 26)]
+def card_x(x, y):
+    return x - CARD_SRC[0] + CARD_DST[0] + sum(n for at, n in card_ins(y) if x >= at)
+def card_y(y):
+    return y - CARD_SRC[1] + CARD_DST[1] + (CARD_INS_ROWS[1] if y > CARD_INS_ROWS[0] else 0)
 DIAGONAL = 136                                                # the name stops short of the frame: x < y + DIAGONAL
 BADGES = [(147, 69, 161, 85), (161, 69, 175, 85), (175, 69, 189, 85), (189, 69, 202, 85), (202, 69, 214, 85)]
 DOTS = (146, 94, 203, 96)                                     # the leader as painted (2x2 dots, period 3)
@@ -68,8 +80,8 @@ RUN_CUT = {244, 245, 268, 269, 270}
 TILE_X_CUT = {270, 271}
 TILE_Y_CUT = {281, 282}
 # The dialogue box grows to the picture above it and the column on its right: rows and columns of it repeated.
-BOX_TOP, BOX_TOP_NEW = (178, 184), 172                        # its top rows (kept as the new top), and where it now starts
-BOX_RIGHT, BOX_RIGHT_NEW = (222, 229), 240                    # its right border columns, and where they now are
+BOX_TOP, BOX_TOP_NEW = (178, 184), 168                        # its top rows (kept as the new top), and where it now starts
+BOX_RIGHT, BOX_RIGHT_NEW, BOX_END = (222, 229), 237, 244                    # its right border columns, and where they now are
 # The dialogue: its text and buttons; YES and NO and their labels.
 DIALOG_TEXT = (14, 183, 168, 232)
 DIALOG_BUTTONS = (168, 179, 226, 232)
@@ -246,6 +258,7 @@ def build_backdrop(art):
     for k, box in enumerate(HOLES):
         fill_rows(cp, box, right=(lambda y: y + DIAGONAL) if k == 0 else None)
     fill_rows(cp, PORTRAIT, PORTRAIT_FREE, lo=0, hi=256)
+    base = [[cp[x, y] for x in range(320)] for y in range(240)]
     fill_rows(cp, DIALOG_TEXT, lo=8, hi=20)
     fill_rows(cp, DIALOG_BUTTONS, DIALOG_FREE, lo=8, hi=20)
     for y in range(DIALOG_BUTTONS[1], 183):                   # the dialogue's top edge, under YES's glow
@@ -266,12 +279,12 @@ def build_backdrop(art):
             cp[x, y] = cp[x, 106 if y < 129 else 151]
     # The dialogue box: taller (to the picture's rim) and wider (to the column).
     t0, t1 = BOX_TOP
-    top = [[cp[x, y] for x in range(4, 247)] for y in range(t0, t1)]
+    top = [[cp[x, y] for x in range(4, BOX_END)] for y in range(t0, t1)]
     for y in range(BOX_TOP_NEW, 233 + 1):
-        src = [cp[x, 200] for x in range(4, 247)] if y < 226 else [cp[x, y] for x in range(4, 247)]
+        src = [cp[x, 200] for x in range(4, BOX_END)] if y < 226 else [cp[x, y] for x in range(4, BOX_END)]
         if y < BOX_TOP_NEW + (t1 - t0):
             src = top[y - BOX_TOP_NEW]
-        for x in range(4, 247):
+        for x in range(4, BOX_END):
             cp[x, y] = src[x - 4]
     r0, r1 = BOX_RIGHT
     for y in range(BOX_TOP_NEW, 234):
@@ -281,6 +294,22 @@ def build_backdrop(art):
             cp[x, y] = fill
         for i, c in enumerate(border):
             cp[BOX_RIGHT_NEW + i, y] = c
+    # The save card, widened and made taller, in the picture's place.
+    sx0, sy0, sx1, sy1 = CARD_SRC
+    dx0, dy0, dx1, dy1 = CARD_DST
+    for sy in range(sy0, sy1):
+        rows = [sy] + ([sy] * CARD_INS_ROWS[1] if sy == CARD_INS_ROWS[0] else [])
+        line = []
+        for x in range(sx0, sx1):
+            line.append(base[sy][x])
+            line += [base[sy][x]] * sum(n for at, n in card_ins(sy) if at == x)
+        for r, row_y in enumerate(rows):
+            ny = card_y(sy) - (CARD_INS_ROWS[1] if sy == CARD_INS_ROWS[0] else 0) + r
+            for i, c in enumerate(line):
+                cp[dx0 + i, ny] = c
+    for y in range(dy1, BOX_TOP_NEW):                         # between the card and the dialogue: the card's last row
+        for x in range(dx0, dx1):
+            cp[x, y] = cp[x, dy1 - 1]
     return clean
 
 
@@ -391,10 +420,11 @@ def emit(clean, pieces, positions, masks, card_label, nine, ten):
     out.append(' * and the area each one is drawn in (x0, y0, x1, y1, exclusive). The name stops short of x = y + TS_DIAGONAL. */')
     out.append('static const struct { int16_t dotsX, dotsY, top, right; uint8_t ink[3]; int16_t area[4]; } kTsValue[%d] = {' % len(VALUES))
     for (dx, dy, top, right, ink), hole in zip(VALUES, HOLES):
-        out.append('    {%d, %d, %d, %d, {%d, %d, %d}, {%d, %d, %d, %d}},' % ((dx, dy, top, right) + ink + hole))
+        mapped = (card_x(dx, dy), card_y(dy), card_y(top), card_x(right, top))
+        area = (card_x(hole[0], hole[1]), card_y(hole[1]), card_x(hole[2], hole[1]), card_y(hole[3]))
+        out.append('    {%d, %d, %d, %d, {%d, %d, %d}, {%d, %d, %d, %d}},' % (mapped + ink + area))
     out.append('};')
-    out.append('#define TS_DIAGONAL %d' % DIAGONAL)
-    out.append('#define TS_PORTRAIT_X0 %d\n#define TS_PORTRAIT_Y0 %d\n#define TS_PORTRAIT_X1 %d\n#define TS_PORTRAIT_Y1 %d' % PORTRAIT)
+    out.append('#define TS_DIAGONAL %d' % (DIAGONAL + card_x(0, 100) - card_y(100)))
     level = {' ': 0, '.': 4, '+': 9, '#': 15}
     for name, font, rows in (('Ten', ten, 10), ('Nine', nine, 9)):
         chars = ''.join(sorted(c for c in font if ord(c) < 128))
@@ -471,6 +501,10 @@ def main():
             im = out
         pieces.append((name, im))
         x = at[0] + SHIFT - (len(TILE_X_CUT) + 1 if name.startswith('kTsTileY') else 0)
+        if name.startswith('kTsBadge'):                        # the badges stay in a row: from the first one's place
+            at = (card_x(BADGES[0][0], at[1]) + at[0] - BADGES[0][0], card_y(at[1]))
+        elif name in ('kTsDots', 'kTsPortrait'):
+            at = (card_x(at[0], at[1]), card_y(at[1]))
         positions[name] = (x, at[1]) if name[3:7] in ('Side', 'Tile', 'RunO') else at
     for k, (normal, sel) in enumerate(side):
         add('kTsSide%d' % k, normal, SIDE[k][:2])
