@@ -17,23 +17,23 @@ static const uint16_t (*const kTsBg[4])[320] = {kTsBg0, kTsBg1, kTsBg2, kTsBg3};
 #include "poketouch_skin_parts0.h"
 #include "poketouch_skin_parts1.h"
 typedef struct { int16_t x, y, w, h; const uint16_t *px; } TsPic;
-static const TsPic kTsSide0Pic = {247, 6, 73, 27, &kTsSide0[0][0]};
-static const TsPic kTsSideSel0Pic = {247, 6, 73, 27, &kTsSideSel0[0][0]};
-static const TsPic kTsSide1Pic = {247, 33, 73, 27, &kTsSide1[0][0]};
-static const TsPic kTsSideSel1Pic = {247, 33, 73, 27, &kTsSideSel1[0][0]};
-static const TsPic kTsSide2Pic = {247, 60, 73, 27, &kTsSide2[0][0]};
-static const TsPic kTsSideSel2Pic = {247, 60, 73, 27, &kTsSideSel2[0][0]};
-static const TsPic kTsSide3Pic = {247, 87, 73, 25, &kTsSide3[0][0]};
-static const TsPic kTsSideSel3Pic = {247, 87, 73, 25, &kTsSideSel3[0][0]};
-static const TsPic kTsSide4Pic = {247, 112, 73, 33, &kTsSide4[0][0]};
-static const TsPic kTsSideSel4Pic = {247, 112, 73, 33, &kTsSideSel4[0][0]};
-static const TsPic kTsSide5Pic = {247, 145, 73, 25, &kTsSide5[0][0]};
-static const TsPic kTsSideSel5Pic = {247, 145, 73, 25, &kTsSideSel5[0][0]};
-static const TsPic kTsTileXPic = {247, 170, 36, 38, &kTsTileX[0][0]};
-static const TsPic kTsTileYPic = {284, 170, 36, 38, &kTsTileY[0][0]};
-static const TsPic kTsTileYEmptyPic = {284, 170, 36, 38, &kTsTileYEmpty[0][0]};
-static const TsPic kTsRunOnPic = {247, 208, 73, 29, &kTsRunOn[0][0]};
-static const TsPic kTsRunOffPic = {247, 208, 73, 29, &kTsRunOff[0][0]};
+static const TsPic kTsSide0Pic = {252, 6, 68, 27, &kTsSide0[0][0]};
+static const TsPic kTsSideSel0Pic = {252, 6, 68, 27, &kTsSideSel0[0][0]};
+static const TsPic kTsSide1Pic = {252, 33, 68, 27, &kTsSide1[0][0]};
+static const TsPic kTsSideSel1Pic = {252, 33, 68, 27, &kTsSideSel1[0][0]};
+static const TsPic kTsSide2Pic = {252, 60, 68, 27, &kTsSide2[0][0]};
+static const TsPic kTsSideSel2Pic = {252, 60, 68, 27, &kTsSideSel2[0][0]};
+static const TsPic kTsSide3Pic = {252, 87, 68, 25, &kTsSide3[0][0]};
+static const TsPic kTsSideSel3Pic = {252, 87, 68, 25, &kTsSideSel3[0][0]};
+static const TsPic kTsSide4Pic = {252, 112, 68, 33, &kTsSide4[0][0]};
+static const TsPic kTsSideSel4Pic = {252, 112, 68, 33, &kTsSideSel4[0][0]};
+static const TsPic kTsSide5Pic = {252, 145, 68, 25, &kTsSide5[0][0]};
+static const TsPic kTsSideSel5Pic = {252, 145, 68, 25, &kTsSideSel5[0][0]};
+static const TsPic kTsTileXPic = {252, 170, 34, 38, &kTsTileX[0][0]};
+static const TsPic kTsTileYPic = {286, 170, 34, 38, &kTsTileY[0][0]};
+static const TsPic kTsTileYEmptyPic = {286, 170, 34, 38, &kTsTileYEmpty[0][0]};
+static const TsPic kTsRunOnPic = {252, 208, 68, 29, &kTsRunOn[0][0]};
+static const TsPic kTsRunOffPic = {252, 208, 68, 29, &kTsRunOff[0][0]};
 static const TsPic kTsYesPic = {168, 179, 62, 29, &kTsYes[0][0]};
 static const TsPic kTsNoPic = {174, 208, 51, 24, &kTsNo[0][0]};
 static const TsPic kTsDotsPic = {146, 94, 57, 2, &kTsDots[0][0]};
@@ -87,7 +87,7 @@ static const TsPic *const kTsSide[6] = {&kTsSide0Pic, &kTsSide1Pic, &kTsSide2Pic
 static const TsPic *const kTsSideSel[6] = {&kTsSideSel0Pic, &kTsSideSel1Pic, &kTsSideSel2Pic, &kTsSideSel3Pic, &kTsSideSel4Pic, &kTsSideSel5Pic};
 static const TsPic *const kTsBadge[5] = {&kTsBadge0Pic, &kTsBadge1Pic, &kTsBadge2Pic, &kTsBadge3Pic, &kTsBadge4Pic};
 /* The Trainer Card's label (the player's name): its left column and first row. */
-#define TS_CARD_LABEL_X 253
+#define TS_CARD_LABEL_X 259
 #define TS_CARD_LABEL_Y 97
 /* The save card's values: their dotted leader (from x, top row), the value's top row, its right column, ink;
  * and the area each one is drawn in (x0, y0, x1, y1, exclusive). The name stops short of x = y + TS_DIAGONAL. */

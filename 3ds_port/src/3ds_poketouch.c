@@ -152,23 +152,23 @@ static int CtrPokeTouch_PackMenuIcon(unsigned icon, uint8_t pixels[12 * 12], uin
     return 1;
 }
 
-/* The artwork's buttons (poketouch_skin.h): the side column from x = 247 (the GBA picture ends at 243, its rim at 245), the X and Y
+/* The artwork's buttons (poketouch_skin.h): the side column from x = 252 (the GBA picture ends at 243, its rim at 245), the X and Y
  * tiles and RUN under it. */
 const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
-    [PT_POKEDEX]    = {247,   7, 73, 25},
-    [PT_POKEMON]    = {247,  34, 73, 25},
-    [PT_BAG]        = {247,  61, 73, 25},
-    [PT_CARD]       = {247,  88, 73, 23},
-    [PT_SAVE]       = {247, 114, 73, 29},
-    [PT_OPTIONS]    = {247, 146, 73, 23},
-    [PT_REGISTERED] = {248, 171, 34, 36},
-    [PT_BIKE]       = {285, 171, 34, 36},
-    [PT_RUN]        = {247, 209, 73, 27},
+    [PT_POKEDEX]    = {252,   7, 68, 25},
+    [PT_POKEMON]    = {252,  34, 68, 25},
+    [PT_BAG]        = {252,  61, 68, 25},
+    [PT_CARD]       = {252,  88, 68, 23},
+    [PT_SAVE]       = {252, 114, 68, 29},
+    [PT_OPTIONS]    = {252, 146, 68, 23},
+    [PT_REGISTERED] = {253, 171, 32, 36},
+    [PT_BIKE]       = {287, 171, 32, 36},
+    [PT_RUN]        = {252, 209, 68, 27},
 };
 
 /* Areas that are not buttons. */
 static const CtrPokeTouchRect sMenuFrame = {2, 2, 244, 164};
-static const CtrPokeTouchRect sBar = {2, 168, 232, 70};
+static const CtrPokeTouchRect sBar = {2, 170, 244, 68};
 const CtrPokeTouchRect gCtrPokeTouchBack = {172, 208, 56, 24};
 const CtrPokeTouchRect gCtrPokeTouchOptPage = {172, 180, 56, 24};
 
@@ -431,20 +431,13 @@ static void MapBuild(int group, int version)
         return;
     for (int i = 0; i < MAP_COLORS; ++i)
         pal[i] = Gba(gba[i]);
-    /* The Region Map's 192x128 at (24, 28), 1:1, centred on a dark panel inside the artwork's card (PT_HOME_PANEL_*); what
-     * is round the panel is the artwork's backdrop. Cached once, here: what is cached is what is shown. */
+    /* The Region Map's 240x160 picture is sampled, nearest neighbour, over its 192x128 at (24, 28) into the
+     * viewport (exactly 5/4), once, here: what is cached is what is shown. */
     for (int dx = 0; dx < PT_VIEW_W; ++dx)
         for (int dy = 0; dy < PT_VIEW_H; ++dy) {
-            int x = PT_VIEW_X + dx, y = PT_VIEW_Y + dy;
-            int px = x - PT_HOME_PANEL_X, py = y - PT_HOME_PANEL_Y;
-            uint16_t c = TS_BG(x, y);
-
-            if (px >= 0 && py >= 0 && px < PT_HOME_PANEL_W && py < PT_HOME_PANEL_H)
-                c = px == 0 || py == 0 || px == PT_HOME_PANEL_W - 1 || py == PT_HOME_PANEL_H - 1 ? PT_RED_EDGE : PT_RED_VIEW;
-            if (dx >= PT_HOME_X && dy >= PT_HOME_Y && dx < PT_HOME_X + 192 && dy < PT_HOME_Y + 128)
-                c = pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, PT_HOME_SRC_X + dx - PT_HOME_X,
-                                 PT_HOME_SRC_Y + dy - PT_HOME_Y)];
-            sMap.cols[dx][PT_VIEW_H - 1 - dy] = c;
+            int sx = PT_HOME_SRC_X + dx * 4 / 5, sy = PT_HOME_SRC_Y + dy * 4 / 5;
+            sMap.cols[dx][PT_VIEW_H - 1 - dy] =
+                pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, sx, sy)];
         }
 }
 
@@ -452,7 +445,8 @@ static void MapBuild(int group, int version)
  * order, 0 clear): the player (Red or Leaf) and the selection cursor (two
  * frames, which blink). An icon is centred on its cell: 8x8 pixels at (32, 32)
  * + 8 per cell on the Region Map's screen, so its 16x16 is at (8 x + 28, 8 y + 28)
- * there. HOME shows them 1:1. The cursor is above the player. */
+ * there. HOME enlarges both by the map's 5/4 (nearest neighbour): 20x20 icons
+ * on 10x10 cells. The cursor is above the player. */
 extern int CtrPokeTouch_MapPlayerIcon(uint8_t *tiles, uint16_t *palette);
 extern int CtrPokeTouch_MapCursorIcon(uint8_t *tiles, uint16_t *palette);
 
@@ -494,9 +488,9 @@ static int MarkerRect(int cx, int cy, int *x, int *y)
 {
     if (cx < 0 || cy < 0 || cx >= MAP_CELLS_X || cy >= MAP_CELLS_Y)
         return 0;
-    /* The same transform as the map: source (8 cx + 28, 8 cy + 28) minus the crop, 1:1. */
-    *x = PT_HOME_X + 8 * cx + 28 - PT_HOME_SRC_X;
-    *y = PT_HOME_Y + 8 * cy + 28 - PT_HOME_SRC_Y;
+    /* The same transform as the map: source (8 cx + 28, 8 cy + 28) minus the crop, times 5/4. */
+    *x = (8 * cx + 28 - PT_HOME_SRC_X) * 5 / 4;
+    *y = (8 * cy + 28 - PT_HOME_SRC_Y) * 5 / 4;
     return 1;
 }
 
@@ -508,7 +502,7 @@ static void IconDraw(const struct Icon *icon, int frame, int cx, int cy)
         return;
     for (int py = 0; py < PT_HOME_ICON; ++py)
         for (int px = 0; px < PT_HOME_ICON; ++px) {
-            uint8_t index = icon->pixels[frame % icon->frames][py * MARKER + px];
+            uint8_t index = icon->pixels[frame % icon->frames][(py * 4 / 5) * MARKER + px * 4 / 5];
             if (index)
                 Px(PT_VIEW_X + x + px, PT_VIEW_Y + y + py, icon->pal[index]);
         }
@@ -799,7 +793,7 @@ static void MenuFrame(const CtrPokeTouchView *v)
         SaveDraw(v);
         return;
     }
-    if (v->viewport || (v->options && !v->viewport)) {
+    if (v->viewport || v->options || v->home) {
         /* A rim round the picture, so it does not run into the side column. */
         UiRoundRect(r, UI_RADIUS_PANEL, PT_RED_EDGE);
         Fill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_OUTLINE);
@@ -909,8 +903,8 @@ static void Button(int id, const CtrPokeTouchView *v)
                 name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
             }
             name[n] = 0;
-            UiText(name, TS_CARD_LABEL_X + 6, TS_CARD_LABEL_Y - 3, mode == TS_DIM ? UI_TEXT_OFF : UI_TEXT, UI_TEXT_SH, 1,
-                   TS_CARD_LABEL_X + 48);
+            UiText(name, TS_CARD_LABEL_X, TS_CARD_LABEL_Y - 3, mode == TS_DIM ? UI_TEXT_OFF : UI_TEXT, UI_TEXT_SH, 1,
+                   TS_CARD_LABEL_X + 40);
         }
         break;
     case PT_REGISTERED:

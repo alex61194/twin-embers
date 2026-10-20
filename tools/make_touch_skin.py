@@ -61,6 +61,15 @@ BADGES = [(147, 69, 161, 85), (161, 69, 175, 85), (175, 69, 189, 85), (189, 69, 
 DOTS = (146, 94, 203, 96)                                     # the leader as painted (2x2 dots, period 3)
 PORTRAIT = (23, 52, 79, 132)
 PORTRAIT_FREE = [28, 29]
+# The side column is narrower: columns taken out of each picture (x in the artwork), where nothing is drawn.
+SIDE_CUT = {244, 245, 246, 247, 252}
+SAVE_SEL_CUT = {250, 251, 252, 288, 289}                      # the selected SAVE keeps its brackets and its frame
+RUN_CUT = {244, 245, 268, 269, 270}
+TILE_X_CUT = {270, 271}
+TILE_Y_CUT = {281, 282}
+# The dialogue box grows to the picture above it and the column on its right: rows and columns of it repeated.
+BOX_TOP, BOX_TOP_NEW = (178, 184), 172                        # its top rows (kept as the new top), and where it now starts
+BOX_RIGHT, BOX_RIGHT_NEW = (222, 229), 240                    # its right border columns, and where they now are
 # The dialogue: its text and buttons; YES and NO and their labels.
 DIALOG_TEXT = (14, 183, 168, 232)
 DIALOG_BUTTONS = (168, 179, 226, 232)
@@ -72,7 +81,7 @@ NO = (174, 208, 225, 232)
 YES_LABEL = (187, 186, 211, 201)
 NO_LABEL = (190, 211, 208, 226)
 INTERIOR = (32, 0, 0)
-SHIFT_FROM, SHIFT = 236, 6                                    # the side column moves 6 right: the GBA picture ends at x = 243, its rim at 245
+SHIFT_FROM, SHIFT = 235, 11                                   # the side column moves 11 right: the GBA picture ends at x = 243, its rim at 245
 
 
 def lum(c):
@@ -246,12 +255,32 @@ def build_backdrop(art):
         if y >= 183:
             for x in range(*DIALOG_EDGE):
                 cp[x, y] = cp[x, EDGE_ROW]
-    for x in range(319, SHIFT_FROM + SHIFT - 1, -1):          # the side column's panel, 3 to the right (the GBA picture
+    for x in range(319, SHIFT_FROM + SHIFT - 1, -1):          # the side column's panel, to the right (the GBA picture
         for y in range(240):                                  # ends at x = 243)
             cp[x, y] = cp[x - SHIFT, y]
+    for y in range(240):                                       # the old buttons' left edges left behind: the panel's margin
+        for x in range(239, SHIFT_FROM + SHIFT):
+            cp[x, y] = cp[238, y]
     for y in range(108, 150):                                  # SAVE's golden glow beside its button: the column's own
-        for x in list(range(233, 249)):
+        for x in range(233, 258):
             cp[x, y] = cp[x, 106 if y < 129 else 151]
+    # The dialogue box: taller (to the picture's rim) and wider (to the column).
+    t0, t1 = BOX_TOP
+    top = [[cp[x, y] for x in range(4, 247)] for y in range(t0, t1)]
+    for y in range(BOX_TOP_NEW, 233 + 1):
+        src = [cp[x, 200] for x in range(4, 247)] if y < 226 else [cp[x, y] for x in range(4, 247)]
+        if y < BOX_TOP_NEW + (t1 - t0):
+            src = top[y - BOX_TOP_NEW]
+        for x in range(4, 247):
+            cp[x, y] = src[x - 4]
+    r0, r1 = BOX_RIGHT
+    for y in range(BOX_TOP_NEW, 234):
+        border = [cp[x, y] for x in range(r0, r1)]
+        fill = cp[r0 - 12, y]
+        for x in range(r0, BOX_RIGHT_NEW):
+            cp[x, y] = fill
+        for i, c in enumerate(border):
+            cp[BOX_RIGHT_NEW + i, y] = c
     return clean
 
 
@@ -431,8 +460,18 @@ def main():
     pieces, positions = [], {}
 
     def add(name, im, at):
+        cuts = (SAVE_SEL_CUT if name == 'kTsSideSel4' else RUN_CUT if name.startswith('kTsRun') else TILE_X_CUT if name == 'kTsTileX' else TILE_Y_CUT
+                if name.startswith('kTsTileY') else SIDE_CUT if name.startswith('kTsSide') else set())
+        if cuts:
+            keep = [u for u in range(im.size[0]) if at[0] + u not in cuts]
+            out = Image.new('RGB', (len(keep), im.size[1]))
+            for n, u in enumerate(keep):
+                for v in range(im.size[1]):
+                    out.putpixel((n, v), im.getpixel((u, v)))
+            im = out
         pieces.append((name, im))
-        positions[name] = (at[0] + SHIFT, at[1]) if name[3:7] in ('Side', 'Tile', 'RunO') else at
+        x = at[0] + SHIFT - (len(TILE_X_CUT) + 1 if name.startswith('kTsTileY') else 0)
+        positions[name] = (x, at[1]) if name[3:7] in ('Side', 'Tile', 'RunO') else at
     for k, (normal, sel) in enumerate(side):
         add('kTsSide%d' % k, normal, SIDE[k][:2])
         add('kTsSideSel%d' % k, sel, SIDE[k][:2])
@@ -448,6 +487,7 @@ def main():
     for i, b in enumerate(BADGES):
         add('kTsBadge%d' % i, crop(art, b), b[:2])
     lx, ly, _, _ = label_box(art, (SIDE_INK[0], SIDE[SIDE_CARD][1], 296, SIDE[SIDE_CARD][3]))
+    lx = lx - SIDE[0][0] - sum(1 for c in SIDE_CUT if c < lx) + SIDE[0][0] + SHIFT              # where the label is on the screen
     nine, ten = lettering()
     return art, clean, pieces, positions, masks, (lx, ly), nine, ten
 

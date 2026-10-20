@@ -172,8 +172,8 @@ int main(int argc, char **argv)
 #endif
     for (int y=-1;y<=H;++y) for (int x=-1;x<=W;++x) {
         static const CtrPokeTouchRect expected[PT_COUNT] = {
-            {247,7,73,25},{247,34,73,25},{247,61,73,25},{247,88,73,23},
-            {247,114,73,29},{247,146,73,23},{248,171,34,36},{285,171,34,36},{247,209,73,27}};
+            {252,7,68,25},{252,34,68,25},{252,61,68,25},{252,88,68,23},
+            {252,114,68,29},{252,146,68,23},{253,171,32,36},{287,171,32,36},{252,209,68,27}};
         int hit=PT_NONE;
         for(int i=0;i<PT_COUNT;++i) if(UiIn(&expected[i],x,y)) hit=i;
         assert(CtrPokeTouch_HitTest(x,y)==hit);
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
     strcpy(v.playerName,"Trades"); strcpy(v.bar[0],"TEST MAP");
     for(int i=0;i<PT_COUNT;++i) v.enabled[i]=1;
     CtrPokeTouch_Draw(canvas,&v);
-    for(int x=18;x<18+192;++x) for(int y=22;y<22+128;++y) assert(at(x,y)==Gba(0x5ab3));
+    for(int x=4;x<244;++x) for(int y=4;y<164;++y) assert(at(x,y)==Gba(0x5ab3));
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
         FILE *f=fopen(argv[1],"wb"); assert(f);
         fprintf(f,"P6\n320 240\n255\n");

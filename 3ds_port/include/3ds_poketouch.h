@@ -42,20 +42,16 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
  * REGIONMAP_* values. */
 enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COUNT };
-/* HOME shows the Region Map's 192x128 at (24, 28) of its 240x160 screen (the 22x15 grid of 8x8 cells at (32, 32) and the
- * 16x16 icons around it) 1:1 inside the artwork's card: on a dark panel (screen pixels PT_HOME_PANEL_*) with the map
- * at viewport pixel (PT_HOME_X, PT_HOME_Y). Only HOME uses this; the other screens keep the viewport 1:1 with the GBA
- * picture. */
+/* HOME shows the Region Map's 192x128 at (24, 28) of its 240x160 screen (the 22x15 grid of 8x8
+ * cells at (32, 32) and the 16x16 icons around it) enlarged by exactly 5/4, nearest neighbour,
+ * into the viewport: cells are 10x10 from (10, 5), icons 20x20. Only HOME uses this; the other
+ * screens keep the viewport 1:1 with the GBA picture. */
 #define PT_HOME_SRC_X 24
 #define PT_HOME_SRC_Y 28
-#define PT_HOME_X 14                    /* viewport pixel of the map's corner */
-#define PT_HOME_Y 18
-#define PT_HOME_CELL 8
-#define PT_HOME_ICON 16
-#define PT_HOME_PANEL_X 10              /* screen pixels */
-#define PT_HOME_PANEL_Y 10
-#define PT_HOME_PANEL_W 208
-#define PT_HOME_PANEL_H 150
+#define PT_HOME_X 10                    /* viewport pixel of cell (0, 0) */
+#define PT_HOME_Y 5
+#define PT_HOME_CELL 10
+#define PT_HOME_ICON 20
 /* The native OPTIONS screen (3ds_poketouch_options.c holds the rows): it fills the viewport with up
  * to PT_OPT_MAX rows, each a label on the left and, on the right, "<" value ">". A row is 228x20 at
  * (PT_VIEW_X + 6, PT_VIEW_Y + 4 + 22 row). On a row, the label selects it (its description goes to
