@@ -431,13 +431,20 @@ static void MapBuild(int group, int version)
         return;
     for (int i = 0; i < MAP_COLORS; ++i)
         pal[i] = Gba(gba[i]);
-    /* The Region Map's 240x160 picture is sampled, nearest neighbour, over its 192x128 at (24, 28) into the
-     * viewport (exactly 5/4), once, here: what is cached is what is shown. */
+    /* The Region Map's 192x128 at (24, 28), 1:1, centred on a dark panel inside the artwork's card (PT_HOME_PANEL_*); what
+     * is round the panel is the artwork's backdrop. Cached once, here: what is cached is what is shown. */
     for (int dx = 0; dx < PT_VIEW_W; ++dx)
         for (int dy = 0; dy < PT_VIEW_H; ++dy) {
-            int sx = PT_HOME_SRC_X + dx * 4 / 5, sy = PT_HOME_SRC_Y + dy * 4 / 5;
-            sMap.cols[dx][PT_VIEW_H - 1 - dy] =
-                pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, sx, sy)];
+            int x = PT_VIEW_X + dx, y = PT_VIEW_Y + dy;
+            int px = x - PT_HOME_PANEL_X, py = y - PT_HOME_PANEL_Y;
+            uint16_t c = TS_BG(x, y);
+
+            if (px >= 0 && py >= 0 && px < PT_HOME_PANEL_W && py < PT_HOME_PANEL_H)
+                c = px == 0 || py == 0 || px == PT_HOME_PANEL_W - 1 || py == PT_HOME_PANEL_H - 1 ? PT_RED_EDGE : PT_RED_VIEW;
+            if (dx >= PT_HOME_X && dy >= PT_HOME_Y && dx < PT_HOME_X + 192 && dy < PT_HOME_Y + 128)
+                c = pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, PT_HOME_SRC_X + dx - PT_HOME_X,
+                                 PT_HOME_SRC_Y + dy - PT_HOME_Y)];
+            sMap.cols[dx][PT_VIEW_H - 1 - dy] = c;
         }
 }
 
@@ -445,8 +452,7 @@ static void MapBuild(int group, int version)
  * order, 0 clear): the player (Red or Leaf) and the selection cursor (two
  * frames, which blink). An icon is centred on its cell: 8x8 pixels at (32, 32)
  * + 8 per cell on the Region Map's screen, so its 16x16 is at (8 x + 28, 8 y + 28)
- * there. HOME enlarges both by the map's 5/4 (nearest neighbour): 20x20 icons
- * on 10x10 cells. The cursor is above the player. */
+ * there. HOME shows them 1:1. The cursor is above the player. */
 extern int CtrPokeTouch_MapPlayerIcon(uint8_t *tiles, uint16_t *palette);
 extern int CtrPokeTouch_MapCursorIcon(uint8_t *tiles, uint16_t *palette);
 
@@ -488,9 +494,9 @@ static int MarkerRect(int cx, int cy, int *x, int *y)
 {
     if (cx < 0 || cy < 0 || cx >= MAP_CELLS_X || cy >= MAP_CELLS_Y)
         return 0;
-    /* The same transform as the map: source (8 cx + 28, 8 cy + 28) minus the crop, times 5/4. */
-    *x = (8 * cx + 28 - PT_HOME_SRC_X) * 5 / 4;
-    *y = (8 * cy + 28 - PT_HOME_SRC_Y) * 5 / 4;
+    /* The same transform as the map: source (8 cx + 28, 8 cy + 28) minus the crop, 1:1. */
+    *x = PT_HOME_X + 8 * cx + 28 - PT_HOME_SRC_X;
+    *y = PT_HOME_Y + 8 * cy + 28 - PT_HOME_SRC_Y;
     return 1;
 }
 
@@ -502,7 +508,7 @@ static void IconDraw(const struct Icon *icon, int frame, int cx, int cy)
         return;
     for (int py = 0; py < PT_HOME_ICON; ++py)
         for (int px = 0; px < PT_HOME_ICON; ++px) {
-            uint8_t index = icon->pixels[frame % icon->frames][(py * 4 / 5) * MARKER + px * 4 / 5];
+            uint8_t index = icon->pixels[frame % icon->frames][py * MARKER + px];
             if (index)
                 Px(PT_VIEW_X + x + px, PT_VIEW_Y + y + py, icon->pal[index]);
         }
@@ -833,7 +839,7 @@ static void OptPageButton(const CtrPokeTouchView *v)
 }
 
 /* The contextual bar is the artwork's dialogue box: up to three lines, 18 pixels apart, the block centred on its middle
- * line (y = 190 / 208 with two); the first line is the subject (white), the others what is known about it (dim). */
+ * line (y = 190 / 208 with two, 185 / 200 / 215 with three); the first line is the subject (white), the others what is known about it (dim). */
 static void Bar(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sBar;
@@ -844,12 +850,12 @@ static void Bar(const CtrPokeTouchView *v)
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    int top = 203 - ((lines - 1) * 18 + 9) / 2;
+    int pitch = lines > 2 ? 15 : 18, top = lines > 2 ? 185 : 203 - ((lines - 1) * 18 + 9) / 2;
     /* The text stops short of BACK, PAGE, or of SAVE's buttons, when they are there. */
     int limit = (v->backVisible || hasPage) ? gCtrPokeTouchBack.x - 4
               : v->save && v->saveState != SAVE_WRITING ? sSaveButtons.x - 2 : r->x + r->w - 8;
     for (int i = 0; i < lines; ++i)
-        UiText(v->bar[i], 22, top + i * 18, i == 0 ? UI_TEXT : PT_RED_DIM, UI_TEXT_SH, 1, limit);
+        UiText(v->bar[i], 22, top + i * pitch, i == 0 ? UI_TEXT : PT_RED_DIM, UI_TEXT_SH, 1, limit);
     if (hasPage)
         OptPageButton(v);
     if (v->backVisible)
@@ -889,6 +895,7 @@ static void Button(int id, const CtrPokeTouchView *v)
     switch (id) {
     case PT_CARD:
         if (v->playerName[0]) {
+            /* The game's own lettering, as the artwork's other labels. */
             char name[16];
             int n = 0;
 
@@ -897,7 +904,8 @@ static void Button(int id, const CtrPokeTouchView *v)
                 name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
             }
             name[n] = 0;
-            TsLetters(name, TS_CARD_LABEL_X + 3, TS_CARD_LABEL_Y, 1, kTsWhite, TS_CARD_LABEL_X + 45);
+            UiText(name, TS_CARD_LABEL_X + 3, TS_CARD_LABEL_Y - 3, mode == TS_DIM ? UI_TEXT_OFF : UI_TEXT, UI_TEXT_SH, 1,
+                   TS_CARD_LABEL_X + 45);
         }
         break;
     case PT_REGISTERED:

@@ -38,7 +38,7 @@ SEL_INNER = (245, 119, 313, 138)                              # inside the golde
 SEL_FREE = [250, 251, 289, 290, 291]
 SAVE_EDGE = (156, 112, 232)                                   # SAVE's colour edge as a plain button
 SAVE_LETTERS = (251, 282)                                     # its label (inside the brackets) and floppy disk
-SAVE_DISK = (292, 313)
+SAVE_DISK = (292, 311)
 OUTLINE = (8, 12, 20)
 TILE_X = (241, 170, 277, 208)
 TILE_Y = (278, 170, 316, 208)
@@ -176,12 +176,17 @@ def side_buttons(art, clean):
                     x = sx0 + u
                     if SIDE_INK[0] <= x < SIDE_INK[1] - 1 and dist(bp[u, v], body) > 0 and 3 <= v < sy1 - sy0 - 4:
                         bp[u, v] = body
-                    elif RUN_EDGE[0] <= x < RUN_EDGE[1] and bp[u, v][1] > bp[u, v][0] + 30:
+                    elif RUN_EDGE[0] <= x < 252 and bp[u, v][1] > bp[u, v][0] + 12:
                         l = lum(bp[u, v]) / 190
                         bp[u, v] = tuple(min(255, int(SAVE_EDGE[i] * l)) for i in range(3))
             plain = crop(clean, SIDE[k])
             top = (h - btn.size[1]) // 2
             plain.paste(btn, (0, top))
+            pp = plain.load()
+            for v in range(h):                                # the rows round it: BAG's own, not SAVE's golden glow
+                if v < top or v >= top + btn.size[1]:
+                    for u in range(plain.size[0]):
+                        pp[u, v] = bp[u, 0 if v < top else btn.size[1] - 1]
             # SAVE's letters (white, outlined dark as on the other buttons) and its floppy disk, from the painted one.
             frame = golden(art, h)
             fpx = frame.load()
@@ -244,6 +249,9 @@ def build_backdrop(art):
     for x in range(319, SHIFT_FROM + SHIFT - 1, -1):          # the side column's panel, 3 to the right (the GBA picture
         for y in range(240):                                  # ends at x = 243)
             cp[x, y] = cp[x - SHIFT, y]
+    for y in range(108, 150):                                  # SAVE's golden glow beside its button: the column's own
+        for x in list(range(233, 246)) + list(range(314, 320)):
+            cp[x, y] = cp[x, 106 if y < 129 else 151]
     return clean
 
 
