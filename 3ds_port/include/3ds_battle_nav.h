@@ -3,8 +3,8 @@
 /*
  * The battle action menu's D-pad graph, in the layout the lower screen draws:
  *
- *                 FIGHT
- *   BAG          RUN          POKeMON
+ *   FIGHT   BAG
+ *   POKeMON RUN
  *
  * Cursors are FireRed's own (gActionSelectionCursor): 0 FIGHT, 1 BAG, 2 POKeMON, 3 RUN. One table
  * serves the physical D-pad (battle_controller_player.c) and the touch plans (3ds_bottom.c), so both
@@ -21,10 +21,10 @@ static inline int CtrBattleActionStep(int cursor, int dir)
 {
     static const signed char kNext[4][CTR_NAV_DIRS] = {
         /*            UP  DOWN LEFT RIGHT */
-        /* FIGHT */ { -1,   1,  -1,  -1 },
-        /* BAG   */ {  0,  -1,  -1,   3 },
-        /* POKeMON*/{  0,  -1,   3,  -1 },
-        /* RUN   */ {  0,  -1,   1,   2 },
+        /* FIGHT */ { -1,   2,  -1,   1 },
+        /* BAG   */ { -1,   3,   0,  -1 },
+        /* POKeMON*/{  0,  -1,  -1,   3 },
+        /* RUN   */ {  1,  -1,   2,  -1 },
     };
     int next;
 
