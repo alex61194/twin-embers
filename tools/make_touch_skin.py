@@ -50,12 +50,12 @@ RUN_EDGE = (240, 248)
 # The save card (the SAVE screen): each value with its dotted leader and the badges, taken out.
 VALUES = [  # dots from x, dots top, value top, value right (inclusive), ink
     (143, 61, 53, 184, (248, 252, 248)),                      # the player's name (left of the frame's diagonal)
-    (146, 94, 86, 211, (248, 252, 248)),                      # badges
+    (143, 82, 73, 211, (248, 252, 248)),                      # badges: the count, on the label's own row
     (149, 112, 103, 211, (248, 252, 248)),                    # Pokedex
     (159, 130, 121, 211, (248, 252, 248)),                    # play time
     (134, 148, 139, 211, (248, 252, 152)),                    # money
 ]
-HOLES = [(141, 50, 192, 65), (143, 68, 214, 98), (146, 101, 214, 116), (155, 118, 214, 134), (130, 136, 214, 152)]
+HOLES = [(141, 50, 192, 65), (141, 68, 214, 98), (146, 101, 214, 116), (155, 118, 214, 134), (130, 136, 214, 152)]
 # The save card fills the GBA picture's place (240x160 at (4, 4)): the artwork's card, its thick bezel trimmed, widened by
 # repeating a flat column of each row and made 5 rows taller by repeating a flat row of the gap between title and panel.
 CARD_SRC = (9, 7, 223, 162)                                   # x0, y0, x1, y1 (exclusive) of the artwork's card
@@ -416,7 +416,6 @@ def emit(clean, pieces, positions, masks, card_label, nine, ten):
         out.append('static const TsMask %sPic = {%d, %d, %d, %d, &%s[0][0]};' % (name, x, y, len(rows[0]), len(rows), name))
     out.append('static const TsPic *const kTsSide[6] = {%s};' % ', '.join('&kTsSide%dPic' % k for k in range(6)))
     out.append('static const TsPic *const kTsSideSel[6] = {%s};' % ', '.join('&kTsSideSel%dPic' % k for k in range(6)))
-    out.append('static const TsPic *const kTsBadge[%d] = {%s};' % (len(BADGES), ', '.join('&kTsBadge%dPic' % i for i in range(len(BADGES)))))
     out.append('/* The Trainer Card\'s label (the player\'s name): its left column and first row. */')
     out.append('#define TS_CARD_LABEL_X %d\n#define TS_CARD_LABEL_Y %d' % card_label)
     out.append('/* The save card\'s values: their dotted leader (from x, top row), the value\'s top row, its right column, ink;')
@@ -504,9 +503,7 @@ def main():
             im = out
         pieces.append((name, im))
         x = at[0] + SHIFT - (len(TILE_X_CUT) + 1 if name.startswith('kTsTileY') else 0)
-        if name.startswith('kTsBadge'):                        # the badges stay in a row: from the first one's place
-            at = (card_x(BADGES[0][0], at[1]) + at[0] - BADGES[0][0], card_y(at[1]))
-        elif name in ('kTsDots', 'kTsPortrait'):
+        if name in ('kTsDots', 'kTsPortrait'):
             at = (card_x(at[0], at[1]), card_y(at[1]))
         positions[name] = (x, at[1]) if name[3:7] in ('Side', 'Tile', 'RunO') else at
     for k, (normal, sel) in enumerate(side):
@@ -521,8 +518,6 @@ def main():
     add('kTsNo', no, NO[:2])
     add('kTsDots', crop(art, DOTS), DOTS[:2])
     add('kTsPortrait', portrait, PORTRAIT[:2])
-    for i, b in enumerate(BADGES):
-        add('kTsBadge%d' % i, crop(art, b), b[:2])
     lx, ly, _, _ = label_box(art, (SIDE_INK[0], SIDE[SIDE_CARD][1], 296, SIDE[SIDE_CARD][3]))
     lx = lx - SIDE[0][0] - sum(1 for c in SIDE_CUT if c < lx) + SIDE[0][0] + SHIFT              # where the label is on the screen
     nine, ten = lettering()

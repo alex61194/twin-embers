@@ -879,7 +879,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin.h",
-   "sha256": "10a570691a9b72df1ca4e65be6fa51eb4603be9f05ba7f3001f80a55d10abf58",
+   "sha256": "7e0c34edb5c1faf6f27ba021debb8dc91e0d7938705a4f7151f2f6541db75c41",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -895,7 +895,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_bg1.h",
-   "sha256": "7209c6a44ba038a2933771ecb806f4407b5d7d5b1104ae6d1ed1bfc46d21286d",
+   "sha256": "d31ac294e778db21f98750c686d8ef6194ea992e367336bc21e965ede85a89a8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -919,7 +919,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_parts0.h",
-   "sha256": "cb25c571f49fb603a6c7d1454712e39e4e7ac5e44030c33663496fc7639e4ab0",
+   "sha256": "bff9ed7afaf21aa976f26e7ba36486bcf978b0cd94199be71cf5dda64a169270",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -927,7 +927,7 @@
   },
   {
    "path": "3ds_port/include/poketouch_skin_parts1.h",
-   "sha256": "4dfc124b675b0abc8faec24869ca281f51d2ffbb3099ec8b80e025d392a29f9d",
+   "sha256": "13b096e46a5b5a923f6a4ff3ebd1f7ccd11be72c7dc02daeae0c8e492979eae8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1271,7 +1271,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "b20a768b7f2967bcd138eddf25bfb05c1839c25629ed5a70c916e53064174835",
+   "sha256": "c8f583cf2e42ec4483a9c5da1ab3ffeb5fd5ad68b9ced3afc5b137d4105e3bcf",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1963,7 +1963,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "570f811bb969ab4c60732f84f435e28d15f210026dfdcdae13cb33af0f1a57e5",
+   "sha256": "b50bfe2c9e5aaca08a5c32034ed657ee7e11793ed2d105eac5df34c44e44872e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4310,6 +4310,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0122-pokecenter-heal-balls-on-tray.json",
+   "sha256": "8cd85aa7449873ccf367f6290bf4ed9722b84e4dd8c01de81eeb1c84ab9c8ffe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -4432,7 +4440,7 @@
   },
   {
    "path": "tools/make_touch_skin.py",
-   "sha256": "14efca4ea2495c88248d28d142149ea24397c557c91a58bb9a75f8a99ea73b5b",
+   "sha256": "b794004dc2d0a0b342024f86485caed3c8b1082f9b44f33683bb16117803fb03",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
