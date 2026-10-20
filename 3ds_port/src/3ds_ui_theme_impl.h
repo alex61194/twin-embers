@@ -44,9 +44,9 @@ static const UiSurface sUiRed = {
     {UI_RGB(96, 8, 12), UI_RGB(156, 34, 32), UI_RGB(52, 4, 6)},              /* neutral */
     {UI_RGB(120, 12, 16), UI_RGB(190, 48, 40), UI_RGB(46, 2, 4)},            /* cancel */
     {UI_RGB(218, 32, 24), UI_RGB(231, 78, 50), UI_RGB(120, 10, 8)},          /* fight: sChromeOn, gloss kept under white 3x text */
-    {UI_RGB(190, 22, 22), UI_RGB(236, 77, 56), UI_RGB(102, 8, 8)},           /* bag: sChrome with the gloss held to 3.4:1 under white */
-    {UI_RGB(190, 22, 22), UI_RGB(236, 77, 56), UI_RGB(102, 8, 8)},           /* pokemon */
-    {UI_RGB(46, 54, 68), UI_RGB(68, 78, 96), UI_RGB(24, 28, 38)},             /* run: slate graphite arcade button */
+    {UI_RGB(138, 58, 26), UI_RGB(180, 88, 44), UI_RGB(80, 28, 12)},          /* bag: warm cognac leather brown */
+    {UI_RGB(104, 24, 48), UI_RGB(152, 44, 76), UI_RGB(56, 12, 24)},          /* pokemon: rich plum wine magenta */
+    {UI_RGB(46, 54, 68), UI_RGB(70, 82, 102), UI_RGB(24, 28, 38)},           /* run: slate graphite arcade button */
 };
 
 static const UiSurface *sUiS = &sUiNavy;
