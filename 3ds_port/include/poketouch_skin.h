@@ -38,11 +38,6 @@ static const TsPic kTsYesPic = {168, 179, 62, 29, &kTsYes[0][0]};
 static const TsPic kTsNoPic = {174, 208, 51, 24, &kTsNo[0][0]};
 static const TsPic kTsDotsPic = {141, 96, 57, 2, &kTsDots[0][0]};
 static const TsPic kTsPortraitPic = {18, 54, 56, 80, &kTsPortrait[0][0]};
-static const TsPic kTsBadge0Pic = {142, 71, 14, 16, &kTsBadge0[0][0]};
-static const TsPic kTsBadge1Pic = {156, 71, 14, 16, &kTsBadge1[0][0]};
-static const TsPic kTsBadge2Pic = {170, 71, 14, 16, &kTsBadge2[0][0]};
-static const TsPic kTsBadge3Pic = {184, 71, 13, 16, &kTsBadge3[0][0]};
-static const TsPic kTsBadge4Pic = {197, 71, 12, 16, &kTsBadge4[0][0]};
 /* The YES and NO lettering as painted: cover 0..15, drawn white with a dark outline on either button. */
 typedef struct { int16_t x, y, w, h; const uint8_t *cover; } TsMask;
 static const uint8_t kTsYesMask[15][24] = {
@@ -85,7 +80,6 @@ static const uint8_t kTsNoMask[15][18] = {
 static const TsMask kTsNoMaskPic = {190, 211, 18, 15, &kTsNoMask[0][0]};
 static const TsPic *const kTsSide[6] = {&kTsSide0Pic, &kTsSide1Pic, &kTsSide2Pic, &kTsSide3Pic, &kTsSide4Pic, &kTsSide5Pic};
 static const TsPic *const kTsSideSel[6] = {&kTsSideSel0Pic, &kTsSideSel1Pic, &kTsSideSel2Pic, &kTsSideSel3Pic, &kTsSideSel4Pic, &kTsSideSel5Pic};
-static const TsPic *const kTsBadge[5] = {&kTsBadge0Pic, &kTsBadge1Pic, &kTsBadge2Pic, &kTsBadge3Pic, &kTsBadge4Pic};
 /* The Trainer Card's label (the player's name): its left column and first row. */
 #define TS_CARD_LABEL_X 259
 #define TS_CARD_LABEL_Y 97
@@ -93,7 +87,7 @@ static const TsPic *const kTsBadge[5] = {&kTsBadge0Pic, &kTsBadge1Pic, &kTsBadge
  * and the area each one is drawn in (x0, y0, x1, y1, exclusive). The name stops short of x = y + TS_DIAGONAL. */
 static const struct { int16_t dotsX, dotsY, top, right; uint8_t ink[3]; int16_t area[4]; } kTsValue[5] = {
     {138, 63, 55, 205, {248, 252, 248}, {136, 52, 213, 67}},
-    {141, 96, 88, 232, {248, 252, 248}, {138, 70, 235, 100}},
+    {138, 84, 75, 232, {248, 252, 248}, {136, 70, 235, 100}},
     {144, 114, 105, 232, {248, 252, 248}, {141, 103, 235, 118}},
     {154, 132, 123, 232, {248, 252, 248}, {150, 120, 235, 136}},
     {129, 150, 141, 232, {248, 252, 152}, {125, 138, 235, 154}},

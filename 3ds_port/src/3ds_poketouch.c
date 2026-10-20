@@ -674,9 +674,6 @@ static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
             if (c != TS_KEY)
                 Px(dx, kTsValue[f].dotsY + row, c);
         }
-    if (f == SF_BADGES)
-        for (int i = 0; i < 5 && i < v->saveBadges; ++i)
-            TsPicDraw(kTsBadge[i], TS_NORMAL);
     {
         uint8_t col[3] = {ink[0], ink[1], ink[2]};
 
