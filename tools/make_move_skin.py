@@ -50,6 +50,13 @@ BALL_LEAD = (-2, 12, 39, 30)                                 # the lead's, with 
 TRACK = (-1, 41, 36, 7)                                      # the HP bar with its frame
 PAR = (99, 12, 21, 13)
 ZONE_FILL = (24, 4, 0)
+# The type sheet (docs/media/move-cards.png): eighteen card frames at their size (133x60), three to a row, in this
+# order of types.
+SHEET_TYPES = [10, 4, 11, 12, 13, 15, 2, 5, 1, 3, 6, 8, 14, 7, 17, 16, 0, 9]
+SHEET_W, SHEET_H = 133, 60
+SHEET_NEUTRAL = 16                                           # the Body Slam card shows the neutral mark
+ART_TYPES = [10, 4, 11, 12]                                  # the types of the screen artwork's four cards
+BODY_SAMPLE = (60, 36, 76, 45)                               # a stretch of every card's own background (cell)
 
 # The move names' lettering: 9 rows, two-pixel stems; '#' ink, '+' half, '.' a quarter.
 TITLE_FONT = {
@@ -335,6 +342,57 @@ def build_icons(img, card, neon):
     return icons
 
 
+def sheet_cards():
+    """The type sheet's cards, each placed as a card cell (its frame at 3, 3)."""
+    im = Image.open(ART / 'move-cards.png').convert('RGB')
+    assert im.size == (SHEET_W * 3, SHEET_H * 6)
+    cards = []
+    for i in range(len(SHEET_TYPES)):
+        x, y = SHEET_W * (i % 3), SHEET_H * (i // 3)
+        cell = Image.new('RGB', (CARD_W, CARD_H))
+        cell.paste(im.crop((x, y, x + SHEET_W, y + SHEET_H)), (3, 3))
+        cards.append(cell)
+    return cards
+
+
+def sheet_colours(card):
+    """A sheet card's frame, capsule and lit PP colours."""
+    px = card.load()
+    neon = median(px[u, v] for v in range(15, 50) for u in (3, 4))
+    pill = [px[u, v] for v in range(34, 44) for u in range(9, 52)]
+    pill = [c for c in pill if min(c) < 190 and lum(c) > 40]
+    lit = [px[u, v] for v in range(51, 57) for u in range(10, 24)]
+    lit = sorted(lit, key=lum)[len(lit) // 2:]
+    return neon, median(pill), median(lit)
+
+
+def sheet_cover(card, box):
+    """A picture on a sheet card within `box` (cell coordinates): per pixel a cover over the card's own background
+    there (the darker half's middle) and the colour that gives the pixel back over it."""
+    px = card.load()
+    u0, v0, u1, v1 = box
+    vals = sorted((px[u, v] for u in range(u0, u1) for v in range(v0, v1)), key=lum)
+    bg = vals[len(vals) // 4]
+    rows = []
+    for v in range(v0, v1):
+        row = []
+        for u in range(u0, u1):
+            c = px[u, v]
+            dist = sum((c[i] - bg[i]) ** 2 for i in range(3)) ** 0.5
+            al = clamp(dist / 70.0, 0, 1) if dist > 18 else 0.0
+            row.append((al, tuple(clamp(bg[i] + (c[i] - bg[i]) / al) for i in range(3)) if al else c))
+        rows.append(row)
+    return rows
+
+
+def sheet_neutral(card):
+    """The neutral mark: the sheet's Body Slam card draws a six-pixel dash (white, its lower row at half) at the middle
+    height of "x1" (cell row 39), four pixels before it."""
+    px = card.load()
+    ink = max((px[u, 39] for u in range(100, 112)), key=lum)
+    return ink, [[1.0] * 6, [0.45] * 6], 4, 39
+
+
 def inpaint_rows(px, box, sample_x):
     """Each row of `box` takes the colour its free columns (`sample_x`) have there."""
     x0, y0, x1, y1 = box
@@ -383,6 +441,25 @@ def main():
     marks = build_marks(base, card, neon)
     icons = build_icons(base, card, neon)
     bg = build_backdrop(base)
+    sheet = sheet_cards()
+    type_neon, type_pill, type_seg, type_icon = [None] * 18, [None] * 18, [None] * 18, [None] * 18
+    for k, t in enumerate(SHEET_TYPES):
+        type_neon[t], type_pill[t], type_seg[t] = sheet_colours(sheet[k])
+        type_icon[t] = sheet_cover(sheet[k], ICON_MASK)
+    for k, t in enumerate(ART_TYPES):                         # the screen artwork's own four, sharper
+        type_neon[t], type_pill[t] = neon[k], pill[k]
+        type_icon[t] = icons[k]
+    type_body = [(0, 0, 0)] * 18                             # how much lighter the sheet paints each card's background
+    for k, t in enumerate(SHEET_TYPES):
+        if t in ART_TYPES:
+            continue
+        sp = sheet[k].load()
+        u0, v0, u1, v1 = BODY_SAMPLE
+        want = median(sp[u, v] for u in range(u0, u1) for v in range(v0, v1))
+        have = median(card_pixel(card, u, v, type_neon[t]) for u in range(u0, u1) for v in range(v0, v1))
+        type_body[t] = tuple(round(want[i] - have[i]) for i in range(3))
+    type_seg[11] = (72, 216, 248)                            # the sheet's Water card is at a fifth of its PP (orange)
+    neutral = sheet_neutral(sheet[SHEET_NEUTRAL])
     hp_green = [median(bpx[x, y] for x in range(32, 57)) for y in range(42, 47)]
     hp_yellow = [median(bpx[x, y] for x in range(76, 88)) for y in range(42, 47)]
 
@@ -409,6 +486,12 @@ def main():
     out.append('static const uint8_t kMskArtNeon[4][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in neon))
     out.append('static const uint8_t kMskArtPill[4][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in pill))
     out.append('static const uint8_t kMskArtSeg[4][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in seg_ink))
+    out.append('/* Per type (FireRed\'s order): the frame, capsule and lit PP colours, from the type sheet. */')
+    for name, table in (('kMskTypeNeon', type_neon), ('kMskTypePill', type_pill), ('kMskTypeSeg', type_seg)):
+        out.append('static const uint8_t %s[18][3] = {%s};' % (name, ', '.join('{%d, %d, %d}' % c for c in table)))
+    out.append('/* Per type: what the sheet adds to the card\'s own background, inside the frame. */')
+    out.append('static const int8_t kMskTypeBody[18][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in type_body))
+    out.append('#define MSK_BODY_U0 5\n#define MSK_BODY_V0 5\n#define MSK_BODY_U1 134\n#define MSK_BODY_V1 61')
     out.append('static const uint8_t kMskHpGreen[5][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in hp_green))
     out.append('static const uint8_t kMskHpYellow[5][3] = {%s};' % ', '.join('{%d, %d, %d}' % c for c in hp_yellow))
     out.append('')
@@ -444,13 +527,19 @@ def main():
                    % (i, w, i, h, i, gap, i, top))
         out.append('static const uint8_t kMskMark%dInk[3] = {%d, %d, %d};' % ((i,) + ink))
         out.append(c_rows('kMskMark%d[%d][%d]' % (i, h, w), 'uint8_t', alpha, lambda a: '%d' % round(a * 255), 20))
-    out.append('/* The artwork\'s type icons (Fire, Ground, Water, Grass) in the tab: RGB565 and cover 0..255. */')
+    out.append('/* The type icons in the tab, by type: RGB565 and cover 0..255. */')
     out.append('#define MSK_ICON_U %d\n#define MSK_ICON_V %d\n#define MSK_ICON_W %d\n#define MSK_ICON_H %d'
                % (ICON_MASK[0], ICON_MASK[1], ICON_MASK[2] - ICON_MASK[0], ICON_MASK[3] - ICON_MASK[1]))
-    out.append('static const uint16_t kMskIcon[4][MSK_ICON_H][MSK_ICON_W][2] = {')
-    for rows in icons:
+    out.append('static const uint16_t kMskIcon[18][MSK_ICON_H][MSK_ICON_W][2] = {')
+    for rows in type_icon:
         out.append('    {%s},' % ', '.join('{%s}' % ', '.join('{0x%04X, %d}' % (rgb565(c), round(al * 255)) for al, c in r) for r in rows))
     out.append('};')
+    ink, alpha, gap, top = neutral
+    out.append('/* The neutral mark (a dash before "x1"). */')
+    out.append('#define MSK_MARK4_W %d\n#define MSK_MARK4_H %d\n#define MSK_MARK4_GAP %d\n#define MSK_MARK4_V %d'
+               % (len(alpha[0]), len(alpha), gap, top))
+    out.append('static const uint8_t kMskMark4Ink[3] = {%d, %d, %d};' % ink)
+    out.append(c_rows('kMskMark4[%d][%d]' % (len(alpha), len(alpha[0])), 'uint8_t', alpha, lambda a: '%d' % round(a * 255), 20))
     shots = [('kMskBall', crop(base, SLOT_X[2] + BALL[0], BALL[1], BALL[2], BALL[3])),
              ('kMskBallFaint', crop(base, SLOT_X[3] + BALL[0], BALL[1], BALL[2], BALL[3])),
              ('kMskBallLead', crop(base, SLOT_X[0] + BALL_LEAD[0], BALL_LEAD[1], BALL_LEAD[2], BALL_LEAD[3])),

@@ -10,8 +10,9 @@
 #define CTR_TYPE_FORESIGHT 0xFE
 #define CTR_TYPE_ENDTABLE  0xFF
 
-/* What a card says. CTR_FX_NONE is a neutral hit (nothing is drawn) and also "not known". */
-enum { CTR_FX_NONE, CTR_FX_IMMUNE, CTR_FX_QUARTER, CTR_FX_HALF, CTR_FX_DOUBLE, CTR_FX_QUADRUPLE };
+/* What a card says. CTR_FX_NEUTRAL is a plain hit (x1); CTR_FX_NONE is "nothing to say" (a status move, a double
+ * battle, not known). */
+enum { CTR_FX_NONE, CTR_FX_IMMUNE, CTR_FX_QUARTER, CTR_FX_HALF, CTR_FX_DOUBLE, CTR_FX_QUADRUPLE, CTR_FX_NEUTRAL };
 
 /* One attacking type against one defending type, in hundredths (0, 50, 100, 200). With `foresight` active, stops
  * at the CTR_TYPE_FORESIGHT marker so Normal/Fighting hit Ghost neutrally. */
@@ -52,7 +53,7 @@ static inline int CtrTypeChart_EffectEx(const unsigned char *chart, unsigned atk
     if (type2 != type1)
         m = m * CtrTypeChart_OneEx(chart, atk, type2, foresight) / 100;
     return m == 0 ? CTR_FX_IMMUNE : m <= 25 ? CTR_FX_QUARTER : m < 100 ? CTR_FX_HALF
-         : m >= 400 ? CTR_FX_QUADRUPLE : m > 100 ? CTR_FX_DOUBLE : CTR_FX_NONE;
+         : m >= 400 ? CTR_FX_QUADRUPLE : m > 100 ? CTR_FX_DOUBLE : CTR_FX_NEUTRAL;
 }
 
 static inline int CtrTypeChart_Effect(const unsigned char *chart, unsigned atk, unsigned type1, unsigned type2)

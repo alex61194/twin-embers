@@ -1097,20 +1097,6 @@ static const uint8_t kBMRows[][7] = {
 /* ---- The move-selection screen, drawn from its artwork (docs/media/move-screen*.png, turned into tables by
  * tools/make_move_skin.py): the backdrop as painted, the cards and capsules recoloured per type from the artwork's
  * own four, and over them what the battle says (names, PP, matchups, the party's balls and HP, the description). ---- */
-/* Per type: the frame's colour, the capsule's and the lit PP's. The artwork paints Fire, Ground, Water and Grass;
- * the others follow them. */
-static const uint8_t kMsNeon[18][3] = {
-    {200, 196, 176}, {232, 88, 56}, {168, 152, 248}, {200, 96, 224}, {192, 144, 80}, {208, 184, 96},
-    {176, 208, 48}, {152, 120, 216}, {184, 192, 216}, {120, 176, 168}, {232, 144, 32}, {56, 200, 216},
-    {144, 224, 72}, {248, 216, 56}, {248, 96, 152}, {136, 224, 232}, {136, 96, 248}, {152, 120, 96}};
-static const uint8_t kMsPill[18][3] = {
-    {150, 146, 110}, {192, 48, 40}, {130, 110, 220}, {150, 60, 160}, {136, 84, 24}, {170, 150, 60},
-    {140, 170, 30}, {100, 80, 160}, {140, 150, 170}, {90, 140, 130}, {216, 36, 24}, {48, 112, 200},
-    {96, 188, 40}, {220, 180, 30}, {220, 70, 120}, {100, 190, 200}, {100, 60, 220}, {100, 80, 64}};
-static const uint8_t kMsSeg[18][3] = {
-    {216, 212, 192}, {248, 104, 72}, {184, 168, 255}, {216, 112, 240}, {216, 172, 88}, {224, 200, 112},
-    {192, 228, 64}, {168, 136, 232}, {200, 208, 232}, {136, 192, 184}, {248, 128, 8}, {72, 216, 248},
-    {160, 248, 32}, {255, 232, 72}, {255, 112, 168}, {152, 240, 248}, {152, 112, 255}, {168, 136, 112}};
 static const uint8_t kMsSegLow[3] = {248, 104, 8};          /* the artwork's Water card, at a fifth of its PP */
 static const uint8_t kMsEmpty[3] = {72, 44, 44};            /* an empty move slot's frame */
 
@@ -1305,14 +1291,18 @@ static void BMCard(int i, const CtrBattleView *v)
     const CtrBattleMove *m = &v->move[i];
     int ox = kMskCardPos[i][0], oy = kMskCardPos[i][1];
     int type = m->present && m->type < 18 ? m->type : 0;
-    const uint8_t *n = m->present ? kMsNeon[type] : kMsEmpty, *pc = kMsPill[type];
+    const uint8_t *n = m->present ? kMskTypeNeon[type] : kMsEmpty, *pc = kMskTypePill[type];
     int pressed = v->pressed == i;
 
     for (int y = 0; y < MSK_CARD_H; ++y)
         for (int x = 0; x < MSK_CARD_W; ++x) {
             const int16_t *t = kMskCard[y][x];
 
-            Px(ox + x, oy + y, MsRgb(t[0] + t[3] * n[0] / 256, t[1] + t[3] * n[1] / 256, t[2] + t[3] * n[2] / 256));
+            int in = m->present && x >= MSK_BODY_U0 && x < MSK_BODY_U1 && y >= MSK_BODY_V0 && y < MSK_BODY_V1;
+            const int8_t *d = kMskTypeBody[type];
+
+            Px(ox + x, oy + y, MsRgb(t[0] + t[3] * n[0] / 256 + (in ? d[0] : 0), t[1] + t[3] * n[1] / 256 + (in ? d[1] : 0),
+                                     t[2] + t[3] * n[2] / 256 + (in ? d[2] : 0)));
         }
     if (!m->present)
         return;
@@ -1320,24 +1310,25 @@ static void BMCard(int i, const CtrBattleView *v)
         for (int x = 0; x < MSK_PILL_W; ++x) {
             const int16_t *t = kMskPill[y][x];
 
+            const int8_t *d = kMskTypeBody[type];
+            int cu = MSK_PILL_U + x, cv = MSK_PILL_V + y;            /* inside the capsule (cell 7..55 x 31..46, round ends)? */
+            int ex = cu < 15 ? 15 - cu : cu > 47 ? cu - 47 : 0, ey = cv * 2 < 77 ? 77 - cv * 2 : cv * 2 - 77;
+            int bg = cv >= 31 && cv <= 46 && cu >= 7 && cu <= 55 && ex * ex * 4 + ey * ey <= 16 * 16 ? 0 : 256;
+
             Px(ox + MSK_PILL_U + x, oy + MSK_PILL_V + y,
-               MsRgb(t[0] + (t[3] * n[0] + t[4] * pc[0]) / 256, t[1] + (t[3] * n[1] + t[4] * pc[1]) / 256,
-                     t[2] + (t[3] * n[2] + t[4] * pc[2]) / 256));
+               MsRgb(t[0] + (t[3] * n[0] + t[4] * pc[0] + d[0] * bg) / 256, t[1] + (t[3] * n[1] + t[4] * pc[1] + d[1] * bg) / 256,
+                     t[2] + (t[3] * n[2] + t[4] * pc[2] + d[2] * bg) / 256));
         }
     {
         static const uint8_t kWhite[3] = {248, 252, 248};
-        int art = type == 10 ? 0 : type == 4 ? 1 : type == 11 ? 2 : type == 12 ? 3 : -1;
         int lit = m->maxPp ? (int)(((unsigned)m->pp * 10 + m->maxPp - 1) / m->maxPp) : 0;
-        const uint8_t *s = m->pp * 5 <= m->maxPp ? kMsSegLow : kMsSeg[type];
+        const uint8_t *s = m->pp * 5 <= m->maxPp ? kMsSegLow : kMskTypeSeg[type];
+        const int8_t *d = kMskTypeBody[type];
         char pp[16];
 
-        if (art >= 0) {
-            for (int y = 0; y < MSK_ICON_H; ++y)
-                for (int x = 0; x < MSK_ICON_W; ++x)
-                    MsBlend565(ox + MSK_ICON_U + x, oy + MSK_ICON_V + y, kMskIcon[art][y][x][0], kMskIcon[art][y][x][1]);
-        } else
-            BTypeIconN(ox + 120, oy + 7, (uint8_t)type, 12, MsRgb((n[0] + 255) / 2, (n[1] + 255) / 2, (n[2] + 255) / 2),
-                       MsRgb(n[0], n[1], n[2]));
+        for (int y = 0; y < MSK_ICON_H; ++y)
+            for (int x = 0; x < MSK_ICON_W; ++x)
+                MsBlend565(ox + MSK_ICON_U + x, oy + MSK_ICON_V + y, kMskIcon[type][y][x][0], kMskIcon[type][y][x][1]);
         MsTitle(m->name, ox + 13, oy + 17, ox + 112);
         MsText(m->typeName, ox + 31 - MsTextWidth(m->typeName) / 2, oy + 36, kWhite);
         for (int y = 0; y < MSK_SEG_H; ++y)
@@ -1351,27 +1342,33 @@ static void BMCard(int i, const CtrBattleView *v)
                     if (c < lit) {
                         const int16_t *t = kMskSegLit[y][k];
 
-                        col = MsRgb(t[0] + (t[3] * n[0] + t[4] * s[0]) / 256, t[1] + (t[3] * n[1] + t[4] * s[1]) / 256,
-                                    t[2] + (t[3] * n[2] + t[4] * s[2]) / 256);
+                        int bg = t[4] > 96 ? 0 : 256;
+
+                        col = MsRgb(t[0] + (t[3] * n[0] + t[4] * s[0] + d[0] * bg) / 256, t[1] + (t[3] * n[1] + t[4] * s[1] + d[1] * bg) / 256,
+                                    t[2] + (t[3] * n[2] + t[4] * s[2] + d[2] * bg) / 256);
                     } else {
                         const int16_t *t = kMskSegSpent[y][k];
 
-                        col = MsRgb(t[0] + t[3] * n[0] / 256, t[1] + t[3] * n[1] / 256, t[2] + t[3] * n[2] / 256);
+                        col = MsRgb(t[0] + t[3] * n[0] / 256 + d[0], t[1] + t[3] * n[1] / 256 + d[1], t[2] + t[3] * n[2] / 256 + d[2]);
                     }
                     Px(ox + u0 + k, oy + MSK_SEG_V + y, col);
                 }
             }
         snprintf(pp, sizeof(pp), "PP %u/%u", m->pp, m->maxPp);
         MsText(pp, ox + 128 - MsTextWidth(pp), oy + 50, m->pp ? kWhite : kMsSegLow);
-        if (m->matchup != CTR_FX_NONE && m->matchup <= CTR_FX_QUADRUPLE) {
-            static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
-            int mk = m->matchup == CTR_FX_DOUBLE ? 0 : m->matchup == CTR_FX_IMMUNE ? 2 : m->matchup == CTR_FX_QUADRUPLE ? 3 : 1;
-            const uint8_t *ink = mk == 0 ? kMskMark0Ink : mk == 1 ? kMskMark1Ink : mk == 2 ? kMskMark2Ink : kMskMark3Ink;
-            const uint8_t *a = mk == 0 ? &kMskMark0[0][0] : mk == 1 ? &kMskMark1[0][0] : mk == 2 ? &kMskMark2[0][0] : &kMskMark3[0][0];
-            int mw = mk == 0 ? MSK_MARK0_W : mk == 1 ? MSK_MARK1_W : mk == 2 ? MSK_MARK2_W : MSK_MARK3_W;
-            int mh = mk == 0 ? MSK_MARK0_H : mk == 1 ? MSK_MARK1_H : mk == 2 ? MSK_MARK2_H : MSK_MARK3_H;
-            int mv = mk == 0 ? MSK_MARK0_V : mk == 1 ? MSK_MARK1_V : mk == 2 ? MSK_MARK2_V : MSK_MARK3_V;
-            int gap = mk == 0 ? MSK_MARK0_GAP : mk == 1 ? MSK_MARK1_GAP : mk == 2 ? MSK_MARK2_GAP : MSK_MARK3_GAP;
+        if (m->matchup != CTR_FX_NONE && m->matchup <= CTR_FX_NEUTRAL) {
+            /* x2 star, x1/2 and x1/4 diamond, x0 cross, x4 star, x1 dash */
+            static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4", "x1"};
+            static const uint8_t kMark[] = {0, 2, 1, 1, 0, 3, 4};
+            static const struct { const uint8_t *ink, *a; uint8_t w, h, v, gap; } kMarks[5] = {
+                {kMskMark0Ink, &kMskMark0[0][0], MSK_MARK0_W, MSK_MARK0_H, MSK_MARK0_V, MSK_MARK0_GAP},
+                {kMskMark1Ink, &kMskMark1[0][0], MSK_MARK1_W, MSK_MARK1_H, MSK_MARK1_V, MSK_MARK1_GAP},
+                {kMskMark2Ink, &kMskMark2[0][0], MSK_MARK2_W, MSK_MARK2_H, MSK_MARK2_V, MSK_MARK2_GAP},
+                {kMskMark3Ink, &kMskMark3[0][0], MSK_MARK3_W, MSK_MARK3_H, MSK_MARK3_V, MSK_MARK3_GAP},
+                {kMskMark4Ink, &kMskMark4[0][0], MSK_MARK4_W, MSK_MARK4_H, MSK_MARK4_V, MSK_MARK4_GAP}};
+            int mk = kMark[m->matchup];
+            const uint8_t *ink = kMarks[mk].ink, *a = kMarks[mk].a;
+            int mw = kMarks[mk].w, mh = kMarks[mk].h, mv = kMarks[mk].v, gap = kMarks[mk].gap;
             int tx = ox + 128 - MsTextWidth(kText[m->matchup]), gx = tx - gap - mw;
 
             MsTextB(kText[m->matchup], tx, oy + 35, ink, 1);

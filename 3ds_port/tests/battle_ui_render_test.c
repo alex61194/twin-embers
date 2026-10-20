@@ -342,6 +342,43 @@ int main(int argc, char **argv)
     }
 #endif
 #ifndef BATTLE_UI_BEFORE
+    if (getenv("BATTLE_UI_TYPES")) {
+        /* The type sheet's eighteen cards (opt-in), four to a screen: "98_types_N", for a comparison with the sheet. */
+        static const struct { const char *name, *type; int t, pp, max, fx; } kSheet[18] = {
+            {"FLAMETHROWER", "FIRE", 10, 10, 15, CTR_FX_DOUBLE}, {"EARTHQUAKE", "GROUND", 4, 8, 10, CTR_FX_HALF},
+            {"SURF", "WATER", 11, 3, 15, CTR_FX_IMMUNE}, {"SOLARBEAM", "GRASS", 12, 4, 10, CTR_FX_QUADRUPLE},
+            {"THUNDERBOLT", "ELECTR", 13, 15, 15, CTR_FX_DOUBLE}, {"ICE BEAM", "ICE", 15, 10, 10, CTR_FX_DOUBLE},
+            {"AERIAL ACE", "FLYING", 2, 20, 20, CTR_FX_DOUBLE}, {"ROCK SLIDE", "ROCK", 5, 10, 10, CTR_FX_DOUBLE},
+            {"CROSS CHOP", "FIGHT", 1, 5, 5, CTR_FX_DOUBLE}, {"SLUDGE BOMB", "POISON", 3, 10, 10, CTR_FX_DOUBLE},
+            {"MEGAHORN", "BUG", 6, 7, 10, CTR_FX_DOUBLE}, {"IRON TAIL", "STEEL", 8, 12, 15, CTR_FX_HALF},
+            {"PSYCHIC", "PSYCHC", 14, 10, 10, CTR_FX_DOUBLE}, {"SHADOW BALL", "GHOST", 7, 12, 15, CTR_FX_DOUBLE},
+            {"CRUNCH", "DARK", 17, 15, 15, CTR_FX_DOUBLE}, {"DRAGON CLAW", "DRAGON", 16, 15, 15, CTR_FX_DOUBLE},
+            {"BODY SLAM", "NORMAL", 0, 15, 15, CTR_FX_NEUTRAL}, {"CURSE", "???", 9, 10, 10, CTR_FX_NEUTRAL}};
+        CtrBattleView w = v;
+
+        w.showCursor = 0; w.pressed = -1;
+        for (int screen = 0; screen < 5; ++screen) {
+            char name[32];
+
+            for (k = 0; k < 4; ++k) {
+                CtrBattleMove *m = &w.move[k];
+                int n = screen * 4 + k;
+
+                memset(m, 0, sizeof(*m));
+                if (n >= 18)
+                    continue;
+                m->present = 1; m->type = (uint8_t)kSheet[n].t; m->pp = (uint8_t)kSheet[n].pp; m->maxPp = (uint8_t)kSheet[n].max;
+                m->matchup = (uint8_t)kSheet[n].fx;
+                names(m->name, sizeof(m->name), kSheet[n].name); names(m->typeName, sizeof(m->typeName), kSheet[n].type);
+            }
+            settle(&old, &w); old = w;
+            snprintf(name, sizeof(name), "98_types_%d", screen);
+            put(out, name);
+        }
+        settle(&old, &v); old = v;
+    }
+#endif
+#ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MOCK")) {
         /* The reference mockup's data (opt-in): drawn as "99_mock" for a pixel comparison with the design. */
         static const char *const nm[4] = {"FLAMETHROWER", "EARTHQUAKE", "SURF", "SOLARBEAM"};
