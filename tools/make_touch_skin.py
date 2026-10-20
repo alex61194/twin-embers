@@ -307,9 +307,12 @@ def build_backdrop(art):
             ny = card_y(sy) - (CARD_INS_ROWS[1] if sy == CARD_INS_ROWS[0] else 0) + r
             for i, c in enumerate(line):
                 cp[dx0 + i, ny] = c
-    for y in range(dy1, BOX_TOP_NEW):                         # between the card and the dialogue: the card's last row
-        for x in range(dx0, dx1):
-            cp[x, y] = cp[x, dy1 - 1]
+    for y in range(dy1, BOX_TOP_NEW):                         # between the card and the dialogue: the backdrop's dark red
+        for x in range(dx0 - 2, dx1 + 2):
+            cp[x, y] = (64, 4, 8)
+    for y in range(234, 240):                                  # under the dialogue: what the artwork has under its left part
+        for x in range(dx0, BOX_END + 4):
+            cp[x, y] = cp[100, y]
     return clean
 
 

@@ -169,8 +169,8 @@ const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
 /* Areas that are not buttons. */
 static const CtrPokeTouchRect sMenuFrame = {2, 2, 244, 164};
 static const CtrPokeTouchRect sBar = {2, 170, 244, 68};
-const CtrPokeTouchRect gCtrPokeTouchBack = {172, 208, 56, 24};
-const CtrPokeTouchRect gCtrPokeTouchOptPage = {172, 180, 56, 24};
+const CtrPokeTouchRect gCtrPokeTouchBack = {176, 203, 56, 22};
+const CtrPokeTouchRect gCtrPokeTouchOptPage = {176, 177, 56, 22};
 
 /* The palette and components are the lower screen's design system (3ds_ui_theme.h / .inc). The only colour of
  * its own is the empty viewport's. */
