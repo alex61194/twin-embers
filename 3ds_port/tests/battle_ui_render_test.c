@@ -261,6 +261,7 @@ int main(int argc, char **argv)
     v.pressed = -1;
     v.party[0] = v.party[1] = v.party[2] = v.party[4] = 1; v.party[3] = 2;
     v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
+    names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeHp = 158; v.activeMaxHp = 158;
     CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
     old = v;
@@ -534,16 +535,15 @@ int main(int argc, char **argv)
         for (size_t i = 0; i < sizeof(states) / sizeof(states[0]); ++i) {
             s.state = (uint8_t)states[i];
             CtrBattleUi_Draw(canvas, &s);
-            if (states[i] == BUI_MOVE)
-                continue;                  /* the move screen is its artwork, whatever colours it holds */
+            if (states[i] == BUI_MOVE || states[i] == BUI_IDLE || states[i] == BUI_ACTION)
+                continue;                  /* these screens are their artwork, whatever colours it holds */
             for (int n = 0; n < W * H; ++n)
                 for (size_t j = 0; j < sizeof(navy) / sizeof(navy[0]); ++j)
                     if (canvas[n] == navy[j]) {
                         fprintf(stderr, "state %d keeps the navy theme colour %04x at %d\n", states[i], navy[j], n);
                         assert(0);
                     }
-            if (states[i] != BUI_MOVE)
-                assert(at(1, 100) == PT_RED_BG);
+            assert(at(1, 100) == PT_RED_BG);
         }
         {
             CtrSummaryUiView sv;

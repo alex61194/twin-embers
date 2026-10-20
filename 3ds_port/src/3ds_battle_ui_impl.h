@@ -336,13 +336,8 @@ static void BHudDrawMoveTitle(const char *title, int x, int y, int limit)
 
 static const CtrPokeTouchRect sBStrip = {3, 3, 314, 31};
 static const CtrPokeTouchRect sBBody = {3, 34, 314, 203};
-static const CtrPokeTouchRect sBAction[4] = {      /* by the controller's action number */
-    {8, 40, 304, 104},              /* FIGHT: the priority, a little taller than the row */
-    {8, 150, 98, 78},               /* BAG */
-    {214, 150, 98, 78},             /* POKeMON */
-    {111, 150, 98, 78},             /* RUN */
-};
 #include "battle_move_skin.h"
+#include "battle_action_skin.h"
 
 static const CtrPokeTouchRect sBMStrip = {MSK_STRIP_X0, MSK_STRIP_Y0, MSK_STRIP_X1 - MSK_STRIP_X0, MSK_STRIP_Y1 - MSK_STRIP_Y0};
 static const CtrPokeTouchRect sBMFooter = {MSK_FOOT_X0, MSK_FOOT_Y0, MSK_FOOT_X1 - MSK_FOOT_X0, MSK_FOOT_Y1 - MSK_FOOT_Y0};
@@ -359,6 +354,14 @@ static CtrPokeTouchRect BMCardRect(int i)
 static CtrPokeTouchRect BMCellRect(int i)
 {
     CtrPokeTouchRect r = {kMskCardPos[i][0], kMskCardPos[i][1], MSK_CARD_W, MSK_CARD_H};
+
+    return r;
+}
+
+/* An action card's area: the card's picture without the glow round it. */
+static CtrPokeTouchRect ABCardRect(int i)
+{
+    CtrPokeTouchRect r = {(int16_t)(kAbCardPos[i][0] + 3), (int16_t)(kAbCardPos[i][1] + 3), AB_CARD_W - 6, AB_CARD_H - 6};
 
     return r;
 }
@@ -416,9 +419,12 @@ int CtrBattleUi_TabPocket(int tab)
 int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
 {
     if (v->state == BUI_ACTION)
-        for (int i = 0; i < 4; ++i)
-            if (BIn(&sBAction[i], x, y))
+        for (int i = 0; i < 4; ++i) {
+            CtrPokeTouchRect r = ABCardRect(i);
+
+            if (BIn(&r, x, y))
                 return i;
+        }
     if (v->state == BUI_MOVE) {
         for (int i = 0; i < 4; ++i)
             if (v->move[i].present) {
@@ -715,97 +721,6 @@ static void BAccent(const CtrPokeTouchRect *r, int dy, uint16_t color)
     UiRoundFill(x, r->y + 6 + dy, 28, 6, 2, UIS_OUTLINE);
     UiRoundFill(x + 1, r->y + 7 + dy, 26, 4, 1, color);
     Fill(x + 3, r->y + 7 + dy, 22, 1, UiMix(color, UI_TEXT, 3));
-}
-
-static void BActionButton(int i, const CtrBattleView *v)
-{
-    /* FIGHT keeps the chrome's bright crimson; the three below wear colours of their own (BAG a leather brown,
-     * POKeMON a deep wine, RUN the slate) so that only FIGHT is the saturated red. */
-    UiButtonStyle sStyle[4];
-    static const char *const label[4] = {"FIGHT", "BAG", "POK\xC3\xA9MON", "RUN"};
-    static const int sIcon[4] = {BI_BURST, BI_BAG, BI_POKEBALL, BI_SHOE};
-    const CtrPokeTouchRect *r = &sBAction[i];
-    int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
-    int dy = (state & UI_PRESSED) ? 1 : 0;
-    static const uint16_t sLight[4] = {UI_RGB(255, 205, 55), UI_RGB(65, 225, 110), UI_RGB(60, 190, 255), UI_RGB(255, 225, 60)};
-    static const uint16_t sSpec[4]  = {UI_RGB(255, 255, 215), UI_RGB(200, 255, 215), UI_RGB(210, 245, 255), UI_RGB(255, 255, 210)};
-
-    sStyle[0] = sUiS->fight;
-    sStyle[1] = sUiS->bag;
-    sStyle[2] = sUiS->pokemon;
-    sStyle[3] = sUiS->run;
-    if (sUiS == &sUiRed) {
-        sStyle[1] = (UiButtonStyle){UI_RGB(138, 74, 28), UI_RGB(186, 112, 52), UI_RGB(86, 42, 14)};
-        sStyle[2] = (UiButtonStyle){UI_RGB(110, 22, 48), UI_RGB(160, 52, 84), UI_RGB(68, 12, 30)};
-    }
-    BIconsPrepare();
-    if (i == BUI_ACT_FIGHT) {
-        int top = 24, mid = 49;     /* where the two flat bands of the face start, from the button's top */
-
-        UiButton(r, &sStyle[i], state);
-        if (!dy) {
-            Fill(r->x + 2, r->y + top, r->w - 4, mid - top, UI_RGB(200, 28, 22));
-            Fill(r->x + 2, r->y + mid, r->w - 4, r->h - mid - 5, UI_RGB(165, 20, 18));
-        }
-        /* Fine diagonal pinstripes, over the upper band only: one pixel in six, a touch lighter than the face. */
-        for (int sy = r->y + 10; sy < r->y + mid; ++sy) {
-            for (int sx = r->x + 4; sx < r->x + r->w - 4; ++sx) {
-                if ((sx + sy) % 6 == 0)
-                    Px(sx, sy + dy, UI_RGB(207, 56, 51));
-            }
-        }
-        /* Giant watermark Pokeball on the right half */
-        BWatermarkBallIn(r, r->x + 215, r->y + r->h / 2 + dy, 36, UI_RGB(192, 24, 22));
-
-        /* Golden top neon bar across FIGHT, clear of the corner brackets */
-        UiRoundFill(r->x + 18, r->y + 5 + dy, r->w - 36, 4, 2, sLight[0]);
-        Fill(r->x + 24, r->y + 6 + dy, r->w - 48, 1, sSpec[0]);
-
-        if (state & UI_FOCUSED) {
-            CtrPokeTouchRect inside = UiInset(r, 2);     /* inside the golden frame, so all four corners show */
-
-            BFocusGlowBrackets(&inside);
-        }
-
-        /* Fiery starburst icon */
-        int burstX = r->x + 36, burstY = r->y + (r->h - 46) / 2 + dy;
-        BIconAt(BI_BURST, burstX, burstY);
-
-        /* Huge bold white arcade FIGHT label with solid black drop shadow */
-        int tx = r->x + 115, ty = r->y + (r->h - 8 * 3) / 2 + dy;
-        BArcadeDrawText("FIGHT", tx, ty, UI_TEXT, UIS_OUTLINE, 3, r->x + r->w - 4, 3);
-    } else {
-        UiButton(r, &sStyle[i], state);
-
-        /* Watermark Pokeball behind icon */
-        uint16_t wm = i == BUI_ACT_RUN ? UI_RGB(56, 66, 82) : i == BUI_ACT_BAG ? UI_RGB(118, 60, 22) : UI_RGB(92, 16, 40);
-        BWatermarkBallIn(r, r->x + r->w / 2, r->y + 32 + dy, 20, wm);
-
-        /* Colored top neon lightbar */
-        UiRoundFill(r->x + 8, r->y + 5 + dy, r->w - 16, 4, 2, sLight[i]);
-        Fill(r->x + 14, r->y + 6 + dy, r->w - 28, 1, sSpec[i]);
-
-        if (state & UI_FOCUSED)
-            BFocusGlowBrackets(r);
-
-        /* Centered high-resolution icons, in the 40 pixels between the bar and the label */
-        int iconW = sBImg[sIcon[i]].image.w, iconH = sBImg[sIcon[i]].image.h;
-        int ix = r->x + (r->w - iconW) / 2;
-        int iy = r->y + 12 + (40 - iconH) / 2 + dy;
-        BIconAt(sIcon[i], ix, iy);
-
-        /* Bold white arcade label with black drop shadow */
-        int lw = BArcadeTextWidth(label[i], 2);
-        int lx = r->x + (r->w - lw) / 2;
-        int ly = r->y + r->h - 8 * 2 - 8 + dy;
-        BArcadeDrawText(label[i], lx, ly, UI_TEXT, UIS_OUTLINE, 2, r->x + r->w - 2, 2);
-    }
-}
-
-static void BAction(const CtrBattleView *v)
-{
-    for (int i = 0; i < 4; ++i)
-        BActionButton(i, v);
 }
 
 /* Whether button or card `i` looks different between two views of the same screen: pressed, or focused. */
@@ -1416,6 +1331,170 @@ static void BMoveScreen(const CtrBattleView *v)
     BMCancel(v->pressed == BUI_CANCEL);
 }
 
+/* ---- The action screen (battle_action_skin.h, made by tools/make_action_skin.py): the artwork's frame, the party's balls
+ * and HP, the four action cards as painted, and the footer with the Pokemon in the lead and FireRed's question. ---- */
+static const CtrPokeTouchRect sABStrip = {AB_STRIP_X0, AB_STRIP_Y0, AB_STRIP_X1 - AB_STRIP_X0, AB_STRIP_Y1 - AB_STRIP_Y0};
+static const CtrPokeTouchRect sABFoot = {AB_FOOT_X0, AB_FOOT_Y0, AB_FOOT_X1 - AB_FOOT_X0, AB_FOOT_Y1 - AB_FOOT_Y0};
+
+static int BAbScreen(int state)
+{
+    return state == BUI_ACTION || state == BUI_IDLE;
+}
+
+static void AbBg(int x, int y, int w, int h)
+{
+    for (int v = 0; v < h; ++v)
+        for (int u = 0; u < w; ++u)
+            if ((unsigned)(x + u) < W && (unsigned)(y + v) < H)
+                Px(x + u, y + v, AB_BG(x + u, y + v));
+}
+
+static void AbStrip(const CtrBattleView *v)
+{
+    static const uint8_t kStatus[7][3] = {{0, 0, 0}, {184, 88, 208}, {0, 0, 0}, {150, 150, 176},
+                                          {100, 200, 232}, {232, 96, 48}, {224, 88, 176}};
+    static const char *const kStatusName[7] = {"", "PSN", "PAR", "SLP", "FRZ", "BRN", "PKRS"};
+
+    AbBg(sABStrip.x, sABStrip.y, sABStrip.w, sABStrip.h);
+    for (int i = 0; i < 6; ++i) {
+        int bx = kAbSlotX[i];
+        unsigned hp = v->partyHp[i];
+
+        if (!v->party[i])
+            continue;
+        MsShot(&kAbTrack[0][0], AB_TRACK_W, AB_TRACK_H, bx + AB_TRACK_U, AB_TRACK_V);
+        if (hp) {
+            int fill = (int)(hp * 34 / 100);
+
+            if (fill < 1)
+                fill = 1;
+            for (int r = 0; r < 5; ++r) {
+                const uint8_t *g = kAbHpGreen[r], *y = kAbHpYellow[r];
+                int rr = hp > 50 ? g[0] : hp > 20 ? y[0] : 230 * (g[1] + 40) / 255;
+                int gg = hp > 50 ? g[1] : hp > 20 ? y[1] : 56 * (g[1] + 40) / 255;
+                int bb = hp > 50 ? g[2] : hp > 20 ? y[2] : 44 * (g[1] + 40) / 255;
+
+                for (int u = 0; u < fill; ++u)
+                    Px(bx + u, 42 + r, MsRgb(rr, gg, bb));
+            }
+        }
+        if (i == 0)
+            MsShot(&kAbBallLead[0][0], AB_LEAD_W, AB_LEAD_H, bx + AB_LEAD_U, AB_LEAD_V);
+        else
+            MsShot(v->party[i] == 2 ? &kAbBallFaint[0][0] : &kAbBall[0][0], AB_BALL_W, AB_BALL_H,
+                   bx + AB_BALL_U, AB_BALL_V);
+        if (hp > 0 && hp < 100) {
+            char pct[8];
+
+            snprintf(pct, sizeof(pct), "%u%%", hp);
+            MsTiny(pct, bx + 25, 35, 200, 170, 120);
+        }
+        if (v->partyStatus[i] >= 1 && v->partyStatus[i] <= 6) {
+            int px = bx + 25, py = AB_PAR_Y, st = v->partyStatus[i];
+
+            if (st == 2)
+                MsShot(&kAbPar[0][0], AB_PAR_W, AB_PAR_H, px, py);
+            else {
+                /* PAR's capsule in the status's colour, its letters taken out and written again */
+                for (int r = 0; r < AB_PAR_H; ++r)
+                    for (int c = 0; c < AB_PAR_W; ++c) {
+                        uint16_t p = kAbPar[r][c];
+                        int pr = (p >> 11) * 255 / 31, pg = ((p >> 5) & 63) * 255 / 63, pb = (p & 31) * 255 / 31;
+                        int l = (pr * 3 + pg * 6 + pb) / 10;
+
+                        if (r >= 4 && r <= 8 && c >= 3 && c <= 15) {
+                            uint16_t q = kAbPar[r][2];
+                            l = (((q >> 11) * 255 / 31) * 3 + (((q >> 5) & 63) * 255 / 63) * 6 + ((q & 31) * 255 / 31)) / 10;
+                        }
+                        if (pr - pb > 40 && l > 30)
+                            Px(px + c, py + r, MsRgb(kStatus[st][0] * l / 150, kStatus[st][1] * l / 150, kStatus[st][2] * l / 150));
+                        else
+                            Px(px + c, py + r, p);
+                    }
+                MsTiny(kStatusName[st], px + (AB_PAR_W - (int)strlen(kStatusName[st]) * 4 + 1) / 2, py + 4,
+                       (kStatus[st][0] + 255) / 2, (kStatus[st][1] + 255) / 2, (kStatus[st][2] + 255) / 2);
+            }
+        }
+    }
+}
+
+/* A card as painted; pressed it is lit, selected by the D-pad it wears the golden brackets. */
+static void AbCard(int i, const CtrBattleView *v)
+{
+    int ox = kAbCardPos[i][0], oy = kAbCardPos[i][1];
+    int pressed = v->pressed == i, focused = v->showCursor && v->cursor == i;
+
+    for (int y = 0; y < AB_CARD_H; ++y)
+        for (int x = 0; x < AB_CARD_W; ++x) {
+            uint16_t c = kAbCard[i][y][x];
+
+            if (pressed) {
+                int r = (c >> 11) * 255 / 31, g = ((c >> 5) & 63) * 255 / 63, b = (c & 31) * 255 / 31;
+
+                c = MsRgb(r * 9 / 8 + 8, g * 9 / 8 + 8, b * 9 / 8 + 8);
+            }
+            Px(ox + x, oy + y, c);
+        }
+    if (focused) {
+        CtrPokeTouchRect r = {(int16_t)(ox + 1), (int16_t)(oy + 1), AB_CARD_W - 2, AB_CARD_H - 2};   /* round the card's whole frame */
+
+        BFocusGlowBrackets(&r);
+    }
+}
+
+/* The footer: the lead's name, level and HP as numbers and a bar, and FireRed's question. */
+static void AbFooter(const CtrBattleView *v)
+{
+    static const uint8_t kWhite[3] = {248, 252, 248};
+    char text[40], name[BUI_NAME_LEN];
+    int n = 0;
+
+    AbBg(sABFoot.x, sABFoot.y, sABFoot.w, sABFoot.h);
+    for (; v->activeName[n] && n < BUI_NAME_LEN - 1; ++n) {
+        char ch = v->activeName[n];
+
+        name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
+    }
+    name[n] = 0;
+    if (!v->activeMaxHp)
+        return;
+    MsTiny(name, AB_NAME_X, AB_NAME_Y, kWhite[0], kWhite[1], kWhite[2]);
+    snprintf(text, sizeof(text), "%u", (unsigned)v->activeLevel);
+    MsTiny(text, AB_LEVEL_X, AB_LEVEL_Y, kAbLevelInk[0], kAbLevelInk[1], kAbLevelInk[2]);
+    {
+        unsigned pct = (unsigned)v->activeHp * 100u / v->activeMaxHp;
+        int fill = (int)((unsigned)v->activeHp * AB_HPBAR_W / v->activeMaxHp);
+
+        if (v->activeHp && fill < 1)
+            fill = 1;
+        for (int r = 0; r < AB_HPBAR_H; ++r)
+            for (int u = 0; u < AB_HPBAR_W; ++u) {
+                const uint8_t *g = kAbHpGreen[r + 1], *y = kAbHpYellow[r + 1];
+                int rr = pct > 50 ? g[0] : pct > 20 ? y[0] : 230 * (g[1] + 40) / 255;
+                int gg = pct > 50 ? g[1] : pct > 20 ? y[1] : 56 * (g[1] + 40) / 255;
+                int bb = pct > 50 ? g[2] : pct > 20 ? y[2] : 44 * (g[1] + 40) / 255;
+
+                Px(AB_HPBAR_X + u, AB_HPBAR_Y + r, u < fill ? MsRgb(rr, gg, bb) : MsRgb(36, 12, 14));
+            }
+    }
+    snprintf(text, sizeof(text), "%u/%u", (unsigned)v->activeHp, (unsigned)v->activeMaxHp);
+    MsTiny(text, AB_HPTEXT_RIGHT - 4 * (int)strlen(text) + 1, AB_HPTEXT_Y, kWhite[0], kWhite[1], kWhite[2]);
+    if (v->state == BUI_ACTION) {
+        snprintf(text, sizeof(text), "What will %s do?", name);
+        UiText(text, AB_MESSAGE_X, AB_MESSAGE_Y - 1, UI_TEXT, UIS_TEXT_SH, 1, 290);
+    }
+}
+
+static void BActionScreen(const CtrBattleView *v)
+{
+    AbBg(0, 0, W, H);
+    AbStrip(v);
+    AbFooter(v);
+    if (v->state == BUI_ACTION)
+        for (int i = 0; i < 4; ++i)
+            AbCard(i, v);
+}
+
 /* Aiming a move in a double battle: a card for each battler FireRed lets it be aimed at, the opposing ones on top in
  * FIGHT's red, the player's below in POKeMON's blue: the name, the level, the matchup badge, the side and the HP bar. */
 static void BTargetCard(int i, const CtrBattleView *v)
@@ -1767,9 +1846,7 @@ static void BBag(const CtrBattleView *v)
 static void BBody(const CtrBattleView *v)
 {
     Fill(sBBody.x, sBBody.y, sBBody.w, sBBody.h, UIS_BG);
-    if (v->state == BUI_ACTION)
-        BAction(v);
-    else if (v->state == BUI_BAG)
+    if (v->state == BUI_BAG)
         BBag(v);
     else if (v->state == BUI_PARTY)
         BParty(v);
@@ -1785,6 +1862,11 @@ void CtrBattleUi_Draw(uint16_t *canvas, const CtrBattleView *v)
     sUiS = &sUiRed;
     if (v->state == BUI_MOVE) {
         BMoveScreen(v);
+        sUiS = &sUiNavy;
+        return;
+    }
+    if (BAbScreen(v->state)) {
+        BActionScreen(v);
         sUiS = &sUiNavy;
         return;
     }
@@ -1817,6 +1899,29 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
     sCanvas = canvas;
     sUiS = &sUiRed;
     CtrDirty_Clear(dirty);
+    if (BAbScreen(v->state) || BAbScreen(old->state)) {
+        if (old->state != v->state || memcmp(old->party, v->party, sizeof(v->party))
+            || memcmp(old->partyHp, v->partyHp, sizeof(v->partyHp)) || memcmp(old->partyStatus, v->partyStatus, sizeof(v->partyStatus))
+            || strcmp(old->activeName, v->activeName) || old->activeLevel != v->activeLevel
+            || old->activeHp != v->activeHp || old->activeMaxHp != v->activeMaxHp) {
+            CtrPokeTouchRect all = {0, 0, W, H};
+
+            CtrBattleUi_Draw(canvas, v);
+            sUiS = &sUiRed;
+            BMark(dirty, &all);
+        } else {
+            for (int i = 0; i < 4; ++i)
+                if (BLooksChanged(old, v, i)) {
+                    CtrPokeTouchRect g = {kAbCardPos[i][0], kAbCardPos[i][1], AB_CARD_W, AB_CARD_H};
+
+                    AbBg(g.x, g.y, g.w, g.h);
+                    AbCard(i, v);
+                    BMark(dirty, &g);
+                }
+        }
+        sUiS = &sUiNavy;
+        return;
+    }
     if (v->state == BUI_MOVE || old->state == BUI_MOVE) {
         /* The move screen has its own chassis: leaving or entering it, or a change of moves or of the party, redraws
          * everything; otherwise only the card, the footer or CANCEL that looks different. */
@@ -1891,15 +1996,6 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
             BCancel(&sBPCancel, v->pressed == BUI_PTY_CANCEL);
             BMark(dirty, &sBPCancel);
         }
-    } else if (v->state == BUI_ACTION
-               && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
-        /* The buttons do not overlap: only the ones that look different, over their own rectangles. */
-        for (int i = 0; i < 4; ++i)
-            if (BLooksChanged(old, v, i)) {
-                Fill(sBAction[i].x, sBAction[i].y, sBAction[i].w, sBAction[i].h, UIS_BG);
-                BActionButton(i, v);
-                BMark(dirty, &sBAction[i]);
-            }
     }
     sUiS = &sUiNavy;
 }

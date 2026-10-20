@@ -829,6 +829,15 @@ static void BattleCommon(CtrBattleView *v)
             v->partyStatus[i] = (uint8_t)(st > 6 ? 0 : st);
         }
     }
+    if (v->party[0]) {                  /* the lead: the action screen's footer */
+        unsigned level = CtrBottomParty_Level(0);
+
+        CtrBottomParty_Nickname(0, v->activeName);
+        v->activeName[sizeof(v->activeName) - 1] = 0;
+        v->activeLevel = (uint8_t)(level > 255 ? 255 : level);
+        v->activeHp = (uint16_t)CtrBottomParty_HP(0);
+        v->activeMaxHp = (uint16_t)CtrBottomParty_MaxHP(0);
+    }
 }
 
 /* The battle Bag as it is now: its pocket, its items (the save's own), the selected one's detail, the open menu or the
