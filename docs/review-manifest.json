@@ -4311,7 +4311,7 @@
   },
   {
    "path": "patches/pokefirered/0122-pokecenter-heal-balls-on-tray.json",
-   "sha256": "1a8183c50b2b19006d9662f6f54716e3d9b81fec7411e7334cef2b5360032feb",
+   "sha256": "8cd85aa7449873ccf367f6290bf4ed9722b84e4dd8c01de81eeb1c84ab9c8ffe",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
