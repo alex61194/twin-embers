@@ -30,8 +30,8 @@ BG_PARTS = 4
 KEY = (248, 0, 248)                                           # see-through in a picture (RGB565 0xF81F)
 
 # The side column: each button's area (x0, y0, x1, y1, exclusive), the button as painted inside.
-SIDE = [(241, 6, 317, 33), (241, 33, 317, 60), (241, 60, 317, 87), (241, 87, 317, 112), (241, 112, 317, 145),
-        (241, 145, 317, 170)]
+SIDE = [(241, 6, 314, 33), (241, 33, 314, 60), (241, 60, 314, 87), (241, 87, 314, 112), (241, 112, 314, 145),
+        (241, 145, 314, 170)]
 SIDE_SAVE, SIDE_CARD, SIDE_PLAIN_FROM = 4, 3, 2
 SIDE_INK = (250, 314)                                         # where a button's label and icon are
 SEL_INNER = (245, 119, 313, 138)                              # inside the golden frame
@@ -41,9 +41,9 @@ SAVE_LETTERS = (251, 282)                                     # its label (insid
 SAVE_DISK = (292, 311)
 OUTLINE = (8, 12, 20)
 TILE_X = (241, 170, 277, 208)
-TILE_Y = (278, 170, 316, 208)
+TILE_Y = (278, 170, 314, 208)
 TILE_Y_ICON = [(284, 182, 312, 203), (295, 178, 312, 182)]   # the Bicycle
-RUN = (241, 208, 317, 237)
+RUN = (241, 208, 314, 237)
 RUN_PILL = (250, 215, 266, 229)                               # "ON" in its capsule
 RUN_WORD = (253, 218, 264, 227)
 RUN_EDGE = (240, 248)
@@ -72,7 +72,7 @@ NO = (174, 208, 225, 232)
 YES_LABEL = (187, 186, 211, 201)
 NO_LABEL = (190, 211, 208, 226)
 INTERIOR = (32, 0, 0)
-SHIFT_FROM, SHIFT = 236, 3                                    # the side column moves 3 right (the GBA picture ends at x = 243)
+SHIFT_FROM, SHIFT = 236, 6                                    # the side column moves 6 right: the GBA picture ends at x = 243, its rim at 245
 
 
 def lum(c):
@@ -250,7 +250,7 @@ def build_backdrop(art):
         for y in range(240):                                  # ends at x = 243)
             cp[x, y] = cp[x - SHIFT, y]
     for y in range(108, 150):                                  # SAVE's golden glow beside its button: the column's own
-        for x in list(range(233, 246)) + list(range(314, 320)):
+        for x in list(range(233, 249)):
             cp[x, y] = cp[x, 106 if y < 129 else 151]
     return clean
 

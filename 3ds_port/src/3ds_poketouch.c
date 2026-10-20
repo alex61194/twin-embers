@@ -152,22 +152,22 @@ static int CtrPokeTouch_PackMenuIcon(unsigned icon, uint8_t pixels[12 * 12], uin
     return 1;
 }
 
-/* The artwork's buttons (poketouch_skin.h): the side column from x = 244 (the GBA picture ends at 243), the X and Y
+/* The artwork's buttons (poketouch_skin.h): the side column from x = 247 (the GBA picture ends at 243, its rim at 245), the X and Y
  * tiles and RUN under it. */
 const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
-    [PT_POKEDEX]    = {244,   7, 76, 25},
-    [PT_POKEMON]    = {244,  34, 76, 25},
-    [PT_BAG]        = {244,  61, 76, 25},
-    [PT_CARD]       = {244,  88, 76, 23},
-    [PT_SAVE]       = {244, 114, 76, 29},
-    [PT_OPTIONS]    = {244, 146, 76, 23},
-    [PT_REGISTERED] = {243, 171, 36, 36},
-    [PT_BIKE]       = {282, 171, 36, 36},
-    [PT_RUN]        = {244, 209, 76, 27},
+    [PT_POKEDEX]    = {247,   7, 73, 25},
+    [PT_POKEMON]    = {247,  34, 73, 25},
+    [PT_BAG]        = {247,  61, 73, 25},
+    [PT_CARD]       = {247,  88, 73, 23},
+    [PT_SAVE]       = {247, 114, 73, 29},
+    [PT_OPTIONS]    = {247, 146, 73, 23},
+    [PT_REGISTERED] = {248, 171, 34, 36},
+    [PT_BIKE]       = {285, 171, 34, 36},
+    [PT_RUN]        = {247, 209, 73, 27},
 };
 
 /* Areas that are not buttons. */
-static const CtrPokeTouchRect sMenuFrame = {2, 2, 242, 164};
+static const CtrPokeTouchRect sMenuFrame = {2, 2, 244, 164};
 static const CtrPokeTouchRect sBar = {2, 168, 232, 70};
 const CtrPokeTouchRect gCtrPokeTouchBack = {172, 208, 56, 24};
 const CtrPokeTouchRect gCtrPokeTouchOptPage = {172, 180, 56, 24};
@@ -799,6 +799,11 @@ static void MenuFrame(const CtrPokeTouchView *v)
         SaveDraw(v);
         return;
     }
+    if (v->viewport || (v->options && !v->viewport)) {
+        /* A rim round the picture, so it does not run into the side column. */
+        UiRoundRect(r, UI_RADIUS_PANEL, PT_RED_EDGE);
+        Fill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_OUTLINE);
+    }
     if (v->options && !v->viewport) {
         Fill(PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H, PT_RED_VIEW);
         for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
@@ -904,8 +909,8 @@ static void Button(int id, const CtrPokeTouchView *v)
                 name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
             }
             name[n] = 0;
-            UiText(name, TS_CARD_LABEL_X + 3, TS_CARD_LABEL_Y - 3, mode == TS_DIM ? UI_TEXT_OFF : UI_TEXT, UI_TEXT_SH, 1,
-                   TS_CARD_LABEL_X + 45);
+            UiText(name, TS_CARD_LABEL_X + 6, TS_CARD_LABEL_Y - 3, mode == TS_DIM ? UI_TEXT_OFF : UI_TEXT, UI_TEXT_SH, 1,
+                   TS_CARD_LABEL_X + 48);
         }
         break;
     case PT_REGISTERED:

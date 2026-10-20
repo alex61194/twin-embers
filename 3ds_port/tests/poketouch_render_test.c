@@ -172,8 +172,8 @@ int main(int argc, char **argv)
 #endif
     for (int y=-1;y<=H;++y) for (int x=-1;x<=W;++x) {
         static const CtrPokeTouchRect expected[PT_COUNT] = {
-            {244,7,76,25},{244,34,76,25},{244,61,76,25},{244,88,76,23},
-            {244,114,76,29},{244,146,76,23},{243,171,36,36},{282,171,36,36},{244,209,76,27}};
+            {247,7,73,25},{247,34,73,25},{247,61,73,25},{247,88,73,23},
+            {247,114,73,29},{247,146,73,23},{248,171,34,36},{285,171,34,36},{247,209,73,27}};
         int hit=PT_NONE;
         for(int i=0;i<PT_COUNT;++i) if(UiIn(&expected[i],x,y)) hit=i;
         assert(CtrPokeTouch_HitTest(x,y)==hit);
