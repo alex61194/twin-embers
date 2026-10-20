@@ -821,6 +821,13 @@ static void BattleCommon(CtrBattleView *v)
             v->party[i] = 3;
         else
             v->party[i] = 1;
+        if (v->party[i]) {
+            unsigned hp = CtrBottomParty_HP(i), max = CtrBottomParty_MaxHP(i);
+            unsigned st = CtrBottomParty_IsEgg(i) ? 0 : CtrBottomParty_Status(i);
+
+            v->partyHp[i] = (uint8_t)(CtrBottomParty_IsEgg(i) || !max ? 100 : hp >= max ? 100 : hp ? (hp * 100 / max ? hp * 100 / max : 1) : 0);
+            v->partyStatus[i] = (uint8_t)(st > 6 ? 0 : st);
+        }
     }
 }
 

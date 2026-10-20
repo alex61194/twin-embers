@@ -14,6 +14,9 @@ static CtrPakHeader realHeader;
 static CtrPakEntry *realIndex;
 const uint8_t *CtrTwinFontData(void) { return font; }
 unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 5; }
+static uint8_t smallFont[256 * 32];
+const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 5; }
 
 /* Literal-only GBA LZ stream, freshly synthesized from the fixture bytes. */
 void *CtrData_Load(const char *path, uint32_t *len)

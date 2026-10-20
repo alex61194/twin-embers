@@ -17,6 +17,9 @@
 static uint8_t font[256 * 64];
 const uint8_t *CtrTwinFontData(void) { return font; }
 unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 6; }
+static uint8_t smallFont[256 * 32], smallWidth[256];
+const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { return code < 256 && smallWidth[code] ? smallWidth[code] : 5; }
 #ifndef BATTLE_UI_EXTERNAL_LOAD
 /* The pack's two item icons, synthesised: a literal-only GBA LZ stream of 24x24 4bpp tiles (3x3) and of a palette, so
  * the full-size icon path runs without game data. With BATTLE_UI_NO_PACK nothing is found and the fallbacks draw. */
@@ -238,9 +241,18 @@ int main(int argc, char **argv)
 #endif
     if (fontPath) {
         FILE *f = fopen(fontPath, "rb");
+        const char *smallPath = getenv("BATTLE_UI_SMALL_FONT");
 
         assert(f && fread(font, 1, sizeof(font), f) == sizeof(font));
         fclose(f);
+        if (smallPath && (f = fopen(smallPath, "rb")) != NULL) {     /* the game's small font: blank unless named */
+            assert(fread(smallFont, 1, sizeof(smallFont), f) == sizeof(smallFont));
+            fclose(f);
+            if ((smallPath = getenv("BATTLE_UI_SMALL_WIDTHS")) != NULL && (f = fopen(smallPath, "rb")) != NULL) {
+                assert(fread(smallWidth, 1, sizeof(smallWidth), f) == sizeof(smallWidth));
+                fclose(f);
+            }
+        }
     }
 #ifndef BATTLE_UI_BEFORE
     legibility();
@@ -248,6 +260,7 @@ int main(int argc, char **argv)
     memset(&v, 0, sizeof(v));
     v.pressed = -1;
     v.party[0] = v.party[1] = v.party[2] = v.party[4] = 1; v.party[3] = 2;
+    v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
     CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
     old = v;
@@ -280,13 +293,13 @@ int main(int argc, char **argv)
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
 #ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MATCHUPS")) {
-        /* The matchup tags (opt-in: the baseline comparison above does not draw them). A tag is a 40x14 rounded fill
-         * that starts right after the type pill, between x+37 and x+98 of its card, on the row y+28..y+42: its fill
-         * colour is counted along the row y+35 (x2 green, x4 lime inside a gold rim, x1/2 orange, x0 red). */
+        /* The matchup marks (opt-in: the baseline comparison above does not draw them). Right of the type pill, on the
+         * row y+22..y+35 of each move card, a glyph and "xN" in the colour of their meaning (x2 green, x1/2 amber,
+         * x0 red, x4 lime): that colour is counted over the row, and the other three must not appear in it. */
         static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
-        static const uint16_t fill[4] = {UI_RGB(40, 150, 70), UI_RGB(204, 84, 24), UI_RGB(190, 40, 40), UI_RGB(110, 245, 30)};
+        const uint16_t fill[4] = {MsRgb(kMskMark0Ink[0], kMskMark0Ink[1], kMskMark0Ink[2]), MsRgb(kMskMark1Ink[0], kMskMark1Ink[1], kMskMark1Ink[2]),
+                                  MsRgb(kMskMark2Ink[0], kMskMark2Ink[1], kMskMark2Ink[2]), MsRgb(kMskMark3Ink[0], kMskMark3Ink[1], kMskMark3Ink[2])};
         CtrBattleView w = v;
-        int gold;
 
         for (k = 0; k < 4; ++k) {
             w.move[k] = v.move[k < 3 ? k : 0];
@@ -296,37 +309,65 @@ int main(int argc, char **argv)
         w.showCursor = 0;
         settle(&old, &w); old = w; put(out, "03b_move_matchups");
         for (k = 0; k < 4; ++k) {
-            const CtrPokeTouchRect *r = &sBCard[k];
+            const CtrPokeTouchRect rr = BMCardRect(k), *r = &rr;
             int found = 0;
 
-            for (int x = r->x + 37; x < r->x + 98; ++x)
-                found += at(x, r->y + 35) == fill[k];
-            assert(found >= 18);           /* the tag's fill is there, in the colour of its meaning */
+            for (int y = r->y + 26; y < r->y + 45; ++y)
+                for (int x = r->x + 57; x < r->x + r->w; ++x)
+                    found += at(x, y) == fill[k];
+            assert(found >= 12);           /* the mark is there, in the colour of its meaning */
             for (int c = 0; c < 4; ++c)
-                if (c != k && fill[c] != fill[k]) {
+                if (c != k) {
                     int other = 0;
 
-                    for (int x = r->x + 37; x < r->x + 98; ++x)
-                        other += at(x, r->y + 35) == fill[c];
+                    for (int y = r->y + 26; y < r->y + 45; ++y)
+                        for (int x = r->x + 57; x < r->x + r->w; ++x)
+                            other += at(x, y) == fill[c];
                     assert(other == 0);    /* and in no other */
                 }
         }
-        gold = 0;
-        for (int x = sBCard[3].x + 37; x < sBCard[3].x + 98; ++x)
-            gold += at(x, sBCard[3].y + 35 - 6) == UI_RGB(255, 224, 102) || at(x, sBCard[3].y + 28) == UI_RGB(255, 224, 102);
-        assert(gold > 0);                  /* the x4 has its gold rim */
-        /* A neutral hit draws nothing: the row of the first card has no fill of its tag any more. */
+        /* A neutral hit draws nothing: the row of the first card has none of its colour any more. */
         {
-            const CtrPokeTouchRect *r = &sBCard[0];
+            const CtrPokeTouchRect rr = BMCardRect(0), *r = &rr;
             int left = 0;
 
             w.move[0].matchup = CTR_FX_NONE;
             settle(&old, &w); old = w;
-            for (int x = r->x + 37; x < r->x + 98; ++x)
-                left += at(x, r->y + 35) == fill[0];
+            for (int y = r->y + 26; y < r->y + 45; ++y)
+                for (int x = r->x + 57; x < r->x + r->w; ++x)
+                    left += at(x, y) == fill[0];
             assert(left == 0);
         }
         settle(&old, &v); old = v;       /* and back to the cards without tags */
+    }
+#endif
+#ifndef BATTLE_UI_BEFORE
+    if (getenv("BATTLE_UI_MOCK")) {
+        /* The reference mockup's data (opt-in): drawn as "99_mock" for a pixel comparison with the design. */
+        static const char *const nm[4] = {"FLAMETHROWER", "EARTHQUAKE", "SURF", "SOLARBEAM"};
+        static const char *const tn[4] = {"FIRE", "GROUND", "WATER", "GRASS"};
+        static const int ty[4] = {10, 4, 11, 12}, pp[4] = {10, 8, 3, 4}, mp[4] = {15, 10, 15, 10};
+        static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        CtrBattleView w = v;
+
+        for (k = 0; k < 4; ++k) {
+            CtrBattleMove *m = &w.move[k];
+
+            memset(m, 0, sizeof(*m));
+            m->present = 1; m->type = (uint8_t)ty[k]; m->pp = (uint8_t)pp[k]; m->maxPp = (uint8_t)mp[k]; m->matchup = fx[k];
+            names(m->name, sizeof(m->name), nm[k]); names(m->typeName, sizeof(m->typeName), tn[k]);
+            names(m->power, sizeof(m->power), "90");
+        }
+        names(w.move[0].accuracy, sizeof(w.move[0].accuracy), "100");
+        w.move[0].effectChance = 10; w.move[0].stab = 1;
+        names(w.move[0].desc, sizeof(w.move[0].desc), "A powerful fire attack that may inflict a burn.");
+        w.cursor = 0; w.showCursor = 1; w.pressed = -1;
+        for (k = 0; k < 6; ++k) { w.party[k] = 1; w.partyHp[k] = 100; w.partyStatus[k] = 0; }
+        w.party[1] = 3; w.partyHp[1] = 50; w.partyStatus[1] = 2; w.party[3] = 2; w.partyHp[3] = 0;
+        settle(&old, &w); old = w; put(out, "99_mock");
+        w.showCursor = 0; w.pressed = 1; settle(&old, &w); old = w; put(out, "99_mock_card");
+        w.pressed = BUI_CANCEL; settle(&old, &w); old = w; put(out, "99_mock_cancel");
+        settle(&old, &v); old = v;
     }
 #endif
     v.pressed = 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
@@ -456,13 +497,16 @@ int main(int argc, char **argv)
         for (size_t i = 0; i < sizeof(states) / sizeof(states[0]); ++i) {
             s.state = (uint8_t)states[i];
             CtrBattleUi_Draw(canvas, &s);
+            if (states[i] == BUI_MOVE)
+                continue;                  /* the move screen is its artwork, whatever colours it holds */
             for (int n = 0; n < W * H; ++n)
                 for (size_t j = 0; j < sizeof(navy) / sizeof(navy[0]); ++j)
                     if (canvas[n] == navy[j]) {
                         fprintf(stderr, "state %d keeps the navy theme colour %04x at %d\n", states[i], navy[j], n);
                         assert(0);
                     }
-            assert(at(1, 100) == PT_RED_BG);
+            if (states[i] != BUI_MOVE)
+                assert(at(1, 100) == PT_RED_BG);
         }
         {
             CtrSummaryUiView sv;

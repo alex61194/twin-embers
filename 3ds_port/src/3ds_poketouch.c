@@ -193,13 +193,12 @@ static void Fill(int x, int y, int w, int h, uint16_t c)
     }
 }
 
-/* FireRed's latin_normal glyphs, text and shadow pixels apart. Capitals
- * cover glyph rows 3-11, so a line drawn at `top` has its capitals there. */
-static const PtGlyph *Glyph(const char **s)
+/* The character code of the next UTF-8 character of `*s` in FireRed's charmap (0 for what the font does not draw). */
+static unsigned GlyphCode(const char **s)
 {
-    TwinIconsPrepare();
     unsigned char c = (unsigned char)**s;
     unsigned code = 0;
+
     ++*s;
     if (c >= 'A' && c <= 'Z') code = 0xbb + c - 'A';
     else if (c >= 'a' && c <= 'z') code = 0xd5 + c - 'a';
@@ -214,6 +213,17 @@ static const PtGlyph *Glyph(const char **s)
         case ')': code=0x5d; break; case '%': code=0x5b; break;
         default: break;
     }
+    return code;
+}
+
+/* FireRed's latin_normal glyphs, text and shadow pixels apart. Capitals
+ * cover glyph rows 3-11, so a line drawn at `top` has its capitals there. */
+static const PtGlyph *Glyph(const char **s)
+{
+    unsigned code;
+
+    TwinIconsPrepare();
+    code = GlyphCode(s);
     if (!sPtFontReady[code]) {
         const uint8_t *src = CtrTwinFontData() + code * 64;
         PtGlyph *g = &sPtFont[code];
@@ -223,6 +233,24 @@ static const PtGlyph *Glyph(const char **s)
         sPtFontReady[code] = true;
     }
     return &sPtFont[code];
+}
+
+/* The game's small font (latin_small): 5 pixels wide for most letters, capitals on glyph rows 4-10. */
+static const PtGlyph *GlyphSmall(const char **s)
+{
+    unsigned code;
+
+    TwinIconsPrepare();
+    code = GlyphCode(s);
+    if (!sPtFontSmallReady[code]) {
+        const uint8_t *src = CtrTwinSmallFontData() + code * 32;
+        PtGlyph *g = &sPtFontSmall[code];
+        g->width = CtrTwinSmallFontWidth(code);
+        if (g->width > 8) g->width = 8;
+        TwinSmallGlyphDecode(src, g->width, g->rows);
+        sPtFontSmallReady[code] = true;
+    }
+    return &sPtFontSmall[code];
 }
 /* Images: palette indices, 0 clear; disabled art is a light grey. */
 static uint16_t Tone(uint16_t c, int on)

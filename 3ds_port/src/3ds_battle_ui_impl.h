@@ -17,9 +17,28 @@ static const CtrPokeTouchRect sBAction[4] = {      /* by the controller's action
     {214, 150, 98, 78},             /* POKeMON */
     {111, 150, 98, 78},             /* RUN */
 };
+#include "battle_move_skin.h"
+
+static const CtrPokeTouchRect sBMStrip = {MSK_STRIP_X0, MSK_STRIP_Y0, MSK_STRIP_X1 - MSK_STRIP_X0, MSK_STRIP_Y1 - MSK_STRIP_Y0};
+static const CtrPokeTouchRect sBMFooter = {MSK_FOOT_X0, MSK_FOOT_Y0, MSK_FOOT_X1 - MSK_FOOT_X0, MSK_FOOT_Y1 - MSK_FOOT_Y0};
+static const CtrPokeTouchRect sBMCancel = {MSK_CANCEL_X, MSK_CANCEL_Y, MSK_CANCEL_W, MSK_CANCEL_H};
+
+/* The area a card answers to: its frame, inside the cell its picture fills. */
+static CtrPokeTouchRect BMCardRect(int i)
+{
+    CtrPokeTouchRect r = {(int16_t)(kMskCardPos[i][0] + 3), (int16_t)(kMskCardPos[i][1] + 3), MSK_CARD_W - 6, MSK_CARD_H - 6};
+
+    return r;
+}
+
+static CtrPokeTouchRect BMCellRect(int i)
+{
+    CtrPokeTouchRect r = {kMskCardPos[i][0], kMskCardPos[i][1], MSK_CARD_W, MSK_CARD_H};
+
+    return r;
+}
+
 static const CtrPokeTouchRect sBCard[4] = {{6, 40, 151, 68}, {163, 40, 151, 68}, {6, 114, 151, 69}, {163, 114, 151, 69}};
-static const CtrPokeTouchRect sBMoveFooter = {6, 188, 218, 44};
-static const CtrPokeTouchRect sBMoveCancel = {228, 188, 86, 44};
 static const CtrPokeTouchRect sBCancel = {6, 190, 308, 30};
 /* The Safari Zone's four actions in the controller's 2x2 order (BALL, BAIT, ROCK, RUN). */
 static const CtrPokeTouchRect sBSafari[4] = {{8, 42, 150, 90}, {162, 42, 150, 90}, {8, 138, 150, 90}, {162, 138, 150, 90}};
@@ -77,9 +96,13 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
                 return i;
     if (v->state == BUI_MOVE) {
         for (int i = 0; i < 4; ++i)
-            if (v->move[i].present && BIn(&sBCard[i], x, y))
-                return i;
-        if (BIn(&sBMoveCancel, x, y))
+            if (v->move[i].present) {
+                CtrPokeTouchRect r = BMCardRect(i);
+
+                if (BIn(&r, x, y))
+                    return i;
+            }
+        if (BIn(&sBMCancel, x, y))
             return BUI_CANCEL;
     }
     if (v->state == BUI_TARGET) {
@@ -293,7 +316,7 @@ static void BFocusGlowBrackets(const CtrPokeTouchRect *r)
 /* 8x8 silhouettes for FireRed's 18 types (its type numbers 0-17: Normal, Fighting, Flying, Poison, Ground, Rock, Bug,
  * Ghost, Steel, ???, Fire, Water, Grass, Electric, Psychic, Ice, Dragon, Dark), one byte a row, the high bit the left
  * pixel. Hand-drawn for this port. */
-static void BTypeIcon(int x, int y, uint8_t type, uint16_t ink)
+static void BTypeIconN(int x, int y, uint8_t type, int size, uint16_t ink, uint16_t ink2)
 {
     static const uint8_t sIcon[18][8] = {
         {0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C},   /* Normal: a ring */
@@ -316,12 +339,45 @@ static void BTypeIcon(int x, int y, uint8_t type, uint16_t ink)
         {0x3C, 0x78, 0xF0, 0xF0, 0xF0, 0xF0, 0x78, 0x3C},   /* Dark: a crescent */
     };
 
+    static const uint16_t sIcon12[18][12] = {
+        {0x1F8, 0x30C, 0x606, 0x402, 0xC03, 0xC03, 0xC03, 0xC03, 0x402, 0x606, 0x30C, 0x1F8},
+        {0x36C, 0x7FC, 0x7FE, 0x7FE, 0x7FE, 0x7FE, 0x3FC, 0x3FC, 0x1FC, 0x1F8, 0x1F8, 0x1F8},
+        {0x003, 0x00F, 0x03F, 0x0FF, 0x3FE, 0x7FC, 0xFF8, 0xFC0, 0xF00, 0xE00, 0xC00, 0x800},
+        {0x1F8, 0x3FC, 0x7FE, 0x7FE, 0x666, 0x666, 0x7FE, 0x198, 0x1F8, 0x168, 0x1F8, 0x000},
+        {0x000, 0x000, 0x060, 0x0F2, 0x1FB, 0x3FE, 0x7FF, 0x7FF, 0xFFF, 0xFFF, 0xFFF, 0xFFF},
+        {0x000, 0x1F8, 0x3FC, 0x7FE, 0x7FF, 0xFFF, 0xFFF, 0xFFF, 0x7FF, 0x7FE, 0x3FC, 0x1F8},
+        {0x204, 0x108, 0x0F0, 0x1F8, 0x3FC, 0xBFD, 0x7FE, 0xBFD, 0x3FC, 0x5FA, 0x8F1, 0x000},
+        {0x1F8, 0x3FC, 0x7FE, 0x666, 0x666, 0x7FE, 0x7FE, 0x7FE, 0x7FE, 0x6F6, 0x462, 0x000},
+        {0x060, 0x2F4, 0x3FC, 0x79E, 0xF0F, 0xF0F, 0xF0F, 0x79E, 0x3FC, 0x2F4, 0x060, 0x000},
+        {0x1F8, 0x3FC, 0x70E, 0x70E, 0x00E, 0x01C, 0x038, 0x038, 0x000, 0x038, 0x038, 0x000},
+        {0x040, 0x060, 0x0E4, 0x1EC, 0x3EE, 0x3FE, 0x7FF, 0x7FF, 0x7DF, 0x38E, 0x1FC, 0x0F8},
+        {0x040, 0x040, 0x0E0, 0x0E0, 0x1F0, 0x3F8, 0x3F8, 0x7FC, 0x7FC, 0x7FC, 0x3F8, 0x1F0},
+        {0x00F, 0x03F, 0x0FF, 0x1FF, 0x3FF, 0x3FE, 0x7FC, 0x7F8, 0xEF0, 0xD80, 0xA00, 0x800},
+        {0x03C, 0x078, 0x0F0, 0x1E0, 0x3FE, 0x3FE, 0x01C, 0x038, 0x070, 0x060, 0x0C0, 0x080},
+        {0x000, 0x1F8, 0x204, 0x4F2, 0x50A, 0x56A, 0x56A, 0x50A, 0x4F2, 0x204, 0x1F8, 0x000},
+        {0x060, 0x264, 0x168, 0x0F0, 0x861, 0xFFF, 0xFFF, 0x861, 0x0F0, 0x168, 0x264, 0x060},
+        {0xC03, 0xE07, 0xF0F, 0xF9F, 0x7FE, 0x3FC, 0x1F8, 0x0F0, 0x090, 0x198, 0x108, 0x000},
+        {0x1F0, 0x3C0, 0x780, 0x780, 0xF00, 0xF00, 0xF00, 0xF08, 0x79C, 0x7FE, 0x3FC, 0x1F8}
+    };
+
     if (type > 17)
         return;
-    for (int r = 0; r < 8; ++r)
-        for (int c = 0; c < 8; ++c)
-            if (sIcon[type][r] & (0x80u >> c))
-                Px(x + c, y + r, ink);
+    if (size == 12) {
+        for (int r = 0; r < 12; ++r)
+            for (int c = 0; c < 12; ++c)
+                if (sIcon12[type][r] & (0x800u >> c))
+                    Px(x + c, y + r, r < 5 ? ink : ink2);
+        return;
+    }
+    for (int r = 0; r < size; ++r)
+        for (int c = 0; c < size; ++c)
+            if (sIcon[type][r * 8 / size] & (0x80u >> (c * 8 / size)))
+                Px(x + c, y + r, r * 2 < size ? ink : ink2);      /* lighter on top, the second tone below */
+}
+
+static void BTypeIcon(int x, int y, uint8_t type, uint16_t ink)
+{
+    BTypeIconN(x, y, type, 8, ink, ink);
 }
 
 /* PokeTouch's side buttons carry a coloured tick to tell them apart on the one red; the battle's wear it on their top
@@ -482,23 +538,37 @@ static void BDescribeN(const char *text, int x, int y, int width, int maxLines, 
         UiText(line, x, y + lines * UI_LINE_H, color, UIS_TEXT_SH, 1, x + width);
 }
 
-/* Gen 3 Physical (type < 10: 9x9 starburst) vs Special (type >= 10: 9x9 concentric rings) icon in the move header. */
-static void BMoveCategoryIcon(int x, int y, uint8_t type, uint16_t ink, uint16_t sh)
+/* The same running text in the small font: `maxLines` of 8 pixels, wrapped to `width`. */
+static void BDescribeSmall(const char *text, int x, int y, int width, int maxLines, uint16_t color)
 {
-    static const uint16_t sPhys[9] = {
-        0x020, 0x0A8, 0x070, 0x0FA, 0x1FF, 0x0FA, 0x070, 0x0A8, 0x020
-    };
-    static const uint16_t sSpec[9] = {
-        0x070, 0x088, 0x124, 0x154, 0x154, 0x154, 0x124, 0x088, 0x070
-    };
-    const uint16_t *rows = type < 10 ? sPhys : sSpec;
+    char word[24], line[96], joined[96];
+    int lines = 0;
+    const char *p = text;
 
-    for (int ry = 0; ry < 9; ++ry)
-        for (int rx = 0; rx < 9; ++rx)
-            if (rows[ry] & (1u << (8 - rx))) {
-                Px(x + rx + 1, y + ry + 1, sh);
-                Px(x + rx, y + ry, ink);
-            }
+    line[0] = 0;
+    while (*p && lines < maxLines) {
+        int w = 0;
+
+        while (*p == ' ' || *p == '\n')
+            ++p;
+        while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
+            word[w++] = *p++;
+        word[w] = 0;
+        if (!w)
+            break;
+        memcpy(joined, line, sizeof(joined));
+        BAppend(joined, sizeof(joined), word);
+        if (line[0] && UiTextWidthSmall(joined) > width) {
+            UiTextSmall(line, x, y + lines * 8, color, UIS_TEXT_SH, x + width);
+            line[0] = 0;
+            if (++lines >= maxLines)
+                return;
+            BAppend(line, sizeof(line), word);
+        } else
+            memcpy(line, joined, sizeof(line));
+    }
+    if (line[0] && lines < maxLines)
+        UiTextSmall(line, x, y + lines * 8, color, UIS_TEXT_SH, x + width);
 }
 
 /* Deep saturated elemental background tone for the card body */
@@ -517,6 +587,12 @@ static uint16_t BCardBodyColor(int type)
     case 17: return UI_RGB(28, 24, 28);  /* Dark: deep slate charcoal */
     default: return UI_RGB(36, 32, 40);  /* Normal/other: dark neutral slate */
     }
+}
+
+/* The PP colour FireRed's move list uses: the usual ink, then yellow at half, orange at a quarter, red at none. */
+static uint16_t BPpColor(unsigned pp, unsigned max)
+{
+    return pp == 0 ? UI_HP_LOW : pp * 4 <= max ? UI_WARN : pp * 2 <= max ? UI_HP_MID : UI_TEXT;
 }
 
 /* A card of the battle (a move, a target): raised, its header band in `color` with `title`, the body a dark tint of
@@ -582,30 +658,37 @@ static int BCardFrame(const CtrPokeTouchRect *r, uint16_t color, int type, const
         BTypeIcon(ibox.x + 3, ibox.y + 2, (uint8_t)type, UI_TEXT);
     }
 
-    /* Move Title in BOLD WHITE arcade font with solid 1px black outline */
+    /* The title in white with a solid 1px black outline: a move's name in the game's small font (7-pixel capitals,
+     * centred in the header band), a target's name (type < 0) in the usual one. */
     {
         int tx = type >= 0 ? r->x + 23 : r->x + 8;
-        int ty = r->y + 7 + dy;
         int limit = r->x + r->w - 18;
 
-        UiText(title, tx - 1, ty, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx + 1, ty, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty - 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty + 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx + 1, ty + 1, UIS_OUTLINE, 0, 1, limit);
-        UiText(title, tx, ty, UI_TEXT, 0, 1, limit);
+        if (type >= 0) {
+            int ty = r->y + 8 + dy;
+
+            UiTextSmall(title, tx - 1, ty, UIS_OUTLINE, 0, limit);
+            UiTextSmall(title, tx + 1, ty, UIS_OUTLINE, 0, limit);
+            UiTextSmall(title, tx, ty - 1, UIS_OUTLINE, 0, limit);
+            UiTextSmall(title, tx, ty + 1, UIS_OUTLINE, 0, limit);
+            UiTextSmall(title, tx + 1, ty + 1, UIS_OUTLINE, 0, limit);
+            UiTextSmall(title, tx, ty, UI_TEXT, 0, limit);
+        } else {
+            int ty = r->y + 7 + dy;
+
+            UiText(title, tx - 1, ty, UIS_OUTLINE, 0, 1, limit);
+            UiText(title, tx + 1, ty, UIS_OUTLINE, 0, 1, limit);
+            UiText(title, tx, ty - 1, UIS_OUTLINE, 0, 1, limit);
+            UiText(title, tx, ty + 1, UIS_OUTLINE, 0, 1, limit);
+            UiText(title, tx + 1, ty + 1, UIS_OUTLINE, 0, 1, limit);
+            UiText(title, tx, ty, UI_TEXT, 0, 1, limit);
+        }
     }
 
     if (state & UI_FOCUSED)
         BFocusGlowBrackets(r);
 
     return dy;
-}
-
-/* The PP colour FireRed's move list uses: the usual ink, then yellow at half, orange at a quarter, red at none. */
-static uint16_t BPpColor(unsigned pp, unsigned max)
-{
-    return pp == 0 ? UI_HP_LOW : pp * 4 <= max ? UI_WARN : pp * 2 <= max ? UI_HP_MID : UI_TEXT;
 }
 
 /* The matchup tag beside the type badge: what the move does to the foe's types. x2 green, x4 lime with a gold rim,
@@ -640,69 +723,6 @@ static void BMatchupTag(uint8_t matchup, int x, int y)
                 matchup == CTR_FX_QUADRUPLE ? 0 : UIS_TEXT_SH, 1);
 }
 
-/* A move card: the name and Physical/Special icon on the type's colour, the type badge, the matchup, power (and
- * accuracy when populated), and the PP left (number and bar). */
-static void BCard(int i, const CtrBattleView *v)
-{
-    const CtrPokeTouchRect *r = &sBCard[i];
-    const CtrBattleMove *m = &v->move[i];
-    int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
-    uint16_t color;
-    int dy;
-
-    if (!m->present) {
-        BCardFrame(r, 0, -1, NULL, 0);
-        return;
-    }
-    color = UiTypeColor(m->type);
-    dy = BCardFrame(r, color, m->type, m->name, state);
-
-    /* Category icon on right corner of header */
-    BMoveCategoryIcon(r->x + r->w - 15, r->y + 6 + dy, m->type, UI_TEXT, UIS_OUTLINE);
-
-    {
-        int pill = UiTextWidth(m->typeName, 1) + 8;
-        CtrPokeTouchRect badge = {(int16_t)(r->x + 8), (int16_t)(r->y + 28 + dy), (int16_t)(pill < 34 ? 34 : pill > 46 ? 46 : pill), 14};
-        char pp[12];
-
-        UiTypeBadge(&badge, m->type, m->typeName);
-        BMatchupTag(m->matchup, badge.x + badge.w + 3, r->y + 28 + dy);   /* at most to x+97: PWR stays at w-52 */
-
-        /* PWR in light blue-grey (#a0b4cc) and value in bold white */
-        UiText("PWR", r->x + r->w - 52, r->y + 28 + dy, UI_RGB(160, 180, 204), UIS_TEXT_SH, 1, r->x + r->w);
-        UiTextRight(m->power, r->x + r->w - 8, r->y + 28 + dy, UI_TEXT, UIS_TEXT_SH, 1);
-
-        /* PP in #a0b4cc and count in bold white */
-        UiText("PP", r->x + 8, r->y + 48 + dy, UI_RGB(160, 180, 204), UIS_TEXT_SH, 1, r->x + 30);
-        snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
-        UiText(pp, r->x + 24, r->y + 48 + dy, UI_TEXT, UIS_TEXT_SH, 1, r->x + 68);
-
-        /* Segmented neon capsule: ten segments of six pixels and a one-pixel gap, lit by the share of PP left (rounded up,
-         * so one PP left still shows one). Cyan, then amber at half, orange at a quarter, a dim red at none. */
-        {
-            CtrPokeTouchRect bar = {(int16_t)(r->x + r->w - 8 - 71), (int16_t)(r->y + 50 + dy), 71, 6};
-            int lit = m->maxPp ? (int)(((unsigned)m->pp * 10 + m->maxPp - 1) / m->maxPp) : 0;
-            uint16_t neon = m->pp == 0 ? UI_RGB(160, 30, 20)
-                          : m->pp * 4 <= m->maxPp ? UI_RGB(255, 90, 46)
-                          : m->pp * 2 <= m->maxPp ? UI_RGB(255, 194, 51)
-                          : UI_RGB(53, 208, 255);
-            uint16_t shine = m->pp == 0 ? UI_RGB(210, 80, 70)
-                           : m->pp * 4 <= m->maxPp ? UI_RGB(255, 190, 140)
-                           : m->pp * 2 <= m->maxPp ? UI_RGB(255, 245, 180)
-                           : UI_RGB(155, 234, 255);
-
-            UiRoundFill(bar.x, bar.y, bar.w, bar.h, 2, UI_RGB(11, 31, 58));
-            Fill(bar.x + 1, bar.y + 1, bar.w - 2, bar.h - 2, UI_RGB(15, 27, 51));
-            for (int seg = 0; seg < 10; ++seg) {
-                if (seg < lit) {
-                    Fill(bar.x + 1 + seg * 7, bar.y + 1, 6, bar.h - 2, neon);
-                    Fill(bar.x + 1 + seg * 7, bar.y + 1, 6, 1, shine);
-                }
-            }
-        }
-    }
-}
-
 /* Sculpted CANCEL button with an inner metallic bevel ring. */
 static void BCancel(const CtrPokeTouchRect *r, int pressed)
 {
@@ -726,64 +746,409 @@ static void BCancel(const CtrPokeTouchRect *r, int pressed)
     UiRing(&rim, UI_RADIUS_BUTTON - 1, 1, pressed ? sUiS->cancel.body : UIS_BORDER_LIT);
 }
 
-/* Live move description footer on the left of the compact CANCEL button in BUI_MOVE. */
-static void BMoveFooter(const CtrBattleView *v)
-{
-    const CtrPokeTouchRect *r = &sBMoveFooter;
-    int sel = v->cursor >= 0 && v->cursor < 4 && v->move[v->cursor].present ? v->cursor : 0;
-    const CtrBattleMove *m = &v->move[sel];
-    uint16_t accent = m->present ? UiTypeColor(m->type) : UIS_BORDER_LIT;
+/* Capitals, digits and a few marks on a 5x7 grid (the move screen's counts and labels). */
+static const char kBMChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/%-.x+?";
+static const uint8_t kBMRows[][7] = {
+        {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}   /* A */,
+        {0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E}   /* B */,
+        {0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E}   /* C */,
+        {0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}   /* D */,
+        {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F}   /* E */,
+        {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10}   /* F */,
+        {0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F}   /* G */,
+        {0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}   /* H */,
+        {0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E}   /* I */,
+        {0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C}   /* J */,
+        {0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11}   /* K */,
+        {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F}   /* L */,
+        {0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11}   /* M */,
+        {0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11}   /* N */,
+        {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}   /* O */,
+        {0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10}   /* P */,
+        {0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D}   /* Q */,
+        {0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11}   /* R */,
+        {0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E}   /* S */,
+        {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}   /* T */,
+        {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}   /* U */,
+        {0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04}   /* V */,
+        {0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11}   /* W */,
+        {0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11}   /* X */,
+        {0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04}   /* Y */,
+        {0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F}   /* Z */,
+        {0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E}   /* 0 */,
+        {0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E}   /* 1 */,
+        {0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F}   /* 2 */,
+        {0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x1E}   /* 3 */,
+        {0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02}   /* 4 */,
+        {0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E}   /* 5 */,
+        {0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E}   /* 6 */,
+        {0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08}   /* 7 */,
+        {0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E}   /* 8 */,
+        {0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C}   /* 9 */,
+        {0x01, 0x01, 0x02, 0x04, 0x08, 0x10, 0x10}   /* / */,
+        {0x19, 0x19, 0x02, 0x04, 0x08, 0x13, 0x13}   /* % */,
+        {0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00}   /* - */,
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x06}   /* . */,
+        {0x00, 0x00, 0x11, 0x0A, 0x04, 0x0A, 0x11}   /* x */,
+        {0x00, 0x04, 0x04, 0x1F, 0x04, 0x04, 0x00}   /* + */,
+        {0x0E, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04}   /* ? */
+};
 
-    UiPanel(r, UIS_PANEL_LO, UIS_BORDER);
-    Fill(r->x + 3, r->y + 1, r->w - 6, 1, UIS_BORDER_LIT);
-    Fill(r->x + 2, r->y + 5, 2, r->h - 10, accent);
-    if (!m->present) {
-        UiText("Select a move.", r->x + 9, r->y + 16, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
+/* ---- The move-selection screen, drawn from its artwork (docs/media/move-screen*.png, turned into tables by
+ * tools/make_move_skin.py): the backdrop as painted, the cards and capsules recoloured per type from the artwork's
+ * own four, and over them what the battle says (names, PP, matchups, the party's balls and HP, the description). ---- */
+/* Per type: the frame's colour, the capsule's and the lit PP's. The artwork paints Fire, Ground, Water and Grass;
+ * the others follow them. */
+static const uint8_t kMsNeon[18][3] = {
+    {200, 196, 176}, {232, 88, 56}, {168, 152, 248}, {200, 96, 224}, {192, 144, 80}, {208, 184, 96},
+    {176, 208, 48}, {152, 120, 216}, {184, 192, 216}, {120, 176, 168}, {232, 144, 32}, {56, 200, 216},
+    {144, 224, 72}, {248, 216, 56}, {248, 96, 152}, {136, 224, 232}, {136, 96, 248}, {152, 120, 96}};
+static const uint8_t kMsPill[18][3] = {
+    {150, 146, 110}, {192, 48, 40}, {130, 110, 220}, {150, 60, 160}, {136, 84, 24}, {170, 150, 60},
+    {140, 170, 30}, {100, 80, 160}, {140, 150, 170}, {90, 140, 130}, {216, 36, 24}, {48, 112, 200},
+    {96, 188, 40}, {220, 180, 30}, {220, 70, 120}, {100, 190, 200}, {100, 60, 220}, {100, 80, 64}};
+static const uint8_t kMsSeg[18][3] = {
+    {216, 212, 192}, {248, 104, 72}, {184, 168, 255}, {216, 112, 240}, {216, 172, 88}, {224, 200, 112},
+    {192, 228, 64}, {168, 136, 232}, {200, 208, 232}, {136, 192, 184}, {248, 128, 8}, {72, 216, 248},
+    {160, 248, 32}, {255, 232, 72}, {255, 112, 168}, {152, 240, 248}, {152, 112, 255}, {168, 136, 112}};
+static const uint8_t kMsSegLow[3] = {248, 104, 8};          /* the artwork's Water card, at a fifth of its PP */
+static const uint8_t kMsEmpty[3] = {72, 44, 44};            /* an empty move slot's frame */
+
+static int MsClamp(int v)
+{
+    return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+static uint16_t MsRgb(int r, int g, int b)
+{
+    return UI_RGB(MsClamp(r), MsClamp(g), MsClamp(b));
+}
+
+static uint16_t MsGet(int x, int y)
+{
+    return (unsigned)x < W && (unsigned)y < H ? sCanvas[(size_t)x * H + (H - 1 - (size_t)y)] : 0;
+}
+
+/* `c` over the pixel by a cover of `a` (0..255). */
+static void MsBlend(int x, int y, int r, int g, int b, int a)
+{
+    uint16_t o;
+    int or_, og, ob;
+
+    if (a <= 0)
+        return;
+    if (a >= 255) {
+        Px(x, y, MsRgb(r, g, b));
         return;
     }
-    {
-        char stats[64];
-        const char *acc = m->accuracy[0] && m->accuracy[0] != '-' ? m->accuracy : "--";
-        int n = snprintf(stats, sizeof(stats), "ACC %s%s", acc, acc[0] == '-' ? "" : "%");
+    o = MsGet(x, y);
+    or_ = (o >> 11) * 255 / 31;
+    og = ((o >> 5) & 63) * 255 / 63;
+    ob = (o & 31) * 255 / 31;
+    Px(x, y, MsRgb(or_ + (r - or_) * a / 255, og + (g - og) * a / 255, ob + (b - ob) * a / 255));
+}
 
-        if (m->effectChance && n > 0 && (size_t)n < sizeof(stats))
-            n += snprintf(stats + n, sizeof(stats) - (size_t)n, "  EFF %u%%", m->effectChance);
-        if (m->priority && n > 0 && (size_t)n < sizeof(stats))
-            snprintf(stats + n, sizeof(stats) - (size_t)n, "  PRI %+d", m->priority);
-        UiText(stats, r->x + 8, r->y + 4, UI_RGB(240, 205, 100), UIS_TEXT_SH, 1, r->x + r->w - (m->stab ? 70 : 8));
-        if (m->stab) {
-            CtrPokeTouchRect stab = {(int16_t)(r->x + r->w - 66), (int16_t)(r->y + 3), 60, 11};
-            UiRoundFill(stab.x, stab.y, stab.w, stab.h, 2, UI_RGB(236, 174, 36));
-            UiRoundRect(&stab, 2, UI_RGB(255, 220, 80));
-            UiTextCentered("STAB x1.5", &stab, -1, UI_RGB(60, 40, 0), 0, 1);
-        }
-    }
-    /* Crimson divider line across panel */
-    Fill(r->x + 6, r->y + 16, r->w - 12, 1, UI_RGB(160, 24, 28));
-    Fill(r->x + 6, r->y + 17, r->w - 12, 1, UI_RGB(24, 4, 6));
+static void MsBlend565(int x, int y, uint16_t c, int a)
+{
+    MsBlend(x, y, (c >> 11) * 255 / 31, ((c >> 5) & 63) * 255 / 63, (c & 31) * 255 / 31, a);
+}
 
-    if (m->desc[0]) {
-        BDescribeN(m->desc, r->x + 8, r->y + 20, r->w - 16, 2, UI_TEXT);
-    } else {
-        const char *cat = m->type < 10 ? "PHYSICAL MOVE" : "SPECIAL MOVE";
-        UiText(m->name, r->x + 8, r->y + 20, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 6);
-        UiText(cat, r->x + 8, r->y + 31, UIS_TEXT_DIM, UIS_TEXT_SH, 1, r->x + r->w - 6);
+static void MsBg(int x, int y, int w, int h)
+{
+    for (int v = 0; v < h; ++v)
+        for (int u = 0; u < w; ++u)
+            if ((unsigned)(x + u) < W && (unsigned)(y + v) < H)
+                Px(x + u, y + v, MSK_BG(x + u, y + v));
+}
+
+static void MsShot(const uint16_t *src, int w, int h, int x, int y)
+{
+    for (int v = 0; v < h; ++v)
+        for (int u = 0; u < w; ++u)
+            Px(x + u, y + v, src[v * w + u]);
+}
+
+/* The 5x7 lettering softened as the artwork's: each stem one pixel and a half (two when `bold`). */
+static void MsTextB(const char *s, int x, int y, const uint8_t col[3], int bold)
+{
+    for (; *s; ++s, x += 6) {
+        const char *p = strchr(kBMChars, *s);
+        int g = p && *s ? (int)(p - kBMChars) : -1;
+
+        if (g < 0)
+            continue;
+        for (int r = 0; r < 7; ++r)
+            for (int c = 0; c < 5; ++c)
+                if (kBMRows[g][r] & (1u << (4 - c))) {
+                    MsBlend(x + c, y + r, col[0], col[1], col[2], 255);
+                    if (!(c < 4 && (kBMRows[g][r] & (1u << (3 - c)))))
+                        MsBlend(x + c + 1, y + r, col[0], col[1], col[2], bold ? 255 : 120);
+                }
     }
 }
 
-static void BMove(const CtrBattleView *v)
+static void MsText(const char *s, int x, int y, const uint8_t col[3])
 {
+    MsTextB(s, x, y, col, 0);
+}
+
+static int MsTextWidth(const char *s)
+{
+    int n = (int)strlen(s);
+
+    return n ? n * 6 : 0;
+}
+
+/* The move name's lettering (9 rows, from the artwork). */
+static void MsTitle(const char *s, int x, int y, int limit)
+{
+    for (; *s; ++s) {
+        const char *p = strchr(kMskTitleChars, *s);
+        int g = p && *s ? (int)(p - kMskTitleChars) : (int)(strchr(kMskTitleChars, ' ') - kMskTitleChars);
+        int w = kMskTitleWidth[g];
+
+        if (x + w > limit)
+            return;
+        for (int r = 0; r < 9; ++r)
+            for (int c = 0; c < w; ++c)
+                MsBlend(x + c, y + r, 255, 255, 255, kMskTitleRows[g][r][c] * 17);
+        x += w + 1;
+    }
+}
+
+static void MsTiny(const char *s, int x, int y, int r, int g, int b)
+{
+    for (; *s; ++s, x += 4) {
+        const char *p = strchr(kMskTinyChars, *s);
+
+        if (!p || !*s)
+            continue;
+        for (int row = 0; row < 5; ++row)
+            for (int c = 0; c < 3; ++c)
+                if (kMskTinyRows[p - kMskTinyChars][row] & (4u >> c))
+                    MsBlend(x + c, y + row, r, g, b, 255);
+    }
+}
+
+static void BMStrip(const CtrBattleView *v)
+{
+    static const uint8_t kStatus[7][3] = {{0, 0, 0}, {184, 88, 208}, {0, 0, 0}, {150, 150, 176},
+                                          {100, 200, 232}, {232, 96, 48}, {224, 88, 176}};
+    static const char *const kStatusName[7] = {"", "PSN", "PAR", "SLP", "FRZ", "BRN", "PKRS"};
+
+    MsBg(sBMStrip.x, sBMStrip.y, sBMStrip.w, sBMStrip.h);
+    for (int i = 0; i < 6; ++i) {
+        int bx = kMskSlotX[i];
+        unsigned hp = v->partyHp[i];
+
+        if (!v->party[i])
+            continue;
+        MsShot(&kMskTrack[0][0], MSK_TRACK_W, MSK_TRACK_H, bx + MSK_TRACK_U, MSK_TRACK_V);
+        if (hp) {
+            int fill = (int)(hp * 34 / 100);
+
+            if (fill < 1)
+                fill = 1;
+            for (int r = 0; r < 5; ++r) {
+                const uint8_t *g = kMskHpGreen[r], *y = kMskHpYellow[r];
+                int rr = hp > 50 ? g[0] : hp > 20 ? y[0] : 230 * (g[1] + 40) / 255;
+                int gg = hp > 50 ? g[1] : hp > 20 ? y[1] : 56 * (g[1] + 40) / 255;
+                int bb = hp > 50 ? g[2] : hp > 20 ? y[2] : 44 * (g[1] + 40) / 255;
+
+                for (int u = 0; u < fill; ++u)
+                    Px(bx + u, 42 + r, MsRgb(rr, gg, bb));
+            }
+        }
+        if (i == 0)
+            MsShot(&kMskBallLead[0][0], MSK_LEAD_W, MSK_LEAD_H, bx + MSK_LEAD_U, MSK_LEAD_V);
+        else
+            MsShot(v->party[i] == 2 ? &kMskBallFaint[0][0] : &kMskBall[0][0], MSK_BALL_W, MSK_BALL_H,
+                   bx + MSK_BALL_U, MSK_BALL_V);
+        if (hp > 0 && hp < 100) {
+            char pct[8];
+
+            snprintf(pct, sizeof(pct), "%u%%", hp);
+            MsTiny(pct, bx + 25, 35, 200, 170, 120);
+        }
+        if (v->partyStatus[i] >= 1 && v->partyStatus[i] <= 6) {
+            int px = bx + 25, py = MSK_PAR_Y, st = v->partyStatus[i];
+
+            if (st == 2)
+                MsShot(&kMskPar[0][0], MSK_PAR_W, MSK_PAR_H, px, py);
+            else {
+                /* PAR's capsule in the status's colour, its letters taken out and written again */
+                for (int r = 0; r < MSK_PAR_H; ++r)
+                    for (int c = 0; c < MSK_PAR_W; ++c) {
+                        uint16_t p = kMskPar[r][c];
+                        int pr = (p >> 11) * 255 / 31, pg = ((p >> 5) & 63) * 255 / 63, pb = (p & 31) * 255 / 31;
+                        int l = (pr * 3 + pg * 6 + pb) / 10;
+
+                        if (r >= 4 && r <= 8 && c >= 3 && c <= 15) {
+                            uint16_t q = kMskPar[r][2];
+                            l = (((q >> 11) * 255 / 31) * 3 + (((q >> 5) & 63) * 255 / 63) * 6 + ((q & 31) * 255 / 31)) / 10;
+                        }
+                        if (pr - pb > 40 && l > 30)
+                            Px(px + c, py + r, MsRgb(kStatus[st][0] * l / 150, kStatus[st][1] * l / 150, kStatus[st][2] * l / 150));
+                        else
+                            Px(px + c, py + r, p);
+                    }
+                MsTiny(kStatusName[st], px + (MSK_PAR_W - (int)strlen(kStatusName[st]) * 4 + 1) / 2, py + 4,
+                       (kStatus[st][0] + 255) / 2, (kStatus[st][1] + 255) / 2, (kStatus[st][2] + 255) / 2);
+            }
+        }
+    }
+}
+
+/* A card: the artwork's card in the type's colours, its capsule, icon, name, matchup, PP cells and count. */
+static void BMCard(int i, const CtrBattleView *v)
+{
+    const CtrBattleMove *m = &v->move[i];
+    int ox = kMskCardPos[i][0], oy = kMskCardPos[i][1];
+    int type = m->present && m->type < 18 ? m->type : 0;
+    const uint8_t *n = m->present ? kMsNeon[type] : kMsEmpty, *pc = kMsPill[type];
+    int pressed = v->pressed == i;
+
+    for (int y = 0; y < MSK_CARD_H; ++y)
+        for (int x = 0; x < MSK_CARD_W; ++x) {
+            const int16_t *t = kMskCard[y][x];
+
+            Px(ox + x, oy + y, MsRgb(t[0] + t[3] * n[0] / 256, t[1] + t[3] * n[1] / 256, t[2] + t[3] * n[2] / 256));
+        }
+    if (!m->present)
+        return;
+    for (int y = 0; y < MSK_PILL_H; ++y)
+        for (int x = 0; x < MSK_PILL_W; ++x) {
+            const int16_t *t = kMskPill[y][x];
+
+            Px(ox + MSK_PILL_U + x, oy + MSK_PILL_V + y,
+               MsRgb(t[0] + (t[3] * n[0] + t[4] * pc[0]) / 256, t[1] + (t[3] * n[1] + t[4] * pc[1]) / 256,
+                     t[2] + (t[3] * n[2] + t[4] * pc[2]) / 256));
+        }
+    {
+        static const uint8_t kWhite[3] = {248, 252, 248};
+        int art = type == 10 ? 0 : type == 4 ? 1 : type == 11 ? 2 : type == 12 ? 3 : -1;
+        int lit = m->maxPp ? (int)(((unsigned)m->pp * 10 + m->maxPp - 1) / m->maxPp) : 0;
+        const uint8_t *s = m->pp * 5 <= m->maxPp ? kMsSegLow : kMsSeg[type];
+        char pp[16];
+
+        if (art >= 0) {
+            for (int y = 0; y < MSK_ICON_H; ++y)
+                for (int x = 0; x < MSK_ICON_W; ++x)
+                    MsBlend565(ox + MSK_ICON_U + x, oy + MSK_ICON_V + y, kMskIcon[art][y][x][0], kMskIcon[art][y][x][1]);
+        } else
+            BTypeIconN(ox + 120, oy + 7, (uint8_t)type, 12, MsRgb((n[0] + 255) / 2, (n[1] + 255) / 2, (n[2] + 255) / 2),
+                       MsRgb(n[0], n[1], n[2]));
+        MsTitle(m->name, ox + 13, oy + 17, ox + 112);
+        MsText(m->typeName, ox + 31 - MsTextWidth(m->typeName) / 2, oy + 36, kWhite);
+        for (int y = 0; y < MSK_SEG_H; ++y)
+            for (int c = 0; c < 10; ++c) {
+                int u0 = MSK_SEG_U0 - 1 + (c * MSK_SEG_PITCH3) / 3 - y / 2;
+                int w = MSK_SEG_U0 - 1 + ((c + 1) * MSK_SEG_PITCH3) / 3 - y / 2 - u0;
+
+                for (int k = 0; k < w && k < MSK_SEG_CELL; ++k) {
+                    uint16_t col;
+
+                    if (c < lit) {
+                        const int16_t *t = kMskSegLit[y][k];
+
+                        col = MsRgb(t[0] + (t[3] * n[0] + t[4] * s[0]) / 256, t[1] + (t[3] * n[1] + t[4] * s[1]) / 256,
+                                    t[2] + (t[3] * n[2] + t[4] * s[2]) / 256);
+                    } else {
+                        const int16_t *t = kMskSegSpent[y][k];
+
+                        col = MsRgb(t[0] + t[3] * n[0] / 256, t[1] + t[3] * n[1] / 256, t[2] + t[3] * n[2] / 256);
+                    }
+                    Px(ox + u0 + k, oy + MSK_SEG_V + y, col);
+                }
+            }
+        snprintf(pp, sizeof(pp), "PP %u/%u", m->pp, m->maxPp);
+        MsText(pp, ox + 128 - MsTextWidth(pp), oy + 50, m->pp ? kWhite : kMsSegLow);
+        if (m->matchup != CTR_FX_NONE && m->matchup <= CTR_FX_QUADRUPLE) {
+            static const char *const kText[] = {"", "x0", "x1/4", "x1/2", "x2", "x4"};
+            int mk = m->matchup == CTR_FX_DOUBLE ? 0 : m->matchup == CTR_FX_IMMUNE ? 2 : m->matchup == CTR_FX_QUADRUPLE ? 3 : 1;
+            const uint8_t *ink = mk == 0 ? kMskMark0Ink : mk == 1 ? kMskMark1Ink : mk == 2 ? kMskMark2Ink : kMskMark3Ink;
+            const uint8_t *a = mk == 0 ? &kMskMark0[0][0] : mk == 1 ? &kMskMark1[0][0] : mk == 2 ? &kMskMark2[0][0] : &kMskMark3[0][0];
+            int mw = mk == 0 ? MSK_MARK0_W : mk == 1 ? MSK_MARK1_W : mk == 2 ? MSK_MARK2_W : MSK_MARK3_W;
+            int mh = mk == 0 ? MSK_MARK0_H : mk == 1 ? MSK_MARK1_H : mk == 2 ? MSK_MARK2_H : MSK_MARK3_H;
+            int mv = mk == 0 ? MSK_MARK0_V : mk == 1 ? MSK_MARK1_V : mk == 2 ? MSK_MARK2_V : MSK_MARK3_V;
+            int gap = mk == 0 ? MSK_MARK0_GAP : mk == 1 ? MSK_MARK1_GAP : mk == 2 ? MSK_MARK2_GAP : MSK_MARK3_GAP;
+            int tx = ox + 128 - MsTextWidth(kText[m->matchup]), gx = tx - gap - mw;
+
+            MsTextB(kText[m->matchup], tx, oy + 35, ink, 1);
+            for (int y = 0; y < mh; ++y)
+                for (int x = 0; x < mw; ++x)
+                    MsBlend(gx + x, oy + mv + y, ink[0], ink[1], ink[2], a[y * mw + x]);
+        }
+    }
+    if (pressed)                                             /* pressed: the artwork lights the card up */
+        for (int y = 0; y < MSK_CARD_H; ++y)
+            for (int x = 0; x < MSK_CARD_W; ++x) {
+                uint16_t o = MsGet(ox + x, oy + y);
+
+                Px(ox + x, oy + y, MsRgb((o >> 11) * 255 / 31 * 9 / 8 + 6, ((o >> 5) & 63) * 255 / 63 * 9 / 8 + 6,
+                                        (o & 31) * 255 / 31 * 9 / 8 + 6));
+            }
+    if (v->showCursor && v->cursor == i) {
+        CtrPokeTouchRect r = BMCardRect(i);
+
+        BFocusGlowBrackets(&r);
+    }
+}
+
+static void BMFooter(const CtrBattleView *v)
+{
+    static const uint8_t kLabel[3] = {160, 216, 228}, kWhite[3] = {248, 252, 248};
+    int sel = v->cursor >= 0 && v->cursor < 4 && v->move[v->cursor].present ? v->cursor : 0;
+    const CtrBattleMove *m = &v->move[sel];
+
+    MsBg(sBMFooter.x, sBMFooter.y, sBMFooter.w, sBMFooter.h);
+    if (!m->present)
+        return;
+    {
+        const char *acc = m->accuracy[0] && m->accuracy[0] != '-' ? m->accuracy : "--";
+        char val[16];
+
+        MsText("ACC", 23, 202, kLabel);
+        snprintf(val, sizeof(val), "%s%s", acc, acc[0] == '-' ? "" : "%");
+        MsText(val, 44, 202, kWhite);
+        if (m->effectChance) {
+            MsText("EFF", 79, 202, kLabel);
+            snprintf(val, sizeof(val), "%u%%", m->effectChance);
+            MsText(val, 100, 202, kWhite);
+        }
+        if (m->stab)
+            MsShot(&kMskStab[0][0], MSK_STAB_W, MSK_STAB_H, MSK_STAB_X, MSK_STAB_Y);
+    }
+    if (m->desc[0])
+        BDescribeSmall(m->desc, 22, 214, 190, 2, UI_RGB(248, 244, 240));
+    else
+        UiTextSmall(m->type < 10 ? "Physical move" : "Special move", 22, 214, UI_RGB(200, 180, 180), 0, 212);
+}
+
+static void BMCancel(int pressed)
+{
+    if (pressed)
+        MsShot(&kMskCancelDown[0][0], MSK_CANCEL_W, MSK_CANCEL_H, MSK_CANCEL_X, MSK_CANCEL_Y);
+    else
+        MsBg(MSK_CANCEL_X, MSK_CANCEL_Y, MSK_CANCEL_W, MSK_CANCEL_H);
+}
+
+static void BMoveScreen(const CtrBattleView *v)
+{
+    MsBg(0, 0, W, H);
+    BMStrip(v);
     for (int i = 0; i < 4; ++i)
-        BCard(i, v);
-    BMoveFooter(v);
-    BCancel(&sBMoveCancel, v->pressed == BUI_CANCEL);
+        BMCard(i, v);
+    BMFooter(v);
+    BMCancel(v->pressed == BUI_CANCEL);
 }
 
 /* Aiming a move in a double battle: a card for each battler FireRed lets it be aimed at, the opposing ones on top in
  * FIGHT's red, the player's below in POKeMON's blue: the name, the level, the matchup badge, the side and the HP bar. */
 static void BTargetCard(int i, const CtrBattleView *v)
 {
-    static const UiButtonStyle sFoe = UI_STYLE_FIGHT, sAlly = UI_STYLE_POKEMON;
+    static const UiButtonStyle sFoe = UI_STYLE_FIGHT;
+    static const UiButtonStyle sAlly = {UI_RGB(206, 108, 22), UI_RGB(244, 156, 52), UI_RGB(128, 62, 10)};   /* amber, not blue */
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleTarget *t = &v->target[i];
     int state = (v->pressed == i ? UI_PRESSED : 0) | (v->showCursor && v->cursor == i ? UI_FOCUSED : 0);
@@ -892,18 +1257,18 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     CtrPokeTouchRect r = BPanel(i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
-    uint16_t body = press ? UI_SELECT_HI : selected ? UI_SELECT : fainted ? UiMix(UIS_PANEL, UIS_OUTLINE, 4) : UIS_PANEL;
+    uint16_t body = press ? UIS_SELECT_HI : selected ? UIS_SELECT : fainted ? UiMix(UIS_PANEL, UIS_OUTLINE, 4) : UIS_PANEL;
 
     if (!p->present[i]) {
         UiRoundRect(&r, UI_RADIUS_PANEL, UIS_SEPARATOR);
         UiRoundFill(r.x + 1, r.y + 1, r.w - 2, r.h - 2, UI_RADIUS_PANEL - 1, UIS_BG);
         return;
     }
-    UiPanel(&r, body, selected ? UI_FOCUS : fainted ? UiMix(UIS_BORDER, UI_DANGER, 4) : UIS_BORDER);
+    UiPanel(&r, body, selected ? UIS_FOCUS : fainted ? UiMix(UIS_BORDER, UI_DANGER, 4) : UIS_BORDER);
     if (selected) {
         CtrPokeTouchRect ring = UiInset(&r, 1);
 
-        UiRing(&ring, UI_RADIUS_PANEL - 1, 1, UI_FOCUS_LIT);
+        UiRing(&ring, UI_RADIUS_PANEL - 1, 1, UIS_FOCUS_LIT);
     }
     UiRoundFill(r.x + 5, r.y + 5, 37, 37, 3, UiMix(body, UIS_OUTLINE, 4));
     if (BPartyIcon(i, p->icon[i]))
@@ -946,7 +1311,7 @@ static void BPartyOverlay(const CtrBattleView *v)
         BDescribeN(p->message, box.x + 10, box.y + 10, box.w - 20, 3, UI_TEXT);
         UiText("Tap to continue", box.x + box.w - 10 - UiTextWidth("Tap to continue", 1) - 9, box.y + box.h - 16,
                UIS_TEXT_DIM, UIS_TEXT_SH, 1, box.x + box.w);
-        UiArrow(box.x + box.w - 16, box.y + box.h - 16, 1, UI_FOCUS);
+        UiArrow(box.x + box.w - 16, box.y + box.h - 16, 1, UIS_FOCUS);
     } else if (p->panel == BUI_PTY_ACTIONS || p->panel == BUI_PTY_YESNO) {
         int n = p->menuCount > 6 ? 6 : p->menuCount;
         CtrPokeTouchRect frame = {98, (int16_t)(124 - 15 * n - 8), 124, (int16_t)(30 * n + 12)};
@@ -1050,8 +1415,8 @@ static void BBagRow(int i, const CtrBattleView *v)
     if (!b->row[i].item)
         return;
     if (selected || press) {
-        UiRoundFill(r.x, r.y, r.w, r.h - 1, UI_RADIUS_PANEL, press ? UI_SELECT_HI : UI_SELECT);
-        Fill(r.x + 1, r.y + 4, 2, r.h - 9, UI_FOCUS_LIT);
+        UiRoundFill(r.x, r.y, r.w, r.h - 1, UI_RADIUS_PANEL, press ? UIS_SELECT_HI : UIS_SELECT);
+        Fill(r.x + 1, r.y + 4, 2, r.h - 9, UIS_FOCUS_LIT);
     } else
         UiSeparator(r.x + 4, r.y + r.h - 1, r.w - 8);
     BItemDraw(b->row[i].item, r.x + 5, r.y, 1);
@@ -1073,9 +1438,9 @@ static void BBagList(const CtrBattleView *v)
         BBagRow(i, v);
     if (b->count > BUI_BAG_ROWS) {
         if (b->first > 0)
-            UiArrow(sBUpArrow.x + 7, sBUpArrow.y + 4, -2, UI_FOCUS);
+            UiArrow(sBUpArrow.x + 7, sBUpArrow.y + 4, -2, UIS_FOCUS);
         if (b->first + BUI_BAG_ROWS < b->count)
-            UiArrow(sBDownArrow.x + 7, sBDownArrow.y + 4, 2, UI_FOCUS);
+            UiArrow(sBDownArrow.x + 7, sBDownArrow.y + 4, 2, UIS_FOCUS);
     }
 }
 
@@ -1091,7 +1456,7 @@ static void BBagDetail(const CtrBattleView *v)
     if (b->message[0]) {
         BDescribeN(b->message, 189, 76, 117, 7, UI_TEXT);
         UiText("Tap", 260, 180, UIS_TEXT_DIM, UIS_TEXT_SH, 1, 300);
-        UiArrow(282, 180, 1, UI_FOCUS);
+        UiArrow(282, 180, 1, UIS_FOCUS);
         return;
     }
     if (b->menuCount > 0) {
@@ -1131,8 +1496,6 @@ static void BBody(const CtrBattleView *v)
     Fill(sBBody.x, sBBody.y, sBBody.w, sBBody.h, UIS_BG);
     if (v->state == BUI_ACTION)
         BAction(v);
-    else if (v->state == BUI_MOVE)
-        BMove(v);
     else if (v->state == BUI_BAG)
         BBag(v);
     else if (v->state == BUI_PARTY)
@@ -1147,6 +1510,11 @@ void CtrBattleUi_Draw(uint16_t *canvas, const CtrBattleView *v)
 {
     sCanvas = canvas;
     sUiS = &sUiRed;
+    if (v->state == BUI_MOVE) {
+        BMoveScreen(v);
+        sUiS = &sUiNavy;
+        return;
+    }
     Fill(0, 0, W, H, UIS_BG);
     Fill(0, 0, W, 2, UIS_BG_TOP);
     BStrip(v);
@@ -1176,33 +1544,47 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
     sCanvas = canvas;
     sUiS = &sUiRed;
     CtrDirty_Clear(dirty);
+    if (v->state == BUI_MOVE || old->state == BUI_MOVE) {
+        /* The move screen has its own chassis: leaving or entering it, or a change of moves or of the party, redraws
+         * everything; otherwise only the card, the footer or CANCEL that looks different. */
+        if (old->state != v->state || memcmp(old->move, v->move, sizeof(v->move))
+            || memcmp(old->party, v->party, sizeof(v->party)) || memcmp(old->partyHp, v->partyHp, sizeof(v->partyHp))
+            || memcmp(old->partyStatus, v->partyStatus, sizeof(v->partyStatus))) {
+            CtrPokeTouchRect all = {0, 0, W, H};
+
+            CtrBattleUi_Draw(canvas, v);
+            sUiS = &sUiRed;
+            BMark(dirty, &all);
+        } else {
+            for (int i = 0; i < 4; ++i)
+                if (BLooksChanged(old, v, i)) {
+                    CtrPokeTouchRect g = BMCellRect(i);
+
+                    BMCard(i, v);
+                    BMark(dirty, &g);
+                }
+            if (old->cursor != v->cursor || old->showCursor != v->showCursor) {
+                BMFooter(v);
+                BMark(dirty, &sBMFooter);
+            }
+            if ((old->pressed == BUI_CANCEL) != (v->pressed == BUI_CANCEL)) {
+                BMCancel(v->pressed == BUI_CANCEL);
+                BMark(dirty, &sBMCancel);
+            }
+        }
+        sUiS = &sUiNavy;
+        return;
+    }
     if (memcmp(old->party, v->party, sizeof(v->party))) {
         BStrip(v);
         BMark(dirty, &sBStrip);
     }
-    if (old->state != v->state || (v->state == BUI_MOVE && memcmp(old->move, v->move, sizeof(v->move)))
+    if (old->state != v->state
         || (v->state == BUI_BAG && (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || old->pressed != v->pressed))
         || (v->state == BUI_PARTY && !BPartySlotsOnly(&old->pty, &v->pty))
         || (v->state == BUI_TARGET && memcmp(old->target, v->target, sizeof(v->target)))) {
         BBody(v);
         BMark(dirty, &sBBody);
-    } else if (v->state == BUI_MOVE && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
-        for (int i = 0; i < 4; ++i)
-            if (BLooksChanged(old, v, i)) {
-                Fill(sBCard[i].x, sBCard[i].y, sBCard[i].w, sBCard[i].h, UIS_BG);
-                BCard(i, v);
-                BMark(dirty, &sBCard[i]);
-            }
-        if (old->cursor != v->cursor) {
-            Fill(sBMoveFooter.x, sBMoveFooter.y, sBMoveFooter.w, sBMoveFooter.h, UIS_BG);
-            BMoveFooter(v);
-            BMark(dirty, &sBMoveFooter);
-        }
-        if ((old->pressed == BUI_CANCEL) != (v->pressed == BUI_CANCEL)) {
-            Fill(sBMoveCancel.x, sBMoveCancel.y, sBMoveCancel.w, sBMoveCancel.h, UIS_BG);
-            BCancel(&sBMoveCancel, v->pressed == BUI_CANCEL);
-            BMark(dirty, &sBMoveCancel);
-        }
     } else if (v->state == BUI_TARGET && (old->pressed != v->pressed || old->cursor != v->cursor || old->showCursor != v->showCursor)) {
         for (int i = 0; i < 4; ++i)
             if (BLooksChanged(old, v, i)) {

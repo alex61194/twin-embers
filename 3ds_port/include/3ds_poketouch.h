@@ -238,6 +238,8 @@ typedef struct {
     int8_t cursor;                  /* the controller's own cursor, drawn only while showCursor (the last input was a button) */
     uint8_t showCursor;
     uint8_t party[6];               /* 0 no Pokemon, 1 able, 2 fainted, 3 status condition */
+    uint8_t partyHp[6];             /* HP left as a percentage (an egg: 100) */
+    uint8_t partyStatus[6];         /* 0 none, else 1..6 PSN PAR SLP FRZ BRN PKRS */
     CtrBattleMove move[4];
     CtrBattleBag bag;
     CtrBattleParty pty;

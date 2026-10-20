@@ -148,7 +148,7 @@ static void SHeader(const CtrSummaryUiView *v)
     int on = SSwitchEnabled(v);
 
     UiPanel(&sSHeader, UIS_PANEL, UIS_BORDER);
-    Fill(sSHeader.x + 1, sSHeader.y + sSHeader.h - 2, sSHeader.w - 2, 1, UI_FOCUS);
+    Fill(sSHeader.x + 1, sSHeader.y + sSHeader.h - 2, sSHeader.w - 2, 1, UIS_FOCUS);
     UiRoundFill(6, 5, 34, 34, 3, UIS_PANEL_LO);
     SIcon(v, 7, 4, 1);
     if (!v->loading) {
@@ -184,7 +184,7 @@ static void SHeader(const CtrSummaryUiView *v)
         int top = UiButtonLabelTop(r, state, 1);
 
         UiButton(r, sStyle, state);
-        UiArrow(r->x + r->w / 2 - 4, top + 2, i ? 2 : -2, on ? UI_FOCUS_LIT : UI_TEXT_OFF);
+        UiArrow(r->x + r->w / 2 - 4, top + 2, i ? 2 : -2, on ? UIS_FOCUS_LIT : UI_TEXT_OFF);
     }
 }
 
@@ -311,7 +311,7 @@ static void SMoveRow(const CtrSummaryUiView *v, int i)
         Fill(r.x, r.y, r.w, r.h, UIS_PANEL_LO);
         return;
     }
-    UiPanel(&r, pressed ? UI_SELECT_HI : cursor ? UI_SELECT : UIS_PANEL_LO, cursor ? UI_FOCUS : UIS_BORDER);
+    UiPanel(&r, pressed ? UIS_SELECT_HI : cursor ? UIS_SELECT : UIS_PANEL_LO, cursor ? UIS_FOCUS : UIS_BORDER);
     if (i == 4) {
         UiTextCentered("CANCEL", &r, -1, UI_TEXT, UIS_TEXT_SH, 1);
     } else if (d->moves[i]) {
@@ -380,7 +380,7 @@ static void STrainer(const CtrSummaryUiView *v)
         SRowText(13, 112, 294, "NATURE", d->nature, 1);
         SRowText(13, 127, 294, "RIBBONS", ribbons, 1);
     }
-    UiText("TRAINER MEMO", 13, d->egg ? 113 : 143, UI_FOCUS, UIS_TEXT_SH, 1, 307);
+    UiText("TRAINER MEMO", 13, d->egg ? 113 : 143, UIS_FOCUS, UIS_TEXT_SH, 1, 307);
     BDescribeN(d->memo, 13, d->egg ? 127 : 157, 294, d->egg ? 2 : 4, UI_TEXT);
     if (d->egg)
         BDescribeN(d->hatch, 13, 154, 294, 4, UIS_TEXT_DIM);
