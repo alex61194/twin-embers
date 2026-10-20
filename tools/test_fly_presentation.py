@@ -57,6 +57,51 @@ int main(void) {
 }
 ''')
 
+    def test_pokecenter_heal_actors_are_translated(self):
+        """The healing machine's balls and monitor and the Hall of Fame monitor are drawn at fixed GBA screen
+        positions: they are moved with the authored stage, unlike the field's own sprites."""
+        code = function(additions('0108-fly-authored-geometry.json', 'src/field_effect.c'), 'CtrFieldEffect_AuthoredSprite')
+        anchor = '    if (sprite->callback == SpriteCB_FlyBirdLeaveBall'
+        heal = additions('0121-pokecenter-heal-authored-geometry.json', 'src/field_effect.c')
+        self.assertIn(anchor, code)
+        code = code.replace(anchor, heal + anchor, 1)
+        self.run_c('''
+#include <assert.h>
+#include <stdbool.h>
+#define TRUE 1
+#define MAX_SPRITES 64
+typedef unsigned char u8;
+struct Sprite { void (*callback)(struct Sprite *); bool coordOffsetEnabled; };
+static struct Sprite gSprites[64];
+static struct { u8 spriteId; } gPlayerAvatar = {0xff};
+static void Task_ShowMon_Outdoors(u8 n) { (void)n; }
+static void Task_ShowMon_Indoors(u8 n) { (void)n; }
+static void Task_FlyOut(u8 n) { (void)n; }
+static void Task_FlyIn(u8 n) { (void)n; }
+static struct { void (*func)(u8); short data[16]; } gTasks[16];
+static u8 FindTaskIdByFunc(void (*func)(u8)) {
+    for (u8 i=0;i<16;++i) if (gTasks[i].func==func) return i;
+    return 0xff;
+}
+static int FuncIsActiveTask(void (*func)(u8)) { return FindTaskIdByFunc(func)!=0xff; }
+static void SpriteCB_FlyBirdLeaveBall(struct Sprite *s) { (void)s; }
+static void SpriteCB_FlyBirdSwoopDown(struct Sprite *s) { (void)s; }
+static void SpriteCB_FlyBirdReturnToBall(struct Sprite *s) { (void)s; }
+static void SpriteCB_FlyBirdWithPlayer(struct Sprite *s) { (void)s; }
+static void SpriteCB_PokeballGlow(struct Sprite *s) { (void)s; }
+static void SpriteCB_PokecenterMonitor(struct Sprite *s) { (void)s; }
+static void SpriteCB_HallOfFameMonitor(struct Sprite *s) { (void)s; }
+static void SpriteCB_Other(struct Sprite *s) { (void)s; }
+''' + code + '''
+int main(void) {
+    gSprites[1].callback=SpriteCB_PokeballGlow; assert(CtrFieldEffect_AuthoredSprite(&gSprites[1]));
+    gSprites[1].callback=SpriteCB_PokecenterMonitor; assert(CtrFieldEffect_AuthoredSprite(&gSprites[1]));
+    gSprites[1].callback=SpriteCB_HallOfFameMonitor; assert(CtrFieldEffect_AuthoredSprite(&gSprites[1]));
+    gSprites[1].callback=SpriteCB_Other; assert(!CtrFieldEffect_AuthoredSprite(&gSprites[1]));
+    gSprites[2].callback=0; assert(!CtrFieldEffect_AuthoredSprite(&gSprites[2]));
+}
+''')
+
     def test_only_invocation_and_flight_actors_are_translated(self):
         code = additions('0108-fly-authored-geometry.json', 'src/field_effect.c')
         code = function(code, 'CtrFieldEffect_ShowMonActive') + '\n' + function(code, 'CtrFieldEffect_AuthoredSprite')

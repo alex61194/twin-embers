@@ -4078,6 +4078,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0121-pokecenter-heal-authored-geometry.json",
+   "sha256": "1a26616a3fb8442ee16ba989f900f247960382bf11ffaa1173b0bd1c08ee779c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -4437,7 +4445,7 @@
   },
   {
    "path": "tools/test_fly_presentation.py",
-   "sha256": "a4648409a36e20eda575b86efd3140cb91caed0b29a1b004d3705973314490a3",
+   "sha256": "262dea46fb49d43b554cb9b5dc01df5aa3523f328012053c6ea094d45281c1b2",
    "review_status": "reviewed",
    "credit": "alex61194; Twin Embers Port contributors; inherited/adapted upstream portions as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; external game/dependency rights excluded",
