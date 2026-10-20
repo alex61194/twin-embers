@@ -152,23 +152,25 @@ static int CtrPokeTouch_PackMenuIcon(unsigned icon, uint8_t pixels[12 * 12], uin
     return 1;
 }
 
+/* The artwork's buttons (poketouch_skin.h): the side column from x = 244 (the GBA picture ends at 243), the X and Y
+ * tiles and RUN under it. */
 const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
-    [PT_POKEDEX]    = {248,   2, 70, 25},
-    [PT_POKEMON]    = {248,  30, 70, 25},
-    [PT_BAG]        = {248,  58, 70, 25},
-    [PT_CARD]       = {248,  86, 70, 25},
-    [PT_SAVE]       = {248, 114, 70, 25},
-    [PT_OPTIONS]    = {248, 142, 70, 25},
-    [PT_REGISTERED] = {248, 170, 34, 33},
-    [PT_BIKE]       = {284, 170, 34, 33},
-    [PT_RUN]        = {248, 205, 70, 33},
+    [PT_POKEDEX]    = {244,   7, 76, 25},
+    [PT_POKEMON]    = {244,  34, 76, 25},
+    [PT_BAG]        = {244,  61, 76, 25},
+    [PT_CARD]       = {244,  88, 76, 23},
+    [PT_SAVE]       = {244, 114, 76, 29},
+    [PT_OPTIONS]    = {244, 146, 76, 23},
+    [PT_REGISTERED] = {243, 171, 36, 36},
+    [PT_BIKE]       = {282, 171, 36, 36},
+    [PT_RUN]        = {244, 209, 76, 27},
 };
 
 /* Areas that are not buttons. */
-static const CtrPokeTouchRect sMenuFrame = {2, 2, 244, 164};
-static const CtrPokeTouchRect sBar = {2, 168, 244, 70};
-const CtrPokeTouchRect gCtrPokeTouchBack = {176, 207, 64, 25};
-const CtrPokeTouchRect gCtrPokeTouchOptPage = {176, 177, 64, 25};
+static const CtrPokeTouchRect sMenuFrame = {2, 2, 242, 164};
+static const CtrPokeTouchRect sBar = {2, 168, 232, 70};
+const CtrPokeTouchRect gCtrPokeTouchBack = {172, 208, 56, 24};
+const CtrPokeTouchRect gCtrPokeTouchOptPage = {172, 180, 56, 24};
 
 /* The palette and components are the lower screen's design system (3ds_ui_theme.h / .inc). The only colour of
  * its own is the empty viewport's. */
@@ -274,14 +276,9 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
         }
 }
 
-static void Image(const PtImage *im, int x, int y, int on)
-{
-    TwinIconsPrepare();
-    Art(im->pixels, im->pal, im->w, 0, 0, im->w, im->h, x, y, on);
-}
-
 #include "3ds_ui_theme_impl.h"
 #include "3ds_icons.h"
+#include "3ds_touch_skin_impl.h"
 
 /* Exterior chrome only. The shared theme and all viewport/game/map pixels
  * keep their existing palette. Integer fills retain crisp pixel corners. */
@@ -301,17 +298,10 @@ static void Image(const PtImage *im, int x, int y, int on)
 static const UiButtonStyle sChrome = {UI_RGB(190, 22, 22), UI_RGB(255, 100, 70), UI_RGB(102, 8, 8)};
 static const UiButtonStyle sChromeOn = {UI_RGB(218, 32, 24), UI_RGB(255, 164, 98), UI_RGB(120, 10, 8)};
 
-static void ChromePanel(const CtrPokeTouchRect *r)
-{
-    UiPanel(r, PT_RED_PANEL, PT_RED_EDGE);
-    Fill(r->x + 3, r->y + 1, r->w - 6, 1, PT_RED_LIGHT);
-    Fill(r->x + 3, r->y + r->h - 2, r->w - 6, 1, UI_RGB(92, 6, 8));
-}
-
 static void ChromeButton(const CtrPokeTouchRect *r, int state)
 {
     /* Restore uncovered corner/pressed-face pixels before a partial repaint. */
-    Fill(r->x, r->y, r->w, r->h, r->x >= 248 ? PT_RED_BG : PT_RED_PANEL);
+    TsBgRect(r->x, r->y, r->w, r->h);
     UiButton(r, state & UI_SELECTED ? &sChromeOn : &sChrome, state);
     if (!(state & (UI_DISABLED | UI_SELECTED | UI_FOCUSED))) {
         CtrPokeTouchRect rim = UiInset(r, 1);
@@ -638,21 +628,27 @@ static void OptRow(int row, const CtrPokeTouchView *v)
  * has its own rectangle, filled with the card's colour before its text, so one that changes (the play clock) is
  * redrawn alone. The dialogue is the contextual bar: text on the left, the buttons in SAVE_BUTTONS on the right. */
 enum { SF_NAME, SF_BADGES, SF_DEX, SF_TIME, SF_MONEY, SF_COUNT };
-static const CtrPokeTouchRect sSavePanel = {8, 8, 232, 152};
-static const CtrPokeTouchRect sSaveButtons = {170, 174, 68, 60};   /* inside the bar, right of its text */
+static const CtrPokeTouchRect sSavePanel = {4, 4, 232, 166};
+static const CtrPokeTouchRect sSaveButtons = {166, 177, 66, 57};   /* inside the dialogue, right of its text */
 
 static CtrPokeTouchRect SaveField(int f)
 {
-    CtrPokeTouchRect r = {140, (int16_t)(35 + 21 * f), 92, 16};
+    CtrPokeTouchRect r = {kTsValue[f].area[0], kTsValue[f].area[1], (int16_t)(kTsValue[f].area[2] - kTsValue[f].area[0]),
+                          (int16_t)(kTsValue[f].area[3] - kTsValue[f].area[1])};
+
     return r;
 }
 
+/* One line of the save card: the backdrop back, then the dotted leader, the value in the artwork's lettering (the
+ * badges' pictures and the count on their line). */
 static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
 {
     CtrPokeTouchRect r = SaveField(f);
+    const uint8_t *ink = kTsValue[f].ink;
     char text[24];
+    int w, x;
 
-    Fill(r.x, r.y, r.w, r.h, PT_RED_CARD);
+    TsBgRect(r.x, r.y, r.w, r.h);
     switch (f) {
     case SF_NAME:   snprintf(text, sizeof(text), "%s", v->playerName); break;
     case SF_BADGES: snprintf(text, sizeof(text), "%u", (unsigned)v->saveBadges); break;
@@ -666,16 +662,38 @@ static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
                              (unsigned)(v->saveMinutes > 59 ? 59 : v->saveMinutes)); break;
     default:        snprintf(text, sizeof(text), "\xc2\xa5%u", (unsigned)(v->saveMoney > 999999u ? 999999u : v->saveMoney)); break;
     }
-    UiText(text, r.x + r.w - 2 - TextWidth(text), r.y + 3, UI_TEXT, UI_TEXT_SH, 1, r.x + r.w);
+    for (char *c = text; f == SF_NAME && *c; ++c)
+        if (*c >= 'a' && *c <= 'z')
+            *c = (char)(*c - ('a' - 'A'));
+    w = TsLettersWidth(text, 1);
+    x = kTsValue[f].right + 1 - w;
+    for (int dx = kTsValue[f].dotsX; dx < x - 4; ++dx)
+        for (int row = 0; row < kTsDotsPic.h; ++row) {
+            uint16_t c = kTsDotsPic.px[row * kTsDotsPic.w + (dx - kTsValue[f].dotsX) % kTsDotsPic.w];
+
+            if (c != TS_KEY)
+                Px(dx, kTsValue[f].dotsY + row, c);
+        }
+    if (f == SF_BADGES)
+        for (int i = 0; i < 5 && i < v->saveBadges; ++i)
+            TsPicDraw(kTsBadge[i], TS_NORMAL);
+    {
+        uint8_t col[3] = {ink[0], ink[1], ink[2]};
+
+        TsLetters(text, x, kTsValue[f].top, 1, col, r.x + r.w + 2);
+    }
 }
 
-/* The player's icon, 3x, on a round-cornered plate. */
+/* The player's portrait: Red's as painted; Leaf's icon (FireRed's own map icon, enlarged by 3) on the same frame. */
 static void SaveSprite(const CtrPokeTouchView *v)
 {
-    const int x0 = 18, y0 = 40, scale = 3;
-    CtrPokeTouchRect plate = {(int16_t)(x0 - 5), (int16_t)(y0 - 5), MARKER * scale + 10, MARKER * scale + 10};
+    const int scale = 3;
 
-    UiPanel(&plate, PT_RED_INSET, PT_RED_EDGE);
+    if (!v->playerFemale) {
+        TsPicDraw(&kTsPortraitPic, TS_NORMAL);
+        return;
+    }
+    TsBgRect(kTsPortraitPic.x, kTsPortraitPic.y, kTsPortraitPic.w, kTsPortraitPic.h);
     if (sPlayer.key != v->playerFemale)
         IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
     if (!sPlayer.ok)
@@ -684,31 +702,15 @@ static void SaveSprite(const CtrPokeTouchView *v)
         for (int px = 0; px < MARKER; ++px) {
             uint8_t index = sPlayer.pixels[0][py * MARKER + px];
             if (index)
-                Fill(x0 + px * scale, y0 + py * scale, scale, scale, sPlayer.pal[index]);
+                Fill(kTsPortraitPic.x + 4 + px * scale, kTsPortraitPic.y + 16 + py * scale, scale, scale, sPlayer.pal[index]);
         }
 }
 
 static void SaveDraw(const CtrPokeTouchView *v)
 {
-    static const struct { const char *text; int y; } sLabels[SF_COUNT] = {
-        {"PLAYER", 38}, {"BADGES", 59}, {"POK\xc3\xa9" "DEX", 80}, {"PLAY TIME", 101}, {"MONEY", 122}};
-    static const char title[] = "POK\xc3\xa9MON FIRE RED";
-    static const UiButtonStyle sTitle = UI_STYLE_FIGHT;
-    CtrPokeTouchRect band = {10, 10, 228, 19};
-
-    UiPanel(&sSavePanel, PT_RED_CARD, PT_RED_EDGE);
-    UiRoundFill(band.x, band.y, band.w, band.h, 2, sTitle.body);
-    Fill(band.x + 2, band.y + 1, band.w - 4, 7, UiMix(sTitle.body, sTitle.lit, 3));
-    Fill(band.x + 2, band.y + band.h - 1, band.w - 4, 1, sTitle.shade);
-    UiTextCentered(title, &band, 15, UI_TEXT, sTitle.shade, 1);
     SaveSprite(v);
-    for (int f = 0; f < SF_COUNT; ++f) {
-        UiText(sLabels[f].text, 84, sLabels[f].y, PT_RED_DIM, UI_TEXT_SH, 1, 140);
-        if (f + 1 < SF_COUNT)
-            Fill(84, sLabels[f].y + 15, 148, 1, PT_RED_RULE);
+    for (int f = 0; f < SF_COUNT; ++f)
         SaveFieldDraw(f, v);
-    }
-    UiTextCentered("Your progress will be saved.", &sSavePanel, 142, PT_RED_DIM, UI_TEXT_SH, 1);
 }
 
 static int SaveFieldChanged(int f, const CtrPokeTouchView *a, const CtrPokeTouchView *b)
@@ -722,16 +724,10 @@ static int SaveFieldChanged(int f, const CtrPokeTouchView *a, const CtrPokeTouch
     }
 }
 
-/* The dialogue's buttons: YES over NO, or a lone OK, on the right of the bar's text. */
+/* The dialogue's buttons: YES over NO as painted, or a lone OK on YES's place. */
 static CtrPokeTouchRect SaveButtonRect(int which, int state)
 {
-    CtrPokeTouchRect r = {172, 0, 64, 24};
-
-    if (state == SAVE_CONFIRM)
-        r.y = (int16_t)(which == PT_SAVE_FIRST ? 178 : 206);
-    else
-        r.y = 192;
-    return r;
+    return state == SAVE_CONFIRM && which == PT_SAVE_SECOND ? TsRect(&kTsNoPic) : TsRect(&kTsYesPic);
 }
 
 int CtrPokeTouch_SaveHit(int x, int y, int state)
@@ -747,59 +743,53 @@ int CtrPokeTouch_SaveHit(int x, int y, int state)
     return PT_SAVE_NONE;
 }
 
-/* YES is the green of going ahead, NO the navy of going back, OK the primary blue; the selected one carries the focus
- * ring, the one under a touch is pressed. While writing, a progress strip of dots instead. */
+/* YES is the artwork's green (lit when selected, darkened when not), NO its red (a green ring when selected), a lone
+ * OK the green; the one under a touch is brighter. While writing, a strip of dots instead. */
 static void SaveButtons(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *b = &sSaveButtons;
-    static const char *const sConfirm[2] = {"YES", "NO"};
+    int confirm = v->saveState == SAVE_CONFIRM;
 
-    Fill(b->x, b->y, b->w, b->h, PT_RED_PANEL);
+    TsBgRect(b->x, b->y, b->w, b->h);
     if (v->saveState == SAVE_WRITING) {
         for (int i = 0; i < 3; ++i)
             UiDisc(b->x + 22 + 12 * i, b->y + 30, 3, i == 1 ? PT_RED_DIM : PT_RED_LIGHT);
         return;
     }
-    for (int which = PT_SAVE_FIRST; which <= (v->saveState == SAVE_CONFIRM ? PT_SAVE_SECOND : PT_SAVE_FIRST); ++which) {
-        CtrPokeTouchRect r = SaveButtonRect(which, v->saveState);
-        int selected = v->saveState != SAVE_CONFIRM || v->saveSel == which - PT_SAVE_FIRST;
-        int state = (selected ? UI_FOCUSED : 0) | (v->savePressed == which ? UI_PRESSED : 0);
-        const char *label = v->saveState == SAVE_CONFIRM ? sConfirm[which - PT_SAVE_FIRST] : "OK";
+    if (confirm) {
+        int no = v->saveSel == 1, press = v->savePressed == PT_SAVE_SECOND;
+        CtrPokeTouchRect r = TsRect(&kTsNoPic);
 
-        if (which == PT_SAVE_FIRST && v->saveState == SAVE_CONFIRM) {
-            static const UiButtonStyle sYes = {UI_RGB(34, 150, 68), UI_RGB(90, 220, 120), UI_RGB(16, 70, 30)};
-            UiButton(&r, &sYes, state);
-            if (selected) {
-                uint16_t gold = UI_RGB(255, 224, 80);
-                Fill(r.x + 1, r.y + 1, 5, 2, gold); Fill(r.x + 1, r.y + 1, 2, 5, gold);
-                Fill(r.x + r.w - 6, r.y + 1, 5, 2, gold); Fill(r.x + r.w - 3, r.y + 1, 2, 5, gold);
-                Fill(r.x + 1, r.y + r.h - 3, 5, 2, gold); Fill(r.x + 1, r.y + r.h - 6, 2, 5, gold);
-                Fill(r.x + r.w - 6, r.y + r.h - 3, 5, 2, gold); Fill(r.x + r.w - 3, r.y + r.h - 6, 2, 5, gold);
-            }
-            UiTextCentered("YES", &r, UiButtonLabelTop(&r, state, 1), UI_TEXT, sYes.shade, 1);
-        } else {
-            ChromeButton(&r, state);
-            UiTextCentered(label, &r, UiButtonLabelTop(&r, state, 1), UiLabelColor(state), UI_TEXT_SH, 1);
-        }
+        TsPicDraw(&kTsNoPic, press ? TS_BRIGHT : TS_NORMAL);
+        if (no)
+            UiRing(&r, 3, 1, UI_RGB(88, 252, 136));
+        TsMaskDraw(&kTsNoMaskPic, 0, 0);
+    }
+    {
+        int yes = !confirm || v->saveSel == 0, press = v->savePressed == PT_SAVE_FIRST;
+
+        TsPicDraw(&kTsYesPic, press ? TS_BRIGHT : yes ? TS_NORMAL : TS_DARK);
+        if (confirm)
+            TsMaskDraw(&kTsYesMaskPic, 0, 0);
+        else
+            TsLetters("OK", kTsYesPic.x + (kTsYesPic.w - TsLettersWidth("OK", 1)) / 2, kTsYesPic.y + 10, 1, kTsWhite,
+                      kTsYesPic.x + kTsYesPic.w);
     }
 }
 
-/* The exterior FireRed-red backdrop. */
+/* The artwork's backdrop: the whole screen as painted, what the game changes taken out. */
 static void Frame(void)
 {
-    Fill(0, 0, W, H, PT_RED_BG);
-    Fill(0, 0, W, 2, PT_RED_EDGE);
+    TsBackdrop();
 }
 
-/* The viewport's frame: a light rim round the picture (the map, the GBA screen, OPTIONS or SAVE). */
+/* The viewport: the artwork's card behind the GBA picture, the map, OPTIONS, or the save card's values. */
 static void MenuFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sMenuFrame;
 
-    UiRoundRect(r, UI_RADIUS_PANEL, PT_RED_EDGE);
-    Fill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_OUTLINE);
+    TsBgRect(r->x, r->y, r->w, r->h);
     if (v->save && !v->viewport) {
-        Fill(PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H, PT_RED_VIEW);
         SaveDraw(v);
         return;
     }
@@ -842,17 +832,15 @@ static void OptPageButton(const CtrPokeTouchView *v)
     UiTextCentered(label, r, top, ink, UI_TEXT_SH, 1);
 }
 
-/* The contextual bar: up to three lines, 18 pixels apart, the block centred on the bar's middle line (y = 181 / 199 /
- * 217 with three); the first line is the subject (white), the others what is known about it (dim). A blue edge on the
- * left marks it as the screen's caption. */
+/* The contextual bar is the artwork's dialogue box: up to three lines, 18 pixels apart, the block centred on its middle
+ * line (y = 190 / 208 with two); the first line is the subject (white), the others what is known about it (dim). */
 static void Bar(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sBar;
     int lines = 0;
     int hasPage = v->options && !v->viewport && v->optPageCount > 1;
 
-    ChromePanel(r);
-    Fill(r->x + 2, r->y + 6, 2, r->h - 12, PT_RED_EDGE);
+    TsBgRect(r->x, r->y, r->w, r->h);
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
@@ -861,7 +849,7 @@ static void Bar(const CtrPokeTouchView *v)
     int limit = (v->backVisible || hasPage) ? gCtrPokeTouchBack.x - 4
               : v->save && v->saveState != SAVE_WRITING ? sSaveButtons.x - 2 : r->x + r->w - 8;
     for (int i = 0; i < lines; ++i)
-        UiText(v->bar[i], 10, top + i * 18, i == 0 ? UI_TEXT : (v->save || v->options) && !v->viewport ? PT_RED_DIM : UI_TEXT_DIM, UI_TEXT_SH, 1, limit);
+        UiText(v->bar[i], 22, top + i * 18, i == 0 ? UI_TEXT : PT_RED_DIM, UI_TEXT_SH, 1, limit);
     if (hasPage)
         OptPageButton(v);
     if (v->backVisible)
@@ -870,152 +858,52 @@ static void Bar(const CtrPokeTouchView *v)
         SaveButtons(v);
 }
 
-/* The colour that marks each destination on its button: the same as its role everywhere (POKeMON blue, BAG green). */
-static const uint16_t sAccent[PT_COUNT] = {
-    [PT_POKEDEX] = UI_RGB(255, 194, 40), [PT_POKEMON] = UI_RGB(64, 190, 240), [PT_BAG] = UI_RGB(60, 224, 100),
-    [PT_CARD] = UI_RGB(236, 150, 50), [PT_SAVE] = UI_RGB(150, 110, 230), [PT_OPTIONS] = UI_RGB(130, 150, 186),
-    [PT_REGISTERED] = UI_RGB(64, 140, 240), [PT_BIKE] = UI_RGB(60, 186, 100), [PT_RUN] = UI_RGB(60, 186, 100),
-};
-
-/* A shortcut's key: a small round badge with the letter (X blue, Y green, as on the console). */
-static void KeyBadge(char letter, int x, int y, uint16_t color)
+/* The artwork's picture of an element, and its area. */
+static const TsPic *ButtonPic(int id, int selected, int bike)
 {
-    static const uint8_t sX[5] = {5, 5, 2, 5, 5}, sY[5] = {5, 5, 2, 2, 2};
-    const uint8_t *g = letter == 'X' ? sX : sY;
-
-    UiRoundFill(x, y, 9, 9, 2, UI_OUTLINE);
-    UiRoundFill(x + 1, y + 1, 7, 7, 2, color);
-    for (int row = 0; row < 5; ++row)
-        for (int col = 0; col < 3; ++col)
-            if (g[row] & (4 >> col))
-                Px(x + 3 + col, y + 2 + row, UI_TEXT);
-}
-
-/* A sidebar button: a dark raised card with its destination's colour as an edge on the left, the icon and the label.
- * Selected (the screen shown, or the running mode on) it turns the selection blue with a bright ring; pressed it sinks;
- * disabled the icon is grey and the label dim. */
-/* The side menu's icons from the pack's own 24x24 art, reduced by area to 16x16 (the 12x12 samples stay as the fallback). */
-static PtSoft sSoft[6];
-
-static void SoftIconsPrepare(void)
-{
-    static bool ready;
-
-    if (ready)
-        return;
-    ready = true;
-    for (int n = 0; n < 6; ++n)
-        PokeTouch_SoftIcon(sMenuItemArt[n], &sSoft[n]);
-}
-
-/* The RUN tile's shoe: the battle's 42x34 art (3ds_icons.h) halved to 21x17 by 2x2 boxes, a box opaque when two of its four
- * pixels are, its colour the mean of those. The tile once drew the full art as if it were 24x24 and showed noise. */
-#define RUN_SHOE_W ((SBARTSHOE_W + 1) / 2)
-#define RUN_SHOE_H ((SBARTSHOE_H + 1) / 2)
-static void RunShoe(int x, int y, int on)
-{
-    static uint16_t px[RUN_SHOE_W * RUN_SHOE_H];
-    static uint8_t solid[RUN_SHOE_W * RUN_SHOE_H];
-    static int ready;
-
-    if (!ready) {
-        const uint8_t *src;
-        const uint16_t *pal;
-
-        BIconsPrepare();
-        src = sBImg[BI_SHOE].image.pixels;
-        pal = sBImg[BI_SHOE].image.pal;
-        for (int oy = 0; oy < RUN_SHOE_H; ++oy)
-            for (int ox = 0; ox < RUN_SHOE_W; ++ox) {
-                int n = 0, r = 0, g = 0, b = 0;
-
-                for (int dy = 0; dy < 2; ++dy)
-                    for (int dx = 0; dx < 2; ++dx) {
-                        int sx = ox * 2 + dx, sy = oy * 2 + dy;
-                        uint8_t v = sx < SBARTSHOE_W && sy < SBARTSHOE_H ? src[sy * SBARTSHOE_W + sx] : 0;
-
-                        if (v) {
-                            ++n;
-                            r += pal[v] >> 11;
-                            g += (pal[v] >> 5) & 63;
-                            b += pal[v] & 31;
-                        }
-                    }
-                if (n >= 2) {
-                    solid[oy * RUN_SHOE_W + ox] = 1;
-                    px[oy * RUN_SHOE_W + ox] = (uint16_t)((r / n) << 11 | (g / n) << 5 | (b / n));
-                }
-            }
-        ready = 1;
+    switch (id) {
+    case PT_REGISTERED: return &kTsTileXPic;
+    case PT_BIKE:       return bike ? &kTsTileYPic : &kTsTileYEmptyPic;
+    case PT_RUN:        return selected ? &kTsRunOnPic : &kTsRunOffPic;
+    default:            return selected ? kTsSideSel[id] : kTsSide[id];
     }
-    for (int oy = 0; oy < RUN_SHOE_H; ++oy)
-        for (int ox = 0; ox < RUN_SHOE_W; ++ox)
-            if (solid[oy * RUN_SHOE_W + ox])
-                Px(x + ox, y + oy, Tone(px[oy * RUN_SHOE_W + ox], on));
 }
 
+static CtrPokeTouchRect Area(int id)
+{
+    return TsRect(ButtonPic(id, 0, 0));
+}
+
+/* A button as painted: selected (the screen shown, or the running mode on) it is the golden one, pressed it is lit,
+ * disabled it is grey. The Trainer Card carries the player's name (uppercase) and the shortcuts their item. */
 static void Button(int id, const CtrPokeTouchView *v)
 {
-    const CtrPokeTouchRect *r = &gCtrPokeTouchRects[id];
     int on = v->enabled[id] || v->selected == id;
     int pressed = v->enabled[id] && v->pressed == id;
     int selected = v->selected == id || (id == PT_RUN && v->enabled[id] && v->running);
-    int state = (pressed ? UI_PRESSED : 0) | (selected ? UI_SELECTED : 0) | (on ? 0 : UI_DISABLED);
-    int dy = pressed ? 1 : 0, face = r->h - 2 - (pressed ? 1 : UI_DEPTH);
-    uint16_t ink = on ? UI_TEXT : UI_TEXT_OFF;
+    int mode = !on ? TS_DIM : pressed ? TS_BRIGHT : TS_NORMAL;
+    const TsPic *pic = ButtonPic(id, selected, v->bikeItem != 0);
 
-    ChromeButton(r, state);
-    if (id <= PT_OPTIONS) {
-        static const PtImage *const sSideIcons[] = {
-            [PT_POKEDEX] = &sPt_icon_pokedex, [PT_POKEMON] = &sPt_icon_pokemon, [PT_BAG] = &sPt_icon_bag,
-            [PT_CARD] = &sPt_icon_card, [PT_SAVE] = &sPt_icon_save, [PT_OPTIONS] = &sPt_icon_options,
-        };
-        static const char *const sLabels[] = {
-            [PT_POKEDEX] = "POK\xc3\xa9" "DEX", [PT_POKEMON] = "POK\xc3\xa9MON", [PT_BAG] = "BAG",
-            [PT_CARD] = "CARD", [PT_SAVE] = "SAVE", [PT_OPTIONS] = "OPTIONS",
-        };
-        /* The Trainer Card is the player's own: it carries their name in uppercase to match the sidebar. */
-        char cardName[16];
-        const char *label = sLabels[id];
-        int mid = r->y + 1 + dy + face / 2;
-
-        if (id == PT_CARD && v->playerName[0]) {
-            for (int c = 0; c < (int)sizeof(cardName) - 1 && v->playerName[c]; ++c) {
-                char ch = v->playerName[c];
-                cardName[c] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
-                cardName[c + 1] = 0;
-            }
-            label = cardName;
-        }
-
-        SoftIconsPrepare();
-        Fill(r->x + 3, mid - 6, 2, 12, on ? sAccent[id] : UI_TEXT_OFF);
-        if (sSoft[id].ok)
-            PokeTouch_SoftDraw(&sSoft[id], r->x + 6, mid - 8, on);
-        else
-            Image(sSideIcons[id], r->x + 8, mid - 6, on);
-        UiText(label, r->x + 23, mid - 4, ink, UI_TEXT_SH, 1, r->x + r->w - 3);
-        return;
-    }
+    TsBgRect(pic->x, pic->y, pic->w, pic->h);
+    TsPicDraw(pic, mode);
     switch (id) {
-    case PT_REGISTERED:
-    case PT_BIKE:
-        ItemArt(id == PT_REGISTERED ? ICON_REGISTERED : ICON_BIKE, id == PT_REGISTERED ? v->registeredItem : v->bikeItem,
-                r->x + 10, r->y + 9 + dy, on);
-        KeyBadge(id == PT_REGISTERED ? 'X' : 'Y', r->x + 3, r->y + 3 + dy, on ? sAccent[id] : UI_TEXT_OFF);
-        break;
-    case PT_RUN:
-        {
-            int pillX = r->x + 5, pillY = r->y + 10 + dy;
-            uint16_t pillBg = selected ? UI_RGB(34, 150, 68) : UI_RGB(60, 64, 72);
-            CtrPokeTouchRect pill = {(int16_t)pillX, (int16_t)pillY, 18, 11};
+    case PT_CARD:
+        if (v->playerName[0]) {
+            char name[16];
+            int n = 0;
 
-            UiRoundFill(pillX, pillY, 18, 11, 2, pillBg);
-            UiRoundRect(&pill, 2, selected ? UI_RGB(80, 220, 120) : UI_RGB(100, 104, 112));
-            UiTextCentered(selected ? "ON" : "OFF", &pill, pillY + 2, UI_TEXT, 0, 1);
-            UiText("RUN", r->x + 25, r->y + 11 + dy, ink, UI_TEXT_SH, 1, r->x + 46);
-            RunShoe(r->x + 47, r->y + 6 + dy, on);
+            for (; n < (int)sizeof(name) - 1 && v->playerName[n]; ++n) {
+                char ch = v->playerName[n];
+                name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
+            }
+            name[n] = 0;
+            TsLetters(name, TS_CARD_LABEL_X + 3, TS_CARD_LABEL_Y, 1, kTsWhite, TS_CARD_LABEL_X + 45);
         }
+        break;
+    case PT_REGISTERED:
+        ItemArt(ICON_REGISTERED, v->registeredItem, pic->x + (pic->w - 20) / 2, pic->y + 12, on);
+        break;
+    default:
         break;
     }
 }
@@ -1165,7 +1053,11 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
         if (!Changed(i, old, v))
             continue;
         Button(i, v);
-        Mark(dirty, &gCtrPokeTouchRects[i]);
+        {
+            CtrPokeTouchRect area = Area(i);
+
+            Mark(dirty, &area);
+        }
     }
 }
 

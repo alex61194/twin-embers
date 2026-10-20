@@ -1134,11 +1134,6 @@ static void MsBlend(int x, int y, int r, int g, int b, int a)
     Px(x, y, MsRgb(or_ + (r - or_) * a / 255, og + (g - og) * a / 255, ob + (b - ob) * a / 255));
 }
 
-static void MsBlend565(int x, int y, uint16_t c, int a)
-{
-    MsBlend(x, y, (c >> 11) * 255 / 31, ((c >> 5) & 63) * 255 / 63, (c & 31) * 255 / 31, a);
-}
-
 static void MsBg(int x, int y, int w, int h)
 {
     for (int v = 0; v < h; ++v)
@@ -1185,7 +1180,7 @@ static int MsTextWidth(const char *s)
     return n ? n * 6 : 0;
 }
 
-/* The move name's lettering (9 rows, from the artwork). */
+/* The move name's lettering (8 rows, after the artwork's). */
 static void MsTitle(const char *s, int x, int y, int limit)
 {
     for (; *s; ++s) {
@@ -1195,7 +1190,7 @@ static void MsTitle(const char *s, int x, int y, int limit)
 
         if (x + w > limit)
             return;
-        for (int r = 0; r < 9; ++r)
+        for (int r = 0; r < 8; ++r)
             for (int c = 0; c < w; ++c)
                 MsBlend(x + c, y + r, 255, 255, 255, kMskTitleRows[g][r][c] * 17);
         x += w + 1;
@@ -1291,70 +1286,51 @@ static void BMCard(int i, const CtrBattleView *v)
     const CtrBattleMove *m = &v->move[i];
     int ox = kMskCardPos[i][0], oy = kMskCardPos[i][1];
     int type = m->present && m->type < 18 ? m->type : 0;
-    const uint8_t *n = m->present ? kMskTypeNeon[type] : kMsEmpty, *pc = kMskTypePill[type];
+    const uint8_t *n = m->present ? kMskTypeNeon[type] : kMsEmpty;
     int pressed = v->pressed == i;
 
+    /* The glow round the frame from the artwork's card in the type's colour; inside it, the owner's card for the type. */
     for (int y = 0; y < MSK_CARD_H; ++y)
         for (int x = 0; x < MSK_CARD_W; ++x) {
             const int16_t *t = kMskCard[y][x];
 
-            int in = m->present && x >= MSK_BODY_U0 && x < MSK_BODY_U1 && y >= MSK_BODY_V0 && y < MSK_BODY_V1;
-            const int8_t *d = kMskTypeBody[type];
-
-            Px(ox + x, oy + y, MsRgb(t[0] + t[3] * n[0] / 256 + (in ? d[0] : 0), t[1] + t[3] * n[1] / 256 + (in ? d[1] : 0),
-                                     t[2] + t[3] * n[2] / 256 + (in ? d[2] : 0)));
+            if (m->present && x >= 3 && x < 3 + MSK_DLX_W && y >= 3 && y < 3 + MSK_DLX_H)
+                Px(ox + x, oy + y, kMskDlx[type][y - 3][x - 3]);
+            else
+                Px(ox + x, oy + y, MsRgb(t[0] + t[3] * n[0] / 256, t[1] + t[3] * n[1] / 256, t[2] + t[3] * n[2] / 256));
         }
     if (!m->present)
         return;
-    for (int y = 0; y < MSK_PILL_H; ++y)
-        for (int x = 0; x < MSK_PILL_W; ++x) {
-            const int16_t *t = kMskPill[y][x];
-
-            const int8_t *d = kMskTypeBody[type];
-            int cu = MSK_PILL_U + x, cv = MSK_PILL_V + y;            /* inside the capsule (cell 7..55 x 31..46, round ends)? */
-            int ex = cu < 15 ? 15 - cu : cu > 47 ? cu - 47 : 0, ey = cv * 2 < 77 ? 77 - cv * 2 : cv * 2 - 77;
-            int bg = cv >= 31 && cv <= 46 && cu >= 7 && cu <= 55 && ex * ex * 4 + ey * ey <= 16 * 16 ? 0 : 256;
-
-            Px(ox + MSK_PILL_U + x, oy + MSK_PILL_V + y,
-               MsRgb(t[0] + (t[3] * n[0] + t[4] * pc[0] + d[0] * bg) / 256, t[1] + (t[3] * n[1] + t[4] * pc[1] + d[1] * bg) / 256,
-                     t[2] + (t[3] * n[2] + t[4] * pc[2] + d[2] * bg) / 256));
-        }
     {
         static const uint8_t kWhite[3] = {248, 252, 248};
-        int lit = m->maxPp ? (int)(((unsigned)m->pp * 10 + m->maxPp - 1) / m->maxPp) : 0;
-        const uint8_t *s = m->pp * 5 <= m->maxPp ? kMsSegLow : kMskTypeSeg[type];
-        const int8_t *d = kMskTypeBody[type];
         char pp[16];
 
-        for (int y = 0; y < MSK_ICON_H; ++y)
-            for (int x = 0; x < MSK_ICON_W; ++x)
-                MsBlend565(ox + MSK_ICON_U + x, oy + MSK_ICON_V + y, kMskIcon[type][y][x][0], kMskIcon[type][y][x][1]);
-        MsTitle(m->name, ox + 13, oy + 17, ox + 112);
-        MsText(m->typeName, ox + 31 - MsTextWidth(m->typeName) / 2, oy + 36, kWhite);
-        for (int y = 0; y < MSK_SEG_H; ++y)
-            for (int c = 0; c < 10; ++c) {
-                int u0 = MSK_SEG_U0 - 1 + (c * MSK_SEG_PITCH3) / 3 - y / 2;
-                int w = MSK_SEG_U0 - 1 + ((c + 1) * MSK_SEG_PITCH3) / 3 - y / 2 - u0;
+        /* The PP bar, one piece, the same place and length on every card, leaning like the cards' cells: lit from the left as far as the PP left,
+         * empty after; the lit part in the card's colour over half, yellow at half, orange at a quarter (FireRed's steps). */
+        static const uint8_t kWarn[2][3] = {{248, 216, 48}, {248, 136, 32}};
+        int warn = m->pp * 4 <= m->maxPp ? 1 : m->pp * 2 <= m->maxPp ? 0 : -1;
+        int x0 = MSK_DLX_BAR_X0, x1 = MSK_DLX_BAR_X1;
+        int fill = m->maxPp ? (int)((unsigned)m->pp * (unsigned)(x1 - x0 + 1) / m->maxPp) : 0;
 
-                for (int k = 0; k < w && k < MSK_SEG_CELL; ++k) {
-                    uint16_t col;
+        if (m->pp && fill < 1)
+            fill = 1;
+        for (int y = 0; y < MSK_DLX_BAR_ROWS; ++y) {
+            int v = MSK_DLX_BAR_V0 + y, off = MSK_DLX_SEG_ROW >= v ? (MSK_DLX_SEG_ROW - v) / 2 : -((v - MSK_DLX_SEG_ROW + 1) / 2);
+            const uint8_t *l = kMskDlxBar[type].lit[y], *e = kMskDlxBar[type].empty[y];
+            uint16_t lit = MsRgb(l[0], l[1], l[2]);
 
-                    if (c < lit) {
-                        const int16_t *t = kMskSegLit[y][k];
+            if (warn >= 0) {                                  /* the warning colour, as bright as this row of the bar */
+                int lum = (l[0] * 3 + l[1] * 6 + l[2]) / 10, ref = (kWarn[warn][0] * 3 + kWarn[warn][1] * 6 + kWarn[warn][2]) / 10;
 
-                        int bg = t[4] > 96 ? 0 : 256;
-
-                        col = MsRgb(t[0] + (t[3] * n[0] + t[4] * s[0] + d[0] * bg) / 256, t[1] + (t[3] * n[1] + t[4] * s[1] + d[1] * bg) / 256,
-                                    t[2] + (t[3] * n[2] + t[4] * s[2] + d[2] * bg) / 256);
-                    } else {
-                        const int16_t *t = kMskSegSpent[y][k];
-
-                        col = MsRgb(t[0] + t[3] * n[0] / 256 + d[0], t[1] + t[3] * n[1] / 256 + d[1], t[2] + t[3] * n[2] / 256 + d[2]);
-                    }
-                    Px(ox + u0 + k, oy + MSK_SEG_V + y, col);
-                }
+                lit = MsRgb(kWarn[warn][0] * lum / ref, kWarn[warn][1] * lum / ref, kWarn[warn][2] * lum / ref);
             }
-        snprintf(pp, sizeof(pp), "PP %u/%u", m->pp, m->maxPp);
+            for (int x = x0; x <= x1; ++x)
+                Px(ox + 3 + x + off, oy + 3 + v, x - x0 < fill ? lit : MsRgb(e[0], e[1], e[2]));
+        }
+        MsTitle(m->name, ox + 13, oy + 18, ox + 112);
+        MsText(m->typeName, ox + 3 + kMskDlxPillMid[type] - MsTextWidth(m->typeName) / 2, oy + 36, kWhite);
+        MsText("PP", ox + 3 + 80, oy + 50, kWhite);              /* "PP" where the card writes it, the count to its right */
+        snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
         MsText(pp, ox + 128 - MsTextWidth(pp), oy + 50, m->pp ? kWhite : kMsSegLow);
         if (m->matchup != CTR_FX_NONE && m->matchup <= CTR_FX_NEUTRAL) {
             /* x2 star, x1/2 and x1/4 diamond, x0 cross, x4 star, x1 dash */
