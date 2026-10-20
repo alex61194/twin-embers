@@ -18,7 +18,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.1.2). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.1.3). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
