@@ -17,6 +17,9 @@
 static uint8_t font[256 * 64];
 const uint8_t *CtrTwinFontData(void) { return font; }
 unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 6; }
+static uint8_t smallFont[256 * 32], smallWidth[256];
+const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { return code < 256 && smallWidth[code] ? smallWidth[code] : 5; }
 #ifndef BATTLE_UI_EXTERNAL_LOAD
 /* The pack's two item icons, synthesised: a literal-only GBA LZ stream of 24x24 4bpp tiles (3x3) and of a palette, so
  * the full-size icon path runs without game data. With BATTLE_UI_NO_PACK nothing is found and the fallbacks draw. */
@@ -238,9 +241,18 @@ int main(int argc, char **argv)
 #endif
     if (fontPath) {
         FILE *f = fopen(fontPath, "rb");
+        const char *smallPath = getenv("BATTLE_UI_SMALL_FONT");
 
         assert(f && fread(font, 1, sizeof(font), f) == sizeof(font));
         fclose(f);
+        if (smallPath && (f = fopen(smallPath, "rb")) != NULL) {     /* the game's small font: blank unless named */
+            assert(fread(smallFont, 1, sizeof(smallFont), f) == sizeof(smallFont));
+            fclose(f);
+            if ((smallPath = getenv("BATTLE_UI_SMALL_WIDTHS")) != NULL && (f = fopen(smallPath, "rb")) != NULL) {
+                assert(fread(smallWidth, 1, sizeof(smallWidth), f) == sizeof(smallWidth));
+                fclose(f);
+            }
+        }
     }
 #ifndef BATTLE_UI_BEFORE
     legibility();
@@ -248,6 +260,8 @@ int main(int argc, char **argv)
     memset(&v, 0, sizeof(v));
     v.pressed = -1;
     v.party[0] = v.party[1] = v.party[2] = v.party[4] = 1; v.party[3] = 2;
+    v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
+    names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeHp = 158; v.activeMaxHp = 158;
     CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
     old = v;
@@ -280,9 +294,12 @@ int main(int argc, char **argv)
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
 #ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MATCHUPS")) {
-        /* The matchup tags (opt-in: the baseline comparison above does not draw them). A tag's fill is read back
-         * next to its left edge: green for x2 and x4, orange for x1/2, red for x0. */
+        /* The matchup marks (opt-in: the baseline comparison above does not draw them). Right of the type pill, on the
+         * row y+22..y+35 of each move card, a glyph and "xN" in the colour of their meaning (x2 green, x1/2 amber,
+         * x0 red, x4 lime): that colour is counted over the row, and the other three must not appear in it. */
         static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        const uint16_t fill[4] = {MsRgb(kMskMark0Ink[0], kMskMark0Ink[1], kMskMark0Ink[2]), MsRgb(kMskMark1Ink[0], kMskMark1Ink[1], kMskMark1Ink[2]),
+                                  MsRgb(kMskMark2Ink[0], kMskMark2Ink[1], kMskMark2Ink[2]), MsRgb(kMskMark3Ink[0], kMskMark3Ink[1], kMskMark3Ink[2])};
         CtrBattleView w = v;
 
         for (k = 0; k < 4; ++k) {
@@ -292,33 +309,103 @@ int main(int argc, char **argv)
         }
         w.showCursor = 0;
         settle(&old, &w); old = w; put(out, "03b_move_matchups");
-        int greens[4];
-
         for (k = 0; k < 4; ++k) {
-            const CtrPokeTouchRect *r = &sBCard[k];
-            unsigned c = at(r->x + 63 + 3, r->y + 28 + 7);
-            int red = (int)(c >> 11) << 3, green = (int)((c >> 5) & 63) << 2;
+            const CtrPokeTouchRect rr = BMCardRect(k), *r = &rr;
+            int found = 0;
 
-            greens[k] = green;
+            for (int y = r->y + 26; y < r->y + 45; ++y)
+                for (int x = r->x + 57; x < r->x + r->w; ++x)
+                    found += at(x, y) == fill[k];
+            assert(found >= 12);           /* the mark is there, in the colour of its meaning */
+            for (int c = 0; c < 4; ++c)
+                if (c != k) {
+                    int other = 0;
 
-            if (fx[k] == CTR_FX_DOUBLE || fx[k] == CTR_FX_QUADRUPLE)
-                assert(green > red + 30);
-            else if (fx[k] == CTR_FX_HALF)
-                assert(red > green + 30 && green > 90);
-            else
-                assert(red > green + 60 && green < 90);
+                    for (int y = r->y + 26; y < r->y + 45; ++y)
+                        for (int x = r->x + 57; x < r->x + r->w; ++x)
+                            other += at(x, y) == fill[c];
+                    assert(other == 0);    /* and in no other */
+                }
         }
-        assert(greens[3] > greens[0] + 16);    /* x4 is a brighter green than x2 */
-        /* A neutral hit draws nothing: that spot is the card's own again. */
+        /* A neutral hit draws nothing: the row of the first card has none of its colour any more. */
         {
-            const CtrPokeTouchRect *r = &sBCard[0];
-            unsigned tagged = at(r->x + 66, r->y + 35);
+            const CtrPokeTouchRect rr = BMCardRect(0), *r = &rr;
+            int left = 0;
 
             w.move[0].matchup = CTR_FX_NONE;
             settle(&old, &w); old = w;
-            assert(at(r->x + 66, r->y + 35) != tagged);
+            for (int y = r->y + 26; y < r->y + 45; ++y)
+                for (int x = r->x + 57; x < r->x + r->w; ++x)
+                    left += at(x, y) == fill[0];
+            assert(left == 0);
         }
         settle(&old, &v); old = v;       /* and back to the cards without tags */
+    }
+#endif
+#ifndef BATTLE_UI_BEFORE
+    if (getenv("BATTLE_UI_TYPES")) {
+        /* The type sheet's eighteen cards (opt-in), four to a screen: "98_types_N", for a comparison with the sheet. */
+        static const struct { const char *name, *type; int t, pp, max, fx; } kSheet[18] = {
+            {"FLAMETHROWER", "FIRE", 10, 10, 15, CTR_FX_DOUBLE}, {"EARTHQUAKE", "GROUND", 4, 8, 10, CTR_FX_HALF},
+            {"SURF", "WATER", 11, 3, 15, CTR_FX_IMMUNE}, {"SOLARBEAM", "GRASS", 12, 4, 10, CTR_FX_QUADRUPLE},
+            {"THUNDERBOLT", "ELECTR", 13, 15, 15, CTR_FX_DOUBLE}, {"ICE BEAM", "ICE", 15, 10, 10, CTR_FX_DOUBLE},
+            {"AERIAL ACE", "FLYING", 2, 20, 20, CTR_FX_DOUBLE}, {"ROCK SLIDE", "ROCK", 5, 10, 10, CTR_FX_DOUBLE},
+            {"CROSS CHOP", "FIGHT", 1, 5, 5, CTR_FX_DOUBLE}, {"SLUDGE BOMB", "POISON", 3, 10, 10, CTR_FX_DOUBLE},
+            {"MEGAHORN", "BUG", 6, 7, 10, CTR_FX_DOUBLE}, {"IRON TAIL", "STEEL", 8, 12, 15, CTR_FX_HALF},
+            {"PSYCHIC", "PSYCHC", 14, 10, 10, CTR_FX_DOUBLE}, {"SHADOW BALL", "GHOST", 7, 12, 15, CTR_FX_DOUBLE},
+            {"CRUNCH", "DARK", 17, 15, 15, CTR_FX_DOUBLE}, {"DRAGON CLAW", "DRAGON", 16, 15, 15, CTR_FX_DOUBLE},
+            {"BODY SLAM", "NORMAL", 0, 15, 15, CTR_FX_NEUTRAL}, {"CURSE", "???", 9, 10, 10, CTR_FX_NEUTRAL}};
+        CtrBattleView w = v;
+
+        w.showCursor = 0; w.pressed = -1;
+        for (int screen = 0; screen < 5; ++screen) {
+            char name[32];
+
+            for (k = 0; k < 4; ++k) {
+                CtrBattleMove *m = &w.move[k];
+                int n = screen * 4 + k;
+
+                memset(m, 0, sizeof(*m));
+                if (n >= 18)
+                    continue;
+                m->present = 1; m->type = (uint8_t)kSheet[n].t; m->pp = (uint8_t)kSheet[n].pp; m->maxPp = (uint8_t)kSheet[n].max;
+                m->matchup = (uint8_t)kSheet[n].fx;
+                names(m->name, sizeof(m->name), kSheet[n].name); names(m->typeName, sizeof(m->typeName), kSheet[n].type);
+            }
+            settle(&old, &w); old = w;
+            snprintf(name, sizeof(name), "98_types_%d", screen);
+            put(out, name);
+        }
+        settle(&old, &v); old = v;
+    }
+#endif
+#ifndef BATTLE_UI_BEFORE
+    if (getenv("BATTLE_UI_MOCK")) {
+        /* The reference mockup's data (opt-in): drawn as "99_mock" for a pixel comparison with the design. */
+        static const char *const nm[4] = {"FLAMETHROWER", "EARTHQUAKE", "SURF", "SOLARBEAM"};
+        static const char *const tn[4] = {"FIRE", "GROUND", "WATER", "GRASS"};
+        static const int ty[4] = {10, 4, 11, 12}, pp[4] = {10, 8, 3, 4}, mp[4] = {15, 10, 15, 10};
+        static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        CtrBattleView w = v;
+
+        for (k = 0; k < 4; ++k) {
+            CtrBattleMove *m = &w.move[k];
+
+            memset(m, 0, sizeof(*m));
+            m->present = 1; m->type = (uint8_t)ty[k]; m->pp = (uint8_t)pp[k]; m->maxPp = (uint8_t)mp[k]; m->matchup = fx[k];
+            names(m->name, sizeof(m->name), nm[k]); names(m->typeName, sizeof(m->typeName), tn[k]);
+            names(m->power, sizeof(m->power), "90");
+        }
+        names(w.move[0].accuracy, sizeof(w.move[0].accuracy), "100");
+        w.move[0].effectChance = 10; w.move[0].stab = 1;
+        names(w.move[0].desc, sizeof(w.move[0].desc), "A powerful fire attack that may inflict a burn.");
+        w.cursor = 0; w.showCursor = 1; w.pressed = -1;
+        for (k = 0; k < 6; ++k) { w.party[k] = 1; w.partyHp[k] = 100; w.partyStatus[k] = 0; }
+        w.party[1] = 3; w.partyHp[1] = 50; w.partyStatus[1] = 2; w.party[3] = 2; w.partyHp[3] = 0;
+        settle(&old, &w); old = w; put(out, "99_mock");
+        w.showCursor = 0; w.pressed = 1; settle(&old, &w); old = w; put(out, "99_mock_card");
+        w.pressed = BUI_CANCEL; settle(&old, &w); old = w; put(out, "99_mock_cancel");
+        settle(&old, &v); old = v;
     }
 #endif
     v.pressed = 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
@@ -448,6 +535,8 @@ int main(int argc, char **argv)
         for (size_t i = 0; i < sizeof(states) / sizeof(states[0]); ++i) {
             s.state = (uint8_t)states[i];
             CtrBattleUi_Draw(canvas, &s);
+            if (states[i] == BUI_MOVE || states[i] == BUI_IDLE || states[i] == BUI_ACTION)
+                continue;                  /* these screens are their artwork, whatever colours it holds */
             for (int n = 0; n < W * H; ++n)
                 for (size_t j = 0; j < sizeof(navy) / sizeof(navy[0]); ++j)
                     if (canvas[n] == navy[j]) {

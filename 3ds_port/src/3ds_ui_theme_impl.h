@@ -20,6 +20,7 @@
  * its own with sUiS before it draws and restores sUiNavy after. */
 typedef struct {
     uint16_t bg, bgTop, outline, panelLo, panel, panelHi, border, borderLit, separator, textSh, textDim, track;
+    uint16_t select, selectHi, focus, focusLit;       /* a selected row, its pressed shade, the focus ring, its light */
     UiButtonStyle primary, neutral, cancel;           /* the lead button of a group, the others, CANCEL */
     UiButtonStyle fight, bag, pokemon, run;           /* the battle's four actions */
 } UiSurface;
@@ -27,22 +28,25 @@ typedef struct {
 static const UiSurface sUiNavy = {
     UI_BG, UI_BG_TOP, UI_OUTLINE, UI_PANEL_LO, UI_PANEL, UI_PANEL_HI, UI_BORDER, UI_BORDER_LIT, UI_SEPARATOR, UI_TEXT_SH,
     UI_TEXT_DIM, UI_HP_TRACK,
+    UI_SELECT, UI_SELECT_HI, UI_FOCUS, UI_FOCUS_LIT,
     UI_STYLE_PRIMARY, UI_STYLE_NEUTRAL, UI_STYLE_CANCEL,
     UI_STYLE_FIGHT, UI_STYLE_BAG, UI_STYLE_POKEMON, UI_STYLE_RUN,
 };
 
-/* PokeTouch's red: its frame, panels and buttons (PT_RED_*, sChrome and sChromeOn in 3ds_poketouch.c), the light
- * blue of a selection and white text kept as they are there, the text's shadow and secondary ink warmed to match. */
+/* PokeTouch's red: its frame, panels and buttons (PT_RED_*, sChrome and sChromeOn in 3ds_poketouch.c) and white text,
+ * the text's shadow and secondary ink warmed to match. The battle and Summary screens that wear it have fire in place of
+ * the navy theme's blue: panel lines in amber, a selected row a burnt orange, the focus ring a flame. */
 static const UiSurface sUiRed = {
     PT_RED_BG, UI_RGB(92, 8, 10), UI_RGB(28, 2, 3), UI_RGB(44, 3, 5), PT_RED_PANEL, UI_RGB(176, 34, 30), PT_RED_EDGE,
-    PT_RED_LIGHT, UI_RGB(150, 22, 24), UI_RGB(30, 2, 3), UI_RGB(255, 208, 192), UI_RGB(40, 3, 5),
+    UI_RGB(255, 160, 56), UI_RGB(150, 22, 24), UI_RGB(30, 2, 3), UI_RGB(255, 208, 192), UI_RGB(40, 3, 5),
+    UI_RGB(172, 50, 18), UI_RGB(208, 78, 24), UI_RGB(255, 152, 40), UI_RGB(255, 214, 120),
     {UI_RGB(208, 26, 20), UI_RGB(216, 32, 24), UI_RGB(112, 10, 8)},          /* primary: sChromeOn, calmer, so 1x labels keep 4.5:1 */
     {UI_RGB(96, 8, 12), UI_RGB(156, 34, 32), UI_RGB(52, 4, 6)},              /* neutral */
     {UI_RGB(120, 12, 16), UI_RGB(190, 48, 40), UI_RGB(46, 2, 4)},            /* cancel */
     {UI_RGB(218, 32, 24), UI_RGB(231, 78, 50), UI_RGB(120, 10, 8)},          /* fight: sChromeOn, gloss kept under white 3x text */
-    {UI_RGB(190, 22, 22), UI_RGB(236, 77, 56), UI_RGB(102, 8, 8)},           /* bag: sChrome with the gloss held to 3.4:1 under white */
-    {UI_RGB(190, 22, 22), UI_RGB(236, 77, 56), UI_RGB(102, 8, 8)},           /* pokemon */
-    {UI_RGB(190, 22, 22), UI_RGB(236, 77, 56), UI_RGB(102, 8, 8)},           /* run */
+    {UI_RGB(138, 58, 26), UI_RGB(180, 88, 44), UI_RGB(80, 28, 12)},          /* bag: warm cognac leather brown */
+    {UI_RGB(104, 24, 48), UI_RGB(152, 44, 76), UI_RGB(56, 12, 24)},          /* pokemon: rich plum wine magenta */
+    {UI_RGB(46, 54, 68), UI_RGB(70, 82, 102), UI_RGB(24, 28, 38)},           /* run: slate graphite arcade button */
 };
 
 static const UiSurface *sUiS = &sUiNavy;
@@ -58,6 +62,10 @@ static const UiSurface *sUiS = &sUiNavy;
 #define UIS_TEXT_SH (sUiS->textSh)
 #define UIS_TEXT_DIM (sUiS->textDim)
 #define UIS_HP_TRACK (sUiS->track)
+#define UIS_SELECT (sUiS->select)
+#define UIS_SELECT_HI (sUiS->selectHi)
+#define UIS_FOCUS (sUiS->focus)
+#define UIS_FOCUS_LIT (sUiS->focusLit)
 
 UI_FN int UiIn(const CtrPokeTouchRect *r, int x, int y)
 {
@@ -189,6 +197,37 @@ UI_FN void UiText(const char *s, int x, int top, uint16_t fg, uint16_t shadow, i
     }
 }
 
+/* The same in the game's small font: capitals 7 pixels high (rows 4-10 of the glyph, so a line drawn at `top` has its
+ * capitals there), letters mostly 5 wide. For the attack names and descriptions. */
+UI_FN int UiTextWidthSmall(const char *s)
+{
+    int w = 0;
+
+    while (*s)
+        w += GlyphSmall(&s)->width;
+    return w;
+}
+
+UI_FN void UiTextSmall(const char *s, int x, int top, uint16_t fg, uint16_t shadow, int limit)
+{
+    int y = top - 4;
+
+    while (*s) {
+        const PtGlyph *g = GlyphSmall(&s);
+
+        if (x + g->width > limit)
+            break;
+        for (int row = 0; row < 16; ++row)
+            for (int col = 0; col < g->width; ++col) {
+                unsigned v = (g->rows[row] >> (2 * col)) & 3;
+
+                if (v)
+                    Px(x + col, y + row, v == 1 ? fg : shadow);
+            }
+        x += g->width;
+    }
+}
+
 /* Centred on `r` across, its capitals vertically centred when `top` < 0. */
 UI_FN void UiTextCentered(const char *s, const CtrPokeTouchRect *r, int top, uint16_t fg, uint16_t shadow, int scale)
 {
@@ -251,7 +290,7 @@ UI_FN void UiButton(const CtrPokeTouchRect *r, const UiButtonStyle *style, int s
     if (state & UI_SELECTED) {
         CtrPokeTouchRect ring = UiInset(r, 1);
 
-        UiRing(&ring, UI_RADIUS_BUTTON - 1, 1, UI_FOCUS);
+        UiRing(&ring, UI_RADIUS_BUTTON - 1, 1, UIS_FOCUS);
     }
     if ((state & UI_FOCUSED) && !(state & UI_DISABLED)) {
         CtrPokeTouchRect ring = UiInset(r, 1);
@@ -299,7 +338,7 @@ UI_FN void UiTab(const CtrPokeTouchRect *r, const char *label, int state)
 
     UiButton(r, on ? sOn : sOff, state & ~UI_SELECTED);
     if (on)
-        Fill(r->x + 6, r->y + r->h - 3, r->w - 12, 2, UI_FOCUS_LIT);
+        Fill(r->x + 6, r->y + r->h - 3, r->w - 12, 2, UIS_FOCUS_LIT);
     {
         CtrPokeTouchRect face = *r;
 
@@ -381,7 +420,7 @@ UI_FN void UiHpBar(const CtrPokeTouchRect *r, unsigned hp, unsigned max)
 UI_FN void UiHeader(const CtrPokeTouchRect *r, const char *title, const char *caption)
 {
     UiPanel(r, UIS_PANEL, UIS_BORDER);
-    Fill(r->x + 1, r->y + r->h - 2, r->w - 2, 1, UI_FOCUS);
+    Fill(r->x + 1, r->y + r->h - 2, r->w - 2, 1, UIS_FOCUS);
     UiText(title, r->x + 8, r->y + (r->h - UI_TEXT_H) / 2, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 4);
     if (caption && caption[0])
         UiTextRight(caption, r->x + r->w - 8, r->y + (r->h - UI_TEXT_H) / 2, UIS_TEXT_DIM, UIS_TEXT_SH, 1);

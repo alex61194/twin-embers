@@ -10,8 +10,25 @@ static const char *const sBattleStyle[] = {"SHIFT", "SET"};
 static const char *const sSound[] = {"MONO", "STEREO"};
 static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
+static const char *const sSummaryMode[] = {"3DS", "GBA"};
 
-/* FireRed's menu order. The names are the ones of its own strings (strings.c). */
+static int sPortTypeMatchup;
+static int sPortMoveDetails;
+static int sPortFieldSummary;
+
+static int TwoCount(void) { return 2; }
+static int GetTypeMatchup(void) { return sPortTypeMatchup; }
+static void SetTypeMatchup(int v) { sPortTypeMatchup = v & 1; }
+static int GetMoveDetails(void) { return sPortMoveDetails; }
+static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
+static int GetFieldSummary(void) { return sPortFieldSummary; }
+static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
+
+int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
+int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
+int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
+
+/* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
 static const CtrOptionRow sRows[] = {
     {"TEXT SPEED", {"How fast dialogue", "text is printed."}, PT_OPT_TEXT_SPEED, sTextSpeed, NULL, NULL, NULL, NULL},
     {"BATTLE SCENE", {"Show or skip the move", "animations in battle."}, PT_OPT_BATTLE_SCENE, sBattleScene, NULL,
@@ -24,10 +41,17 @@ static const CtrOptionRow sRows[] = {
     {"FRAME", {"The style of the text", "box's frame."}, PT_OPT_FRAME, NULL, "TYPE", NULL, NULL, NULL},
     /* The 3DS's own: the counter in the top-right corner of the top screen (stored in the save's spare bit). */
     {"FPS COUNTER", {"Show the frames per", "second on the top screen."}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
+    /* Page 2: 3DS Port QoL options. */
+    {"TYPE MATCHUP", {"Show type effectiveness", "on battle move cards."}, 0, sFps, NULL,
+     GetTypeMatchup, TwoCount, SetTypeMatchup},
+    {"MOVE DETAILS", {"Show live move details", "and category in battle."}, 0, sFps, NULL,
+     GetMoveDetails, TwoCount, SetMoveDetails},
+    {"FIELD SUMMARY", {"Use the 3DS Summary", "screen from field Party."}, 0, sSummaryMode, NULL,
+     GetFieldSummary, TwoCount, SetFieldSummary},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
-_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX, "the OPTIONS screen holds PT_OPT_MAX rows");
+_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX * 2, "the OPTIONS screen holds up to two pages of PT_OPT_MAX rows");
 
 int CtrOptions_RowCount(void)
 {
@@ -98,16 +122,28 @@ void CtrOptions_ValueText(int row, char *out, int size)
 
 void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
 {
+    int page, base, count;
+
     if (v == NULL)
         return;
-    v->options = 1;
-    v->optCount = (uint8_t)ROWS;
     if (selected < 0 || selected >= ROWS)
         selected = 0;
-    v->optSelected = (uint8_t)selected;
-    for (int i = 0; i < ROWS; ++i) {
-        snprintf(v->optLabel[i], PT_OPT_LABEL_LEN, "%s", sRows[i].label);
-        CtrOptions_ValueText(i, v->optValue[i], PT_OPT_VALUE_LEN);
+    page = selected / PT_OPT_MAX;
+    base = page * PT_OPT_MAX;
+    count = ROWS - base > PT_OPT_MAX ? PT_OPT_MAX : ROWS - base;
+    v->options = 1;
+    v->optPage = (uint8_t)page;
+    v->optPageCount = (uint8_t)((ROWS + PT_OPT_MAX - 1) / PT_OPT_MAX);
+    v->optCount = (uint8_t)count;
+    v->optSelected = (uint8_t)(selected - base);
+    for (int i = 0; i < PT_OPT_MAX; ++i) {
+        if (i < count) {
+            snprintf(v->optLabel[i], PT_OPT_LABEL_LEN, "%s", sRows[base + i].label);
+            CtrOptions_ValueText(base + i, v->optValue[i], PT_OPT_VALUE_LEN);
+        } else {
+            v->optLabel[i][0] = 0;
+            v->optValue[i][0] = 0;
+        }
     }
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);
     snprintf(v->bar[1], PT_BAR_LEN, "%s", sRows[selected].description[0]);

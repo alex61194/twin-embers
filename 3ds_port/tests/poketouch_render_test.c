@@ -14,6 +14,9 @@ static CtrPakHeader realHeader;
 static CtrPakEntry *realIndex;
 const uint8_t *CtrTwinFontData(void) { return font; }
 unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 5; }
+static uint8_t smallFont[256 * 32];
+const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 5; }
 
 /* Literal-only GBA LZ stream, freshly synthesized from the fixture bytes. */
 void *CtrData_Load(const char *path, uint32_t *len)
@@ -169,8 +172,8 @@ int main(int argc, char **argv)
 #endif
     for (int y=-1;y<=H;++y) for (int x=-1;x<=W;++x) {
         static const CtrPokeTouchRect expected[PT_COUNT] = {
-            {248,2,70,25},{248,30,70,25},{248,58,70,25},{248,86,70,25},
-            {248,114,70,25},{248,142,70,25},{248,170,34,33},{284,170,34,33},{248,205,70,33}};
+            {252,7,68,25},{252,34,68,25},{252,61,68,25},{252,88,68,23},
+            {252,114,68,29},{252,146,68,23},{253,171,32,36},{287,171,32,36},{252,209,68,27}};
         int hit=PT_NONE;
         for(int i=0;i<PT_COUNT;++i) if(UiIn(&expected[i],x,y)) hit=i;
         assert(CtrPokeTouch_HitTest(x,y)==hit);

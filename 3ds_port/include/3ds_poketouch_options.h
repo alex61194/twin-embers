@@ -31,6 +31,11 @@ void CtrOptions_ValueText(int row, char *out, int size);
 /* The view's rows, their values and the bar for the selected row. */
 void CtrOptions_Fill(CtrPokeTouchView *view, int selected);
 
+/* 3DS port QoL options (Page 2 of OPTIONS). */
+int CtrOptions_TypeMatchup(void);
+int CtrOptions_MoveDetails(void);
+int CtrOptions_FieldSummary(void);
+
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);
 extern int CtrPokeTouch_OptionGet(int option);

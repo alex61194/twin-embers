@@ -4,6 +4,8 @@ typedef struct { uint8_t width; uint32_t rows[16]; } PtGlyph;
 typedef struct { uint8_t w, h; const uint8_t *pixels; uint16_t pal[16]; } PtImage;
 static PtGlyph sPtFont[256];
 static bool sPtFontReady[256];
+static PtGlyph sPtFontSmall[256];       /* the game's small font, for the attack texts */
+static bool sPtFontSmallReady[256];
 static uint8_t sTwinIconPixels[7][12 * 12];
 static PtImage sPt_icon_pokedex, sPt_icon_pokemon, sPt_icon_bag, sPt_icon_card;
 static PtImage sPt_icon_save, sPt_icon_options, sPt_icon_shoes;
@@ -69,3 +71,5 @@ static void TwinIconsPrepare(void)
 }
 extern const uint8_t *CtrTwinFontData(void);
 extern unsigned CtrTwinFontWidth(unsigned code);
+extern const uint8_t *CtrTwinSmallFontData(void);
+extern unsigned CtrTwinSmallFontWidth(unsigned code);
