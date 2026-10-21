@@ -1,5 +1,9 @@
 # Map edges on the 400x240 field
 
+> **Status: switched off.** The continuation described below is disabled (`CTR_MAP_EDGE_FILL` is 0 in
+> `3ds_port/include/3ds_map_edge.h`): outside a map the game draws its own border block, as on the GBA. The rule and its
+> tests stay, built with `CTR_MAP_EDGE_FILL=1`, so it can be turned on again.
+
 ## Root cause
 
 Outside a map the game draws the layout's 2x2 border block, repeated

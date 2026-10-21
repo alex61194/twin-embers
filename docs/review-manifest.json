@@ -488,7 +488,7 @@
   },
   {
    "path": "3ds_port/include/3ds_map_edge.h",
-   "sha256": "b5be089a7918a0ba5296ba62105355d1479a4bf394bbb324fc806be4bab1114d",
+   "sha256": "2f2b6df622cb8761a72aa42618d445dadf07bb367b36c5dd65da565b1373121c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1963,7 +1963,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "b50bfe2c9e5aaca08a5c32034ed657ee7e11793ed2d105eac5df34c44e44872e",
+   "sha256": "f684bc50029161a19c8a3c23718967b0d024f51ffdd8426781d9a5a2077cd23e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2514,7 +2514,7 @@
   },
   {
    "path": "docs/MAP-EDGE-VALIDATION.md",
-   "sha256": "7b746f0504ea02518fad67b45f770052b135c8af3cfbcf148ff6c6d1afa3e95a",
+   "sha256": "82c21bb905a77ca7f47443bb166cef2c665be86259784f2c10e342995b274d20",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4744,7 +4744,7 @@
   },
   {
    "path": "tools/test_map_edge.py",
-   "sha256": "e4c40f8023c7495ac84039fb25f3e10a375ad6f59b103c0fe5da09d185905f3f",
+   "sha256": "281d650b6d48b157706e5fb5cbbebdfcc3ce794d116fee361810b581351f4f17",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
