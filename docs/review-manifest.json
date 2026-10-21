@@ -4319,7 +4319,7 @@
   },
   {
    "path": "patches/pokefirered/0123-fog-horizontal-native-width.json",
-   "sha256": "c432d8de1cb61ec8e9e3eeb55d1dbbcb5c4c9bbb30ac95f8dcfe3112f58782e0",
+   "sha256": "ea2f992dbe72e6685189af869691d1c2ac6daea6f3c2f6577dd596a8b29dead2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4711,7 +4711,7 @@
   },
   {
    "path": "tools/test_fog_coverage.py",
-   "sha256": "2a96c023023067435057971480f5b0fd6850bb011e054bd27c0e5c5b29aa7f77",
+   "sha256": "3d983c9ea61e3fef737052e59a2c33c8b37f56ad16a7e232abf900b0799e6ef6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
