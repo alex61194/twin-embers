@@ -4318,6 +4318,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0123-fog-horizontal-native-width.json",
+   "sha256": "c432d8de1cb61ec8e9e3eeb55d1dbbcb5c4c9bbb30ac95f8dcfe3112f58782e0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -4700,6 +4708,14 @@
    "basis": "Synthetic execution of production signed-coordinate, actor ownership, frame publication and invocation-strip geometry; no game assets or binary payloads; additional production DrawObjects coordinate-selection regression",
    "modified_for_distribution": true,
    "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults"
+  },
+  {
+   "path": "tools/test_fog_coverage.py",
+   "sha256": "2a96c023023067435057971480f5b0fd6850bb011e054bd27c0e5c5b29aa7f77",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "tools/test_item_pc_wait.py",
