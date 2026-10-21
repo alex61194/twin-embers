@@ -1738,7 +1738,7 @@
   },
   {
    "path": "3ds_port/tests/map_edge_draw_test.c",
-   "sha256": "e5c017091a4a5d4f5320b1b88af220d9fd6705c7796b64fea215ce33332712f6",
+   "sha256": "d1f24973bea605cdec0168fd98515c78d4f579e138679f59958f68b7e27dc4d6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4320,14 +4320,6 @@
   {
    "path": "patches/pokefirered/0123-fog-horizontal-native-width.json",
    "sha256": "22c1a13654275095c22761a90d91f2d367c64604cbd8319634db5cc8286fa9f0",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0124-connection-crossing-redraw.json",
-   "sha256": "66a4af627cb9c815e834f80e08986c74121140323d5e2044d2fd651caf892db0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

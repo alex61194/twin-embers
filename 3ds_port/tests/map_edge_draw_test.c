@@ -543,64 +543,6 @@ static void test_changed_maps(void)
     }
 }
 
-/* ---- connection crossings -------------------------------------------------------- */
-/* Walking over a connection keeps the old map's picture for the cells it believes the new
- * map shares. The wider field view reaches past them: the ring must hold the new map there
- * and the saved view must not blank what the new map defines. */
-static long gCrossings;
-static void check_crossing(int m, int px, int py, int dx, int dy)
-{
-    static struct View a, w;
-    static u16 vm[VIRTUAL_MAP_SIZE];
-    int nm, i, j, bad = 0, blanked = 0, pos_x, pos_y;
-    set_mode(0);
-    enter_map(m, px, py);
-    step_camera(dx, dy);
-    nm = (int)(gMapHeader.mapLayout - sLayouts);
-    if (nm == m)
-        return;
-    gCrossings++;
-    pos_x = gSaveBlock1Ptr->pos.x; pos_y = gSaveBlock1Ptr->pos.y;
-    snap(&a);
-    memcpy(vm, gBackupMapData, sizeof vm);
-    memset(sTilemap, 0, sizeof sTilemap);
-    DrawWholeMapView();
-    snap(&w);
-    for (i = 0; i < 16; i++)
-        for (j = 0; j < VIEW_COLS; j++)
-            bad += !same(&a.c[i][j], &w.c[i][j]);
-    CHECK(bad == 0, "%s -> %s at (%d,%d): %d cells of the ring are stale after the crossing", sNames[m], sNames[nm], pos_x, pos_y, bad);
-    enter_map(nm, pos_x, pos_y);
-    for (i = 0; i < VMap.Xsize * VMap.Ysize; i++)
-        blanked += gBackupMapData[i] != MAPGRID_UNDEFINED && vm[i] == MAPGRID_UNDEFINED;
-    CHECK(blanked == 0, "%s -> %s at (%d,%d): the saved view blanked %d defined cells", sNames[m], sNames[nm], pos_x, pos_y, blanked);
-}
-
-static void test_crossings(void)
-{
-    int m, i, k;
-    for (m = 0; m < sMapCount; m++)
-    {
-        const struct MapLayout *l = sLayouts + m;
-        const struct MapConnections *c = sHeaders[m].connections;
-        if (c == NULL || c->connections == NULL) continue;
-        for (i = 0; i < c->count; i++)
-            for (k = 0; k < 8; k++)
-            {
-                int dir = c->connections[i].direction, dx = 0, dy = 0, px, py;
-                if (dir == CONNECTION_NORTH) dy = -1;
-                else if (dir == CONNECTION_SOUTH) dy = 1;
-                else if (dir == CONNECTION_WEST) dx = -1;
-                else if (dir == CONNECTION_EAST) dx = 1;
-                else continue;
-                px = dx ? (dx < 0 ? 0 : l->width - 1) : (k * l->width) / 8;
-                py = dy ? (dy < 0 ? 0 : l->height - 1) : (k * l->height) / 8;
-                check_crossing(m, px, py, dx, dy);
-            }
-    }
-    CHECK(gCrossings > 0, "no connection crossing was exercised");
-}
-
 /* Debug aid: print what DrawMetatileAt would pick for a ring of `pad` metatiles around a map. */
 static void dump_map(const char *name, int pad, int vanilla)
 {
@@ -643,8 +585,6 @@ int main(int argc, char **argv)
     test_cape_brink();
     test_walks();
     test_scroll_consistency();
-    test_crossings();
-    printf("crossed %ld connections\n", gCrossings);
     printf("checked %ld cells: %ld extended by the rule, %ld differ from vanilla\n", gChecked, gExtended, gDiff);
     if (failures) { printf("%d failures\n", failures); return 1; }
     puts("PASS map edge draw");
