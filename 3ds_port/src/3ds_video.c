@@ -734,7 +734,9 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
                   GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
     unsigned control = Reg(0x50), effect = (control >> 6) & 3;
     C2D_PlainImageTint(&sTint, C2D_Color32(255, 255, 255, 255), 0);
-    if (!effects) { CtrPerf_End(PERF_BLEND,perfStart); return; }
+    /* A semi-transparent OBJ is blended whatever the window it is in says about colour effects: the overworld's
+     * windows never enable them, and its fog is translucent. */
+    if (!effects && !semiTransparent) { CtrPerf_End(PERF_BLEND,perfStart); return; }
     if ((effect == 1 && (control & (1u << layer))) || semiTransparent)
     {
         /* GPU implements independently clamped EVA/EVB (not 1-EVA).
