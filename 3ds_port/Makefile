@@ -137,6 +137,10 @@ GAME_PLATFORM_OBJS += build/3ds_perf.o
 GAME_PLATFORM_OBJS += build/3ds_leafgreen.o
 build/3ds_leafgreen.o: CFLAGS += -iquote ../include
 build/3ds_leafgreen.o: include/3ds_leafgreen.h
+# The touch MENU's own text and the lower screen's Party message (field_message_box.c, help_system.c, party_menu.c).
+GAME_PLATFORM_OBJS += build/3ds_touch_text.o
+build/3ds_touch_text.o: CFLAGS += -iquote ../include
+build/3ds_touch_text.o: include/3ds_touch_text.h
 # Night encounters (wild_encounter.c); the map constants are generated with the game sources.
 GAME_PLATFORM_OBJS += build/3ds_night_wild.o
 build/3ds_night_wild.o: CFLAGS += -iquote ../include
