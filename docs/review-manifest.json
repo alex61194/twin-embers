@@ -72,7 +72,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "aa1e5abee186e564177eb0c160d1bc6592e6614e05d2ca51cb88f5911c87e7dc",
+   "sha256": "e2bb9acf073149ddf49517ac22f667e42d6a1a630b7ed22e0ce14874ad77522e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -364,6 +364,14 @@
    "basis": "Data-error screen word-wraps messages to 39 columns with an empty row between text rows (3ds_data_error_text.h); no message text, pack checks or exit behaviour changed"
   },
   {
+   "path": "3ds_port/include/3ds_day_night.h",
+   "sha256": "de9836fdd290cf186aa6e2802bcdcf51a1efa1ff8ba0ddcc5c3aede4910d8c69",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/include/3ds_dirty_rect.h",
    "sha256": "a15b62eed9b998c9c4c245634878e01ebee4c18da91e637cac9743795eca3c2c",
    "review_status": "reviewed",
@@ -570,7 +578,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "d41d93e0ed84e1bca445d4a8958510ec21452140aca8b1ae91861d38178fe4ac",
+   "sha256": "3d5416e708febf47603a606467299f50f67694adbfb9cdced94dd6fde43b3dd9",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -579,7 +587,7 @@
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "d2e37b3d0b9ae4409b4c26118f2f90bb7b3ee405",
    "source_sha256": "f77c41028e76e293cfb2eebf6a3259100a96d48668f10d65475a94fe1ac8666c",
-   "modified_for_distribution": false
+   "modified_for_distribution": true
   },
   {
    "path": "3ds_port/include/3ds_presentation.h",
@@ -670,7 +678,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "17ba1799aeb641fdb991820eab168f534a40eeb17756d7b999e94d3540fd7413",
+   "sha256": "805de6d21b8f029f0a056c2be39b63696b400c14475f332cdf287c23c3e2765f",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1133,7 +1141,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "caa4ff09fe77f2dc7ee7ebbc1da6e5fb6cfe111b5b442012ef178897900763c5",
+   "sha256": "336e3cb312fc50769edaacd4845102ac1d542a8ffad0aadfe3dc759101dc8fa1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1285,7 +1293,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "74ea94db6aa255d6fcf7e981a08b33c986e992e7a974536178cf829ac05566dd",
+   "sha256": "f26ff8fe1ec388a1234ccf987b4415ab0e532d4071fe7de44e69a5e0d245382f",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1387,7 +1395,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "ef5fa5030dcc9c4568e19cc2da93a1a14ef75d2110a17536db6cb21790e7450a",
+   "sha256": "23baa64345a53f74933cbebd28e34fd7127587f50538b16067ba50072b5363e3",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1626,6 +1634,14 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
   },
   {
+   "path": "3ds_port/tests/day_night_test.c",
+   "sha256": "2bd93f6153c44982e73c00d82ef0b51e1c593404e8522fb71ac22f2529f97124",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/dma_test.c",
    "sha256": "5b51b53a57d4032f5079958e761218da56bd21ebc94f27f21b432e3505a55d78",
    "review_status": "reviewed",
@@ -1783,7 +1799,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "b325bd4f734aae5c457691965d098cc462ebd8101b4ec42d6d636f8132e1b2f6",
+   "sha256": "df44a18af4e16b203c5c666fdb59cab0e3b7d7804aefdfa40cc23323d24533b5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2532,7 +2548,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "e756e781b2e74832f832f305c7f95d4c5aab5fca8a31971e50dab01fba970b8b",
+   "sha256": "a42ec642d1e220b2ac8035484cf222799ed6e20bfd285961115271951be5cabb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

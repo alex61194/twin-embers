@@ -13,6 +13,8 @@
 #include "dma3.h"
 #include "palette.h"
 #include "task.h"
+#include "overworld.h"
+#include "constants/map_types.h"
 #include "3ds_audio.h"
 #include "3ds_audio_cadence.h"
 #include "3ds_input.h"
@@ -24,6 +26,7 @@
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "3ds_fast_forward.h"
+#include "3ds_poketouch_options.h"
 
 extern IntrFunc gIntrTable[];
 
@@ -41,6 +44,16 @@ static StageSet sStage, sStageUi, sCentred, sBattle, sTransition, sNativeUi, sIn
 extern const u16 *CtrTrainerCard_FlipScroll(void);
 extern bool32 CtrField_BarnDoorWipeActive(void);
 extern bool32 IsMapNamePopupTaskActive(void);
+
+/* The field's own main callback on an outdoor map, outside a battle: where the
+ * day/night tint applies (FireRed's outdoor types, as in 3ds_map_edge.h). */
+static bool FieldOutdoors(void)
+{
+    unsigned type = gMapHeader.mapType;
+
+    return gMain.callback1 == CB1_Overworld && !gMain.inBattle
+        && (type == MAP_TYPE_TOWN || type == MAP_TYPE_CITY || type == MAP_TYPE_ROUTE || type == MAP_TYPE_OCEAN_ROUTE);
+}
 
 static void RememberCallback(StageSet *set, IntrCallback callback)
 {
@@ -458,6 +471,7 @@ void VBlankIntrWait(void)
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
+    CtrVideo_SetDayNight(CtrOptions_DayNight() && FieldOutdoors());
     GbaShadow_SetHeldKeys((uint16_t)(CtrBottom_FilterGameKeys(CtrInput_Get()->held) | CtrBottom_InjectedKeys()));
     CtrPerf_End(PERF_VBLANK, perfVblank);
     /* The overworld turbo (3ds_fast_forward.h): a frame that is not shown skips the

@@ -57,7 +57,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/palette_fade_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -78,6 +78,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/vram_track_test.exe
 	./build/fast_forward_test.exe
 	./build/palette_fade_test.exe
+	./build/day_night_test.exe
 	./build/data_error_text_test.exe
 	./build/cgb_audio_test.exe
 	./build/cgb_blep_test.exe
@@ -309,6 +310,10 @@ build/fast_forward_test.exe: tests/fast_forward_test.c include/3ds_fast_forward.
 build/palette_fade_test.exe: tests/palette_fade_test.c include/3ds_palette_fade.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/palette_fade_test.c -o $@
+
+build/day_night_test.exe: tests/day_night_test.c include/3ds_day_night.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/day_night_test.c -o $@
 
 build/data_error_text_test.exe: tests/data_error_text_test.c include/3ds_data_error_text.h
 	@mkdir -p build

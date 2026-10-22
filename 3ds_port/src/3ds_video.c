@@ -19,6 +19,7 @@
 #include "3ds_presentation.h"
 #include "3ds_intro_native.h"
 #include "3ds_palette_fade.h"
+#include "3ds_day_night.h"
 #include "3ds_poketouch.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
@@ -2694,6 +2695,39 @@ static bool sMapNamePopup;
 
 void CtrVideo_SetMapNamePopup(bool active) { sMapNamePopup = active; }
 
+/*
+ * Day and night on the outdoor field: the map layers and the sprites below the
+ * menus' priority are multiplied by the colour of the hour (3ds_day_night.h)
+ * with one quad, so the palettes, the weather and the fades stay the game's.
+ * The clock is the console's own (osGetTime counts local milliseconds from
+ * 1900, which starts on a midnight).
+ */
+static bool sDayNight;
+static uint32_t sDayNightColor = 0xffffffu;
+
+void CtrVideo_SetDayNight(bool outdoors)
+{
+    sDayNight = outdoors;
+    if (outdoors) sDayNightColor = CtrDayNight_Tint((uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS));
+}
+
+static bool DayNightActive(void)
+{
+    return sDayNight && sFieldLayers && sDayNightColor != 0xffffffu;
+}
+
+/* Multiplies what this pass has drawn so far by the hour's colour; alpha is kept for the depth planes. */
+static void DayNightMultiply(void)
+{
+    C2D_Flush();
+    C3D_AlphaTest(false, GPU_ALWAYS, 0);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_DST_COLOR, GPU_ZERO, GPU_ZERO, GPU_ONE);
+    C2D_DrawRectSolid(-1024, -1024, 0, 4096, 4096,
+                      C2D_Color32(sDayNightColor >> 16, sDayNightColor >> 8, sDayNightColor, 255));
+    C2D_Flush();
+    BlendForget();
+}
+
 /* GBA BG0 rect [gx0,gx1) x [gy0,gy1) drawn with the view at (viewX, viewY),
  * inside the native clip (x0..x1, y0..y1) being composed. */
 static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1, int gy0, int gy1,
@@ -2889,10 +2923,17 @@ static void Layers(unsigned mask)
     unsigned display = Reg(0), mode = display & 7;
     mask &= ~sLayerExclude;
     if (mode > 2) { Error(10, "bitmap display modes are not part of baseline"); return; }
+    /* The menus and text boxes are priority 0: the hour's tint goes on before them. */
+    bool dayNight = DayNightActive();
     for (int priority = 3; priority >= 0; --priority)
     {
         /* One depth plane at a time while composing them separately. */
         if (!(sPriorityMask & (1u << priority))) continue;
+        if (priority == 0 && dayNight)
+        {
+            DayNightMultiply();
+            dayNight = false;
+        }
         /* Priority is the depth scale: 3 stays at the screen plane. */
         sLayerShift = (sLayerOrigin + sParallax * (3 - priority)) / sShiftZoom;
         for (int bg = 3; bg >= 0; --bg)
@@ -2955,6 +2996,8 @@ static void Layers(unsigned mask)
             if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_OBJ] += elapsed;
         }
     }
+    /* A depth plane without priority 0 is tinted whole. */
+    if (dayNight) DayNightMultiply();
 }
 
 /*

@@ -63,6 +63,30 @@ returns each time and finishes once the copy completes; the GBA build is unchang
 ARM build links. NOT reproduced in an emulator or on a console: NEEDS HARDWARE VALIDATION (open the
 player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
 
+## Day and night on the outdoor field
+
+On outdoor maps (FireRed's town and route map types) the map and its sprites take the colour of the hour
+of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, plain day from 09:00 to 17:30 and dusk at
+19:00, blended second by second in between (`3ds_day_night.h`; the hours follow Merrp's day/night system
+for pokeemerald, the colours are the port's own). Indoors, in caves, in battle and in every menu nothing
+changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default) or OFF; like the other page-2 options it is not
+kept in the save and is CLOCK again after a restart.
+
+- It is drawn, not played: the compositor multiplies what the field drew below priority 0 by one colour
+  with one quad (`3ds_video.c`, `DayNightMultiply`). The palettes, the weather, the fades and the game's
+  RAM are untouched, and so is the save. Text boxes, the map-name popup and the menus are priority 0
+  (BG0) and keep their colours.
+- Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
+  (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6. No game patch.
+- In 3D each depth plane without priority 0 is tinted whole, so every plane is tinted once.
+- Not yet: lit windows, glow and night effects (the second and third phases of the plan).
+
+Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white so nothing is drawn, the
+keys land at their hours, no hour is darker than the night, no channel moves more than one step per second
+and the day wraps); `tests/poketouch_options_test.c` (the DAY/NIGHT row, its default and its two values);
+the ARM build links. NEEDS VALIDATION in Azahar and on a console (outdoors at night with the clock set,
+entering a house, a battle, a door fade, 3D on).
+
 ## Not added, and why
 
 - ZL/ZR for the turbo: the port removed it on purpose (`3ds_fast_forward.h`).
