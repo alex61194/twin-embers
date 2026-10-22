@@ -72,20 +72,27 @@ for pokeemerald, the colours are the port's own). Indoors, in caves, in battle a
 changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default) or OFF; like the other page-2 options it is not
 kept in the save and is CLOCK again after a restart.
 
-- It is drawn, not played: the compositor multiplies what the field drew below priority 0 by one colour
-  with one quad (`3ds_video.c`, `DayNightMultiply`). The palettes, the weather, the fades and the game's
-  RAM are untouched, and so is the save. Text boxes, the map-name popup and the menus are priority 0
-  (BG0) and keep their colours.
+- It is coloured, not played: the compositor shades each colour as it turns the palette into texels
+  (`3ds_video.c`, `DayNightTexel`), for the map's palettes 0-12 and the sprite palettes. The game's
+  palettes in RAM, the weather, the fades and the save are untouched. Palettes 13-15 (text boxes, the
+  map-name popup, the menus) keep their colours. A change of tint (in steps of 16 seconds) re-converts
+  the palettes once and the tile cache refreshes through the palette versions it already uses.
+- Lit windows: at night, the glass of the windows listed per tileset in `3ds_day_night_lights.h`
+  (`tile | palette << 12`) takes a warm lamp colour instead of the shade, fading in from dusk. Only the
+  glass pixels of those tiles (light blue, `CtrDayNight_Glass`) are lit; frames and sills stay dark. The
+  list is by tile, not by colour, because the Poke Mart roof uses the same blues as the windows and must
+  stay dark. Not lit: Silph Co.'s glass front, the Bike Shop skylight, and the houses with grey windows.
 - Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
-  (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6. No game patch.
-- In 3D each depth plane without priority 0 is tinted whole, so every plane is tinted once.
-- Not yet: lit windows, glow and night effects (the second and third phases of the plan).
+  (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6, passing the light lists of the map's
+  primary and secondary tilesets. No game patch.
+- Not yet: glow around lamps and night effects (the third phase of the plan).
 
-Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white so nothing is drawn, the
-keys land at their hours, no hour is darker than the night, no channel moves more than one step per second
-and the day wraps); `tests/poketouch_options_test.c` (the DAY/NIGHT row, its default and its two values);
-the ARM build links. NEEDS VALIDATION in Azahar and on a console (outdoors at night with the clock set,
-entering a house, a battle, a door fade, 3D on).
+Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white, the keys land at their hours,
+no hour is darker than the night, no channel moves more than one step per second, the day wraps; the
+shade never brightens, the lamp is full at night and off by day, glass is told from sill, wall and grass;
+the light tables are valid tiles with no duplicates and no Mart roof tile); `tests/poketouch_options_test.c`
+(the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
+a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
 
 ## Not added, and why
 

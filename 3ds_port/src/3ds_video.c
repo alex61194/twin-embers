@@ -503,6 +503,119 @@ static unsigned Read16(unsigned offset)
     return sMemory.vram[offset] | (sMemory.vram[offset + 1] << 8);
 }
 
+/*
+ * Day and night on the outdoor field (3ds_day_night.h). The map's palettes
+ * (backgrounds 0-12; 13-15 are the text boxes and menus) and the sprites' are
+ * turned into texels through the colour of the hour, and the glass of the
+ * window tiles in the lights table (3ds_day_night_lights.h) is lit instead.
+ * The game's palettes, its fades and the weather stay as the game wrote them:
+ * only the conversion changes, so a new hour costs the tiles on screen one
+ * re-decode, like a palette change. The clock is the console's own (osGetTime
+ * counts local milliseconds from 1900, which starts on a midnight), read in
+ * steps of DAY_NIGHT_STEP seconds so that a dusk re-decodes every few steps
+ * rather than every second.
+ */
+#define DAY_NIGHT_STEP 16u
+#define DAY_NIGHT_BG_BANKS 13u
+static bool sDayNightRequested;
+static uint32_t sDayNightRequestColor = 0xffffffu;
+static const uint16_t *sDayNightRequestLights[2];
+static unsigned sDayNightRequestCount[2];
+/* What the texels are converted with now. */
+static uint32_t sDayNightColor = 0xffffffu;
+static unsigned sDayNightLit;
+static const uint16_t *sDayNightLights[2];
+/* Per tile of the field's character block, the palettes it is a window with. */
+static uint16_t sLitBanks[1024];
+/* The background colours that are glass, lit, as texels; 0 for the others. */
+static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
+static bool sFieldLayers;
+
+void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+                          const uint16_t *secondary, unsigned secondaryCount)
+{
+    sDayNightRequested = outdoors;
+    sDayNightRequestLights[0] = primary;
+    sDayNightRequestCount[0] = primary ? primaryCount : 0;
+    sDayNightRequestLights[1] = secondary;
+    sDayNightRequestCount[1] = secondary ? secondaryCount : 0;
+    if (outdoors)
+    {
+        uint32_t second = (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
+        sDayNightRequestColor = CtrDayNight_Tint(second / DAY_NIGHT_STEP * DAY_NIGHT_STEP);
+    }
+}
+
+static bool DayNightBank(unsigned bank) { return bank < DAY_NIGHT_BG_BANKS || bank >= 16; }
+
+/* Palette entry p (colour color) as a texel, under the hour in force. */
+static uint16_t DayNightTexel(unsigned p, uint16_t color)
+{
+    if (sDayNightColor != 0xffffffu && DayNightBank(p / 16))
+        color = CtrDayNight_Shade(color, sDayNightColor);
+    return CtrVideo_RGBA5551(color);
+}
+
+static void DayNightLitEntry(unsigned p)
+{
+    if (p >= DAY_NIGHT_BG_BANKS * 16) return;
+    sLitTexture[p] = sDayNightLit && CtrDayNight_Glass(sPalette[p])
+        ? CtrVideo_RGBA5551(CtrDayNight_Lit(sPalette[p], sDayNightColor, sDayNightLit)) : 0;
+}
+
+/* After UpdatePalette, before UpdateFade: a new hour, or a map with other
+ * windows, converts every tinted entry again and marks them all changed. */
+static void DayNightUpdate(void)
+{
+    bool on = sDayNightRequested && sFieldLayers;
+    uint32_t color = on ? sDayNightRequestColor : 0xffffffu;
+    const uint16_t *lights0 = on ? sDayNightRequestLights[0] : NULL;
+    const uint16_t *lights1 = on ? sDayNightRequestLights[1] : NULL;
+
+    if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
+    if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
+    {
+        memset(sLitBanks, 0, sizeof(sLitBanks));
+        for (unsigned k = 0; k < 2; ++k)
+            for (unsigned i = 0; on && i < sDayNightRequestCount[k]; ++i)
+            {
+                uint16_t entry = sDayNightRequestLights[k][i];
+                sLitBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
+            }
+        sDayNightLights[0] = lights0;
+        sDayNightLights[1] = lights1;
+    }
+    sDayNightColor = color;
+    sDayNightLit = color == 0xffffffu ? 0 : CtrDayNight_Lights(color);
+    for (unsigned p = 0; p < 512; ++p)
+        if (DayNightBank(p / 16)) sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
+    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) DayNightLitEntry(p);
+    for (unsigned bank = 0; bank < 32; ++bank)
+    {
+        if (!DayNightBank(bank)) continue;
+        memset(sPaletteChanges[bank], 0, sizeof(sPaletteChanges[bank]));
+        sPaletteChanges[bank][0] = 0xffffu;
+        ++sPaletteVersion[bank];
+    }
+    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
+        sPaletteChanges[32][entry / 32] |= 1u << (entry & 31);
+    memset(sPaletteChanges[33], 0xff, sizeof(sPaletteChanges[33]));
+    ++sPaletteVersion[32];
+    ++sPaletteVersion[33];
+    sBgPaletteStamp = sStats.frames + 1;
+    if (!sFadeBaseValid) return;
+    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) sFadeBaseTexture[p] = DayNightTexel(p, sFadeBase[p]);
+    for (unsigned bank = 0; bank < DAY_NIGHT_BG_BANKS; ++bank)
+    {
+        memset(sFadeChanges[bank], 0, sizeof(sFadeChanges[bank]));
+        sFadeChanges[bank][0] = 0xffffu;
+        ++sFadeVersion[bank];
+    }
+    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
+        sFadeChanges[32][entry / 32] |= 1u << (entry & 31);
+    ++sFadeVersion[32];
+}
+
 static void UpdatePalette(void)
 {
     bool bgChanged = false, objChanged = false;
@@ -519,7 +632,8 @@ static void UpdatePalette(void)
                 if (sPalette[p] == sMemory.palette[p]) continue;
                 CTR_PERF_COUNT(PERF_PALETTE_COLORS, 1);
                 sPalette[p] = sMemory.palette[p];
-                sTexturePalette[p] = CtrVideo_RGBA5551(sPalette[p]);
+                sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
+                DayNightLitEntry(p);
                 sPaletteChanges[bank][0] |= 1u << index;
                 unsigned entry = p & 255;
                 sPaletteChanges[group][entry / 32] |= 1u << (entry & 31);
@@ -660,13 +774,16 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
+            /* A window of the field's character block at night: its glass is lit (DayNightUpdate). */
+            const uint16_t *lit = sDayNightLit && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
+                && (sLitBanks[address / 32] & (1u << bank)) ? sLitTexture + paletteBase : NULL;
             memset(tile->colors, 0, sizeof(tile->colors));
             tile->visible = false;
             for (unsigned pixel = 0; pixel < 64; ++pixel)
             {
                 unsigned index = color256 ? tile->bytes[pixel]
                     : (tile->bytes[pixel / 2] >> ((pixel & 1) * 4)) & 15;
-                dest[sMorton[pixel]] = index ? palette[paletteBase + index] : 0;
+                dest[sMorton[pixel]] = !index ? 0 : lit && lit[index] ? lit[index] : palette[paletteBase + index];
                 if (index)
                 {
                     tile->visible = true;
@@ -2695,39 +2812,6 @@ static bool sMapNamePopup;
 
 void CtrVideo_SetMapNamePopup(bool active) { sMapNamePopup = active; }
 
-/*
- * Day and night on the outdoor field: the map layers and the sprites below the
- * menus' priority are multiplied by the colour of the hour (3ds_day_night.h)
- * with one quad, so the palettes, the weather and the fades stay the game's.
- * The clock is the console's own (osGetTime counts local milliseconds from
- * 1900, which starts on a midnight).
- */
-static bool sDayNight;
-static uint32_t sDayNightColor = 0xffffffu;
-
-void CtrVideo_SetDayNight(bool outdoors)
-{
-    sDayNight = outdoors;
-    if (outdoors) sDayNightColor = CtrDayNight_Tint((uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS));
-}
-
-static bool DayNightActive(void)
-{
-    return sDayNight && sFieldLayers && sDayNightColor != 0xffffffu;
-}
-
-/* Multiplies what this pass has drawn so far by the hour's colour; alpha is kept for the depth planes. */
-static void DayNightMultiply(void)
-{
-    C2D_Flush();
-    C3D_AlphaTest(false, GPU_ALWAYS, 0);
-    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_DST_COLOR, GPU_ZERO, GPU_ZERO, GPU_ONE);
-    C2D_DrawRectSolid(-1024, -1024, 0, 4096, 4096,
-                      C2D_Color32(sDayNightColor >> 16, sDayNightColor >> 8, sDayNightColor, 255));
-    C2D_Flush();
-    BlendForget();
-}
-
 /* GBA BG0 rect [gx0,gx1) x [gy0,gy1) drawn with the view at (viewX, viewY),
  * inside the native clip (x0..x1, y0..y1) being composed. */
 static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1, int gy0, int gy1,
@@ -2923,17 +3007,10 @@ static void Layers(unsigned mask)
     unsigned display = Reg(0), mode = display & 7;
     mask &= ~sLayerExclude;
     if (mode > 2) { Error(10, "bitmap display modes are not part of baseline"); return; }
-    /* The menus and text boxes are priority 0: the hour's tint goes on before them. */
-    bool dayNight = DayNightActive();
     for (int priority = 3; priority >= 0; --priority)
     {
         /* One depth plane at a time while composing them separately. */
         if (!(sPriorityMask & (1u << priority))) continue;
-        if (priority == 0 && dayNight)
-        {
-            DayNightMultiply();
-            dayNight = false;
-        }
         /* Priority is the depth scale: 3 stays at the screen plane. */
         sLayerShift = (sLayerOrigin + sParallax * (3 - priority)) / sShiftZoom;
         for (int bg = 3; bg >= 0; --bg)
@@ -2996,8 +3073,6 @@ static void Layers(unsigned mask)
             if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_OBJ] += elapsed;
         }
     }
-    /* A depth plane without priority 0 is tinted whole. */
-    if (dayNight) DayNightMultiply();
 }
 
 /*
@@ -4977,11 +5052,13 @@ void CtrVideo_Present(void)
     if (sUsed > CACHE_COUNT - 4096) TileCacheReset();
     uint64_t perfPalette=CtrPerf_Begin();
     UpdatePalette();
+    DayNightUpdate();
     UpdateFade();
     NativeIntroPrepare();
     CtrPerf_End(PERF_PALETTE,perfPalette);
     if (sStage || sBattle) RecordScroll();
-    uint16_t backdrop = (Reg(0) & 128) ? 0x7fff : sPalette[0];
+    uint16_t backdrop = (Reg(0) & 128) ? 0x7fff
+        : sDayNightColor != 0xffffffu ? CtrDayNight_Shade(sPalette[0], sDayNightColor) : sPalette[0];
     uint32_t rgb = CtrVideo_RGBA8(backdrop, true);
     uint32_t clear = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
     /*

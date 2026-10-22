@@ -311,7 +311,7 @@ build/palette_fade_test.exe: tests/palette_fade_test.c include/3ds_palette_fade.
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/palette_fade_test.c -o $@
 
-build/day_night_test.exe: tests/day_night_test.c include/3ds_day_night.h
+build/day_night_test.exe: tests/day_night_test.c include/3ds_day_night.h include/3ds_day_night_lights.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/day_night_test.c -o $@
 

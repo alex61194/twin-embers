@@ -115,8 +115,11 @@ void CtrVideo_SetQuestLogLayout(bool layout);
 void CtrVideo_SetMapNamePopup(bool active);
 /* Whether the field being shown is outdoors with the day/night option on: the
  * compositor then tints the map and its sprites by the 3DS clock's hour
- * (3ds_day_night.h). Menus and text boxes keep their colours. */
-void CtrVideo_SetDayNight(bool outdoors);
+ * (3ds_day_night.h), and lights the windows its tilesets list
+ * (3ds_day_night_lights.h; either list may be NULL). Menus and text boxes keep
+ * their colours. */
+void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+                          const uint16_t *secondary, unsigned secondaryCount);
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

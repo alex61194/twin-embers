@@ -72,7 +72,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "e2bb9acf073149ddf49517ac22f667e42d6a1a630b7ed22e0ce14874ad77522e",
+   "sha256": "0822d5bf213bef0a7233575e79cc4ac26e106a39869fcc26c98e3e1a6ff08eb8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -365,11 +365,19 @@
   },
   {
    "path": "3ds_port/include/3ds_day_night.h",
-   "sha256": "de9836fdd290cf186aa6e2802bcdcf51a1efa1ff8ba0ddcc5c3aede4910d8c69",
+   "sha256": "c87102164793a90337981ae6c70a2ef45db1c59e962967f012db8f5ca30e5ab4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_day_night_lights.h",
+   "sha256": "82a1357ac09fc6f776825b940abef2005fcec2d2c92dc5e14c701150a0a5eecc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source: tile numbers of lit window tiles per tileset; no ROM/game payloads or generated media"
   },
   {
    "path": "3ds_port/include/3ds_dirty_rect.h",
@@ -678,7 +686,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "805de6d21b8f029f0a056c2be39b63696b400c14475f332cdf287c23c3e2765f",
+   "sha256": "0fbfc0a797f0fa8a3ec2efd022b4913ffc52925b46948a45f78c702feef61f47",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1141,7 +1149,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "336e3cb312fc50769edaacd4845102ac1d542a8ffad0aadfe3dc759101dc8fa1",
+   "sha256": "acb3c8a774560858a749006df4fc4b80bad8e8df197915dc65d63f0348dbef18",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1395,7 +1403,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "23baa64345a53f74933cbebd28e34fd7127587f50538b16067ba50072b5363e3",
+   "sha256": "b5e695817ae1d5fd16493ed046051c09de77ad3cd9825524597a2d7f1f08ef3b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1635,7 +1643,7 @@
   },
   {
    "path": "3ds_port/tests/day_night_test.c",
-   "sha256": "2bd93f6153c44982e73c00d82ef0b51e1c593404e8522fb71ac22f2529f97124",
+   "sha256": "e39c56f6e7b1abaef12f72c15fdc711548172518e4e4a47572561c9addd8b45b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2548,7 +2556,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "a42ec642d1e220b2ac8035484cf222799ed6e20bfd285961115271951be5cabb",
+   "sha256": "879b09a282a005267291b021cbc3efb14b902293491f22302b83282eb94ef2bf",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
