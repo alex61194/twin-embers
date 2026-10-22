@@ -132,8 +132,33 @@ int main(void) {
     assert(!CtrFlash_InitMigrating("new.sav", "preferred.sav", "fallback.sav"));
     fault = 0;
     assert(fopen("new.sav", "rb") == NULL);
+    /* A clock footer after the flash (mGBA, cartridge dumpers) is read and
+     * copied with it, byte for byte. */
+    FILE *footer = fopen("preferred.sav", "ab");
+    assert(footer);
+    for (int i = 0; i < 16; ++i) assert(fputc(0xa0 + i, footer) != EOF);
+    assert(fclose(footer) == 0);
+    assert(CtrFlash_InitMigrating("new.sav", "preferred.sav", "fallback.sav"));
+    assert(ProgramFlashByte(0, 0, 0x01) == 0);
+    assert(CtrFlash_Close());
+    FILE *copied = fopen("new.sav", "rb");
+    assert(copied && fgetc(copied) == 0x01 && fseek(copied, 131072, SEEK_SET) == 0);
+    for (int i = 0; i < 16; ++i) assert(fgetc(copied) == 0xa0 + i);
+    assert(fgetc(copied) == EOF && fclose(copied) == 0);
+    remove("new.sav");
+    /* Played in place, the footer stays where it is. */
+    assert(CtrFlash_Init("preferred.sav"));
+    assert(ProgramFlashByte(31, 4095, 0x02) == 0);
+    assert(CtrFlash_Close());
+    copied = fopen("preferred.sav", "rb");
+    assert(copied && fseek(copied, 131071, SEEK_SET) == 0 && fgetc(copied) == 0x02);
+    for (int i = 0; i < 16; ++i) assert(fgetc(copied) == 0xa0 + i);
+    assert(fgetc(copied) == EOF && fclose(copied) == 0);
+    /* Anything longer than the flash and SAVE_TRAILER_MAX is another image. */
     FILE *oversized = fopen("preferred.sav", "ab");
-    assert(oversized && fputc(0, oversized) != EOF && fclose(oversized) == 0);
+    assert(oversized);
+    for (int i = 16; i < 513; ++i) assert(fputc(0, oversized) != EOF);
+    assert(fclose(oversized) == 0);
     assert(!CtrFlash_InitMigrating("new.sav", "preferred.sav", "fallback.sav"));
     assert(fopen("new.sav", "rb") == NULL);
     assert(CtrFlash_InitMigrating("new.sav", "absent.sav", "also-absent.sav"));

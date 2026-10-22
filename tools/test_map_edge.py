@@ -27,11 +27,18 @@ class MapEdgeRule(unittest.TestCase):
     def test_rule_on_synthetic_maps(self):
         with tempfile.TemporaryDirectory() as tmp:
             exe = Path(tmp) / ('map-edge-test.exe' if os.name == 'nt' else 'map-edge-test')
-            subprocess.run([compiler(), '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror',
+            subprocess.run([compiler(), '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-DCTR_MAP_EDGE_FILL=1',
                             '-I' + str(ROOT / '3ds_port/include'), str(ROOT / '3ds_port/tests/map_edge_test.c'),
                             '-o', str(exe)], check=True)
             out = subprocess.run([str(exe)], check=True, capture_output=True, text=True).stdout
             self.assertIn('PASS map edge', out)
+
+
+class MapEdgeSwitch(unittest.TestCase):
+    def test_the_continuation_is_off_by_default(self):
+        header = (ROOT / '3ds_port/include/3ds_map_edge.h').read_text()
+        self.assertIn('#define CTR_MAP_EDGE_FILL 0', header)
+        self.assertIn('return CTR_MAP_EDGE_FILL && (', header)
 
 
 class MapEdgeProduction(unittest.TestCase):
@@ -47,7 +54,7 @@ class MapEdgeProduction(unittest.TestCase):
             world = tmp / 'world.txt'
             world.write_text(map_edge_world.build(tree))
             exe = tmp / ('map-edge-draw.exe' if os.name == 'nt' else 'map-edge-draw')
-            subprocess.run([compiler(), '-std=gnu11', '-O2', '-w', '-DPLATFORM_3DS', '-DMODERN=1', '-DFIRERED',
+            subprocess.run([compiler(), '-std=gnu11', '-O2', '-w', '-DCTR_MAP_EDGE_FILL=1', '-DPLATFORM_3DS', '-DMODERN=1', '-DFIRERED',
                             '-DENGLISH', '-DREVISION=0', '-iquote', str(ROOT / '3ds_port/include'),
                             '-iquote', str(tree / 'include'), '-iquote', str(tree / 'src'),
                             str(ROOT / '3ds_port/tests/map_edge_draw_test.c'), '-o', str(exe)], check=True)

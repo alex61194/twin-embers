@@ -11,6 +11,8 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
                             const char *fallbackPath);
 /* Writes the pending sectors; true only once the write is confirmed. On failure they stay pending. */
 bool CtrFlash_Flush(void);
+/* Right after CtrFlash_Init: a copy of the save as read, at backupPath (best effort). */
+bool CtrFlash_Backup(const char *backupPath);
 /* Flushes (one retry) and closes; false if anything pending could not be written. */
 bool CtrFlash_Close(void);
 

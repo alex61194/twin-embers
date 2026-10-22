@@ -36,6 +36,73 @@ drawn); the ARM build links `CtrBattle_MoveMatchup`.
 
 NEEDS HARDWARE VALIDATION (a real battle: the tag against the foe's types, then after a switch).
 
+## LeafGreen's wild Pokémon
+
+The species LeafGreen has in the wild and FireRed does not can be caught here too. FireRed and LeafGreen share
+their encounter tables slot for slot, so a slot holding a FireRed-only species gives LeafGreen's species instead
+half of the time, at the slot's own level (`3ds_leafgreen.h`, patch 0130):
+
+| FireRed | LeafGreen |
+|---|---|
+| Ekans, Arbok | Sandshrew, Sandslash |
+| Oddish, Gloom | Bellsprout, Weepinbell |
+| Psyduck, Golduck | Slowpoke, Slowbro |
+| Growlithe | Vulpix |
+| Shellder | Staryu |
+| Scyther (Safari Zone) | Pinsir |
+| Seadra, Weezing | Kingler, Muk |
+| Wooper, Murkrow, Qwilfish, Delibird (Sevii Islands) | Marill, Misdreavus, Remoraid, Sneasel |
+
+Two of LeafGreen's slots are not a counterpart of FireRed's and are named by place: Magmar on the Mt. Ember
+exterior (the Spearow slots that are Magmar in LeafGreen, levels 38 and 40) and Mantine in the deep water of Tanoby
+Ruins and Trainer Tower (the 35-40 Tentacool slot). It covers walking, surfing, Rock Smash, fishing and Sweet Scent.
+
+- Not changed: species both games have at other rates (Krabby/Horsea, the Nidoran, Kakuna/Metapod,
+  Koffing/Grimer, Ledyba/Spinarak), Electabuzz and Skarmory (LeafGreen has another species there, not an exclusive),
+  the Game Corner prizes and in-game trades (script data), and the Pokédex area map, which shows FireRed's places.
+- The table of counterparts is port-authored code in `build/3ds_leafgreen.o`; FireRed's encounter tables still
+  come from the pack.
+
+Checked: `tests/leafgreen_test.c` (in `verify-host`); every FireRed/LeafGreen slot difference in the pinned
+`wild_encounters.json`; `verify-clean-release` reports 0 embedded bytes.
+
+NEEDS HARDWARE VALIDATION (an encounter of each kind on a route with a counterpart).
+
+## Trade evolutions by level
+
+The Pokémon that evolve by trade also evolve on levelling up from level 40, with no trade (patch 0131): Kadabra,
+Machoke, Graveler and Haunter, and the trade-with-item ones, without the item: Poliwhirl (Politoed), Onix (Steelix),
+Scyther (Scizor), Seadra (Kingdra), Porygon (Porygon2) and Clamperl (Huntail).
+
+- Holding the trade's item picks that branch: Clamperl with the Deep Sea Scale becomes Gorebyss.
+- Slowpoke keeps evolving into Slowbro at 37. Holding a King's Rock when it levels up from 37 makes it Slowking.
+- As in a trade, the targets from the second generation wait for the National Pokédex, and the Everstone stops it.
+- A trade still evolves them as before. The held item is not used up by the level evolution.
+
+NEEDS HARDWARE VALIDATION (Rare Candy on a level 39 Kadabra; a Slowpoke with a King's Rock).
+
+## Night encounters
+
+From 21:00 to 05:00 on the 3DS clock (the night the day/night tint draws), some wild slots give a night species,
+always and at the slot's own level (`3ds_night_wild.h`, patch 0134). The day birds and bugs give way: Pidgey to
+Hoothoot (Zubat or Oddish before the National Pokédex), Caterpie to Spinarak (Venonat), Spearow to Murkrow (Zubat),
+Fearow and Pidgeotto to Noctowl (Golbat, Venomoth); Mt. Moon has more Clefairy, the Pokémon Tower more Haunter and
+Misdreavus, the Pokémon Mansion Gastly and Houndour, Route 8 Gastly, the Lost Cave Misdreavus. With the Super Rod at
+night in the waters of Five to Seven Island, Chinchou and Lanturn bite instead of Gyarados and Seadra. In Six Island's
+Pattern Bush it goes both ways: Ledyba by day, Spinarak by night.
+
+- Johto species wait for the National Pokédex, as in the Sevii Islands; before it a rule gives its Kanto species or
+  leaves the slot alone.
+- The LeafGreen half (above) applies after it, so a night Oddish can still be a Bellsprout.
+- Eevee's friendship evolutions are on again with the same clock: Espeon by day, Umbreon at night (FireRed left them
+  out for want of a clock).
+- It follows the clock, not the DAY/NIGHT option, which only switches the tint. The Pokédex area map shows the day.
+
+Checked: `tests/night_wild_test.c` (in `verify-host`); every rule's species is in its map's FireRed slot (pinned
+`wild_encounters.json`).
+
+NEEDS HARDWARE VALIDATION (Route 1 at 23:00 and at 12:00; Rare Candy on a friendly Eevee at night).
+
 ## "Engine ABI is missing"
 
 The 3DSX reads `romfs:/engine/abi.bin` first. Two causes look the same on screen, so the message now
@@ -62,6 +129,74 @@ from the recipe against a stalled copy (the unpatched loop never returns: it tim
 returns each time and finishes once the copy completes; the GBA build is unchanged) and is in CI; the
 ARM build links. NOT reproduced in an emulator or on a console: NEEDS HARDWARE VALIDATION (open the
 player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
+
+## The touch screen's ember look
+
+The lower screen's field menus wear the owner's modern design (DS/3DS-era raised buttons on a red ember
+backdrop, from the mockups the owner approved): the START column as cream buttons with an icon
+and FireRed's lettering (amber and glowing for the screen shown), the X and Y tiles with their badge, RUN
+with a switch, the GBA picture and the HOME map in a slate frame, the bar as a note card with BACK (violet)
+and PAGE beside it, OPTIONS as raised rows with the value in a pill (a switch for ON/OFF) and SAVE as a card
+with YES and NO. The battle Summary keeps its layout on the same backdrop. The battle screens are unchanged.
+
+- The art is the port's own: `tools/make_ember_skin.py` draws the backdrop and the six column icons
+  (`ember_skin*.h`); the BAG icon is the port's battle Bag reduced. The text is FireRed's font at run time.
+- Embers rise slowly over the backdrop (about twenty sparks, `3ds_touch_skin_impl.h`): one step a frame,
+  drawn only on pixels that show the backdrop, so they pass behind every button and never over the GBA
+  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS: ON (the default) or OFF; like
+  the other page-2 options it is not kept in the save.
+- The old artwork skin (`poketouch_skin*.h`, `tools/make_touch_skin.py`) is removed.
+
+Checked: `tests/poketouch_render_test.c` (new hit geometry, every incremental redraw equal to a full one);
+`tests/poketouch_options_test.c` (the EMBERS row, its default and its values); the ARM build links.
+NEEDS VALIDATION in Azahar and on a console (each field menu, SAVE, OPTIONS, the embers' cost per frame).
+
+## Day and night on the outdoor field
+
+On outdoor maps (FireRed's town and route map types) the map and its sprites take the colour of the hour
+of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, plain day from 09:00 to 17:30 and dusk at
+19:00, blended second by second in between (`3ds_day_night.h`; the hours follow Merrp's day/night system
+for pokeemerald, the colours are the port's own). Indoors, in caves, in battle and in every menu nothing
+changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default) or OFF; like the other page-2 options it is not
+kept in the save and is CLOCK again after a restart.
+
+- It is coloured, not played: the compositor shades each colour as it turns the palette into texels
+  (`3ds_video.c`, `DayNightTexel`), for the map's palettes 0-12 and the sprite palettes. The game's
+  palettes in RAM, the weather, the fades and the save are untouched. Palettes 13-15 (text boxes, the
+  map-name popup, the menus) keep their colours. A change of tint (in steps of 16 seconds) re-converts
+  the palettes once and the tile cache refreshes through the palette versions it already uses.
+- Lit windows: at night, the glass of the windows listed per tileset in `3ds_day_night_lights.h`
+  (`tile | palette << 12`) takes a warm lamp colour instead of the shade, fading in from dusk. Only the
+  glass pixels of those tiles (light blue, `CtrDayNight_Glass`) are lit; frames and sills stay dark. The
+  list is by tile, not by colour, because the Poke Mart roof uses the same blues as the windows and must
+  stay dark. Not lit: Silph Co.'s glass front, the Bike Shop skylight, and the houses with grey windows.
+- Not every window is lit all night: Pokemon Centers, Marts, Gyms and the route gatehouses
+  (`CTR_LIGHT_PUBLIC`) are, the houses keep their own hours (`CtrDayNight_WindowOn`): on between 18:30
+  and 20:00, off one by one between 21:45 and 02:15, about one in eight on all night, about a third on
+  again from 05:00. The hours come from a hash of where the window stands on the map, so a window keeps
+  them every night and walking past does not make them flicker. A window is the run of window tiles whose
+  glass meets across their edges, so it switches as a whole.
+- Where the tilemap stands on the map: `field_camera.c` keeps its tile offset to itself, so the bridge finds
+  it by matching the tilemap buffers against the map's metatiles in view (`UpdateCamera`), then only checks
+  it each frame; twice the camera position minus the offset stays the same while walking. Until it is
+  found every listed window is lit.
+- Each lit window throws a soft warm glow on the ground under it (`DrawDayNightGlow`): one additive quad
+  per window bottom tile, drawn after the priority-2 backgrounds and before the sprites of that priority.
+- The night itself is a moonlit grade (`CtrDayNight_Moon`: a quarter of the way to grey, gamma 1.3, a
+  blue multiply) that the hour's multiply goes over to as the night deepens, so dusk stays warm.
+- Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
+  (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6, passing the light lists of the map's
+  primary and secondary tilesets. No game patch.
+- Not yet: street lamps, fireflies and other night effects.
+
+Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white, the keys land at their hours,
+no hour is darker than the night, no channel moves more than one step per second, the day wraps; the
+shade never raises a colour's luma and the night is the moonlit grade, dusk stays warm, the lamp is full at
+night and off by day, glass is told from sill, wall and grass; the windows' hours: none at noon, all at
+21:00, fewer through the night, some all night and some at dawn; the light tables are valid tiles with no
+duplicates, no Mart roof tile, and only General's non-house buildings public); `tests/poketouch_options_test.c`
+(the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
+a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
 
 ## Not added, and why
 

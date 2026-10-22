@@ -20,7 +20,13 @@
 #define FLASH_SECTOR_SIZE 4096u
 #define FLASH_SECTOR_COUNT 32u
 
+/* What a save file may carry after the flash: mGBA and cartridge dumpers
+ * append a few bytes (mGBA's clock footer is 16). Kept in the file as it is:
+ * saves write only inside the flash. */
+#define SAVE_TRAILER_MAX 512u
+
 static u8 sImage[FLASH_ROM_SIZE_1M];
+static u8 sTrailer[SAVE_TRAILER_MAX + 1];
 static FILE *sFile;
 static u32 sDirtySectors;
 
@@ -96,6 +102,20 @@ static FILE *CreateExclusive(const char *path)
     return file;
 }
 
+/* The flash image, then at most SAVE_TRAILER_MAX bytes after it. A truncated
+ * file, a longer one (another game's 256 KiB or 1 MiB image) or a read error
+ * is refused. */
+static bool ReadSave(FILE *file, u8 *image, size_t *trailerLength)
+{
+    if (fread(image, 1, sizeof(sImage), file) != sizeof(sImage))
+        return false;
+    size_t length = fread(sTrailer, 1, sizeof(sTrailer), file);
+    if (ferror(file) || length > SAVE_TRAILER_MAX)
+        return false;
+    *trailerLength = length;
+    return true;
+}
+
 bool CtrFlash_Init(const char *path)
 {
     memset(sImage, 0xff, sizeof(sImage));
@@ -105,9 +125,8 @@ bool CtrFlash_Init(const char *path)
     {
         /* A truncated, oversized or unreadable save is an error, never a
          * partially blank image that the game could treat as a new game. */
-        bool ok = fread(sImage, 1, sizeof(sImage), sFile) == sizeof(sImage);
-        int extra = fgetc(sFile);
-        ok = ok && extra == EOF && !ferror(sFile);
+        size_t trailer;
+        bool ok = ReadSave(sFile, sImage, &trailer);
         if (!ok || fseek(sFile, 0, SEEK_SET) != 0)
         {
             fclose(sFile);
@@ -160,9 +179,8 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
         }
         /* Validate the complete source before creating the destination. */
         unsigned char *image = sImage;
-        bool ok = fread(image, 1, sizeof(sImage), old) == sizeof(sImage);
-        int extra = fgetc(old);
-        ok = ok && extra == EOF && !ferror(old);
+        size_t trailer = 0;
+        bool ok = ReadSave(old, image, &trailer);
         if (fclose(old) != 0)
             ok = false;
         if (!ok)
@@ -176,7 +194,8 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
             HW_SAVE_TRACE("HW SAVE ERROR cannot create migration destination %s errno=%d", path, errno);
             return false;
         }
-        ok = fwrite(image, 1, sizeof(sImage), copy) == sizeof(sImage);
+        ok = fwrite(image, 1, sizeof(sImage), copy) == sizeof(sImage)
+             && fwrite(sTrailer, 1, trailer, copy) == trailer;
         if (fflush(copy) != 0)
             ok = false;
         if (fclose(copy) != 0)
@@ -240,6 +259,50 @@ bool CtrFlash_Close(void)
     if (!ok)
         HW_SAVE_TRACE("HW SAVE ERROR closing the save");
     return ok;
+}
+
+/* A copy of the save as it was read at start (CtrFlash_Init), next to it. It is written
+ * to a temporary file first and only then takes the place of the previous copy, so a
+ * failed write never costs the copy already there. A blank card has nothing to keep and
+ * keeps the old copy. Best effort: the game runs without it. */
+bool CtrFlash_Backup(const char *backupPath)
+{
+    char temp[256];
+    size_t i;
+
+    if (!sFile || !backupPath || sDirtySectors != 0)
+        return false;
+    for (i = 0; i < sizeof(sImage) && sImage[i] == 0xff; ++i)
+        ;
+    if (i == sizeof(sImage))
+        return false;
+    if (snprintf(temp, sizeof(temp), "%s.tmp", backupPath) >= (int)sizeof(temp))
+        return false;
+    remove(temp);
+    FILE *out = fopen(temp, "wb");
+    if (!out)
+    {
+        HW_SAVE_TRACE("HW SAVE backup: cannot create %s errno=%d", temp, errno);
+        return false;
+    }
+    bool ok = fwrite(sImage, 1, sizeof(sImage), out) == sizeof(sImage);
+    if (fflush(out) != 0)
+        ok = false;
+    if (fclose(out) != 0)
+        ok = false;
+    if (ok)
+    {
+        remove(backupPath);
+        ok = rename(temp, backupPath) == 0;
+    }
+    if (!ok)
+    {
+        remove(temp);
+        HW_SAVE_TRACE("HW SAVE backup failed: %s", backupPath);
+        return false;
+    }
+    HW_SAVE_TRACE("HW SAVE backup written: %s", backupPath);
+    return true;
 }
 
 u16 IdentifyFlash(void)

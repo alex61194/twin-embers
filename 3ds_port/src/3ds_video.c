@@ -19,6 +19,7 @@
 #include "3ds_presentation.h"
 #include "3ds_intro_native.h"
 #include "3ds_palette_fade.h"
+#include "3ds_day_night.h"
 #include "3ds_poketouch.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
@@ -60,10 +61,25 @@ static void PerfFlush(void)
     C2D_Flush();
     CtrPerf_End(PERF_SUBMIT,start);
 }
+/*
+ * The PICA's texture cache, dropped (GPUREG_TEXUNIT_CONFIG bit 16, the bit
+ * Citro3D's own context update writes). Citro3D asks for it only when a
+ * texture binding changes, and Citro2D rebinds only a texture other than the
+ * last one: the tile atlas, the background layers and the bottom chrome are
+ * the same textures frame after frame, rewritten by the CPU or drawn into, so
+ * on hardware the GPU went on sampling their old texels (a sprite drawn with
+ * the tiles that had its atlas slots before). Azahar has no such cache.
+ * Found by ZallaxDev's port on a New 3DS (1a5b6ee).
+ */
+static void TexCacheDrop(void)
+{
+    GPUCMD_AddMaskedWrite(GPUREG_TEXUNIT_CONFIG, 0x4, 1u << 16);
+}
 static void PerfSplit(u8 flags)
 {
     CTR_PERF_COUNT(PERF_FRAME_SPLITS, 1);
     C3D_FrameSplit(flags);
+    TexCacheDrop();
 }
 #define C3D_FrameSplit PerfSplit
 /* The target Citro2D draws on, for passes that need its dimensions. */
@@ -73,6 +89,9 @@ static void PerfSceneBegin(C3D_RenderTarget *target)
 {
     sDrawTarget = target;
     if (sPerfTarget != target) { CTR_PERF_COUNT(PERF_TARGET_SWITCH,1); sPerfTarget=target; }
+    /* What was drawn into the last target is sampled from now on. */
+    C2D_Flush();
+    TexCacheDrop();
     C2D_SceneBegin(target);
 }
 #define C2D_DrawImageAt PerfImageAt
@@ -502,6 +521,153 @@ static unsigned Read16(unsigned offset)
     return sMemory.vram[offset] | (sMemory.vram[offset + 1] << 8);
 }
 
+/*
+ * Day and night on the outdoor field (3ds_day_night.h). The map's palettes
+ * (backgrounds 0-12; 13-15 are the text boxes and menus) and the sprites' are
+ * turned into texels through the colour of the hour, and the glass of the
+ * window tiles in the lights table (3ds_day_night_lights.h) is lit instead.
+ * The game's palettes, its fades and the weather stay as the game wrote them:
+ * only the conversion changes, so a new hour costs the tiles on screen one
+ * re-decode, like a palette change. The clock is the console's own (osGetTime
+ * counts local milliseconds from 1900, which starts on a midnight), read in
+ * steps of DAY_NIGHT_STEP seconds so that a dusk re-decodes every few steps
+ * rather than every second.
+ */
+#define DAY_NIGHT_STEP 16u
+#define DAY_NIGHT_BG_BANKS 13u
+static bool sDayNightRequested;
+static uint32_t sDayNightRequestColor = 0xffffffu;
+static uint32_t sDayNightRequestSecond;
+static const uint16_t *sDayNightRequestLights[2];
+static unsigned sDayNightRequestCount[2];
+/* What the texels are converted with now. */
+static uint32_t sDayNightColor = 0xffffffu;
+static unsigned sDayNightLit;
+static const uint16_t *sDayNightLights[2];
+/* Per tile of the field's character block, the palettes it is a window with,
+ * and of those the ones lit all night (CTR_LIGHT_PUBLIC). */
+static uint16_t sLitBanks[1024];
+static uint16_t sPublicBanks[1024];
+/* The windows' hours (CtrDayNight_WindowOn) are read in minutes. */
+static uint32_t sDayNightMinute = ~0u;
+/* Where the field's tilemap stands on the map (CtrVideo_SetDayNightCamera). */
+typedef struct
+{
+    bool valid;
+    int tileX, tileY, viewLeft, mapX, mapY;
+    unsigned map;
+} DayNightCamera;
+static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
+/* Per field layer cell: 1 where a lit window was drawn (the glow under it). */
+static uint8_t sCellLight[4][4096];
+/* The background colours that are glass, lit, as texels; 0 for the others. */
+static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
+static bool sFieldLayers;
+
+void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+                          const uint16_t *secondary, unsigned secondaryCount)
+{
+    sDayNightRequested = outdoors;
+    sDayNightRequestLights[0] = primary;
+    sDayNightRequestCount[0] = primary ? primaryCount : 0;
+    sDayNightRequestLights[1] = secondary;
+    sDayNightRequestCount[1] = secondary ? secondaryCount : 0;
+    if (outdoors)
+    {
+        uint32_t second = (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
+        sDayNightRequestColor = CtrDayNight_Tint(second / DAY_NIGHT_STEP * DAY_NIGHT_STEP);
+        sDayNightRequestSecond = second;
+    }
+}
+
+void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map)
+{
+    sDayNightCameraRequest = (DayNightCamera){valid, tileX, tileY, viewLeft, mapX, mapY, map};
+}
+
+static bool DayNightBank(unsigned bank) { return bank < DAY_NIGHT_BG_BANKS || bank >= 16; }
+
+/* Palette entry p (colour color) as a texel, under the hour in force. */
+static uint16_t DayNightTexel(unsigned p, uint16_t color)
+{
+    if (sDayNightColor != 0xffffffu && DayNightBank(p / 16))
+        color = CtrDayNight_Shade(color, sDayNightColor);
+    return CtrVideo_RGBA5551(color);
+}
+
+static void DayNightLitEntry(unsigned p)
+{
+    if (p >= DAY_NIGHT_BG_BANKS * 16) return;
+    sLitTexture[p] = sDayNightLit && CtrDayNight_Glass(sPalette[p])
+        ? CtrVideo_RGBA5551(CtrDayNight_Lit(sPalette[p], sDayNightColor, sDayNightLit)) : 0;
+}
+
+/* After UpdatePalette, before UpdateFade: a new hour, or a map with other
+ * windows, converts every tinted entry again and marks them all changed. */
+static void DayNightUpdate(void)
+{
+    bool on = sDayNightRequested && sFieldLayers;
+    uint32_t color = on ? sDayNightRequestColor : 0xffffffu;
+    const uint16_t *lights0 = on ? sDayNightRequestLights[0] : NULL;
+    const uint16_t *lights1 = on ? sDayNightRequestLights[1] : NULL;
+
+    uint32_t minute = on ? sDayNightRequestSecond / 60u : ~0u;
+    DayNightCamera camera = on ? sDayNightCameraRequest : (DayNightCamera){0};
+
+    /* Another minute or another camera: windows may switch, so the field's
+     * layers walk again (only the cells that change are drawn). */
+    if (minute != sDayNightMinute || memcmp(&camera, &sDayNightCamera, sizeof(camera)))
+    {
+        sDayNightMinute = minute;
+        sDayNightCamera = camera;
+        if (sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
+    }
+    if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
+    if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
+    {
+        memset(sLitBanks, 0, sizeof(sLitBanks));
+        memset(sPublicBanks, 0, sizeof(sPublicBanks));
+        for (unsigned k = 0; k < 2; ++k)
+            for (unsigned i = 0; on && i < sDayNightRequestCount[k]; ++i)
+            {
+                uint16_t entry = sDayNightRequestLights[k][i];
+                sLitBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
+                if (entry & CTR_LIGHT_PUBLIC) sPublicBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
+            }
+        sDayNightLights[0] = lights0;
+        sDayNightLights[1] = lights1;
+    }
+    sDayNightColor = color;
+    sDayNightLit = color == 0xffffffu ? 0 : CtrDayNight_Lights(color);
+    for (unsigned p = 0; p < 512; ++p)
+        if (DayNightBank(p / 16)) sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
+    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) DayNightLitEntry(p);
+    for (unsigned bank = 0; bank < 32; ++bank)
+    {
+        if (!DayNightBank(bank)) continue;
+        memset(sPaletteChanges[bank], 0, sizeof(sPaletteChanges[bank]));
+        sPaletteChanges[bank][0] = 0xffffu;
+        ++sPaletteVersion[bank];
+    }
+    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
+        sPaletteChanges[32][entry / 32] |= 1u << (entry & 31);
+    memset(sPaletteChanges[33], 0xff, sizeof(sPaletteChanges[33]));
+    ++sPaletteVersion[32];
+    ++sPaletteVersion[33];
+    sBgPaletteStamp = sStats.frames + 1;
+    if (!sFadeBaseValid) return;
+    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) sFadeBaseTexture[p] = DayNightTexel(p, sFadeBase[p]);
+    for (unsigned bank = 0; bank < DAY_NIGHT_BG_BANKS; ++bank)
+    {
+        memset(sFadeChanges[bank], 0, sizeof(sFadeChanges[bank]));
+        sFadeChanges[bank][0] = 0xffffu;
+        ++sFadeVersion[bank];
+    }
+    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
+        sFadeChanges[32][entry / 32] |= 1u << (entry & 31);
+    ++sFadeVersion[32];
+}
+
 static void UpdatePalette(void)
 {
     bool bgChanged = false, objChanged = false;
@@ -518,7 +684,8 @@ static void UpdatePalette(void)
                 if (sPalette[p] == sMemory.palette[p]) continue;
                 CTR_PERF_COUNT(PERF_PALETTE_COLORS, 1);
                 sPalette[p] = sMemory.palette[p];
-                sTexturePalette[p] = CtrVideo_RGBA5551(sPalette[p]);
+                sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
+                DayNightLitEntry(p);
                 sPaletteChanges[bank][0] |= 1u << index;
                 unsigned entry = p & 255;
                 sPaletteChanges[group][entry / 32] |= 1u << (entry & 31);
@@ -598,15 +765,21 @@ static bool TilePaletteChanged(const Tile *tile, unsigned paletteId)
  */
 static uint32_t sTileSerial;
 
-static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase);
+static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark);
 
 static int GetTileSlot(unsigned address, unsigned bank, bool color256)
 {
-    return GetTileSlotFrom(address, bank, color256, false);
+    return GetTileSlotKey(address, bank, color256, false, false);
 }
 
-/* fadeBase: decode in sFadeBase (background tiles only), a separate slot. */
 static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase)
+{
+    return GetTileSlotKey(address, bank, color256, fadeBase, false);
+}
+
+/* fadeBase: decode in sFadeBase (background tiles only), a separate slot.
+ * dark: a window tile with its light off, a separate slot too. */
+static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark)
 {
     CTR_PERF_COUNT(PERF_CACHE_REQUEST,1);
     uint64_t perfCache=0;
@@ -621,7 +794,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         address = 0;
     }
     unsigned paletteId = color256 ? 32 + (bank >= 16) : bank;
-    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
+    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0) | (dark ? 0x40000000u : 0);
     unsigned hash = (key * 2654435761u) & (HASH_COUNT - 1);
     while (sHash[hash] && sTiles[sHash[hash] - 1].key != key)
         hash = (hash + 1) & (HASH_COUNT - 1);
@@ -629,7 +802,14 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
     {
         CTR_PERF_COUNT(PERF_CACHE_MISS,1);
         if (sUsed == CACHE_COUNT)
-            CtrPlatform_Fatal("VIDEO tile cache exhausted in a single frame");
+        {
+            /* More new tiles in one frame than the headroom FrameBegin keeps: the index starts
+             * again instead of the game stopping. Tiles already placed this frame may show
+             * another tile's picture for this one frame; the next generation redraws them.
+             * The probe ended on an empty entry, which the reset leaves empty. */
+            Error(7, "tile cache exhausted in a single frame; index reset");
+            TileCacheReset();
+        }
         sHash[hash] = ++sUsed;
         sTiles[sUsed - 1] = (Tile){.key = key};
     }
@@ -659,13 +839,16 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
+            /* A window of the field's character block at night: its glass is lit (DayNightUpdate). */
+            const uint16_t *lit = sDayNightLit && !dark && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
+                && (sLitBanks[address / 32] & (1u << bank)) ? sLitTexture + paletteBase : NULL;
             memset(tile->colors, 0, sizeof(tile->colors));
             tile->visible = false;
             for (unsigned pixel = 0; pixel < 64; ++pixel)
             {
                 unsigned index = color256 ? tile->bytes[pixel]
                     : (tile->bytes[pixel / 2] >> ((pixel & 1) * 4)) & 15;
-                dest[sMorton[pixel]] = index ? palette[paletteBase + index] : 0;
+                dest[sMorton[pixel]] = !index ? 0 : lit && lit[index] ? lit[index] : palette[paletteBase + index];
                 if (index)
                 {
                     tile->visible = true;
@@ -734,7 +917,9 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
                   GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
     unsigned control = Reg(0x50), effect = (control >> 6) & 3;
     C2D_PlainImageTint(&sTint, C2D_Color32(255, 255, 255, 255), 0);
-    if (!effects) { CtrPerf_End(PERF_BLEND,perfStart); return; }
+    /* A semi-transparent OBJ is blended whatever the window it is in says about colour effects: the overworld's
+     * windows never enable them, and its fog is translucent. */
+    if (!effects && !semiTransparent) { CtrPerf_End(PERF_BLEND,perfStart); return; }
     if ((effect == 1 && (control & (1u << layer))) || semiTransparent)
     {
         /* GPU implements independently clamped EVA/EVB (not 1-EVA).
@@ -1436,6 +1621,122 @@ static bool BattleRowShown(unsigned map, unsigned size, unsigned chars, bool col
     return false;
 }
 
+/*
+ * A move's background (fadetobg: Solar Beam's rays, the ghost's dark, Psychic's
+ * waves...) replaces the terrain on BG3 with a 240x160 picture in the first
+ * 32 columns of its 64-column map. The rest of the map still holds the
+ * terrain, which the GBA never shows while the picture holds still, but the
+ * zoomed scene's margins reach into it. So while such a picture holds still
+ * (a shake of a few pixels included), only the picture is drawn from the map,
+ * and its edge pixels are carried out to the screen's edges, as rays and
+ * gradients run on. A picture that slides (Agility, Fly) wraps as before: the
+ * margin then shows what is about to slide in. Maps of 64 columns (Surf's
+ * water, Fissure) are made to wrap and are left alone.
+ */
+static bool sMoveBackground;
+
+void CtrVideo_SetMoveBackground(const void *tilemap)
+{
+    /* An LZ77 header: the decompressed size in its upper 24 bits. */
+    sMoveBackground = tilemap && (*(const uint32_t *)tilemap >> 8) <= 2048;
+}
+
+static int SignedScroll(unsigned scroll)
+{
+    return scroll >= 256 ? (int)scroll - 512 : (int)scroll;
+}
+
+static bool MoveBackgroundStill(unsigned bg, unsigned scrollX, unsigned scrollY)
+{
+    int sx = SignedScroll(scrollX), sy = SignedScroll(scrollY);
+
+    return bg == 3 && sMoveBackground && sx >= -16 && sx <= 16 && sy >= -16 && sy <= 16;
+}
+
+/*
+ * A run of n texels of a background as the screen shows them, from screen
+ * pixel (sx, sy) rightwards (or downwards), all within one tile, stretched over
+ * the rectangle (dx, dy, dw, dh).
+ */
+static void DrawEdgeRun(unsigned map, unsigned size, unsigned chars, bool color256,
+                        unsigned scrollX, unsigned scrollY, int sx, int sy, bool down, int n,
+                        float dx, float dy, float dw, float dh)
+{
+    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    unsigned mapX = (unsigned)(sx + (int)scrollX), mapY = (unsigned)(sy + (int)scrollY);
+    unsigned entry = MapEntry(map, size, (mapX >> 3) & (columns - 1), (mapY >> 3) & (rows - 1));
+    int slot = EntrySlot(chars, entry, color256);
+    bool flipX = entry & 1024, flipY = entry & 2048;
+    int tx = (int)(mapX & 7), ty = (int)(mapY & 7);
+    int w = down ? 1 : n, h = down ? n : 1;
+    float left, right, top, bottom;
+
+    if (slot < 0 || n <= 0 || dw <= 0 || dh <= 0) return;
+    if (++sStats.tiles >= MAX_DRAWS - 32) { Error(2, "GPU geometry budget exceeded"); return; }
+    {
+        int baseX = (slot % (ATLAS_SIZE / 8)) * 8, baseY = (slot / (ATLAS_SIZE / 8)) * 8;
+        /* The texel span in the atlas, in screen order; a flipped tile runs backwards. */
+        int ax0 = flipX ? baseX + 8 - tx : baseX + tx, ax1 = flipX ? ax0 - w : ax0 + w;
+        int ay0 = flipY ? baseY + 8 - ty : baseY + ty, ay1 = flipY ? ay0 - h : ay0 + h;
+
+        left = ax0 / (float)ATLAS_SIZE;
+        right = ax1 / (float)ATLAS_SIZE;
+        top = 1.0f - ay0 / (float)ATLAS_SIZE;
+        bottom = 1.0f - ay1 / (float)ATLAS_SIZE;
+    }
+    const Tex3DS_SubTexture sub = {(u16)w, (u16)h, left, top, right, bottom};
+    C2D_DrawImageAt((C2D_Image){&sAtlas, &sub}, dx + CTR_VIEW_X + sLayerShift, dy + CTR_VIEW_Y, 0,
+                    &sTint, dw / w, dh / h);
+}
+
+/* The margins around a still move background (see above), from its edge pixels. */
+static void DrawPictureMargins(unsigned map, unsigned size, unsigned chars, bool color256,
+                               unsigned scrollX, unsigned scrollY)
+{
+    int x0 = sClipX0 > 0 ? sClipX0 : 0, x1 = sClipX1 < 240 ? sClipX1 : 240;
+    int y0 = sClipY0 > 0 ? sClipY0 : 0, y1 = sClipY1 < 160 ? sClipY1 : 160;
+    float left = (float)(-sClipX0), right = (float)(sClipX1 - 240);
+    float above = (float)(-sClipY0), below = (float)(sClipY1 - 160);
+
+    /* Down the left and right edges, a tile row at a time. */
+    for (int y = y0; y < y1;)
+    {
+        int end = y + 8 - (int)((y + (int)scrollY) & 7);
+
+        if (end > y1) end = y1;
+        if (left > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, y, true, end - y,
+                        sClipX0, y, left, end - y);
+        if (right > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, y, true, end - y,
+                        240, y, right, end - y);
+        y = end;
+    }
+    /* Across the top and bottom edges, a tile column at a time. */
+    for (int x = x0; x < x1;)
+    {
+        int end = x + 8 - (int)((x + (int)scrollX) & 7);
+
+        if (end > x1) end = x1;
+        if (above > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, x, 0, false, end - x,
+                        x, sClipY0, end - x, above);
+        if (below > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, x, 159, false, end - x,
+                        x, 160, end - x, below);
+        x = end;
+    }
+    /* The corners, from the corner pixels. */
+    if (above > 0 && left > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, 0, false, 1, sClipX0, sClipY0, left, above);
+    if (above > 0 && right > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, 0, false, 1, 240, sClipY0, right, above);
+    if (below > 0 && left > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, 159, false, 1, sClipX0, 160, left, below);
+    if (below > 0 && right > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, 159, false, 1, 240, 160, right, below);
+}
+
 static void DrawBattleBg(unsigned bg)
 {
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -1450,6 +1751,7 @@ static void DrawBattleBg(unsigned bg)
     unsigned lastEntry = ~0u;
     int lastSlot = -1;
     bool wraps = columns == 64;
+    bool picture = MoveBackgroundStill(bg, scrollX, scrollY);
 
     if (!wraps)
     {
@@ -1460,6 +1762,15 @@ static void DrawBattleBg(unsigned bg)
     {
         DrawBattleCut(bg, 0, 240, 0, 160, 0);
         return;
+    }
+    if (picture)
+    {
+        ViewBase();
+        DrawPictureMargins(map, size, chars, color256, scrollX, scrollY);
+        if (x0 < 0) x0 = 0;
+        if (x1 > 240) x1 = 240;
+        if (y0 < 0) y0 = 0;
+        if (y1 > 160) y1 = 160;
     }
     if (!ClipCell(&x0, &x1, &y0, &y1)) return;
     firstColumn = (unsigned)(((x0 + ox) & ~7) - ox + (int)scrollX) >> 3;
@@ -1800,6 +2111,72 @@ static bool VramChangedAfter(unsigned address, unsigned bytes, uint32_t after)
     return false;
 }
 
+/*
+ * Night windows on the field's layers. A window tile is a tile of the lights
+ * table drawn with its palette; its glass is lit unless its window keeps
+ * other hours (CtrDayNight_WindowOn). A window is the run of window tiles
+ * whose glass meets across their edges, keyed by its top-left tile's place
+ * on the map, so the tiles of one window switch together.
+ */
+static bool WindowTile(unsigned chars, unsigned entry, bool color256)
+{
+    unsigned address = chars + (entry & 1023) * 32, bank = entry >> 12;
+
+    return sDayNightLit && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
+        && (sLitBanks[address / 32] & (1u << bank));
+}
+
+/* Which edges of a window tile have glass, flips applied: 1 left, 2 right, 4 top, 8 bottom. */
+static unsigned GlassEdges(unsigned chars, unsigned entry)
+{
+    const uint8_t *tile = sMemory.vram + chars + (entry & 1023) * 32;
+    const uint16_t *glass = sLitTexture + (entry >> 12) * 16;
+    unsigned edges = 0;
+
+#define GLASS(index) ((index) && glass[(index)])
+    for (unsigned i = 0; i < 8; ++i)
+    {
+        if (GLASS(tile[i * 4] & 15)) edges |= 1;
+        if (GLASS(tile[i * 4 + 3] >> 4)) edges |= 2;
+        if (GLASS((tile[i / 2] >> ((i & 1) * 4)) & 15)) edges |= 4;
+        if (GLASS((tile[28 + i / 2] >> ((i & 1) * 4)) & 15)) edges |= 8;
+    }
+#undef GLASS
+    if (entry & 1024) edges = (edges & 12) | ((edges & 1) << 1) | ((edges & 2) >> 1);
+    if (entry & 2048) edges = (edges & 3) | ((edges & 4) << 1) | ((edges & 8) >> 1);
+    return edges;
+}
+
+static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+{
+    const DayNightCamera *camera = &sDayNightCamera;
+    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    unsigned address = chars + (entry & 1023) * 32;
+
+    if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
+    for (unsigned step = 0; step < 4; ++step)
+    {
+        unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
+
+        if (!(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 2)) break;
+        column = left;
+        entry = next;
+    }
+    for (unsigned step = 0; step < 4; ++step)
+    {
+        unsigned up = (row + rows - 1) & (rows - 1), next = MapEntry(map, size, column, up);
+
+        if (!(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 8)) break;
+        row = up;
+        entry = next;
+    }
+    int dx = (int)((column - (unsigned)camera->tileX) & (columns - 1));
+    int dy = (int)((row - (unsigned)camera->tileY) & (rows - 1));
+    if (dx >= camera->viewLeft + (int)columns) dx -= (int)columns;
+    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(camera->mapX * 2 + dx, camera->mapY * 2 + dy, camera->map),
+                                sDayNightMinute * 60u);
+}
+
 static bool LayerRenderCells(unsigned bg)
 {
     static uint16_t dirty[LAYER_CELLS];
@@ -1855,8 +2232,16 @@ static bool LayerRenderCells(unsigned bg)
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             int slot;
+            uint8_t light = 0;
 
-            if (memoStamp[index] == stamp && memoEntry[index] == entry)
+            if (bg && sFieldLayers && WindowTile(chars, entry, color256))
+            {
+                bool on = WindowLit(map, size, chars, column, row, entry);
+
+                slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
+                light = on;
+            }
+            else if (memoStamp[index] == stamp && memoEntry[index] == entry)
                 slot = memoSlot[index];
             else
             {
@@ -1869,6 +2254,7 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
+            sCellLight[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0
                 : (((sTiles[slot].serial << 2) | ((entry >> 10) & 3)) | 1u << 31);
@@ -2711,6 +3097,74 @@ static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1,
  * bottom centre without changing the field BG scroll or object coordinates. */
 void CtrVideo_SetFieldMoveShowMon(bool active) { sFieldMoveShowMon = active; }
 
+/*
+ * FireRed's Poke Ball trail battle transition (battle_transition.c): balls roll
+ * across the screen in bands of 32 lines, each blacking out the tile column it
+ * passes. Its trail was BG0 tiles, and BG0's map spans 256 pixels; the field
+ * under it is this 400x240 canvas, so the trail is kept here, in the canvas's
+ * own 8x8 cells, and drawn in BG0's place.
+ */
+#define TRAIL_COLUMNS (CTR_GAME_WIDTH / 8)
+#define TRAIL_ROWS (CTR_GAME_HEIGHT / 8)
+static uint64_t sTrail[TRAIL_ROWS];
+static bool sTrailShown;
+
+void CtrPokeballTrail_Reset(void)
+{
+    memset(sTrail, 0, sizeof(sTrail));
+    sTrailShown = false;
+}
+
+/* A ball per band of 32 lines, down the whole height. */
+unsigned CtrPokeballTrail_Count(void) { return (CTR_GAME_HEIGHT + 31) / 32; }
+
+int CtrPokeballTrail_Right(void) { return CTR_GAME_WIDTH; }
+
+/* Ball i's field effect arguments (x, y, side, delay): FireRed's five, then more in the same stagger. */
+void CtrPokeballTrail_Ball(unsigned i, unsigned side, uint32_t *args)
+{
+    static const int8_t delays[] = {0, 16, 32, 8, 24, 4, 20, 36};
+
+    args[0] = (uint32_t)(side ? CTR_GAME_WIDTH + 16 : -16);
+    args[1] = i * 32 + 16;
+    args[2] = side;
+    args[3] = (uint32_t)delays[i % (sizeof(delays) / sizeof(delays[0]))];
+}
+
+/* The ball at (x, y), its centre, blacks out its tile column across its band. */
+void CtrPokeballTrail_Mark(int x, int y)
+{
+    int column = x >> 3, row = y >> 3;
+
+    if (x < 0 || column >= TRAIL_COLUMNS) return;
+    for (int r = row - 2; r <= row + 1; ++r)
+        if (r >= 0 && r < TRAIL_ROWS) sTrail[r] |= 1ull << column;
+    sTrailShown = true;
+}
+
+static void DrawPokeballTrail(int x0, int x1, int y0, int y1)
+{
+    ViewBase();
+    for (int r = 0; r < TRAIL_ROWS; ++r)
+    {
+        uint64_t bits = sTrail[r];
+        int top = r * 8 > y0 ? r * 8 : y0, bottom = r * 8 + 8 < y1 ? r * 8 + 8 : y1;
+
+        if (!bits || top >= bottom) continue;
+        for (int c = 0; c < TRAIL_COLUMNS;)
+        {
+            if (!(bits >> c & 1)) { ++c; continue; }
+            int end = c;
+            while (end < TRAIL_COLUMNS && (bits >> end & 1)) ++end;
+            int left = c * 8 > x0 ? c * 8 : x0, right = end * 8 < x1 ? end * 8 : x1;
+            if (left < right)
+                C2D_DrawRectSolid(left + CTR_VIEW_X, top + CTR_VIEW_Y, 0, right - left, bottom - top,
+                                  C2D_Color32(0, 0, 0, 255));
+            c = end;
+        }
+    }
+}
+
 static void DrawFieldUi(unsigned bg)
 {
     int x0 = sClipX0, x1 = sClipX1, y0 = sClipY0, y1 = sClipY1;
@@ -2763,6 +3217,7 @@ static void DrawFieldUi(unsigned bg)
         DrawFieldUiRect(bg, CTR_STAGE_X, sBattleTransition ? CTR_STAGE_Y : CTR_GAME_HEIGHT - 160, 0, 240, 0, 160, x0, x1, y0, y1);
     sViewX = vx; sViewY = vy;
     sClipX0 = x0; sClipX1 = x1; sClipY0 = y0; sClipY1 = y1;
+    if (sTrailShown) DrawPokeballTrail(x0, x1, y0, y1);
     ViewBase();
 }
 
@@ -2882,6 +3337,84 @@ static bool IntroClipLayer(int bg, bool scenery)
     return true;
 }
 
+/*
+ * The light a lit window throws on the ground: a soft warm glow under each
+ * window's bottom tiles, added over the field's ground layers before the
+ * sprites of their priority, as strong as the night is deep.
+ */
+static C3D_Tex sGlowTex;
+static bool sGlowReady, sGlowFailed;
+
+static void GlowPrepare(void)
+{
+    if (sGlowReady || sGlowFailed) return;
+    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
+    uint32_t *texels = (uint32_t *)sGlowTex.data;
+    for (unsigned y = 0; y < 32; ++y)
+        for (unsigned x = 0; x < 32; ++x)
+        {
+            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
+            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
+
+            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
+        }
+    C3D_TexFlush(&sGlowTex);
+    C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    sGlowReady = true;
+}
+
+static void DrawDayNightGlow(void)
+{
+    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
+    unsigned display = Reg(0);
+    C2D_ImageTint tint;
+    bool begun = false;
+
+    if (!sDayNightLit || !sFieldLayers) return;
+    GlowPrepare();
+    if (!sGlowReady) return;
+    C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f);
+    for (unsigned bg = 1; bg < 4; ++bg)
+    {
+        unsigned control = Reg(8 + bg * 2), size = control >> 14;
+        unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+        int width = (int)columns * 8, height = (int)rows * 8;
+        int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
+
+        if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
+        for (unsigned row = 0; row < rows; ++row)
+        {
+            const uint8_t *light = sCellLight[bg] + row * columns;
+            const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
+            int y = (((int)row * 8 - sy) % height + height) % height;
+
+            if (y >= VIEW_BOTTOM) y -= height;
+            if (y < VIEW_TOP - 24) continue;
+            for (unsigned column = 0; column < columns; ++column)
+            {
+                if (!light[column] || below[column]) continue;
+                int x = (((int)column * 8 - sx) % width + width) % width;
+
+                if (x >= VIEW_RIGHT) x -= width;
+                if (x < VIEW_LEFT - 24) continue;
+                if (!begun)
+                {
+                    C2D_Flush();
+                    ViewBase();
+                    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
+                    begun = true;
+                }
+                ++sStats.tiles;
+                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
+                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+            }
+        }
+    }
+    if (!begun) return;
+    C2D_Flush();
+    BlendForget();
+}
+
 static void Layers(unsigned mask)
 {
     unsigned display = Reg(0), mode = display & 7;
@@ -2935,6 +3468,7 @@ static void Layers(unsigned mask)
                 if ((mode == 1 && bg == 2) || mode == 2) gCtrPerf.ticks[PERF_BG_AFFINE] += elapsed;
             }
         }
+        if (priority == 2) DrawDayNightGlow();
         if ((mask & 16) && (display & 0x1000))
         {
             uint64_t start = svcGetSystemTick();
@@ -4826,6 +5360,9 @@ static void ApplyPresentationView(void)
     sViewY = (sIntro && !CtrIntroNative_Active()) || sStage || sCentred || sNative ? CTR_STAGE_Y : 0;
     ClipToView();
     sFieldLayers = !sStage && !sCentred && !sBattle && !sNative && !sNativeUi && !sIntro;
+    /* Neither the trail nor a move's background outlives its screen. */
+    if (!sFieldLayers && sTrailShown) CtrPokeballTrail_Reset();
+    if (!sBattle) sMoveBackground = false;
     int mode = sIntro ? 6 : sNativeUi ? 5 : sStage ? 1 : sCentred ? 2 : sBattle ? 3 : sNative ? 4 : 0;
     if (mode != lastMode)
     {
@@ -4879,6 +5416,8 @@ void CtrVideo_Present(void)
     CtrPerf_End(PERF_PREPARE,perfPrepare);
     uint64_t waitStart = svcGetSystemTick();
     if (!C3D_FrameBegin(C3D_FRAME_SYNCDRAW)) return;
+    /* Before anything samples what the CPU wrote since the last frame. */
+    TexCacheDrop();
     uint64_t start = svcGetSystemTick();
     sStats.waitMs = (start - waitStart) * 1000.0 / SYSCLOCK_ARM11;
     if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_GPU_WAIT]+=start-waitStart;
@@ -4932,11 +5471,13 @@ void CtrVideo_Present(void)
     if (sUsed > CACHE_COUNT - 4096) TileCacheReset();
     uint64_t perfPalette=CtrPerf_Begin();
     UpdatePalette();
+    DayNightUpdate();
     UpdateFade();
     NativeIntroPrepare();
     CtrPerf_End(PERF_PALETTE,perfPalette);
     if (sStage || sBattle) RecordScroll();
-    uint16_t backdrop = (Reg(0) & 128) ? 0x7fff : sPalette[0];
+    uint16_t backdrop = (Reg(0) & 128) ? 0x7fff
+        : sDayNightColor != 0xffffffu ? CtrDayNight_Shade(sPalette[0], sDayNightColor) : sPalette[0];
     uint32_t rgb = CtrVideo_RGBA8(backdrop, true);
     uint32_t clear = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
     /*

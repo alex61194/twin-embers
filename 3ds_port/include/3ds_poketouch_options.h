@@ -35,6 +35,10 @@ void CtrOptions_Fill(CtrPokeTouchView *view, int selected);
 int CtrOptions_TypeMatchup(void);
 int CtrOptions_MoveDetails(void);
 int CtrOptions_FieldSummary(void);
+/* The day/night tint of the outdoor field (3ds_day_night.h): on unless set to OFF. */
+int CtrOptions_DayNight(void);
+/* The embers rising behind the lower screen's menus: on unless set to OFF. */
+int CtrOptions_Embers(void);
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);

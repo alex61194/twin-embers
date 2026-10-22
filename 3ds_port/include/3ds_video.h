@@ -101,6 +101,13 @@ void CtrVideo_SetIntroEdgeFill(unsigned mask);
 void CtrVideo_SetNativeViewport(bool native);
 /* FireRed's battle transition is running: the field stays the 400x240 canvas under its effect (it is not the strict 240x160 viewport). */
 void CtrVideo_SetBattleTransition(bool active);
+/* Called from FireRed's code (battle_transition.c, battle_anim.c). */
+void CtrPokeballTrail_Reset(void);
+unsigned CtrPokeballTrail_Count(void);
+void CtrPokeballTrail_Ball(unsigned i, unsigned side, uint32_t *args);
+void CtrPokeballTrail_Mark(int x, int y);
+int CtrPokeballTrail_Right(void);
+void CtrVideo_SetMoveBackground(const void *tilemap);
 /*
  * Whether the frames that follow are a GBA screen shown centred (the fly map, the Town Map):
  * 1:1 at the stage position, with only the layers that wrap on the GBA and
@@ -113,6 +120,18 @@ void CtrVideo_SetNativeUi(bool nativeUi);
  * its description and bottom bar on the canvas bottom, both full width. */
 void CtrVideo_SetQuestLogLayout(bool layout);
 void CtrVideo_SetMapNamePopup(bool active);
+/* Whether the field being shown is outdoors with the day/night option on: the
+ * compositor then tints the map and its sprites by the 3DS clock's hour
+ * (3ds_day_night.h), and lights the windows its tilesets list
+ * (3ds_day_night_lights.h; either list may be NULL). Menus and text boxes keep
+ * their colours. */
+void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+                          const uint16_t *secondary, unsigned secondaryCount);
+/* Where the field's tilemap stands on the map, for the windows' own hours:
+ * the BG cell (tileX, tileY) holds the top-left tile of map metatile (mapX,
+ * mapY), the cells left of it reach viewLeft (negative), and map tells one
+ * map from another. Not valid: every listed window is lit. */
+void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

@@ -64,6 +64,9 @@ static void ShutdownPlatform(void)
 TRACED_EXIT(ExitData, CtrData_Shutdown())
 TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
+/* Leaving through the HOME Menu (aptMainLoop) is exit(0) from the VBlank bridge:
+ * whatever is still pending reaches the card before the process ends. */
+TRACED_EXIT(ExitFlash, CtrFlash_Close())
 
 /* Started by the HOME Menu forwarder (3ds_port/forwarder, 3ds_forwarder.h): it
  * made its own title Luma3DS's 3DSX title and passed the previous one. Put that
@@ -116,6 +119,9 @@ int main(void)
                                   "sdmc:/3ds/pokefirered/firered.sav"))
         CtrPlatform_Fatal("Twin Embers save could not be opened or migrated. Original saves preserved; check SD space and permissions.");
     CtrLog_Write(CTR_LOG_FS, "flash initialized");
+    atexit(ExitFlash);
+    /* The save as it was at this start, kept beside it for a card or a build that fails later. */
+    CtrFlash_Backup("sdmc:/3ds/twinembers/twinembers.sav.bak");
     if (!CtrVideo_Init())
         CtrPlatform_Fatal("FireRed compositor init failed");
     CtrVideo_Bind((CtrVideoMemory){

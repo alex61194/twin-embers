@@ -29,10 +29,16 @@
 
 #include <stdbool.h>
 
+/* The continuation is switched off: outside a map the game draws its own border block, as on the GBA. The rule below
+ * stays (and stays tested, with CTR_MAP_EDGE_FILL=1) so it can be turned on again. */
+#ifndef CTR_MAP_EDGE_FILL
+#define CTR_MAP_EDGE_FILL 0
+#endif
+
 /* MAP_TYPE_TOWN 1, MAP_TYPE_CITY 2, MAP_TYPE_ROUTE 3, MAP_TYPE_OCEAN_ROUTE 6. */
 static inline bool CtrEdge_MapTypeExtends(unsigned mapType)
 {
-    return mapType == 1 || mapType == 2 || mapType == 3 || mapType == 6;
+    return CTR_MAP_EDGE_FILL && (mapType == 1 || mapType == 2 || mapType == 3 || mapType == 6);
 }
 
 /* Sea metatile behaviours (MB_POND_WATER, MB_FAST_WATER, MB_DEEP_WATER, MB_OCEAN_WATER). */
