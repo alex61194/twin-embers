@@ -72,7 +72,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "aa1e5abee186e564177eb0c160d1bc6592e6614e05d2ca51cb88f5911c87e7dc",
+   "sha256": "4d239036a853adfb968ae42430e0317d9e27f054735612b2f06c35eb83b34e31",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -472,6 +472,14 @@
    "source_blob": "413de8e9fa6c9a1204f6c36238d88e1809b7db08",
    "source_sha256": "539a35b529db84f2921ec9adfaccad04fda96aa532468cd32e03d76e56f868fb",
    "modified_for_distribution": true
+  },
+  {
+   "path": "3ds_port/include/3ds_leafgreen.h",
+   "sha256": "673daf2b356d4b54ba5ba48a9f1d467ac3ab4a03d4d1d5637a9d2d67dd8eb3f6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/include/3ds_log.h",
@@ -1215,6 +1223,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "3ds_port/src/3ds_leafgreen.c",
+   "sha256": "55f670716f6bcf3ae84af800b7f5f6c605d2b2d9d7f334a662720434845b09ea",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/src/3ds_link_peripherals.c",
    "sha256": "6dda7af52c571759b25ccb46014920631d07368585e2be46f079bbf7c2aa6039",
    "review_status": "reviewed",
@@ -1722,6 +1738,14 @@
   {
    "path": "3ds_port/tests/item_pc_wait_test.c",
    "sha256": "6a1c2fbe9c4fd0908aa0b05fa198130d9e8a701df88ff05f55e2e195469657cf",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/leafgreen_test.c",
+   "sha256": "0852e32454ae0c4730722e1f71f7431c540d69e6a7f44ef2a6ec6f6159c8afa6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2532,7 +2556,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "e756e781b2e74832f832f305c7f95d4c5aab5fca8a31971e50dab01fba970b8b",
+   "sha256": "04cbe0f1330c2babf9b2ca11bc7ac34891f13950e7dab44609a6ecc191a83e26",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4320,6 +4344,22 @@
   {
    "path": "patches/pokefirered/0123-fog-horizontal-native-width.json",
    "sha256": "22c1a13654275095c22761a90d91f2d367c64604cbd8319634db5cc8286fa9f0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0130-leafgreen-wild-exclusives.json",
+   "sha256": "7598551ca3c4d46c6b3276d6116f04e812d0aadaf0c0a2a46513208c55d642e1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0131-trade-evolutions-by-level.json",
+   "sha256": "d021a8253e68b7a9877e3ca9390ee00c116d352b5600ccb423d3923544245f62",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
