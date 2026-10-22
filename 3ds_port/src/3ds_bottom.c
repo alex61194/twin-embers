@@ -179,6 +179,9 @@ extern unsigned CtrBottomPouch_Quantity(int index);
 extern void CtrBottomPouch_Title(char *out, int size);
 extern int CtrBottomPouch_HitAt(int gx, int gy);
 extern int CtrSave_Begin(void);
+extern void CtrMenu_SetSwitchTarget(int target);
+extern int CtrMenu_TakeSwitched(void);
+extern int CtrBottomSummary_RedirectExit(void);
 extern void CtrSave_End(void);
 extern int CtrSave_IsDifferentFile(void);
 extern int CtrSave_Run(void);
@@ -397,6 +400,7 @@ static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); }
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
+static int sSaveAfterMenu;         /* SAVE asked for with START open: frames left to open it once START has closed */
 
 /* Native OPTIONS (3ds_poketouch_options.c): a PokeTouch screen of its own over
  * the live field, with no hidden FireRed menu behind it, so no session. sScreen
@@ -1190,6 +1194,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_OPTIONS] = (uint8_t)CanRouteDestination(PT_OPTIONS, mode);
         s->touch.enabled[PT_CARD] = (uint8_t)CanRouteDestination(PT_CARD, mode);
         s->touch.enabled[PT_POKEDEX] = (uint8_t)CanRouteDestination(PT_POKEDEX, mode);
+        s->touch.enabled[PT_SAVE] = (uint8_t)CanRouteDestination(PT_SAVE, mode);
         /* The entry whose session this is: BAG for the field Bag, POKeMON
          * for Party's GIVE Bag (and Summary). */
         s->touch.selected = (uint8_t)(sSession.active ? sSession.owner : mode == MODE_BAG ? PT_BAG : PT_POKEMON);
@@ -1321,6 +1326,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_OPTIONS] = (uint8_t)CanRouteDestination(PT_OPTIONS, mode);
         s->touch.enabled[PT_CARD] = (uint8_t)CanRouteDestination(PT_CARD, mode);
         s->touch.enabled[PT_POKEDEX] = (uint8_t)CanRouteDestination(PT_POKEDEX, mode);
+        s->touch.enabled[PT_SAVE] = (uint8_t)CanRouteDestination(PT_SAVE, mode);
         s->touch.viewport = 1;
         PartyBar(s, &s->touch);
         if (PartyNative())
@@ -2105,7 +2111,8 @@ static int CanRouteDestination(int target, int mode)
 {
     if (sSession.battle)
         return 0;
-    if (target != PT_POKEMON && target != PT_BAG && target != PT_CARD && target != PT_OPTIONS && target != PT_POKEDEX)
+    if (target != PT_POKEMON && target != PT_BAG && target != PT_CARD && target != PT_OPTIONS && target != PT_POKEDEX
+        && target != PT_SAVE)
         return 0;
     if (!sSession.active || sPendingScreen != PT_NONE || target == sScreen)
         return 0;
@@ -2121,12 +2128,18 @@ static void RequestDestination(int target, int mode)
     sRouteFrames = sRouteWait = sRouteTries = sRouteReady = 0;
     sRouteMode = -1;
     sTapped = SLOT_NONE;
+    /* The screen's own exit opens the next one directly (CtrMenu_SetSwitchTarget); a Summary of the Party leaves for it
+     * too, not back to the Party. */
+    CtrMenu_SetSwitchTarget(target);
+    if (mode == MODE_SUMMARY)
+        CtrBottomSummary_RedirectExit();
     CtrLog_Write(CTR_LOG_VIDEO, "bottom: route %s -> %s", RootName(sScreen), RootName(target));
 }
 
 static void RouteAbort(const char *why)
 {
     CtrLog_Write(CTR_LOG_VIDEO, "bottom: route to %s abandoned: %s", RootName(sPendingScreen), why);
+    CtrMenu_SetSwitchTarget(-1);
     sPendingScreen = PT_NONE;
     sRouteHold = 0;
     sForceRedraw = 1;
@@ -2139,6 +2152,19 @@ static void OpenDestination(int target)
 {
     int opened;
 
+    CtrMenu_SetSwitchTarget(-1);        /* the field was reached: no screen's exit is to switch any more */
+    if (target == PT_SAVE) {
+        /* SAVE locks the field first (CtrSave_Begin), once the field takes it after the fade back. */
+        if (CtrSave_Begin()) {
+            sPendingScreen = PT_NONE;
+            OpenSave();
+            CtrLog_Write(CTR_LOG_VIDEO, "bottom: route reached the field: %s", RootName(target));
+            return;
+        }
+        if (++sRouteTries > ROUTE_OPEN_TRIES)
+            RouteAbort("save refused");
+        return;
+    }
     if (NativeRoot(target)) {
         /* A native screen: nothing to open. The unwound session ends in the
          * field (TOP released there) and the bottom stays held until then. */
@@ -2194,6 +2220,15 @@ static void UpdateDestinationRoute(int mode)
     }
     if (sPendingScreen == PT_NONE)
         return;
+    if (CtrMenu_TakeSwitched()) {
+        /* The screen's exit opened the next one: its session begins, shown once it is ready. */
+        int target = sPendingScreen;
+
+        sPendingScreen = PT_NONE;
+        BeginSessionPending(target);
+        CtrLog_Write(CTR_LOG_VIDEO, "bottom: switched to %s", RootName(target));
+        return;
+    }
     if (!sSession.active) {
         RouteAbort("session ended");
         return;
@@ -2422,8 +2457,12 @@ static void PokeTouchActivate(int id)
         }
         break;
     case PT_SAVE:
-        /* FireRed's save, never its START entry or original dialogue; the field is locked first. */
-        if (!menu && CtrSave_Begin())
+        /* FireRed's save, never its START entry or original dialogue; the field is locked first. With START open,
+         * START is closed first (its EXIT) and SAVE opens as soon as the field takes it. */
+        if (menu) {
+            CtrPokeTouch_Pick(PT_CLOSE);
+            sSaveAfterMenu = 90;
+        } else if (CtrSave_Begin())
             OpenSave();
         break;
     case PT_POKEDEX:
@@ -2454,7 +2493,7 @@ static int FieldEnabled(int id)
      * sidebar is off: SAVE's NO, its B and its OK are the ways out. */
     if (SaveActive() || !CtrPokeTouch_Enabled(id))
         return 0;
-    if (id == PT_OPTIONS || id == PT_CARD || id == PT_SAVE)
+    if (id == PT_OPTIONS || id == PT_CARD)
         return !CtrPokeTouch_StartMenuOpen() && !(id == PT_OPTIONS && OptionsActive());
     return 1;
 }
@@ -2516,6 +2555,19 @@ static void ProcessOptionsTouch(const CtrInput *in)
 }
 
 /* SAVE opens on its confirmation (YES first; NO first when it would replace another game file). */
+static void UpdateSaveAfterMenu(int mode)
+{
+    if (!sSaveAfterMenu)
+        return;
+    --sSaveAfterMenu;
+    if (mode != MODE_FIELD || sSession.active || CtrPokeTouch_StartMenuOpen())
+        return;
+    if (CtrSave_Begin()) {
+        sSaveAfterMenu = 0;
+        OpenSave();
+    }
+}
+
 static void OpenSave(void)
 {
     sScreen = PT_SAVE;
@@ -3794,6 +3846,7 @@ void CtrBottom_Frame(void)
     } else
         pressed = ProcessTouch(mode);
     UpdateSave();
+    UpdateSaveAfterMenu(mode);
     UpdateDestinationRoute(mode);
     RunPlan();
     if (mode == MODE_DEX)

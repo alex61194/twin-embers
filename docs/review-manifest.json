@@ -1035,7 +1035,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "edfde8f2376d5fe53a42284c9153d6629b2081aa1c5a0fc4a9b6ca65592cd00a",
+   "sha256": "8ce841e9b6a252271a56bf445017e04ccd82656336eaf7a88d3f4b773e8d269e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4344,6 +4344,14 @@
   {
    "path": "patches/pokefirered/0125-party-fly-on-touch-map.json",
    "sha256": "9a9464aa481b68213ddda88f708dad36aaff9e7b98507e4a20884cec22eb839c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0126-poketouch-direct-switch.json",
+   "sha256": "767817d15651ccadec8c733ae8fb616b924cccce4ba5924bb468f2441c05265f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
