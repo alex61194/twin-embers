@@ -101,6 +101,13 @@ void CtrVideo_SetIntroEdgeFill(unsigned mask);
 void CtrVideo_SetNativeViewport(bool native);
 /* FireRed's battle transition is running: the field stays the 400x240 canvas under its effect (it is not the strict 240x160 viewport). */
 void CtrVideo_SetBattleTransition(bool active);
+/* Called from FireRed's code (battle_transition.c, battle_anim.c). */
+void CtrPokeballTrail_Reset(void);
+unsigned CtrPokeballTrail_Count(void);
+void CtrPokeballTrail_Ball(unsigned i, unsigned side, uint32_t *args);
+void CtrPokeballTrail_Mark(int x, int y);
+int CtrPokeballTrail_Right(void);
+void CtrVideo_SetMoveBackground(const void *tilemap);
 /*
  * Whether the frames that follow are a GBA screen shown centred (the fly map, the Town Map):
  * 1:1 at the stage position, with only the layers that wrap on the GBA and

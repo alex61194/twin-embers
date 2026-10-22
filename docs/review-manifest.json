@@ -698,7 +698,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "7e93f3dbef3c61fba1ecb90aa45702944ef42c5cdd72a884cab135dcc9b9150e",
+   "sha256": "8fa378ff8b5b9e1d478f5ce9c231bef5ae87413fe4e9ff80bc2dfbc05d00801a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1268,7 +1268,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "0f8e2c296dd2613398a00ee012a42407c460578918e362b8cdbc9540c40312ff",
+   "sha256": "6b38c8884a77316cde47104815aa7c54ca4835bb3f2a09558064b34611a0620b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4287,6 +4287,22 @@
   {
    "path": "patches/pokefirered/0131-trade-evolutions-by-level.json",
    "sha256": "d021a8253e68b7a9877e3ca9390ee00c116d352b5600ccb423d3923544245f62",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0132-pokeball-trail-native-canvas.json",
+   "sha256": "7fe8bda5dcd9b5a14064009d4ec5e026aac0dcbeb2f280091f72ee7dfcdf118e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0133-move-background-edges.json",
+   "sha256": "fc2dd33ea0acd773f78113278a2f1d781d7806cb9b41b4b342dfb4690e40b0bd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

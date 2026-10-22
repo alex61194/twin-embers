@@ -1621,6 +1621,122 @@ static bool BattleRowShown(unsigned map, unsigned size, unsigned chars, bool col
     return false;
 }
 
+/*
+ * A move's background (fadetobg: Solar Beam's rays, the ghost's dark, Psychic's
+ * waves...) replaces the terrain on BG3 with a 240x160 picture in the first
+ * 32 columns of its 64-column map. The rest of the map still holds the
+ * terrain, which the GBA never shows while the picture holds still, but the
+ * zoomed scene's margins reach into it. So while such a picture holds still
+ * (a shake of a few pixels included), only the picture is drawn from the map,
+ * and its edge pixels are carried out to the screen's edges, as rays and
+ * gradients run on. A picture that slides (Agility, Fly) wraps as before: the
+ * margin then shows what is about to slide in. Maps of 64 columns (Surf's
+ * water, Fissure) are made to wrap and are left alone.
+ */
+static bool sMoveBackground;
+
+void CtrVideo_SetMoveBackground(const void *tilemap)
+{
+    /* An LZ77 header: the decompressed size in its upper 24 bits. */
+    sMoveBackground = tilemap && (*(const uint32_t *)tilemap >> 8) <= 2048;
+}
+
+static int SignedScroll(unsigned scroll)
+{
+    return scroll >= 256 ? (int)scroll - 512 : (int)scroll;
+}
+
+static bool MoveBackgroundStill(unsigned bg, unsigned scrollX, unsigned scrollY)
+{
+    int sx = SignedScroll(scrollX), sy = SignedScroll(scrollY);
+
+    return bg == 3 && sMoveBackground && sx >= -16 && sx <= 16 && sy >= -16 && sy <= 16;
+}
+
+/*
+ * A run of n texels of a background as the screen shows them, from screen
+ * pixel (sx, sy) rightwards (or downwards), all within one tile, stretched over
+ * the rectangle (dx, dy, dw, dh).
+ */
+static void DrawEdgeRun(unsigned map, unsigned size, unsigned chars, bool color256,
+                        unsigned scrollX, unsigned scrollY, int sx, int sy, bool down, int n,
+                        float dx, float dy, float dw, float dh)
+{
+    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    unsigned mapX = (unsigned)(sx + (int)scrollX), mapY = (unsigned)(sy + (int)scrollY);
+    unsigned entry = MapEntry(map, size, (mapX >> 3) & (columns - 1), (mapY >> 3) & (rows - 1));
+    int slot = EntrySlot(chars, entry, color256);
+    bool flipX = entry & 1024, flipY = entry & 2048;
+    int tx = (int)(mapX & 7), ty = (int)(mapY & 7);
+    int w = down ? 1 : n, h = down ? n : 1;
+    float left, right, top, bottom;
+
+    if (slot < 0 || n <= 0 || dw <= 0 || dh <= 0) return;
+    if (++sStats.tiles >= MAX_DRAWS - 32) { Error(2, "GPU geometry budget exceeded"); return; }
+    {
+        int baseX = (slot % (ATLAS_SIZE / 8)) * 8, baseY = (slot / (ATLAS_SIZE / 8)) * 8;
+        /* The texel span in the atlas, in screen order; a flipped tile runs backwards. */
+        int ax0 = flipX ? baseX + 8 - tx : baseX + tx, ax1 = flipX ? ax0 - w : ax0 + w;
+        int ay0 = flipY ? baseY + 8 - ty : baseY + ty, ay1 = flipY ? ay0 - h : ay0 + h;
+
+        left = ax0 / (float)ATLAS_SIZE;
+        right = ax1 / (float)ATLAS_SIZE;
+        top = 1.0f - ay0 / (float)ATLAS_SIZE;
+        bottom = 1.0f - ay1 / (float)ATLAS_SIZE;
+    }
+    const Tex3DS_SubTexture sub = {(u16)w, (u16)h, left, top, right, bottom};
+    C2D_DrawImageAt((C2D_Image){&sAtlas, &sub}, dx + CTR_VIEW_X + sLayerShift, dy + CTR_VIEW_Y, 0,
+                    &sTint, dw / w, dh / h);
+}
+
+/* The margins around a still move background (see above), from its edge pixels. */
+static void DrawPictureMargins(unsigned map, unsigned size, unsigned chars, bool color256,
+                               unsigned scrollX, unsigned scrollY)
+{
+    int x0 = sClipX0 > 0 ? sClipX0 : 0, x1 = sClipX1 < 240 ? sClipX1 : 240;
+    int y0 = sClipY0 > 0 ? sClipY0 : 0, y1 = sClipY1 < 160 ? sClipY1 : 160;
+    float left = (float)(-sClipX0), right = (float)(sClipX1 - 240);
+    float above = (float)(-sClipY0), below = (float)(sClipY1 - 160);
+
+    /* Down the left and right edges, a tile row at a time. */
+    for (int y = y0; y < y1;)
+    {
+        int end = y + 8 - (int)((y + (int)scrollY) & 7);
+
+        if (end > y1) end = y1;
+        if (left > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, y, true, end - y,
+                        sClipX0, y, left, end - y);
+        if (right > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, y, true, end - y,
+                        240, y, right, end - y);
+        y = end;
+    }
+    /* Across the top and bottom edges, a tile column at a time. */
+    for (int x = x0; x < x1;)
+    {
+        int end = x + 8 - (int)((x + (int)scrollX) & 7);
+
+        if (end > x1) end = x1;
+        if (above > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, x, 0, false, end - x,
+                        x, sClipY0, end - x, above);
+        if (below > 0)
+            DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, x, 159, false, end - x,
+                        x, 160, end - x, below);
+        x = end;
+    }
+    /* The corners, from the corner pixels. */
+    if (above > 0 && left > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, 0, false, 1, sClipX0, sClipY0, left, above);
+    if (above > 0 && right > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, 0, false, 1, 240, sClipY0, right, above);
+    if (below > 0 && left > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 0, 159, false, 1, sClipX0, 160, left, below);
+    if (below > 0 && right > 0)
+        DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, 159, false, 1, 240, 160, right, below);
+}
+
 static void DrawBattleBg(unsigned bg)
 {
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -1635,6 +1751,7 @@ static void DrawBattleBg(unsigned bg)
     unsigned lastEntry = ~0u;
     int lastSlot = -1;
     bool wraps = columns == 64;
+    bool picture = MoveBackgroundStill(bg, scrollX, scrollY);
 
     if (!wraps)
     {
@@ -1645,6 +1762,15 @@ static void DrawBattleBg(unsigned bg)
     {
         DrawBattleCut(bg, 0, 240, 0, 160, 0);
         return;
+    }
+    if (picture)
+    {
+        ViewBase();
+        DrawPictureMargins(map, size, chars, color256, scrollX, scrollY);
+        if (x0 < 0) x0 = 0;
+        if (x1 > 240) x1 = 240;
+        if (y0 < 0) y0 = 0;
+        if (y1 > 160) y1 = 160;
     }
     if (!ClipCell(&x0, &x1, &y0, &y1)) return;
     firstColumn = (unsigned)(((x0 + ox) & ~7) - ox + (int)scrollX) >> 3;
@@ -2971,6 +3097,74 @@ static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1,
  * bottom centre without changing the field BG scroll or object coordinates. */
 void CtrVideo_SetFieldMoveShowMon(bool active) { sFieldMoveShowMon = active; }
 
+/*
+ * FireRed's Poke Ball trail battle transition (battle_transition.c): balls roll
+ * across the screen in bands of 32 lines, each blacking out the tile column it
+ * passes. Its trail was BG0 tiles, and BG0's map spans 256 pixels; the field
+ * under it is this 400x240 canvas, so the trail is kept here, in the canvas's
+ * own 8x8 cells, and drawn in BG0's place.
+ */
+#define TRAIL_COLUMNS (CTR_GAME_WIDTH / 8)
+#define TRAIL_ROWS (CTR_GAME_HEIGHT / 8)
+static uint64_t sTrail[TRAIL_ROWS];
+static bool sTrailShown;
+
+void CtrPokeballTrail_Reset(void)
+{
+    memset(sTrail, 0, sizeof(sTrail));
+    sTrailShown = false;
+}
+
+/* A ball per band of 32 lines, down the whole height. */
+unsigned CtrPokeballTrail_Count(void) { return (CTR_GAME_HEIGHT + 31) / 32; }
+
+int CtrPokeballTrail_Right(void) { return CTR_GAME_WIDTH; }
+
+/* Ball i's field effect arguments (x, y, side, delay): FireRed's five, then more in the same stagger. */
+void CtrPokeballTrail_Ball(unsigned i, unsigned side, uint32_t *args)
+{
+    static const int8_t delays[] = {0, 16, 32, 8, 24, 4, 20, 36};
+
+    args[0] = (uint32_t)(side ? CTR_GAME_WIDTH + 16 : -16);
+    args[1] = i * 32 + 16;
+    args[2] = side;
+    args[3] = (uint32_t)delays[i % (sizeof(delays) / sizeof(delays[0]))];
+}
+
+/* The ball at (x, y), its centre, blacks out its tile column across its band. */
+void CtrPokeballTrail_Mark(int x, int y)
+{
+    int column = x >> 3, row = y >> 3;
+
+    if (x < 0 || column >= TRAIL_COLUMNS) return;
+    for (int r = row - 2; r <= row + 1; ++r)
+        if (r >= 0 && r < TRAIL_ROWS) sTrail[r] |= 1ull << column;
+    sTrailShown = true;
+}
+
+static void DrawPokeballTrail(int x0, int x1, int y0, int y1)
+{
+    ViewBase();
+    for (int r = 0; r < TRAIL_ROWS; ++r)
+    {
+        uint64_t bits = sTrail[r];
+        int top = r * 8 > y0 ? r * 8 : y0, bottom = r * 8 + 8 < y1 ? r * 8 + 8 : y1;
+
+        if (!bits || top >= bottom) continue;
+        for (int c = 0; c < TRAIL_COLUMNS;)
+        {
+            if (!(bits >> c & 1)) { ++c; continue; }
+            int end = c;
+            while (end < TRAIL_COLUMNS && (bits >> end & 1)) ++end;
+            int left = c * 8 > x0 ? c * 8 : x0, right = end * 8 < x1 ? end * 8 : x1;
+            if (left < right)
+                C2D_DrawRectSolid(left + CTR_VIEW_X, top + CTR_VIEW_Y, 0, right - left, bottom - top,
+                                  C2D_Color32(0, 0, 0, 255));
+            c = end;
+        }
+    }
+}
+
 static void DrawFieldUi(unsigned bg)
 {
     int x0 = sClipX0, x1 = sClipX1, y0 = sClipY0, y1 = sClipY1;
@@ -3023,6 +3217,7 @@ static void DrawFieldUi(unsigned bg)
         DrawFieldUiRect(bg, CTR_STAGE_X, sBattleTransition ? CTR_STAGE_Y : CTR_GAME_HEIGHT - 160, 0, 240, 0, 160, x0, x1, y0, y1);
     sViewX = vx; sViewY = vy;
     sClipX0 = x0; sClipX1 = x1; sClipY0 = y0; sClipY1 = y1;
+    if (sTrailShown) DrawPokeballTrail(x0, x1, y0, y1);
     ViewBase();
 }
 
@@ -5165,6 +5360,9 @@ static void ApplyPresentationView(void)
     sViewY = (sIntro && !CtrIntroNative_Active()) || sStage || sCentred || sNative ? CTR_STAGE_Y : 0;
     ClipToView();
     sFieldLayers = !sStage && !sCentred && !sBattle && !sNative && !sNativeUi && !sIntro;
+    /* Neither the trail nor a move's background outlives its screen. */
+    if (!sFieldLayers && sTrailShown) CtrPokeballTrail_Reset();
+    if (!sBattle) sMoveBackground = false;
     int mode = sIntro ? 6 : sNativeUi ? 5 : sStage ? 1 : sCentred ? 2 : sBattle ? 3 : sNative ? 4 : 0;
     if (mode != lastMode)
     {
