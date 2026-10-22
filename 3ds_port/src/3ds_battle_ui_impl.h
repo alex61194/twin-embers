@@ -396,10 +396,20 @@ static const CtrPokeTouchRect sBPNote = {4, 176, 236, 60};
 static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
 #define BP_DEPTH 3
 
-static CtrPokeTouchRect BPanel(int i)
+/* A slot's card, where FireRed puts it, so the D-pad walks the cards as they look: the lead (one, two in a double) on
+ * the left, the others stacked on the right, down the slots' order. */
+static CtrPokeTouchRect BPanel(const CtrBattleParty *p, int i)
 {
-    CtrPokeTouchRect r = {(int16_t)(i & 1 ? 163 : 6), (int16_t)(6 + 56 * (i >> 1)), 151, 50};
-    return r;
+    int lead = p->lead == 2 ? 2 : 1, rest = 6 - lead;
+
+    if (i < lead) {
+        CtrPokeTouchRect r = {6, (int16_t)(6 + 56 * i), 151, 50};
+        return r;
+    } else {
+        int h = (164 - 4 * (rest - 1)) / rest;     /* 4 apart: a card's glow never reaches its neighbour's redraw */
+        CtrPokeTouchRect r = {163, (int16_t)(6 + (h + 4) * (i - lead)), 151, (int16_t)h};
+        return r;
+    }
 }
 
 /* A row of the Party's menu: one column of up to four, two columns beyond. */
@@ -473,7 +483,7 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
         if (p->mode != BUI_PTY_FORCED && BIn(&sBPCancel, x, y))
             return BUI_PTY_CANCEL;
         for (int i = 0; i < 6; ++i) {
-            CtrPokeTouchRect r = BPanel(i);
+            CtrPokeTouchRect r = BPanel(p, i);
             if (p->present[i] && BIn(&r, x, y))
                 return BUI_PTY_SLOT + i;
         }
@@ -1644,7 +1654,7 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     static const uint16_t tint[7] = {0, UI_RGB(170, 80, 190), UI_RGB(214, 170, 30), UI_RGB(120, 128, 150),
                                      UI_RGB(80, 170, 220), UI_RGB(226, 96, 48), UI_RGB(200, 90, 160)};
     const CtrBattleParty *p = &v->pty;
-    CtrPokeTouchRect r = BPanel(i);
+    CtrPokeTouchRect r = BPanel(p, i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
     const EmPal *pal = selected ? &kEmAmber : fainted ? &kEmGrey : &kEmCream;
@@ -1659,6 +1669,43 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     if (selected)
         EmGlowRing(r.x, r.y, r.w, r.h);
     fy = EmButton(r.x, r.y, r.w, r.h, pal, BP_DEPTH, press);
+    if (r.h < 44) {
+        /* A right-hand card, shorter: the icon on a smaller plate, the name and level above, the bar and HP below. */
+        int cy = fy + fh / 2;
+
+        UiDisc(r.x + 17, cy, 12, UiMix(pal->bottom, pal->edge, 2));
+        UiDisc(r.x + 17, cy, 11, UiMix(pal->top, pal->bottom, 6));
+        if (BPartyIcon(i, p->icon[i]))
+            for (int y = 2; y < 30; ++y)
+                for (int x = 0; x < 32; ++x) {
+                    uint8_t index = sBPIcon[i].pixels[y * 32 + x];
+                    int py = cy - 18 + y;
+                    if (index && py >= fy && py < fy + fh)
+                        Px(r.x + 1 + x, py, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
+                }
+        UiText(p->name[i], r.x + 36, fy + 2, pal->ink, pal->inkSh, 1, r.x + r.w - 32);
+        if (p->egg[i])
+            return;
+        {
+            char text[24];
+            int ly = fy + fh - 12;
+            CtrPokeTouchRect bar = {(int16_t)(r.x + 36), (int16_t)(ly + 3), 48, 5};
+
+            if (fainted || (p->status[i] >= 1 && p->status[i] <= 6)) {
+                CtrPokeTouchRect badge = {(int16_t)(r.x + r.w - 33), (int16_t)(fy + 2), 28, 11};
+
+                UiBadge(&badge, fainted ? UI_RGB(90, 80, 90) : tint[p->status[i]], fainted ? "FNT" : code[p->status[i]]);
+            } else {
+                snprintf(text, sizeof(text), "Lv%u", p->level[i]);
+                UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), fy + 2, pal->ink, pal->inkSh, 1, r.x + r.w);
+            }
+            UiRoundFill(bar.x - 1, bar.y - 1, bar.w + 2, bar.h + 2, 2, UI_RGB(64, 72, 104));
+            UiHpBar(&bar, p->hp[i], p->maxHp[i]);
+            snprintf(text, sizeof(text), "%u/%u", p->hp[i], p->maxHp[i]);
+            UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), ly, pal->ink, pal->inkSh, 1, r.x + r.w);
+        }
+        return;
+    }
     UiDisc(r.x + 21, fy + 21, 15, UiMix(pal->bottom, pal->edge, 2));
     UiDisc(r.x + 21, fy + 21, 14, UiMix(pal->top, pal->bottom, 6));
     if (BPartyIcon(i, p->icon[i]))
@@ -2024,7 +2071,7 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
     }
     if (v->state == BUI_PARTY || old->state == BUI_PARTY) {
         /* The Party has its own screen: a move of the selection or a press redraws its cards, anything else all of it. */
-        if (old->state != v->state || !BPartySlotsOnly(&old->pty, &v->pty)
+        if (old->state != v->state || !BPartySlotsOnly(&old->pty, &v->pty) || old->pty.lead != v->pty.lead
             || ((old->pressed >= BUI_PTY_MENU && old->pressed < BUI_PTY_MESSAGE) != (v->pressed >= BUI_PTY_MENU && v->pressed < BUI_PTY_MESSAGE))
             || (v->pty.panel != BUI_PTY_NONE && old->pressed != v->pressed)) {
             CtrPokeTouchRect all = {0, 0, W, H};
@@ -2035,7 +2082,9 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
             for (int i = 0; i < 6; ++i)
                 if ((old->pty.cursor == i) != (v->pty.cursor == i)
                     || (old->pressed == BUI_PTY_SLOT + i) != (v->pressed == BUI_PTY_SLOT + i)) {
-                    CtrPokeTouchRect r = UiInset(&(CtrPokeTouchRect){BPanel(i).x, BPanel(i).y, BPanel(i).w, BPanel(i).h}, -2);
+                    CtrPokeTouchRect r = BPanel(&v->pty, i);
+
+                    r = UiInset(&r, -2);
 
                     BPartyPanel(i, v);
                     BMark(dirty, &r);
