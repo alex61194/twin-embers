@@ -72,7 +72,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "aa1e5abee186e564177eb0c160d1bc6592e6614e05d2ca51cb88f5911c87e7dc",
+   "sha256": "0822d5bf213bef0a7233575e79cc4ac26e106a39869fcc26c98e3e1a6ff08eb8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -364,6 +364,22 @@
    "basis": "Data-error screen word-wraps messages to 39 columns with an empty row between text rows (3ds_data_error_text.h); no message text, pack checks or exit behaviour changed"
   },
   {
+   "path": "3ds_port/include/3ds_day_night.h",
+   "sha256": "bac4310438cfdb988fd13e88de0573efa76d28b7f1ec09686b4d68e9b50553de",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_day_night_lights.h",
+   "sha256": "20eb337a549de3f9515bf21903fc41b74c2e2b295be54771d7b42af8cb2b58ea",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source: tile numbers of lit window tiles per tileset; no ROM/game payloads or generated media"
+  },
+  {
    "path": "3ds_port/include/3ds_dirty_rect.h",
    "sha256": "a15b62eed9b998c9c4c245634878e01ebee4c18da91e637cac9743795eca3c2c",
    "review_status": "reviewed",
@@ -579,7 +595,7 @@
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "d2e37b3d0b9ae4409b4c26118f2f90bb7b3ee405",
    "source_sha256": "f77c41028e76e293cfb2eebf6a3259100a96d48668f10d65475a94fe1ac8666c",
-   "modified_for_distribution": false
+   "modified_for_distribution": true
   },
   {
    "path": "3ds_port/include/3ds_presentation.h",
@@ -670,7 +686,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "17ba1799aeb641fdb991820eab168f534a40eeb17756d7b999e94d3540fd7413",
+   "sha256": "7e93f3dbef3c61fba1ecb90aa45702944ef42c5cdd72a884cab135dcc9b9150e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -973,7 +989,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "caa4ff09fe77f2dc7ee7ebbc1da6e5fb6cfe111b5b442012ef178897900763c5",
+   "sha256": "3547e8468129fe3a264dc69a612f40bd250c8e298c7b4bf4596db055547580ee",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1227,7 +1243,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "ef5fa5030dcc9c4568e19cc2da93a1a14ef75d2110a17536db6cb21790e7450a",
+   "sha256": "b88f52532e0687b96b2f9d2a334adcfdff4da062c2343268691c69c7676ac58d",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1464,6 +1480,14 @@
    "source_sha256": "75a1dcfabf39c4071fd9fdc395cb4d4d3115edb5b674160afd55228626e55754",
    "modified_for_distribution": true,
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
+  },
+  {
+   "path": "3ds_port/tests/day_night_test.c",
+   "sha256": "af5703ddb252bdc7472d4d1620a990090af318996e3cca4e1aadc3768ffa2d14",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/tests/dma_test.c",

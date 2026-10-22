@@ -48,13 +48,14 @@ int main(void)
     CtrPokeTouchView view;
     char small[4];
 
-    CHECK(CtrOptions_RowCount() == 11, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 12, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
     CHECK(strcmp(CtrOptions_Row(8)->label, "MOVE DETAILS") == 0, "MOVE DETAILS is row 8");
     CHECK(strcmp(CtrOptions_Row(9)->label, "FIELD SUMMARY") == 0, "FIELD SUMMARY is row 9");
-    CHECK(strcmp(CtrOptions_Row(10)->label, "EMBERS") == 0, "EMBERS is row 10");
+    CHECK(strcmp(CtrOptions_Row(10)->label, "DAY/NIGHT") == 0, "DAY/NIGHT is row 10");
+    CHECK(strcmp(CtrOptions_Row(11)->label, "EMBERS") == 0, "EMBERS is row 11");
 
     /* Valid values: the names FireRed uses, FRAME as TYPE1..TYPE10. */
     for (int row = 0; row < 7; ++row) {
@@ -71,6 +72,7 @@ int main(void)
     }
     /* Page 2 port options. */
     CHECK(CtrOptions_TypeMatchup() == 1 && CtrOptions_MoveDetails() == 1 && CtrOptions_FieldSummary() == 0
+          && CtrOptions_DayNight() == 1
           && CtrOptions_Embers() == 1, "default port options");
     CtrOptions_Step(7, 1);
     Text(7, "OFF");
@@ -82,15 +84,21 @@ int main(void)
     CHECK(CtrOptions_FieldSummary() == 1, "FIELD SUMMARY stepped to GBA");
     CtrOptions_Step(9, 1);
     Text(9, "3DS");
-    Text(10, "ON");
+    Text(10, "CLOCK");
     CtrOptions_Step(10, 1);
     Text(10, "OFF");
-    CHECK(CtrOptions_Embers() == 0, "EMBERS stepped to OFF");
+    CHECK(CtrOptions_DayNight() == 0, "DAY/NIGHT stepped to OFF");
     CtrOptions_Step(10, 1);
-    Text(10, "ON");
+    Text(10, "CLOCK");
+    Text(11, "ON");
+    CtrOptions_Step(11, 1);
+    Text(11, "OFF");
+    CHECK(CtrOptions_Embers() == 0, "EMBERS stepped to OFF");
+    CtrOptions_Step(11, 1);
+    Text(11, "ON");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 4 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 5 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
 
     /* Stepping wraps both ways through the valid values. */
