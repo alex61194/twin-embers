@@ -294,12 +294,11 @@ int main(int argc, char **argv)
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
 #ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MATCHUPS")) {
-        /* The matchup marks (opt-in: the baseline comparison above does not draw them). Right of the type pill, on the
-         * row y+22..y+35 of each move card, a glyph and "xN" in the colour of their meaning (x2 green, x1/2 amber,
-         * x0 red, x4 lime): that colour is counted over the row, and the other three must not appear in it. */
+        /* The matchup pills (opt-in: the baseline comparison above does not draw them). On the second row of each move
+         * card, right of POW, a pill in the colour of its meaning (x2 and x4 green, x1/2 orange, x0 grey): that colour
+         * is counted over the row, and the other three must not appear in it. */
         static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
-        const uint16_t fill[4] = {MsRgb(kMskMark0Ink[0], kMskMark0Ink[1], kMskMark0Ink[2]), MsRgb(kMskMark1Ink[0], kMskMark1Ink[1], kMskMark1Ink[2]),
-                                  MsRgb(kMskMark2Ink[0], kMskMark2Ink[1], kMskMark2Ink[2]), MsRgb(kMskMark3Ink[0], kMskMark3Ink[1], kMskMark3Ink[2])};
+        const uint16_t fill[4] = {kBFxColor[CTR_FX_DOUBLE], kBFxColor[CTR_FX_HALF], kBFxColor[CTR_FX_IMMUNE], kBFxColor[CTR_FX_QUADRUPLE]};
         CtrBattleView w = v;
 
         for (k = 0; k < 4; ++k) {
@@ -310,10 +309,10 @@ int main(int argc, char **argv)
         w.showCursor = 0;
         settle(&old, &w); old = w; put(out, "03b_move_matchups");
         for (k = 0; k < 4; ++k) {
-            const CtrPokeTouchRect rr = BMCardRect(k), *r = &rr;
+            const CtrPokeTouchRect *r = &sBCard[k];
             int found = 0;
 
-            for (int y = r->y + 26; y < r->y + 45; ++y)
+            for (int y = r->y + 20; y < r->y + 38; ++y)
                 for (int x = r->x + 57; x < r->x + r->w; ++x)
                     found += at(x, y) == fill[k];
             assert(found >= 12);           /* the mark is there, in the colour of its meaning */
@@ -321,7 +320,7 @@ int main(int argc, char **argv)
                 if (c != k) {
                     int other = 0;
 
-                    for (int y = r->y + 26; y < r->y + 45; ++y)
+                    for (int y = r->y + 20; y < r->y + 38; ++y)
                         for (int x = r->x + 57; x < r->x + r->w; ++x)
                             other += at(x, y) == fill[c];
                     assert(other == 0);    /* and in no other */
@@ -329,12 +328,12 @@ int main(int argc, char **argv)
         }
         /* A neutral hit draws nothing: the row of the first card has none of its colour any more. */
         {
-            const CtrPokeTouchRect rr = BMCardRect(0), *r = &rr;
+            const CtrPokeTouchRect *r = &sBCard[0];
             int left = 0;
 
             w.move[0].matchup = CTR_FX_NONE;
             settle(&old, &w); old = w;
-            for (int y = r->y + 26; y < r->y + 45; ++y)
+            for (int y = r->y + 20; y < r->y + 38; ++y)
                 for (int x = r->x + 57; x < r->x + r->w; ++x)
                     left += at(x, y) == fill[0];
             assert(left == 0);

@@ -146,18 +146,6 @@ static void SIcon(const CtrSummaryUiView *v, int x, int y, int scale)
 #define S_INK EM_DARK
 #define S_LABEL EM_DIM
 #define S_RULE UI_RGB(220, 210, 196)
-static UiSurface sUiEmber;
-
-static void SSurface(void)
-{
-    sUiEmber = sUiRed;
-    sUiEmber.textSh = EM_DARK_SH;
-    sUiEmber.textDim = EM_DIM;
-    sUiEmber.outline = UI_RGB(64, 72, 104);
-    sUiEmber.track = UI_RGB(64, 72, 104);
-    sUiS = &sUiEmber;
-}
-
 /* A light card: outlined, cream from top to bottom. */
 static void SCardBox(int x, int y, int w, int h)
 {
@@ -466,7 +454,7 @@ static void SFooter(const CtrSummaryUiView *v)
 void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)
 {
     sCanvas = canvas;
-    SSurface();
+    EmSurface();
     TsBackdrop();                       /* the embers, as PokeTouch's */
     SHeader(v);
     STabs(v);
@@ -511,7 +499,7 @@ static int SFooterChanged(const CtrSummaryUiView *a, const CtrSummaryUiView *b)
 void CtrSummaryUi_Update(uint16_t *canvas, const CtrSummaryUiView *old, const CtrSummaryUiView *v, CtrDirtyList *dirty)
 {
     sCanvas = canvas;
-    SSurface();
+    EmSurface();
     CtrDirty_Clear(dirty);
     if (SHeaderChanged(old, v)) {
         SHeader(v);
