@@ -2952,6 +2952,41 @@ static bool sMapNamePopup;
 
 void CtrVideo_SetMapNamePopup(bool active) { sMapNamePopup = active; }
 
+/* The Pokeball-trail battle transition's black bands (battle_transition.c), in canvas pixels. On the GBA each ball
+ * clears BG0 tiles behind it, but BG0 is a 256-pixel map drawn 240x160 at the canvas centre, so on the 400x240 canvas
+ * the trail is drawn here instead, across the whole width, under the balls. */
+#define TRANSITION_TRAIL_BANDS 8
+static struct { int16_t top, bottom, left, right; } sTransitionTrail[TRANSITION_TRAIL_BANDS];
+
+void CtrVideo_SetTransitionTrail(unsigned band, int top, int bottom, int left, int right)
+{
+    if (band >= TRANSITION_TRAIL_BANDS)
+        return;
+    sTransitionTrail[band].top = top;
+    sTransitionTrail[band].bottom = bottom;
+    sTransitionTrail[band].left = left;
+    sTransitionTrail[band].right = right;
+}
+
+void CtrVideo_ClearTransitionTrail(void)
+{
+    memset(sTransitionTrail, 0, sizeof(sTransitionTrail));
+}
+
+static void DrawTransitionTrail(int x0, int x1, int y0, int y1)
+{
+    for (unsigned i = 0; i < TRANSITION_TRAIL_BANDS; ++i)
+    {
+        int left = sTransitionTrail[i].left > x0 ? sTransitionTrail[i].left : x0;
+        int right = sTransitionTrail[i].right < x1 ? sTransitionTrail[i].right : x1;
+        int top = sTransitionTrail[i].top > y0 ? sTransitionTrail[i].top : y0;
+        int bottom = sTransitionTrail[i].bottom < y1 ? sTransitionTrail[i].bottom : y1;
+
+        if (left < right && top < bottom)
+            C2D_DrawRectSolid(left + sLayerShift, top, 0, right - left, bottom - top, C2D_Color32(0, 0, 0, 255));
+    }
+}
+
 /* GBA BG0 rect [gx0,gx1) x [gy0,gy1) drawn with the view at (viewX, viewY),
  * inside the native clip (x0..x1, y0..y1) being composed. */
 static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1, int gy0, int gy1,
@@ -3021,6 +3056,8 @@ static void DrawFieldUi(unsigned bg)
         /* The transition's own BG0 (its tile patterns) is centred on the canvas, like the GBA's centre under the player;
          * the field's text boxes sit at the bottom. */
         DrawFieldUiRect(bg, CTR_STAGE_X, sBattleTransition ? CTR_STAGE_Y : CTR_GAME_HEIGHT - 160, 0, 240, 0, 160, x0, x1, y0, y1);
+    if (sBattleTransition)
+        DrawTransitionTrail(x0, x1, y0, y1);
     sViewX = vx; sViewY = vy;
     sClipX0 = x0; sClipX1 = x1; sClipY0 = y0; sClipY1 = y1;
     ViewBase();
@@ -5154,6 +5191,8 @@ static void ApplyPresentationView(void)
     sNativeUi = sNativeUiRequested && !sStage && !sCentred && !sBattle && !sIntro;
     sNative = sNativeRequested && !sStage && !sCentred && !sBattle && !sNativeUi && !sIntro;
     sBattleTransition = sBattleTransitionRequested && !sStage && !sCentred && !sBattle && !sNativeUi && !sNative && !sIntro;
+    if (!sBattleTransition)
+        CtrVideo_ClearTransitionTrail();
     sTargetW = CTR_GAME_WIDTH;
     sTargetH = CTR_GAME_HEIGHT;
     sSurfaceH = 256;

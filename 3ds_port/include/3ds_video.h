@@ -101,6 +101,10 @@ void CtrVideo_SetIntroEdgeFill(unsigned mask);
 void CtrVideo_SetNativeViewport(bool native);
 /* FireRed's battle transition is running: the field stays the 400x240 canvas under its effect (it is not the strict 240x160 viewport). */
 void CtrVideo_SetBattleTransition(bool active);
+/* The Pokeball-trail transition's black band `band` (0-7): canvas rows [top, bottom), columns [left, right). The bands
+ * are drawn over the field, under the balls, while the transition runs, and cleared when it ends. */
+void CtrVideo_SetTransitionTrail(unsigned band, int top, int bottom, int left, int right);
+void CtrVideo_ClearTransitionTrail(void);
 /*
  * Whether the frames that follow are a GBA screen shown centred (the fly map, the Town Map):
  * 1:1 at the stage position, with only the layers that wrap on the GBA and
