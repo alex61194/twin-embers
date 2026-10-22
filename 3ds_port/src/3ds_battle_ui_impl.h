@@ -547,17 +547,121 @@ static void BPill(int x, int y, const char *text, uint16_t bg, uint16_t ink, uin
     UiText(text, x + 7, y + 3, ink, shadow, 1, x + w);
 }
 
-/* A battle icon (3ds_icons.h) centred on a light disc of the piece's colour. */
+/* The menu's icons: FIGHT, the Poke Ball and the shoe drawn flat by tools/make_battle_icons.py, the game's own bag
+ * from the user's pack (reduced to fit its disc), BAIT and ROCK the port's art (3ds_icons.h). */
+#include "battle_flat_icons.h"
+enum { BX_FIGHT, BX_BAG, BX_BALL, BX_SHOE, BX_BAIT, BX_ROCK };
+#define BBAG_MAX 48
+static struct {
+    int ready, ok, w, h;
+    uint16_t rgb[BBAG_MAX * BBAG_MAX];
+    uint8_t a[BBAG_MAX * BBAG_MAX];
+} sBBag;
+
+/* FireRed's bag (the ITEMS frame of graphics/interface/bag_male) at most `maxH` tall, its edge blended. */
+static void BBagPrepare(int maxH)
+{
+    static uint8_t tiles[64 * 256 / 2];
+    uint8_t colors[32], px[64 * 64];
+    uint16_t pal[16];
+    uint32_t len = 0;
+    uint8_t *packed;
+    int n = 0, x0 = 64, y0 = 64, x1 = -1, y1 = -1, bw, bh, tw, th;
+    float step;
+
+    if (sBBag.ready)
+        return;
+    sBBag.ready = 1;
+    packed = CtrData_Load("graphics/interface/bag_male.4bpp.lz", &len);
+    if (packed) {
+        n = PokeTouch_Lz77(packed, len, tiles, sizeof(tiles));
+        free(packed);
+    }
+    if (n < 64 * 64 / 2 || PokeTouch_LoadLz("graphics/interface/bag.gbapal.lz", colors, sizeof(colors)) != 32)
+        return;
+    for (int i = 1; i < 16; ++i) {
+        unsigned c = (unsigned)colors[i * 2] | (unsigned)colors[i * 2 + 1] << 8;
+        pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+    }
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x) {
+            uint8_t b = tiles[(y / 8 * 8 + x / 8) * 32 + y % 8 * 4 + x % 8 / 2], v = (x & 1) ? b >> 4 : b & 15;
+
+            px[y * 64 + x] = v;
+            if (v) {
+                x0 = x < x0 ? x : x0; x1 = x > x1 ? x : x1;
+                y0 = y < y0 ? y : y0; y1 = y > y1 ? y : y1;
+            }
+        }
+    if (x1 < 0)
+        return;
+    bw = x1 - x0 + 1;
+    bh = y1 - y0 + 1;
+    step = bh > maxH ? (float)bh / maxH : 1.0f;
+    tw = (int)(bw / step + 0.5f);
+    th = (int)(bh / step + 0.5f);
+    if (tw > BBAG_MAX || th > BBAG_MAX)
+        return;
+    /* Area-averaged: each pixel the colours of the source pixels it covers (only the drawn ones), its cover as alpha. */
+    for (int oy = 0; oy < th; ++oy)
+        for (int ox = 0; ox < tw; ++ox) {
+            float fx0 = ox * step, fx1 = fx0 + step, fy0 = oy * step, fy1 = fy0 + step, wsum = 0, wop = 0, r = 0, g = 0, b = 0;
+
+            for (int sy = (int)fy0; sy < bh && sy < fy1; ++sy)
+                for (int sx = (int)fx0; sx < bw && sx < fx1; ++sx) {
+                    float wx = (sx + 1 < fx1 ? sx + 1 : fx1) - (sx > fx0 ? sx : fx0);
+                    float wy = (sy + 1 < fy1 ? sy + 1 : fy1) - (sy > fy0 ? sy : fy0);
+                    float w = wx * wy;
+                    uint8_t v = px[(y0 + sy) * 64 + x0 + sx];
+
+                    wsum += w;
+                    if (v) {
+                        wop += w;
+                        r += w * (pal[v] >> 11);
+                        g += w * ((pal[v] >> 5) & 63);
+                        b += w * (pal[v] & 31);
+                    }
+                }
+            sBBag.a[oy * tw + ox] = wop > 0 && wsum > 0 ? (uint8_t)(wop / wsum * 255.0f + 0.5f) : 0;
+            sBBag.rgb[oy * tw + ox] = wop > 0 ? (uint16_t)((int)(r / wop + 0.5f) << 11 | (int)(g / wop + 0.5f) << 5
+                                                           | (int)(b / wop + 0.5f)) : 0;
+        }
+    sBBag.w = tw;
+    sBBag.h = th;
+    sBBag.ok = 1;
+}
+
+static void BFlat(const uint16_t *px, int w, int h, int x, int y)
+{
+    for (int v = 0; v < h; ++v)
+        for (int u = 0; u < w; ++u)
+            if (px[v * w + u])
+                Px(x + u, y + v, px[v * w + u]);
+}
+
+/* Icon `icon` (BX_*) centred at (cx, cy) on a light disc of the piece's colour, `r` its radius. */
 static void BDiscIcon(int icon, int cx, int cy, int r, const EmPal *p)
 {
-    int w, h;
-
-    BIconsPrepare();
-    w = sBImg[icon].image.w * sBImg[icon].scale;
-    h = sBImg[icon].image.h * sBImg[icon].scale;
     UiDisc(cx, cy, r + 1, UiMix(p->bottom, p->lip, 3));
     UiDisc(cx, cy, r, UiMix(p->top, EM_WHITE, 4));
-    BIconAt(icon, cx - w / 2, cy - h / 2);
+    if (icon == BX_FIGHT)
+        BFlat(kFlatFight, FLATFIGHT_W, FLATFIGHT_H, cx - FLATFIGHT_W / 2, cy - FLATFIGHT_H / 2);
+    else if (icon == BX_BALL)
+        BFlat(kFlatBall, FLATBALL_W, FLATBALL_H, cx - FLATBALL_W / 2, cy - FLATBALL_H / 2);
+    else if (icon == BX_SHOE)
+        BFlat(kFlatShoe, FLATSHOE_W, FLATSHOE_H, cx - FLATSHOE_W / 2, cy - FLATSHOE_H / 2);
+    else if (icon == BX_BAG && (BBagPrepare(2 * r - 2), sBBag.ok)) {
+        for (int v = 0; v < sBBag.h; ++v)
+            for (int u = 0; u < sBBag.w; ++u)
+                EmBlend(cx - sBBag.w / 2 + u, cy - sBBag.h / 2 + v, sBBag.rgb[v * sBBag.w + u], sBBag.a[v * sBBag.w + u]);
+    } else {
+        int art = icon == BX_BAG ? BI_BAG : icon == BX_BAIT ? BI_BAIT : BI_ROCK, w, h;
+
+        BIconsPrepare();
+        w = sBImg[art].image.w * sBImg[art].scale;
+        h = sBImg[art].image.h * sBImg[art].scale;
+        BIconAt(art, cx - w / 2, cy - h / 2);
+    }
 }
 
 /* A raised card of the battle: the backdrop back round it, the glow while FireRed's cursor is on it. */
@@ -647,7 +751,7 @@ static void BStrip(const CtrBattleView *v)
 static void BActCard(int i, const CtrBattleView *v)
 {
     static const EmPal *const pal[4] = {&kEmAmber, &kEmBlue, &kEmGreen, &kEmPurple};
-    static const int icon[4] = {BI_BURST, BI_BAG, BI_POKEBALL, BI_SHOE};
+    static const int icon[4] = {BX_FIGHT, BX_BAG, BX_BALL, BX_SHOE};
     static const char *const label[4] = {"FIGHT", "BAG", "POK\xC3\xA9MON", "RUN"};
     static const char *const sub[4] = {"", "ITEMS", "PARTY", "ESCAPE"};
     const CtrPokeTouchRect *r = &sBAct[i];
@@ -809,7 +913,7 @@ static void BTargetNote(void)
 static void BSafariCard(int i, const CtrBattleView *v)
 {
     static const EmPal *const pal[4] = {&kEmAmber, &kEmGreen, &kEmBlue, &kEmPurple};
-    static const int icon[4] = {BI_POKEBALL, BI_BAIT, BI_ROCK, BI_SHOE};
+    static const int icon[4] = {BX_BALL, BX_BAIT, BX_ROCK, BX_SHOE};
     static const char *const label[4] = {"BALL", "BAIT", "ROCK", "RUN"};
     const CtrPokeTouchRect *r = &sBSafari[i];
     const EmPal *p = pal[i];
