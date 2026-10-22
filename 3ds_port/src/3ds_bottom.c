@@ -916,6 +916,7 @@ static void BattlePartyFill(Snapshot *s)
     /* SEND_OUT cannot be cancelled. Out of battle the Party says what it is for itself (its own prompt). */
     p->mode = !CtrBottomParty_InBattle() ? BUI_PTY_SWITCH
             : action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;
+    p->lead = (uint8_t)(CtrBottomParty_Layout() == 0 ? 1 : 2);
     p->caption[0] = 0;
     if (!CtrBottomParty_InBattle() && s->panel != PANEL_MESSAGE)
         BatCopy(p->caption, sizeof(p->caption), s->message);
@@ -937,6 +938,8 @@ static void BattlePartyFill(Snapshot *s)
         p->panel = s->panel == PANEL_YESNO ? BUI_PTY_YESNO : BUI_PTY_ACTIONS;
         p->menuCount = (uint8_t)n;
         p->menuCursor = s->actionCursor;
+        if (sPlan.kind == PLAN_MENU && sPlan.target < n)
+            p->menuCursor = (int8_t)sPlan.target;      /* the row touched, not the cursor on its way there */
         for (int i = 0; i < n; ++i)
             BatCopy(p->menuName[i], sizeof(p->menuName[i]), s->panel == PANEL_YESNO ? (i == 0 ? "YES" : "NO") : s->actionNames[i]);
     } else if (s->panel == PANEL_MESSAGE) {
@@ -1448,6 +1451,12 @@ static uint16_t PlanStep(int cur, int target)
         if (cur >= PARTY_SIZE)
             return K_DOWN;
     }
+    /* A selection menu of more than three rows wraps round: the shorter way. */
+    if (sPlan.kind == PLAN_MENU && sPlan.menuKind == 1 && sPlan.count > 3) {
+        int down = (target - cur + sPlan.count) % sPlan.count;
+
+        return down <= sPlan.count - down ? K_DOWN : K_UP;
+    }
     if (target > cur)
         return K_DOWN;
     return K_UP;
@@ -1512,6 +1521,13 @@ static void RunPlan(void)
     }
     if (cur == sPlan.target) {
         sInjected = K_A;
+        PlanClear();
+        sPlan.release = 1;
+        return;
+    }
+    /* The selection menu's last row is its CANCEL, which is what its B does: taken at once, not walked to. */
+    if (sPlan.kind == PLAN_MENU && sPlan.menuKind == 1 && sPlan.target == sPlan.count - 1) {
+        sInjected = K_B;
         PlanClear();
         sPlan.release = 1;
         return;

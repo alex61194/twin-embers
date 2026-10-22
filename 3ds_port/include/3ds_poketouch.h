@@ -223,6 +223,7 @@ typedef struct {
     char menuName[8][14];
     char message[96];
     char caption[64];               /* what the Party says under the slots ("" for the mode's own words) */
+    uint8_t lead;                   /* the slots in the left column, as FireRed lays them out (1, or 2 in a double) */
 } CtrBattleParty;
 /* BUI_TARGET: a double battle's move being aimed. The four cards are the opposing battlers on top and the player's
  * below (left, right); only the ones FireRed lets the move be aimed at are `present`. The hit codes are the card

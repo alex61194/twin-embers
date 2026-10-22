@@ -573,7 +573,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "9ecabd34bef9937c3eedca9370392a49a7427bbd3014dfbefc627613c1ca44a5",
+   "sha256": "b1e85d95192693b0fddba70ebf9a72cef9cfb3e00b58657c26cdba8caf126960",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -996,7 +996,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "112b40fa8aa6fd00a68e625134e1baf1f9f858839563841afba0bd26d1f6d32d",
+   "sha256": "03b908e80985b99859c62d57cb9eec4ac8ab77f4d01532d918f8f95ec31b6579",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1035,7 +1035,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "cb2229d260a46154c8a2ff4c80d3cabb3641e4a8d26f85a9ef1f4ef5feb560a1",
+   "sha256": "a37d9df03e1087bf313a539d7a83e3b7bba2050c23b1830263084ff30d3b33f5",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4328,6 +4328,14 @@
   {
    "path": "patches/pokefirered/0123-fog-horizontal-native-width.json",
    "sha256": "22c1a13654275095c22761a90d91f2d367c64604cbd8319634db5cc8286fa9f0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0124-party-message-mixed-case.json",
+   "sha256": "e873edac7205137f7273aaff4690dfdc6c684fa93260cf28517928b699dbb04f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
