@@ -845,7 +845,7 @@ static int ColumnIcon(int id)
 
 /* A button: cream, amber and glowing when selected (the screen shown, or the running mode on), sunk when pressed,
  * grey when it cannot be used. The column's carry their icon and label (the Trainer Card the player's name), the
- * shortcuts their item and badge, RUN its switch. */
+ * shortcuts their key and their item in its well, RUN its switch. */
 static void Button(int id, const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchRects[id];
@@ -862,12 +862,14 @@ static void Button(int id, const CtrPokeTouchView *v)
     fy = EmButton(r->x, r->y, r->w, r->h, pal, COL_DEPTH, pressed);
     switch (id) {
     case PT_REGISTERED:
-        EmBadge(r->x, fy, "X");
-        ItemArt(ICON_REGISTERED, v->registeredItem, r->x + (r->w - 20) / 2 + 1, fy + 13, on);
+        EmKeyTab(r->x + r->w / 2, fy + 2, "X");
+        EmWell(r->x + 3, fy + 15, r->w - 6, fh - 18, pal);
+        ItemArt(ICON_REGISTERED, v->registeredItem, r->x + (r->w - 20) / 2, fy + 15 + (fh - 18 - 20) / 2, on);
         break;
     case PT_BIKE:
-        EmBadge(r->x, fy, "Y");
-        ItemArt(ICON_BIKE, v->bikeItem, r->x + (r->w - 20) / 2 + 1, fy + 13, on);
+        EmKeyTab(r->x + r->w / 2, fy + 2, "Y");
+        EmWell(r->x + 3, fy + 15, r->w - 6, fh - 18, pal);
+        ItemArt(ICON_BIKE, v->bikeItem, r->x + (r->w - 20) / 2, fy + 15 + (fh - 18 - 20) / 2, on);
         break;
     case PT_RUN:
         UiText("RUN", r->x + 7, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + 34);

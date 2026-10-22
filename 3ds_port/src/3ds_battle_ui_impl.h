@@ -390,19 +390,24 @@ static CtrPokeTouchRect BMenuRow(int i)
     CtrPokeTouchRect r = {187, (int16_t)(104 + 30 * i), 121, 26};
     return r;
 }
-/* The battle Party: a header, the six Pokemon in two columns of three, CANCEL. */
-static const CtrPokeTouchRect sBPHeader = {8, 36, 304, 23};
-static const CtrPokeTouchRect sBPCancel = {8, 211, 304, 23};
+/* The Party (in battle and on the field): the six Pokemon as raised cards in two columns of three on the embers, and
+ * under them the note card with what the Party says and CANCEL. */
+static const CtrPokeTouchRect sBPNote = {4, 176, 236, 60};
+static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
+#define BP_DEPTH 3
 
 static CtrPokeTouchRect BPanel(int i)
 {
-    CtrPokeTouchRect r = {(int16_t)(i & 1 ? 163 : 6), (int16_t)(62 + 49 * (i >> 1)), 151, 47};
+    CtrPokeTouchRect r = {(int16_t)(i & 1 ? 163 : 6), (int16_t)(6 + 56 * (i >> 1)), 151, 50};
     return r;
 }
 
+/* A row of the Party's menu: one column of up to four, two columns beyond. */
 static CtrPokeTouchRect BPMenuRow(int count, int i)
 {
-    CtrPokeTouchRect r = {104, (int16_t)(124 - 15 * count + 30 * i), 112, 26};
+    int cols = count > 4 ? 2 : 1, rows = (count + cols - 1) / cols, col = cols == 2 ? i / rows : 0, row = cols == 2 ? i % rows : i;
+    CtrPokeTouchRect r = {(int16_t)(cols == 2 ? 44 + 118 * col : 100), (int16_t)(88 - 15 * rows + 30 * row),
+                          (int16_t)(cols == 2 ? 112 : 120), 27};
     return r;
 }
 
@@ -456,7 +461,7 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
         if (p->panel == BUI_PTY_TEXT)
             return BUI_PTY_MESSAGE;                         /* anywhere: the message waits for A */
         if (p->panel == BUI_PTY_ACTIONS || p->panel == BUI_PTY_YESNO) {
-            int n = p->menuCount > 6 ? 6 : p->menuCount;
+            int n = p->menuCount > 8 ? 8 : p->menuCount;
 
             for (int i = 0; i < n; ++i) {
                 CtrPokeTouchRect r = BPMenuRow(n, i);
@@ -1598,8 +1603,41 @@ static int BPartyIcon(int slot, unsigned icon)
     return 1;
 }
 
-/* A Party card: the icon on its plate, the name and level, the HP bar and numbers, a status badge. The Party's
- * selection is the blue of a selection with a bright ring; a Pokemon that fainted is tinted red. */
+/* Text wrapped into `maxLines` lines of `width`, in `ink` over `shadow`. */
+static void BPWrap(const char *text, int x, int y, int width, int maxLines, uint16_t ink, uint16_t shadow)
+{
+    char word[24], line[80], joined[80];
+    int lines = 0;
+    const char *p = text;
+
+    line[0] = 0;
+    while (*p && lines < maxLines) {
+        int w = 0;
+
+        while (*p == ' ' || *p == '\n')
+            ++p;
+        while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
+            word[w++] = *p++;
+        word[w] = 0;
+        if (!w)
+            break;
+        memcpy(joined, line, sizeof(joined));
+        BAppend(joined, sizeof(joined), word);
+        if (line[0] && UiTextWidth(joined, 1) > width) {
+            UiText(line, x, y + lines * 16, ink, shadow, 1, x + width);
+            line[0] = 0;
+            if (++lines >= maxLines)
+                return;
+            BAppend(line, sizeof(line), word);
+        } else
+            memcpy(line, joined, sizeof(line));
+    }
+    if (line[0] && lines < maxLines)
+        UiText(line, x, y + lines * 16, ink, shadow, 1, x + width);
+}
+
+/* A Party card: a raised card (amber and glowing for the Party's selection, grey for one that fainted) with the icon
+ * on its round plate, the name, the level or a status chip, the HP bar and numbers. An empty slot is a hollow. */
 static void BPartyPanel(int i, const CtrBattleView *v)
 {
     static const char *const code[7] = {"", "PSN", "PAR", "SLP", "FRZ", "BRN", "PKRS"};
@@ -1609,86 +1647,114 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     CtrPokeTouchRect r = BPanel(i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
-    uint16_t body = press ? UIS_SELECT_HI : selected ? UIS_SELECT : fainted ? UiMix(UIS_PANEL, UIS_OUTLINE, 4) : UIS_PANEL;
+    const EmPal *pal = selected ? &kEmAmber : fainted ? &kEmGrey : &kEmCream;
+    int fy, fh = r.h - BP_DEPTH;
 
+    TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
     if (!p->present[i]) {
-        UiRoundRect(&r, UI_RADIUS_PANEL, UIS_SEPARATOR);
-        UiRoundFill(r.x + 1, r.y + 1, r.w - 2, r.h - 2, UI_RADIUS_PANEL - 1, UIS_BG);
+        UiRoundFill(r.x, r.y, r.w, fh, 5, UI_RGB(140, 70, 60));
+        UiRoundFill(r.x + 1, r.y + 1, r.w - 2, fh - 2, 4, UI_RGB(70, 18, 16));
         return;
     }
-    UiPanel(&r, body, selected ? UIS_FOCUS : fainted ? UiMix(UIS_BORDER, UI_DANGER, 4) : UIS_BORDER);
-    if (selected) {
-        CtrPokeTouchRect ring = UiInset(&r, 1);
-
-        UiRing(&ring, UI_RADIUS_PANEL - 1, 1, UIS_FOCUS_LIT);
-    }
-    UiRoundFill(r.x + 5, r.y + 5, 37, 37, 3, UiMix(body, UIS_OUTLINE, 4));
+    if (selected)
+        EmGlowRing(r.x, r.y, r.w, r.h);
+    fy = EmButton(r.x, r.y, r.w, r.h, pal, BP_DEPTH, press);
+    UiDisc(r.x + 21, fy + 21, 15, UiMix(pal->bottom, pal->edge, 2));
+    UiDisc(r.x + 21, fy + 21, 14, UiMix(pal->top, pal->bottom, 6));
     if (BPartyIcon(i, p->icon[i]))
         for (int y = 0; y < 32; ++y)
             for (int x = 0; x < 32; ++x) {
                 uint8_t index = sBPIcon[i].pixels[y * 32 + x];
                 if (index)
-                    Px(r.x + 7 + x, r.y + 6 + y, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
+                    Px(r.x + 5 + x, fy + 3 + y, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
             }
-    UiText(p->name[i], r.x + 47, r.y + 6, UI_TEXT, UIS_TEXT_SH, 1, r.x + r.w - 30);
+    UiText(p->name[i], r.x + 41, fy + 4, pal->ink, pal->inkSh, 1, r.x + r.w - 4);
     if (p->egg[i])
         return;
     {
         char text[24];
-        CtrPokeTouchRect bar = {(int16_t)(r.x + 47), (int16_t)(r.y + 20), (int16_t)(r.w - 54), 6};
+        CtrPokeTouchRect bar = {(int16_t)(r.x + 41), (int16_t)(fy + 34), 52, 6};
 
-        snprintf(text, sizeof(text), "Lv%u", p->level[i]);
-        UiTextRight(text, r.x + r.w - 6, r.y + 6, UIS_TEXT_DIM, UIS_TEXT_SH, 1);
-        UiHpBar(&bar, p->hp[i], p->maxHp[i]);
         if (fainted || (p->status[i] >= 1 && p->status[i] <= 6)) {
-            CtrPokeTouchRect badge = {(int16_t)(r.x + 47), (int16_t)(r.y + 30), 30, 13};
+            CtrPokeTouchRect badge = {(int16_t)(r.x + 41), (int16_t)(fy + 17), 30, 13};
 
-            UiBadge(&badge, fainted ? UI_DANGER : tint[p->status[i]], fainted ? "FNT" : code[p->status[i]]);
+            UiBadge(&badge, fainted ? UI_RGB(90, 80, 90) : tint[p->status[i]], fainted ? "FNT" : code[p->status[i]]);
+        } else {
+            snprintf(text, sizeof(text), "Lv%u", p->level[i]);
+            UiText(text, r.x + 41, fy + 18, pal->ink, pal->inkSh, 1, r.x + r.w - 4);
         }
+        UiRoundFill(bar.x - 1, bar.y - 1, bar.w + 2, bar.h + 2, 2, UI_RGB(64, 72, 104));
+        UiHpBar(&bar, p->hp[i], p->maxHp[i]);
         snprintf(text, sizeof(text), "%u/%u", p->hp[i], p->maxHp[i]);
-        UiTextRight(text, r.x + r.w - 6, r.y + 32, UI_TEXT, UIS_TEXT_SH, 1);
+        UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), fy + 30, pal->ink, pal->inkSh, 1, r.x + r.w);
     }
 }
 
-/* What the Party has open over its slots, as a modal over the dimmed Party: its menu, or the message it waits on. */
+/* CANCEL: violet, as BACK. */
+static void BPCancelButton(int pressed)
+{
+    const CtrPokeTouchRect *r = &sBPCancel;
+    int fy;
+
+    TsBgRect(r->x, r->y, r->w, r->h);
+    fy = EmButton(r->x, r->y, r->w, r->h, &kEmViolet, BP_DEPTH, pressed);
+    EmLabel("CANCEL", r->x, r->w, fy, r->h - BP_DEPTH, &kEmViolet);
+}
+
+/* The note card: what the Party says (its question or hint), or, with no CANCEL, that one must be sent out. */
+static void BPNoteCard(const CtrBattleView *v)
+{
+    const CtrPokeTouchRect *n = &sBPNote;
+    const char *text = v->pty.caption[0] ? v->pty.caption
+                     : v->pty.mode == BUI_PTY_FORCED ? "A POK\xC3\xA9MON must be sent out."
+                     : v->pty.mode == BUI_PTY_TARGET ? "Use on which one?" : "Choose a POK\xC3\xA9MON.";
+
+    TsBgRect(n->x, n->y, n->w, n->h);
+    EmNote(n->x, n->y, n->w, n->h);
+    BPWrap(text, n->x + 12, n->y + 14, n->w - 18, 2, EM_DARK, EM_DARK_SH);
+}
+
+/* What the Party has open over its slots, over the dimmed Party: its menu (the selected row amber, the last violet),
+ * or the message it waits on in a card. */
 static void BPartyOverlay(const CtrBattleView *v)
 {
-    const UiButtonStyle *sFirst = &sUiS->primary, *sMiddle = &sUiS->neutral, *sLast = &sUiS->cancel;
     const CtrBattleParty *p = &v->pty;
+    CtrPokeTouchRect all = {0, 0, W, H};
 
     if (p->panel == BUI_PTY_TEXT) {
-        CtrPokeTouchRect box = {20, 92, 280, 68};
+        CtrPokeTouchRect box = {20, 70, 280, 76};
 
-        UiModal(&sBBody, &box);
-        BDescribeN(p->message, box.x + 10, box.y + 10, box.w - 20, 3, UI_TEXT);
-        UiText("Tap to continue", box.x + box.w - 10 - UiTextWidth("Tap to continue", 1) - 9, box.y + box.h - 16,
-               UIS_TEXT_DIM, UIS_TEXT_SH, 1, box.x + box.w);
-        UiArrow(box.x + box.w - 16, box.y + box.h - 16, 1, UIS_FOCUS);
+        UiDim(&all);
+        EmNote(box.x, box.y, box.w, box.h);
+        BPWrap(p->message, box.x + 14, box.y + 10, box.w - 24, 3, EM_DARK, EM_DARK_SH);
+        UiText("Tap to continue", box.x + box.w - 14 - UiTextWidth("Tap to continue", 1) - 9, box.y + box.h - 16,
+               EM_DIM, EM_DARK_SH, 1, box.x + box.w);
+        UiArrow(box.x + box.w - 18, box.y + box.h - 16, 1, EM_STRIPE);
     } else if (p->panel == BUI_PTY_ACTIONS || p->panel == BUI_PTY_YESNO) {
-        int n = p->menuCount > 6 ? 6 : p->menuCount;
-        CtrPokeTouchRect frame = {98, (int16_t)(124 - 15 * n - 8), 124, (int16_t)(30 * n + 12)};
+        int n = p->menuCount > 8 ? 8 : p->menuCount;
 
-        UiModal(&sBBody, &frame);
+        UiDim(&all);
         for (int i = 0; i < n; ++i) {
             CtrPokeTouchRect r = BPMenuRow(n, i);
-            int state = (v->pressed == BUI_PTY_MENU + i ? UI_PRESSED : 0) | (p->menuCursor == i ? UI_FOCUSED : 0);
+            const EmPal *pal = p->menuCursor == i ? &kEmAmber : i == n - 1 ? &kEmViolet : &kEmCream;
+            int fy;
 
-            UiLabelButton(&r, i == 0 ? sFirst : i == n - 1 ? sLast : sMiddle, state, p->menuName[i], 1);
+            if (p->menuCursor == i)
+                EmGlowRing(r.x, r.y, r.w, r.h);
+            fy = EmButton(r.x, r.y, r.w, r.h, pal, BP_DEPTH, v->pressed == BUI_PTY_MENU + i);
+            EmLabel(p->menuName[i], r.x, r.w, fy, r.h - BP_DEPTH, pal);
         }
     }
 }
 
 static void BParty(const CtrBattleView *v)
 {
-    static const char *const sCaption[3] = {"Choose a POK\xC3\xA9MON.", "Use on which one?", "Send one out."};
-
-    UiHeader(&sBPHeader, "POK\xC3\xA9MON", sCaption[v->pty.mode < 3 ? v->pty.mode : 0]);
+    TsBackdrop();
     for (int i = 0; i < 6; ++i)
         BPartyPanel(i, v);
+    BPNoteCard(v);
     if (v->pty.mode != BUI_PTY_FORCED)
-        BCancel(&sBPCancel, v->pressed == BUI_PTY_CANCEL);
-    else
-        UiFooter(&sBPCancel, "A POK\xC3\xA9MON must be sent out.");
+        BPCancelButton(v->pressed == BUI_PTY_CANCEL);
     BPartyOverlay(v);
 }
 
@@ -1848,8 +1914,6 @@ static void BBody(const CtrBattleView *v)
     Fill(sBBody.x, sBBody.y, sBBody.w, sBBody.h, UIS_BG);
     if (v->state == BUI_BAG)
         BBag(v);
-    else if (v->state == BUI_PARTY)
-        BParty(v);
     else if (v->state == BUI_TARGET)
         BTarget(v);
     else if (v->state == BUI_SAFARI)
@@ -1867,6 +1931,11 @@ void CtrBattleUi_Draw(uint16_t *canvas, const CtrBattleView *v)
     }
     if (BAbScreen(v->state)) {
         BActionScreen(v);
+        sUiS = &sUiNavy;
+        return;
+    }
+    if (v->state == BUI_PARTY) {
+        BParty(v);
         sUiS = &sUiNavy;
         return;
     }
@@ -1953,13 +2022,38 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
         sUiS = &sUiNavy;
         return;
     }
+    if (v->state == BUI_PARTY || old->state == BUI_PARTY) {
+        /* The Party has its own screen: a move of the selection or a press redraws its cards, anything else all of it. */
+        if (old->state != v->state || !BPartySlotsOnly(&old->pty, &v->pty)
+            || ((old->pressed >= BUI_PTY_MENU && old->pressed < BUI_PTY_MESSAGE) != (v->pressed >= BUI_PTY_MENU && v->pressed < BUI_PTY_MESSAGE))
+            || (v->pty.panel != BUI_PTY_NONE && old->pressed != v->pressed)) {
+            CtrPokeTouchRect all = {0, 0, W, H};
+
+            BParty(v);
+            BMark(dirty, &all);
+        } else {
+            for (int i = 0; i < 6; ++i)
+                if ((old->pty.cursor == i) != (v->pty.cursor == i)
+                    || (old->pressed == BUI_PTY_SLOT + i) != (v->pressed == BUI_PTY_SLOT + i)) {
+                    CtrPokeTouchRect r = UiInset(&(CtrPokeTouchRect){BPanel(i).x, BPanel(i).y, BPanel(i).w, BPanel(i).h}, -2);
+
+                    BPartyPanel(i, v);
+                    BMark(dirty, &r);
+                }
+            if (v->pty.mode != BUI_PTY_FORCED && (old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)) {
+                BPCancelButton(v->pressed == BUI_PTY_CANCEL);
+                BMark(dirty, &sBPCancel);
+            }
+        }
+        sUiS = &sUiNavy;
+        return;
+    }
     if (memcmp(old->party, v->party, sizeof(v->party))) {
         BStrip(v);
         BMark(dirty, &sBStrip);
     }
     if (old->state != v->state
         || (v->state == BUI_BAG && (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || old->pressed != v->pressed))
-        || (v->state == BUI_PARTY && !BPartySlotsOnly(&old->pty, &v->pty))
         || (v->state == BUI_TARGET && memcmp(old->target, v->target, sizeof(v->target)))) {
         BBody(v);
         BMark(dirty, &sBBody);
@@ -1982,20 +2076,6 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
                 BSafariButton(i, v);
                 BMark(dirty, &sBSafari[i]);
             }
-    } else if (v->state == BUI_PARTY && (old->pressed != v->pressed || old->pty.cursor != v->pty.cursor)) {
-        for (int i = 0; i < 6; ++i)
-            if ((old->pty.cursor == i) != (v->pty.cursor == i)
-                || (old->pressed == BUI_PTY_SLOT + i) != (v->pressed == BUI_PTY_SLOT + i)) {
-                CtrPokeTouchRect r = BPanel(i);
-                Fill(r.x, r.y, r.w, r.h, UIS_BG);
-                BPartyPanel(i, v);
-                BMark(dirty, &r);
-            }
-        if (v->pty.mode != BUI_PTY_FORCED && (old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)) {
-            Fill(sBPCancel.x, sBPCancel.y, sBPCancel.w, sBPCancel.h, UIS_BG);
-            BCancel(&sBPCancel, v->pressed == BUI_PTY_CANCEL);
-            BMark(dirty, &sBPCancel);
-        }
     }
     sUiS = &sUiNavy;
 }

@@ -897,6 +897,13 @@ static void BatCopy(char *dst, size_t size, const char *src)
 
 /* The battle Party as the Party is now (the lower screen's own Party snapshot `s`, which reads FireRed's Party): the six
  * slots, the Party's selection, what it was opened for, and its menu or message when it has one open. */
+/* The Party drawn as the port's own screen (the battle's, and the field's too) rather than FireRed's picture: all but the
+ * picks of several Pokemon (a link or the Battle Tower), whose CONFIRM only FireRed's screen has. */
+static int PartyNative(void)
+{
+    return CtrBottomParty_InBattle() || !CtrBottomParty_ChooseMultiple();
+}
+
 static void BattlePartyFill(Snapshot *s)
 {
     CtrBattleView *v = &s->battle;
@@ -906,7 +913,12 @@ static void BattlePartyFill(Snapshot *s)
     BattleCommon(v);
     v->state = BUI_PARTY;
     p->cursor = (int8_t)(s->cursor >= 0 && s->cursor < PARTY_SIZE ? s->cursor : -1);
-    p->mode = action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;   /* SEND_OUT cannot be cancelled */
+    /* SEND_OUT cannot be cancelled. Out of battle the Party says what it is for itself (its own prompt). */
+    p->mode = !CtrBottomParty_InBattle() ? BUI_PTY_SWITCH
+            : action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;
+    p->caption[0] = 0;
+    if (!CtrBottomParty_InBattle() && s->panel != PANEL_MESSAGE)
+        BatCopy(p->caption, sizeof(p->caption), s->message);
     for (int i = 0; i < PARTY_SIZE; ++i) {
         p->present[i] = (uint8_t)((s->presentMask >> i) & 1);
         if (!p->present[i])
@@ -920,7 +932,7 @@ static void BattlePartyFill(Snapshot *s)
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {
-        int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 6 ? 6 : s->actionCount;
+        int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 8 ? 8 : s->actionCount;
 
         p->panel = s->panel == PANEL_YESNO ? BUI_PTY_YESNO : BUI_PTY_ACTIONS;
         p->menuCount = (uint8_t)n;
@@ -1285,7 +1297,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_POKEDEX] = (uint8_t)CanRouteDestination(PT_POKEDEX, mode);
         s->touch.viewport = 1;
         PartyBar(s, &s->touch);
-        if (CtrBottomParty_InBattle())
+        if (PartyNative())
             BattlePartyFill(s);
     }
 }
@@ -2889,7 +2901,7 @@ static void ProcessBattlePartyTouch(const CtrInput *in)
         } else if (code == BUI_PTY_CANCEL) {
             if (!open && CtrBottomParty_IsOpen() && !CtrBottomParty_CanAdvanceText())
                 CtrBottomParty_TouchSlot(PARTY_SIZE + 1);
-        } else if (code >= BUI_PTY_MENU && code < BUI_PTY_MENU + 6) {
+        } else if (code >= BUI_PTY_MENU && code < BUI_PTY_MENU + 8) {
             if (open)
                 PlanStart(PLAN_MENU, code - BUI_PTY_MENU);
         } else if (code == BUI_PTY_MESSAGE && CtrBottomParty_CanAdvanceText())
@@ -3309,7 +3321,7 @@ static int ProcessTouch(int mode)
         ProcessBattleTouch(in);
         return HIT_NONE;
     }
-    if (mode == MODE_PARTY && CtrBottomParty_InBattle()) {
+    if (mode == MODE_PARTY && PartyNative()) {
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
@@ -3659,8 +3671,12 @@ static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
 {
     int picture;
 
-    if (s->battleUi || s->mode == MODE_OFF)
+    if ((s->battleUi && s->battle.state != BUI_PARTY) || s->mode == MODE_OFF)
         return;
+    if (s->battleUi) {
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);
+        return;
+    }
     picture = !s->summaryUi && (s->touch.viewport || (s->touch.home && !s->touch.options && !s->touch.save));
     CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), picture, dirty);
 }
@@ -3734,7 +3750,7 @@ void CtrBottom_Frame(void)
         BatPlanClear();
     RunStoragePlan(mode);
     if (mode != MODE_BATTLE && !(mode == MODE_BAG && CtrBottomBag_InBattle())
-        && !(mode == MODE_PARTY && CtrBottomParty_InBattle()))
+        && !(mode == MODE_PARTY && PartyNative()))
         sBat.down = sBat.inside = 0;
     /* The battle keeps the upper screen from the pick of BAG or POKeMON (or a replacement), before the Bag or Party exists (its fade and setup are never shown). */
     if (mode == MODE_BATTLE)
