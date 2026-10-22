@@ -4311,7 +4311,7 @@
   },
   {
    "path": "patches/pokefirered/0124-party-message-mixed-case.json",
-   "sha256": "e873edac7205137f7273aaff4690dfdc6c684fa93260cf28517928b699dbb04f",
+   "sha256": "dd06e68cf0ae9b187d77b2c1f044591fde89632882ff85949b3369b259ffb1fe",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
