@@ -357,7 +357,7 @@ build/obj_window_test.exe: tests/obj_window_test.c include/3ds_obj_window.h
 
 build/map_edge_test.exe: tests/map_edge_test.c include/3ds_map_edge.h
 	@mkdir -p build
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/map_edge_test.c -o $@
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_MAP_EDGE_FILL=1 -Iinclude tests/map_edge_test.c -o $@
 
 build/forwarder_test.exe: tests/forwarder_test.c include/3ds_forwarder.h
 	@mkdir -p build

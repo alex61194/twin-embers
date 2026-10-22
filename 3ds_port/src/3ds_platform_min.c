@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include "3ds_platform.h"
 #include "3ds_perf.h"
+#include "3ds_data_error_text.h"
 
 uint64_t CtrPerf_PlatformClock(void) { return svcGetSystemTick(); }
 
@@ -226,9 +227,36 @@ void CtrLog_Write(CtrLogCategory category, const char *format, ...)
     if (line != stack) free(line);
 }
 
+static void PrintErrorRow(void *ctx, const char *text, size_t length)
+{
+    (void)ctx;
+    printf("%.*s\n", (int)length, text);
+}
+
+/* The error screen: the bottom console taken back from the lower-screen UI (consoleInit
+ * resets its format and buffering), the message word-wrapped, and the game held there
+ * until A, so the reason is read instead of the app closing on its own. */
+void CtrPlatform_ShowError(const char *heading, const char *title, const char *detail)
+{
+    consoleInit(GFX_BOTTOM, NULL);
+    printf("\x1b[2J");
+    CtrError_WrapText(heading, PrintErrorRow, NULL);
+    CtrError_WrapText(title, PrintErrorRow, NULL);
+    if (detail != NULL)
+        CtrError_WrapText(detail, PrintErrorRow, NULL);
+    CtrError_WrapText("Press A to exit.", PrintErrorRow, NULL);
+    while (aptMainLoop())
+    {
+        hidScanInput();
+        if (hidKeysDown() & KEY_A) break;
+        gfxFlushBuffers();
+        gspWaitForVBlank();
+    }
+    exit(1);
+}
+
 void CtrPlatform_Fatal(const char *reason)
 {
     CtrLog_Write(CTR_LOG_ERROR, "fatal: %s", reason);
-    fprintf(stderr, "FireRed 3DS: %s\n", reason);
-    exit(1);
+    CtrPlatform_ShowError("twinembers error", reason, NULL);
 }

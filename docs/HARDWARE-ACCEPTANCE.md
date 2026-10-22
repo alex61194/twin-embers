@@ -25,6 +25,10 @@ FAIL should include the screen text or `/3ds/twinembers/port.log` lines.
       Twin Embers save is used.
 - [ ] SAVE screen reports success only after writing; a write-protected card
       shows a save error instead.
+- [ ] After a start with a save, `/3ds/twinembers/twinembers.sav.bak` exists and is
+      131072 bytes; no `.bak.tmp` is left behind.
+- [ ] With the card's write-protect switch on, starting the game shows the save error
+      on the lower screen until A (the app does not just close).
 
 ## Interface
 
@@ -38,7 +42,8 @@ FAIL should include the screen text or `/3ds/twinembers/port.log` lines.
 - [ ] Several wild and trainer battles: menus, moves, switching, Pokémon cries.
 - [ ] Fly to two towns; Surf across water; Flash inside Rock Tunnel.
 - [ ] Enter and leave buildings, caves and route connections without glitches.
-- [ ] Map edges at Pallet Town, Route 1 and a coastal route look continuous.
+- [ ] Map edges at Pallet Town, Route 1 and a coastal route show the game's own border
+      (no fill), with no holes or flicker.
 
 ## Audio and performance
 

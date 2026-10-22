@@ -46,7 +46,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "5ab58fcd7b69a25dba61761f8b827cc77eba7e5306de4151ca7ef1ca0f6761f5",
+   "sha256": "97add41cab00b0d4e2afd5ad99c13124671fa55a18460cc0172ee4d6088cea94",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -57,7 +57,8 @@
    "field_ui_review": "Reviewed complete Flash WIN0H scanline composition, native window restoration, strict cave preview viewport and synthetic regression tests",
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
    "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
-   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": ".gitignore",
@@ -87,7 +88,8 @@
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
    "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults",
    "data_error_layout_review": "Data-error screen word-wraps messages to 39 columns with an empty row between text rows (3ds_data_error_text.h); no message text, pack checks or exit behaviour changed",
-   "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context."
+   "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/compat/ctr_gba_battle.h",
@@ -436,7 +438,7 @@
   },
   {
    "path": "3ds_port/include/3ds_flash.h",
-   "sha256": "9037b94b0cbc89c16d91f774f6e86cb3278ffe84ff1b1ef85112303fd4145cf4",
+   "sha256": "2178be40052c2aa17b23695ce88fa0f37d8561920d2ef9715161e5bc4c62588e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -445,7 +447,8 @@
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "ea4513e61c6ff878936581af68e382ebd8a0f80d",
    "source_sha256": "16f5f768b60ee4ece945a495b1eb859ba13175012686d041135f489341c563e1",
-   "modified_for_distribution": true
+   "modified_for_distribution": true,
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/include/3ds_fly_phase.h",
@@ -560,7 +563,7 @@
   },
   {
    "path": "3ds_port/include/3ds_platform.h",
-   "sha256": "d2f87ef9a5387d1df1553c0bb2ec9a209ed33347507c47058b9ee84352138b3f",
+   "sha256": "c3752e8a8727fab1cf8be914fda31dfbb9ede9f7400f6836a9a6cca936a1740f",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -569,7 +572,8 @@
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "c306fc2c14f719d85d52d807e8703febf96281da",
    "source_sha256": "d2f87ef9a5387d1df1553c0bb2ec9a209ed33347507c47058b9ee84352138b3f",
-   "modified_for_distribution": false
+   "modified_for_distribution": false,
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
@@ -903,7 +907,8 @@
    "modified_for_distribution": true,
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
-   "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return"
+   "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_bottom_screen.c",
@@ -947,7 +952,7 @@
   },
   {
    "path": "3ds_port/src/3ds_data_error.c",
-   "sha256": "d92ce3a16a7d10b8625e373e2ca7438c0fdd1dfe196bdc155f3a0a67228e07e1",
+   "sha256": "452db1feae2c54ae9ba912ef8dba5db06078a6521223b95d809bd274adb698ce",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -958,7 +963,8 @@
    "source_sha256": "eaa71e6a21d1287f73dd076834f5b3a29482d4fc60122463340e6ec14aff34fd",
    "modified_for_distribution": true,
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
-   "data_error_layout_review": "Data-error screen word-wraps messages to 39 columns with an empty row between text rows (3ds_data_error_text.h); no message text, pack checks or exit behaviour changed"
+   "data_error_layout_review": "Data-error screen word-wraps messages to 39 columns with an empty row between text rows (3ds_data_error_text.h); no message text, pack checks or exit behaviour changed",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_dma.c",
@@ -985,7 +991,8 @@
    "source_blob": "79faebf235e3caf4aafb6fa483874ed8197dea69",
    "source_sha256": "d6bb5f399868dba3ad8fb5ed98fded01ee4a75b1bab5000403ec7453e41c3710",
    "modified_for_distribution": true,
-   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
+   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
@@ -1000,7 +1007,8 @@
    "source_sha256": "87eae4f6524c51fa8fb2b80319a7c957ac4ee97b4e2088470005f6c2853a571e",
    "modified_for_distribution": true,
    "field_ui_review": "Reviewed complete Flash WIN0H scanline composition, native window restoration, strict cave preview viewport and synthetic regression tests",
-   "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions"
+   "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_game_memory.c",
@@ -1113,7 +1121,7 @@
   },
   {
    "path": "3ds_port/src/3ds_platform_min.c",
-   "sha256": "e1230b77ec8169650a0ff97ddfc1744c504aa2c3e1131af5ec433e9f71174fb4",
+   "sha256": "5ecd5d25c6082ec0ec4dbc897547c738046322131da6214fefb0c997fc43199b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1123,7 +1131,8 @@
    "source_blob": "5c078340d32511857e89e637daabb30a1181de35",
    "source_sha256": "f7055214014bf60bb79637f369fceec91f34f383540c48935e929ef23bb2db3c",
    "modified_for_distribution": true,
-   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
+   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
@@ -1255,7 +1264,8 @@
    "modified_for_distribution": true,
    "field_ui_review": "Reviewed complete Flash WIN0H scanline composition, native window restoration, strict cave preview viewport and synthetic regression tests",
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
-   "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults"
+   "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/3ds_video_decode.c",
@@ -1299,7 +1309,7 @@
   },
   {
    "path": "3ds_port/src/main_game_full.c",
-   "sha256": "cea26994e1ece62e79e3268a437aa88988ca4718483f528f0bc62c06b10a9f4b",
+   "sha256": "a8bbf640e5db2f76876e8a57c1d66d91247370aaf8240e8c7249be4725b78adb",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1309,7 +1319,8 @@
    "source_blob": "e40c5c6c1c41db0a0210288571e428e92c15f628",
    "source_sha256": "9e263f3c9e21ec14e7afaf06ffaa239d1b8007449f6a86de1e2a8c780b739659",
    "modified_for_distribution": true,
-   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
+   "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/src/main_game_native.c",
@@ -1525,7 +1536,7 @@
   },
   {
    "path": "3ds_port/tests/flash_test.c",
-   "sha256": "1a14d0448395733377d114aa9190b824db65bbcb8b27a038148d208c302daa05",
+   "sha256": "33aafd35b9030e4586d4fbf02a57534baeb5ff02b5c7ca598c32ef92fde2537e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1534,7 +1545,8 @@
    "source_commit": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
    "source_blob": "a92b0b916ec93e7236397ec9ba7c97005098e932",
    "source_sha256": "2a5331c69650d44fd6560cfbf2b00d821f183580060042192082474e788403d0",
-   "modified_for_distribution": true
+   "modified_for_distribution": true,
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "3ds_port/tests/forwarder_test.c",
@@ -1827,7 +1839,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "f684bc50029161a19c8a3c23718967b0d024f51ffdd8426781d9a5a2077cd23e",
+   "sha256": "3d52d6233388579baac9a97d286e3a96c54698ed098f09432e718ed5aab2cdc2",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1841,7 +1853,8 @@
    "build_guide_review": "README points users to the local build guide docs/BUILDING.md; no prebuilt executable is offered",
    "public_docs_review": "README: screenshot gallery restored, images hosted in the separate media release; documentation only",
    "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
-   "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged"
+   "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "SECURITY.md",
@@ -2369,12 +2382,13 @@
   },
   {
    "path": "docs/HARDWARE-ACCEPTANCE.md",
-   "sha256": "a19c85f43efe1ff1fbe6523585b36f90b9cba224c35ded152329e4407f16539b",
+   "sha256": "ff505c87f671260545c7fc1c9a6f1ec3f4ba5b990ba942d1120b2aad9021ba01",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only owner acceptance checklist for real Nintendo 3DS testing; no ROM/game payloads or generated media",
-   "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories; documentation only"
+   "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories; documentation only",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "docs/MAP-EDGE-VALIDATION.md",
@@ -2440,7 +2454,8 @@
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
    "public_docs_review": "Public release documentation pass: beginner README (install, controls, supported ROM, troubleshooting, credits, disclaimer), technical details moved to docs/TECHNICAL-NOTES.md, DSP firmware requirement, no links to private repositories; documentation only",
-   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status"
+   "release_gate_review": "Release gate follows an owner decision record (owner-risk-acceptance, rights_verified false); no change to binary_release_approved, audits or recorded rights status",
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
    "path": "docs/VALIDATION.md",

@@ -35,6 +35,8 @@ void CtrPlatform_RequestReset(void);
 void CtrPlatform_RequestExit(void);
 void CtrPlatform_Fatal(const char *reason) __attribute__((noreturn));
 void CtrPlatform_ShowDataError(const char *title, const char *detail) __attribute__((noreturn));
+/* Error screen on the bottom console until A, then exit(1). detail may be NULL. */
+void CtrPlatform_ShowError(const char *heading, const char *title, const char *detail) __attribute__((noreturn));
 uint64_t CtrPlatform_Milliseconds(void);
 /* Raw ARM11 ticks, for game translation units that cannot include libctru. */
 uint64_t CtrPlatform_Ticks(void);

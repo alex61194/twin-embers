@@ -261,6 +261,50 @@ bool CtrFlash_Close(void)
     return ok;
 }
 
+/* A copy of the save as it was read at start (CtrFlash_Init), next to it. It is written
+ * to a temporary file first and only then takes the place of the previous copy, so a
+ * failed write never costs the copy already there. A blank card has nothing to keep and
+ * keeps the old copy. Best effort: the game runs without it. */
+bool CtrFlash_Backup(const char *backupPath)
+{
+    char temp[256];
+    size_t i;
+
+    if (!sFile || !backupPath || sDirtySectors != 0)
+        return false;
+    for (i = 0; i < sizeof(sImage) && sImage[i] == 0xff; ++i)
+        ;
+    if (i == sizeof(sImage))
+        return false;
+    if (snprintf(temp, sizeof(temp), "%s.tmp", backupPath) >= (int)sizeof(temp))
+        return false;
+    remove(temp);
+    FILE *out = fopen(temp, "wb");
+    if (!out)
+    {
+        HW_SAVE_TRACE("HW SAVE backup: cannot create %s errno=%d", temp, errno);
+        return false;
+    }
+    bool ok = fwrite(sImage, 1, sizeof(sImage), out) == sizeof(sImage);
+    if (fflush(out) != 0)
+        ok = false;
+    if (fclose(out) != 0)
+        ok = false;
+    if (ok)
+    {
+        remove(backupPath);
+        ok = rename(temp, backupPath) == 0;
+    }
+    if (!ok)
+    {
+        remove(temp);
+        HW_SAVE_TRACE("HW SAVE backup failed: %s", backupPath);
+        return false;
+    }
+    HW_SAVE_TRACE("HW SAVE backup written: %s", backupPath);
+    return true;
+}
+
 u16 IdentifyFlash(void)
 {
     gFlash = &sFlashType;

@@ -35,6 +35,10 @@ jobs:
         run: |
           python3 tools/bootstrap.py --dir build/rng-test-upstream
           python3 tools/test_rng_initialization.py --tree build/rng-test-upstream -v
+      - name: Host unit tests of the port (make verify-host, gcc only)
+        run: |
+          python3 tools/bootstrap.py --dir build/host-tests
+          make -C build/host-tests/3ds_port verify-host
       - name: Field menus, Flash masks and cave transition geometry
         run: python3 -m unittest discover -s tools -p test_field_presentation.py -v
       - name: Fly actors, exact OAM publication and invocation strip
