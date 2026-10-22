@@ -144,12 +144,21 @@ static void EmSwitch(int x, int y, int on)
     UiDisc(on ? x + 19 : x + 6, y + 6, 5, UI_RGB(250, 250, 252));
 }
 
-/* A shortcut's corner badge: a blue disc with its button's letter. */
-static void EmBadge(int x, int y, const char *letter)
+/* A shortcut's key: its button's letter on a small blue pill, centred at the top of the tile (cx its centre). */
+static void EmKeyTab(int cx, int y, const char *letter)
 {
-    UiDisc(x + 6, y + 6, 7, UI_RGB(24, 32, 80));
-    UiDisc(x + 6, y + 6, 6, UI_RGB(56, 88, 216));
-    UiText(letter, x + 7 - UiTextWidth(letter, 1) / 2, y + 2, EM_WHITE, UI_RGB(24, 32, 80), 1, x + 14);
+    UiRoundFill(cx - 10, y, 20, 11, 5, UI_RGB(30, 40, 96));
+    EmGradFill(cx - 9, y + 1, 18, 9, 4, UI_RGB(96, 132, 236), UI_RGB(52, 80, 200));
+    UiText(letter, cx - UiTextWidth(letter, 1) / 2, y + 1, EM_WHITE, UI_RGB(30, 40, 96), 1, cx + 9);
+}
+
+/* The soft well a shortcut's item sits in: the face's own colour, a little deeper, with a shade along its top. */
+static void EmWell(int x, int y, int w, int h, const EmPal *p)
+{
+    uint16_t deep = UiMix(p->bottom, p->edge, 2);
+
+    UiRoundFill(x, y, w, h, 4, deep);
+    EmGradFill(x + 1, y + 2, w - 2, h - 3, 3, UiMix(deep, p->bottom, 5), UiMix(p->top, p->bottom, 4));
 }
 
 /* One of the column's icons (ember_skin.h), blended onto what is there; dim, it is toned grey. */

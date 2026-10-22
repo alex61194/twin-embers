@@ -543,7 +543,7 @@ int main(int argc, char **argv)
                         fprintf(stderr, "state %d keeps the navy theme colour %04x at %d\n", states[i], navy[j], n);
                         assert(0);
                     }
-            assert(at(1, 100) == PT_RED_BG);
+            assert(at(1, 100) == EMBER_BG(1, 100) || at(1, 100) == PT_RED_BG);   /* the ember backdrop, or the flat red not yet redone */
         }
         {
             CtrSummaryUiView sv;
@@ -559,7 +559,7 @@ int main(int argc, char **argv)
                             fprintf(stderr, "summary page %d keeps the navy theme colour %04x at %d\n", page, navy[j], n);
                             assert(0);
                         }
-                assert(at(1, 100) == PT_RED_BG);
+                assert(at(1, 100) == EMBER_BG(1, 100));
             }
         }
     }

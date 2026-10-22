@@ -218,10 +218,11 @@ typedef struct {
     int8_t cursor;                  /* the Party's own selection: a slot 0-5 */
     uint8_t mode;                   /* BUI_PTY_SWITCH, BUI_PTY_TARGET (an item's target), BUI_PTY_FORCED (no CANCEL) */
     uint8_t panel;                  /* BUI_PTY_*: what the Party has open over the slots */
-    uint8_t menuCount;              /* its menu's rows (SHIFT, SUMMARY, CANCEL; YES, NO) */
+    uint8_t menuCount;              /* its menu's rows (SHIFT, SUMMARY, CANCEL; YES, NO; the field's up to 8) */
     int8_t menuCursor;
-    char menuName[6][14];
+    char menuName[8][14];
     char message[96];
+    char caption[64];               /* what the Party says under the slots ("" for the mode's own words) */
 } CtrBattleParty;
 /* BUI_TARGET: a double battle's move being aimed. The four cards are the opposing battlers on top and the player's
  * below (left, right); only the ones FireRed lets the move be aimed at are `present`. The hit codes are the card
