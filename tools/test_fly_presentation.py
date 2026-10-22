@@ -202,6 +202,8 @@ static int calls,vx,vy,right;
 static unsigned Reg(unsigned n) { (void)n; return 0; }
 static void ViewBase(void) {}
 static void DrawTextBg(unsigned bg) { assert(bg==0); ++calls; vx=sViewX; vy=sViewY; right=sClipX1; }
+static bool sTrailShown;
+static void DrawPokeballTrail(int x0,int x1,int y0,int y1) { (void)x0; (void)x1; (void)y0; (void)y1; }
 ''' + code + '''
 int main(void) {
     sFieldMoveShowMon=true; DrawFieldUi(0);

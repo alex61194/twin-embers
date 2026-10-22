@@ -522,6 +522,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "3ds_port/include/3ds_night_wild.h",
+   "sha256": "623a7e29c15a8a208e4b636a91e487e3765c6405d89a2f8a36d8fb3843dbcc04",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/include/3ds_obj_window.h",
    "sha256": "c328c67a37a03203b970b43c7295e6b27ede210636133169134f2e12ff442eb2",
    "review_status": "reviewed",
@@ -1108,6 +1116,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/src/3ds_night_wild.c",
+   "sha256": "438ea81bdb8bd21b61a960d1cfc260cd6a04ea063305a0c307491c6502cf08d2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/src/3ds_pak.c",
    "sha256": "5846f06867013ebf60a6b5404793852f3fefc17e549a8a28a90bdb939bd69753",
    "review_status": "reviewed",
@@ -1647,6 +1663,14 @@
   {
    "path": "3ds_port/tests/map_edge_test.c",
    "sha256": "c1736accf3a39bea8d05ed39a80683bd3d0c52e80b8242c9d3818485644374f4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/night_wild_test.c",
+   "sha256": "d9c82ae84788f08f1246d20dae52cc54bdd4bc56a7b7e6b5d52ef8bdb3a8f192",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4309,6 +4333,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0134-night-wild-encounters.json",
+   "sha256": "339019fcd3d980c990237c037d1725eda22fd9f2e79a942953b13af0fccac7f7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -4676,7 +4708,7 @@
   },
   {
    "path": "tools/test_fly_presentation.py",
-   "sha256": "262dea46fb49d43b554cb9b5dc01df5aa3523f328012053c6ea094d45281c1b2",
+   "sha256": "21812153af342c0edd147d55eefd3c53cb40038436548a38f1c4fa5cb4b2f5d5",
    "review_status": "reviewed",
    "credit": "alex61194; Twin Embers Port contributors; inherited/adapted upstream portions as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; external game/dependency rights excluded",
@@ -4923,38 +4955,6 @@
   {
    "path": "upstream.lock",
    "sha256": "8254f971bd9e536aa4ef22e849df8126e5ec1b94bc548768bfc0a5c865f520f7",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_night_wild.h",
-   "sha256": "623a7e29c15a8a208e4b636a91e487e3765c6405d89a2f8a36d8fb3843dbcc04",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_night_wild.c",
-   "sha256": "438ea81bdb8bd21b61a960d1cfc260cd6a04ea063305a0c307491c6502cf08d2",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/night_wild_test.c",
-   "sha256": "d9c82ae84788f08f1246d20dae52cc54bdd4bc56a7b7e6b5d52ef8bdb3a8f192",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0134-night-wild-encounters.json",
-   "sha256": "339019fcd3d980c990237c037d1725eda22fd9f2e79a942953b13af0fccac7f7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
