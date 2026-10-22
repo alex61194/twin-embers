@@ -63,6 +63,27 @@ returns each time and finishes once the copy completes; the GBA build is unchang
 ARM build links. NOT reproduced in an emulator or on a console: NEEDS HARDWARE VALIDATION (open the
 player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
 
+## The touch screen's ember look
+
+The lower screen's field menus wear the owner's modern design (DS/3DS-era raised buttons on a red ember
+backdrop, from the mockups the owner approved): the START column as cream buttons with an icon
+and FireRed's lettering (amber and glowing for the screen shown), the X and Y tiles with their badge, RUN
+with a switch, the GBA picture and the HOME map in a slate frame, the bar as a note card with BACK (violet)
+and PAGE beside it, OPTIONS as raised rows with the value in a pill (a switch for ON/OFF) and SAVE as a card
+with YES and NO. The battle Summary keeps its layout on the same backdrop. The battle screens are unchanged.
+
+- The art is the port's own: `tools/make_ember_skin.py` draws the backdrop and the six column icons
+  (`ember_skin*.h`); the BAG icon is the port's battle Bag reduced. The text is FireRed's font at run time.
+- Embers rise slowly over the backdrop (about twenty sparks, `3ds_touch_skin_impl.h`): one step a frame,
+  drawn only on pixels that show the backdrop, so they pass behind every button and never over the GBA
+  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS: ON (the default) or OFF; like
+  the other page-2 options it is not kept in the save.
+- The old artwork skin (`poketouch_skin*.h`, `tools/make_touch_skin.py`) is removed.
+
+Checked: `tests/poketouch_render_test.c` (new hit geometry, every incremental redraw equal to a full one);
+`tests/poketouch_options_test.c` (the EMBERS row, its default and its values); the ARM build links.
+NEEDS VALIDATION in Azahar and on a console (each field menu, SAVE, OPTIONS, the embers' cost per frame).
+
 ## Not added, and why
 
 - ZL/ZR for the turbo: the port removed it on purpose (`3ds_fast_forward.h`).

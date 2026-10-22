@@ -144,6 +144,10 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *view);
  * is added to `dirty` to be presented; nothing is added when nothing changed. */
 void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const CtrPokeTouchView *view,
                          CtrDirtyList *dirty);
+/* One step of the embers rising over the backdrop of whatever screen the canvas holds (PokeTouch, the battle, the
+ * Summary): drawn only where the backdrop shows and, with `pictureShown`, off the GBA picture; with `on` false they
+ * are only taken away. What changed is added to `dirty`. */
+void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyList *dirty);
 
 /*
  * The battle screen (3ds_battle_ui.inc, CtrBattleUi_*): the whole lower screen while FireRed's battle is on the

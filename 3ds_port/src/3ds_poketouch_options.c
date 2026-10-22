@@ -11,10 +11,12 @@ static const char *const sSound[] = {"MONO", "STEREO"};
 static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
 static const char *const sSummaryMode[] = {"3DS", "GBA"};
+static const char *const sEmbers[] = {"ON", "OFF"};
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
 static int sPortFieldSummary;
+static int sPortEmbers;
 
 static int TwoCount(void) { return 2; }
 static int GetTypeMatchup(void) { return sPortTypeMatchup; }
@@ -23,10 +25,13 @@ static int GetMoveDetails(void) { return sPortMoveDetails; }
 static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
 static int GetFieldSummary(void) { return sPortFieldSummary; }
 static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
+static int GetEmbers(void) { return sPortEmbers; }
+static void SetEmbers(int v) { sPortEmbers = v & 1; }
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
 int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
+int CtrOptions_Embers(void) { return sPortEmbers == 0; }
 
 /* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
 static const CtrOptionRow sRows[] = {
@@ -48,6 +53,8 @@ static const CtrOptionRow sRows[] = {
      GetMoveDetails, TwoCount, SetMoveDetails},
     {"FIELD SUMMARY", {"Use the 3DS Summary", "screen from field Party."}, 0, sSummaryMode, NULL,
      GetFieldSummary, TwoCount, SetFieldSummary},
+    {"EMBERS", {"Embers rising behind the", "touch screen's menus."}, 0, sEmbers, NULL,
+     GetEmbers, TwoCount, SetEmbers},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))

@@ -192,7 +192,7 @@ static void STabs(const CtrSummaryUiView *v)
 {
     int shown = CtrSummaryUi_Tab(v);
 
-    Fill(sSTab[0].x, sSTab[0].y, sSTab[SUI_TABS - 1].x + sSTab[SUI_TABS - 1].w - sSTab[0].x, sSTab[0].h, UIS_BG);
+    TsBgRect(sSTab[0].x, sSTab[0].y, sSTab[SUI_TABS - 1].x + sSTab[SUI_TABS - 1].w - sSTab[0].x, sSTab[0].h);
     for (int i = 0; i < SUI_TABS; ++i)
         UiTab(&sSTab[i], sSTabLabel[i], (shown == i && !v->loading ? UI_SELECTED : 0)
                                         | (v->pressed == SUI_HIT_TAB + i ? UI_PRESSED : 0)
@@ -388,7 +388,7 @@ static void STrainer(const CtrSummaryUiView *v)
 
 static void SBody(const CtrSummaryUiView *v)
 {
-    Fill(sSBody.x, sSBody.y, sSBody.w, sSBody.h, UIS_BG);
+    TsBgRect(sSBody.x, sSBody.y, sSBody.w, sSBody.h);
     if (v->loading)
         return;
     switch (CtrSummaryUi_Tab(v)) {
@@ -414,7 +414,7 @@ static void SFooter(const CtrSummaryUiView *v)
     int state = v->pressed == SUI_HIT_BACK ? UI_PRESSED : 0;
     int top = UiButtonLabelTop(&sSBack, state, 1), w = UiTextWidth("BACK", 1), x = sSBack.x + (sSBack.w - w - 9) / 2;
 
-    Fill(sSFooter.x, sSFooter.y, sSBack.x + sSBack.w - sSFooter.x, sSFooter.h, UIS_BG);
+    TsBgRect(sSFooter.x, sSFooter.y, sSBack.x + sSBack.w - sSFooter.x, sSFooter.h);
     UiFooter(&sSFooter, hint);
     UiButton(&sSBack, sStyle, state);
     UiArrow(x, top, -1, UI_TEXT);
@@ -425,8 +425,7 @@ void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)
 {
     sCanvas = canvas;
     sUiS = &sUiRed;
-    Fill(0, 0, W, H, UIS_BG);
-    Fill(0, 0, W, 2, UIS_BG_TOP);
+    TsBackdrop();                       /* the embers, as PokeTouch's */
     SHeader(v);
     STabs(v);
     SBody(v);
@@ -473,7 +472,7 @@ void CtrSummaryUi_Update(uint16_t *canvas, const CtrSummaryUiView *old, const Ct
     sUiS = &sUiRed;
     CtrDirty_Clear(dirty);
     if (SHeaderChanged(old, v)) {
-        Fill(sSHeader.x, sSHeader.y, sSHeader.w, sSHeader.h, UIS_BG);
+        TsBgRect(sSHeader.x, sSHeader.y, sSHeader.w, sSHeader.h);
         SHeader(v);
         CtrDirty_Add(dirty, sSHeader.x, sSHeader.y, sSHeader.x + sSHeader.w, sSHeader.y + sSHeader.h);
     }

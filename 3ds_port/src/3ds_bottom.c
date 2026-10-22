@@ -3653,6 +3653,18 @@ static int NavPressedShown(void)
     return (sShown.summaryUi && sShown.sum.pressed != -1) || (sShown.battleUi && sShown.battle.pressed != -1);
 }
 
+/* The embers rising behind the menus (the EMBERS option): one step a frame over the screen on the canvas, PokeTouch's
+ * or the Summary's (the battle's artwork has its own backdrop), kept off the GBA picture and the HOME map. */
+static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
+{
+    int picture;
+
+    if (s->battleUi || s->mode == MODE_OFF)
+        return;
+    picture = !s->summaryUi && (s->touch.viewport || (s->touch.home && !s->touch.options && !s->touch.save));
+    CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), picture, dirty);
+}
+
 void CtrBottom_Frame(void)
 {
     int mode;
@@ -3814,6 +3826,7 @@ void CtrBottom_Frame(void)
                 CtrBattleUi_Update(sCanvas, &sShown.battle, &state.battle, &dirty);
             else
                 CtrPokeTouch_Update(sCanvas, &sShown.touch, &state.touch, &dirty);
+            EmbersStep(&state, &dirty);
             ProfSpan(&sProf.frameUi, profT);
             sShown = state;
             profT = ProfNow();
@@ -3842,6 +3855,13 @@ void CtrBottom_Frame(void)
             ProfFrameEnd(&full);
         }
         return;
+    }
+    if (!sReveal.active && sHaveShown) {
+        CtrDirtyList dirty;
+
+        CtrDirty_Clear(&dirty);
+        EmbersStep(&sShown, &dirty);
+        Present(&dirty);
     }
     RevealStep();
     ProfFrameEnd(NULL);
