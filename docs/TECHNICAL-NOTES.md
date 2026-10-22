@@ -40,7 +40,9 @@ The game handles saves as follows:
 - An existing destination always wins, and the original files are never modified.
 - Copy, read, flush, close and permission errors stop startup with a save error.
   They never fall through to a new game or an older fallback.
-- Invalid save sizes also stop startup.
+- Invalid save sizes also stop startup. A 128 KiB image followed by at most 512 bytes (the clock
+  footer mGBA and cartridge dumpers add) is read as the flash; those bytes stay in the file,
+  are copied with it on migration, and saves never write them.
 - A save is reported as written only after the SD card confirms the write.
 - The save layout is FireRed's own, including two reserved option bits.
 - This is a byte-preserving path migration, not a converter for other emulators'

@@ -61,10 +61,25 @@ static void PerfFlush(void)
     C2D_Flush();
     CtrPerf_End(PERF_SUBMIT,start);
 }
+/*
+ * The PICA's texture cache, dropped (GPUREG_TEXUNIT_CONFIG bit 16, the bit
+ * Citro3D's own context update writes). Citro3D asks for it only when a
+ * texture binding changes, and Citro2D rebinds only a texture other than the
+ * last one: the tile atlas, the background layers and the bottom chrome are
+ * the same textures frame after frame, rewritten by the CPU or drawn into, so
+ * on hardware the GPU went on sampling their old texels (a sprite drawn with
+ * the tiles that had its atlas slots before). Azahar has no such cache.
+ * Found by ZallaxDev's port on a New 3DS (1a5b6ee).
+ */
+static void TexCacheDrop(void)
+{
+    GPUCMD_AddMaskedWrite(GPUREG_TEXUNIT_CONFIG, 0x4, 1u << 16);
+}
 static void PerfSplit(u8 flags)
 {
     CTR_PERF_COUNT(PERF_FRAME_SPLITS, 1);
     C3D_FrameSplit(flags);
+    TexCacheDrop();
 }
 #define C3D_FrameSplit PerfSplit
 /* The target Citro2D draws on, for passes that need its dimensions. */
@@ -74,6 +89,9 @@ static void PerfSceneBegin(C3D_RenderTarget *target)
 {
     sDrawTarget = target;
     if (sPerfTarget != target) { CTR_PERF_COUNT(PERF_TARGET_SWITCH,1); sPerfTarget=target; }
+    /* What was drawn into the last target is sampled from now on. */
+    C2D_Flush();
+    TexCacheDrop();
     C2D_SceneBegin(target);
 }
 #define C2D_DrawImageAt PerfImageAt
@@ -5193,6 +5211,8 @@ void CtrVideo_Present(void)
     CtrPerf_End(PERF_PREPARE,perfPrepare);
     uint64_t waitStart = svcGetSystemTick();
     if (!C3D_FrameBegin(C3D_FRAME_SYNCDRAW)) return;
+    /* Before anything samples what the CPU wrote since the last frame. */
+    TexCacheDrop();
     uint64_t start = svcGetSystemTick();
     sStats.waitMs = (start - waitStart) * 1000.0 / SYSCLOCK_ARM11;
     if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_GPU_WAIT]+=start-waitStart;
