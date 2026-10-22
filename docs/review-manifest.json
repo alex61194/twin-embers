@@ -4342,7 +4342,7 @@
   },
   {
    "path": "patches/pokefirered/0125-touch-menu-wording.json",
-   "sha256": "67f6c83c4d0e46c39116debfb6cbf5b06d764b95ab8c5b0f65ed935212e31527",
+   "sha256": "ae12b91f5f05dddd920145f4a7a582cee9aa135b7c8d90b22dd98e901155bc63",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
