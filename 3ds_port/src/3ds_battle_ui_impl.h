@@ -544,7 +544,7 @@ static void BPill(int x, int y, const char *text, uint16_t bg, uint16_t ink, uin
 
     UiRoundFill(x, y, w, 15, 5, UiMix(bg, UI_RGB(0, 0, 0), 3));
     UiRoundFill(x + 1, y + 1, w - 2, 13, 4, bg);
-    UiText(text, x + 7, y + 1, ink, shadow, 1, x + w);
+    UiText(text, x + 7, y + 3, ink, shadow, 1, x + w);
 }
 
 /* A battle icon (3ds_icons.h) centred on a light disc of the piece's colour. */
@@ -666,8 +666,8 @@ static void BActCard(int i, const CtrBattleView *v)
         }
         return;
     }
-    BDiscIcon(icon[i], r->x + r->w / 2, fy + 29, 24, p);
-    EmLabel(label[i], r->x, r->w, fy + 50, 16, p);
+    BDiscIcon(icon[i], r->x + r->w / 2, fy + 26, 22, p);
+    UiText(label[i], r->x + (r->w - UiTextWidth(label[i], 1)) / 2, fy + 54, p->ink, p->inkSh, 1, r->x + r->w);
     BPill(r->x + (r->w - BPillW(sub[i])) / 2, fy + 69, sub[i], p->lip, EM_WHITE, p->edge);
 }
 
@@ -706,18 +706,15 @@ static void BMoveCard(int i, const CtrBattleView *v)
     }
     fy = BEmCard(r, p, focused, v->pressed == i);
     Fill(r->x + 3, fy + 4, 4, fh - 8, UiTypeColor(m->type));
-    UiText(m->name, r->x + 12, fy + 4, p->ink, p->inkSh, 1, r->x + r->w - 58);
-    {
-        CtrPokeTouchRect badge = {(int16_t)(r->x + r->w - 56), (int16_t)(fy + 4), 50, 14};
-
-        UiTypeBadge(&badge, m->type, m->typeName);
-    }
-    UiText("POW", r->x + 12, fy + 22, label, p->inkSh, 1, r->x + 40);
-    UiText(m->power[0] ? m->power : "-", r->x + 40, fy + 22, p->ink, p->inkSh, 1, r->x + 72);
+    UiText(m->name, r->x + 12, fy + 7, p->ink, p->inkSh, 1, r->x + r->w - 58);
+    BPill(r->x + r->w - 6 - BPillW(m->typeName), fy + 4, m->typeName, UiTypeColor(m->type), EM_WHITE,
+          UiMix(UiTypeColor(m->type), UI_RGB(0, 0, 0), 4));
+    UiText("POW", r->x + 12, fy + 25, label, p->inkSh, 1, r->x + 40);
+    UiText(m->power[0] ? m->power : "-", r->x + 40, fy + 25, p->ink, p->inkSh, 1, r->x + 72);
     if (m->matchup != CTR_FX_NONE)
-        BMatchupPill(m->matchup, r->x + r->w - 6, fy + 21);
+        BMatchupPill(m->matchup, r->x + r->w - 6, fy + 22);
     else if (!m->power[0] || m->power[0] == '-')
-        UiTextRight("STATUS", r->x + r->w - 8, fy + 22, label, p->inkSh, 1);
+        UiTextRight("STATUS", r->x + r->w - 8, fy + 25, label, p->inkSh, 1);
     {
         int lit = m->maxPp ? ((int)m->pp * 10 + m->maxPp - 1) / m->maxPp : 0;
         uint16_t on = m->pp * 4 <= m->maxPp ? UI_RGB(232, 110, 30) : m->pp * 2 <= m->maxPp ? UI_RGB(236, 190, 30)
@@ -727,9 +724,9 @@ static void BMoveCard(int i, const CtrBattleView *v)
 
         for (int k = 0; k < 10; ++k)
             UiRoundFill(r->x + 12 + 6 * k, fy + 45, 5, 5, 2, k < lit ? on : off);
-        UiText("PP", r->x + r->w - 62, fy + 41, label, p->inkSh, 1, r->x + r->w);
         snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
-        UiTextRight(pp, r->x + r->w - 8, fy + 41, BEmPpInk(m->pp, m->maxPp, p), p->inkSh, 1);
+        UiTextRight(pp, r->x + r->w - 8, fy + 43, BEmPpInk(m->pp, m->maxPp, p), p->inkSh, 1);
+        UiTextRight("PP", r->x + r->w - 13 - UiTextWidth(pp, 1), fy + 43, label, p->inkSh, 1);
     }
 }
 
@@ -749,18 +746,18 @@ static void BMoveNote(const CtrBattleView *v)
         char val[16];
         int x = n->x + 12;
 
-        UiText("ACC", x, n->y + 5, EM_DIM, EM_DARK_SH, 1, n->x + n->w);
+        UiText("ACC", x, n->y + 7, EM_DIM, EM_DARK_SH, 1, n->x + n->w);
         snprintf(val, sizeof(val), "%s%s", acc, acc[0] == '-' ? "" : "%");
-        UiText(val, x + 26, n->y + 5, EM_DARK, EM_DARK_SH, 1, n->x + n->w);
+        UiText(val, x + 26, n->y + 7, EM_DARK, EM_DARK_SH, 1, n->x + n->w);
         if (m->effectChance) {
-            UiText("EFFECT", x + 70, n->y + 5, EM_DIM, EM_DARK_SH, 1, n->x + n->w);
+            UiText("EFFECT", x + 70, n->y + 7, EM_DIM, EM_DARK_SH, 1, n->x + n->w);
             snprintf(val, sizeof(val), "%u%%", m->effectChance);
-            UiText(val, x + 116, n->y + 5, EM_DARK, EM_DARK_SH, 1, n->x + n->w);
+            UiText(val, x + 116, n->y + 7, EM_DARK, EM_DARK_SH, 1, n->x + n->w);
         }
         if (m->stab)
             BPill(n->x + n->w - 8 - BPillW("STAB"), n->y + 4, "STAB", EM_STRIPE, EM_WHITE, UI_RGB(110, 40, 6));
     }
-    BDescribeN(m->desc[0] ? m->desc : m->type < 10 ? "Physical move" : "Special move", n->x + 12, n->y + 22,
+    BDescribeN(m->desc[0] ? m->desc : m->type < 10 ? "Physical move" : "Special move", n->x + 12, n->y + 24,
                n->w - 18, 3, EM_DARK);
 }
 
@@ -781,12 +778,12 @@ static void BTargetCard(int i, const CtrBattleView *v)
     }
     fy = BEmCard(r, p, focused, v->pressed == i);
     Fill(r->x + 3, fy + 4, 4, fh - 8, side);
-    UiText(t->name, r->x + 12, fy + 4, p->ink, p->inkSh, 1, r->x + r->w - 48);
-    BPill(r->x + r->w - 6 - BPillW(t->side ? "ALLY" : "FOE"), fy + 3, t->side ? "ALLY" : "FOE", side, EM_WHITE,
+    UiText(t->name, r->x + 12, fy + 7, p->ink, p->inkSh, 1, r->x + r->w - 48);
+    BPill(r->x + r->w - 6 - BPillW(t->side ? "ALLY" : "FOE"), fy + 4, t->side ? "ALLY" : "FOE", side, EM_WHITE,
           UiMix(side, UI_RGB(0, 0, 0), 4));
     snprintf(text, sizeof(text), "Lv%u", t->level);
-    UiText(text, r->x + 12, fy + 22, p->ink, p->inkSh, 1, r->x + 60);
-    BMatchupPill(t->matchup, r->x + r->w - 6, fy + 21);
+    UiText(text, r->x + 12, fy + 25, p->ink, p->inkSh, 1, r->x + 60);
+    BMatchupPill(t->matchup, r->x + r->w - 6, fy + 22);
     {
         CtrPokeTouchRect bar = {(int16_t)(r->x + 12), (int16_t)(fy + 45), 70, 6};
 
@@ -794,7 +791,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
         UiHpBar(&bar, t->hp, t->maxHp);
         if (t->side) {
             snprintf(text, sizeof(text), "%u/%u", t->hp, t->maxHp);
-            UiTextRight(text, r->x + r->w - 8, fy + 41, p->ink, p->inkSh, 1);
+            UiTextRight(text, r->x + r->w - 8, fy + 44, p->ink, p->inkSh, 1);
         }
     }
 }
@@ -805,7 +802,7 @@ static void BTargetNote(void)
 
     TsBgRect(n->x, n->y, n->w, n->h);
     EmNote(n->x, n->y, n->w, n->h);
-    BPWrap("Which POK\xC3\xA9MON should the move hit?", n->x + 12, n->y + 14, n->w - 18, 2, EM_DARK, EM_DARK_SH);
+    BPWrap("Which POK\xC3\xA9MON should the move hit?", n->x + 12, n->y + 25, n->w - 18, 2, EM_DARK, EM_DARK_SH);
 }
 
 /* ---- The Safari Zone: BALL, BAIT, ROCK, RUN (the words of FireRed's gText_SafariZoneMenu) ---- */
@@ -819,7 +816,7 @@ static void BSafariCard(int i, const CtrBattleView *v)
     int fy = BEmCard(r, p, v->showCursor && v->cursor == i, v->pressed == i);
 
     BDiscIcon(icon[i], r->x + r->w / 2, fy + 34, 25, p);
-    EmLabel(label[i], r->x, r->w, fy + 64, 16, p);
+    UiText(label[i], r->x + (r->w - UiTextWidth(label[i], 1)) / 2, fy + 69, p->ink, p->inkSh, 1, r->x + r->w);
 }
 
 /* ---- The battle Bag ---- */
@@ -846,12 +843,12 @@ static void BBagRow(int i, const CtrBattleView *v)
         return;
     fy = EmButton(r.x, r.y, r.w, r.h, p, 2, v->pressed == BUI_BAG_ROW + i);
     BItemDraw(b->row[i].item, r.x + 3, fy, 1);
-    UiText(b->row[i].name, r.x + 30, fy + 5, p->ink, p->inkSh, 1, r.x + r.w - 34);
+    UiText(b->row[i].name, r.x + 30, fy + 8, p->ink, p->inkSh, 1, r.x + r.w - 34);
     if (b->pocket != 1) {                       /* key items are one of each: no count */
         char qty[8];
 
         snprintf(qty, sizeof(qty), "x%u", b->row[i].qty > 999 ? 999 : b->row[i].qty);
-        UiTextRight(qty, r.x + r.w - 8, fy + 5, p->ink, p->inkSh, 1);
+        UiTextRight(qty, r.x + r.w - 8, fy + 8, p->ink, p->inkSh, 1);
     }
 }
 
