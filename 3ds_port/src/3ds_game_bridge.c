@@ -13,6 +13,8 @@
 #include "dma3.h"
 #include "palette.h"
 #include "task.h"
+#include "overworld.h"
+#include "constants/map_types.h"
 #include "3ds_audio.h"
 #include "3ds_audio_cadence.h"
 #include "3ds_input.h"
@@ -24,6 +26,8 @@
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "3ds_fast_forward.h"
+#include "3ds_poketouch_options.h"
+#include "3ds_day_night_lights.h"
 
 extern IntrFunc gIntrTable[];
 
@@ -41,6 +45,65 @@ static StageSet sStage, sStageUi, sCentred, sBattle, sTransition, sNativeUi, sIn
 extern const u16 *CtrTrainerCard_FlipScroll(void);
 extern bool32 CtrField_BarnDoorWipeActive(void);
 extern bool32 IsMapNamePopupTaskActive(void);
+
+/* The field's own main callback on an outdoor map, outside a battle: where the
+ * day/night tint applies (FireRed's outdoor types, as in 3ds_map_edge.h). */
+static bool FieldOutdoors(void)
+{
+    unsigned type = gMapHeader.mapType;
+
+    return gMain.callback1 == CB1_Overworld && !gMain.inBattle
+        && (type == MAP_TYPE_TOWN || type == MAP_TYPE_CITY || type == MAP_TYPE_ROUTE || type == MAP_TYPE_OCEAN_ROUTE);
+}
+
+/* The windows lit at night, by tileset (3ds_day_night_lights.h). */
+extern const struct Tileset gTileset_General, gTileset_PalletTown, gTileset_ViridianCity, gTileset_PewterCity,
+    gTileset_VermilionCity, gTileset_LavenderTown, gTileset_CeladonCity, gTileset_FuchsiaCity,
+    gTileset_SaffronCity, gTileset_IndigoPlateau, gTileset_SeviiIslands123;
+
+#define LIGHTS(tileset, table) {&gTileset_##tileset, table, sizeof(table) / sizeof(table[0])}
+static const struct
+{
+    const struct Tileset *tileset;
+    const uint16_t *lights;
+    unsigned count;
+} sTilesetLights[] = {
+    LIGHTS(General, kCtrLights_General),
+    LIGHTS(PalletTown, kCtrLights_PalletTown),
+    LIGHTS(ViridianCity, kCtrLights_ViridianCity),
+    LIGHTS(PewterCity, kCtrLights_PewterCity),
+    LIGHTS(VermilionCity, kCtrLights_VermilionCity),
+    LIGHTS(LavenderTown, kCtrLights_LavenderTown),
+    LIGHTS(CeladonCity, kCtrLights_CeladonCity),
+    LIGHTS(FuchsiaCity, kCtrLights_FuchsiaCity),
+    LIGHTS(SaffronCity, kCtrLights_SaffronCity),
+    LIGHTS(IndigoPlateau, kCtrLights_IndigoPlateau),
+    LIGHTS(SeviiIslands123, kCtrLights_SeviiIslands123),
+};
+#undef LIGHTS
+
+static const uint16_t *TilesetLights(const struct Tileset *tileset, unsigned *count)
+{
+    for (unsigned i = 0; i < sizeof(sTilesetLights) / sizeof(sTilesetLights[0]); ++i)
+        if (sTilesetLights[i].tileset == tileset)
+        {
+            *count = sTilesetLights[i].count;
+            return sTilesetLights[i].lights;
+        }
+    *count = 0;
+    return NULL;
+}
+
+static void UpdateDayNight(void)
+{
+    bool outdoors = CtrOptions_DayNight() && FieldOutdoors();
+    const struct MapLayout *layout = gMapHeader.mapLayout;
+    unsigned primaryCount = 0, secondaryCount = 0;
+    const uint16_t *primary = outdoors && layout ? TilesetLights(layout->primaryTileset, &primaryCount) : NULL;
+    const uint16_t *secondary = outdoors && layout ? TilesetLights(layout->secondaryTileset, &secondaryCount) : NULL;
+
+    CtrVideo_SetDayNight(outdoors, primary, primaryCount, secondary, secondaryCount);
+}
 
 static void RememberCallback(StageSet *set, IntrCallback callback)
 {
@@ -458,6 +521,7 @@ void VBlankIntrWait(void)
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
+    UpdateDayNight();
     GbaShadow_SetHeldKeys((uint16_t)(CtrBottom_FilterGameKeys(CtrInput_Get()->held) | CtrBottom_InjectedKeys()));
     CtrPerf_End(PERF_VBLANK, perfVblank);
     /* The overworld turbo (3ds_fast_forward.h): a frame that is not shown skips the

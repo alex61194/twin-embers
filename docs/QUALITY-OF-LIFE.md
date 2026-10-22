@@ -63,6 +63,37 @@ returns each time and finishes once the copy completes; the GBA build is unchang
 ARM build links. NOT reproduced in an emulator or on a console: NEEDS HARDWARE VALIDATION (open the
 player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
 
+## Day and night on the outdoor field
+
+On outdoor maps (FireRed's town and route map types) the map and its sprites take the colour of the hour
+of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, plain day from 09:00 to 17:30 and dusk at
+19:00, blended second by second in between (`3ds_day_night.h`; the hours follow Merrp's day/night system
+for pokeemerald, the colours are the port's own). Indoors, in caves, in battle and in every menu nothing
+changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default) or OFF; like the other page-2 options it is not
+kept in the save and is CLOCK again after a restart.
+
+- It is coloured, not played: the compositor shades each colour as it turns the palette into texels
+  (`3ds_video.c`, `DayNightTexel`), for the map's palettes 0-12 and the sprite palettes. The game's
+  palettes in RAM, the weather, the fades and the save are untouched. Palettes 13-15 (text boxes, the
+  map-name popup, the menus) keep their colours. A change of tint (in steps of 16 seconds) re-converts
+  the palettes once and the tile cache refreshes through the palette versions it already uses.
+- Lit windows: at night, the glass of the windows listed per tileset in `3ds_day_night_lights.h`
+  (`tile | palette << 12`) takes a warm lamp colour instead of the shade, fading in from dusk. Only the
+  glass pixels of those tiles (light blue, `CtrDayNight_Glass`) are lit; frames and sills stay dark. The
+  list is by tile, not by colour, because the Poke Mart roof uses the same blues as the windows and must
+  stay dark. Not lit: Silph Co.'s glass front, the Bike Shop skylight, and the houses with grey windows.
+- Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
+  (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6, passing the light lists of the map's
+  primary and secondary tilesets. No game patch.
+- Not yet: glow around lamps and night effects (the third phase of the plan).
+
+Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white, the keys land at their hours,
+no hour is darker than the night, no channel moves more than one step per second, the day wraps; the
+shade never brightens, the lamp is full at night and off by day, glass is told from sill, wall and grass;
+the light tables are valid tiles with no duplicates and no Mart roof tile); `tests/poketouch_options_test.c`
+(the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
+a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
+
 ## The touch screen's ember look
 
 The lower screen's field menus wear the owner's modern design (DS/3DS-era raised buttons on a red ember
@@ -76,7 +107,7 @@ with YES and NO. The battle Summary keeps its layout on the same backdrop. The b
   (`ember_skin*.h`); the BAG icon is the port's battle Bag reduced. The text is FireRed's font at run time.
 - Embers rise slowly over the backdrop (about twenty sparks, `3ds_touch_skin_impl.h`): one step a frame,
   drawn only on pixels that show the backdrop, so they pass behind every button and never over the GBA
-  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS: ON (the default) or OFF; like
+  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS (after DAY/NIGHT): ON (the default) or OFF; like
   the other page-2 options it is not kept in the save.
 - The old artwork skin (`poketouch_skin*.h`, `tools/make_touch_skin.py`) is removed.
 
