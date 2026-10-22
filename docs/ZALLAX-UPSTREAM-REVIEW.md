@@ -63,3 +63,22 @@ the same defect exist here, and does the same fix fit.
 Voxel world, 3D battles and stereo planes; PokeNav, Match Call, Mirage Tower, Trainer Hill,
 contests and other Emerald-only content; Emerald's intro and title; the web builder and release
 checklists; README and issue templates.
+
+## Second pass: `e80ba61` to `b198c08` (2026-10-18, Zallax 0.4.0)
+
+208 more commits. Most are the voxel world, the 3D battle, translations, local wireless and
+Emerald-only screens. Applied (branch `fix/hardware-gpu-y-saves`):
+
+| Zallax | Defect in Twin Embers | Status |
+|---|---|---|
+| `1a5b6ee` / `af0ffe3` | The PICA200's texture cache was never dropped. Citro3D only drops it when a texture binding changes, and the tile atlas, the background layers and the bottom chrome are the same textures every frame: on hardware sprites can be drawn with stale tiles. Azahar has no such cache. | Fixed: dropped after `C3D_FrameBegin`, at every frame split and before every render target switch. ARM build links; NEEDS HARDWARE CHECK |
+| `0b9ed71`, `aead550` | A 128 KiB save with a clock footer (mGBA, cartridge dumpers) was refused and the game stopped with a save error | Fixed: up to 512 trailing bytes are kept in the file and copied on migration; anything longer is still refused. `tools/test_flash_migration.py` |
+| same commit as the cache | VRAM render targets hold garbage on hardware until cleared | Already covered: every layer, scene, band, logical and bottom target is cleared whole before it is first sampled |
+
+Worth measuring on an Old 3DS before porting: the kernel data-cache flush instead of the GSP
+service (`svcFlushProcessDataCache`, about 0.6 ms a flush), a 512 KiB command buffer, the bottom
+framebuffers made RGB565 at `gfxInit` (150 KiB of linear heap), and a minimum label slice per
+bottom-screen redraw (`97a00a7`). To check in game: rain, sand and bubbles over the 400-wide field
+(`7dd32a7`; the fog is patch 0123), the Pokedex page of a Pokemon just caught (`bb0a4ab`), move
+backgrounds past 240 columns (`3e4ae45`). Not applicable: the cry at x2 (`b927816`; the turbo does
+not run in battle).
