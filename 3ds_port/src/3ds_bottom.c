@@ -2803,6 +2803,9 @@ static void RunBatPlan(void)
     sBatPlan.release = 1;
 }
 
+extern int CtrText_WaitsForButton(void);
+static int sBatIdleTap;             /* a touch that began while the battle offered no choice */
+
 static void ProcessBattleTouch(const CtrInput *in)
 {
     int state = CtrBattle_State(), btn = -1;
@@ -2816,6 +2819,21 @@ static void ProcessBattleTouch(const CtrInput *in)
         sBatTouchLast = 0;
     if (in->touchActive && sHaveShown)
         btn = CtrBattleUi_Hit(&sShown.battle, (int)in->touchX, (int)in->touchY);
+    /* No choice on the screen: a tap anywhere is A for the battle's message that waits on a button ("Wild PIDGEY
+     * appeared!"), as on a DS. Only then: a message that runs on by itself, or an animation, takes nothing. */
+    if (shows != BUI_IDLE || (in->held & 0x3ffu))
+        sBatIdleTap = 0;
+    else if (in->touchDown)
+        sBatIdleTap = 1;
+    else if (!in->touchActive && sBatIdleTap) {
+        sBatIdleTap = 0;
+        if (CtrText_WaitsForButton()) {
+            BatPlanClear();
+            sBatPlan.active = 1;
+            sBatPlan.state = state;
+            sBatPlan.press = K_A;
+        }
+    }
     if ((in->held & 0x3ffu) || !ready || (sBat.down && sBat.state != state)) {
         sBat.down = sBat.inside = 0;
         return;
