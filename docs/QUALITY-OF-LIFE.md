@@ -81,6 +81,28 @@ Scyther (Scizor), Seadra (Kingdra), Porygon (Porygon2) and Clamperl (Huntail).
 
 NEEDS HARDWARE VALIDATION (Rare Candy on a level 39 Kadabra; a Slowpoke with a King's Rock).
 
+## Night encounters
+
+From 21:00 to 05:00 on the 3DS clock (the night the day/night tint draws), some wild slots give a night species,
+always and at the slot's own level (`3ds_night_wild.h`, patch 0134). The day birds and bugs give way: Pidgey to
+Hoothoot (Zubat or Oddish before the National Pokédex), Caterpie to Spinarak (Venonat), Spearow to Murkrow (Zubat),
+Fearow and Pidgeotto to Noctowl (Golbat, Venomoth); Mt. Moon has more Clefairy, the Pokémon Tower more Haunter and
+Misdreavus, the Pokémon Mansion Gastly and Houndour, Route 8 Gastly, the Lost Cave Misdreavus. With the Super Rod at
+night in the waters of Five to Seven Island, Chinchou and Lanturn bite instead of Gyarados and Seadra. In Six Island's
+Pattern Bush it goes both ways: Ledyba by day, Spinarak by night.
+
+- Johto species wait for the National Pokédex, as in the Sevii Islands; before it a rule gives its Kanto species or
+  leaves the slot alone.
+- The LeafGreen half (above) applies after it, so a night Oddish can still be a Bellsprout.
+- Eevee's friendship evolutions are on again with the same clock: Espeon by day, Umbreon at night (FireRed left them
+  out for want of a clock).
+- It follows the clock, not the DAY/NIGHT option, which only switches the tint. The Pokédex area map shows the day.
+
+Checked: `tests/night_wild_test.c` (in `verify-host`); every rule's species is in its map's FireRed slot (pinned
+`wild_encounters.json`).
+
+NEEDS HARDWARE VALIDATION (Route 1 at 23:00 and at 12:00; Rare Candy on a friendly Eevee at night).
+
 ## "Engine ABI is missing"
 
 The 3DSX reads `romfs:/engine/abi.bin` first. Two causes look the same on screen, so the message now
