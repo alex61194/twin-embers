@@ -493,6 +493,14 @@
    "modified_for_distribution": true
   },
   {
+   "path": "3ds_port/include/3ds_leafgreen.h",
+   "sha256": "673daf2b356d4b54ba5ba48a9f1d467ac3ab4a03d4d1d5637a9d2d67dd8eb3f6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/include/3ds_log.h",
    "sha256": "d8a23dad1d64e69d8e8239957e259c94306edfe94f8c9e8bf6e28eae285ddf25",
    "review_status": "reviewed",
@@ -1079,6 +1087,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "3ds_port/src/3ds_leafgreen.c",
+   "sha256": "55f670716f6bcf3ae84af800b7f5f6c605d2b2d9d7f334a662720434845b09ea",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/src/3ds_link_peripherals.c",
    "sha256": "6dda7af52c571759b25ccb46014920631d07368585e2be46f079bbf7c2aa6039",
    "review_status": "reviewed",
@@ -1598,6 +1614,14 @@
   {
    "path": "3ds_port/tests/item_pc_wait_test.c",
    "sha256": "6a1c2fbe9c4fd0908aa0b05fa198130d9e8a701df88ff05f55e2e195469657cf",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/leafgreen_test.c",
+   "sha256": "0852e32454ae0c4730722e1f71f7431c540d69e6a7f44ef2a6ec6f6159c8afa6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

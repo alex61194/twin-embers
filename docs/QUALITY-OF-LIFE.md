@@ -36,6 +36,51 @@ drawn); the ARM build links `CtrBattle_MoveMatchup`.
 
 NEEDS HARDWARE VALIDATION (a real battle: the tag against the foe's types, then after a switch).
 
+## LeafGreen's wild Pokémon
+
+The species LeafGreen has in the wild and FireRed does not can be caught here too. FireRed and LeafGreen share
+their encounter tables slot for slot, so a slot holding a FireRed-only species gives LeafGreen's species instead
+half of the time, at the slot's own level (`3ds_leafgreen.h`, patch 0130):
+
+| FireRed | LeafGreen |
+|---|---|
+| Ekans, Arbok | Sandshrew, Sandslash |
+| Oddish, Gloom | Bellsprout, Weepinbell |
+| Psyduck, Golduck | Slowpoke, Slowbro |
+| Growlithe | Vulpix |
+| Shellder | Staryu |
+| Scyther (Safari Zone) | Pinsir |
+| Seadra, Weezing | Kingler, Muk |
+| Wooper, Murkrow, Qwilfish, Delibird (Sevii Islands) | Marill, Misdreavus, Remoraid, Sneasel |
+
+Two of LeafGreen's slots are not a counterpart of FireRed's and are named by place: Magmar on the Mt. Ember
+exterior (the Spearow slots that are Magmar in LeafGreen, levels 38 and 40) and Mantine in the deep water of Tanoby
+Ruins and Trainer Tower (the 35-40 Tentacool slot). It covers walking, surfing, Rock Smash, fishing and Sweet Scent.
+
+- Not changed: species both games have at other rates (Krabby/Horsea, the Nidoran, Kakuna/Metapod,
+  Koffing/Grimer, Ledyba/Spinarak), Electabuzz and Skarmory (LeafGreen has another species there, not an exclusive),
+  the Game Corner prizes and in-game trades (script data), and the Pokédex area map, which shows FireRed's places.
+- The table of counterparts is port-authored code in `build/3ds_leafgreen.o`; FireRed's encounter tables still
+  come from the pack.
+
+Checked: `tests/leafgreen_test.c` (in `verify-host`); every FireRed/LeafGreen slot difference in the pinned
+`wild_encounters.json`; `verify-clean-release` reports 0 embedded bytes.
+
+NEEDS HARDWARE VALIDATION (an encounter of each kind on a route with a counterpart).
+
+## Trade evolutions by level
+
+The Pokémon that evolve by trade also evolve on levelling up from level 40, with no trade (patch 0131): Kadabra,
+Machoke, Graveler and Haunter, and the trade-with-item ones, without the item: Poliwhirl (Politoed), Onix (Steelix),
+Scyther (Scizor), Seadra (Kingdra), Porygon (Porygon2) and Clamperl (Huntail).
+
+- Holding the trade's item picks that branch: Clamperl with the Deep Sea Scale becomes Gorebyss.
+- Slowpoke keeps evolving into Slowbro at 37. Holding a King's Rock when it levels up from 37 makes it Slowking.
+- As in a trade, the targets from the second generation wait for the National Pokédex, and the Everstone stops it.
+- A trade still evolves them as before. The held item is not used up by the level evolution.
+
+NEEDS HARDWARE VALIDATION (Rare Candy on a level 39 Kadabra; a Slowpoke with a King's Rock).
+
 ## "Engine ABI is missing"
 
 The 3DSX reads `romfs:/engine/abi.bin` first. Two causes look the same on screen, so the message now
