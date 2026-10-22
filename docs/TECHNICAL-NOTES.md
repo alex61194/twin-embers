@@ -41,7 +41,13 @@ The game handles saves as follows:
 - Copy, read, flush, close and permission errors stop startup with a save error.
   They never fall through to a new game or an older fallback.
 - Invalid save sizes also stop startup.
-- A save is reported as written only after the SD card confirms the write.
+- The SAVE screen reports a save as written only after the SD card confirms the write.
+  Saves the game makes on its own (the Hall of Fame's) are written right after; if the
+  card keeps failing for a second, the game stops on a save-error screen instead of
+  going on as if it had saved.
+- Each start keeps a copy of the save as it was read, `twinembers.sav.bak`, next to it
+  (written to a temporary file first; a blank save never replaces an existing copy).
+- Errors that stop the game (save, data, graphics) stay on the lower screen until A.
 - The save layout is FireRed's own, including two reserved option bits.
 - This is a byte-preserving path migration, not a converter for other emulators'
   save formats.

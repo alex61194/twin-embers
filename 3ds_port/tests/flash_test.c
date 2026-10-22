@@ -94,5 +94,42 @@ int main(void)
     fclose(file);
     remove(legacy);
     remove(renamed);
+
+    /* Backup at start: a copy of the save as read, in place of the previous copy;
+     * a blank card keeps the copy there. */
+    const char *backup = "build/flash-test.sav.bak";
+    remove(backup);
+    remove(path);
+    assert(CtrFlash_Init(path));
+    assert(!CtrFlash_Backup(backup));                 /* blank: nothing to keep */
+    assert(fopen(backup, "rb") == NULL);
+    assert(ProgramFlashSectorAndVerify(5, sector) == 0);
+    assert(CtrFlash_Flush());
+    CtrFlash_Close();
+    assert(CtrFlash_Init(path));
+    assert(CtrFlash_Backup(backup));
+    assert(ProgramFlashByte(5, 0, 0x01) == 0);       /* play after the copy does not reach it */
+    assert(CtrFlash_Flush());
+    CtrFlash_Close();
+    file = fopen(backup, "rb");
+    assert(file && fseek(file, 0, SEEK_END) == 0 && ftell(file) == 131072);
+    assert(fseek(file, 5 * 4096, SEEK_SET) == 0 && fgetc(file) == 0x42);
+    fclose(file);
+    assert(CtrFlash_Init(path));
+    assert(CtrFlash_Backup(backup));                  /* the next start replaces it */
+    CtrFlash_Close();
+    file = fopen(backup, "rb");
+    assert(file && fseek(file, 5 * 4096, SEEK_SET) == 0 && fgetc(file) == 0x01);
+    fclose(file);
+    assert(fopen("build/flash-test.sav.bak.tmp", "rb") == NULL);
+    remove(path);
+    assert(CtrFlash_Init(path));                      /* a deleted save starts blank... */
+    assert(!CtrFlash_Backup(backup));
+    CtrFlash_Close();
+    file = fopen(backup, "rb");                       /* ...and the last copy survives */
+    assert(file && fseek(file, 5 * 4096, SEEK_SET) == 0 && fgetc(file) == 0x01);
+    fclose(file);
+    remove(path);
+    remove(backup);
     return 0;
 }

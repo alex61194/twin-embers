@@ -20,6 +20,7 @@
 #include "3ds_dma.h"
 #include "3ds_flash.h"
 #include "3ds_log.h"
+#include "3ds_platform.h"
 #include "3ds_video.h"
 #include "gba_shadow.h"
 #include "3ds_perf.h"
@@ -475,13 +476,18 @@ void VBlankIntrWait(void)
         CtrVideo_Present();
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is
-     * retried on the next frames; only one that persists for a second stops the game. */
+     * retried on the next frames; only one that persists for a second stops the game, on
+     * a screen that says so (a save the game itself makes, such as the Hall of Fame's,
+     * has already been reported as written by then). */
     if (CtrFlash_Flush())
         sFlashFailures = 0;
     else if (++sFlashFailures == 1)
         CtrLog_Write(CTR_LOG_FS, "save flush failed; retrying");
     else if (sFlashFailures >= 60)
-        exit(0);
+        CtrPlatform_ShowError("twinembers save error",
+                              "The game could not be written to the SD card, so the last save may be incomplete.",
+                              "Check the card (write-protect switch, free space) before playing again. "
+                              "twinembers.sav.bak in /3ds/twinembers/ holds the save from the last start.");
     /* GBA scanline order per frame: VCount match at line 150 advances the
      * m4a PCM ring (m4aSoundVSync), then VBlank at line 160 mixes the fresh
      * slice (SoundMain). Dispatching only VBlank left pcmDmaCounter stuck. */

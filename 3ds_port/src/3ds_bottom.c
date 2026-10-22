@@ -2039,6 +2039,9 @@ static int CanRouteDestination(int target, int mode)
         return 0;
     if (!sSession.active || sPendingScreen != PT_NONE || target == sScreen)
         return 0;
+    /* The Pokédex is a destination only once the game has given it (as its START entry). */
+    if (target == PT_POKEDEX && !CtrSave_HasPokedex())
+        return 0;
     return RouteScreenReady(mode, 0);
 }
 

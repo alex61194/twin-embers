@@ -629,7 +629,14 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
     {
         CTR_PERF_COUNT(PERF_CACHE_MISS,1);
         if (sUsed == CACHE_COUNT)
-            CtrPlatform_Fatal("VIDEO tile cache exhausted in a single frame");
+        {
+            /* More new tiles in one frame than the headroom FrameBegin keeps: the index starts
+             * again instead of the game stopping. Tiles already placed this frame may show
+             * another tile's picture for this one frame; the next generation redraws them.
+             * The probe ended on an empty entry, which the reset leaves empty. */
+            Error(7, "tile cache exhausted in a single frame; index reset");
+            TileCacheReset();
+        }
         sHash[hash] = ++sUsed;
         sTiles[sUsed - 1] = (Tile){.key = key};
     }

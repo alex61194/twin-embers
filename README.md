@@ -127,9 +127,11 @@ Turbo works while exploring and in battle. It skips drawing frames, not game log
 - **"Unsupported ROM."** Check it is FireRed USA Revision 0 against the SHA-1 above.
 - **Builder cannot write.** Free at least 32 MiB and check the card's write-protect switch.
 - **No sound.** Look for `SD:/3ds/dspfirm.cdc`.
-- **Save error.** Leave the card alone, keep your backup, and report it.
+- **Save error.** The message stays on the lower screen until you press A. Leave the card alone, keep your backup (`twinembers.sav.bak`), and report it.
 
-Known gaps: some original dialogue still tells you to use START for a menu that no longer exists, and before you own the Pokédex its lower-screen tile can look active inside another menu (tapping it takes you back home).
+Known gap: the Safari Zone sign still mentions START.
+
+Each start keeps a copy of your save as `twinembers.sav.bak` in the same folder. To go back to it, copy it over `twinembers.sav` with the game closed.
 
 To report a bug, [open an issue](https://github.com/alex61194/twin-embers/issues) with your console model or emulator, the steps that trigger it and any text the screen showed. Creating an empty `/3ds/twinembers/debug.txt` makes the game write `port.log`. **Never attach a ROM, a pack, a save or any other game data.**
 
