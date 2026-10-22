@@ -683,6 +683,17 @@ static struct {
     unsigned frames;            /* the cursor's blink clock */
 } sHome;
 
+/* FLY chosen in the Party: FireRed's Fly map is not opened, the Party goes back to the field and HOME's map is where the
+ * destination is picked, with one tap (CtrBottom_BeginFlyPick, from party_menu.c). A button pressed in the field, a
+ * battle, START or another screen gives it up. */
+static int sFlyPick;
+
+void CtrBottom_BeginFlyPick(void)
+{
+    sFlyPick = 1;
+    sHome.valid = 0;
+}
+
 /* The map section a tap at cell (cx, cy) means: the cell's own, else (the
  * cities are one cell) a Fly destination right beside it. */
 static int HomeFind(int group, int cx, int cy, int *fx, int *fy, int *mapsec, int *dungeon)
@@ -736,6 +747,12 @@ static void HomeTap(int gx, int gy)
             CtrPokeTouch_RequestFly((unsigned)mapsec);
             sHome.valid = 0;
         }
+        return;
+    }
+    if (sFlyPick && mapsec != MAPSEC_NONE_VALUE && CtrPokeTouch_FlyStatus((unsigned)mapsec) == PT_FLY_OK) {
+        CtrPokeTouch_RequestFly((unsigned)mapsec);      /* FLY was chosen already: the tap is the destination */
+        sFlyPick = 0;
+        sHome.valid = 0;
         return;
     }
     sHome.valid = 1;
@@ -792,6 +809,12 @@ static void HomeMapState(Snapshot *s)
         s->touch.cursorY = (int8_t)sHome.y;
         s->touch.cursorFrame = (uint8_t)((sHome.frames / 20) & 1);
         HomeSelectionBar(&s->touch);
+        return;
+    }
+    if (sFlyPick) {
+        snprintf(s->touch.bar[0], PT_BAR_LEN, "FLY");
+        snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap a town to go there.");
+        snprintf(s->touch.bar[2], PT_BAR_LEN, "Any button: cancel");
         return;
     }
     CtrPokeTouch_Location(s->touch.bar[0], PT_BAR_LEN);
@@ -1860,6 +1883,25 @@ static int ProcessSummaryTouch(const CtrInput *in)
     int hit = in->touchActive && sHaveShown && sShown.summaryUi
             ? CtrSummaryUi_Hit(&sShown.sum, (int)in->touchX, (int)in->touchY) : -1;
 
+    /* TRAINER, the last tab, is the port's (FireRed's first page shown as its memo), so the D-pad reaches it here: RIGHT
+     * on the moves page goes to it, LEFT from it back to the moves (on release, as the plan walks FireRed's pages with its
+     * own LEFT and RIGHT, which a held key would cancel). */
+    if (sSumPlan.kind == SUMPLAN_NONE && sHaveShown && sShown.summaryUi && !sShown.sum.loading && CtrBottomSummary_Ready()
+        && !(in->held & 0x3ffu)) {
+        int page = CtrBottomSummary_Page();
+
+        if ((in->up & K_RIGHT) && page == SUI_PAGE_MOVES && !sShown.sum.data.egg) {
+            sSum.trainer = 1;
+            SumPlanStart(SUMPLAN_PAGE, SUI_PAGE_INFO, 0, 0);
+            return HIT_NONE;
+        }
+        if ((in->up & K_LEFT) && page == SUI_PAGE_INFO && sShown.sum.trainer) {
+            sSum.trainer = 0;
+            if (!sShown.sum.data.egg)
+                SumPlanStart(SUMPLAN_PAGE, SUI_PAGE_MOVES, 0, 0);
+            return HIT_NONE;
+        }
+    }
     if (sSumPlan.kind != SUMPLAN_NONE) {        /* what the last tap asked is still being walked: no second plan over it */
         sSum.down = sSum.inside = 0;
         return HIT_NONE;
@@ -2771,6 +2813,9 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
+    /* On TRAINER (the Summary's last tab) RIGHT goes nowhere: FireRed would turn its first page to the next. */
+    if (CurrentMode() == MODE_SUMMARY && sHaveShown && sShown.summaryUi && sShown.sum.trainer)
+        held &= ~K_RIGHT;
     return held;
 }
 
@@ -3725,6 +3770,9 @@ void CtrBottom_Frame(void)
         StorePlanClear();
     }
     UpdateStorageOwner(mode);
+    if (sFlyPick && (mode == MODE_BATTLE || NativeActive() || CtrPokeTouch_StartMenuOpen()
+                     || (mode == MODE_FIELD && (CtrInput_Get()->down & 0x3ffu))))
+        sFlyPick = 0;                   /* the Party's FLY given up */
     if (mode != MODE_FIELD && !(mode == MODE_OFF && CtrBottom_IsFieldTransition())) {
         sHome.valid = 0;                /* a menu or a battle has the screen: no selection */
         sHome.down = 0;
