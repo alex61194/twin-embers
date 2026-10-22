@@ -1,13 +1,25 @@
 /* CtrDayNight_Tint: the plain day stays untouched, no hour is darker than
  * the night, and the colour moves smoothly through the day without a jump.
  * The palette side: shading, how lit the windows are, what is glass, and the
- * lights table (3ds_day_night_lights.h) well formed. */
+ * lights table (3ds_day_night_lights.h) well formed, and the windows' own
+ * hours. */
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "3ds_day_night.h"
 #include "3ds_day_night_lights.h"
+
+static unsigned Luma(uint16_t c) { return (c & 31) * 77 + ((c >> 5) & 31) * 150 + ((c >> 10) & 31) * 29; }
+
+/* How many of n windows are lit at a second of the day. */
+static unsigned LitCount(uint32_t second, unsigned n)
+{
+    unsigned lit = 0;
+    for (unsigned i = 0; i < n; ++i)
+        lit += CtrDayNight_WindowOn(CtrDayNight_WindowHash((int)(i % 97) * 2, (int)(i / 97) * 2, 3u << 8 | 1u), second);
+    return lit;
+}
 
 static int Channel(uint32_t tint, unsigned shift) { return (int)((tint >> shift) & 255); }
 
@@ -21,8 +33,10 @@ static void Table(const uint16_t *table, unsigned count, int general)
     for (unsigned i = 0; i < count; ++i)
     {
         unsigned tile = table[i] & 1023, bank = table[i] >> 12;
-        assert(bank < 13 && (table[i] & 0x0c00) == 0);
+        assert(bank < 13 && (table[i] & 0x0800) == 0);
         if (general) assert(tile < 640 && bank < 7);
+        /* Only General's buildings are open all night, and not its houses. */
+        if (table[i] & CTR_LIGHT_PUBLIC) assert(general && tile != 557 && tile != 558);
         for (unsigned j = 0; j < i; ++j) assert(table[j] != table[i]);
     }
 }
@@ -57,16 +71,23 @@ int main(void)
     }
     assert(CtrDayNight_Tint(CTR_DAY_NIGHT_DAY_SECONDS + 100u) == CtrDayNight_Tint(100u));
 
-    /* Shading: white leaves every colour as it is, the night darkens, black stays black. */
+    /* Shading: white leaves every colour as it is, no hour brightens a colour
+     * (by its luma; the night's grade may give a yellow a little blue), black
+     * stays black, and the night is the moonlit grade. */
     for (uint32_t c = 0; c < 0x8000u; ++c)
     {
-        uint16_t shaded = CtrDayNight_Shade((uint16_t)c, night);
         assert(CtrDayNight_Shade((uint16_t)c, 0xffffffu) == c);
-        for (unsigned shift = 0; shift < 15; shift += 5)
-            assert(((shaded >> shift) & 31) <= ((c >> shift) & 31));
+        assert(Luma(CtrDayNight_Shade((uint16_t)c, night)) <= Luma((uint16_t)c));
+        assert(Luma(CtrDayNight_Shade((uint16_t)c, CtrDayNight_Tint(68400u))) <= Luma((uint16_t)c));
+        assert(CtrDayNight_Shade((uint16_t)c, night) == CtrDayNight_Moon((uint16_t)c));
     }
-    assert(CtrDayNight_Shade(0x7fff, night) == ((11u) | (13u << 5) | (20u << 10)));
+    assert(CtrDayNight_Shade(0x7fff, night) == ((10u) | (13u << 5) | (24u << 10)));
     assert(CtrDayNight_Shade(0, night) == 0);
+    /* Dusk stays warm: white keeps more red than blue. */
+    {
+        uint16_t w = CtrDayNight_Shade(0x7fff, CtrDayNight_Tint(68400u));
+        assert((w & 31) > ((w >> 10) & 31));
+    }
     /* The windows: dark by day, fully lit at night, partly at dusk and less at dawn. */
     assert(CtrDayNight_Lights(0xffffffu) == 0 && CtrDayNight_Lights(night) == 256);
     unsigned dusk = CtrDayNight_Lights(CtrDayNight_Tint(68400u)), dawn = CtrDayNight_Lights(CtrDayNight_Tint(23400u));
@@ -80,7 +101,28 @@ int main(void)
     assert(CtrDayNight_Lit(Bgr(156, 213, 255), night, 256) == CTR_DAY_NIGHT_LAMP);
     assert(CtrDayNight_Lit(Bgr(156, 213, 255), 0xffffffu, 0) == Bgr(156, 213, 255));
 
+    /* The windows' own hours: none lit at noon or 17:00, all at 21:00 (on by
+     * 20:00, the first off at 21:45), fewer and fewer through the night, a
+     * few all night and a few early risers. */
+    {
+        const unsigned n = 9700;
+        unsigned at[] = {LitCount(43200u, n), LitCount(61200u, n), LitCount(75600u, n), LitCount(81000u, n),
+                         LitCount(84600u, n), LitCount(3600u, n), LitCount(10800u, n), LitCount(21600u, n)};
+        assert(at[0] == 0 && at[1] == 0 && at[2] == n);
+        assert(at[3] < n && at[4] < at[3] && at[5] < at[4] && at[6] <= at[5]);
+        assert(at[3] > n / 2 && at[6] > n / 20 && at[6] < n / 5);
+        assert(at[7] > at[6]);
+        /* 18:30 to 20:00: they come on one by one. */
+        assert(LitCount(66600u, n) < LitCount(68400u, n) && LitCount(68400u, n) < LitCount(72000u, n));
+        /* The hours are a window's own: the same place, the same answer; another place, another hash. */
+        assert(CtrDayNight_WindowHash(10, 20, 5) == CtrDayNight_WindowHash(10, 20, 5));
+        assert(CtrDayNight_WindowHash(10, 20, 5) != CtrDayNight_WindowHash(12, 20, 5)
+               && CtrDayNight_WindowHash(10, 20, 5) != CtrDayNight_WindowHash(10, 20, 6));
+    }
+
     TABLE(kCtrLights_General, 1);
+    /* The Pokemon Center's windows are lit all night, the houses' are not. */
+    assert(kCtrLights_General[0] == (384 | CTR_LIGHT_PUBLIC | 2 << 12));
     TABLE(kCtrLights_PalletTown, 0);
     TABLE(kCtrLights_ViridianCity, 0);
     TABLE(kCtrLights_PewterCity, 0);

@@ -82,15 +82,31 @@ kept in the save and is CLOCK again after a restart.
   glass pixels of those tiles (light blue, `CtrDayNight_Glass`) are lit; frames and sills stay dark. The
   list is by tile, not by colour, because the Poke Mart roof uses the same blues as the windows and must
   stay dark. Not lit: Silph Co.'s glass front, the Bike Shop skylight, and the houses with grey windows.
+- Not every window is lit all night: Pokemon Centers, Marts, Gyms and the route gatehouses
+  (`CTR_LIGHT_PUBLIC`) are, the houses keep their own hours (`CtrDayNight_WindowOn`): on between 18:30
+  and 20:00, off one by one between 21:45 and 02:15, about one in eight on all night, about a third on
+  again from 05:00. The hours come from a hash of where the window stands on the map, so a window keeps
+  them every night and walking past does not make them flicker. A window is the run of window tiles whose
+  glass meets across their edges, so it switches as a whole.
+- Where the tilemap stands on the map: `field_camera.c` keeps its tile offset to itself, so the bridge finds
+  it by matching the tilemap buffers against the map's metatiles in view (`UpdateCamera`), then only checks
+  it each frame; twice the camera position minus the offset stays the same while walking. Until it is
+  found every listed window is lit.
+- Each lit window throws a soft warm glow on the ground under it (`DrawDayNightGlow`): one additive quad
+  per window bottom tile, drawn after the priority-2 backgrounds and before the sprites of that priority.
+- The night itself is a moonlit grade (`CtrDayNight_Moon`: a quarter of the way to grey, gamma 1.3, a
+  blue multiply) that the hour's multiply goes over to as the night deepens, so dusk stays warm.
 - Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
   (`CB1_Overworld`), outside a battle, on map types 1, 2, 3 and 6, passing the light lists of the map's
   primary and secondary tilesets. No game patch.
-- Not yet: glow around lamps and night effects (the third phase of the plan).
+- Not yet: street lamps, fireflies and other night effects.
 
 Checked: `tests/day_night_test.c` (in `verify-host`: the day is exactly white, the keys land at their hours,
 no hour is darker than the night, no channel moves more than one step per second, the day wraps; the
-shade never brightens, the lamp is full at night and off by day, glass is told from sill, wall and grass;
-the light tables are valid tiles with no duplicates and no Mart roof tile); `tests/poketouch_options_test.c`
+shade never raises a colour's luma and the night is the moonlit grade, dusk stays warm, the lamp is full at
+night and off by day, glass is told from sill, wall and grass; the windows' hours: none at noon, all at
+21:00, fewer through the night, some all night and some at dawn; the light tables are valid tiles with no
+duplicates, no Mart roof tile, and only General's non-house buildings public); `tests/poketouch_options_test.c`
 (the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
 a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
 

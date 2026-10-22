@@ -519,14 +519,29 @@ static unsigned Read16(unsigned offset)
 #define DAY_NIGHT_BG_BANKS 13u
 static bool sDayNightRequested;
 static uint32_t sDayNightRequestColor = 0xffffffu;
+static uint32_t sDayNightRequestSecond;
 static const uint16_t *sDayNightRequestLights[2];
 static unsigned sDayNightRequestCount[2];
 /* What the texels are converted with now. */
 static uint32_t sDayNightColor = 0xffffffu;
 static unsigned sDayNightLit;
 static const uint16_t *sDayNightLights[2];
-/* Per tile of the field's character block, the palettes it is a window with. */
+/* Per tile of the field's character block, the palettes it is a window with,
+ * and of those the ones lit all night (CTR_LIGHT_PUBLIC). */
 static uint16_t sLitBanks[1024];
+static uint16_t sPublicBanks[1024];
+/* The windows' hours (CtrDayNight_WindowOn) are read in minutes. */
+static uint32_t sDayNightMinute = ~0u;
+/* Where the field's tilemap stands on the map (CtrVideo_SetDayNightCamera). */
+typedef struct
+{
+    bool valid;
+    int tileX, tileY, viewLeft, mapX, mapY;
+    unsigned map;
+} DayNightCamera;
+static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
+/* Per field layer cell: 1 where a lit window was drawn (the glow under it). */
+static uint8_t sCellLight[4][4096];
 /* The background colours that are glass, lit, as texels; 0 for the others. */
 static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
 static bool sFieldLayers;
@@ -543,7 +558,13 @@ void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned prima
     {
         uint32_t second = (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
         sDayNightRequestColor = CtrDayNight_Tint(second / DAY_NIGHT_STEP * DAY_NIGHT_STEP);
+        sDayNightRequestSecond = second;
     }
+}
+
+void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map)
+{
+    sDayNightCameraRequest = (DayNightCamera){valid, tileX, tileY, viewLeft, mapX, mapY, map};
 }
 
 static bool DayNightBank(unsigned bank) { return bank < DAY_NIGHT_BG_BANKS || bank >= 16; }
@@ -572,15 +593,28 @@ static void DayNightUpdate(void)
     const uint16_t *lights0 = on ? sDayNightRequestLights[0] : NULL;
     const uint16_t *lights1 = on ? sDayNightRequestLights[1] : NULL;
 
+    uint32_t minute = on ? sDayNightRequestSecond / 60u : ~0u;
+    DayNightCamera camera = on ? sDayNightCameraRequest : (DayNightCamera){0};
+
+    /* Another minute or another camera: windows may switch, so the field's
+     * layers walk again (only the cells that change are drawn). */
+    if (minute != sDayNightMinute || memcmp(&camera, &sDayNightCamera, sizeof(camera)))
+    {
+        sDayNightMinute = minute;
+        sDayNightCamera = camera;
+        if (sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
+    }
     if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
     if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
     {
         memset(sLitBanks, 0, sizeof(sLitBanks));
+        memset(sPublicBanks, 0, sizeof(sPublicBanks));
         for (unsigned k = 0; k < 2; ++k)
             for (unsigned i = 0; on && i < sDayNightRequestCount[k]; ++i)
             {
                 uint16_t entry = sDayNightRequestLights[k][i];
                 sLitBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
+                if (entry & CTR_LIGHT_PUBLIC) sPublicBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
             }
         sDayNightLights[0] = lights0;
         sDayNightLights[1] = lights1;
@@ -713,15 +747,21 @@ static bool TilePaletteChanged(const Tile *tile, unsigned paletteId)
  */
 static uint32_t sTileSerial;
 
-static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase);
+static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark);
 
 static int GetTileSlot(unsigned address, unsigned bank, bool color256)
 {
-    return GetTileSlotFrom(address, bank, color256, false);
+    return GetTileSlotKey(address, bank, color256, false, false);
 }
 
-/* fadeBase: decode in sFadeBase (background tiles only), a separate slot. */
 static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase)
+{
+    return GetTileSlotKey(address, bank, color256, fadeBase, false);
+}
+
+/* fadeBase: decode in sFadeBase (background tiles only), a separate slot.
+ * dark: a window tile with its light off, a separate slot too. */
+static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark)
 {
     CTR_PERF_COUNT(PERF_CACHE_REQUEST,1);
     uint64_t perfCache=0;
@@ -736,7 +776,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         address = 0;
     }
     unsigned paletteId = color256 ? 32 + (bank >= 16) : bank;
-    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
+    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0) | (dark ? 0x40000000u : 0);
     unsigned hash = (key * 2654435761u) & (HASH_COUNT - 1);
     while (sHash[hash] && sTiles[sHash[hash] - 1].key != key)
         hash = (hash + 1) & (HASH_COUNT - 1);
@@ -775,7 +815,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
             /* A window of the field's character block at night: its glass is lit (DayNightUpdate). */
-            const uint16_t *lit = sDayNightLit && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
+            const uint16_t *lit = sDayNightLit && !dark && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
                 && (sLitBanks[address / 32] & (1u << bank)) ? sLitTexture + paletteBase : NULL;
             memset(tile->colors, 0, sizeof(tile->colors));
             tile->visible = false;
@@ -1920,6 +1960,72 @@ static bool VramChangedAfter(unsigned address, unsigned bytes, uint32_t after)
     return false;
 }
 
+/*
+ * Night windows on the field's layers. A window tile is a tile of the lights
+ * table drawn with its palette; its glass is lit unless its window keeps
+ * other hours (CtrDayNight_WindowOn). A window is the run of window tiles
+ * whose glass meets across their edges, keyed by its top-left tile's place
+ * on the map, so the tiles of one window switch together.
+ */
+static bool WindowTile(unsigned chars, unsigned entry, bool color256)
+{
+    unsigned address = chars + (entry & 1023) * 32, bank = entry >> 12;
+
+    return sDayNightLit && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
+        && (sLitBanks[address / 32] & (1u << bank));
+}
+
+/* Which edges of a window tile have glass, flips applied: 1 left, 2 right, 4 top, 8 bottom. */
+static unsigned GlassEdges(unsigned chars, unsigned entry)
+{
+    const uint8_t *tile = sMemory.vram + chars + (entry & 1023) * 32;
+    const uint16_t *glass = sLitTexture + (entry >> 12) * 16;
+    unsigned edges = 0;
+
+#define GLASS(index) ((index) && glass[(index)])
+    for (unsigned i = 0; i < 8; ++i)
+    {
+        if (GLASS(tile[i * 4] & 15)) edges |= 1;
+        if (GLASS(tile[i * 4 + 3] >> 4)) edges |= 2;
+        if (GLASS((tile[i / 2] >> ((i & 1) * 4)) & 15)) edges |= 4;
+        if (GLASS((tile[28 + i / 2] >> ((i & 1) * 4)) & 15)) edges |= 8;
+    }
+#undef GLASS
+    if (entry & 1024) edges = (edges & 12) | ((edges & 1) << 1) | ((edges & 2) >> 1);
+    if (entry & 2048) edges = (edges & 3) | ((edges & 4) << 1) | ((edges & 8) >> 1);
+    return edges;
+}
+
+static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+{
+    const DayNightCamera *camera = &sDayNightCamera;
+    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    unsigned address = chars + (entry & 1023) * 32;
+
+    if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
+    for (unsigned step = 0; step < 4; ++step)
+    {
+        unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
+
+        if (!(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 2)) break;
+        column = left;
+        entry = next;
+    }
+    for (unsigned step = 0; step < 4; ++step)
+    {
+        unsigned up = (row + rows - 1) & (rows - 1), next = MapEntry(map, size, column, up);
+
+        if (!(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 8)) break;
+        row = up;
+        entry = next;
+    }
+    int dx = (int)((column - (unsigned)camera->tileX) & (columns - 1));
+    int dy = (int)((row - (unsigned)camera->tileY) & (rows - 1));
+    if (dx >= camera->viewLeft + (int)columns) dx -= (int)columns;
+    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(camera->mapX * 2 + dx, camera->mapY * 2 + dy, camera->map),
+                                sDayNightMinute * 60u);
+}
+
 static bool LayerRenderCells(unsigned bg)
 {
     static uint16_t dirty[LAYER_CELLS];
@@ -1975,8 +2081,16 @@ static bool LayerRenderCells(unsigned bg)
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             int slot;
+            uint8_t light = 0;
 
-            if (memoStamp[index] == stamp && memoEntry[index] == entry)
+            if (bg && sFieldLayers && WindowTile(chars, entry, color256))
+            {
+                bool on = WindowLit(map, size, chars, column, row, entry);
+
+                slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
+                light = on;
+            }
+            else if (memoStamp[index] == stamp && memoEntry[index] == entry)
                 slot = memoSlot[index];
             else
             {
@@ -1989,6 +2103,7 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
+            sCellLight[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0
                 : (((sTiles[slot].serial << 2) | ((entry >> 10) & 3)) | 1u << 31);
@@ -3002,6 +3117,84 @@ static bool IntroClipLayer(int bg, bool scenery)
     return true;
 }
 
+/*
+ * The light a lit window throws on the ground: a soft warm glow under each
+ * window's bottom tiles, added over the field's ground layers before the
+ * sprites of their priority, as strong as the night is deep.
+ */
+static C3D_Tex sGlowTex;
+static bool sGlowReady, sGlowFailed;
+
+static void GlowPrepare(void)
+{
+    if (sGlowReady || sGlowFailed) return;
+    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
+    uint32_t *texels = (uint32_t *)sGlowTex.data;
+    for (unsigned y = 0; y < 32; ++y)
+        for (unsigned x = 0; x < 32; ++x)
+        {
+            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
+            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
+
+            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
+        }
+    C3D_TexFlush(&sGlowTex);
+    C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    sGlowReady = true;
+}
+
+static void DrawDayNightGlow(void)
+{
+    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
+    unsigned display = Reg(0);
+    C2D_ImageTint tint;
+    bool begun = false;
+
+    if (!sDayNightLit || !sFieldLayers) return;
+    GlowPrepare();
+    if (!sGlowReady) return;
+    C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f);
+    for (unsigned bg = 1; bg < 4; ++bg)
+    {
+        unsigned control = Reg(8 + bg * 2), size = control >> 14;
+        unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+        int width = (int)columns * 8, height = (int)rows * 8;
+        int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
+
+        if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
+        for (unsigned row = 0; row < rows; ++row)
+        {
+            const uint8_t *light = sCellLight[bg] + row * columns;
+            const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
+            int y = (((int)row * 8 - sy) % height + height) % height;
+
+            if (y >= VIEW_BOTTOM) y -= height;
+            if (y < VIEW_TOP - 24) continue;
+            for (unsigned column = 0; column < columns; ++column)
+            {
+                if (!light[column] || below[column]) continue;
+                int x = (((int)column * 8 - sx) % width + width) % width;
+
+                if (x >= VIEW_RIGHT) x -= width;
+                if (x < VIEW_LEFT - 24) continue;
+                if (!begun)
+                {
+                    C2D_Flush();
+                    ViewBase();
+                    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
+                    begun = true;
+                }
+                ++sStats.tiles;
+                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
+                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+            }
+        }
+    }
+    if (!begun) return;
+    C2D_Flush();
+    BlendForget();
+}
+
 static void Layers(unsigned mask)
 {
     unsigned display = Reg(0), mode = display & 7;
@@ -3055,6 +3248,7 @@ static void Layers(unsigned mask)
                 if ((mode == 1 && bg == 2) || mode == 2) gCtrPerf.ticks[PERF_BG_AFFINE] += elapsed;
             }
         }
+        if (priority == 2) DrawDayNightGlow();
         if ((mask & 16) && (display & 0x1000))
         {
             uint64_t start = svcGetSystemTick();

@@ -56,17 +56,6 @@ static inline uint32_t CtrDayNight_Tint(uint32_t second)
 /* Lamplight, BGR555: (255, 197, 90). */
 #define CTR_DAY_NIGHT_LAMP ((11u << 10) | (24u << 5) | 31u)
 
-/* A GBA colour (BGR555) times the tint, still BGR555. */
-static inline uint16_t CtrDayNight_Shade(uint16_t color, uint32_t tint)
-{
-    unsigned r = color & 31, g = (color >> 5) & 31, b = (color >> 10) & 31;
-
-    r = (r * ((tint >> 16) & 255) + 127) / 255;
-    g = (g * ((tint >> 8) & 255) + 127) / 255;
-    b = (b * (tint & 255) + 127) / 255;
-    return (uint16_t)(r | (g << 5) | (b << 10));
-}
-
 /* How lit the windows are under a tint: 0 by day, 256 at night, by its darkest channel. */
 static inline unsigned CtrDayNight_Lights(uint32_t tint)
 {
@@ -76,6 +65,52 @@ static inline unsigned CtrDayNight_Lights(uint32_t tint)
     low = low < b ? low : b;
     if (low <= CTR_DAY_NIGHT_DARKEST) return 256;
     return (255 - low) * 256 / (255 - CTR_DAY_NIGHT_DARKEST);
+}
+
+/* The night's own grade: a quarter of the way to grey, darker mid-tones
+ * (gamma 1.3, from 5 bits to 8) and moonlight blue, so the night keeps its
+ * contrast instead of the flat multiply going muddy. */
+static const uint8_t kCtrDayNightGamma[32] = {
+    0, 3, 7, 12, 18, 24, 30, 37, 44, 51, 59, 66, 74, 82, 91, 99,
+    108, 117, 126, 135, 144, 154, 163, 173, 183, 193, 203, 213, 223, 234, 244, 255,
+};
+static const uint8_t kCtrDayNightMoon[3] = {82, 102, 194};
+
+static inline uint16_t CtrDayNight_Moon(uint16_t color)
+{
+    unsigned c[3] = {color & 31u, (color >> 5) & 31u, (color >> 10) & 31u};
+    unsigned lum = (c[0] * 77 + c[1] * 150 + c[2] * 29) >> 8;
+    uint16_t out = 0;
+
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        unsigned v = (c[i] * 3 + lum + 2) >> 2;
+
+        v = (kCtrDayNightGamma[v] * kCtrDayNightMoon[i] + 127) / 255;
+        out |= (uint16_t)(((v + 4) >> 3 > 31 ? 31 : (v + 4) >> 3) << (i * 5));
+    }
+    return out;
+}
+
+/* A GBA colour (BGR555) under the hour, still BGR555: the hour's colour
+ * multiplied in, going over to the night's grade as the night deepens
+ * (squared, so a dusk stays warm). */
+static inline uint16_t CtrDayNight_Shade(uint16_t color, uint32_t tint)
+{
+    unsigned r = color & 31, g = (color >> 5) & 31, b = (color >> 10) & 31;
+    unsigned night = CtrDayNight_Lights(tint);
+    uint16_t moon, out = 0;
+
+    r = (r * ((tint >> 16) & 255) + 127) / 255;
+    g = (g * ((tint >> 8) & 255) + 127) / 255;
+    b = (b * (tint & 255) + 127) / 255;
+    night = night * night / 256;
+    if (!night) return (uint16_t)(r | (g << 5) | (b << 10));
+    moon = CtrDayNight_Moon(color);
+    out |= (uint16_t)((r * (256 - night) + (moon & 31) * night + 128) >> 8);
+    out |= (uint16_t)(((g * (256 - night) + ((moon >> 5) & 31) * night + 128) >> 8) << 5);
+    out |= (uint16_t)(((b * (256 - night) + ((moon >> 10) & 31) * night + 128) >> 8) << 10);
+    return out;
 }
 
 /* Window glass: a light blue. Which tiles are windows is the lights table's
@@ -102,6 +137,41 @@ static inline uint16_t CtrDayNight_Lit(uint16_t color, uint32_t tint, unsigned l
         out |= (uint16_t)(((from * (256 - lights) + to * lights + 128) >> 8) << shift);
     }
     return out;
+}
+
+/* A lights table entry (3ds_day_night_lights.h) of a building open all night. */
+#define CTR_LIGHT_PUBLIC (1u << 10)
+
+/*
+ * Not every window is lit all night. Each lit window (the light table's
+ * houses; public buildings stay lit) has its own hours from a hash of where
+ * it stands: lights on between 18:30 and 20:00, off one by one between 21:45
+ * and 02:15, about one in eight on all night, and about a third on again
+ * from 05:00 to 06:12 until the day puts them out. The same window keeps the
+ * same hours every night, so walking past does not make them flicker.
+ */
+static inline uint32_t CtrDayNight_WindowHash(int x, int y, unsigned map)
+{
+    uint32_t v = (uint32_t)x * 73856093u ^ (uint32_t)y * 19349663u ^ (map + 1u) * 83492791u;
+
+    v ^= v >> 13;
+    v *= 0x5bd1e995u;
+    v ^= v >> 15;
+    v *= 0x27d4eb2du;
+    return v ^ (v >> 16);
+}
+
+static inline bool CtrDayNight_WindowOn(uint32_t hash, uint32_t second)
+{
+    uint32_t noon = (second % CTR_DAY_NIGHT_DAY_SECONDS + 43200u) % CTR_DAY_NIGHT_DAY_SECONDS;
+    uint32_t on = 23400u + (hash & 255u) * 5400u / 256u;              /* 18:30 + up to 90 min */
+    unsigned stay = (hash >> 8) & 255u;
+    uint32_t off = stay >= 224u ? CTR_DAY_NIGHT_DAY_SECONDS             /* all night */
+        : 35100u + stay * 16200u / 224u;                                /* 21:45 + up to 270 min */
+
+    if (noon >= on && noon < off) return true;
+    /* Early risers: from 05:00 plus up to 72 min, until noon. */
+    return ((hash >> 16) & 255u) < 90u && noon >= 61200u + ((hash >> 24) & 255u) * 4320u / 256u;
 }
 
 #endif

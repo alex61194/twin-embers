@@ -120,6 +120,11 @@ void CtrVideo_SetMapNamePopup(bool active);
  * their colours. */
 void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
                           const uint16_t *secondary, unsigned secondaryCount);
+/* Where the field's tilemap stands on the map, for the windows' own hours:
+ * the BG cell (tileX, tileY) holds the top-left tile of map metatile (mapX,
+ * mapY), the cells left of it reach viewLeft (negative), and map tells one
+ * map from another. Not valid: every listed window is lit. */
+void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

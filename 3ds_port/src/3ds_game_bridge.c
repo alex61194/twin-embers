@@ -14,6 +14,7 @@
 #include "palette.h"
 #include "task.h"
 #include "overworld.h"
+#include "fieldmap.h"
 #include "constants/map_types.h"
 #include "3ds_audio.h"
 #include "3ds_audio_cadence.h"
@@ -94,6 +95,87 @@ static const uint16_t *TilesetLights(const struct Tileset *tileset, unsigned *co
     return NULL;
 }
 
+/*
+ * Where the field's tilemap stands on the map, for the windows' own hours.
+ * field_camera.c keeps its tile offset to itself, but the offset only moves
+ * with the camera: twice the camera's map position minus the offset (sCameraK)
+ * stays the same while walking. It is found by matching the tilemap buffers
+ * against the metatiles the map holds in view, then only checked each frame;
+ * a map load or a connection changes it and it is found again.
+ */
+#define CAMERA_VIEW_LEFT (-4 - FIELD_VIEW_OFFSET_X / 8)
+static bool sCameraKnown;
+static int sCameraKX, sCameraKY;
+static unsigned sCameraMap = ~0u;
+/* Frames to wait before searching again after a search found nothing. */
+static unsigned sCameraWait;
+
+/* How many sampled in-map metatiles the buffers disagree with at this offset
+ * (stops past limit); *samples counts the ones looked at. */
+static unsigned CameraMisses(int tileX, int tileY, unsigned limit, unsigned *samples)
+{
+    const struct MapLayout *layout = gMapHeader.mapLayout;
+    unsigned misses = 0;
+
+    *samples = 0;
+    for (int i = 4; i <= 24; i += 2)
+        for (int j = 0; j <= 22; j += 2)
+        {
+            s32 x = gSaveBlock1Ptr->pos.x + j / 2, y = gSaveBlock1Ptr->pos.y + i / 2;
+            u32 id;
+            const u16 *tiles, *buffer;
+            int tx = (tileX + j) & 63, ty = (tileY + i) & 31;
+            unsigned offset = (tx >= 32 ? 1024u : 0u) + (unsigned)ty * 32 + (unsigned)(tx & 31);
+
+            if (x < MAP_OFFSET || y < MAP_OFFSET || x >= layout->width + MAP_OFFSET || y >= layout->height + MAP_OFFSET)
+                continue;
+            id = MapGridGetMetatileIdAt(x, y);
+            if (id >= NUM_METATILES_TOTAL) continue;
+            tiles = id < NUM_METATILES_IN_PRIMARY
+                ? layout->primaryTileset->metatiles + id * NUM_TILES_PER_METATILE
+                : layout->secondaryTileset->metatiles + (id - NUM_METATILES_IN_PRIMARY) * NUM_TILES_PER_METATILE;
+            CTR_ASSET_READ(tiles, NUM_TILES_PER_METATILE * sizeof(*tiles));
+            buffer = MapGridGetMetatileLayerTypeAt(x, y) == METATILE_LAYER_TYPE_NORMAL ? gBGTilemapBuffers1 : gBGTilemapBuffers3;
+            ++*samples;
+            if (buffer[offset] != tiles[0] || buffer[offset + 1] != tiles[1]
+                || buffer[offset + 32] != tiles[2] || buffer[offset + 33] != tiles[3])
+                if (++misses > limit) return misses;
+        }
+    return misses;
+}
+
+static bool UpdateCamera(void)
+{
+    unsigned map = ((unsigned)gSaveBlock1Ptr->location.mapGroup << 8) | gSaveBlock1Ptr->location.mapNum;
+    int px = gSaveBlock1Ptr->pos.x, py = gSaveBlock1Ptr->pos.y;
+    unsigned samples, best = ~0u;
+
+    if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
+    if (map != sCameraMap) sCameraKnown = false;
+    sCameraMap = map;
+    if (sCameraKnown && CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
+        return true;
+    sCameraKnown = false;
+    if (sCameraWait) { --sCameraWait; return false; }
+    for (int ty = 0; ty < 32 && best; ty += 2)
+        for (int tx = 0; tx < 64 && best; tx += 2)
+        {
+            unsigned misses = CameraMisses(tx, ty, best < 3 ? best : 3, &samples);
+
+            if (misses < best && misses <= 2 && samples >= 24)
+            {
+                best = misses;
+                sCameraKX = (px * 2 - tx) & 63;
+                sCameraKY = (py * 2 - ty) & 31;
+                sCameraKnown = true;
+            }
+        }
+    if (!sCameraKnown) sCameraWait = 8;
+    else CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera map=%04x pos=%d,%d offset=%d,%d misses=%u", map, px, py,
+                      (px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, best);
+    return sCameraKnown;
+}
+
 static void UpdateDayNight(void)
 {
     bool outdoors = CtrOptions_DayNight() && FieldOutdoors();
@@ -101,8 +183,15 @@ static void UpdateDayNight(void)
     unsigned primaryCount = 0, secondaryCount = 0;
     const uint16_t *primary = outdoors && layout ? TilesetLights(layout->primaryTileset, &primaryCount) : NULL;
     const uint16_t *secondary = outdoors && layout ? TilesetLights(layout->secondaryTileset, &secondaryCount) : NULL;
+    bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && UpdateCamera();
 
     CtrVideo_SetDayNight(outdoors, primary, primaryCount, secondary, secondaryCount);
+    if (camera)
+        CtrVideo_SetDayNightCamera(true, (gSaveBlock1Ptr->pos.x * 2 - sCameraKX) & 63,
+                                   (gSaveBlock1Ptr->pos.y * 2 - sCameraKY) & 31, CAMERA_VIEW_LEFT,
+                                   gSaveBlock1Ptr->pos.x, gSaveBlock1Ptr->pos.y, sCameraMap);
+    else
+        CtrVideo_SetDayNightCamera(false, 0, 0, 0, 0, 0, 0);
 }
 
 static void RememberCallback(StageSet *set, IntrCallback callback)

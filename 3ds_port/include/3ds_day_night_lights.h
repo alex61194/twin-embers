@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "3ds_day_night.h"
+
 /*
  * The tiles of the outdoor tilesets that are windows (or glass doors), lit at
  * night by the compositor (3ds_video.c, DayNight): only their glass pixels
@@ -19,13 +21,21 @@
  * Pallet, Viridian, Pewter, Vermilion, Lavender, Celadon, Fuchsia, Saffron,
  * Indigo Plateau and Sevii Islands 1-3. Not lit: Silph Co.'s glass, the Bike
  * Shop's skylight, the houses whose windows are grey rather than blue.
+ *
+ * CTR_LIGHT_PUBLIC (bit 10, where a metatile keeps its flip) marks the windows
+ * of buildings open all night: Pokemon Centers, Marts, Gyms and the route
+ * gatehouses. They stay lit; the others keep their own hours
+ * (CtrDayNight_WindowOn).
  */
 
 static const uint16_t kCtrLights_General[] = {
-    384 | 2 << 12, 196 | 3 << 12, 248 | 3 << 12, 249 | 3 << 12, 267 | 3 << 12, 269 | 3 << 12,
-    285 | 3 << 12, 292 | 3 << 12, 293 | 3 << 12, 334 | 3 << 12, 335 | 3 << 12, 385 | 3 << 12,
-    557 | 3 << 12, 558 | 3 << 12, 611 | 3 << 12, 612 | 3 << 12, 613 | 3 << 12, 614 | 3 << 12,
-    627 | 3 << 12, 628 | 3 << 12, 629 | 3 << 12, 630 | 3 << 12,
+    384 | CTR_LIGHT_PUBLIC | 2 << 12, 196 | CTR_LIGHT_PUBLIC | 3 << 12, 248 | CTR_LIGHT_PUBLIC | 3 << 12,
+    249 | CTR_LIGHT_PUBLIC | 3 << 12, 267 | CTR_LIGHT_PUBLIC | 3 << 12, 269 | CTR_LIGHT_PUBLIC | 3 << 12,
+    285 | CTR_LIGHT_PUBLIC | 3 << 12, 292 | CTR_LIGHT_PUBLIC | 3 << 12, 293 | CTR_LIGHT_PUBLIC | 3 << 12,
+    334 | CTR_LIGHT_PUBLIC | 3 << 12, 335 | CTR_LIGHT_PUBLIC | 3 << 12, 385 | CTR_LIGHT_PUBLIC | 3 << 12,
+    557 | 3 << 12, 558 | 3 << 12, 611 | CTR_LIGHT_PUBLIC | 3 << 12, 612 | CTR_LIGHT_PUBLIC | 3 << 12,
+    613 | CTR_LIGHT_PUBLIC | 3 << 12, 614 | CTR_LIGHT_PUBLIC | 3 << 12, 627 | CTR_LIGHT_PUBLIC | 3 << 12,
+    628 | CTR_LIGHT_PUBLIC | 3 << 12, 629 | CTR_LIGHT_PUBLIC | 3 << 12, 630 | CTR_LIGHT_PUBLIC | 3 << 12,
 };
 static const uint16_t kCtrLights_PalletTown[] = {
     684 | 8 << 12, 685 | 8 << 12, 649 | 9 << 12, 654 | 9 << 12, 655 | 9 << 12, 665 | 9 << 12,
