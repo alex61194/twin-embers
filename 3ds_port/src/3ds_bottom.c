@@ -179,6 +179,9 @@ extern unsigned CtrBottomPouch_Quantity(int index);
 extern void CtrBottomPouch_Title(char *out, int size);
 extern int CtrBottomPouch_HitAt(int gx, int gy);
 extern int CtrSave_Begin(void);
+extern void CtrMenu_SetSwitchTarget(int target);
+extern int CtrMenu_TakeSwitched(void);
+extern int CtrBottomSummary_RedirectExit(void);
 extern void CtrSave_End(void);
 extern int CtrSave_IsDifferentFile(void);
 extern int CtrSave_Run(void);
@@ -397,6 +400,7 @@ static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); }
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
+static int sSaveAfterMenu;         /* SAVE asked for with START open: frames left to open it once START has closed */
 
 /* Native OPTIONS (3ds_poketouch_options.c): a PokeTouch screen of its own over
  * the live field, with no hidden FireRed menu behind it, so no session. sScreen
@@ -683,6 +687,17 @@ static struct {
     unsigned frames;            /* the cursor's blink clock */
 } sHome;
 
+/* FLY chosen in the Party: FireRed's Fly map is not opened, the Party goes back to the field and HOME's map is where the
+ * destination is picked, with one tap (CtrBottom_BeginFlyPick, from party_menu.c). A button pressed in the field, a
+ * battle, START or another screen gives it up. */
+static int sFlyPick;
+
+void CtrBottom_BeginFlyPick(void)
+{
+    sFlyPick = 1;
+    sHome.valid = 0;
+}
+
 /* The map section a tap at cell (cx, cy) means: the cell's own, else (the
  * cities are one cell) a Fly destination right beside it. */
 static int HomeFind(int group, int cx, int cy, int *fx, int *fy, int *mapsec, int *dungeon)
@@ -736,6 +751,12 @@ static void HomeTap(int gx, int gy)
             CtrPokeTouch_RequestFly((unsigned)mapsec);
             sHome.valid = 0;
         }
+        return;
+    }
+    if (sFlyPick && mapsec != MAPSEC_NONE_VALUE && CtrPokeTouch_FlyStatus((unsigned)mapsec) == PT_FLY_OK) {
+        CtrPokeTouch_RequestFly((unsigned)mapsec);      /* FLY was chosen already: the tap is the destination */
+        sFlyPick = 0;
+        sHome.valid = 0;
         return;
     }
     sHome.valid = 1;
@@ -792,6 +813,12 @@ static void HomeMapState(Snapshot *s)
         s->touch.cursorY = (int8_t)sHome.y;
         s->touch.cursorFrame = (uint8_t)((sHome.frames / 20) & 1);
         HomeSelectionBar(&s->touch);
+        return;
+    }
+    if (sFlyPick) {
+        snprintf(s->touch.bar[0], PT_BAR_LEN, "FLY");
+        snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap a town to go there.");
+        snprintf(s->touch.bar[2], PT_BAR_LEN, "Any button: cancel");
         return;
     }
     CtrPokeTouch_Location(s->touch.bar[0], PT_BAR_LEN);
@@ -897,6 +924,13 @@ static void BatCopy(char *dst, size_t size, const char *src)
 
 /* The battle Party as the Party is now (the lower screen's own Party snapshot `s`, which reads FireRed's Party): the six
  * slots, the Party's selection, what it was opened for, and its menu or message when it has one open. */
+/* The Party drawn as the port's own screen (the battle's, and the field's too) rather than FireRed's picture: all but the
+ * picks of several Pokemon (a link or the Battle Tower), whose CONFIRM only FireRed's screen has. */
+static int PartyNative(void)
+{
+    return CtrBottomParty_InBattle() || !CtrBottomParty_ChooseMultiple();
+}
+
 static void BattlePartyFill(Snapshot *s)
 {
     CtrBattleView *v = &s->battle;
@@ -906,7 +940,13 @@ static void BattlePartyFill(Snapshot *s)
     BattleCommon(v);
     v->state = BUI_PARTY;
     p->cursor = (int8_t)(s->cursor >= 0 && s->cursor < PARTY_SIZE ? s->cursor : -1);
-    p->mode = action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;   /* SEND_OUT cannot be cancelled */
+    /* SEND_OUT cannot be cancelled. Out of battle the Party says what it is for itself (its own prompt). */
+    p->mode = !CtrBottomParty_InBattle() ? BUI_PTY_SWITCH
+            : action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;
+    p->lead = (uint8_t)(CtrBottomParty_Layout() == 0 ? 1 : 2);
+    p->caption[0] = 0;
+    if (!CtrBottomParty_InBattle() && s->panel != PANEL_MESSAGE)
+        BatCopy(p->caption, sizeof(p->caption), s->message);
     for (int i = 0; i < PARTY_SIZE; ++i) {
         p->present[i] = (uint8_t)((s->presentMask >> i) & 1);
         if (!p->present[i])
@@ -920,11 +960,13 @@ static void BattlePartyFill(Snapshot *s)
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {
-        int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 6 ? 6 : s->actionCount;
+        int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 8 ? 8 : s->actionCount;
 
         p->panel = s->panel == PANEL_YESNO ? BUI_PTY_YESNO : BUI_PTY_ACTIONS;
         p->menuCount = (uint8_t)n;
         p->menuCursor = s->actionCursor;
+        if (sPlan.kind == PLAN_MENU && sPlan.target < n)
+            p->menuCursor = (int8_t)sPlan.target;      /* the row touched, not the cursor on its way there */
         for (int i = 0; i < n; ++i)
             BatCopy(p->menuName[i], sizeof(p->menuName[i]), s->panel == PANEL_YESNO ? (i == 0 ? "YES" : "NO") : s->actionNames[i]);
     } else if (s->panel == PANEL_MESSAGE) {
@@ -1152,6 +1194,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_OPTIONS] = (uint8_t)CanRouteDestination(PT_OPTIONS, mode);
         s->touch.enabled[PT_CARD] = (uint8_t)CanRouteDestination(PT_CARD, mode);
         s->touch.enabled[PT_POKEDEX] = (uint8_t)CanRouteDestination(PT_POKEDEX, mode);
+        s->touch.enabled[PT_SAVE] = (uint8_t)CanRouteDestination(PT_SAVE, mode);
         /* The entry whose session this is: BAG for the field Bag, POKeMON
          * for Party's GIVE Bag (and Summary). */
         s->touch.selected = (uint8_t)(sSession.active ? sSession.owner : mode == MODE_BAG ? PT_BAG : PT_POKEMON);
@@ -1283,9 +1326,10 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_OPTIONS] = (uint8_t)CanRouteDestination(PT_OPTIONS, mode);
         s->touch.enabled[PT_CARD] = (uint8_t)CanRouteDestination(PT_CARD, mode);
         s->touch.enabled[PT_POKEDEX] = (uint8_t)CanRouteDestination(PT_POKEDEX, mode);
+        s->touch.enabled[PT_SAVE] = (uint8_t)CanRouteDestination(PT_SAVE, mode);
         s->touch.viewport = 1;
         PartyBar(s, &s->touch);
-        if (CtrBottomParty_InBattle())
+        if (PartyNative())
             BattlePartyFill(s);
     }
 }
@@ -1436,6 +1480,12 @@ static uint16_t PlanStep(int cur, int target)
         if (cur >= PARTY_SIZE)
             return K_DOWN;
     }
+    /* A selection menu of more than three rows wraps round: the shorter way. */
+    if (sPlan.kind == PLAN_MENU && sPlan.menuKind == 1 && sPlan.count > 3) {
+        int down = (target - cur + sPlan.count) % sPlan.count;
+
+        return down <= sPlan.count - down ? K_DOWN : K_UP;
+    }
     if (target > cur)
         return K_DOWN;
     return K_UP;
@@ -1500,6 +1550,13 @@ static void RunPlan(void)
     }
     if (cur == sPlan.target) {
         sInjected = K_A;
+        PlanClear();
+        sPlan.release = 1;
+        return;
+    }
+    /* The selection menu's last row is its CANCEL, which is what its B does: taken at once, not walked to. */
+    if (sPlan.kind == PLAN_MENU && sPlan.menuKind == 1 && sPlan.target == sPlan.count - 1) {
+        sInjected = K_B;
         PlanClear();
         sPlan.release = 1;
         return;
@@ -1832,6 +1889,25 @@ static int ProcessSummaryTouch(const CtrInput *in)
     int hit = in->touchActive && sHaveShown && sShown.summaryUi
             ? CtrSummaryUi_Hit(&sShown.sum, (int)in->touchX, (int)in->touchY) : -1;
 
+    /* TRAINER, the last tab, is the port's (FireRed's first page shown as its memo), so the D-pad reaches it here: RIGHT
+     * on the moves page goes to it, LEFT from it back to the moves (on release, as the plan walks FireRed's pages with its
+     * own LEFT and RIGHT, which a held key would cancel). */
+    if (sSumPlan.kind == SUMPLAN_NONE && sHaveShown && sShown.summaryUi && !sShown.sum.loading && CtrBottomSummary_Ready()
+        && !(in->held & 0x3ffu)) {
+        int page = CtrBottomSummary_Page();
+
+        if ((in->up & K_RIGHT) && page == SUI_PAGE_MOVES && !sShown.sum.data.egg) {
+            sSum.trainer = 1;
+            SumPlanStart(SUMPLAN_PAGE, SUI_PAGE_INFO, 0, 0);
+            return HIT_NONE;
+        }
+        if ((in->up & K_LEFT) && page == SUI_PAGE_INFO && sShown.sum.trainer) {
+            sSum.trainer = 0;
+            if (!sShown.sum.data.egg)
+                SumPlanStart(SUMPLAN_PAGE, SUI_PAGE_MOVES, 0, 0);
+            return HIT_NONE;
+        }
+    }
     if (sSumPlan.kind != SUMPLAN_NONE) {        /* what the last tap asked is still being walked: no second plan over it */
         sSum.down = sSum.inside = 0;
         return HIT_NONE;
@@ -2035,7 +2111,8 @@ static int CanRouteDestination(int target, int mode)
 {
     if (sSession.battle)
         return 0;
-    if (target != PT_POKEMON && target != PT_BAG && target != PT_CARD && target != PT_OPTIONS && target != PT_POKEDEX)
+    if (target != PT_POKEMON && target != PT_BAG && target != PT_CARD && target != PT_OPTIONS && target != PT_POKEDEX
+        && target != PT_SAVE)
         return 0;
     if (!sSession.active || sPendingScreen != PT_NONE || target == sScreen)
         return 0;
@@ -2051,12 +2128,18 @@ static void RequestDestination(int target, int mode)
     sRouteFrames = sRouteWait = sRouteTries = sRouteReady = 0;
     sRouteMode = -1;
     sTapped = SLOT_NONE;
+    /* The screen's own exit opens the next one directly (CtrMenu_SetSwitchTarget); a Summary of the Party leaves for it
+     * too, not back to the Party. */
+    CtrMenu_SetSwitchTarget(target);
+    if (mode == MODE_SUMMARY)
+        CtrBottomSummary_RedirectExit();
     CtrLog_Write(CTR_LOG_VIDEO, "bottom: route %s -> %s", RootName(sScreen), RootName(target));
 }
 
 static void RouteAbort(const char *why)
 {
     CtrLog_Write(CTR_LOG_VIDEO, "bottom: route to %s abandoned: %s", RootName(sPendingScreen), why);
+    CtrMenu_SetSwitchTarget(-1);
     sPendingScreen = PT_NONE;
     sRouteHold = 0;
     sForceRedraw = 1;
@@ -2069,6 +2152,19 @@ static void OpenDestination(int target)
 {
     int opened;
 
+    CtrMenu_SetSwitchTarget(-1);        /* the field was reached: no screen's exit is to switch any more */
+    if (target == PT_SAVE) {
+        /* SAVE locks the field first (CtrSave_Begin), once the field takes it after the fade back. */
+        if (CtrSave_Begin()) {
+            sPendingScreen = PT_NONE;
+            OpenSave();
+            CtrLog_Write(CTR_LOG_VIDEO, "bottom: route reached the field: %s", RootName(target));
+            return;
+        }
+        if (++sRouteTries > ROUTE_OPEN_TRIES)
+            RouteAbort("save refused");
+        return;
+    }
     if (NativeRoot(target)) {
         /* A native screen: nothing to open. The unwound session ends in the
          * field (TOP released there) and the bottom stays held until then. */
@@ -2124,6 +2220,15 @@ static void UpdateDestinationRoute(int mode)
     }
     if (sPendingScreen == PT_NONE)
         return;
+    if (CtrMenu_TakeSwitched()) {
+        /* The screen's exit opened the next one: its session begins, shown once it is ready. */
+        int target = sPendingScreen;
+
+        sPendingScreen = PT_NONE;
+        BeginSessionPending(target);
+        CtrLog_Write(CTR_LOG_VIDEO, "bottom: switched to %s", RootName(target));
+        return;
+    }
     if (!sSession.active) {
         RouteAbort("session ended");
         return;
@@ -2352,8 +2457,12 @@ static void PokeTouchActivate(int id)
         }
         break;
     case PT_SAVE:
-        /* FireRed's save, never its START entry or original dialogue; the field is locked first. */
-        if (!menu && CtrSave_Begin())
+        /* FireRed's save, never its START entry or original dialogue; the field is locked first. With START open,
+         * START is closed first (its EXIT) and SAVE opens as soon as the field takes it. */
+        if (menu) {
+            CtrPokeTouch_Pick(PT_CLOSE);
+            sSaveAfterMenu = 90;
+        } else if (CtrSave_Begin())
             OpenSave();
         break;
     case PT_POKEDEX:
@@ -2384,7 +2493,7 @@ static int FieldEnabled(int id)
      * sidebar is off: SAVE's NO, its B and its OK are the ways out. */
     if (SaveActive() || !CtrPokeTouch_Enabled(id))
         return 0;
-    if (id == PT_OPTIONS || id == PT_CARD || id == PT_SAVE)
+    if (id == PT_OPTIONS || id == PT_CARD)
         return !CtrPokeTouch_StartMenuOpen() && !(id == PT_OPTIONS && OptionsActive());
     return 1;
 }
@@ -2446,6 +2555,19 @@ static void ProcessOptionsTouch(const CtrInput *in)
 }
 
 /* SAVE opens on its confirmation (YES first; NO first when it would replace another game file). */
+static void UpdateSaveAfterMenu(int mode)
+{
+    if (!sSaveAfterMenu)
+        return;
+    --sSaveAfterMenu;
+    if (mode != MODE_FIELD || sSession.active || CtrPokeTouch_StartMenuOpen())
+        return;
+    if (CtrSave_Begin()) {
+        sSaveAfterMenu = 0;
+        OpenSave();
+    }
+}
+
 static void OpenSave(void)
 {
     sScreen = PT_SAVE;
@@ -2681,6 +2803,9 @@ static void RunBatPlan(void)
     sBatPlan.release = 1;
 }
 
+extern int CtrText_WaitsForButton(void);
+static int sBatIdleTap;             /* a touch that began while the battle offered no choice */
+
 static void ProcessBattleTouch(const CtrInput *in)
 {
     int state = CtrBattle_State(), btn = -1;
@@ -2694,6 +2819,21 @@ static void ProcessBattleTouch(const CtrInput *in)
         sBatTouchLast = 0;
     if (in->touchActive && sHaveShown)
         btn = CtrBattleUi_Hit(&sShown.battle, (int)in->touchX, (int)in->touchY);
+    /* No choice on the screen: a tap anywhere is A for the battle's message that waits on a button ("Wild PIDGEY
+     * appeared!"), as on a DS. Only then: a message that runs on by itself, or an animation, takes nothing. */
+    if (shows != BUI_IDLE || (in->held & 0x3ffu))
+        sBatIdleTap = 0;
+    else if (in->touchDown)
+        sBatIdleTap = 1;
+    else if (!in->touchActive && sBatIdleTap) {
+        sBatIdleTap = 0;
+        if (CtrText_WaitsForButton()) {
+            BatPlanClear();
+            sBatPlan.active = 1;
+            sBatPlan.state = state;
+            sBatPlan.press = K_A;
+        }
+    }
     if ((in->held & 0x3ffu) || !ready || (sBat.down && sBat.state != state)) {
         sBat.down = sBat.inside = 0;
         return;
@@ -2743,6 +2883,9 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
+    /* On TRAINER (the Summary's last tab) RIGHT goes nowhere: FireRed would turn its first page to the next. */
+    if (CurrentMode() == MODE_SUMMARY && sHaveShown && sShown.summaryUi && sShown.sum.trainer)
+        held &= ~K_RIGHT;
     return held;
 }
 
@@ -2889,7 +3032,7 @@ static void ProcessBattlePartyTouch(const CtrInput *in)
         } else if (code == BUI_PTY_CANCEL) {
             if (!open && CtrBottomParty_IsOpen() && !CtrBottomParty_CanAdvanceText())
                 CtrBottomParty_TouchSlot(PARTY_SIZE + 1);
-        } else if (code >= BUI_PTY_MENU && code < BUI_PTY_MENU + 6) {
+        } else if (code >= BUI_PTY_MENU && code < BUI_PTY_MENU + 8) {
             if (open)
                 PlanStart(PLAN_MENU, code - BUI_PTY_MENU);
         } else if (code == BUI_PTY_MESSAGE && CtrBottomParty_CanAdvanceText())
@@ -3309,7 +3452,7 @@ static int ProcessTouch(int mode)
         ProcessBattleTouch(in);
         return HIT_NONE;
     }
-    if (mode == MODE_PARTY && CtrBottomParty_InBattle()) {
+    if (mode == MODE_PARTY && PartyNative()) {
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
@@ -3653,6 +3796,22 @@ static int NavPressedShown(void)
     return (sShown.summaryUi && sShown.sum.pressed != -1) || (sShown.battleUi && sShown.battle.pressed != -1);
 }
 
+/* The embers rising behind the menus (the EMBERS option): one step a frame over the screen on the canvas, PokeTouch's
+ * or the Summary's (the battle's artwork has its own backdrop), kept off the GBA picture and the HOME map. */
+static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
+{
+    int picture;
+
+    if ((s->battleUi && s->battle.state != BUI_PARTY) || s->mode == MODE_OFF)
+        return;
+    if (s->battleUi) {
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);
+        return;
+    }
+    picture = !s->summaryUi && (s->touch.viewport || (s->touch.home && !s->touch.options && !s->touch.save));
+    CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), picture, dirty);
+}
+
 void CtrBottom_Frame(void)
 {
     int mode;
@@ -3681,6 +3840,9 @@ void CtrBottom_Frame(void)
         StorePlanClear();
     }
     UpdateStorageOwner(mode);
+    if (sFlyPick && (mode == MODE_BATTLE || NativeActive() || CtrPokeTouch_StartMenuOpen()
+                     || (mode == MODE_FIELD && (CtrInput_Get()->down & 0x3ffu))))
+        sFlyPick = 0;                   /* the Party's FLY given up */
     if (mode != MODE_FIELD && !(mode == MODE_OFF && CtrBottom_IsFieldTransition())) {
         sHome.valid = 0;                /* a menu or a battle has the screen: no selection */
         sHome.down = 0;
@@ -3702,6 +3864,7 @@ void CtrBottom_Frame(void)
     } else
         pressed = ProcessTouch(mode);
     UpdateSave();
+    UpdateSaveAfterMenu(mode);
     UpdateDestinationRoute(mode);
     RunPlan();
     if (mode == MODE_DEX)
@@ -3722,7 +3885,7 @@ void CtrBottom_Frame(void)
         BatPlanClear();
     RunStoragePlan(mode);
     if (mode != MODE_BATTLE && !(mode == MODE_BAG && CtrBottomBag_InBattle())
-        && !(mode == MODE_PARTY && CtrBottomParty_InBattle()))
+        && !(mode == MODE_PARTY && PartyNative()))
         sBat.down = sBat.inside = 0;
     /* The battle keeps the upper screen from the pick of BAG or POKeMON (or a replacement), before the Bag or Party exists (its fade and setup are never shown). */
     if (mode == MODE_BATTLE)
@@ -3814,6 +3977,7 @@ void CtrBottom_Frame(void)
                 CtrBattleUi_Update(sCanvas, &sShown.battle, &state.battle, &dirty);
             else
                 CtrPokeTouch_Update(sCanvas, &sShown.touch, &state.touch, &dirty);
+            EmbersStep(&state, &dirty);
             ProfSpan(&sProf.frameUi, profT);
             sShown = state;
             profT = ProfNow();
@@ -3842,6 +4006,13 @@ void CtrBottom_Frame(void)
             ProfFrameEnd(&full);
         }
         return;
+    }
+    if (!sReveal.active && sHaveShown) {
+        CtrDirtyList dirty;
+
+        CtrDirty_Clear(&dirty);
+        EmbersStep(&sShown, &dirty);
+        Present(&dirty);
     }
     RevealStep();
     ProfFrameEnd(NULL);

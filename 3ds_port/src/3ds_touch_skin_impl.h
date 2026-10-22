@@ -1,20 +1,25 @@
-/* The PokeTouch screen's artwork (poketouch_skin.h, made by tools/make_touch_skin.py): the pictures are drawn as
- * painted; the game's data goes on them as lettering in the artwork's own style. Included by 3ds_poketouch.c after
- * its Px / Fill. */
-#include "poketouch_skin.h"
-
-enum { TS_NORMAL, TS_BRIGHT, TS_DIM, TS_DARK };
+/* The lower screen's ember skin (ember_skin.h, made by tools/make_ember_skin.py): the backdrop every screen is drawn on
+ * and the pieces of the modern menus drawn over it: raised rounded buttons with a lip (amber when chosen, cream
+ * otherwise, violet for going back), the note card, the frame round the GBA picture, the switch, the icons; and the
+ * embers that rise slowly over the backdrop. Included by 3ds_poketouch.c after its Px / Fill and the theme. */
+#include "ember_skin.h"
 
 static uint16_t TsGet(int x, int y)
 {
     return sCanvas[(size_t)x * H + (H - 1 - (size_t)y)];
 }
 
+/* The backdrop back over a rectangle. */
 static void TsBgRect(int x, int y, int w, int h)
 {
-    for (int cy = y < 0 ? 0 : y; cy < y + h && cy < H; ++cy)
-        for (int cx = x < 0 ? 0 : x; cx < x + w && cx < W; ++cx)
-            Px(cx, cy, TS_BG(cx, cy));
+    int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y, x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
+
+    for (int cx = x0; cx < x1; ++cx) {
+        uint16_t *p = sCanvas + (size_t)cx * H + (H - (size_t)y1);
+
+        for (int cy = y1 - 1; cy >= y0; --cy)
+            *p++ = EMBER_BG(cx, cy);
+    }
 }
 
 static void TsBackdrop(void)
@@ -22,149 +27,268 @@ static void TsBackdrop(void)
     TsBgRect(0, 0, W, H);
 }
 
-static uint16_t TsTone(uint16_t c, int mode)
+/* `c` over the canvas at (x, y) by a/255. */
+static void EmBlend(int x, int y, uint16_t c, int a)
 {
-    unsigned r = c >> 11, g = (c >> 5) & 63, b = c & 31;
-
-    switch (mode) {
-    case TS_BRIGHT:
-        r = r * 5 / 4 + 3; g = g * 5 / 4 + 6; b = b * 5 / 4 + 3;
-        return (uint16_t)((r > 31 ? 31 : r) << 11 | (g > 63 ? 63 : g) << 5 | (b > 31 ? 31 : b));
-    case TS_DIM: {                                            /* desaturated and darkened: a spent button */
-        unsigned l = (r * 2 * 77 + g * 150 + b * 2 * 29) >> 8;      /* 0..63 */
-
-        l = (l * 3 + (r * 2 + b * 2 + g) / 3 * 2) / 8;
-        return (uint16_t)((l >> 1) << 11 | l << 5 | (l >> 1));
-    }
-    case TS_DARK:
-        return (uint16_t)((r * 5 / 8) << 11 | (g * 5 / 8) << 5 | (b * 5 / 8));
-    default:
-        return c;
-    }
-}
-
-static void TsPicDraw(const TsPic *p, int mode)
-{
-    for (int v = 0; v < p->h; ++v)
-        for (int u = 0; u < p->w; ++u) {
-            uint16_t c = p->px[v * p->w + u];
-
-            if (c != TS_KEY)
-                Px(p->x + u, p->y + v, TsTone(c, mode));
-        }
-}
-
-static CtrPokeTouchRect TsRect(const TsPic *p)
-{
-    CtrPokeTouchRect r = {p->x, p->y, p->w, p->h};
-    return r;
-}
-
-static void TsBlend(int x, int y, const uint8_t col[3], int a)
-{
-    uint16_t c;
-    int r, g, b;
-
     if ((unsigned)x >= W || (unsigned)y >= H || a <= 0)
         return;
-    c = TsGet(x, y);
-    r = (c >> 11) << 3; g = ((c >> 5) & 63) << 2; b = (c & 31) << 3;
-    r += (col[0] - r) * a / 15; g += (col[1] - g) * a / 15; b += (col[2] - b) * a / 15;
-    Px(x, y, RGB(r < 0 ? 0 : r > 255 ? 255 : r, g < 0 ? 0 : g > 255 ? 255 : g, b < 0 ? 0 : b > 255 ? 255 : b));
+    Px(x, y, a >= 255 ? c : UiMix(TsGet(x, y), c, a * 8 / 255));
 }
 
-/* A lettering glyph of the string: its index in the tables, advancing `s`; -1 for a space or what is not drawn. */
-static int TsGlyphOf(const char **s, int ten)
-{
-    const char *chars = ten ? kTsTenChars : kTsNineChars;
-    const uint16_t *latin = ten ? kTsTenLatin : kTsNineLatin;
-    int nChars = (int)strlen(chars), nLatin = ten ? (int)(sizeof(kTsTenLatin) / sizeof(kTsTenLatin[0]))
-                                                  : (int)(sizeof(kTsNineLatin) / sizeof(kTsNineLatin[0]));
-    unsigned char c = (unsigned char)**s;
-    unsigned code = c;
-    const char *p;
+/* The palettes of the raised pieces: the face from `top` to `bottom`, its lip and outline, and the ink of a label. */
+typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh; } EmPal;
 
-    ++*s;
-    if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0xe9; }
-    else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xa5; }
-    if (code < 128) {
-        p = code ? strchr(chars, (int)code) : NULL;
-        return p ? (int)(p - chars) : -1;
+#define EM_DARK UI_RGB(98, 98, 98)                  /* FireRed's text grey and its shadow, on the light pieces */
+#define EM_DARK_SH UI_RGB(213, 213, 205)
+#define EM_DIM UI_RGB(136, 120, 112)
+#define EM_WHITE UI_RGB(255, 255, 255)
+#define EM_STRIPE UI_RGB(232, 112, 28)
+#define EM_GLOW UI_RGB(255, 170, 60)
+#define EM_VALUE UI_RGB(208, 48, 32)                /* a value on a light piece (the game's red) */
+static const EmPal kEmAmber = {UI_RGB(255, 206, 96), UI_RGB(236, 108, 28), UI_RGB(170, 70, 14), UI_RGB(110, 40, 6),
+                               EM_WHITE, UI_RGB(110, 40, 6)};
+static const EmPal kEmCream = {UI_RGB(255, 252, 244), UI_RGB(232, 226, 214), UI_RGB(150, 136, 126), UI_RGB(96, 80, 72),
+                               EM_DARK, EM_DARK_SH};
+static const EmPal kEmGrey = {UI_RGB(200, 192, 196), UI_RGB(150, 140, 146), UI_RGB(108, 98, 104), UI_RGB(70, 60, 66),
+                              UI_RGB(120, 112, 116), UI_RGB(206, 200, 202)};
+static const EmPal kEmViolet = {UI_RGB(120, 112, 128), UI_RGB(70, 62, 82), UI_RGB(46, 38, 58), UI_RGB(30, 24, 40),
+                                EM_WHITE, UI_RGB(30, 24, 40)};
+
+/* Rows [y, y + h) of a rounded rectangle, each row a blend from `top` to `bottom`. */
+static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uint16_t bottom)
+{
+    if (w <= 0 || h <= 0)
+        return;
+    if (radius > 5)
+        radius = 5;
+    if (radius * 2 > h)
+        radius = h / 2;
+    for (int row = 0; row < h; ++row) {
+        int edge = row < h - 1 - row ? row : h - 1 - row, cut = edge < 4 ? sUiCut[radius][edge] : 0;
+        uint16_t c = UiMix(top, bottom, h > 1 ? row * 8 / (h - 1) : 0);
+
+        Fill(x + cut, y + row, w - 2 * cut, 1, c);
     }
-    for (int i = 0; i < nLatin; ++i)
-        if (latin[i] == code)
-            return nChars + i;
-    return -1;
 }
 
-static int TsLetterW(int g, int ten)
+/* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
+ * caller has put the backdrop back under it. Returns where the face starts (for its label). */
+static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
 {
-    return g < 0 ? 3 : ten ? kTsTenWidth[g] : kTsNineWidth[g];
-}
+    int face = h - depth, fy = pressed ? y + depth : y;
 
-static int TsLettersWidth(const char *s, int ten)
-{
-    int w = 0;
-
-    while (*s) {
-        w += TsLetterW(TsGlyphOf(&s, ten), ten) + 1;
+    if (!pressed) {
+        UiRoundFill(x, y + depth, w, face, 5, p->edge);
+        UiRoundFill(x + 1, y + depth + 1, w - 2, face - 2, 4, p->lip);
     }
-    return w ? w - 1 : 0;
+    UiRoundFill(x, fy, w, face, 5, p->edge);
+    EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, pressed ? UiMix(p->top, p->bottom, 4) : p->top, p->bottom);
+    Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 4));
+    return fy;
 }
 
-/* The string in the artwork's lettering, white with its dark outline, from `x`; what would pass `limit` is left out. */
-static void TsLetters(const char *s, int x, int y, int ten, const uint8_t ink[3], int limit)
+/* The glow round a chosen piece: two soft rings outside it. */
+static void EmGlowRing(int x, int y, int w, int h)
 {
-    static const uint8_t outline[3] = {8, 12, 20};
-    int rows = ten ? 10 : 9;
+    for (int i = 1; i <= 2; ++i) {
+        int a = i == 1 ? 150 : 70;
 
-    for (int pass = 0; pass < 2; ++pass) {
-        const char *t = s;
-        int px = x;
-
-        while (*t) {
-            int g = TsGlyphOf(&t, ten), w = TsLetterW(g, ten);
-
-            if (px + w > limit)
-                break;
-            for (int r = 0; g >= 0 && r < rows; ++r)
-                for (int c = 0; c < w; ++c) {
-                    int cov = ten ? kTsTenRows[g][r][c] : kTsNineRows[g][r][c];
-
-                    if (!cov)
-                        continue;
-                    if (pass == 0) {
-                        for (int dy = -1; dy <= 1; ++dy)
-                            for (int dx = -1; dx <= 1; ++dx)
-                                TsBlend(px + c + dx, y + r + dy, outline, 15);
-                    } else {
-                        TsBlend(px + c, y + r, ink, cov);
-                    }
-                }
-            px += w + 1;
+        for (int cx = x + 3; cx < x + w - 3; ++cx) {
+            EmBlend(cx, y - i, EM_GLOW, a);
+            EmBlend(cx, y + h - 1 + i, EM_GLOW, a);
         }
+        for (int cy = y + 3; cy < y + h - 3; ++cy) {
+            EmBlend(x - i, cy, EM_GLOW, a);
+            EmBlend(x + w - 1 + i, cy, EM_GLOW, a);
+        }
+        EmBlend(x - i + 2, y - i + 2, EM_GLOW, a / 2);
+        EmBlend(x + w - 3 + i, y - i + 2, EM_GLOW, a / 2);
+        EmBlend(x - i + 2, y + h - 3 + i, EM_GLOW, a / 2);
+        EmBlend(x + w - 3 + i, y + h - 3 + i, EM_GLOW, a / 2);
     }
 }
 
-static const uint8_t kTsWhite[3] = {248, 252, 248};
-
-static void TsMaskDraw(const TsMask *m, int dx, int dy)
+/* A label centred across [x, x + w) on a face that starts at `fy` and is `fh` tall. */
+static void EmLabel(const char *s, int x, int w, int fy, int fh, const EmPal *p)
 {
-    static const uint8_t outline[3] = {4, 16, 12};
+    int tw = UiTextWidth(s, 1);
 
-    for (int pass = 0; pass < 2; ++pass)
-        for (int v = 0; v < m->h; ++v)
-            for (int u = 0; u < m->w; ++u) {
-                int cov = m->cover[v * m->w + u];
+    UiText(s, x + (w - tw) / 2, fy + (fh - UI_TEXT_H) / 2, p->ink, p->inkSh, 1, x + w);
+}
 
-                if (!cov)
-                    continue;
-                if (pass == 0) {
-                    for (int oy = -1; oy <= 1; ++oy)
-                        for (int ox = -1; ox <= 1; ++ox)
-                            TsBlend(m->x + dx + u + ox, m->y + dy + v + oy, outline, 10);
-                } else {
-                    TsBlend(m->x + dx + u, m->y + dy + v, kTsWhite, cov);
+/* The note card: a light card with an ember stripe on its left; the text is the caller's. */
+static void EmNote(int x, int y, int w, int h)
+{
+    UiRoundFill(x, y, w, h, 5, UI_RGB(60, 64, 92));
+    EmGradFill(x + 1, y + 1, w - 2, h - 2, 4, UI_RGB(255, 255, 255), UI_RGB(226, 230, 238));
+    Fill(x + 4, y + 6, 3, h - 12, EM_STRIPE);
+}
+
+/* The frame round the GBA picture (w x h at x, y): three pixels of dark slate outside it. */
+static void EmBezel(int x, int y, int w, int h)
+{
+    CtrPokeTouchRect outer = {(int16_t)(x - 3), (int16_t)(y - 3), (int16_t)(w + 6), (int16_t)(h + 6)};
+    CtrPokeTouchRect inner = UiInset(&outer, 1);
+
+    UiRoundRect(&outer, 5, UI_RGB(24, 18, 28));
+    UiRoundFill(inner.x, inner.y, inner.w, inner.h, 4, UI_RGB(52, 44, 60));
+    UiRing(&inner, 4, 1, UI_RGB(96, 86, 104));
+}
+
+/* A switch: a 26x12 track, green and the knob on the right when on, grey with the knob on the left when off. */
+static void EmSwitch(int x, int y, int on)
+{
+    UiRoundFill(x, y, 26, 12, 5, UI_RGB(70, 60, 66));
+    UiRoundFill(x + 1, y + 1, 24, 10, 4, on ? UI_RGB(72, 196, 96) : UI_RGB(176, 172, 180));
+    UiDisc(on ? x + 19 : x + 6, y + 6, 6, UI_RGB(70, 60, 66));
+    UiDisc(on ? x + 19 : x + 6, y + 6, 5, UI_RGB(250, 250, 252));
+}
+
+/* A shortcut's key: its button's letter on a small blue pill, centred at the top of the tile (cx its centre). */
+static void EmKeyTab(int cx, int y, const char *letter)
+{
+    UiRoundFill(cx - 10, y, 20, 11, 5, UI_RGB(30, 40, 96));
+    EmGradFill(cx - 9, y + 1, 18, 9, 4, UI_RGB(96, 132, 236), UI_RGB(52, 80, 200));
+    UiText(letter, cx - UiTextWidth(letter, 1) / 2, y + 1, EM_WHITE, UI_RGB(30, 40, 96), 1, cx + 9);
+}
+
+/* The soft well a shortcut's item sits in: the face's own colour, a little deeper, with a shade along its top. */
+static void EmWell(int x, int y, int w, int h, const EmPal *p)
+{
+    uint16_t deep = UiMix(p->bottom, p->edge, 2);
+
+    UiRoundFill(x, y, w, h, 4, deep);
+    EmGradFill(x + 1, y + 2, w - 2, h - 3, 3, UiMix(deep, p->bottom, 5), UiMix(p->top, p->bottom, 4));
+}
+
+/* One of the column's icons (ember_skin.h), blended onto what is there; dim, it is toned grey. */
+static void EmIcon(int icon, int x, int y, int on)
+{
+    for (int v = 0; v < EMBER_ICON; ++v)
+        for (int u = 0; u < EMBER_ICON; ++u) {
+            int a = kEmberIconA[icon][v * EMBER_ICON + u];
+
+            if (a)
+                EmBlend(x + u, y + v, Tone(kEmberIcon[icon][v * EMBER_ICON + u], on), a);
+        }
+}
+
+/* The embers: a couple of dozen sparks rising slowly over the backdrop, drawn only on pixels that show it (so they
+ * pass behind every piece drawn over it) and outside `exclude` (the GBA picture). Each spark remembers the pixels it
+ * painted and puts the backdrop back on those still showing its colour. */
+#define EM_SPARKS 22
+#define EM_SPARK_PX 9
+static struct {
+    int ready;
+    uint32_t seed;
+    struct {
+        int32_t x, y, vy;                   /* 16.16 */
+        uint16_t phase, step;
+        uint8_t big, hue, n;
+        int16_t px[EM_SPARK_PX], py[EM_SPARK_PX];
+        uint16_t col[EM_SPARK_PX];
+    } s[EM_SPARKS];
+} sEm;
+
+static uint32_t EmRand(void)
+{
+    sEm.seed = sEm.seed * 1664525u + 1013904223u;
+    return sEm.seed >> 8;
+}
+
+static void EmSpawn(int i, int anywhere)
+{
+    sEm.s[i].x = (int32_t)(EmRand() % W) << 16;
+    sEm.s[i].y = (int32_t)(anywhere ? EmRand() % H : H + 2 + EmRand() % 20) << 16;
+    sEm.s[i].vy = (int32_t)(0x3000 + EmRand() % 0x7000);           /* 0.19 .. 0.62 px a step */
+    sEm.s[i].phase = (uint16_t)EmRand();
+    sEm.s[i].step = (uint16_t)(200 + EmRand() % 500);
+    sEm.s[i].big = EmRand() % 4 == 0;
+    sEm.s[i].hue = (uint8_t)(EmRand() % 3);
+}
+
+/* The sway: phase 0..65535 to about -3..3 pixels (16.16). */
+static int32_t EmSway(uint16_t phase)
+{
+    static const int8_t k[16] = {0, 9, 17, 22, 24, 22, 17, 9, 0, -9, -17, -22, -24, -22, -17, -9};
+
+    return (int32_t)k[phase >> 12] * 0x2000;
+}
+
+static void EmGrow(CtrDirtyRect *box, int x, int y)
+{
+    if (x < box->x0) box->x0 = x;
+    if (y < box->y0) box->y0 = y;
+    if (x + 1 > box->x1) box->x1 = x + 1;
+    if (y + 1 > box->y1) box->y1 = y + 1;
+}
+
+static void EmPaint(int i, int x, int y, uint16_t c, CtrDirtyRect *box)
+{
+    if ((unsigned)x >= W || (unsigned)y >= H || sEm.s[i].n >= EM_SPARK_PX || TsGet(x, y) != EMBER_BG(x, y))
+        return;
+    Px(x, y, c);
+    sEm.s[i].px[sEm.s[i].n] = (int16_t)x;
+    sEm.s[i].py[sEm.s[i].n] = (int16_t)y;
+    sEm.s[i].col[sEm.s[i].n++] = c;
+    EmGrow(box, x, y);
+}
+
+/* One step of the embers on `canvas`; the rectangles that changed are added to `dirty`. With `on` false the sparks
+ * are only taken away. */
+static void EmbersStep(uint16_t *canvas, int on, const CtrPokeTouchRect *exclude, CtrDirtyList *dirty)
+{
+    static const uint8_t hue[3][3] = {{255, 200, 80}, {255, 150, 40}, {255, 96, 32}};
+
+    sCanvas = canvas;
+    if (!sEm.ready) {
+        sEm.ready = 1;
+        sEm.seed = 0x7e3a11u;
+        for (int i = 0; i < EM_SPARKS; ++i)
+            EmSpawn(i, 1);
+    }
+    for (int i = 0; i < EM_SPARKS; ++i) {
+        CtrDirtyRect box = {W, H, 0, 0};
+        int x, y;
+
+        for (int k = 0; k < sEm.s[i].n; ++k) {
+            int px = sEm.s[i].px[k], py = sEm.s[i].py[k];
+
+            if (TsGet(px, py) == sEm.s[i].col[k])
+                Px(px, py, EMBER_BG(px, py));
+            EmGrow(&box, px, py);
+        }
+        sEm.s[i].n = 0;
+        if (on) {
+            sEm.s[i].y -= sEm.s[i].vy;
+            sEm.s[i].phase = (uint16_t)(sEm.s[i].phase + sEm.s[i].step);
+            if (sEm.s[i].y < -(4 << 16))
+                EmSpawn(i, 0);
+            x = (int)((sEm.s[i].x + EmSway(sEm.s[i].phase)) >> 16);
+            y = (int)(sEm.s[i].y >> 16);
+            if (!(exclude && x >= exclude->x - 2 && x < exclude->x + exclude->w + 2 && y >= exclude->y - 2
+                  && y < exclude->y + exclude->h + 2)) {
+                /* Brighter low down, where the fire is: the core, and a halo round it. */
+                int a = 120 + (y < 0 ? 0 : y > H ? 135 : y * 135 / H);
+                const uint8_t *c = hue[sEm.s[i].hue];
+                uint16_t core = UI_RGB(255, 236, 170), halo = UI_RGB(c[0], c[1], c[2]);
+                int size = sEm.s[i].big ? 2 : 1;
+                static const int8_t ring[4][2] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+
+                for (int v = 0; v < size; ++v)
+                    for (int u = 0; u < size; ++u)
+                        if ((unsigned)(x + u) < W && (unsigned)(y + v) < H)
+                            EmPaint(i, x + u, y + v, UiMix(EMBER_BG(x + u, y + v), core, a * 8 / 256), &box);
+                for (int k = 0; k < 4; ++k) {
+                    int hx = x + ring[k][0] + (ring[k][0] > 0 ? size - 1 : 0);
+                    int hy = y + ring[k][1] + (ring[k][1] > 0 ? size - 1 : 0);
+
+                    if ((unsigned)hx < W && (unsigned)hy < H)
+                        EmPaint(i, hx, hy, UiMix(EMBER_BG(hx, hy), halo, a * 4 / 256), &box);
                 }
             }
+        }
+        if (box.x1 > box.x0)
+            CtrDirty_Add(dirty, box.x0, box.y0, box.x1, box.y1);
+    }
 }

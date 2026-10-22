@@ -38,19 +38,14 @@ class Renderer(unittest.TestCase):
             self.assertEqual(len(cur),len(base))
             # HOME and GBA viewports are pixel-identical to the base.
             self.assertEqual(cur[:2*frame],base[:2*frame],'HOME and GBA viewport pixels must match the base')
-            # OPTIONS and SAVE changed colour (navy to red), not geometry: the same pixels are the backdrop
-            # in both, and nothing blue is left.
+            # OPTIONS and SAVE wear the ember look: a new layout on the red backdrop.
             for n,name in ((2,'OPTIONS'),(3,'SAVE')):
                 a=cur[n*frame:(n+1)*frame]; b=base[n*frame:(n+1)*frame]
                 px=lambda data:[int.from_bytes(data[i:i+2],'little') for i in range(0,len(data),2)]
                 a,b=px(a),px(b)
-                bg=lambda p:max(set(p),key=p.count)
-                abg,bbg=bg(a),bg(b)
-                self.assertEqual([x==abg for x in a],[x==bbg for x in b],name+' geometry must match the base')
-                self.assertNotEqual(a,b,name+' must be recoloured')
-                blue=sum(1 for x in a if (x&31)*8>((x>>11)*8)+40)
-                self.assertEqual(blue,0,name+' still has %d blue pixels'%blue)
-                self.assertGreater((abg>>11)*8,(abg&31)*8,name+' backdrop must be red')
+                self.assertNotEqual(a,b,name+' must be redrawn')
+                red=sum(1 for x in a if (x>>11)*8>(x&31)*8+40)
+                self.assertGreater(red,len(a)//4,name+' must stand on the red backdrop')
             self.assertNotEqual((folder/'current.ppm').read_bytes(),(folder/'base.ppm').read_bytes())
 
 if __name__=='__main__': unittest.main()

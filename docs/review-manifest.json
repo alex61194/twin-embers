@@ -291,7 +291,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_nav.h",
-   "sha256": "6e97f53ab3b91c70e140d96ef011a78b7b87cc3e5832801785285fdf7e545086",
+   "sha256": "c91e6519efe57fa3127100bf62f03088ce8b26ab1662d83928c614f9623ca950",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -557,7 +557,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "f8c5e725360cc7ff8e3df15378a51581513be2d8bc37a97d55cd35b99bf308bd",
+   "sha256": "b1e85d95192693b0fddba70ebf9a72cef9cfb3e00b58657c26cdba8caf126960",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -570,7 +570,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "d41d93e0ed84e1bca445d4a8958510ec21452140aca8b1ae91861d38178fe4ac",
+   "sha256": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -697,156 +697,12 @@
    "modified_for_distribution": false
   },
   {
-   "path": "3ds_port/include/battle_action_skin.h",
-   "sha256": "89286f9bbdc34edd1260469322bacd7f5e5899729bd96dfd91b86c1175c2cae6",
+   "path": "3ds_port/include/battle_flat_icons.h",
+   "sha256": "41e374b533bc192ff058f6963b5eee400bb1e0edcdfdb854d333a576040333d6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_bg0.h",
-   "sha256": "b5e0f58bb7fd11666d91cc4ffee56e0a1e37bc675272f2bc2586edc62bad998e",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_bg1.h",
-   "sha256": "8c54437b76a8d1e97419683ff08ae8df82a004cb4f287a76ccfa63e4802211ff",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_bg2.h",
-   "sha256": "bc0aff576bd6d94056b64b771ad54caaf61e88df5c72c58c3b60920d176beb76",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_bg3.h",
-   "sha256": "dc569719afdf73732943cd0f8ac9a269547005b63b1fa670057b52a030b8f79a",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_cards0.h",
-   "sha256": "6f2fa2ee48816c7ed05c63c17ec5b2331b1a97165bf9cf8bad5d23322d203af9",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_action_skin_cards1.h",
-   "sha256": "ceb35e3fec2e354569afed5ba5f0b48f25831c554082dfaec4ae2ab558e52d83",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin.h",
-   "sha256": "3c0685dedcae9ee76303c5e5e37dbfcb451e03532bac4af4197399acea5ec66e",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_bg0.h",
-   "sha256": "b75a04f7c75b72aa589f3e4c6459f5148cbef7f2bf829525c1d537d48878fc05",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_bg1.h",
-   "sha256": "d96a3db6988237d1dfef779f6bd216f9ca62287a0fa29b514ee72e18f578f355",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_bg2.h",
-   "sha256": "2b8cdc1e6fae9f2eca210673734ecc7d8ec70cc6dfa46e5c6d5c74446fdcd152",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_bg3.h",
-   "sha256": "7995eee821d39de70d3fbda9c5e5047c9cb5589095eff00a3dd04f5fbef31b3d",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_card.h",
-   "sha256": "313e91395ffc8267953c27ef393590aac07e752f5f25eb9092679db9fe487722",
-   "review_status": "reviewed",
-   "credit": "Generated by tools/make_move_skin.py (alex61194, disclosed AI assistance) from the owner-supplied move-screen artwork",
-   "license": "The tables reproduce the owner-supplied artwork (see docs/media/move-screen.png); the generator is MIT; third-party rights unchanged",
-   "basis": "Generated C tables (RGB565 pictures, colour templates, glyphs) from docs/media/move-screen*.png only; no ROM/game payloads. Regenerate with python3 tools/make_move_skin.py."
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards0.h",
-   "sha256": "78d84f3c3a98b0e5a67d7e08ed0e7394139c300a7c2a3e0bf3b578afbbce53b4",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards1.h",
-   "sha256": "f73ef0eaf1e6f1794b79183f09bbe429f3dd0d80a6e405419487ea1a4a567f95",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards2.h",
-   "sha256": "608341fd245f65be3151c8cafb361f450fa2815699fe5f3a964f11b0a41e2d67",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards3.h",
-   "sha256": "de17a53bc1405519434c3174007b0f584fc4bb57967a649374474a8dd38858c4",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards4.h",
-   "sha256": "2f6d7e6bfa0aa396fcd2448e5676a28418eb7cffe722431ba39b4e34b82bf506",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/battle_move_skin_cards5.h",
-   "sha256": "cf720aaa2e08123264c31d8c472479797e8ef24e84386e47ea68a675c8173c65",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
   },
   {
    "path": "3ds_port/include/battle_ui_art.h",
@@ -855,6 +711,46 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/ember_skin.h",
+   "sha256": "9a81cfe727fdc4fec1ec038ddc2a0295abdb04ef130f41d3bed7ba8f6436ee22",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
+  },
+  {
+   "path": "3ds_port/include/ember_skin_bg0.h",
+   "sha256": "1aca5a8ebb74bd63b51335d4c054117065c6278a1c18fc876e457a76964e80b3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
+  },
+  {
+   "path": "3ds_port/include/ember_skin_bg1.h",
+   "sha256": "be4009228b9d5a917d84d761d0fd3176bbb8be19281717bfff288abbb4d217f2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
+  },
+  {
+   "path": "3ds_port/include/ember_skin_bg2.h",
+   "sha256": "2218f2afa8728a9462dd9398bb5345fa3be1a651f42ed3f9ca4115e9fe6c1bb7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
+  },
+  {
+   "path": "3ds_port/include/ember_skin_bg3.h",
+   "sha256": "6963663cd22092292a778832e50a3ed254c654ce298caa5eca23770260bd5800",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated by tools/make_ember_skin.py from port-authored procedural art (gradient, stripes, embers, icons); no game pixels or palettes."
   },
   {
    "path": "3ds_port/include/gba_shadow.h",
@@ -876,62 +772,6 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Menu silhouette fallback generated in RAM; when available the six game menu icons are decoded at runtime from pack-backed item graphics/palettes, without distributing game pixels."
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin.h",
-   "sha256": "7e0c34edb5c1faf6f27ba021debb8dc91e0d7938705a4f7151f2f6541db75c41",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_bg0.h",
-   "sha256": "68eae0eddc36998279fc3182e7f6676ebb12709a06f7fc88ff8fb94ca0966616",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_bg1.h",
-   "sha256": "d31ac294e778db21f98750c686d8ef6194ea992e367336bc21e965ede85a89a8",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_bg2.h",
-   "sha256": "71bae566067d71b98340a91a349c3703e896c2626232dbc660d822d5452e910c",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_bg3.h",
-   "sha256": "693275d86e9bf31a5888613a0bdef092c3a4a24ca5022268fabad9fc61e461e0",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_parts0.h",
-   "sha256": "bff9ed7afaf21aa976f26e7ba36486bcf978b0cd94199be71cf5dda64a169270",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/poketouch_skin_parts1.h",
-   "sha256": "13b096e46a5b5a923f6a4ff3ebd1f7ccd11be72c7dc02daeae0c8e492979eae8",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/include/twin_font.h",
@@ -996,7 +836,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "03e83c81bbd2bf9a8ad33cb1b937132d0220ed4932f57cf726f1d1ebdc42fc9d",
+   "sha256": "9fc49cf3773b00501721461bb9505c89275b8beb742dcdb429de1dc736b01aba",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1035,7 +875,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "021db863aa7f266a31893d1175c9470aebec05d52b94783d9a02f21df7161d85",
+   "sha256": "cd09255e178356772d7cead9a41ed80bc66024ed64adfd1d53cf9f23443b31f6",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1271,7 +1111,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "c8f583cf2e42ec4483a9c5da1ab3ffeb5fd5ad68b9ced3afc5b137d4105e3bcf",
+   "sha256": "1a4aa9b8eddbddc2031cda3cf3c81e8a9c37c6bc07859e3b9a8a144aefef15d0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1285,7 +1125,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "74ea94db6aa255d6fcf7e981a08b33c986e992e7a974536178cf829ac05566dd",
+   "sha256": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1353,7 +1193,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "b4aa5c7fa3bb26923f4a861e85ee08b8bb8cd36d435670b5e3ad01c64a2f839a",
+   "sha256": "8f36af6d598c8e9b1356b6beb1798d3235809fb8ce8dc6ac6194f8a759832cec",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1366,7 +1206,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "d32aa3bc0af73719ec7d7a766a50957b7fe1d05c57d23e8c5cc20898bd75f046",
+   "sha256": "d499357d17e37ffba5bffec7b544e5fc48456489e5b8b28b26ded430cd6f9e82",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1532,7 +1372,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "94bdea1d56ed0bd318bed928f5b5a686e2202b6b4671c189c299d734117e2ed8",
+   "sha256": "baf863f1a2c83c3dd9fdb621fb87c66ec14f45b7dc75329d0e0120a36a3a0e7b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1783,7 +1623,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "b325bd4f734aae5c457691965d098cc462ebd8101b4ec42d6d636f8132e1b2f6",
+   "sha256": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1795,7 +1635,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "d397640d27376fa6fbb18996e5472bb88f7804232252a660b11f4bf3324b269e"
+   "sha256": "a1462b477dc720f70523a6346565afcb279c563de565f3926e2d4d9aaafa00c7"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2532,7 +2372,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "e756e781b2e74832f832f305c7f95d4c5aab5fca8a31971e50dab01fba970b8b",
+   "sha256": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4326,6 +4166,46 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0124-party-message-mixed-case.json",
+   "sha256": "dd06e68cf0ae9b187d77b2c1f044591fde89632882ff85949b3369b259ffb1fe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0125-party-fly-on-touch-map.json",
+   "sha256": "9a9464aa481b68213ddda88f708dad36aaff9e7b98507e4a20884cec22eb839c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0126-poketouch-direct-switch.json",
+   "sha256": "767817d15651ccadec8c733ae8fb616b924cccce4ba5924bb468f2441c05265f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0127-battle-tap-continues-text.json",
+   "sha256": "1466885bcdcc97fa111e17b5e525336f6e6ab6ad3cb996c06db44bbafa8f14b5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0128-battle-text-accents.json",
+   "sha256": "68c7cc87029d0db8ba469bfe92eadaedecfd028e2fde80068305a3de6913ee44",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -4431,28 +4311,20 @@
    "modified_for_distribution": false
   },
   {
-   "path": "tools/make_action_skin.py",
-   "sha256": "8822dc07b8c05fbc5da40dbb125b43fbf7e384ae0a760d9cfcd9889b659612e1",
+   "path": "tools/make_battle_icons.py",
+   "sha256": "b6b650444ea60843bfa8346013a2beb86c0872d8d26479971327a8afcc8837c9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Port-authored development tool that draws the ember backdrop and the START column icons procedurally; no ROM/game data read or written."
   },
   {
-   "path": "tools/make_move_skin.py",
-   "sha256": "4cefcf1a57fb1b63529d4d8a01614940bfe69358e5df0eee73dfd7c498b680e4",
+   "path": "tools/make_ember_skin.py",
+   "sha256": "666a2ea937a66ff319b746c9b31b30f386a564ff1548fef21872a5e666841ce5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/make_touch_skin.py",
-   "sha256": "b794004dc2d0a0b342024f86485caed3c8b1082f9b44f33683bb16117803fb03",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Port-authored development tool that draws the ember backdrop and the START column icons procedurally; no ROM/game data read or written."
   },
   {
    "path": "tools/map_edge_world.py",
@@ -4772,7 +4644,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "293716a48208c9db677ad92bafa92893150a1b1b2dc82584de3c14f3601583c8",
+   "sha256": "42a6f9932ed2f4127180c2c238ddfdec74a22c08c57f2f4b0ffe98465620a7c2",
    "baseline_review": "Baseline viewport comparison against 579726e skips with a reason, after the current-state checks, in a checkout without that commit"
   },
   {
