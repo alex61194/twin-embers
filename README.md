@@ -8,7 +8,7 @@ Most of the work in this project comes down to one question: what should the sec
 
 It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has no ROM inside it and never will; you bring your own cartridge dump and a small Windows tool turns it into the data file the game reads at startup.
 
-<img src="docs/media/02-overworld-pallet-town.png" width="400" alt="Pallet Town filling the top screen, with the touch menu underneath">
+<img src="docs/media/02-night-cerulean.png" width="400" alt="Cerulean City at night, lit windows on the top screen and the ember touch menu underneath">
 
 ---
 
@@ -17,8 +17,23 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
-- **You get:** a wide overworld, a touch-driven lower screen, native battles, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.1.3). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
+- **Status:** alpha (v0.1.4). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+
+---
+
+## New in v0.1.4
+
+- **Day and night.** The outdoors follow the hour of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, day from 09:00 to 17:30 and dusk at 19:00, with smooth blends in between. At night Pokémon Centers, Marts and Gyms stay lit, each house turns its own lights on and off through the evening, lit windows cast a warm pool on the ground and the night itself turns a moonlit blue. Indoors, caves, battles and menus are not tinted. OPTIONS, page 2, DAY/NIGHT turns it off.
+- **Night-time Pokémon.** From 21:00 to 05:00 some wild slots give a night species: Hoothoot, Noctowl, Murkrow and Spinarak take over from the daytime birds and bugs, Haunter and Misdreavus haunt the Pokémon Tower, Gastly and Houndour the Pokémon Mansion, and Chinchou and Lanturn bite on the Super Rod around Five, Six and Seven Island. Johto species wait for the National Pokédex; before it the matching Kanto species appears. Eevee becomes Espeon by day and Umbreon at night again.
+- **LeafGreen's exclusives.** Wherever a FireRed-only Pokémon appears in the wild, half of the time its LeafGreen counterpart appears instead, at the same level.
+- **Trade evolutions without a trade.** Pokémon that evolve by trading also evolve on levelling up from level 40; the held item picks the branch.
+- **A new look for the lower screen.** Rounded, glowing buttons on a red ember backdrop with slowly rising sparks, now in every battle screen too, and the column switches straight from one screen to another.
+- **Full-screen battle extras.** The Poké Ball transition and move backgrounds such as Solar Beam or Psychic now fill the whole 400 × 240 top screen.
+
+The [v0.1.4 release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
+
+<img src="docs/media/03-day-night-off.png" width="300" alt="Cerulean City with DAY/NIGHT off, next to the option that controls it"> <img src="docs/media/04-night-saffron.png" width="300" alt="Saffron City at night, with the touch map of Kanto">
 
 ---
 
@@ -28,31 +43,39 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 The overworld is drawn at the 3DS's native top-screen size instead of the GBA's 240 × 160, so you see more of every town and route before you reach its edge. Beyond a map's edge the game draws its own border, as on the GBA.
 
-The lower screen is **PokéTouch**, a home screen with tiles for your party, Bag, Pokédex, Trainer Card, Town Map, saving and options. Tapping a tile opens that screen directly. The original START menu is no longer needed.
+The lower screen is **PokéTouch**, a home screen with a touch Town Map and a column of buttons for the Pokédex, your party, Bag, Trainer Card, saving and options. Tapping a button opens that screen directly, and tapping another switches straight to it. Tapping a place on the map twice flies there once you can use FLY. X and Y hold your registered item and the Bicycle. The original START menu is no longer needed.
 
-<img src="docs/media/01-title.png" width="300" alt="Title screen"> <img src="docs/media/10-fly-two-island.png" width="300" alt="Flying to Two Island">
+<img src="docs/media/01-title.png" width="300" alt="Title screen"> <img src="docs/media/05-night-recap.png" width="300" alt="The Previously on your quest recap at night, with the Sevii Islands map below">
 
 ### Fighting
 
-Battle commands move to the touch screen: FIGHT, BAG, POKéMON and RUN. Picking FIGHT shows each move as a card with its type, power and remaining PP, so you can choose without remembering the numbers. In a single battle each damaging move also shows how it hits the foe's types: `x2` or `x4` in green, `x1/2` or `x1/4` in orange, `x0` in red.
+Battle commands move to the touch screen: a large FIGHT button with BAG, POKéMON and RUN below it, and the party's Poké Balls along the top. Picking FIGHT shows the moves as a 2 × 2 grid of cards with their type, power, accuracy and remaining PP, and a note describing the selected move, so you can choose without remembering the numbers. In a single battle each damaging move also shows how it hits the foe's types (NOT VERY, SUPER and so on). A tap also continues a battle message that waits for A.
 
-<img src="docs/media/03-battle-menu.png" width="300" alt="Battle commands on the touch screen"> <img src="docs/media/04-battle-moves.png" width="300" alt="Move cards with type, power and PP">
+<img src="docs/media/06-battle-intro.png" width="300" alt="A wild Ekans appears"> <img src="docs/media/07-battle-action.png" width="300" alt="FIGHT, BAG, POKéMON and RUN on the touch screen">
+
+<img src="docs/media/08-battle-moves.png" width="300" alt="Move cards with type, power, accuracy and PP"> <img src="docs/media/11-battle-party.png" width="300" alt="Switching Pokémon in battle">
+
+The battle Bag keeps its pockets as tabs and shows the selected item large with a USE button.
+
+<img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag, Items pocket"> <img src="docs/media/10-battle-key-items.png" width="300" alt="Battle Bag, Key Items pocket">
 
 ### Looking after your team
 
-The party list, Pokémon Summary and Trainer Card each get a full lower-screen page. PC storage is touch-driven as well: move, withdraw and deposit by tapping.
+The party list, Pokémon Summary and Trainer Card each get a full lower-screen page, and the Bag and Pokédex open beside the button column. PC storage is touch-driven as well: move, withdraw and deposit by tapping. Saving asks once, with your progress shown next to it.
 
-<img src="docs/media/05-party.png" width="300" alt="Party"> <img src="docs/media/06-summary.png" width="300" alt="Pokémon Summary">
+<img src="docs/media/12-party.png" width="300" alt="Party"> <img src="docs/media/13-bag.png" width="300" alt="Bag">
 
-<img src="docs/media/07-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/09-pokedex.png" width="300" alt="Pokédex">
+<img src="docs/media/14-pokedex.png" width="300" alt="Pokédex"> <img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card">
+
+<img src="docs/media/16-save.png" width="300" alt="Saving the game">
 
 ### Settings
 
-OPTIONS holds FireRed's own settings plus a switch for an on-screen FPS counter.
+OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, the field summary, DAY/NIGHT and the rising EMBERS.
 
-<img src="docs/media/08-options.png" width="300" alt="Options">
+<img src="docs/media/17-options-1.png" width="300" alt="Options, page 1"> <img src="docs/media/18-options-2.png" width="300" alt="Options, page 2">
 
-<sub>All images are real captures from Azahar and a New 3DS-family console. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
+<sub>All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the v0.1.4 screens come from AzaharPlus. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
 
 ---
 
