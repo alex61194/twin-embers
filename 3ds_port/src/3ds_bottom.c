@@ -211,6 +211,26 @@ extern int CtrBottomDex_PageSlotAt(int x, int y);
 extern int CtrBottomDex_PageSlot(void);
 extern int CtrBottomDex_Page(void);
 extern int CtrBottomDex_PageCanFlip(int direction);
+extern int CtrBottomDex_National(void);
+extern void CtrBottomDex_Counts(unsigned *out);
+extern int CtrBottomDex_MenuCount(void);
+extern int CtrBottomDex_MenuItem(int index, char *out, int size);
+extern int CtrBottomDex_MenuUnlocked(int id);
+extern int CtrBottomDex_ListOrder(void);
+extern int CtrBottomDex_ListCount(void);
+extern unsigned CtrBottomDex_ListEntry(int index);
+extern int CtrBottomDex_CategoryPage(int *category, int *page, int *pages, int *slots, int *slot);
+extern unsigned CtrBottomDex_CategorySpecies(int slot);
+extern unsigned CtrBottomDex_MonSpecies(void);
+extern int CtrBottomDex_MonArea(void);
+extern int CtrBottomDex_Flags(unsigned species);
+extern unsigned CtrBottomDex_Number(unsigned species);
+extern void CtrBottomDex_Name(unsigned species, char *out, int size);
+extern void CtrBottomDex_Category(unsigned species, char *out, int size);
+extern unsigned CtrBottomDex_Height(unsigned species);
+extern unsigned CtrBottomDex_Weight(unsigned species);
+extern void CtrBottomDex_Description(unsigned species, char *out, int size);
+extern int CtrBottomDex_Types(unsigned species, int *types, char *first, char *second, int size);
 
 /* CtrBottomDex_State (pokedex_screen.c): the real Pokedex is not taking input (set up, fading, flipping,
  * closing), or takes it on its top menu or a list (rows to choose), a category page or a Pokemon's page. B
@@ -487,6 +507,11 @@ static struct {
     int pocketTarget, pocketWait;
 } sFieldBag = {0, 0, -1, -1, 0};
 
+/* The Pokedex's touch (ProcessFieldDexTouch), as the Bag's. */
+static struct {
+    int down, inside, code;
+} sFieldDex = {0, 0, -1};
+
 /* Colors RGB565. */
 #define RGB565(r, g, b) ((uint16_t)(((r) & 31) << 11 | ((g) & 63) << 5 | ((b) & 31)))
 #define C_BG RGB565(4, 8, 12)
@@ -723,6 +748,122 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed)
     }
     if (state == BAG_MESSAGE)
         CtrBottomBag_Message(b->prompt, sizeof(b->prompt));
+}
+
+/* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
+static void FieldDexMon(CtrPokeTouchDexMon *m, unsigned species)
+{
+    memset(m, 0, sizeof(*m));
+    if (species == 0)
+        return;
+    m->species = (uint16_t)species;
+    m->number = (uint16_t)CtrBottomDex_Number(species);
+    m->flags = (uint8_t)CtrBottomDex_Flags(species);
+    if (m->flags & 1)
+        CtrBottomDex_Name(species, m->name, sizeof(m->name));
+}
+
+/* The selected Pokemon's types; on its page, its category, size, weight and entry too (FireRed tells them only for a
+ * caught one). */
+static void FieldDexDetail(CtrPokeTouchDex *d, int page)
+{
+    unsigned species = d->sel.species;
+    int types[2];
+
+    d->type[0] = d->type[1] = -1;
+    if (CtrBottomDex_Types(species, types, d->typeName[0], d->typeName[1], sizeof(d->typeName[0]))) {
+        d->type[0] = (int8_t)types[0];
+        d->type[1] = (int8_t)types[1];
+    }
+    if (!page)
+        return;
+    CtrBottomDex_Category(species, d->kind, sizeof(d->kind));
+    d->height = (uint16_t)CtrBottomDex_Height(species);
+    d->weight = (uint16_t)CtrBottomDex_Weight(species);
+    CtrBottomDex_Description(species, d->desc, sizeof(d->desc));
+}
+
+/* The Pokedex as it is now, for the lower screen to draw: 0 for its AREA page, which FireRed draws (the viewport
+ * shows it). While the Pokedex is busy (a fade, a page flip) the picture last shown stays. */
+static int FieldDexFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchDex *d = &v->dex;
+    int state = CtrBottomDex_State();
+    unsigned counts[4];
+
+    if (state == DEX_PAGE && CtrBottomDex_MonArea()) {
+        memset(d, 0, sizeof(*d));
+        return 0;
+    }
+    if (state == DEX_BUSY) {
+        if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on)
+            *d = sShown.touch.dex;
+        else if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.viewport)
+            return 0;                   /* leaving the AREA page: FireRed's picture until the page is back */
+        else {
+            memset(d, 0, sizeof(*d));
+            d->on = 1;
+        }
+        d->pressed = -1;
+        return 1;
+    }
+    memset(d, 0, sizeof(*d));
+    d->on = 1;
+    d->pressed = (int16_t)pressed;
+    d->state = (uint8_t)state;
+    d->national = (uint8_t)(CtrBottomDex_National() != 0);
+    CtrBottomDex_Counts(counts);
+    d->seen[0] = (uint16_t)counts[0];
+    d->owned[0] = (uint16_t)counts[1];
+    d->seen[1] = (uint16_t)counts[2];
+    d->owned[1] = (uint16_t)counts[3];
+    d->type[0] = d->type[1] = -1;
+    if (state == DEX_MENU) {
+        int n = CtrBottomDex_MenuCount();
+
+        d->menuCount = (uint8_t)(n > PT_DEX_MENU_MAX ? PT_DEX_MENU_MAX : n);
+        for (int i = 0; i < d->menuCount; ++i) {
+            int id = CtrBottomDex_MenuItem(i, d->menu[i].name, sizeof(d->menu[i].name));
+
+            d->menu[i].id = (int8_t)id;
+            d->menu[i].locked = (uint8_t)(!CtrBottomDex_MenuUnlocked(id));
+        }
+        d->menuCursor = (int8_t)CtrBottomDex_Cursor();
+    } else if (state == DEX_LIST) {
+        int count = CtrBottomDex_ListCount();
+
+        d->order = (uint8_t)CtrBottomDex_ListOrder();
+        d->listCount = (int16_t)count;
+        d->listCursor = (int16_t)CtrBottomDex_Cursor();
+        d->listFirst = (int16_t)(d->listCursor - 2 < 0 ? 0 : d->listCursor - 2);
+        if (d->listFirst > count - PT_DEX_ROWS)
+            d->listFirst = (int16_t)(count - PT_DEX_ROWS < 0 ? 0 : count - PT_DEX_ROWS);
+        for (int i = 0; i < PT_DEX_ROWS && d->listFirst + i < count; ++i)
+            FieldDexMon(&d->row[i], CtrBottomDex_ListEntry(d->listFirst + i) & 0xFFFFu);
+        FieldDexMon(&d->sel, CtrBottomDex_ListEntry(d->listCursor) & 0xFFFFu);
+        FieldDexDetail(d, 0);
+    } else if (state == DEX_CATEGORY) {
+        int category, page, pages, slots, slot;
+
+        if (CtrBottomDex_CategoryPage(&category, &page, &pages, &slots, &slot)) {
+            d->category = (uint8_t)category;
+            d->page = (uint8_t)page;
+            d->pages = (uint8_t)pages;
+            d->slots = (uint8_t)(slots > 4 ? 4 : slots);
+            d->slot = (uint8_t)slot;
+            d->canPrev = (uint8_t)(CtrBottomDex_PageCanFlip(-1) != 0);
+            d->canNext = (uint8_t)(CtrBottomDex_PageCanFlip(1) != 0);
+            for (int i = 0; i < d->slots; ++i)
+                FieldDexMon(&d->mon[i], CtrBottomDex_CategorySpecies(i));
+            if (slot >= 0 && slot < d->slots)
+                d->sel = d->mon[slot];
+            FieldDexDetail(d, 0);
+        }
+    } else if (state == DEX_PAGE) {
+        FieldDexMon(&d->sel, CtrBottomDex_MonSpecies());
+        FieldDexDetail(d, 1);
+    }
+    return 1;
 }
 
 /* The bar under the TM Case: its title, the TM/HM under the cursor and the
@@ -1315,12 +1456,14 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap card to turn it over.");
         }
         if (mode == MODE_DEX) {
-            /* The Pokedex draws everything itself: the bar only says how to use it. */
+            /* The lower screen draws the Pokedex itself, but for its AREA page (FireRed's map in the viewport). */
             int state = CtrBottomDex_State();
 
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeDEX");
             snprintf(s->touch.bar[1], PT_BAR_LEN, state == DEX_MENU || state == DEX_LIST
                      ? "Tap to select, again to open." : "BACK goes one step back.");
+            if (FieldDexFill(&s->touch, sFieldDex.down && sFieldDex.inside ? sFieldDex.code : -1))
+                s->touch.viewport = 0;
         }
         return;
     }
@@ -3395,6 +3538,103 @@ static void ProcessDexPageTouch(const CtrInput *in)
 }
 
 
+/* The Pokedex drawn on the lower screen: press, track, release, one action, on what it showed (CtrPokeTouch_DexHit).
+ * A tab or a card walks FireRed's cursor to that row with its own UP / DOWN and a tap on the selected one sends A; the
+ * arrows move a page; a slot of a habitat page is walked to with LEFT / RIGHT and PREV / NEXT flip the page; on a
+ * Pokemon's page AREA is its A and CRY its START. A held physical button cancels it. */
+static void DexPlanTo(int kind, int target, int state)
+{
+    DexPlanClear();
+    sDexPlan.active = 1;
+    sDexPlan.kind = kind;
+    sDexPlan.target = target;
+    sDexPlan.state = state;
+    if (kind == DEXPLAN_FLIP)
+        sDexPlan.page = CtrBottomDex_Page();
+}
+
+static void ProcessFieldDexTouch(const CtrInput *in)
+{
+    int state = CtrBottomDex_State(), hit = -1;
+    int ready = sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_DexHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sFieldDex.down = sFieldDex.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sFieldDex.down = sFieldDex.inside = hit >= 0;
+        sFieldDex.code = hit;
+        if (hit >= 0)
+            DexPlanClear();
+        return;
+    }
+    if (!sFieldDex.down)
+        return;
+    if (in->touchActive) {
+        sFieldDex.inside = hit == sFieldDex.code;
+        return;
+    }
+    if (sFieldDex.inside && state == sShown.touch.dex.state && !sDexPlan.active) {
+        const CtrPokeTouchDex *d = &sShown.touch.dex;
+        int code = sFieldDex.code, row;
+
+        if (state == DEX_MENU) {
+            if (code >= PT_DEX_HIT_TAB && code < PT_DEX_HIT_TAB + 3) {
+                row = CtrPokeTouch_DexTabRow(&sShown.touch, code - PT_DEX_HIT_TAB);
+                if (row >= 0 && row != d->menuCursor)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+            } else if (code >= PT_DEX_HIT_ITEM && code < PT_DEX_HIT_ITEM + PT_DEX_MENU_MAX) {
+                row = code - PT_DEX_HIT_ITEM;
+                if (row < d->menuCount && !d->menu[row].locked) {
+                    if (row == d->menuCursor)
+                        sRouteKey = K_A;
+                    else
+                        DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+                }
+            } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
+                row = CtrPokeTouch_DexGridPageRow(&sShown.touch, code == PT_DEX_HIT_UP ? -1 : 1);
+                if (row >= 0)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+            }
+        } else if (state == DEX_LIST) {
+            if (code >= PT_DEX_HIT_ROW && code < PT_DEX_HIT_ROW + PT_DEX_ROWS) {
+                row = d->listFirst + code - PT_DEX_HIT_ROW;
+                if (row == d->listCursor)
+                    sRouteKey = K_A;
+                else if (row < d->listCount)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
+            } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
+                row = d->listCursor + (code == PT_DEX_HIT_UP ? -(PT_DEX_ROWS - 1) : PT_DEX_ROWS - 1);
+                if (row < 0)
+                    row = 0;
+                if (row > d->listCount - 1)
+                    row = d->listCount - 1;
+                if (row != d->listCursor)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
+            }
+        } else if (state == DEX_CATEGORY) {
+            if (code >= PT_DEX_HIT_SLOT && code < PT_DEX_HIT_SLOT + 4) {
+                row = code - PT_DEX_HIT_SLOT;
+                if (row == d->slot)
+                    sRouteKey = K_A;
+                else if (row < d->slots)
+                    DexPlanTo(DEXPLAN_SLOT, row, DEX_CATEGORY);
+            } else if ((code == PT_DEX_HIT_PREV || code == PT_DEX_HIT_NEXT)
+                       && CtrBottomDex_PageCanFlip(code == PT_DEX_HIT_PREV ? -1 : 1))
+                DexPlanTo(DEXPLAN_FLIP, code == PT_DEX_HIT_PREV ? -1 : 1, DEX_CATEGORY);
+        } else if (state == DEX_PAGE) {
+            if (code == PT_DEX_HIT_AREA)
+                sRouteKey = K_A;
+            else if (code == PT_DEX_HIT_CRY)
+                sRouteKey = K_START;
+        }
+    }
+    sFieldDex.down = sFieldDex.inside = 0;
+}
+
 /* Touch of a storage screen never calls any Pokemon mutation function. Every
  * operation (including RELEASE, DEPOSIT and item changes) remains owned by
  * FireRed's task/controller; a touch yields only one real D-pad/A/B key. */
@@ -3648,7 +3888,9 @@ static int ProcessTouch(int mode)
         return HIT_NONE;
     }
     if (mode == MODE_DEX) {
-        if (CtrBottomDex_State() == DEX_CATEGORY || sDexPage.down)
+        if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on && !sDexTap.down && !sDexPage.down)
+            ProcessFieldDexTouch(in);
+        else if (CtrBottomDex_State() == DEX_CATEGORY || sDexPage.down)
             ProcessDexPageTouch(in);
         else
             ProcessDexTouch(in);
@@ -3895,6 +4137,8 @@ void CtrBottom_Init(void)
     sBatBag.pocketWait = sBatBag.autoWait = 0;
     memset(&sFieldBag, 0, sizeof(sFieldBag));
     sFieldBag.code = sFieldBag.pocketTarget = -1;
+    memset(&sFieldDex, 0, sizeof(sFieldDex));
+    sFieldDex.code = -1;
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));

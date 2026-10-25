@@ -106,6 +106,51 @@ typedef struct {
     int16_t pressed;                /* the hit code under a held touch, or -1 */
 } CtrPokeTouchBag;
 
+/* The Pokedex drawn by the port (3ds_field_dex_impl.h), a remote for FireRed's own Pokedex like the Bag: its top menu
+ * (lists, habitats, search) as tabs of cards, an ordered list as rows, a habitat page as its Pokemon, and a Pokemon's
+ * page. Its AREA page stays FireRed's picture in the viewport. */
+#define PT_DEX_MENU_MAX 24
+#define PT_DEX_ROWS 5
+enum { PT_DEX_STATE_BUSY = 0, PT_DEX_STATE_MENU, PT_DEX_STATE_LIST, PT_DEX_STATE_CATEGORY, PT_DEX_STATE_PAGE };
+/* Menu ids as FireRed's (a habitat 0-8, a list 9-14, CANCEL -2, a header -3). */
+#define PT_DEX_ID_KANTO 9
+#define PT_DEX_ID_NATIONAL 14
+#define PT_DEX_ID_HEADER (-3)
+#define PT_DEX_ID_CANCEL (-2)
+/* Hit codes (CtrPokeTouch_DexHit). */
+enum { PT_DEX_HIT_TAB = 100, PT_DEX_HIT_ITEM = 200, PT_DEX_HIT_ROW = 300, PT_DEX_HIT_SLOT = 400, PT_DEX_HIT_UP = 500,
+       PT_DEX_HIT_DOWN, PT_DEX_HIT_PREV, PT_DEX_HIT_NEXT, PT_DEX_HIT_AREA = 510, PT_DEX_HIT_CRY };
+typedef struct {
+    uint16_t species, number;
+    uint8_t flags;                  /* seen (1) and caught (2) */
+    char name[12];
+} CtrPokeTouchDexMon;
+typedef struct {
+    uint8_t on;                     /* the viewport shows this Pokedex (no GBA picture) */
+    uint8_t state;                  /* PT_DEX_STATE_*: the Pokedex's own input state */
+    uint8_t national;               /* the National Pokedex is on */
+    uint16_t seen[2], owned[2];     /* KANTO, NATIONAL */
+    uint8_t menuCount;              /* the top menu's rows, headers included */
+    int8_t menuCursor;              /* its selected row */
+    struct {
+        int8_t id;                  /* PT_DEX_ID_* or a habitat */
+        uint8_t locked;             /* a habitat with nothing seen yet */
+        char name[28];              /* FireRed's label */
+    } menu[PT_DEX_MENU_MAX];
+    uint8_t order;                  /* the ordered list's order (FireRed's DEX_ORDER_*) */
+    int16_t listCount, listCursor, listFirst;
+    CtrPokeTouchDexMon row[PT_DEX_ROWS];
+    uint8_t category, page, pages, slots, slot, canPrev, canNext;
+    CtrPokeTouchDexMon mon[4];      /* a habitat page's Pokemon */
+    CtrPokeTouchDexMon sel;         /* the selected Pokemon (list, habitat page) or the one whose page is open */
+    char kind[28];                  /* its category, height in decimeters, weight in hectograms, types and entry: */
+    uint16_t height, weight;        /* only for a caught one */
+    int8_t type[2];
+    char typeName[2][10];
+    char desc[200];
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchDex;
+
 typedef struct {
     uint8_t enabled[PT_COUNT];  /* usable now: drawn normally, else dimmed */
     uint8_t pressed;            /* element under a held touch, or PT_NONE */
@@ -147,6 +192,7 @@ typedef struct {
     char bar[PT_BAR_LINES][PT_BAR_LEN]; /* contextual text, "" for no line */
     char playerName[16];        /* the Trainer Card button's label (UTF-8) */
     CtrPokeTouchBag bag;        /* the field Bag, when bag.on */
+    CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -169,6 +215,19 @@ int CtrPokeTouch_SaveHit(int x, int y, int state);
 int CtrPokeTouch_HitTest(int x, int y);
 /* What the field Bag (view->bag.on) shows under lower-screen point (x, y): a PT_BAG_HIT_* code, or -1. */
 int CtrPokeTouch_BagHit(const CtrPokeTouchView *view, int x, int y);
+/* What the Pokedex (view->dex.on) shows under lower-screen point (x, y): a PT_DEX_HIT_* code, or -1. */
+int CtrPokeTouch_DexHit(const CtrPokeTouchView *view, int x, int y);
+/* The top menu row a tab (0-2) leads to, and the first row of the habitat/search page before (-1) or after (1) the
+ * one shown; -1 when there is none. */
+int CtrPokeTouch_DexTabRow(const CtrPokeTouchView *view, int tab);
+int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
+/* The Pokedex's pictures, from FireRed's tables (pokedex_screen.c): a species' front picture (64x64 4bpp, 8x8 tiles
+ * in rows of eight) and palette, a top menu row's icon (64x48, the same layout), a footprint (16x16 1bpp, four 8x8
+ * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
+int CtrPokeTouch_DexMonPic(unsigned species, unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_DexMenuIcon(int id, unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits);
+int CtrPokeTouch_DexCaughtMarker(unsigned char *tiles, unsigned short *palette);
 /* A bottom-screen pixel inside the viewport as GBA coordinates; false
  * outside the viewport. */
 bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy);
