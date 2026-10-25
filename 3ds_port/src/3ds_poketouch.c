@@ -752,12 +752,20 @@ static int FrameShown(const CtrPokeTouchView *v)
     return v->viewport || (v->home && !v->options && !v->save);
 }
 
-/* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, or the save card, on the embers. */
+/* The field Bag the port draws (3ds_field_bag_impl.h, included at the end). */
+static void FBagFrame(const CtrPokeTouchView *v);
+static void FBagNote(const CtrPokeTouchView *v, int w);
+
+/* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sMenuFrame;
 
     TsBgRect(r->x, r->y, r->w, r->h);
+    if (v->bag.on && !v->viewport) {
+        FBagFrame(v);
+        return;
+    }
     if (v->save && !v->viewport) {
         SaveDraw(v);
         return;
@@ -815,10 +823,12 @@ static void Bar(const CtrPokeTouchView *v)
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
-    {
+    if (v->bag.on && !v->viewport)
+        FBagNote(v, w);
+    else {
         int pitch = 16, top = NOTE_Y + (NOTE_H - (lines - 1) * pitch - UI_TEXT_H) / 2;
 
+        EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
         for (int i = 0; i < lines; ++i)
             UiText(v->bar[i], NOTE_X + 12, top + i * pitch, i == 0 ? EM_DARK : EM_DIM, EM_DARK_SH, 1,
                    NOTE_X + w - 4);
@@ -966,7 +976,13 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
-    if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
+    if (memcmp(&old->bag, &v->bag, sizeof(v->bag))) {
+        /* The Bag: its whole area and its note (the description follows the selection). */
+        MenuFrame(v);
+        Mark(dirty, &sMenuFrame);
+        Bar(v);
+        Mark(dirty, &sBar);
+    } else if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
         || (v->options && !v->viewport && old->optCount != v->optCount)
         || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
         MenuFrame(v);
@@ -1061,3 +1077,4 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyLis
 
 #include "3ds_battle_ui_impl.h"
 #include "3ds_summary_ui_impl.h"
+#include "3ds_field_bag_impl.h"

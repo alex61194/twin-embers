@@ -158,6 +158,10 @@ extern void CtrBottomBag_PocketName(char *out, int size);
 extern void CtrBottomBag_ItemName(unsigned item, char *out, int size);
 extern unsigned CtrBottomBag_Money(void);
 extern int CtrBottomBag_HitAt(int gx, int gy);
+extern int CtrBottomBag_TouchDrawn(void);
+extern int CtrBottomBag_TossCount(void);
+extern int CtrBottomBag_TossMax(void);
+extern int CtrBottomBag_Prompt(char *out, int size);
 extern int CtrBottomTMCase_IsOpen(void);
 extern int CtrBottomTMCase_State(void);
 extern int CtrBottomTMCase_Count(void);
@@ -476,6 +480,13 @@ static struct {
     uint8_t inside;
 } sPoke = {PT_NONE, 0};
 
+/* The field Bag's touch (ProcessFieldBagTouch): the hit under the touch-down, whether the touch is still on it, and the
+ * pocket a tab asked for (-1 none) with the frames left to get there. */
+static struct {
+    int down, inside, code;
+    int pocketTarget, pocketWait;
+} sFieldBag = {0, 0, -1, -1, 0};
+
 /* Colors RGB565. */
 #define RGB565(r, g, b) ((uint16_t)(((r) & 31) << 11 | ((g) & 63) << 5 | ((b) & 31)))
 #define C_BG RGB565(4, 8, 12)
@@ -641,6 +652,77 @@ static void BagBar(CtrPokeTouchView *v)
         snprintf(v->bar[2], PT_BAR_LEN, "On the X button");
     else
         snprintf(v->bar[2], PT_BAR_LEN, "Money  %u", CtrBottomBag_Money());
+}
+
+/* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
+ * own Bag and Party's GIVE Bag, outside the PC. The shop's, the PC's and the Old Man's keep the GBA picture, which
+ * shows their prices and their own windows. */
+static int FieldBagNative(void)
+{
+    return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;
+}
+
+/* The field Bag as it is now: its pocket, the rows around the cursor (CLOSE BAG the row after the last item), the
+ * selected item's detail, and what it has open. While the Bag is busy (a pocket sliding in, a message printing) the
+ * picture last shown stays. */
+static void FieldBagFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchBag *b = &v->bag;
+    int count, total, state = CtrBottomBag_State();
+
+    if (state == BAG_BUSY && sHaveShown && sShown.mode == MODE_BAG && sShown.touch.bag.on) {
+        *b = sShown.touch.bag;
+        b->pressed = -1;
+        return;
+    }
+    memset(b, 0, sizeof(*b));
+    b->on = 1;
+    b->pressed = (int16_t)pressed;
+    b->state = (uint8_t)(state == BAG_BUSY ? BAG_LIST : state);
+    b->pocket = (uint8_t)CtrBottomBag_Pocket();
+    b->count = (int16_t)(count = CtrBottomBag_Count());
+    b->cursor = (int16_t)CtrBottomBag_Cursor();
+    total = count + 1;
+    b->first = (int16_t)(b->cursor - 2 < 0 ? 0 : b->cursor - 2);
+    if (b->first > total - PT_BAG_ROWS)
+        b->first = (int16_t)(total - PT_BAG_ROWS < 0 ? 0 : total - PT_BAG_ROWS);
+    for (int i = 0; i < PT_BAG_ROWS; ++i) {
+        unsigned item = CtrBottomBag_Item(b->first + i);
+
+        b->row[i].item = (uint16_t)item;
+        if (item) {
+            b->row[i].qty = (uint16_t)CtrBottomBag_Quantity(b->first + i);
+            CtrBottomBag_ItemName(item, b->row[i].name, sizeof(b->row[i].name));
+        }
+    }
+    if (b->cursor >= 0 && b->cursor < count) {
+        b->selItem = (uint16_t)CtrBottomBag_Item(b->cursor);
+        if (b->selItem) {
+            CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
+            CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
+        }
+    }
+    if (state == BAG_ACTIONS || state == BAG_YESNO) {
+        int n = state == BAG_YESNO ? 2 : CtrBottomBag_ActionCount();
+
+        b->menuCount = (uint8_t)(n > PT_BAG_MENU_MAX ? PT_BAG_MENU_MAX : n);
+        b->menuCursor = (int8_t)CtrBottomBag_MenuCursor();
+        for (int i = 0; state == BAG_ACTIONS && i < b->menuCount; ++i)
+            CtrBottomBag_ActionName(i, b->menuName[i], sizeof(b->menuName[i]));
+    }
+    if (state == BAG_QUANTITY) {
+        b->tossCount = (uint16_t)CtrBottomBag_TossCount();
+        b->tossMax = (uint16_t)CtrBottomBag_TossMax();
+    }
+    if (state == BAG_YESNO) {
+        CtrBottomBag_Prompt(b->prompt, sizeof(b->prompt));
+        const CtrPokeTouchBag *was = &sShown.touch.bag;   /* the count asked for just before (one: none was asked) */
+
+        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == MODE_BAG && was->on && was->tossCount
+                                  && (was->state == BAG_QUANTITY || was->state == BAG_YESNO) ? was->tossCount : 1);
+    }
+    if (state == BAG_MESSAGE)
+        CtrBottomBag_Message(b->prompt, sizeof(b->prompt));
 }
 
 /* The bar under the TM Case: its title, the TM/HM under the cursor and the
@@ -1212,6 +1294,10 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->serial = CtrBottomBag_Serial();
             s->cursor = (signed char)CtrBottomBag_Cursor();
             BagBar(&s->touch);
+            if (FieldBagNative()) {
+                FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1);
+                s->touch.viewport = 0;
+            }
         }
         if (mode == MODE_TMCASE) {
             s->serial = CtrBottomTMCase_Serial();
@@ -2999,6 +3085,69 @@ static void ProcessBattleBagTouch(const CtrInput *in)
     sBat.down = sBat.inside = 0;
 }
 
+/* The field Bag's touch: press, track, release, one action, on what the lower screen showed (CtrPokeTouch_BagHit).
+ * A row selects its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the
+ * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
+ * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
+ * Bag's own keys, so FireRed decides what each does. A held physical button cancels it. */
+static void ProcessFieldBagTouch(const CtrInput *in)
+{
+    const ListScreen *list = &sBagScreen;
+    int state = CtrBottomBag_State(), hit = -1;
+    int ready = sHaveShown && sShown.mode == MODE_BAG && sShown.touch.bag.on && !CtrBottom_IsFading();
+
+    if (sFieldBag.pocketTarget >= 0) {
+        int pocket = CtrBottomBag_Pocket();
+
+        if (pocket == sFieldBag.pocketTarget || --sFieldBag.pocketWait <= 0 || (state != BAG_LIST && state != BAG_BUSY))
+            sFieldBag.pocketTarget = -1;
+        else if (state == BAG_LIST && sBagPlan.kind == BAGPLAN_NONE)
+            BagPlanStart(list, BAGPLAN_PRESS, 0, 0, pocket < sFieldBag.pocketTarget ? K_RIGHT : K_LEFT);
+    }
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_BagHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sFieldBag.down = sFieldBag.inside = 0;
+        if (in->held & 0x3ffu)
+            sFieldBag.pocketTarget = -1;
+        return;
+    }
+    if (in->touchDown) {
+        sFieldBag.down = sFieldBag.inside = hit >= 0;
+        sFieldBag.code = hit;
+        return;
+    }
+    if (!sFieldBag.down)
+        return;
+    if (in->touchActive) {
+        sFieldBag.inside = hit == sFieldBag.code;
+        return;
+    }
+    if (sFieldBag.inside && state == sShown.touch.bag.state) {
+        const CtrPokeTouchBag *b = &sShown.touch.bag;
+        int code = sFieldBag.code, page = PT_BAG_ROWS - 1;
+
+        if (code >= PT_BAG_HIT_ROW && code < PT_BAG_HIT_ROW + PT_BAG_ROWS) {
+            int index = b->first + code - PT_BAG_HIT_ROW;
+
+            BagPlanStart(list, BAGPLAN_LIST, index, index == b->cursor || index == b->count, 0);
+        } else if (code >= PT_BAG_HIT_TAB && code < PT_BAG_HIT_TAB + 3) {
+            sFieldBag.pocketTarget = code - PT_BAG_HIT_TAB;
+            sFieldBag.pocketWait = 90;
+        } else if (code >= PT_BAG_HIT_MENU && code < PT_BAG_HIT_MENU + PT_BAG_MENU_MAX)
+            BagPlanStart(list, BAGPLAN_MENU, code - PT_BAG_HIT_MENU, 1, 0);
+        else if (code == PT_BAG_HIT_UP)
+            BagPlanStart(list, BAGPLAN_LIST, b->cursor - page < 0 ? 0 : b->cursor - page, 0, 0);
+        else if (code == PT_BAG_HIT_DOWN)
+            BagPlanStart(list, BAGPLAN_LIST, b->cursor + page > b->count ? b->count : b->cursor + page, 0, 0);
+        else if (code == PT_BAG_HIT_QTY_UP || code == PT_BAG_HIT_QTY_DOWN || code == PT_BAG_HIT_QTY_OK
+                 || code == PT_BAG_HIT_QTY_CANCEL || code == PT_BAG_HIT_MESSAGE)
+            BagPlanStart(list, BAGPLAN_PRESS, 0, 0, code == PT_BAG_HIT_QTY_UP ? K_UP : code == PT_BAG_HIT_QTY_DOWN ? K_DOWN
+                                                  : code == PT_BAG_HIT_QTY_CANCEL ? K_B : K_A);
+    }
+    sFieldBag.down = sFieldBag.inside = 0;
+}
+
 /* The battle Party's touch: press, track, release, one action. A slot is the Party's own touch (it selects that slot and takes
  * its A, so FireRed's Party decides what A means here: its menu, or the item's use, or the switch), CANCEL its B; a row of the
  * menu or the YES / NO it has open is walked to with the Party's plans, and a message it waits on takes A. Nothing is taken while
@@ -3505,6 +3654,10 @@ static int ProcessTouch(int mode)
             ProcessDexTouch(in);
         return HIT_NONE;
     }
+    if (mode == MODE_BAG && FieldBagNative()) {
+        ProcessFieldBagTouch(in);
+        return HIT_NONE;
+    }
     if (in->held & 0x3ffu || (sHaveShown && mode != sShown.mode))
         return HIT_NONE;
     if (ListFor(mode) != NULL)
@@ -3740,6 +3893,8 @@ void CtrBottom_Init(void)
     sBatHold = sBatHoldFrames = 0;
     sBatBag.pocketTarget = -1;
     sBatBag.pocketWait = sBatBag.autoWait = 0;
+    memset(&sFieldBag, 0, sizeof(sFieldBag));
+    sFieldBag.code = sFieldBag.pocketTarget = -1;
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));

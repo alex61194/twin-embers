@@ -73,6 +73,39 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
 #define PT_BAR_LINES 3
 #define PT_BAR_LEN 40
 
+/* The field Bag drawn by the port in the viewport (3ds_field_bag_impl.h), a remote for FireRed's own Bag: its pockets
+ * as tabs, the rows of the list it shows (items, then CLOSE BAG), the item's description in the note, and over the
+ * list the menu, the quantity box, the question or the message it has open. Everything is the Bag's own state. */
+#define PT_BAG_ROWS 5
+#define PT_BAG_MENU_MAX 6
+enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
+       PT_BAG_STATE_MESSAGE };
+/* Hit codes (CtrPokeTouch_BagHit). */
+enum { PT_BAG_HIT_TAB = 100, PT_BAG_HIT_ROW = 200, PT_BAG_HIT_MENU = 300, PT_BAG_HIT_MESSAGE = 500, PT_BAG_HIT_UP = 600,
+       PT_BAG_HIT_DOWN, PT_BAG_HIT_QTY_UP = 610, PT_BAG_HIT_QTY_DOWN, PT_BAG_HIT_QTY_OK, PT_BAG_HIT_QTY_CANCEL };
+typedef struct {
+    uint8_t on;                     /* the viewport shows this Bag (no GBA picture) */
+    uint8_t pocket;                 /* FireRed's pocket: 0 Items, 1 Key Items, 2 Poke Balls */
+    uint8_t state;                  /* PT_BAG_STATE_*: the Bag's own input state */
+    int16_t count;                  /* items in the pocket; row `count` is CLOSE BAG */
+    int16_t cursor;                 /* the Bag's selection (count: CLOSE BAG) */
+    int16_t first;                  /* the list index of the first row shown */
+    struct {
+        uint16_t item;
+        uint16_t qty;
+        char name[20];
+    } row[PT_BAG_ROWS];
+    uint16_t selItem;               /* the selected item, its name and description */
+    char selName[20];
+    char selDesc[112];
+    uint8_t menuCount;              /* the open menu's rows (USE, GIVE, TOSS ... CANCEL) */
+    int8_t menuCursor;
+    char menuName[PT_BAG_MENU_MAX][14];
+    uint16_t tossCount, tossMax;    /* the quantity box: how many, of how many */
+    char prompt[96];                /* the Bag's question (YES/NO) or the message it waits on */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchBag;
+
 typedef struct {
     uint8_t enabled[PT_COUNT];  /* usable now: drawn normally, else dimmed */
     uint8_t pressed;            /* element under a held touch, or PT_NONE */
@@ -113,6 +146,7 @@ typedef struct {
     uint16_t bikeItem;          /* the Bicycle's item id, 0 when not owned */
     char bar[PT_BAR_LINES][PT_BAR_LEN]; /* contextual text, "" for no line */
     char playerName[16];        /* the Trainer Card button's label (UTF-8) */
+    CtrPokeTouchBag bag;        /* the field Bag, when bag.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -133,6 +167,8 @@ int CtrPokeTouch_SaveHit(int x, int y, int state);
 
 /* PT_* under a bottom-screen pixel, or PT_NONE. */
 int CtrPokeTouch_HitTest(int x, int y);
+/* What the field Bag (view->bag.on) shows under lower-screen point (x, y): a PT_BAG_HIT_* code, or -1. */
+int CtrPokeTouch_BagHit(const CtrPokeTouchView *view, int x, int y);
 /* A bottom-screen pixel inside the viewport as GBA coordinates; false
  * outside the viewport. */
 bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy);
