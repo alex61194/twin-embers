@@ -124,7 +124,7 @@ def check(files,modes=None,windows=None,supplements=()):
             raise ValueError(f'Exact ROM fragment: {name}')
     return len(files)
 
-def snapshot(root,commit=None):
+def snapshot(root,commit=None,excluded=()):
     files,modes={},{}
     if commit:
         for record in git(root,'ls-tree','-rz',commit).split(b'\0'):
@@ -133,7 +133,7 @@ def snapshot(root,commit=None):
             mode,kind,blob=metadata.decode().split()
             if kind!='blob': raise ValueError('Non-source Git object')
             name=path.decode(); validate_name(name)
-            if int(git(root,'cat-file','-s',blob))>size_limit(name): raise ValueError('Oversized historical blob')
+            if name not in excluded and int(git(root,'cat-file','-s',blob))>size_limit(name): raise ValueError('Oversized historical blob')
             files[name]=git(root,'cat-file','blob',blob); modes[name]=mode
     else:
         for record in git(root,'ls-files','--stage','-z').split(b'\0'):
@@ -163,8 +163,31 @@ def history(root,windows=None):
             raise ValueError('Historical review must name a reachable full commit')
         if (commit,name) in seen: raise ValueError('Duplicate historical review')
         seen.add((commit,name)); by_commit.setdefault(commit,[]).append(row)
+    # An owner exclusion takes one exact image out of one historical snapshot:
+    # a README image that was committed without review and removed again. It
+    # must be an image in docs/media, gone from the current tree, still a
+    # single well-formed image with no ROM fragment, and named by its exact
+    # SHA-256. Every other file in that snapshot is checked as usual.
+    excluded={}; seen=set()
+    for row in json.loads(current[MANIFEST]).get('historical_exclusions',[]):
+        commit=row.get('commit',''); name=row.get('path','')
+        if not re.fullmatch('[0-9a-f]{40}',commit) or commit not in commits:
+            raise ValueError('Historical exclusion must name a reachable full commit')
+        if (commit,name) in seen: raise ValueError('Duplicate historical exclusion')
+        if not is_media(name) or name in current: raise ValueError('Historical exclusion is only for a removed README image')
+        if not re.fullmatch('[0-9a-f]{64}',row.get('sha256','')) or not row.get('basis'):
+            raise ValueError('Incomplete historical exclusion')
+        seen.add((commit,name)); excluded.setdefault(commit,{})[name]=row['sha256']
     for commit in commits:
-        check(*snapshot(root,commit),windows,supplements=by_commit.get(commit,()))
+        files,modes=snapshot(root,commit,excluded.get(commit,{}))
+        for name,digest in excluded.get(commit,{}).items():
+            raw=files.pop(name,None); modes.pop(name,None)
+            if raw is None or hashlib.sha256(raw).hexdigest()!=digest:
+                raise ValueError('Historical exclusion requires exact blob bytes')
+            check_media(name,raw)
+            if windows and any(raw[n:n+64] in windows for n in range(len(raw)-63)):
+                raise ValueError(f'Exact ROM fragment: {name}')
+        check(files,modes,windows,supplements=by_commit.get(commit,()))
     return len(commits)
 
 DECISION='docs/release-decision.json'

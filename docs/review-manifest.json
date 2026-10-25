@@ -4470,7 +4470,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "420f88d8af40ac2c4c9388a507af970a0d46966fbc3ad14ff7223cfdbebd27bf",
+   "sha256": "b5657da6100cb0909a822542d4077e25990046d431a3336926f6b0c81f053394",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4698,7 +4698,7 @@
   },
   {
    "path": "tools/test_source_audit.py",
-   "sha256": "f8c80020218089891aca73e59a3210fcb3babd209fa5457686a5b0c58f261c64",
+   "sha256": "4d0d58f54cd907030c3abdcc1ebc730860889a4c60e9122646a54937398796cb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5027,6 +5027,657 @@
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
    "basis": "Retrospective review 2026-10-17 of the README text at this commit (owner web edits and PR #1 that did not update the manifest): plain Markdown, media linked from release assets only, no encoded payload, ROM bytes or binaries; attribution and AI disclosure preserved."
+  },
+  {
+   "commit": "af0d98855d12d715465cf038ee48c53fb4ff04ce",
+   "path": "3ds_port/include/3ds_touch_text.h",
+   "sha256": "c1f92c88650d0c1775cc8cc1a5fae2cb329cdb9a2b9b9694984b5c5e102ff646",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (af0d988 v0.1.4: port text out of the game objects (#11)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "af0d98855d12d715465cf038ee48c53fb4ff04ce",
+   "path": "3ds_port/src/3ds_touch_text.c",
+   "sha256": "1b9ab4ab9029dca00ab99d230f459057471aa4b4f45656c63ac0b0db09fab4fe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (af0d988 v0.1.4: port text out of the game objects (#11)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "af0d98855d12d715465cf038ee48c53fb4ff04ce",
+   "path": "patches/pokefirered/0135-port-text-out-of-game-objects.json",
+   "sha256": "e7add81b398fffb8fe9ccac2a9598d98c54aed7af8b861d5657daa2265859e0e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (af0d988 v0.1.4: port text out of the game objects (#11)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "af0d98855d12d715465cf038ee48c53fb4ff04ce",
+   "path": "3ds_port/Makefile",
+   "sha256": "2ceb360119e95c33091d597d82c6150deeb77758c8351ef8d84a12b879436fd0",
+   "supersedes": "c3ab9af4e3ace1ec887ea89b37e9de9f17bef1b44648e3ecb497e358f983b37c",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (af0d988 v0.1.4: port text out of the game objects (#11)): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "69e70d438dad95ba70aced398d8acdf7292dfd5d",
+   "path": "3ds_port/include/3ds_touch_text.h",
+   "sha256": "c1f92c88650d0c1775cc8cc1a5fae2cb329cdb9a2b9b9694984b5c5e102ff646",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (69e70d4 release: the touch MENU text and two port tables leave the game objects (clean-release audit)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "69e70d438dad95ba70aced398d8acdf7292dfd5d",
+   "path": "3ds_port/src/3ds_touch_text.c",
+   "sha256": "1b9ab4ab9029dca00ab99d230f459057471aa4b4f45656c63ac0b0db09fab4fe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (69e70d4 release: the touch MENU text and two port tables leave the game objects (clean-release audit)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "69e70d438dad95ba70aced398d8acdf7292dfd5d",
+   "path": "patches/pokefirered/0135-port-text-out-of-game-objects.json",
+   "sha256": "e7add81b398fffb8fe9ccac2a9598d98c54aed7af8b861d5657daa2265859e0e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (69e70d4 release: the touch MENU text and two port tables leave the game objects (clean-release audit)): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "69e70d438dad95ba70aced398d8acdf7292dfd5d",
+   "path": "3ds_port/Makefile",
+   "sha256": "2ceb360119e95c33091d597d82c6150deeb77758c8351ef8d84a12b879436fd0",
+   "supersedes": "c3ab9af4e3ace1ec887ea89b37e9de9f17bef1b44648e3ecb497e358f983b37c",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (69e70d4 release: the touch MENU text and two port tables leave the game objects (clean-release audit)): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "patches/pokefirered/0129-touch-menu-wording.json",
+   "sha256": "ae12b91f5f05dddd920145f4a7a582cee9aa135b7c8d90b22dd98e901155bc63",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "patches/pokefirered/0130-leafgreen-wild-exclusives.json",
+   "sha256": "7598551ca3c4d46c6b3276d6116f04e812d0aadaf0c0a2a46513208c55d642e1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "patches/pokefirered/0131-trade-evolutions-by-level.json",
+   "sha256": "d021a8253e68b7a9877e3ca9390ee00c116d352b5600ccb423d3923544245f62",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/Makefile",
+   "sha256": "c8aebcdb1a8e8a297a10c1b45990d2e16bb8fef0cd4e25b56f0d25beb6024ac1",
+   "supersedes": "0822d5bf213bef0a7233575e79cc4ac26e106a39869fcc26c98e3e1a6ff08eb8",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/include/3ds_poketouch_options.h",
+   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "supersedes": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/src/3ds_bottom.c",
+   "sha256": "c96065fdeeadc0e2daa487719e339111f774929be9e1c98b3123a57e7960b04d",
+   "supersedes": "cd09255e178356772d7cead9a41ed80bc66024ed64adfd1d53cf9f23443b31f6",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/src/3ds_flash.c",
+   "sha256": "532b5aa2b51d242ee946c690de927bcfae7528b872d13914c7f276236d1dfc99",
+   "supersedes": "80cf8fe2321ee9f1cfc9374e9382df21979de1967932bce92ebdf16f92793b4e",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/src/3ds_game_bridge.c",
+   "sha256": "5378e5b1b03f0146270ac07f24d1a8881aa040bbc32167fb9de11574574885ad",
+   "supersedes": "3547e8468129fe3a264dc69a612f40bd250c8e298c7b4bf4596db055547580ee",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/src/3ds_poketouch_options.c",
+   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "supersedes": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/src/3ds_video.c",
+   "sha256": "0f8e2c296dd2613398a00ee012a42407c460578918e362b8cdbc9540c40312ff",
+   "supersedes": "b88f52532e0687b96b2f9d2a334adcfdff4da062c2343268691c69c7676ac58d",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "3ds_port/tests/poketouch_options_test.c",
+   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "supersedes": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "docs/QUALITY-OF-LIFE.md",
+   "sha256": "35cbc22dcc5c7e62f403f58a51484f0f521075d68cc99489ad58ddd1857a274f",
+   "supersedes": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "5c77af36ad1ba457c8ea605d6214e939b2d85956",
+   "path": "docs/TECHNICAL-NOTES.md",
+   "sha256": "ca5604756978319796d55c8f086f893899861d463504a932a7f2865da9231a4c",
+   "supersedes": "0611aef240451e05641fd42615b0422c8b152884520d21e658571507886b9327",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (5c77af3 release 0.1.4: number the touch MENU wording patch 0129, apart from the Party's 0125): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "patches/pokefirered/0125-touch-menu-wording.json",
+   "sha256": "ae12b91f5f05dddd920145f4a7a582cee9aa135b7c8d90b22dd98e901155bc63",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "patches/pokefirered/0130-leafgreen-wild-exclusives.json",
+   "sha256": "7598551ca3c4d46c6b3276d6116f04e812d0aadaf0c0a2a46513208c55d642e1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "patches/pokefirered/0131-trade-evolutions-by-level.json",
+   "sha256": "d021a8253e68b7a9877e3ca9390ee00c116d352b5600ccb423d3923544245f62",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/Makefile",
+   "sha256": "c8aebcdb1a8e8a297a10c1b45990d2e16bb8fef0cd4e25b56f0d25beb6024ac1",
+   "supersedes": "0822d5bf213bef0a7233575e79cc4ac26e106a39869fcc26c98e3e1a6ff08eb8",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/include/3ds_poketouch_options.h",
+   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "supersedes": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/src/3ds_bottom.c",
+   "sha256": "c96065fdeeadc0e2daa487719e339111f774929be9e1c98b3123a57e7960b04d",
+   "supersedes": "cd09255e178356772d7cead9a41ed80bc66024ed64adfd1d53cf9f23443b31f6",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/src/3ds_flash.c",
+   "sha256": "532b5aa2b51d242ee946c690de927bcfae7528b872d13914c7f276236d1dfc99",
+   "supersedes": "80cf8fe2321ee9f1cfc9374e9382df21979de1967932bce92ebdf16f92793b4e",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/src/3ds_game_bridge.c",
+   "sha256": "5378e5b1b03f0146270ac07f24d1a8881aa040bbc32167fb9de11574574885ad",
+   "supersedes": "3547e8468129fe3a264dc69a612f40bd250c8e298c7b4bf4596db055547580ee",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/src/3ds_poketouch_options.c",
+   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "supersedes": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/src/3ds_video.c",
+   "sha256": "0f8e2c296dd2613398a00ee012a42407c460578918e362b8cdbc9540c40312ff",
+   "supersedes": "b88f52532e0687b96b2f9d2a334adcfdff4da062c2343268691c69c7676ac58d",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "3ds_port/tests/poketouch_options_test.c",
+   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "supersedes": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "docs/QUALITY-OF-LIFE.md",
+   "sha256": "35cbc22dcc5c7e62f403f58a51484f0f521075d68cc99489ad58ddd1857a274f",
+   "supersedes": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "0eae43c2135562f43452225fbb8afd1796d82ada",
+   "path": "docs/TECHNICAL-NOTES.md",
+   "sha256": "ca5604756978319796d55c8f086f893899861d463504a932a7f2865da9231a4c",
+   "supersedes": "0611aef240451e05641fd42615b0422c8b152884520d21e658571507886b9327",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (0eae43c Merge remote-tracking branch 'origin/feature/verde-hoja-evoluciones' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "patches/pokefirered/0125-touch-menu-wording.json",
+   "sha256": "ae12b91f5f05dddd920145f4a7a582cee9aa135b7c8d90b22dd98e901155bc63",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file was added on a branch before its manifest record, which a later commit of the same release added; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/Makefile",
+   "sha256": "12d7a82c40a72df1fca987966c4bd39a72f6c98c17a68ed60e88f6bcf6f4e2a8",
+   "supersedes": "0822d5bf213bef0a7233575e79cc4ac26e106a39869fcc26c98e3e1a6ff08eb8",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/include/3ds_poketouch_options.h",
+   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "supersedes": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/src/3ds_bottom.c",
+   "sha256": "c96065fdeeadc0e2daa487719e339111f774929be9e1c98b3123a57e7960b04d",
+   "supersedes": "cd09255e178356772d7cead9a41ed80bc66024ed64adfd1d53cf9f23443b31f6",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/src/3ds_flash.c",
+   "sha256": "532b5aa2b51d242ee946c690de927bcfae7528b872d13914c7f276236d1dfc99",
+   "supersedes": "80cf8fe2321ee9f1cfc9374e9382df21979de1967932bce92ebdf16f92793b4e",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/src/3ds_game_bridge.c",
+   "sha256": "5378e5b1b03f0146270ac07f24d1a8881aa040bbc32167fb9de11574574885ad",
+   "supersedes": "3547e8468129fe3a264dc69a612f40bd250c8e298c7b4bf4596db055547580ee",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/src/3ds_poketouch_options.c",
+   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "supersedes": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/src/3ds_video.c",
+   "sha256": "0f8e2c296dd2613398a00ee012a42407c460578918e362b8cdbc9540c40312ff",
+   "supersedes": "b88f52532e0687b96b2f9d2a334adcfdff4da062c2343268691c69c7676ac58d",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "3ds_port/tests/poketouch_options_test.c",
+   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "supersedes": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "docs/QUALITY-OF-LIFE.md",
+   "sha256": "9bd76553db600531faf9e38bce27eb36acfe86ecdabd25094c3f047c22ed1c7d",
+   "supersedes": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "b96867e88a74a7e02b4a7ab1b00e98fb3b35d1fd",
+   "path": "docs/TECHNICAL-NOTES.md",
+   "sha256": "ca5604756978319796d55c8f086f893899861d463504a932a7f2865da9231a4c",
+   "supersedes": "0611aef240451e05641fd42615b0422c8b152884520d21e658571507886b9327",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (b96867e Merge remote-tracking branch 'origin/fix/estabilidad-guardado' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "45d8c35f355dd0165c7aa356994c360693b19f39",
+   "path": "3ds_port/include/3ds_poketouch_options.h",
+   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "supersedes": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (45d8c35 Merge remote-tracking branch 'origin/fix/hardware-gpu-y-saves' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "45d8c35f355dd0165c7aa356994c360693b19f39",
+   "path": "3ds_port/src/3ds_poketouch_options.c",
+   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "supersedes": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (45d8c35 Merge remote-tracking branch 'origin/fix/hardware-gpu-y-saves' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "45d8c35f355dd0165c7aa356994c360693b19f39",
+   "path": "3ds_port/src/3ds_video.c",
+   "sha256": "1bf82607726868910c624ec53d5bf92aa9d0a4f3f33e2339e8d9a10a74a3bf56",
+   "supersedes": "b88f52532e0687b96b2f9d2a334adcfdff4da062c2343268691c69c7676ac58d",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (45d8c35 Merge remote-tracking branch 'origin/fix/hardware-gpu-y-saves' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "45d8c35f355dd0165c7aa356994c360693b19f39",
+   "path": "3ds_port/tests/poketouch_options_test.c",
+   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "supersedes": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (45d8c35 Merge remote-tracking branch 'origin/fix/hardware-gpu-y-saves' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "45d8c35f355dd0165c7aa356994c360693b19f39",
+   "path": "docs/QUALITY-OF-LIFE.md",
+   "sha256": "9bd76553db600531faf9e38bce27eb36acfe86ecdabd25094c3f047c22ed1c7d",
+   "supersedes": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (45d8c35 Merge remote-tracking branch 'origin/fix/hardware-gpu-y-saves' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "f22e4f41d6868b8dcc780bc911629c544e232a79",
+   "path": "3ds_port/include/3ds_poketouch_options.h",
+   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "supersedes": "a588df8539e3afe84fae74e9c0e12fb42c769a6d74e79ae022e760e13679cbbe",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (f22e4f4 Merge remote-tracking branch 'origin/feature/dia-noche' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "f22e4f41d6868b8dcc780bc911629c544e232a79",
+   "path": "3ds_port/src/3ds_poketouch_options.c",
+   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "supersedes": "7e94624a21e5a6b9c8177f515533ef8a77082d6765847d5ff4a2b3e73bd9bf31",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (f22e4f4 Merge remote-tracking branch 'origin/feature/dia-noche' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "f22e4f41d6868b8dcc780bc911629c544e232a79",
+   "path": "3ds_port/tests/poketouch_options_test.c",
+   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "supersedes": "d587d50689405f25265369e82f191519a2b7a710f307074920af3bba599f76fc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (f22e4f4 Merge remote-tracking branch 'origin/feature/dia-noche' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "f22e4f41d6868b8dcc780bc911629c544e232a79",
+   "path": "docs/QUALITY-OF-LIFE.md",
+   "sha256": "9bd76553db600531faf9e38bce27eb36acfe86ecdabd25094c3f047c22ed1c7d",
+   "supersedes": "15c7852a3eff31409d0b5cd7b0a10021e436bf8d3241be32d8f638f8c7d4eded",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (f22e4f4 Merge remote-tracking branch 'origin/feature/dia-noche' into release/0.1.4): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "d3d11d97e7da7cea43f31fa78d8ed0142f6ef932",
+   "path": "README.md",
+   "sha256": "b50bfe2c9e5aaca08a5c32034ed657ee7e11793ed2d105eac5df34c44e44872e",
+   "supersedes": "570f811bb969ab4c60732f84f435e28d15f210026dfdcdae13cb33af0f1a57e5",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (d3d11d9 Release v0.1.3: source (#5)): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  },
+  {
+   "commit": "c770262b35cc94a142b936770bb968043e5db7e8",
+   "path": "README.md",
+   "sha256": "b50bfe2c9e5aaca08a5c32034ed657ee7e11793ed2d105eac5df34c44e44872e",
+   "supersedes": "570f811bb969ab4c60732f84f435e28d15f210026dfdcdae13cb33af0f1a57e5",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-10-25 of this intermediate snapshot (c770262 release: v0.1.3): the file changed in a merge before the manifest hash was refreshed by a later commit of the same release; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
+  }
+ ],
+ "historical_exclusions": [
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.41.00.453.png",
+   "sha256": "14891e73df64e1f4c7102a6f5e0a9fc58bf2a27c885f07ead54386f2fbbb38e8",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.53.06.092.png",
+   "sha256": "36951a3fc3ff317645fc41d1c9ee8828bd2d94a305f48c7b3097c7405f46709e",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.56.29.763.png",
+   "sha256": "1998da6c228fbbaf50dcdfe57ab67c644071a05410a4ea36789d0dbb8f0f7a94",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.56.38.909.png",
+   "sha256": "80e2dc372eef78a1747ea4709820b6e8a5a03fc58132527b6c0bff77dd15bf86",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.56.44.609.png",
+   "sha256": "50331d5ac8c51b0d6abfae210aea4689ee66ecdcc69c56944cd237b380e00e67",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.56.49.859.png",
+   "sha256": "bf28b91dbd680a1234fec8cd7770e3cc42e6902f197ee2b916f13b3442900751",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.56.55.658.png",
+   "sha256": "c0fafaab03430e34e01a3f67e9c5c25d2ce42287b73297da6c0b5a26e4e73c20",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.57.08.508.png",
+   "sha256": "809848009cba9233a08abc4dd3cd4d28e69651a37fede5be071e9bb8a3a633c3",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.57.13.077.png",
+   "sha256": "8697eb768e28331a3f8a1a443e2c1060f56ff5b94d25e4fb3ab6503826ec2a58",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.57.18.927.png",
+   "sha256": "aa966267c1f3b373eadae055810b37842a675009996fed367edd0d70425aa93c",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.58.27.097.png",
+   "sha256": "358219be09e568425feea93d2d909676490a8f8f5e27912fb158b9342804e87f",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.58.33.378.png",
+   "sha256": "f2b0d0815ffa0f7c7b33d7df04e799c5bf68b31a9594c6cd33ff8aead85546e9",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.58.37.817.png",
+   "sha256": "c4e42f776c559f33445479828b5dcd108116627f28aa061bb76f1a67b0290c3e",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.58.43.62.png",
+   "sha256": "4be08df9d9b0165dfe12786622ed00fb469306ba4e908b7863a59e2dd029315a",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.58.48.642.png",
+   "sha256": "417d29bf07894788554989ad77b5ddf69bfd99cc17c6559b33962269c9b60a4f",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.59.00.033.png",
+   "sha256": "5322207dc3b7e0a26fa7d01cd97f1815d92fbf26ec4d43b9b6036d42c4cd8787",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
+  },
+  {
+   "commit": "036216727148ea75e87e597e022fde78a6774616",
+   "path": "docs/media/_23.10.26_01.59.17.662.png",
+   "sha256": "e0cfed1a8a66c16962834f26f69a521890930e0171534018e4b1a6777248a986",
+   "basis": "Owner decision 2026-10-25 (alex61194): raw AzaharPlus screenshot of Twin Embers v0.1.4 (3600x4320) uploaded through the GitHub web editor without review and removed in PR #13, which added reduced, reviewed copies. Kept in history rather than rewriting main; only the size cap and manifest record are waived for this one snapshot, the image must still be a single well-formed PNG with no ROM fragment."
   }
  ]
 }
