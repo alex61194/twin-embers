@@ -133,6 +133,26 @@ typedef struct {
     uint8_t flags;                  /* seen (1) and caught (2) */
     char name[12];
 } CtrPokeTouchDexMon;
+/* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
+ * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
+ * on it turns it over with the card's own key. A link card stays FireRed's picture. */
+#define PT_CARD_ROWS 5
+typedef struct {
+    uint8_t on;                     /* the viewport shows this card (no GBA picture) */
+    uint8_t back;                   /* its back is up */
+    uint8_t pressed;                /* the card is held */
+    char name[16];
+    char label[6][16];              /* FireRed's NAME, IDNo., MONEY, yen sign, POKeDEX, TIME */
+    uint32_t id, money;
+    uint8_t hasDex, minutes, stars, badges;   /* badges: bit i, badge i */
+    uint16_t caught, hours;
+    uint8_t rows;                   /* the back's records */
+    struct {
+        char label[28];
+        char value[20];
+    } row[PT_CARD_ROWS];
+} CtrPokeTouchCard;
+
 typedef struct {
     uint8_t on;                     /* the viewport shows this Pokedex (no GBA picture) */
     uint8_t state;                  /* PT_DEX_STATE_*: the Pokedex's own input state */
@@ -201,6 +221,7 @@ typedef struct {
     char playerName[16];        /* the Trainer Card button's label (UTF-8) */
     CtrPokeTouchBag bag;        /* the field Bag, when bag.on */
     CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
+    CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -232,6 +253,12 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
 /* The Pokedex's pictures, from FireRed's tables (pokedex_screen.c): a species' front picture (64x64 4bpp, 8x8 tiles
  * in rows of eight) and palette, a top menu row's icon (64x48, the same layout), a footprint (16x16 1bpp, four 8x8
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
+/* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
+int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
+/* The card's pictures, from FireRed's (trainer_card.c): the trainer's front picture (64x64 4bpp, 8x8 tiles in rows of
+ * eight) and the badges (128x16 4bpp: badge i at tiles 2i, 2i + 1 and 2i + 16, 2i + 17). 0 when there is none. */
+int CtrPokeTouch_CardTrainerPic(unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_CardBadges(unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_DexMonPic(unsigned species, unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_DexMenuIcon(int id, unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits);

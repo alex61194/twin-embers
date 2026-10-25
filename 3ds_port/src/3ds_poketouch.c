@@ -759,6 +759,9 @@ static void FBagNote(const CtrPokeTouchView *v, int w);
 /* The Pokedex the port draws (3ds_field_dex_impl.h, included at the end). */
 static void FDexFrame(const CtrPokeTouchView *v);
 static void FDexNote(const CtrPokeTouchView *v, int w);
+/* The Trainer Card the port draws (3ds_field_card_impl.h, included at the end). */
+static void FCardFrame(const CtrPokeTouchView *v);
+static void FCardNote(const CtrPokeTouchView *v, int w);
 
 /* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
@@ -768,6 +771,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     TsBgRect(r->x, r->y, r->w, r->h);
     if (v->dex.on && !v->viewport) {
         FDexFrame(v);
+        return;
+    }
+    if (v->card.on && !v->viewport) {
+        FCardFrame(v);
         return;
     }
     if (v->bag.on && !v->viewport) {
@@ -833,6 +840,8 @@ static void Bar(const CtrPokeTouchView *v)
             lines = i + 1;
     if (v->dex.on && !v->viewport)
         FDexNote(v, w);
+    else if (v->card.on && !v->viewport)
+        FCardNote(v, w);
     else if (v->bag.on && !v->viewport)
         FBagNote(v, w);
     else {
@@ -986,7 +995,8 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
-    if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))) {
+    if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
+        || memcmp(&old->card, &v->card, sizeof(v->card))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
@@ -1089,3 +1099,4 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyLis
 #include "3ds_summary_ui_impl.h"
 #include "3ds_field_bag_impl.h"
 #include "3ds_field_dex_impl.h"
+#include "3ds_field_card_impl.h"

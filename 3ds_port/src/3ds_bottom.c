@@ -43,6 +43,7 @@
 #include "3ds_summary.h"
 #include "3ds_poketouch.h"
 #include "3ds_poketouch_options.h"
+#include "3ds_ui_strings.h"
 #include "3ds_perf.h"
 
 int CtrBattleAction_Next(int cursor, int dir)
@@ -214,6 +215,12 @@ extern unsigned CtrSave_Money(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
 extern int CtrBottomCard_State(void);
+extern int CtrBottomCard_TouchDrawn(void);
+extern int CtrBottomCard_OnBack(void);
+extern void CtrBottomCard_Label(int which, char *out, int size);
+extern void CtrBottomCard_Name(char *out, int size);
+extern void CtrBottomCard_Numbers(unsigned out[8]);
+extern int CtrBottomCard_BackRow(int index, char *label, int lsize, char *value, int vsize);
 extern int CtrField_TryOpenDex(void);
 extern int CtrTurbo_FieldStable(void);
 extern int CtrTurbo_BattleStable(void);
@@ -522,6 +529,11 @@ static struct {
     int down, inside, code;
     int pocketTarget, pocketWait;
 } sFieldBag = {0, 0, -1, -1, 0};
+
+/* The Trainer Card's touch (ProcessCardTouch): pressed on the card, and still on it. */
+static struct {
+    int down, inside;
+} sCardTap;
 
 /* The Pokedex's touch (ProcessFieldDexTouch), as the Bag's. */
 static struct {
@@ -840,6 +852,35 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
     }
     if (state == BAG_MESSAGE)
         f->message(b->prompt, sizeof(b->prompt));
+}
+
+/* The player's Trainer Card as the card shows it: its side, FireRed's labels and numbers, and its back's records. */
+static void FieldCardFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchCard *c = &v->card;
+    unsigned n[8];
+    int rows = 0;
+
+    memset(c, 0, sizeof(*c));
+    c->on = 1;
+    c->back = (uint8_t)(CtrBottomCard_OnBack() != 0);
+    c->pressed = (uint8_t)(pressed != 0);
+    CtrBottomCard_Name(c->name, sizeof(c->name));
+    for (int i = 0; i < 6; ++i)
+        CtrBottomCard_Label(i, c->label[i], sizeof(c->label[i]));
+    CtrBottomCard_Numbers(n);
+    c->id = n[0];
+    c->money = n[1];
+    c->hasDex = (uint8_t)n[2];
+    c->caught = (uint16_t)n[3];
+    c->hours = (uint16_t)n[4];
+    c->minutes = (uint8_t)n[5];
+    c->stars = (uint8_t)n[6];
+    c->badges = (uint8_t)n[7];
+    while (rows < PT_CARD_ROWS && CtrBottomCard_BackRow(rows, c->row[rows].label, sizeof(c->row[rows].label),
+                                                         c->row[rows].value, sizeof(c->row[rows].value)))
+        ++rows;
+    c->rows = (uint8_t)rows;
 }
 
 /* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
@@ -1544,8 +1585,12 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         }
         if (mode == MODE_CARD) {
             /* The card itself shows its statistics: the bar only says how to turn it. */
-            snprintf(s->touch.bar[0], PT_BAR_LEN, "TRAINER CARD");
-            snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap card to turn it over.");
+            snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TITLE));
+            snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TURN));
+            if (CtrBottomCard_TouchDrawn()) {
+                FieldCardFill(&s->touch, sCardTap.down && sCardTap.inside);
+                s->touch.viewport = 0;
+            }
         }
         if (mode == MODE_DEX) {
             /* The lower screen draws the Pokedex itself, but for its AREA page (FireRed's map in the viewport). */
@@ -3433,13 +3478,12 @@ static void ProcessBattlePartyTouch(const CtrInput *in)
  * front, which flips it (FireRed's own flip animation, not ours), B on its back,
  * which flips it back. Only while the card takes input, so never during the flip
  * or a fade; a held physical button wins. */
-static struct {
-    int down, inside;
-} sCardTap;
 
 static void ProcessCardTouch(const CtrInput *in)
 {
-    int gx, gy, on = in->touchActive && CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &gx, &gy);
+    int gx, gy, on = in->touchActive && (sHaveShown && sShown.touch.card.on
+                                         ? CtrPokeTouch_CardHit(&sShown.touch, (int)in->touchX, (int)in->touchY)
+                                         : CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &gx, &gy));
     int ready = CtrBottomCard_State() != CARD_BUSY && !CtrBottom_IsFading() && !(sHaveShown && sShown.mode != MODE_CARD);
 
     if ((in->held & 0x3ffu) || !ready) {

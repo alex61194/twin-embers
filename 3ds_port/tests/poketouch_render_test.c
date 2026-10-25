@@ -53,6 +53,10 @@ int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits)
 { (void)species; (void)bits; return 0; }
 int CtrPokeTouch_DexCaughtMarker(unsigned char *tiles, unsigned short *palette)
 { (void)tiles; (void)palette; return 0; }
+int CtrPokeTouch_CardTrainerPic(unsigned char *tiles, unsigned short *palette)
+{ (void)tiles; (void)palette; return 0; }
+int CtrPokeTouch_CardBadges(unsigned char *tiles, unsigned short *palette)
+{ (void)tiles; (void)palette; return 0; }
 int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned short *palette)
 {
     memset(tiles, 0x11, 288); memset(palette, 0, 32);
