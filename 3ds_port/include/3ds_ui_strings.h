@@ -42,6 +42,9 @@ typedef enum {
     UIS_DEX_NOTE_UNSEEN,
     UIS_CARD_TITLE,
     UIS_CARD_TURN,
+    UIS_MOVE_PP,
+    UIS_MOVE_POWER,
+    UIS_MOVE_ACCURACY,
     UIS_COUNT
 } CtrUiString;
 
@@ -83,6 +86,9 @@ static const char *const kCtrUiStrings[UIS_COUNT] = {
     [UIS_DEX_NOTE_UNSEEN] = "Not seen yet.",
     [UIS_CARD_TITLE] = "TRAINER CARD",
     [UIS_CARD_TURN] = "Touch the card to turn it over.",
+    [UIS_MOVE_PP] = "PP",
+    [UIS_MOVE_POWER] = "POWER",
+    [UIS_MOVE_ACCURACY] = "ACCURACY",
 };
 
 static inline const char *CtrUiText(CtrUiString id)

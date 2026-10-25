@@ -216,6 +216,17 @@ extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
 extern int CtrBottomCard_State(void);
 extern int CtrBottomCard_TouchDrawn(void);
+extern int CtrBottomLearn_IsOpen(void);
+extern int CtrBottomLearn_Ready(void);
+extern int CtrBottomLearn_Cursor(void);
+extern unsigned CtrBottomLearn_Species(void);
+extern void CtrBottomLearn_Name(char *nickname, int nsize, char *level, int lsize);
+extern unsigned CtrBottomLearn_Move(int i, int *type, char *name, int nsize, char *pp, int psize, char *power, int wsize,
+                                    char *accuracy, int asize);
+extern void CtrBottomLearn_Description(unsigned move, char *out, int size);
+extern void CtrBottomLearn_TypeName(int type, char *out, int size);
+extern void CtrBottomLearn_Question(char *out, int size);
+extern int CtrBottomLearn_Locked(int i);
 extern int CtrBottomCard_OnBack(void);
 extern void CtrBottomCard_Label(int which, char *out, int size);
 extern void CtrBottomCard_Name(char *out, int size);
@@ -529,6 +540,14 @@ static struct {
     int down, inside, code;
     int pocketTarget, pocketWait;
 } sFieldBag = {0, 0, -1, -1, 0};
+
+/* The move-to-forget screen's touch (ProcessLearnTouch), as the Bag's, and its walk to a row. */
+static struct {
+    int down, inside, code;
+} sLearnTap = {0, 0, -1};
+static struct {
+    int active, target, steps, release;
+} sLearnPlan;
 
 /* The Trainer Card's touch (ProcessCardTouch): pressed on the card, and still on it. */
 static struct {
@@ -881,6 +900,49 @@ static void FieldCardFill(CtrPokeTouchView *v, int pressed)
                                                          c->row[rows].value, sizeof(c->row[rows].value)))
         ++rows;
     c->rows = (uint8_t)rows;
+}
+
+/* The Summary choosing the move to forget, as it is now. While it does not take a key the picture last shown stays. */
+static void FieldLearnFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchLearn *l = &v->learn;
+
+    if (!CtrBottomLearn_Ready() && sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on) {
+        *l = sShown.touch.learn;
+        l->pressed = -1;
+        return;
+    }
+    memset(l, 0, sizeof(*l));
+    l->on = 1;
+    l->pressed = (int16_t)pressed;
+    l->cursor = (int8_t)CtrBottomLearn_Cursor();
+    l->species = (uint16_t)CtrBottomLearn_Species();
+    CtrBottomLearn_Name(l->nickname, sizeof(l->nickname), l->level, sizeof(l->level));
+    CtrBottomLearn_Question(l->question, sizeof(l->question));
+    for (int i = 0; i < PT_LEARN_ROWS; ++i) {
+        int type = -1;
+
+        l->row[i].move = (uint16_t)CtrBottomLearn_Move(i, &type, l->row[i].name, sizeof(l->row[i].name), l->row[i].pp,
+                                                       sizeof(l->row[i].pp), l->row[i].power, sizeof(l->row[i].power),
+                                                       l->row[i].accuracy, sizeof(l->row[i].accuracy));
+        l->row[i].type = (int8_t)type;
+        l->row[i].locked = (uint8_t)(CtrBottomLearn_Locked(i) != 0);
+        CtrBottomLearn_TypeName(type, l->row[i].typeName, sizeof(l->row[i].typeName));
+    }
+    if (l->cursor >= 0 && l->cursor < PT_LEARN_ROWS)
+        CtrBottomLearn_Description(l->row[l->cursor].move, l->desc, sizeof(l->desc));
+}
+
+/* The move to forget, when that is the child screen: drawn here, BACK is the Summary's B. */
+static void LearnSnapshot(Snapshot *s, int mode)
+{
+    if (!CtrBottomLearn_IsOpen())
+        return;
+    FieldLearnFill(&s->touch, sLearnTap.down && sLearnTap.inside ? sLearnTap.code : -1);
+    s->touch.viewport = 0;
+    s->touch.backVisible = 1;
+    s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+    s->touch.backPressed = (uint8_t)(sBack.inside != 0);
 }
 
 /* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
@@ -1488,6 +1550,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.selected = sSession.active ? sSession.owner : PT_POKEMON;
         snprintf(s->touch.bar[0], PT_BAR_LEN, "MOVE / ITEM");
         snprintf(s->touch.bar[1], PT_BAR_LEN, "Use A and B to follow the prompts.");
+        LearnSnapshot(s, mode);
         return;
     }
     if (mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD) {
@@ -2346,6 +2409,8 @@ static int BackVisible(int mode)
 {
     if (mode == MODE_FIELD)
         return NativeActive() && sScreen != PT_SAVE;   /* a native screen: back to HOME (SAVE has NO and B) */
+    if (mode == MODE_PARTY_CHILD)
+        return CtrBottomLearn_IsOpen();
     if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX
         || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
         return 1;
@@ -2387,6 +2452,8 @@ static int BackEnabled(int mode)
         return CtrBottomCard_State() != CARD_BUSY;
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
+    if (mode == MODE_PARTY_CHILD)
+        return CtrBottomLearn_Ready();
     if (ListFor(mode) != NULL)
         return ListFor(mode)->state() != BAG_BUSY;
     return mode == MODE_SUMMARY && CtrBottomSummary_Ready();
@@ -2406,6 +2473,8 @@ static void BackPress(int mode)
         sRouteKey = CardLeaveKey();     /* the card's own exit: B on its front, A on its back */
     else if (mode == MODE_DEX)
         sRouteKey = K_B;                /* the Pokedex's own: a level back, out of it from its top menu */
+    else if (mode == MODE_PARTY_CHILD)
+        sRouteKey = K_B;                /* the Summary's own: give up the new move (FireRed asks) */
     else if (ListFor(mode) != NULL)
         BagPlanStart(ListFor(mode), BAGPLAN_PRESS, 0, 0, K_B);
     else if (mode == MODE_SUMMARY)
@@ -3771,6 +3840,69 @@ static void ProcessFieldDexTouch(const CtrInput *in)
     sFieldDex.down = sFieldDex.inside = 0;
 }
 
+/* The move to forget: a row walks the Summary's cursor there with its UP / DOWN, a tap on the selected row is its A
+ * (FireRed refuses an HM with its own sound). A held physical button cancels it. */
+static void RunLearnPlan(void)
+{
+    int cur;
+
+    if (!sLearnPlan.active)
+        return;
+    if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomLearn_IsOpen() || ++sLearnPlan.steps > 32) {
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        return;
+    }
+    if (sLearnPlan.release) {
+        sLearnPlan.release = 0;
+        return;
+    }
+    if (!CtrBottomLearn_Ready())
+        return;                         /* the cursor's own short pause between steps */
+    cur = CtrBottomLearn_Cursor();
+    if (cur == sLearnPlan.target) {
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        return;
+    }
+    sInjected = cur < sLearnPlan.target ? K_DOWN : K_UP;
+    sLearnPlan.release = 1;
+}
+
+static void ProcessLearnTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on
+                          && CtrBottomLearn_Ready() && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_LearnHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sLearnTap.down = sLearnTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sLearnTap.down = sLearnTap.inside = hit >= 0;
+        sLearnTap.code = hit;
+        return;
+    }
+    if (!sLearnTap.down)
+        return;
+    if (in->touchActive) {
+        sLearnTap.inside = hit == sLearnTap.code;
+        return;
+    }
+    if (sLearnTap.inside && !sLearnPlan.active) {
+        int row = sLearnTap.code - PT_LEARN_HIT_ROW;
+
+        if (row == CtrBottomLearn_Cursor())
+            sRouteKey = K_A;
+        else {
+            memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+            sLearnPlan.active = 1;
+            sLearnPlan.target = row;
+        }
+    }
+    sLearnTap.down = sLearnTap.inside = 0;
+}
+
 /* Touch of a storage screen never calls any Pokemon mutation function. Every
  * operation (including RELEASE, DEPOSIT and item changes) remains owned by
  * FireRed's task/controller; a touch yields only one real D-pad/A/B key. */
@@ -4002,6 +4134,15 @@ static int ProcessTouch(int mode)
         sTouch.active = 0;
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
+    }
+    if (mode == MODE_PARTY_CHILD && CtrBottomLearn_IsOpen()) {
+        /* The move to forget: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        ProcessLearnTouch(in);
+        return HIT_NONE;
     }
     if (sStorageSession && (mode == MODE_SUMMARY || mode == MODE_BAG || IS_CASE_MODE(mode))) {
         /* Keep the real GBA child touchscreen handler and BACK. Prevent the
@@ -4275,6 +4416,9 @@ void CtrBottom_Init(void)
     sFieldBag.code = sFieldBag.pocketTarget = -1;
     memset(&sFieldDex, 0, sizeof(sFieldDex));
     sFieldDex.code = -1;
+    memset(&sLearnTap, 0, sizeof(sLearnTap));
+    sLearnTap.code = -1;
+    memset(&sLearnPlan, 0, sizeof(sLearnPlan));
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));
@@ -4409,6 +4553,10 @@ void CtrBottom_Frame(void)
         RunDexPlan();
     else
         DexPlanClear();
+    if (mode == MODE_PARTY_CHILD)
+        RunLearnPlan();
+    else
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
     if (ListFor(mode) != NULL)
         RunBagPlan(ListFor(mode));
     else

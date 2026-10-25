@@ -762,6 +762,9 @@ static void FDexNote(const CtrPokeTouchView *v, int w);
 /* The Trainer Card the port draws (3ds_field_card_impl.h, included at the end). */
 static void FCardFrame(const CtrPokeTouchView *v);
 static void FCardNote(const CtrPokeTouchView *v, int w);
+/* The move to forget the port draws (3ds_field_learn_impl.h, included at the end). */
+static void FLearnFrame(const CtrPokeTouchView *v);
+static void FLearnNote(const CtrPokeTouchView *v, int w);
 
 /* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
@@ -775,6 +778,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->card.on && !v->viewport) {
         FCardFrame(v);
+        return;
+    }
+    if (v->learn.on && !v->viewport) {
+        FLearnFrame(v);
         return;
     }
     if (v->bag.on && !v->viewport) {
@@ -842,6 +849,8 @@ static void Bar(const CtrPokeTouchView *v)
         FDexNote(v, w);
     else if (v->card.on && !v->viewport)
         FCardNote(v, w);
+    else if (v->learn.on && !v->viewport)
+        FLearnNote(v, w);
     else if (v->bag.on && !v->viewport)
         FBagNote(v, w);
     else {
@@ -996,7 +1005,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
     sCanvas = canvas;
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
-        || memcmp(&old->card, &v->card, sizeof(v->card))) {
+        || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
@@ -1100,3 +1109,4 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyLis
 #include "3ds_field_bag_impl.h"
 #include "3ds_field_dex_impl.h"
 #include "3ds_field_card_impl.h"
+#include "3ds_field_learn_impl.h"

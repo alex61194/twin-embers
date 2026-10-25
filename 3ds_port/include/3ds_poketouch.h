@@ -133,6 +133,27 @@ typedef struct {
     uint8_t flags;                  /* seen (1) and caught (2) */
     char name[12];
 } CtrPokeTouchDexMon;
+/* The choice of the move to forget for a new one, drawn by the port (3ds_field_learn_impl.h), a remote for FireRed's
+ * Summary in that mode: the Pokemon, its four moves and the new one (row 4), the selected move's numbers and
+ * description. A row is walked to with the Summary's UP / DOWN and taken with its A; BACK is its B. */
+#define PT_LEARN_ROWS 5
+enum { PT_LEARN_HIT_ROW = 100 };
+typedef struct {
+    uint8_t on;
+    int8_t cursor;
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint16_t species;
+    char nickname[12], level[8];
+    char question[48];
+    struct {
+        uint16_t move;
+        int8_t type;
+        uint8_t locked;             /* an HM: FireRed will not forget it */
+        char name[16], pp[12], power[8], accuracy[8], typeName[10];
+    } row[PT_LEARN_ROWS];
+    char desc[160];
+} CtrPokeTouchLearn;
+
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
  * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
  * on it turns it over with the card's own key. A link card stays FireRed's picture. */
@@ -222,6 +243,7 @@ typedef struct {
     CtrPokeTouchBag bag;        /* the field Bag, when bag.on */
     CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
     CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
+    CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -253,6 +275,8 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
 /* The Pokedex's pictures, from FireRed's tables (pokedex_screen.c): a species' front picture (64x64 4bpp, 8x8 tiles
  * in rows of eight) and palette, a top menu row's icon (64x48, the same layout), a footprint (16x16 1bpp, four 8x8
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
+/* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
+int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
 /* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
 /* The card's pictures, from FireRed's (trainer_card.c): the trainer's front picture (64x64 4bpp, 8x8 tiles in rows of
