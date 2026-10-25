@@ -302,6 +302,9 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
  * Summary): drawn only where the backdrop shows and, with `pictureShown`, off the GBA picture; with `on` false they
  * are only taken away. What changed is added to `dirty`. */
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyList *dirty);
+/* The lower screen with nothing to show for FireRed's screen above (its title, naming, a shop, an evolution, a trade):
+ * the ember backdrop, and the project's logo when `logo`. */
+void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo);
 
 /*
  * The battle screen (3ds_battle_ui.inc, CtrBattleUi_*): the whole lower screen while FireRed's battle is on the

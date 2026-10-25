@@ -380,6 +380,7 @@ typedef struct {
     CtrPokeTouchView touch;
     CtrBattleView battle;
     unsigned char battleUi;         /* the battle's design is what the lower screen shows (the battle, or its Bag) */
+    unsigned char idleLogo;         /* nothing to show for a while (IDLE_LOGO_FRAMES): the logo on the backdrop */
 } Snapshot;
 
 static void SummaryFill(CtrSummaryUiView *v);
@@ -401,6 +402,8 @@ static char sLatchNames[PARTY_MAX_ACTIONS][ACTION_NAME_LEN];
 static uint16_t sCanvas[CTR_BOTTOM_WIDTH * CTR_BOTTOM_HEIGHT];
 static Snapshot sShown;
 static int sHaveShown;
+#define IDLE_LOGO_FRAMES 45
+static int sIdleFrames;
 static int sForceRedraw;
 static int sEnabled = 1;
 static int sInitDone;
@@ -561,7 +564,6 @@ static struct {
 
 /* Colors RGB565. */
 #define RGB565(r, g, b) ((uint16_t)(((r) & 31) << 11 | ((g) & 63) << 5 | ((b) & 31)))
-#define C_BG RGB565(4, 8, 12)
 #define C_CARD RGB565(28, 60, 28)
 #define C_EMPTY RGB565(10, 20, 14)
 #define C_BORDER RGB565(0, 0, 0)
@@ -582,19 +584,6 @@ static struct {
 #define K_DOWN (1u << 7)
 #define K_LEFT (1u << 5)
 #define K_RIGHT (1u << 4)
-
-static void FillRect(int x, int y, int w, int h, uint16_t c)
-{
-    int x0 = x < 0 ? 0 : x;
-    int y0 = y < 0 ? 0 : y;
-    int x1 = x + w > CTR_BOTTOM_WIDTH ? CTR_BOTTOM_WIDTH : x + w;
-    int y1 = y + h > CTR_BOTTOM_HEIGHT ? CTR_BOTTOM_HEIGHT : y + h;
-    for (int cx = x0; cx < x1; ++cx) {
-        uint16_t *p = sCanvas + (size_t)cx * CTR_BOTTOM_HEIGHT + (CTR_BOTTOM_HEIGHT - (size_t)y1);
-        for (int n = y1 - y0; n > 0; --n)
-            *p++ = c;
-    }
-}
 
 /* Party-owned callback remembered while Task_HandleChooseMonInput runs.
  * The action/context menu, switch, item and field-move substates run under
@@ -1846,7 +1835,7 @@ static void Render(const Snapshot *s)
     else if (s->mode != MODE_OFF || sSession.active)
         CtrPokeTouch_Draw(sCanvas, &s->touch);
     else
-        FillRect(0, 0, CTR_BOTTOM_WIDTH, CTR_BOTTOM_HEIGHT, C_BG);
+        CtrPokeTouch_DrawIdle(sCanvas, s->idleLogo);
 }
 
 /* Plan helpers. */
@@ -4484,8 +4473,12 @@ static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
 {
     int picture;
 
-    if ((s->battleUi && s->battle.state != BUI_PARTY) || s->mode == MODE_OFF)
+    if (s->battleUi && s->battle.state != BUI_PARTY)
         return;
+    if (s->mode == MODE_OFF && !sSession.active) {
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);   /* the idle backdrop */
+        return;
+    }
     if (s->battleUi) {
         CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);
         return;
@@ -4626,6 +4619,10 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
+    /* The logo only once nothing has been shown for a while: a screen's few frames of change show the backdrop. */
+    sIdleFrames = state.mode == MODE_OFF && !sSession.active ? (sIdleFrames < IDLE_LOGO_FRAMES ? sIdleFrames + 1
+                                                                                                 : sIdleFrames) : 0;
+    state.idleLogo = (unsigned char)(sIdleFrames >= IDLE_LOGO_FRAMES);
     ProfSpan(&sProf.frameSnapshot, profT);
     /* Party's and the Bag's viewport is drawn by the GPU, sampling the GBA
      * picture: the bottom screen goes through it while one is shown. */
