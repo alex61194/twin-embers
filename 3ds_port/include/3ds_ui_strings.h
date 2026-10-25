@@ -45,6 +45,12 @@ typedef enum {
     UIS_MOVE_PP,
     UIS_MOVE_POWER,
     UIS_MOVE_ACCURACY,
+    UIS_NAME_UPPER,
+    UIS_NAME_LOWER,
+    UIS_NAME_SYMBOLS,
+    UIS_NAME_DELETE,
+    UIS_NAME_OK,
+    UIS_NAME_HINT,
     UIS_COUNT
 } CtrUiString;
 
@@ -89,6 +95,12 @@ static const char *const kCtrUiStrings[UIS_COUNT] = {
     [UIS_MOVE_PP] = "PP",
     [UIS_MOVE_POWER] = "POWER",
     [UIS_MOVE_ACCURACY] = "ACCURACY",
+    [UIS_NAME_UPPER] = "ABC",
+    [UIS_NAME_LOWER] = "abc",
+    [UIS_NAME_SYMBOLS] = "123",
+    [UIS_NAME_DELETE] = "DELETE",
+    [UIS_NAME_OK] = "OK",
+    [UIS_NAME_HINT] = "Touch a key to write it, and OK when the name is ready.",
 };
 
 static inline const char *CtrUiText(CtrUiString id)

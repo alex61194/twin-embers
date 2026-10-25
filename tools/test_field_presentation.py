@@ -123,6 +123,7 @@ static void BeginSessionPending(int owner) { BeginSession(owner); }
 ''' + update + '''
 typedef struct { unsigned char mode,pressed; int cursor,tapped; CtrPokeTouchView touch; } Snapshot;
 static void LearnSnapshot(Snapshot *s,int mode) { (void)s; (void)mode; }   /* no move to forget open */
+static void NameSnapshot(Snapshot *s) { (void)s; }   /* no naming screen open */
 static void snapshot(Snapshot *s,int mode,int pressed) {
 ''' + snapshot + '''
 }

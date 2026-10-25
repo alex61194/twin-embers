@@ -154,6 +154,26 @@ typedef struct {
     char desc[160];
 } CtrPokeTouchLearn;
 
+/* FireRed's naming screen drawn by the port (3ds_field_naming_impl.h), a remote for it: the name so far, the keys of
+ * its page (FireRed's own character codes, 0xff for no key), tabs for its three pages, DELETE and OK. A key moves
+ * FireRed's cursor there and presses its A; a tab is its SELECT, DELETE its B. */
+#define PT_NAME_ROWS 4
+#define PT_NAME_COLS 8
+#define PT_NAME_MAX 12
+enum { PT_NAME_HIT_KEY = 200, PT_NAME_HIT_TAB = 240, PT_NAME_HIT_DELETE = 250, PT_NAME_HIT_OK = 251 };
+typedef struct {
+    uint8_t on;
+    uint8_t page;                   /* FireRed's: 0 symbols, 1 capitals, 2 small letters */
+    uint8_t cols, maxChars, len;
+    int8_t curCol, curRow;          /* FireRed's cursor; curCol == cols is its button column */
+    uint8_t gender;                 /* 1 male, 2 female, 0 none */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint16_t species;               /* the Pokemon being named, or 0 */
+    uint8_t key[PT_NAME_ROWS][PT_NAME_COLS];
+    uint8_t text[PT_NAME_MAX];
+    uint8_t title[32];              /* FireRed's question, its codes, 0xff ended */
+} CtrPokeTouchName;
+
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
  * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
  * on it turns it over with the card's own key. A link card stays FireRed's picture. */
@@ -244,6 +264,7 @@ typedef struct {
     CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
     CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
+    CtrPokeTouchName name;      /* the naming screen, when name.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -277,6 +298,9 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
 /* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
 int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
+/* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
+ * (a key's is PT_NAME_HIT_KEY + row * PT_NAME_COLS + column, a tab's PT_NAME_HIT_TAB + page), or -1. */
+int CtrPokeTouch_NameHit(const CtrPokeTouchView *view, int x, int y);
 /* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
 /* The card's pictures, from FireRed's (trainer_card.c): the trainer's front picture (64x64 4bpp, 8x8 tiles in rows of

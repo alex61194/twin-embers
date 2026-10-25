@@ -227,6 +227,18 @@ extern void CtrBottomLearn_Description(unsigned move, char *out, int size);
 extern void CtrBottomLearn_TypeName(int type, char *out, int size);
 extern void CtrBottomLearn_Question(char *out, int size);
 extern int CtrBottomLearn_Locked(int i);
+extern int CtrBottomNaming_IsOpen(void);
+extern int CtrBottomNaming_Ready(void);
+extern int CtrBottomNaming_Page(void);
+extern int CtrBottomNaming_Columns(void);
+extern int CtrBottomNaming_Key(int row, int col);
+extern int CtrBottomNaming_MaxChars(void);
+extern void CtrBottomNaming_Text(unsigned char *out, int size);
+extern void CtrBottomNaming_Title(unsigned char *out, int size);
+extern int CtrBottomNaming_Species(void);
+extern int CtrBottomNaming_Gender(void);
+extern void CtrBottomNaming_Cursor(int *col, int *row);
+extern int CtrBottomNaming_Touch(int col, int row);
 extern int CtrBottomCard_OnBack(void);
 extern void CtrBottomCard_Label(int which, char *out, int size);
 extern void CtrBottomCard_Name(char *out, int size);
@@ -282,7 +294,8 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 /* Modes shown on the bottom screen for this milestone. */
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
-       MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13 };
+       MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
+       MODE_NAMING = 14 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -552,6 +565,14 @@ static struct {
     int active, target, steps, release;
 } sLearnPlan;
 
+/* The naming screen's touch (ProcessNameTouch), as the Bag's, and its turn of pages to a tab's. */
+static struct {
+    int down, inside, code;
+} sNameTap = {0, 0, -1};
+static struct {
+    int active, target, steps, release;
+} sNamePlan;
+
 /* The Trainer Card's touch (ProcessCardTouch): pressed on the card, and still on it. */
 static struct {
     int down, inside;
@@ -580,6 +601,7 @@ static struct {
 #define K_START (1u << 3)
 #define K_A (1u << 0)
 #define K_B (1u << 1)
+#define K_SELECT (1u << 2)
 #define K_UP (1u << 6)
 #define K_DOWN (1u << 7)
 #define K_LEFT (1u << 5)
@@ -602,6 +624,9 @@ static int CurrentMode(void)
         return MODE_OFF;
     if (!CtrBottom_HasSave())
         return MODE_OFF;
+    /* FireRed's naming screen, wherever it comes from (a new game, a catch, the Name Rater, a box): its keyboard. */
+    if (CtrBottomNaming_IsOpen())
+        return MODE_NAMING;
     if (CtrBottomStorage_PCMenu())
         return MODE_FIELD; /* Withdraw/Deposit/Move choices remain on TOP. */
     if (CtrBottomStorage_BoxOpen())
@@ -932,6 +957,48 @@ static void LearnSnapshot(Snapshot *s, int mode)
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
     s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+}
+
+/* The naming screen as it is now. While it does not take a key (a page turning, the cursor going to OK) the picture
+ * last shown stays. */
+static void FieldNameFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchName *n = &v->name;
+    int col, row;
+
+    if (!CtrBottomNaming_Ready() && sHaveShown && sShown.mode == MODE_NAMING && sShown.touch.name.on) {
+        *n = sShown.touch.name;
+        n->pressed = -1;
+        return;
+    }
+    memset(n, 0, sizeof(*n));
+    n->on = 1;
+    n->pressed = (int16_t)pressed;
+    n->page = (uint8_t)CtrBottomNaming_Page();
+    n->cols = (uint8_t)CtrBottomNaming_Columns();
+    n->maxChars = (uint8_t)CtrBottomNaming_MaxChars();
+    if (n->maxChars > PT_NAME_MAX)
+        n->maxChars = PT_NAME_MAX;
+    for (int r = 0; r < PT_NAME_ROWS; ++r)
+        for (int c = 0; c < PT_NAME_COLS; ++c)
+            n->key[r][c] = (uint8_t)CtrBottomNaming_Key(r, c);
+    memset(n->text, 0xff, sizeof(n->text));
+    CtrBottomNaming_Text(n->text, (int)sizeof(n->text));
+    while (n->len < n->maxChars && n->text[n->len] != 0xff)
+        ++n->len;
+    CtrBottomNaming_Title(n->title, (int)sizeof(n->title));
+    n->species = (uint16_t)CtrBottomNaming_Species();
+    n->gender = (uint8_t)CtrBottomNaming_Gender();
+    CtrBottomNaming_Cursor(&col, &row);
+    n->curCol = (int8_t)col;
+    n->curRow = (int8_t)row;
+}
+
+/* The naming screen: drawn here, modal (no BACK: its own DELETE and OK). */
+static void NameSnapshot(Snapshot *s)
+{
+    FieldNameFill(&s->touch, sNameTap.down && sNameTap.inside ? sNameTap.code : -1);
+    s->touch.viewport = 0;
 }
 
 /* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
@@ -1540,6 +1607,10 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         snprintf(s->touch.bar[0], PT_BAR_LEN, "MOVE / ITEM");
         snprintf(s->touch.bar[1], PT_BAR_LEN, "Use A and B to follow the prompts.");
         LearnSnapshot(s, mode);
+        return;
+    }
+    if (mode == MODE_NAMING) {
+        NameSnapshot(s);
         return;
     }
     if (mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD) {
@@ -3892,6 +3963,72 @@ static void ProcessLearnTouch(const CtrInput *in)
     sLearnTap.down = sLearnTap.inside = 0;
 }
 
+/* A tab: FireRed's SELECT, one page at a time, until its page is the tab's. */
+static void RunNamePlan(void)
+{
+    if (!sNamePlan.active)
+        return;
+    if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomNaming_IsOpen() || ++sNamePlan.steps > 240) {
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
+        return;
+    }
+    if (sNamePlan.release) {
+        sNamePlan.release = 0;
+        return;
+    }
+    if (!CtrBottomNaming_Ready())
+        return;                         /* the page's own turn */
+    if (CtrBottomNaming_Page() == sNamePlan.target) {
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
+        return;
+    }
+    sInjected = K_SELECT;
+    sNamePlan.release = 1;
+}
+
+static void ProcessNameTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_NAMING && sShown.touch.name.on
+                          && CtrBottomNaming_Ready() && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_NameHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sNameTap.down = sNameTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sNameTap.down = sNameTap.inside = hit >= 0;
+        sNameTap.code = hit;
+        return;
+    }
+    if (!sNameTap.down)
+        return;
+    if (in->touchActive) {
+        sNameTap.inside = hit == sNameTap.code;
+        return;
+    }
+    if (sNameTap.inside && !sNamePlan.active) {
+        int code = sNameTap.code;
+
+        if (code >= PT_NAME_HIT_TAB && code < PT_NAME_HIT_TAB + 3) {
+            memset(&sNamePlan, 0, sizeof(sNamePlan));
+            sNamePlan.active = 1;
+            sNamePlan.target = code - PT_NAME_HIT_TAB;
+        } else if (code == PT_NAME_HIT_DELETE)
+            sRouteKey = K_B;
+        else if (code == PT_NAME_HIT_OK) {
+            if (CtrBottomNaming_Touch(CtrBottomNaming_Columns(), 2))
+                sRouteKey = K_A;
+        } else if (code >= PT_NAME_HIT_KEY && code < PT_NAME_HIT_KEY + PT_NAME_ROWS * PT_NAME_COLS) {
+            code -= PT_NAME_HIT_KEY;
+            if (CtrBottomNaming_Touch(code % PT_NAME_COLS, code / PT_NAME_COLS))
+                sRouteKey = K_A;
+        }
+    }
+    sNameTap.down = sNameTap.inside = 0;
+}
+
 /* Touch of a storage screen never calls any Pokemon mutation function. Every
  * operation (including RELEASE, DEPOSIT and item changes) remains owned by
  * FireRed's task/controller; a touch yields only one real D-pad/A/B key. */
@@ -4124,6 +4261,15 @@ static int ProcessTouch(int mode)
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
     }
+    if (mode == MODE_NAMING) {
+        /* The naming screen: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        sBack.down = sBack.inside = 0;
+        ProcessNameTouch(in);
+        return HIT_NONE;
+    }
     if (mode == MODE_PARTY_CHILD && CtrBottomLearn_IsOpen()) {
         /* The move to forget: modal, nothing on the sidebar routes away from it. */
         sPoke.id = PT_NONE;
@@ -4336,7 +4482,7 @@ static int StorageBridge(int mode)
     if (CtrBottom_IsFading()) return 1;
     if (mode == MODE_STORAGE_PC) return !CtrBottomStorage_PCMenuReady();
     if (mode == MODE_STORAGE_BOX) return !CtrBottomStorage_BoxPresented();
-    if (mode == MODE_STORAGE_CHILD) return !CtrBottomStorage_NamingPresented();
+    if (mode == MODE_STORAGE_CHILD || mode == MODE_NAMING) return !CtrBottomStorage_NamingPresented();
     if (mode == MODE_SUMMARY) return !CtrBottomSummary_Ready();
     if (ListFor(mode) != NULL) return ListFor(mode)->state() == BAG_BUSY;
     return 0;
@@ -4408,6 +4554,9 @@ void CtrBottom_Init(void)
     memset(&sLearnTap, 0, sizeof(sLearnTap));
     sLearnTap.code = -1;
     memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    memset(&sNamePlan, 0, sizeof(sNamePlan));
+    memset(&sNameTap, 0, sizeof(sNameTap));
+    sNameTap.code = -1;
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));
@@ -4550,6 +4699,10 @@ void CtrBottom_Frame(void)
         RunLearnPlan();
     else
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    if (mode == MODE_NAMING)
+        RunNamePlan();
+    else
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
     if (ListFor(mode) != NULL)
         RunBagPlan(ListFor(mode));
     else

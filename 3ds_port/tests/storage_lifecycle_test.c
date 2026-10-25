@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "3ds_video.h"
 #include "3ds_poketouch.h"
-enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,BAG_BUSY=9 };
+enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9 };
 static int sStorageSession, fading, pcMenu, pcReady, boxPresented, namePresented, summaryReady, bagState;
 static int CtrBottom_IsFading(void) { return fading; }
 static int CtrBottomStorage_PCMenu(void) { return pcMenu; }
