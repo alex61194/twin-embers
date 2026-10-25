@@ -195,8 +195,15 @@ static void FBQuantity(const CtrPokeTouchBag *b)
     int fy;
 
     FBCard(&sFBAsk);
-    UiTextCentered(CtrUiText(UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
-    UiTextCentered(b->selName, &name, sFBAsk.y + 22, EM_DIM, EM_DARK_SH, 1);
+    UiTextCentered(CtrUiText(b->use == PT_BAG_USE_SELL ? UIS_BAG_SELL_HOW_MANY : b->use == PT_BAG_USE_DEPOSIT
+                             ? UIS_BAG_DEPOSIT_HOW_MANY : UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
+    if (b->use == PT_BAG_USE_SELL) {                    /* the item, and what the shop pays for that many */
+        char line[40];
+
+        snprintf(line, sizeof(line), "%s  \xc2\xa5%u", b->selName, (unsigned)b->sale);
+        UiTextCentered(line, &name, sFBAsk.y + 22, EM_VALUE, EM_DARK_SH, 1);
+    } else
+        UiTextCentered(b->selName, &name, sFBAsk.y + 22, EM_DIM, EM_DARK_SH, 1);
     snprintf(count, sizeof(count), "x%u", b->tossCount);
     UiText(count, 124 - UiTextWidth(count, 2) / 2, sFBQtyDown.y + 3, EM_DARK, EM_DARK_SH, 2, 170);
     fy = EmButton(sFBQtyDown.x, sFBQtyDown.y, sFBQtyDown.w, sFBQtyDown.h, &kEmCream, FB_DEPTH, b->pressed == PT_BAG_HIT_QTY_DOWN);
@@ -258,6 +265,13 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
 
             UiTypeBadge(&t, b->moveType, b->typeName);
             right = t.x - 4;
+        }
+        if (b->use == PT_BAG_USE_SELL) {                /* selling: the player's money on the right */
+            char money[16];
+
+            snprintf(money, sizeof(money), "\xc2\xa5%u", (unsigned)b->money);
+            UiTextRight(money, right - 4, NOTE_Y + 6, EM_VALUE, EM_DARK_SH, 1);
+            right -= UiTextWidth(money, 1) + 10;
         }
         UiText(b->selName, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, right);
         BDescribeN(b->selDesc, NOTE_X + 12, NOTE_Y + 21, w - 18, 3, EM_DIM);

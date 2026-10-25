@@ -227,6 +227,8 @@ extern void CtrBottomLearn_Description(unsigned move, char *out, int size);
 extern void CtrBottomLearn_TypeName(int type, char *out, int size);
 extern void CtrBottomLearn_Question(char *out, int size);
 extern int CtrBottomLearn_Locked(int i);
+extern int CtrBottomBag_Use(void);
+extern unsigned CtrBottomBag_SalePrice(void);
 extern int CtrBottomNaming_IsOpen(void);
 extern int CtrBottomNaming_Ready(void);
 extern int CtrBottomNaming_Page(void);
@@ -741,8 +743,8 @@ static void BagBar(CtrPokeTouchView *v)
 }
 
 /* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
- * own Bag and Party's GIVE Bag, outside the PC. The shop's, the PC's and the Old Man's keep the GBA picture, which
- * shows their prices and their own windows. */
+ * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The Old Man's
+ * and the battle's keep their own pictures. */
 static int FieldBagNative(void)
 {
     return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;
@@ -824,6 +826,13 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
     b->moveType = -1;
     b->pressed = (int16_t)pressed;
     b->state = (uint8_t)(state == BAG_BUSY ? BAG_LIST : state);
+    if (f->kind == PT_BAG_KIND_BAG) {
+        b->use = (uint8_t)CtrBottomBag_Use();
+        if (b->use == PT_BAG_USE_SELL) {
+            b->money = CtrBottomBag_Money();
+            b->sale = state == BAG_QUANTITY ? CtrBottomBag_SalePrice() : 0;
+        }
+    }
     if (f->kind == PT_BAG_KIND_TMCASE) {
         CtrBottomTMCase_Title(b->title, sizeof(b->title));
         CtrBottomTMCase_CloseLabel(b->closeName, sizeof(b->closeName));

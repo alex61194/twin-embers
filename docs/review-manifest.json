@@ -593,7 +593,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "46f4cbfef0417b8f7eee3c879a404f764ed67987dbb2dacdfc7d357ff26c8b85",
+   "sha256": "c40a2a309e16465b5986722fabc0b1ec2357dbf9c7ca454dbe99f42431789ee1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -701,7 +701,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "0ca781357616556f07d62eaeb973f91736cb353ca1faa8187cfd2982912016d1",
+   "sha256": "2739a85ce283b48fd3fcc5356eac8a49ef0c35dcecb81909d94e8c22afdd705c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -935,7 +935,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "811c27aee61375bca251d0ee7c3ef77372c93e02184195adef0ea81013cb68ee",
+   "sha256": "13252a7889e8a45df9f2fe9c8217afd98337efaa652a0431b898a27e20c15b3a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1021,7 +1021,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "529076e63ae5adae34ba96f55587ddfc6764e4a088d2376c46cdb2595de718d5",
+   "sha256": "b521513844028f5a395b2487cf8e655b93e832aaefd23e73a170fb9702a3d766",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4455,6 +4455,22 @@
   {
    "path": "patches/pokefirered/0141-touch-drawn-naming.json",
    "sha256": "241adf82e52506e4fe67507c43faeec2f917b0ae15d08bb91d41d4b1f177ecf7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0142-touch-drawn-sell-deposit.json",
+   "sha256": "a6df83e5857c0741f3c029e53947c4e9244bf522828e4f629421ad1bb84b66d8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0143-text-money-sign.json",
+   "sha256": "46cf2609509cecdd35714daab63a037aa3a12f118bdba1e21ff52fd607ec34f7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
