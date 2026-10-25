@@ -769,6 +769,9 @@ static void FLearnNote(const CtrPokeTouchView *v, int w);
 /* The naming screen the port draws (3ds_field_naming_impl.h, included at the end). */
 static void FNameFrame(const CtrPokeTouchView *v);
 static void FNameNote(const CtrPokeTouchView *v, int w);
+/* The PC box the port draws (3ds_field_box_impl.h, included at the end). */
+static void FBoxFrame(const CtrPokeTouchView *v);
+static void FBoxNote(const CtrPokeTouchView *v, int w);
 
 /* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
@@ -790,6 +793,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->name.on && !v->viewport) {
         FNameFrame(v);
+        return;
+    }
+    if (v->box.on && !v->viewport) {
+        FBoxFrame(v);
         return;
     }
     if (v->bag.on && !v->viewport) {
@@ -861,6 +868,8 @@ static void Bar(const CtrPokeTouchView *v)
         FLearnNote(v, w);
     else if (v->name.on && !v->viewport)
         FNameNote(v, w);
+    else if (v->box.on && !v->viewport)
+        FBoxNote(v, w);
     else if (v->bag.on && !v->viewport)
         FBagNote(v, w);
     else {
@@ -1016,7 +1025,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     sCanvas = canvas;
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
         || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
-        || memcmp(&old->name, &v->name, sizeof(v->name))) {
+        || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
@@ -1148,3 +1157,4 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyLis
 #include "3ds_field_card_impl.h"
 #include "3ds_field_learn_impl.h"
 #include "3ds_field_naming_impl.h"
+#include "3ds_field_box_impl.h"

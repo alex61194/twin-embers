@@ -178,6 +178,42 @@ typedef struct {
     uint8_t title[32];              /* FireRed's question, its codes, 0xff ended */
 } CtrPokeTouchName;
 
+/* A PC box drawn by the port (3ds_field_box_impl.h), a remote for FireRed's own box: its name between the arrows, its
+ * thirty places with their icons, PARTY and CLOSE BOX, the Pokemon in hand, the Party when the cursor is in it, and
+ * over them the box's menu, its YES/NO, its box chooser or its message. Texts are FireRed's own codes, 0xff ended.
+ * A touch is the PC's own controller (3ds_storage_touch.h hit codes): the cursor walked there and A. */
+#define PT_BOX_SLOTS 30
+#define PT_BOX_MENU_MAX 7
+enum { PT_BOX_STATE_BUSY = 0, PT_BOX_STATE_BOX, PT_BOX_STATE_MENU, PT_BOX_STATE_YESNO, PT_BOX_STATE_CHOOSE,
+       PT_BOX_STATE_MESSAGE };
+enum { PT_BOX_HIT_MESSAGE = 300 };  /* besides the ST_HIT_* codes: a message that waits for A */
+typedef struct {
+    uint16_t species;               /* 0: empty */
+    uint8_t egg;
+    uint32_t personality;
+} CtrPokeTouchBoxMon;
+typedef struct {
+    uint8_t on, state;
+    int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
+    uint8_t holding;                /* a Pokemon in hand (held) */
+    uint8_t box;
+    uint8_t boxName[12];
+    CtrPokeTouchBoxMon slot[PT_BOX_SLOTS];
+    CtrPokeTouchBoxMon party[6];
+    uint8_t partyName[6][12];
+    uint8_t partyLevel[6];
+    CtrPokeTouchBoxMon held;
+    CtrPokeTouchBoxMon mon;         /* the Pokemon under the cursor, and FireRed's lines about it */
+    uint8_t monText[4][20];         /* nickname, species, gender and level, item */
+    uint8_t menuCount;
+    int8_t menuCursor;
+    uint8_t menu[PT_BOX_MENU_MAX][16];
+    uint8_t chooseName[12];
+    uint8_t chooseCount;
+    uint8_t message[48];            /* FireRed's line in the box's window, while it shows */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchBox;
+
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
  * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
  * on it turns it over with the card's own key. A link card stays FireRed's picture. */
@@ -269,6 +305,7 @@ typedef struct {
     CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
+    CtrPokeTouchBox box;        /* a PC box, when box.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -305,6 +342,13 @@ int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
 /* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
  * (a key's is PT_NAME_HIT_KEY + row * PT_NAME_COLS + column, a tab's PT_NAME_HIT_TAB + page), or -1. */
 int CtrPokeTouch_NameHit(const CtrPokeTouchView *view, int x, int y);
+/* What of the PC box (view->box.on) is under lower-screen point (x, y): a 3ds_storage_touch.h ST_HIT_* code, or
+ * PT_BOX_HIT_MESSAGE, or ST_HIT_NONE. */
+int CtrPokeTouch_BoxHit(const CtrPokeTouchView *view, int x, int y);
+/* The game's side: a Pokemon's icon (its first frame, 4bpp 32x32) and palette; and the box as it is now (0 while the
+ * port should show FireRed's own picture). */
+int CtrPokeTouch_MonIcon(unsigned species, unsigned personality, int egg, unsigned char *tiles, unsigned short *palette);
+int CtrBottomStorage_BoxFill(CtrPokeTouchBox *box);
 /* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
 /* The card's pictures, from FireRed's (trainer_card.c): the trainer's front picture (64x64 4bpp, 8x8 tiles in rows of

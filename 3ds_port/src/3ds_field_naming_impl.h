@@ -67,6 +67,10 @@ static void FNText(const uint8_t *raw, int n, char *out, int size)
     for (int i = 0; i < n && raw[i] != 0xff && o + 3 <= size; ++i) {
         uint8_t c = raw[i];
 
+        if (c == 0xfc) {                /* a text effect: its code and argument are not glyphs */
+            i += raw[i + 1 < n ? i + 1 : i] <= 0x03 ? 2 : 1;
+            continue;
+        }
         if (c == 0xfe || c == 0)
             out[o++] = ' ';
         else if (c < 0xf7) {

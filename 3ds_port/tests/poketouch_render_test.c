@@ -57,6 +57,11 @@ int CtrPokeTouch_CardTrainerPic(unsigned char *tiles, unsigned short *palette)
 { (void)tiles; (void)palette; return 0; }
 int CtrPokeTouch_CardBadges(unsigned char *tiles, unsigned short *palette)
 { (void)tiles; (void)palette; return 0; }
+int CtrPokeTouch_MonIcon(unsigned species, unsigned personality, int egg, unsigned char *tiles, unsigned short *palette)
+{
+    (void)species; (void)personality; (void)egg; (void)tiles; (void)palette;
+    return 0;
+}
 int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned short *palette)
 {
     memset(tiles, 0x11, 288); memset(palette, 0, 32);

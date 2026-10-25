@@ -1038,6 +1038,20 @@ static void FieldNameFill(CtrPokeTouchView *v, int pressed)
     n->curRow = (int8_t)row;
 }
 
+/* A PC box, drawn here while FireRed's box is in a state the port draws (not moving items, carrying several or
+ * marking one). While it does not take a key the picture last shown stays. */
+static void BoxSnapshot(Snapshot *s)
+{
+    CtrPokeTouchBox *b = &s->touch.box;
+
+    if (!CtrBottomStorage_BoxFill(b))
+        return;
+    if (b->state == PT_BOX_STATE_BUSY && sHaveShown && sShown.mode == MODE_STORAGE_BOX && sShown.touch.box.on)
+        *b = sShown.touch.box;
+    b->pressed = (int16_t)(sStoreTouch.active && sStoreTouch.inside ? sStoreTouch.hit : -1);
+    s->touch.viewport = 0;
+}
+
 /* A mart's BUY list: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
 static void ShopSnapshot(Snapshot *s, int mode)
 {
@@ -1687,6 +1701,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             snprintf(s->touch.bar[0], PT_BAR_LEN, "BOX %02d", StorageGetCurrentBox() + 1);
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap a slot to open its menu.");
             snprintf(s->touch.bar[2], PT_BAR_LEN, "BACK returns to the PC.");
+            BoxSnapshot(s);
         } else {
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeMON STORAGE SYSTEM");
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
@@ -4128,6 +4143,10 @@ static int StoreHit(int mode, int gx, int gy)
 static void StoreBeginTouch(int mode, int hit)
 {
     StorePlanClear();
+    if (hit == PT_BOX_HIT_MESSAGE) {
+        sRouteKey = K_A;                /* the box's message waits for A */
+        return;
+    }
     sStorePlan.context = mode == MODE_STORAGE_PC ? CtrBottomStorage_PCInputContext()
                                                 : CtrBottomStorage_InputContext();
     if (mode == MODE_STORAGE_PC && hit >= ST_HIT_PC_BASE) {
@@ -4167,6 +4186,8 @@ static void ProcessStorageTouch(int mode, const CtrInput *in)
     int on = in->touchActive && CtrPokeTouch_ViewportToGba(
                         (int)in->touchX, (int)in->touchY, &gx, &gy);
     int hit = on ? StoreHit(mode, gx, gy) : ST_HIT_NONE;
+    if (mode == MODE_STORAGE_BOX && sHaveShown && sShown.mode == mode && sShown.touch.box.on)   /* the box drawn here */
+        hit = in->touchActive ? CtrPokeTouch_BoxHit(&sShown.touch, (int)in->touchX, (int)in->touchY) : ST_HIT_NONE;
     if ((in->held & 0x3ffu) || (sHaveShown && sShown.mode != mode)) {
         sStoreTouch.active = sStoreTouch.inside = 0;
         StorePlanClear();
