@@ -219,6 +219,7 @@ static unsigned GlyphCode(const char **s)
         case ',': code=0xb8; break; case '/': code=0xba; break;
         case ':': code=0xf0; break; case '(': code=0x5c; break;
         case ')': code=0x5d; break; case '%': code=0x5b; break;
+        case '\'': code=0xb4; break; case '"': code=0xb2; break;   /* FireRed's closing quotes: KING'S ROCK, 2'00" */
         default: break;
     }
     return code;
