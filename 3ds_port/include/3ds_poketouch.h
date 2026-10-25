@@ -433,8 +433,10 @@ typedef struct {
     char menuName[3][12];
     char message[96];               /* what the Bag printed and waits on */
 } CtrBattleBag;
-enum { BUI_PTY_SLOT = 700, BUI_PTY_CANCEL = 710, BUI_PTY_MENU = 720, BUI_PTY_MESSAGE = 730 };
-enum { BUI_PTY_SWITCH = 0, BUI_PTY_TARGET, BUI_PTY_FORCED };
+enum { BUI_PTY_SLOT = 700, BUI_PTY_CANCEL = 710, BUI_PTY_CONFIRM = 711, BUI_PTY_MENU = 720, BUI_PTY_MESSAGE = 730 };
+/* BUI_PTY_MULTI: the picks of several Pokemon (a link battle, the Union Room), with CONFIRM over CANCEL. */
+enum { BUI_PTY_SWITCH = 0, BUI_PTY_TARGET, BUI_PTY_FORCED, BUI_PTY_MULTI };
+enum { BUI_PTY_NOT_ABLE = 0, BUI_PTY_ABLE, BUI_PTY_FIRST };
 enum { BUI_PTY_NONE = 0, BUI_PTY_ACTIONS, BUI_PTY_TEXT, BUI_PTY_YESNO };
 typedef struct {
     uint8_t present[6];             /* a Pokemon in the slot */
@@ -453,6 +455,8 @@ typedef struct {
     char message[96];
     char caption[64];               /* what the Party says under the slots ("" for the mode's own words) */
     uint8_t lead;                   /* the slots in the left column, as FireRed lays them out (1, or 2 in a double) */
+    uint8_t entry[6];               /* BUI_PTY_MULTI: BUI_PTY_NOT_ABLE, BUI_PTY_ABLE, or BUI_PTY_FIRST + its place in the order */
+    int8_t button;                  /* BUI_PTY_MULTI: the Party's cursor on CONFIRM (0) or CANCEL (1), else -1 */
 } CtrBattleParty;
 /* BUI_TARGET: a double battle's move being aimed. The four cards are the opposing battlers on top and the player's
  * below (left, right); only the ones FireRed lets the move be aimed at are `present`. The hit codes are the card

@@ -593,7 +593,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "26a69d67393e1a0b5ee738c9b5025f4ad90b2915bab4873f67b41cec3363d379",
+   "sha256": "7120a409625d2e50b2fb00e4ca5608f39c1f71908513cba77ac0e9d5127852f1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -701,7 +701,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "1c2652de6d94da526e4f9a0426071888c849660b4e1827f11b4dea8515ad24f6",
+   "sha256": "d56219521977a96dc08c4ac6c627a15ca77996d328b03aa63736dad0828d0921",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -896,7 +896,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "9fc49cf3773b00501721461bb9505c89275b8beb742dcdb429de1dc736b01aba",
+   "sha256": "6b60476a521518a3b5950b086a371f4e3871cc31e96fe633bd090d303b8229a1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -935,7 +935,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "b97183cc322eea739f0db7b48c362146ebe20446bffc8a3b1f86341a96e44a9c",
+   "sha256": "29e16dd1aaa675cfdf8a7cf7825fcfb216d1aa05b1a7021ccd57f3e0be260e65",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4495,6 +4495,14 @@
   {
    "path": "patches/pokefirered/0145-touch-drawn-pc-box.json",
    "sha256": "5994319332f95eb989907fa51a3fb71687efc7f88435ff9f878d375f3539f2d0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0146-touch-drawn-party-entries.json",
+   "sha256": "0c192deb74efd568d7230a627e8fd66be5461432f877a340b6da99e0a460e33c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -6,6 +6,7 @@
  * Everything shown is what the controller reports. */
 
 #include "3ds_icons.h"
+#include "3ds_ui_strings.h"
 #include "3ds_type_chart.h"
 
 /* The party's balls, on their pill. */
@@ -45,6 +46,8 @@ static CtrPokeTouchRect BMenuRow(int i)
  * under them the note card with what the Party says and CANCEL. */
 static const CtrPokeTouchRect sBPNote = {4, 176, 236, 60};
 static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
+/* Picking several Pokemon: CONFIRM over a shorter CANCEL. */
+static const CtrPokeTouchRect sBPConfirm = {244, 180, 72, 26}, sBPCancelLow = {244, 208, 72, 24};
 #define BP_DEPTH 3
 
 /* A slot's card, where FireRed puts it, so the D-pad walks the cards as they look: the lead (one, two in a double) on
@@ -126,7 +129,9 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
             }
             return -1;
         }
-        if (p->mode != BUI_PTY_FORCED && BIn(&sBPCancel, x, y))
+        if (p->mode == BUI_PTY_MULTI && BIn(&sBPConfirm, x, y))
+            return BUI_PTY_CONFIRM;
+        if (p->mode != BUI_PTY_FORCED && BIn(p->mode == BUI_PTY_MULTI ? &sBPCancelLow : &sBPCancel, x, y))
             return BUI_PTY_CANCEL;
         for (int i = 0; i < 6; ++i) {
             CtrPokeTouchRect r = BPanel(p, i);
@@ -306,7 +311,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     CtrPokeTouchRect r = BPanel(p, i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
-    const EmPal *pal = selected ? &kEmAmber : fainted ? &kEmGrey : &kEmCream;
+    int barred = p->mode == BUI_PTY_MULTI && p->entry[i] == BUI_PTY_NOT_ABLE;
+    const EmPal *pal = selected ? &kEmAmber : fainted || barred ? &kEmGrey : &kEmCream;
     int fy, fh = r.h - BP_DEPTH;
 
     TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
@@ -386,15 +392,44 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     }
 }
 
-/* CANCEL: violet, as BACK. */
-static void BPCancelButton(int pressed)
+/* Picking several Pokemon: a slot's place in the order (1-3) on a disc at the foot of its icon plate. */
+static void BPartyEntry(int i, const CtrBattleView *v)
 {
-    const CtrPokeTouchRect *r = &sBPCancel;
+    const CtrBattleParty *p = &v->pty;
+    CtrPokeTouchRect r = BPanel(p, i);
+    int fy = r.y + (v->pressed == BUI_PTY_SLOT + i ? BP_DEPTH : 0), place = p->entry[i] - BUI_PTY_FIRST;
+    int cx = r.x + (r.h < 44 ? 9 : 10), cy = fy + r.h - BP_DEPTH - 9;
+    char digit[2] = {(char)('1' + place), 0};
+
+    if (p->mode != BUI_PTY_MULTI || !p->present[i] || p->entry[i] < BUI_PTY_FIRST)
+        return;
+    UiDisc(cx, cy, 7, kEmAmber.lip);
+    UiDisc(cx, cy, 6, kEmAmber.top);
+    UiText(digit, cx - UiTextWidth(digit, 1) / 2, cy - 5, kEmAmber.ink, kEmAmber.inkSh, 1, cx + 8);
+}
+
+/* CANCEL: violet, as BACK. Picking several, the shorter one under CONFIRM, both lit while the Party's cursor is on
+ * them. */
+static void BPCancelButton(const CtrBattleView *v)
+{
+    int multi = v->pty.mode == BUI_PTY_MULTI;
+    const CtrPokeTouchRect *r = multi ? &sBPCancelLow : &sBPCancel;
+    const EmPal *pal = multi && v->pty.button == 1 ? &kEmAmber : &kEmViolet;
     int fy;
 
-    TsBgRect(r->x, r->y, r->w, r->h);
-    fy = EmButton(r->x, r->y, r->w, r->h, &kEmViolet, BP_DEPTH, pressed);
-    EmLabel("CANCEL", r->x, r->w, fy, r->h - BP_DEPTH, &kEmViolet);
+    TsBgRect(sBPCancel.x - 2, sBPCancel.y - 2, sBPCancel.w + 4, sBPCancel.h + 4);
+    if (multi) {
+        const EmPal *cp = v->pty.button == 0 ? &kEmAmber : &kEmCream;
+
+        if (v->pty.button == 0)
+            EmGlowRing(sBPConfirm.x, sBPConfirm.y, sBPConfirm.w, sBPConfirm.h);
+        fy = EmButton(sBPConfirm.x, sBPConfirm.y, sBPConfirm.w, sBPConfirm.h, cp, BP_DEPTH, v->pressed == BUI_PTY_CONFIRM);
+        EmLabel(CtrUiText(UIS_PTY_CONFIRM), sBPConfirm.x, sBPConfirm.w, fy, sBPConfirm.h - BP_DEPTH, cp);
+        if (v->pty.button == 1)
+            EmGlowRing(r->x, r->y, r->w, r->h);
+    }
+    fy = EmButton(r->x, r->y, r->w, r->h, pal, BP_DEPTH, v->pressed == BUI_PTY_CANCEL);
+    EmLabel("CANCEL", r->x, r->w, fy, r->h - BP_DEPTH, pal);
 }
 
 /* The note card: what the Party says (its question or hint), or, with no CANCEL, that one must be sent out. */
@@ -446,11 +481,13 @@ static void BPartyOverlay(const CtrBattleView *v)
 static void BParty(const CtrBattleView *v)
 {
     TsBackdrop();
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 6; ++i) {
         BPartyPanel(i, v);
+        BPartyEntry(i, v);
+    }
     BPNoteCard(v);
     if (v->pty.mode != BUI_PTY_FORCED)
-        BPCancelButton(v->pressed == BUI_PTY_CANCEL);
+        BPCancelButton(v);
     BPartyOverlay(v);
 }
 
@@ -1141,11 +1178,15 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
 
                     r = UiInset(&r, -2);
                     BPartyPanel(i, v);
+                    BPartyEntry(i, v);
                     BMark(dirty, &r);
                 }
-            if (v->pty.mode != BUI_PTY_FORCED && (old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)) {
-                BPCancelButton(v->pressed == BUI_PTY_CANCEL);
-                BMark(dirty, &sBPCancel);
+            if (v->pty.mode != BUI_PTY_FORCED && ((old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)
+                                                 || (old->pressed == BUI_PTY_CONFIRM) != (v->pressed == BUI_PTY_CONFIRM))) {
+                CtrPokeTouchRect r = UiInset(&sBPCancel, -2);
+
+                BPCancelButton(v);
+                BMark(dirty, &r);
             }
         }
     } else if (v->state == BUI_BAG || old->state == BUI_BAG) {
