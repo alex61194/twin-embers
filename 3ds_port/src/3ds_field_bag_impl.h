@@ -102,6 +102,14 @@ static void FBTabs(const CtrPokeTouchBag *b)
         int w = 28 + UiTextWidth(b->title, 1), x = sFBTitle.x + (sFBTitle.w - w) / 2;
 
         FBCard(&sFBTitle);
+        if (b->kind == PT_BAG_KIND_SHOP) {              /* a mart: its BUY, and the player's money on the right */
+            char money[16];
+
+            snprintf(money, sizeof(money), "\xc2\xa5%u", (unsigned)b->money);
+            UiText(b->title, sFBTitle.x + 12, sFBTitle.y + 6, EM_DARK, EM_DARK_SH, 1, sFBTitle.x + 120);
+            UiTextRight(money, sFBTitle.x + sFBTitle.w - 12, sFBTitle.y + 6, EM_VALUE, EM_DARK_SH, 1);
+            return;
+        }
         if (b->titleItem)
             BItemDraw(b->titleItem, x, sFBTitle.y - 2, 1);
         UiText(b->title, x + 28, sFBTitle.y + 6, EM_DARK, EM_DARK_SH, 1, sFBTitle.x + sFBTitle.w - 4);
@@ -131,6 +139,14 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
     p = selected ? &kEmAmber : &kEmCream;
     fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, press);
     BItemDraw(b->row[i].item, r.x + 3, fy - 1, 1);
+    if (b->kind == PT_BAG_KIND_SHOP) {                  /* a mart's row: its price */
+        char price[12];
+
+        snprintf(price, sizeof(price), "\xc2\xa5%u", (unsigned)b->row[i].price);
+        UiText(b->row[i].name, r.x + 30, fy + 7, p->ink, p->inkSh, 1, r.x + r.w - 12 - UiTextWidth(price, 1));
+        UiTextRight(price, r.x + r.w - 8, fy + 7, p->ink, p->inkSh, 1);
+        return;
+    }
     UiText(b->row[i].name, r.x + 30, fy + 7, p->ink, p->inkSh, 1, r.x + r.w - 40);
     if (b->kind != PT_BAG_KIND_BAG ? b->row[i].qty != 0 : b->pocket != 1) {   /* key items and HMs: no count */
         char qty[8];
@@ -195,9 +211,10 @@ static void FBQuantity(const CtrPokeTouchBag *b)
     int fy;
 
     FBCard(&sFBAsk);
-    UiTextCentered(CtrUiText(b->use == PT_BAG_USE_SELL ? UIS_BAG_SELL_HOW_MANY : b->use == PT_BAG_USE_DEPOSIT
-                             ? UIS_BAG_DEPOSIT_HOW_MANY : UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
-    if (b->use == PT_BAG_USE_SELL) {                    /* the item, and what the shop pays for that many */
+    UiTextCentered(CtrUiText(b->kind == PT_BAG_KIND_SHOP ? UIS_BAG_BUY_HOW_MANY : b->use == PT_BAG_USE_SELL
+                             ? UIS_BAG_SELL_HOW_MANY : b->use == PT_BAG_USE_DEPOSIT ? UIS_BAG_DEPOSIT_HOW_MANY
+                             : UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
+    if (b->use == PT_BAG_USE_SELL || b->kind == PT_BAG_KIND_SHOP) {   /* the item, and what that many come to */
         char line[40];
 
         snprintf(line, sizeof(line), "%s  \xc2\xa5%u", b->selName, (unsigned)b->sale);

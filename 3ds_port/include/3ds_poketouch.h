@@ -79,7 +79,7 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
  * The TM Case and the Berry Pouch it opens are drawn the same way, with their title in place of the pockets. */
 #define PT_BAG_ROWS 5
 #define PT_BAG_MENU_MAX 6
-enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH };
+enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP };   /* SHOP: a mart's BUY list */
 enum { PT_BAG_USE_FIELD = 0, PT_BAG_USE_SELL, PT_BAG_USE_DEPOSIT };   /* the field's Bag, a shop's, the item PC's */
 enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
        PT_BAG_STATE_MESSAGE };
@@ -100,6 +100,7 @@ typedef struct {
     struct {
         uint16_t item;
         uint16_t qty;
+        uint16_t price;             /* a mart's row: what one costs */
         char name[20];
     } row[PT_BAG_ROWS];
     uint16_t selItem;               /* the selected item, its name and description */
@@ -112,7 +113,7 @@ typedef struct {
     char menuName[PT_BAG_MENU_MAX][14];
     uint16_t tossCount, tossMax;    /* the quantity box: how many, of how many */
     uint8_t use;                    /* PT_BAG_USE_*: what the Bag is open for */
-    uint32_t sale, money;           /* selling: what the shop pays for that many, and the player's money */
+    uint32_t sale, money;           /* selling or buying: what that many come to, and the player's money */
     char prompt[96];                /* the Bag's question (YES/NO) or the message it waits on */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
 } CtrPokeTouchBag;
