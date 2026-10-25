@@ -593,7 +593,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "3468db1f6471ee70a6621d2c910eaecee38291518dd7bf93eeffd34218bf7bd4",
+   "sha256": "483c57be520aa8cac71ef018be138d4d4bd8d34812ab577c944f5785099696d4",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -927,7 +927,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "aabdbdf60ded8a4f69acb81d4e2eff9f823503e3df0abb349a631e09820bad08",
+   "sha256": "a7750af9633bd2bfedb3f8b2874160dbbe04668675e7a8a24b4a71681faeb2c6",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1013,7 +1013,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "90fc7e61d825c8e2eae29582ec26f05f707c02416b6c8083fb1f7a382568dca2",
+   "sha256": "529076e63ae5adae34ba96f55587ddfc6764e4a088d2376c46cdb2595de718d5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4391,6 +4391,14 @@
   {
    "path": "patches/pokefirered/0137-touch-drawn-pokedex.json",
    "sha256": "9a6f135d50d368b395fa9db8938a5f5a8fb286882b1916e6aaabe18753a64ff1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0138-touch-drawn-cases.json",
+   "sha256": "3204e074b9f2c379fb3ee42c6166545581c4daf0aa5f983ca420e539548b1e13",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

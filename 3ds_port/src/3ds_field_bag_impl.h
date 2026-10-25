@@ -2,13 +2,15 @@
  * battle screen, whose ember pieces, item icons and text wrapping it shares. A remote for FireRed's own Bag: the pockets
  * as tabs, the list's rows as raised buttons (the Bag's selection amber, CLOSE BAG violet), the item's description in
  * the note, and whatever the Bag has open over the list: its menu, the quantity box, its question or its message.
- * Every row, cursor and count is the Bag's own (3ds_bottom.c walks them with its keys). */
+ * Every row, cursor and count is the Bag's own (3ds_bottom.c walks them with its keys). The TM Case and the Berry Pouch
+ * (bag.kind) are the same list under their title, with FireRed's CLOSE row; a TM/HM shows its move's type. */
 #include "3ds_ui_strings.h"
 
 static const CtrPokeTouchRect sFBTab[3] = {{4, 4, 78, 24}, {85, 4, 78, 24}, {166, 4, 78, 24}};
 static const CtrUiString sFBTabLabel[3] = {UIS_BAG_ITEMS, UIS_BAG_KEY_ITEMS, UIS_BAG_BALLS};
 static const CtrPokeTouchRect sFBUp = {222, 34, 22, 63}, sFBDown = {222, 101, 22, 62};
 static const CtrPokeTouchRect sFBArea = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
+static const CtrPokeTouchRect sFBTitle = {4, 4, 240, 24};
 #define FB_DEPTH 2
 
 static CtrPokeTouchRect FBRow(int i)
@@ -61,7 +63,7 @@ int CtrPokeTouch_BagHit(const CtrPokeTouchView *v, int x, int y)
         return UiIn(&sFBQtyUp, x, y) ? PT_BAG_HIT_QTY_UP : UiIn(&sFBQtyDown, x, y) ? PT_BAG_HIT_QTY_DOWN
              : UiIn(&sFBYes, x, y) ? PT_BAG_HIT_QTY_OK : UiIn(&sFBNo, x, y) ? PT_BAG_HIT_QTY_CANCEL : -1;
     case PT_BAG_STATE_LIST:
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 3 && b->kind == PT_BAG_KIND_BAG; ++i)
             if (UiIn(&sFBTab[i], x, y))
                 return PT_BAG_HIT_TAB + i;
         if (b->count + 1 > PT_BAG_ROWS) {
@@ -96,6 +98,15 @@ static void FBButton(const CtrPokeTouchRect *r, const EmPal *p, const char *labe
 
 static void FBTabs(const CtrPokeTouchBag *b)
 {
+    if (b->kind != PT_BAG_KIND_BAG) {                   /* a case: its icon and name on a plain card */
+        int w = 28 + UiTextWidth(b->title, 1), x = sFBTitle.x + (sFBTitle.w - w) / 2;
+
+        FBCard(&sFBTitle);
+        if (b->titleItem)
+            BItemDraw(b->titleItem, x, sFBTitle.y - 2, 1);
+        UiText(b->title, x + 28, sFBTitle.y + 6, EM_DARK, EM_DARK_SH, 1, sFBTitle.x + sFBTitle.w - 4);
+        return;
+    }
     for (int i = 0; i < 3; ++i) {
         const CtrPokeTouchRect *r = &sFBTab[i];
 
@@ -113,14 +124,15 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
     if (index > b->count)
         return;
     if (index == b->count) {
-        FBButton(&r, selected ? &kEmAmber : &kEmViolet, CtrUiText(UIS_BAG_CLOSE), press);
+        FBButton(&r, selected ? &kEmAmber : &kEmViolet, b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(UIS_BAG_CLOSE),
+                 press);
         return;
     }
     p = selected ? &kEmAmber : &kEmCream;
     fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, press);
     BItemDraw(b->row[i].item, r.x + 3, fy - 1, 1);
     UiText(b->row[i].name, r.x + 30, fy + 7, p->ink, p->inkSh, 1, r.x + r.w - 40);
-    if (b->pocket != 1) {                               /* key items are one of each: no count */
+    if (b->kind != PT_BAG_KIND_BAG ? b->row[i].qty != 0 : b->pocket != 1) {   /* key items and HMs: no count */
         char qty[8];
 
         snprintf(qty, sizeof(qty), "x%u", b->row[i].qty > 999 ? 999 : b->row[i].qty);
@@ -239,10 +251,18 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
     EmSurface();
     EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
     if (b->selItem) {
-        UiText(b->selName, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, NOTE_X + w - 4);
+        int right = NOTE_X + w - 4;
+
+        if (b->moveType >= 0) {                         /* a TM/HM: its move's type beside its name */
+            CtrPokeTouchRect t = {(int16_t)(NOTE_X + w - 54), NOTE_Y + 5, 46, 15};
+
+            UiTypeBadge(&t, b->moveType, b->typeName);
+            right = t.x - 4;
+        }
+        UiText(b->selName, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, right);
         BDescribeN(b->selDesc, NOTE_X + 12, NOTE_Y + 21, w - 18, 3, EM_DIM);
     } else
-        UiText(CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2,
+        UiText(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2,
                EM_DIM, EM_DARK_SH, 1, NOTE_X + w - 4);
     sUiS = &sUiNavy;
 }

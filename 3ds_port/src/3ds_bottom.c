@@ -172,6 +172,14 @@ extern unsigned CtrBottomTMCase_Item(int index);
 extern void CtrBottomTMCase_Title(char *out, int size);
 extern void CtrBottomTMCase_MoveName(unsigned item, char *out, int size);
 extern int CtrBottomTMCase_HitAt(int gx, int gy);
+extern unsigned CtrBottomTMCase_Quantity(int index);
+extern int CtrBottomTMCase_ActionCount(void);
+extern void CtrBottomTMCase_ActionName(int index, char *out, int size);
+extern int CtrBottomTMCase_Message(char *out, int size);
+extern void CtrBottomTMCase_CloseLabel(char *out, int size);
+extern unsigned CtrBottomTMCase_CaseItem(void);
+extern int CtrBottomTMCase_MoveInfo(unsigned item, int *type, int *power, int *accuracy, int *pp, char *typeName,
+                                    int size);
 extern int CtrBottomPouch_IsOpen(void);
 extern int CtrBottomPouch_State(void);
 extern int CtrBottomPouch_Count(void);
@@ -182,6 +190,14 @@ extern unsigned CtrBottomPouch_Item(int index);
 extern unsigned CtrBottomPouch_Quantity(int index);
 extern void CtrBottomPouch_Title(char *out, int size);
 extern int CtrBottomPouch_HitAt(int gx, int gy);
+extern int CtrBottomPouch_ActionCount(void);
+extern void CtrBottomPouch_ActionName(int index, char *out, int size);
+extern int CtrBottomPouch_TossCount(void);
+extern int CtrBottomPouch_TossMax(void);
+extern int CtrBottomPouch_Prompt(char *out, int size);
+extern int CtrBottomPouch_Message(char *out, int size);
+extern void CtrBottomPouch_CloseLabel(char *out, int size);
+extern unsigned CtrBottomPouch_PouchItem(void);
 extern int CtrSave_Begin(void);
 extern void CtrMenu_SetSwitchTarget(int target);
 extern int CtrMenu_TakeSwitched(void);
@@ -687,67 +703,143 @@ static int FieldBagNative(void)
     return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;
 }
 
-/* The field Bag as it is now: its pocket, the rows around the cursor (CLOSE BAG the row after the last item), the
- * selected item's detail, and what it has open. While the Bag is busy (a pocket sliding in, a message printing) the
+/* What the lower screen draws a list screen from: the Bag's bridge, or a case's. A NULL question has no answer there
+ * (the TM Case has no quantity box nor YES/NO). */
+typedef struct {
+    int mode, kind;
+    const ListScreen *list;
+    unsigned (*item)(int index);
+    unsigned (*quantity)(int index);
+    int (*actionCount)(void);
+    void (*actionName)(int index, char *out, int size);
+    int (*tossCount)(void);
+    int (*tossMax)(void);
+    int (*prompt)(char *out, int size);
+    int (*message)(char *out, int size);
+} FieldList;
+
+/* Defined with the list screens' touch plans below. */
+static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen;
+
+static const FieldList sFieldBagList = {
+    MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
+    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message,
+};
+static const FieldList sFieldTMCaseList = {
+    MODE_TMCASE, PT_BAG_KIND_TMCASE, &sTMCaseScreen, CtrBottomTMCase_Item, CtrBottomTMCase_Quantity,
+    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message,
+};
+static const FieldList sFieldPouchList = {
+    MODE_POUCH, PT_BAG_KIND_POUCH, &sPouchScreen, CtrBottomPouch_Item, CtrBottomPouch_Quantity,
+    CtrBottomPouch_ActionCount, CtrBottomPouch_ActionName, CtrBottomPouch_TossCount, CtrBottomPouch_TossMax,
+    CtrBottomPouch_Prompt, CtrBottomPouch_Message,
+};
+
+/* The list the lower screen draws itself in this mode (the field's Bag and the cases it opens), or NULL. */
+static const FieldList *FieldListFor(int mode)
+{
+    if (sStorageSession)
+        return NULL;
+    if (mode == MODE_BAG)
+        return FieldBagNative() ? &sFieldBagList : NULL;
+    return mode == MODE_TMCASE ? &sFieldTMCaseList : mode == MODE_POUCH ? &sFieldPouchList : NULL;
+}
+
+/* A row's name: the item's, and for a TM/HM its move's after it ("TM01 FOCUS PUNCH"). */
+static void FieldListName(const FieldList *f, unsigned item, char *out, int size)
+{
+    CtrBottomBag_ItemName(item, out, size);
+    if (f->kind == PT_BAG_KIND_TMCASE) {
+        char move[16];
+        int n = (int)strlen(out);
+
+        CtrBottomTMCase_MoveName(item, move, sizeof(move));
+        if (move[0] && n + 1 < size)
+            snprintf(out + n, (size_t)(size - n), " %s", move);
+    }
+}
+
+/* The field Bag (or a case) as it is now: its pocket, the rows around the cursor (CLOSE the row after the last item),
+ * the selected item's detail, and what it has open. While it is busy (a pocket sliding in, a message printing) the
  * picture last shown stays. */
-static void FieldBagFill(CtrPokeTouchView *v, int pressed)
+static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
 {
     CtrPokeTouchBag *b = &v->bag;
-    int count, total, state = CtrBottomBag_State();
+    const ListScreen *list = f->list;
+    int count, total, state = list->state();
 
-    if (state == BAG_BUSY && sHaveShown && sShown.mode == MODE_BAG && sShown.touch.bag.on) {
+    if (state == BAG_BUSY && sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on) {
         *b = sShown.touch.bag;
         b->pressed = -1;
         return;
     }
     memset(b, 0, sizeof(*b));
     b->on = 1;
+    b->kind = (uint8_t)f->kind;
+    b->moveType = -1;
     b->pressed = (int16_t)pressed;
     b->state = (uint8_t)(state == BAG_BUSY ? BAG_LIST : state);
-    b->pocket = (uint8_t)CtrBottomBag_Pocket();
-    b->count = (int16_t)(count = CtrBottomBag_Count());
-    b->cursor = (int16_t)CtrBottomBag_Cursor();
+    if (f->kind == PT_BAG_KIND_TMCASE) {
+        CtrBottomTMCase_Title(b->title, sizeof(b->title));
+        CtrBottomTMCase_CloseLabel(b->closeName, sizeof(b->closeName));
+        b->titleItem = (uint16_t)CtrBottomTMCase_CaseItem();
+    } else if (f->kind == PT_BAG_KIND_POUCH) {
+        CtrBottomPouch_Title(b->title, sizeof(b->title));
+        CtrBottomPouch_CloseLabel(b->closeName, sizeof(b->closeName));
+        b->titleItem = (uint16_t)CtrBottomPouch_PouchItem();
+    } else
+        b->pocket = (uint8_t)CtrBottomBag_Pocket();
+    b->count = (int16_t)(count = list->count());
+    b->cursor = (int16_t)list->cursor();
     total = count + 1;
     b->first = (int16_t)(b->cursor - 2 < 0 ? 0 : b->cursor - 2);
     if (b->first > total - PT_BAG_ROWS)
         b->first = (int16_t)(total - PT_BAG_ROWS < 0 ? 0 : total - PT_BAG_ROWS);
     for (int i = 0; i < PT_BAG_ROWS; ++i) {
-        unsigned item = CtrBottomBag_Item(b->first + i);
+        unsigned item = f->item(b->first + i);
 
         b->row[i].item = (uint16_t)item;
         if (item) {
-            b->row[i].qty = (uint16_t)CtrBottomBag_Quantity(b->first + i);
-            CtrBottomBag_ItemName(item, b->row[i].name, sizeof(b->row[i].name));
+            b->row[i].qty = (uint16_t)f->quantity(b->first + i);
+            FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
         }
     }
     if (b->cursor >= 0 && b->cursor < count) {
-        b->selItem = (uint16_t)CtrBottomBag_Item(b->cursor);
+        b->selItem = (uint16_t)f->item(b->cursor);
         if (b->selItem) {
-            CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
+            int type = -1, power, accuracy, pp;
+
+            if (f->kind == PT_BAG_KIND_TMCASE)
+                CtrBottomTMCase_MoveName(b->selItem, b->selName, sizeof(b->selName));
+            else
+                CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
             CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
+            if (f->kind == PT_BAG_KIND_TMCASE
+                && CtrBottomTMCase_MoveInfo(b->selItem, &type, &power, &accuracy, &pp, b->typeName, sizeof(b->typeName)))
+                b->moveType = (int8_t)type;
         }
     }
     if (state == BAG_ACTIONS || state == BAG_YESNO) {
-        int n = state == BAG_YESNO ? 2 : CtrBottomBag_ActionCount();
+        int n = state == BAG_YESNO ? 2 : f->actionCount();
 
         b->menuCount = (uint8_t)(n > PT_BAG_MENU_MAX ? PT_BAG_MENU_MAX : n);
         b->menuCursor = (int8_t)CtrBottomBag_MenuCursor();
         for (int i = 0; state == BAG_ACTIONS && i < b->menuCount; ++i)
-            CtrBottomBag_ActionName(i, b->menuName[i], sizeof(b->menuName[i]));
+            f->actionName(i, b->menuName[i], sizeof(b->menuName[i]));
     }
-    if (state == BAG_QUANTITY) {
-        b->tossCount = (uint16_t)CtrBottomBag_TossCount();
-        b->tossMax = (uint16_t)CtrBottomBag_TossMax();
+    if (state == BAG_QUANTITY && f->tossCount != NULL) {
+        b->tossCount = (uint16_t)f->tossCount();
+        b->tossMax = (uint16_t)f->tossMax();
     }
-    if (state == BAG_YESNO) {
-        CtrBottomBag_Prompt(b->prompt, sizeof(b->prompt));
+    if (state == BAG_YESNO && f->prompt != NULL) {
+        f->prompt(b->prompt, sizeof(b->prompt));
         const CtrPokeTouchBag *was = &sShown.touch.bag;   /* the count asked for just before (one: none was asked) */
 
-        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == MODE_BAG && was->on && was->tossCount
+        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == f->mode && was->on && was->tossCount
                                   && (was->state == BAG_QUANTITY || was->state == BAG_YESNO) ? was->tossCount : 1);
     }
     if (state == BAG_MESSAGE)
-        CtrBottomBag_Message(b->prompt, sizeof(b->prompt));
+        f->message(b->prompt, sizeof(b->prompt));
 }
 
 /* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
@@ -1435,10 +1527,6 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->serial = CtrBottomBag_Serial();
             s->cursor = (signed char)CtrBottomBag_Cursor();
             BagBar(&s->touch);
-            if (FieldBagNative()) {
-                FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1);
-                s->touch.viewport = 0;
-            }
         }
         if (mode == MODE_TMCASE) {
             s->serial = CtrBottomTMCase_Serial();
@@ -1449,6 +1537,10 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->serial = CtrBottomPouch_Serial();
             s->cursor = (signed char)CtrBottomPouch_Cursor();
             PouchBar(&s->touch);
+        }
+        if (FieldListFor(mode) != NULL) {
+            FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, FieldListFor(mode));
+            s->touch.viewport = 0;
         }
         if (mode == MODE_CARD) {
             /* The card itself shows its statistics: the bar only says how to turn it. */
@@ -3233,13 +3325,13 @@ static void ProcessBattleBagTouch(const CtrInput *in)
  * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
  * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
  * Bag's own keys, so FireRed decides what each does. A held physical button cancels it. */
-static void ProcessFieldBagTouch(const CtrInput *in)
+static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
 {
-    const ListScreen *list = &sBagScreen;
-    int state = CtrBottomBag_State(), hit = -1;
-    int ready = sHaveShown && sShown.mode == MODE_BAG && sShown.touch.bag.on && !CtrBottom_IsFading();
+    const ListScreen *list = f->list;
+    int state = list->state(), hit = -1;
+    int ready = sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on && !CtrBottom_IsFading();
 
-    if (sFieldBag.pocketTarget >= 0) {
+    if (sFieldBag.pocketTarget >= 0 && f->kind == PT_BAG_KIND_BAG) {
         int pocket = CtrBottomBag_Pocket();
 
         if (pocket == sFieldBag.pocketTarget || --sFieldBag.pocketWait <= 0 || (state != BAG_LIST && state != BAG_BUSY))
@@ -3896,8 +3988,8 @@ static int ProcessTouch(int mode)
             ProcessDexTouch(in);
         return HIT_NONE;
     }
-    if (mode == MODE_BAG && FieldBagNative()) {
-        ProcessFieldBagTouch(in);
+    if (FieldListFor(mode) != NULL) {
+        ProcessFieldBagTouch(FieldListFor(mode), in);
         return HIT_NONE;
     }
     if (in->held & 0x3ffu || (sHaveShown && mode != sShown.mode))

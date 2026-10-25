@@ -75,9 +75,11 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
 
 /* The field Bag drawn by the port in the viewport (3ds_field_bag_impl.h), a remote for FireRed's own Bag: its pockets
  * as tabs, the rows of the list it shows (items, then CLOSE BAG), the item's description in the note, and over the
- * list the menu, the quantity box, the question or the message it has open. Everything is the Bag's own state. */
+ * list the menu, the quantity box, the question or the message it has open. Everything is the Bag's own state.
+ * The TM Case and the Berry Pouch it opens are drawn the same way, with their title in place of the pockets. */
 #define PT_BAG_ROWS 5
 #define PT_BAG_MENU_MAX 6
+enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH };
 enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
        PT_BAG_STATE_MESSAGE };
 /* Hit codes (CtrPokeTouch_BagHit). */
@@ -85,6 +87,10 @@ enum { PT_BAG_HIT_TAB = 100, PT_BAG_HIT_ROW = 200, PT_BAG_HIT_MENU = 300, PT_BAG
        PT_BAG_HIT_DOWN, PT_BAG_HIT_QTY_UP = 610, PT_BAG_HIT_QTY_DOWN, PT_BAG_HIT_QTY_OK, PT_BAG_HIT_QTY_CANCEL };
 typedef struct {
     uint8_t on;                     /* the viewport shows this Bag (no GBA picture) */
+    uint8_t kind;                   /* PT_BAG_KIND_*: the Bag, or a case it opens */
+    uint16_t titleItem;             /* a case: its own item (the title's icon), its name and its CLOSE row */
+    char title[20];
+    char closeName[16];
     uint8_t pocket;                 /* FireRed's pocket: 0 Items, 1 Key Items, 2 Poke Balls */
     uint8_t state;                  /* PT_BAG_STATE_*: the Bag's own input state */
     int16_t count;                  /* items in the pocket; row `count` is CLOSE BAG */
@@ -98,6 +104,8 @@ typedef struct {
     uint16_t selItem;               /* the selected item, its name and description */
     char selName[20];
     char selDesc[112];
+    int8_t moveType;                /* a TM/HM: the move's type (-1: none) and its name */
+    char typeName[10];
     uint8_t menuCount;              /* the open menu's rows (USE, GIVE, TOSS ... CANCEL) */
     int8_t menuCursor;
     char menuName[PT_BAG_MENU_MAX][14];
