@@ -64,6 +64,10 @@ static CtrAudioStats sStats;
 static unsigned sStatsFrames;
 static CtrAudioCatchUp sCatchUp;
 static unsigned sFrameSamples;
+/* Band-limited PSG on a New 3DS only: it costs ~4x the point-sampled synthesis
+ * (host measurement), every sound frame and every catch-up frame, and on an
+ * Old 3DS the mix shares the system core or the game thread. */
+static int sPsgBlep = CTR_AUDIO_PSG_BLEP;
 
 int CtrAudio_Init(void)
 {
@@ -80,6 +84,15 @@ int CtrAudio_Init(void)
         return 0;
     }
     sNdspUp = 1;
+    {
+        bool isNew3ds = false;
+
+        if (sPsgBlep && R_SUCCEEDED(APT_CheckNew3DS(&isNew3ds)) && !isNew3ds)
+        {
+            sPsgBlep = 0;
+            CtrLog_Write(CTR_LOG_AUDIO, "Old 3DS: PSG point-sampled (band-limited only on a New 3DS)");
+        }
+    }
     sSamples = linearAlloc(bytes);
     if (sSamples == NULL)
     {
@@ -319,8 +332,9 @@ void CtrAudio_OnSoundMain(const CtrAudioFrame *frame)
     {
         CtrCgb_Init(&sCgb, frame->rate);
         /* Band-limited PSG: no aliasing from the square/wave/noise steps
-         * (3ds_cgb_audio.h). CTR_AUDIO_PSG_BLEP=0 keeps point sampling. */
-        CtrCgb_SetBandLimited(&sCgb, CTR_AUDIO_PSG_BLEP);
+         * (3ds_cgb_audio.h). CTR_AUDIO_PSG_BLEP=0, or an Old 3DS, keeps
+         * point sampling. */
+        CtrCgb_SetBandLimited(&sCgb, sPsgBlep);
         sCgbRate = frame->rate;
     }
     CtrCgb_Render(&sCgb, gGbaShadow.regs, sPsg, samples);
