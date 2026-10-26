@@ -26,23 +26,32 @@ typedef struct {
     unsigned turbo;  /* the chosen multiplier: 0 (off) or 2..4 */
     bool applies;    /* the stable field is up now */
     unsigned phase;  /* frames since the last shown one */
+    bool unseen;     /* nothing on either screen changes now: a menu changing over behind a held picture */
 } CtrFastForward;
+
+/* While a menu changes over (the Party closing for the Bag, a battle's Bag or Party setting up) both screens keep
+ * their last picture, so the game runs this many frames for each one shown: the fades and setup frames nobody sees
+ * pass at this speed, and the sound keeps its pace as in the turbo. */
+#define CTR_UNSEEN_SPEED 4
 
 static inline unsigned CtrFastForward_Speed(const CtrFastForward *ff)
 {
-    return ff->applies && ff->turbo >= CTR_TURBO_MIN && ff->turbo <= CTR_TURBO_MAX ? ff->turbo : 1;
+    unsigned speed = ff->applies && ff->turbo >= CTR_TURBO_MIN && ff->turbo <= CTR_TURBO_MAX ? ff->turbo : 1;
+
+    return ff->unseen && speed < CTR_UNSEEN_SPEED ? CTR_UNSEEN_SPEED : speed;
 }
 
 /* Once per game frame: a START press (only when `canCycle`, the stable field with nothing said or
  * scripted) takes the next step; `applies` says whether the multiplier is in force this frame. Any change
  * of the speed in force shows its first frame at once. */
-static inline void CtrFastForward_Turbo(CtrFastForward *ff, bool press, bool canCycle, bool applies)
+static inline void CtrFastForward_Turbo(CtrFastForward *ff, bool press, bool canCycle, bool applies, bool unseen)
 {
     unsigned before = CtrFastForward_Speed(ff);
 
     if (press && canCycle)
         ff->turbo = ff->turbo < CTR_TURBO_MIN ? CTR_TURBO_MIN : ff->turbo >= CTR_TURBO_MAX ? CTR_TURBO_OFF : ff->turbo + 1;
     ff->applies = applies;
+    ff->unseen = unseen;
     if (CtrFastForward_Speed(ff) != before)
         ff->phase = 0;
 }

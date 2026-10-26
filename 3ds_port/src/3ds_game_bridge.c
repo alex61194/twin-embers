@@ -627,7 +627,7 @@ void VBlankIntrWait(void)
         sFastForward.turbo = CtrSettings_Turbo();   /* the speed chosen in an earlier session */
     }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
-                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0);
+                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);
     CtrSettings_SetTurbo(sFastForward.turbo);   /* writes the file only when a press changed it */
     bool shown = CtrFastForward_Show(&sFastForward);
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
