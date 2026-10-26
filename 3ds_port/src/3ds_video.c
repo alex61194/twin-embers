@@ -3442,34 +3442,50 @@ static bool IntroClipLayer(int bg, bool scenery)
 }
 
 /*
- * The light a lit window throws on the ground: a soft warm glow under each
- * window's bottom tiles, added over the field's ground layers before the
- * sprites of their priority, as strong as the night is deep.
+ * The light a lit window throws around itself: a thin warm rim just outside
+ * the window's edges, added over the field's ground layers before the
+ * sprites of their priority, as strong as the night is deep. It hugs the
+ * window, so the wall, the door and the steps under it keep their colours.
  */
+enum { GLOW_RIM = 4, GLOW_SIZE = 8 + 2 * GLOW_RIM };
 static C3D_Tex sGlowTex;
 static bool sGlowReady, sGlowFailed;
 
 static void GlowPrepare(void)
 {
     if (sGlowReady || sGlowFailed) return;
-    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
+    if (!C3D_TexInit(&sGlowTex, GLOW_SIZE, GLOW_SIZE, GPU_RGBA8)) { sGlowFailed = true; return; }
     uint32_t *texels = (uint32_t *)sGlowTex.data;
-    for (unsigned y = 0; y < 32; ++y)
-        for (unsigned x = 0; x < 32; ++x)
+    for (int y = 0; y < GLOW_SIZE; ++y)
+        for (int x = 0; x < GLOW_SIZE; ++x)
         {
-            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
-            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
+            /* Distance from the tile's 8x8 box: none on the glass, fading out across the rim. */
+            float dx = fmaxf(fmaxf(GLOW_RIM - (x + 0.5f), x + 0.5f - (GLOW_RIM + 8)), 0.0f);
+            float dy = fmaxf(fmaxf(GLOW_RIM - (y + 0.5f), y + 0.5f - (GLOW_RIM + 8)), 0.0f);
+            float d = sqrtf(dx * dx + dy * dy) / (GLOW_RIM + 0.5f);
+            unsigned alpha = d > 0.0f && d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
 
-            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
+            texels[CtrVideo_Texel((unsigned)x, (unsigned)y, GLOW_SIZE)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
         }
     C3D_TexFlush(&sGlowTex);
-    C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    C3D_TexSetFilter(&sGlowTex, GPU_NEAREST, GPU_NEAREST);
     sGlowReady = true;
+}
+
+/* One piece of the rim: texture box (x0, y0)-(x1, y1), drawn that far from the tile's corner. */
+static void GlowPiece(int x, int y, C2D_ImageTint *tint, int x0, int y0, int x1, int y1)
+{
+    Tex3DS_SubTexture sub = {(u16)(x1 - x0), (u16)(y1 - y0), x0 / (float)GLOW_SIZE, 1.0f - y0 / (float)GLOW_SIZE,
+                             x1 / (float)GLOW_SIZE, 1.0f - y1 / (float)GLOW_SIZE};
+
+    ++sStats.tiles;
+    C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x + x0 - GLOW_RIM + CTR_VIEW_X + sLayerShift,
+                    y + y0 - GLOW_RIM + CTR_VIEW_Y, 0, tint, 1.0f, 1.0f);
 }
 
 static void DrawDayNightGlow(void)
 {
-    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
+    enum { A = 0, B = GLOW_RIM, C = GLOW_RIM + 8, D = GLOW_SIZE };
     unsigned display = Reg(0);
     C2D_ImageTint tint;
     bool begun = false;
@@ -3486,7 +3502,7 @@ static void DrawDayNightGlow(void)
 
         if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
         if (fade <= 0.0f) continue;
-        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.45f * fade);
         unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
         int width = (int)columns * 8, height = (int)rows * 8;
         int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
@@ -3495,19 +3511,23 @@ static void DrawDayNightGlow(void)
         for (unsigned row = 0; row < rows; ++row)
         {
             const uint8_t *light = sCellLight[bg] + row * columns;
+            const uint8_t *above = sCellLight[bg] + ((row + rows - 1) & (rows - 1)) * columns;
             const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
             int y = (((int)row * 8 - sy) % height + height) % height;
 
-            if (y >= VIEW_BOTTOM) y -= height;
-            /* The glow lights the ground below its window tile: only for tiles the view shows. */
-            if (y <= VIEW_TOP - 8) continue;
+            if (y >= VIEW_BOTTOM + GLOW_RIM) y -= height;
+            if (y <= VIEW_TOP - 8 - GLOW_RIM) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
-                if (!light[column] || below[column]) continue;
+                if (!light[column]) continue;
+                unsigned left = (column + columns - 1) & (columns - 1), right = (column + 1) & (columns - 1);
+                /* The rim runs only along the window's outer edges: none between two of its lit tiles. */
+                bool l = !light[left], r = !light[right], t = !above[column], b = !below[column];
                 int x = (((int)column * 8 - sx) % width + width) % width;
 
-                if (x >= VIEW_RIGHT) x -= width;
-                if (x <= VIEW_LEFT - 8) continue;
+                if (!(l || r || t || b)) continue;
+                if (x >= VIEW_RIGHT + GLOW_RIM) x -= width;
+                if (x <= VIEW_LEFT - 8 - GLOW_RIM) continue;
                 if (!begun)
                 {
                     C2D_Flush();
@@ -3515,9 +3535,14 @@ static void DrawDayNightGlow(void)
                     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
                     begun = true;
                 }
-                ++sStats.tiles;
-                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
-                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+                if (l) GlowPiece(x, y, &tint, A, B, B, C);
+                if (r) GlowPiece(x, y, &tint, C, B, D, C);
+                if (t) GlowPiece(x, y, &tint, B, A, C, B);
+                if (b) GlowPiece(x, y, &tint, B, C, C, D);
+                if (l && t && !above[left]) GlowPiece(x, y, &tint, A, A, B, B);
+                if (r && t && !above[right]) GlowPiece(x, y, &tint, C, A, D, B);
+                if (l && b && !below[left]) GlowPiece(x, y, &tint, A, C, B, D);
+                if (r && b && !below[right]) GlowPiece(x, y, &tint, C, C, D, D);
             }
         }
     }
