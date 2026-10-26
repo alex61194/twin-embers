@@ -3078,6 +3078,14 @@ static bool sMapNamePopup;
 
 void CtrVideo_SetMapNamePopup(bool active) { sMapNamePopup = active; }
 
+/* FireRed's forest map preview (map_preview_screen.c: Viridian Forest, the Safari Zone, the Rocket Hideout...) is a
+ * 240x160 picture on BG0 that fades into the field once it has loaded. The picture is letterboxed (black lines 0-23
+ * and 136-159, the name tab in the top bar), so scaled by the canvas width it covers the canvas and loses only the
+ * last 16 lines of the bottom bar. */
+static bool sForestPreview;
+
+void CtrVideo_SetForestPreview(bool active) { sForestPreview = active; }
+
 /* GBA BG0 rect [gx0,gx1) x [gy0,gy1) drawn with the view at (viewX, viewY),
  * inside the native clip (x0..x1, y0..y1) being composed. */
 static void DrawFieldUiRect(unsigned bg, int viewX, int viewY, int gx0, int gx1, int gy0, int gy1,
@@ -3187,6 +3195,24 @@ static void DrawFieldUi(unsigned bg)
                 DrawFieldUiRect(bg, x - 232, viewY, 232, 240, gy0, gy1, x0, x1, y0, y1);
         }
         DrawFieldUiRect(bg, CTR_STAGE_X, CTR_GAME_HEIGHT - 160, 0, 240, 16, 112, x0, x1, y0, y1);
+    }
+    else if (sForestPreview)
+    {
+        float zoom = sZoom;
+
+        sZoom = (float)CTR_GAME_WIDTH / 240;
+        sViewX = sViewY = 0;
+        sClipX0 = (int)floorf(x0 / sZoom);
+        sClipX1 = (int)ceilf(x1 / sZoom);
+        sClipY0 = (int)floorf(y0 / sZoom);
+        sClipY1 = (int)ceilf(y1 / sZoom);
+        if (sClipX0 < 0) sClipX0 = 0;
+        if (sClipX1 > 240) sClipX1 = 240;
+        if (sClipY0 < 0) sClipY0 = 0;
+        if (sClipY1 > 160) sClipY1 = 160;
+        if (sClipX0 < sClipX1 && sClipY0 < sClipY1)
+            DrawTextBg(bg);
+        sZoom = zoom;
     }
     else if (sMapNamePopup)
     {

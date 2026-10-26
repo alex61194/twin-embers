@@ -47,6 +47,8 @@ static StageSet sStage, sStageUi, sCentred, sBattle, sTransition, sNativeUi, sIn
 extern const u16 *CtrTrainerCard_FlipScroll(void);
 extern bool32 CtrField_BarnDoorWipeActive(void);
 extern bool32 IsMapNamePopupTaskActive(void);
+/* Despite its name, TRUE while the forest preview's task is NOT running (map_preview_screen.c). */
+extern bool32 ForestMapPreviewScreenIsRunning(void);
 
 /* The field's own main callback on an outdoor map, outside a battle: where the
  * day/night tint applies (FireRed's outdoor types, as in 3ds_map_edge.h). */
@@ -611,6 +613,7 @@ void VBlankIntrWait(void)
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
+    CtrVideo_SetForestPreview(ForestMapPreviewScreenIsRunning() == FALSE);
     UpdateDayNight();
     GbaShadow_SetHeldKeys((uint16_t)(CtrBottom_FilterGameKeys(CtrInput_Get()->held) | CtrBottom_InjectedKeys()));
     CtrPerf_End(PERF_VBLANK, perfVblank);
