@@ -620,7 +620,7 @@ void VBlankIntrWait(void)
      * START (a new press) cycles it where CtrBottom_TurboCanCycle allows, and it is in force only where
      * CtrBottom_TurboApplies says the stable field, or a battle's stable core, is the screen's owner. */
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
-                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0);
+                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);
     bool shown = CtrFastForward_Show(&sFastForward);
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();

@@ -4978,6 +4978,15 @@ bool CtrBottom_TurboApplies(void)
         && !sRouteHold && !SaveActive();
 }
 
+/* The lower screen keeps its picture and TOP its frame (a route in flight, a bridge between two screens of a session,
+ * the battle's Bag or Party being opened): nothing the game draws meanwhile is seen, so the game may skip showing it. */
+bool CtrBottom_MenuChangingOver(void)
+{
+    if (!sEnabled || !sInitDone || !CtrBottom_HasSave() || !sHeldTop)
+        return false;
+    return sRouteHold || sBridging || sBatHold;
+}
+
 /* START cycles the multiplier in the same two places: in the battle at any moment of its stable core (a message, an
  * animation, a choice), with no menu of the original opened. */
 bool CtrBottom_TurboCanCycle(void)

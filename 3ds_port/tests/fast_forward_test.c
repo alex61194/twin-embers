@@ -14,7 +14,7 @@ static unsigned Shown(CtrFastForward *ff, unsigned frames)
 
 static void Frame(CtrFastForward *ff, bool press, bool canCycle, bool applies)
 {
-    CtrFastForward_Turbo(ff, press, canCycle, applies);
+    CtrFastForward_Turbo(ff, press, canCycle, applies, false);
 }
 
 int main(void)
@@ -51,6 +51,10 @@ int main(void)
 
     /* A press and the field leaving on the same frame: the step is taken, and not applied. */
     Frame(&ff, true, true, false); assert(ff.turbo == 4 && CtrFastForward_Speed(&ff) == 1);
+    /* A menu changing over behind held screens runs at 4x whatever the turbo says, and 1x again after it. */
+    ff.turbo = 0;
+    CtrFastForward_Turbo(&ff, false, false, false, true); assert(CtrFastForward_Speed(&ff) == CTR_UNSEEN_SPEED && Shown(&ff, 40) == 10);
+    CtrFastForward_Turbo(&ff, false, false, false, false); assert(CtrFastForward_Speed(&ff) == 1 && CtrFastForward_Show(&ff));
     puts("PASS turbo: starts off, START cycles 2x/3x/4x/off one step a press, remembered through menus, applied only in the stable field, first frame shown at once");
     return 0;
 }
