@@ -3579,18 +3579,19 @@ static void DrawDayNightGlow(unsigned mask)
         for (unsigned row = 0; row < rows; ++row)
         {
             const uint8_t *light = sCellGlow[bg] + row * columns;
-            int y = (((int)row * 8 - sy) % height + height) % height;
+            /* The map's sides are powers of two: a mask, not a division (none on the ARM11). */
+            int y = ((int)row * 8 - sy) & (height - 1);
 
             if (y >= VIEW_BOTTOM + 8) y -= height;
             if (y <= VIEW_TOP - 16) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
                 unsigned slot = light[column];
-                int x = (((int)column * 8 - sx) % width + width) % width;
-                int u, v;
+                int x, u, v;
                 Tex3DS_SubTexture sub;
 
                 if (!slot) continue;
+                x = ((int)column * 8 - sx) & (width - 1);
                 if (x >= VIEW_RIGHT + 8) x -= width;
                 if (x <= VIEW_LEFT - 16) continue;
                 if (!begun)
