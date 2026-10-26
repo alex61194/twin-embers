@@ -213,12 +213,14 @@ static unsigned GlyphCode(const char **s)
     else if (c >= '0' && c <= '9') code = 0xa1 + c - '0';
     else if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0x1b; }
     else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xb7; }
+    else if (c == 0x01 && **s) code = (unsigned char)*(*s)++;   /* a FireRed code as it is (CtrPokeTouch name text) */
     else switch (c) {
         case '!': code=0xab; break; case '?': code=0xac; break;
         case '.': code=0xad; break; case '-': code=0xae; break;
         case ',': code=0xb8; break; case '/': code=0xba; break;
         case ':': code=0xf0; break; case '(': code=0x5c; break;
         case ')': code=0x5d; break; case '%': code=0x5b; break;
+        case '\'': code=0xb4; break; case '"': code=0xb2; break;   /* FireRed's closing quotes: KING'S ROCK, 2'00" */
         default: break;
     }
     return code;
@@ -752,12 +754,55 @@ static int FrameShown(const CtrPokeTouchView *v)
     return v->viewport || (v->home && !v->options && !v->save);
 }
 
-/* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, or the save card, on the embers. */
+/* The field Bag the port draws (3ds_field_bag_impl.h, included at the end). */
+static void FBagFrame(const CtrPokeTouchView *v);
+static void FBagNote(const CtrPokeTouchView *v, int w);
+/* The Pokedex the port draws (3ds_field_dex_impl.h, included at the end). */
+static void FDexFrame(const CtrPokeTouchView *v);
+static void FDexNote(const CtrPokeTouchView *v, int w);
+/* The Trainer Card the port draws (3ds_field_card_impl.h, included at the end). */
+static void FCardFrame(const CtrPokeTouchView *v);
+static void FCardNote(const CtrPokeTouchView *v, int w);
+/* The move to forget the port draws (3ds_field_learn_impl.h, included at the end). */
+static void FLearnFrame(const CtrPokeTouchView *v);
+static void FLearnNote(const CtrPokeTouchView *v, int w);
+/* The naming screen the port draws (3ds_field_naming_impl.h, included at the end). */
+static void FNameFrame(const CtrPokeTouchView *v);
+static void FNameNote(const CtrPokeTouchView *v, int w);
+/* The PC box the port draws (3ds_field_box_impl.h, included at the end). */
+static void FBoxFrame(const CtrPokeTouchView *v);
+static void FBoxNote(const CtrPokeTouchView *v, int w);
+
+/* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sMenuFrame;
 
     TsBgRect(r->x, r->y, r->w, r->h);
+    if (v->dex.on && !v->viewport) {
+        FDexFrame(v);
+        return;
+    }
+    if (v->card.on && !v->viewport) {
+        FCardFrame(v);
+        return;
+    }
+    if (v->learn.on && !v->viewport) {
+        FLearnFrame(v);
+        return;
+    }
+    if (v->name.on && !v->viewport) {
+        FNameFrame(v);
+        return;
+    }
+    if (v->box.on && !v->viewport) {
+        FBoxFrame(v);
+        return;
+    }
+    if (v->bag.on && !v->viewport) {
+        FBagFrame(v);
+        return;
+    }
     if (v->save && !v->viewport) {
         SaveDraw(v);
         return;
@@ -815,10 +860,22 @@ static void Bar(const CtrPokeTouchView *v)
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
-    {
+    if (v->dex.on && !v->viewport)
+        FDexNote(v, w);
+    else if (v->card.on && !v->viewport)
+        FCardNote(v, w);
+    else if (v->learn.on && !v->viewport)
+        FLearnNote(v, w);
+    else if (v->name.on && !v->viewport)
+        FNameNote(v, w);
+    else if (v->box.on && !v->viewport)
+        FBoxNote(v, w);
+    else if (v->bag.on && !v->viewport)
+        FBagNote(v, w);
+    else {
         int pitch = 16, top = NOTE_Y + (NOTE_H - (lines - 1) * pitch - UI_TEXT_H) / 2;
 
+        EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
         for (int i = 0; i < lines; ++i)
             UiText(v->bar[i], NOTE_X + 12, top + i * pitch, i == 0 ? EM_DARK : EM_DIM, EM_DARK_SH, 1,
                    NOTE_X + w - 4);
@@ -966,7 +1023,15 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
-    if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
+    if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
+        || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
+        || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))) {
+        /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
+        MenuFrame(v);
+        Mark(dirty, &sMenuFrame);
+        Bar(v);
+        Mark(dirty, &sBar);
+    } else if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
         || (v->options && !v->viewport && old->optCount != v->optCount)
         || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
         MenuFrame(v);
@@ -1052,6 +1117,32 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
 /* The embers over whatever screen is on the canvas (3ds_bottom.c calls it once a frame): kept off the GBA picture
  * when one is shown, only taken away when `on` is false. */
+#include "idle_logo.h"
+
+/* The lower screen while FireRed's screen above has nothing for it: the ember backdrop and the project's logo. */
+void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo)
+{
+    int x0 = (W - IDLE_LOGO_W) / 2, y0 = (H - IDLE_LOGO_H_PX) / 2 - 6;
+
+    sCanvas = canvas;
+    TsBackdrop();
+    for (int y = 0; logo && y < IDLE_LOGO_H_PX; ++y)
+        for (int x = 0; x < IDLE_LOGO_W; ++x) {
+            int k = kIdleLogo[y * IDLE_LOGO_W + x], a = kIdleLogoAlpha[k];
+            unsigned c = kIdleLogoColour[k], b;
+
+            if (a == 0)
+                continue;
+            if (a < 15) {                          /* a/15 of the logo over the backdrop, channel by channel */
+                b = TsGet(x0 + x, y0 + y);
+                c = ((((c >> 11) * a + (b >> 11) * (15 - a)) / 15) << 11)
+                  | (((((c >> 5) & 63) * a + ((b >> 5) & 63) * (15 - a)) / 15) << 5)
+                  | (((c & 31) * a + (b & 31) * (15 - a)) / 15);
+            }
+            Px(x0 + x, y0 + y, (uint16_t)c);
+        }
+}
+
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyList *dirty)
 {
     static const CtrPokeTouchRect picture = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
@@ -1061,3 +1152,9 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyLis
 
 #include "3ds_battle_ui_impl.h"
 #include "3ds_summary_ui_impl.h"
+#include "3ds_field_bag_impl.h"
+#include "3ds_field_dex_impl.h"
+#include "3ds_field_card_impl.h"
+#include "3ds_field_learn_impl.h"
+#include "3ds_field_naming_impl.h"
+#include "3ds_field_box_impl.h"

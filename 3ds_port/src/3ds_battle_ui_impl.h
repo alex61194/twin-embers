@@ -6,6 +6,7 @@
  * Everything shown is what the controller reports. */
 
 #include "3ds_icons.h"
+#include "3ds_ui_strings.h"
 #include "3ds_type_chart.h"
 
 /* The party's balls, on their pill. */
@@ -45,6 +46,8 @@ static CtrPokeTouchRect BMenuRow(int i)
  * under them the note card with what the Party says and CANCEL. */
 static const CtrPokeTouchRect sBPNote = {4, 176, 236, 60};
 static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
+/* Picking several Pokemon: CONFIRM over a shorter CANCEL. */
+static const CtrPokeTouchRect sBPConfirm = {244, 180, 72, 26}, sBPCancelLow = {244, 208, 72, 24};
 #define BP_DEPTH 3
 
 /* A slot's card, where FireRed puts it, so the D-pad walks the cards as they look: the lead (one, two in a double) on
@@ -126,7 +129,9 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
             }
             return -1;
         }
-        if (p->mode != BUI_PTY_FORCED && BIn(&sBPCancel, x, y))
+        if (p->mode == BUI_PTY_MULTI && BIn(&sBPConfirm, x, y))
+            return BUI_PTY_CONFIRM;
+        if (p->mode != BUI_PTY_FORCED && BIn(p->mode == BUI_PTY_MULTI ? &sBPCancelLow : &sBPCancel, x, y))
             return BUI_PTY_CANCEL;
         for (int i = 0; i < 6; ++i) {
             CtrPokeTouchRect r = BPanel(p, i);
@@ -306,7 +311,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     CtrPokeTouchRect r = BPanel(p, i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
-    const EmPal *pal = selected ? &kEmAmber : fainted ? &kEmGrey : &kEmCream;
+    int barred = p->mode == BUI_PTY_MULTI && p->entry[i] == BUI_PTY_NOT_ABLE;
+    const EmPal *pal = selected ? &kEmAmber : fainted || barred ? &kEmGrey : &kEmCream;
     int fy, fh = r.h - BP_DEPTH;
 
     TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
@@ -386,15 +392,44 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     }
 }
 
-/* CANCEL: violet, as BACK. */
-static void BPCancelButton(int pressed)
+/* Picking several Pokemon: a slot's place in the order (1-3) on a disc at the foot of its icon plate. */
+static void BPartyEntry(int i, const CtrBattleView *v)
 {
-    const CtrPokeTouchRect *r = &sBPCancel;
+    const CtrBattleParty *p = &v->pty;
+    CtrPokeTouchRect r = BPanel(p, i);
+    int fy = r.y + (v->pressed == BUI_PTY_SLOT + i ? BP_DEPTH : 0), place = p->entry[i] - BUI_PTY_FIRST;
+    int cx = r.x + (r.h < 44 ? 9 : 10), cy = fy + r.h - BP_DEPTH - 9;
+    char digit[2] = {(char)('1' + place), 0};
+
+    if (p->mode != BUI_PTY_MULTI || !p->present[i] || p->entry[i] < BUI_PTY_FIRST)
+        return;
+    UiDisc(cx, cy, 7, kEmAmber.lip);
+    UiDisc(cx, cy, 6, kEmAmber.top);
+    UiText(digit, cx - UiTextWidth(digit, 1) / 2, cy - 5, kEmAmber.ink, kEmAmber.inkSh, 1, cx + 8);
+}
+
+/* CANCEL: violet, as BACK. Picking several, the shorter one under CONFIRM, both lit while the Party's cursor is on
+ * them. */
+static void BPCancelButton(const CtrBattleView *v)
+{
+    int multi = v->pty.mode == BUI_PTY_MULTI;
+    const CtrPokeTouchRect *r = multi ? &sBPCancelLow : &sBPCancel;
+    const EmPal *pal = multi && v->pty.button == 1 ? &kEmAmber : &kEmViolet;
     int fy;
 
-    TsBgRect(r->x, r->y, r->w, r->h);
-    fy = EmButton(r->x, r->y, r->w, r->h, &kEmViolet, BP_DEPTH, pressed);
-    EmLabel("CANCEL", r->x, r->w, fy, r->h - BP_DEPTH, &kEmViolet);
+    TsBgRect(sBPCancel.x - 2, sBPCancel.y - 2, sBPCancel.w + 4, sBPCancel.h + 4);
+    if (multi) {
+        const EmPal *cp = v->pty.button == 0 ? &kEmAmber : &kEmCream;
+
+        if (v->pty.button == 0)
+            EmGlowRing(sBPConfirm.x, sBPConfirm.y, sBPConfirm.w, sBPConfirm.h);
+        fy = EmButton(sBPConfirm.x, sBPConfirm.y, sBPConfirm.w, sBPConfirm.h, cp, BP_DEPTH, v->pressed == BUI_PTY_CONFIRM);
+        EmLabel(CtrUiText(UIS_PTY_CONFIRM), sBPConfirm.x, sBPConfirm.w, fy, sBPConfirm.h - BP_DEPTH, cp);
+        if (v->pty.button == 1)
+            EmGlowRing(r->x, r->y, r->w, r->h);
+    }
+    fy = EmButton(r->x, r->y, r->w, r->h, pal, BP_DEPTH, v->pressed == BUI_PTY_CANCEL);
+    EmLabel("CANCEL", r->x, r->w, fy, r->h - BP_DEPTH, pal);
 }
 
 /* The note card: what the Party says (its question or hint), or, with no CANCEL, that one must be sent out. */
@@ -446,11 +481,13 @@ static void BPartyOverlay(const CtrBattleView *v)
 static void BParty(const CtrBattleView *v)
 {
     TsBackdrop();
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 6; ++i) {
         BPartyPanel(i, v);
+        BPartyEntry(i, v);
+    }
     BPNoteCard(v);
     if (v->pty.mode != BUI_PTY_FORCED)
-        BPCancelButton(v->pressed == BUI_PTY_CANCEL);
+        BPCancelButton(v);
     BPartyOverlay(v);
 }
 
@@ -776,23 +813,74 @@ static void BActCard(int i, const CtrBattleView *v)
 }
 
 /* ---- The moves ---- */
+/* The PP count's ink: red at 0, orange and amber when low. On the amber card the orange and amber vanish into it, so
+ * there only 0 is red and the pips tell the rest. */
 static uint16_t BEmPpInk(unsigned pp, unsigned max, const EmPal *p)
 {
-    return pp == 0 ? EM_VALUE : pp * 4 <= max ? UI_RGB(222, 96, 24) : pp * 2 <= max ? UI_RGB(196, 128, 0) : p->ink;
+    if (pp == 0)
+        return EM_VALUE;
+    if (p == &kEmAmber)
+        return p->ink;
+    return pp * 4 <= max ? UI_RGB(222, 96, 24) : pp * 2 <= max ? UI_RGB(196, 128, 0) : p->ink;
 }
 
 /* What the move does to the foe, on a pill: green when it is super effective, orange when not very, grey otherwise. */
 static const uint16_t kBFxColor[] = {0, UI_RGB(110, 100, 110), UI_RGB(204, 84, 24), UI_RGB(214, 112, 30),
                                      UI_RGB(40, 150, 70), UI_RGB(30, 170, 60), UI_RGB(100, 106, 132)};
 
+/* The mark before the pill's words, as in the mockup: two arrows up for super effective, one down for not very, a red
+ * cross for no effect; a plain hit has none. 7 pixels tall, `x` its left edge; returns its width. */
+enum { BFX_MARK_NONE, BFX_MARK_UP, BFX_MARK_DOWN, BFX_MARK_CROSS };
+
+static int BFxMarkW(int mark)
+{
+    return mark == BFX_MARK_UP ? 11 : mark == BFX_MARK_DOWN ? 7 : mark == BFX_MARK_CROSS ? 7 : 0;
+}
+
+static void BFxMark(int mark, int x, int y, uint16_t ink, uint16_t shadow)
+{
+    for (int pass = 0; pass < 2; ++pass) {
+        uint16_t c = pass ? ink : shadow;
+        int sx = x + !pass, sy = y + !pass;      /* the shadow first, a pixel down and right, as the font's */
+
+        if (mark == BFX_MARK_UP)
+            for (int k = 0; k < 2; ++k)
+                for (int row = 0; row < 6; ++row)
+                    Fill(sx + 6 * k + 2 - row / 2, sy + 1 + row, 1 + row / 2 * 2, 1, c);
+        else if (mark == BFX_MARK_DOWN)
+            for (int row = 0; row < 7; ++row)
+                Fill(sx + (row + 1) / 2, sy + row, 7 - (row + 1) / 2 * 2, 1, c);
+        else if (mark == BFX_MARK_CROSS) {
+            if (pass)
+                c = UI_RGB(240, 72, 64);
+            for (int k = 0; k < 6; ++k) {
+                Fill(sx + k, sy + k, 2, 1, c);
+                Fill(sx + 5 - k, sy + k, 2, 1, c);
+            }
+        }
+    }
+}
+
 static void BMatchupPill(uint8_t matchup, int right, int y)
 {
     static const char *const kText[] = {"", "NO EFFECT", "NOT VERY", "NOT VERY", "SUPER", "SUPER x4", "EFFECTIVE"};
+    static const uint8_t kMark[] = {BFX_MARK_NONE, BFX_MARK_CROSS, BFX_MARK_DOWN, BFX_MARK_DOWN, BFX_MARK_UP, BFX_MARK_UP,
+                                    BFX_MARK_NONE};
     const uint16_t *kColor = kBFxColor;
+    uint16_t shadow;
+    int markW, w, x;
 
     if (matchup == CTR_FX_NONE || matchup > CTR_FX_NEUTRAL)
         return;
-    BPill(right - BPillW(kText[matchup]), y, kText[matchup], kColor[matchup], EM_WHITE, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 4));
+    markW = BFxMarkW(kMark[matchup]);
+    w = BPillW(kText[matchup]) + (markW ? markW + 2 : 0);
+    x = right - w;
+    shadow = UiMix(kColor[matchup], UI_RGB(0, 0, 0), 4);
+    UiRoundFill(x, y, w, 15, 5, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 3));
+    UiRoundFill(x + 1, y + 1, w - 2, 13, 4, kColor[matchup]);
+    if (markW)
+        BFxMark(kMark[matchup], x + 6, y + 4, EM_WHITE, shadow);
+    UiText(kText[matchup], x + 7 + (markW ? markW + 2 : 0), y + 3, EM_WHITE, shadow, 1, x + w);
 }
 
 static void BMoveCard(int i, const CtrBattleView *v)
@@ -823,7 +911,8 @@ static void BMoveCard(int i, const CtrBattleView *v)
         int lit = m->maxPp ? ((int)m->pp * 10 + m->maxPp - 1) / m->maxPp : 0;
         uint16_t on = m->pp * 4 <= m->maxPp ? UI_RGB(232, 110, 30) : m->pp * 2 <= m->maxPp ? UI_RGB(236, 190, 30)
                     : UI_RGB(72, 190, 96);
-        uint16_t off = UiMix(p->bottom, p->edge, 3);
+        /* On the amber card the unlit pips are its dark brown: its orange looked like lit pips (a move at 0 PP read full). */
+        uint16_t off = focused ? UiMix(p->lip, p->edge, 4) : UiMix(p->bottom, p->edge, 3);
         char pp[16];
 
         for (int k = 0; k < 10; ++k)
@@ -1141,11 +1230,15 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
 
                     r = UiInset(&r, -2);
                     BPartyPanel(i, v);
+                    BPartyEntry(i, v);
                     BMark(dirty, &r);
                 }
-            if (v->pty.mode != BUI_PTY_FORCED && (old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)) {
-                BPCancelButton(v->pressed == BUI_PTY_CANCEL);
-                BMark(dirty, &sBPCancel);
+            if (v->pty.mode != BUI_PTY_FORCED && ((old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)
+                                                 || (old->pressed == BUI_PTY_CONFIRM) != (v->pressed == BUI_PTY_CONFIRM))) {
+                CtrPokeTouchRect r = UiInset(&sBPCancel, -2);
+
+                BPCancelButton(v);
+                BMark(dirty, &r);
             }
         }
     } else if (v->state == BUI_BAG || old->state == BUI_BAG) {

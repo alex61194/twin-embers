@@ -5,7 +5,9 @@
  * logging goes once to sdmc:/3ds/twinembers/port.log (never per frame).
  */
 #include <3ds.h>
+#include <setjmp.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "3ds_audio.h"
@@ -68,6 +70,68 @@ TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
  * whatever is still pending reaches the card before the process ends. */
 TRACED_EXIT(ExitFlash, CtrFlash_Close())
 
+/*
+ * Soft reset: A+B+START+SELECT, and the game's own DoSoftReset (after the save
+ * is cleared, a failed save and the like). The GBA clears its RAM and starts
+ * the game again; quitting and starting the 3DSX again took seconds. Here the
+ * game's variables (the game_ram section, tools/game_ram_ld.py) go back to how
+ * they were as AgbMain first started, and AgbMain is entered again: its own
+ * start-up clears the emulated hardware (RegisterRamReset). Kept as they are:
+ * the save (the port's flash image), the data the port loaded from the pack,
+ * and the port itself.
+ */
+extern char __ctr_game_ram[], __ctr_game_ram_end[];
+extern void (*gCtrSoftReset)(void);
+static char *sGameAtStart;
+static jmp_buf sAgbMainEntry;
+static unsigned sResets;
+
+static size_t GameRamBytes(void) { return (size_t)(__ctr_game_ram_end - __ctr_game_ram); }
+
+static void BindVideo(void)
+{
+    CtrVideo_Bind((CtrVideoMemory){
+        .vram = gGbaShadow.vram,
+        .palette = (const uint16_t *)gGbaShadow.pltt,
+        .oam = (const uint16_t *)gGbaShadow.oam,
+        .regs = (const uint16_t *)gGbaShadow.regs,
+    });
+}
+
+static void SoftResetGame(void)
+{
+    /* Whatever the game wrote reaches the card first, as on a quit. */
+    if (!CtrFlash_Flush())
+        CtrLog_Write(CTR_LOG_FS, "soft reset: the save could not be flushed");
+    /* The sound worker mixes from the game's variables: not while they change. */
+    CtrAudio_LockSound();
+    memcpy(__ctr_game_ram, sGameAtStart, GameRamBytes());
+    CtrDma_Reset();
+    CtrAudio_ResetPsg();
+    CtrAudio_UnlockSound();
+    CtrAudio_ResetCatchUp();
+    /* The chord is still held: the game reads the keys the next frame scans,
+     * so it resets again each frame until they are let go, like the GBA. */
+    GbaShadow_SetHeldKeys(0);
+    BindVideo();
+    ++sResets;
+    longjmp(sAgbMainEntry, 1);
+}
+
+static void KeepGameAtStart(void)
+{
+    sGameAtStart = malloc(GameRamBytes());
+    if (sGameAtStart == NULL)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "soft reset unavailable (no memory): it quits instead");
+        return;
+    }
+    memcpy(sGameAtStart, __ctr_game_ram, GameRamBytes());
+    gCtrSoftReset = SoftResetGame;
+    CtrLog_Write(CTR_LOG_GAME, "soft reset ready: game RAM %lu KiB",
+                 (unsigned long)(GameRamBytes() >> 10));
+}
+
 /* Started by the HOME Menu forwarder (3ds_port/forwarder, 3ds_forwarder.h): it
  * made its own title Luma3DS's 3DSX title and passed the previous one. Put that
  * back first, so the forwarder runs its own code next time and the usual
@@ -124,12 +188,7 @@ int main(void)
     CtrFlash_Backup("sdmc:/3ds/twinembers/twinembers.sav.bak");
     if (!CtrVideo_Init())
         CtrPlatform_Fatal("FireRed compositor init failed");
-    CtrVideo_Bind((CtrVideoMemory){
-        .vram = gGbaShadow.vram,
-        .palette = (const uint16_t *)gGbaShadow.pltt,
-        .oam = (const uint16_t *)gGbaShadow.oam,
-        .regs = (const uint16_t *)gGbaShadow.regs,
-    });
+    BindVideo();
     CtrLog_Write(CTR_LOG_VIDEO, "video initialized");
     /* Bottom UI takes the bottom screen after boot logs; console stays as
      * fallback when bottom is disabled or fails. First FIELD redraw overwrites
@@ -159,7 +218,11 @@ int main(void)
     CtrGameBridge_StartWatchdog();
     CtrPerf_SetMemory(gGbaShadow.vram, gGbaShadow.pltt, gGbaShadow.oam);
     CtrPerf_Init(SYSCLOCK_ARM11, (uintptr_t)AgbMain);
-    CtrLog_Write(CTR_LOG_GAME, "entering AgbMain");
+    KeepGameAtStart();
+    if (setjmp(sAgbMainEntry) == 0)
+        CtrLog_Write(CTR_LOG_GAME, "entering AgbMain");
+    else
+        CtrLog_Write(CTR_LOG_GAME, "soft reset %u: entering AgbMain again", sResets);
     AgbMain();
     CtrLog_Write(CTR_LOG_GAME, "AgbMain returned");
     CtrAudio_Shutdown();

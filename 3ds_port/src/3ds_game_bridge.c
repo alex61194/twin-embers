@@ -28,6 +28,7 @@
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "3ds_fast_forward.h"
+#include "3ds_settings.h"
 #include "3ds_poketouch_options.h"
 #include "3ds_day_night_lights.h"
 
@@ -47,6 +48,8 @@ static StageSet sStage, sStageUi, sCentred, sBattle, sTransition, sNativeUi, sIn
 extern const u16 *CtrTrainerCard_FlipScroll(void);
 extern bool32 CtrField_BarnDoorWipeActive(void);
 extern bool32 IsMapNamePopupTaskActive(void);
+/* Despite its name, TRUE while the forest preview's task is NOT running (map_preview_screen.c). */
+extern bool32 ForestMapPreviewScreenIsRunning(void);
 
 /* The field's own main callback on an outdoor map, outside a battle: where the
  * day/night tint applies (FireRed's outdoor types, as in 3ds_map_edge.h). */
@@ -61,7 +64,8 @@ static bool FieldOutdoors(void)
 /* The windows lit at night, by tileset (3ds_day_night_lights.h). */
 extern const struct Tileset gTileset_General, gTileset_PalletTown, gTileset_ViridianCity, gTileset_PewterCity,
     gTileset_VermilionCity, gTileset_LavenderTown, gTileset_CeladonCity, gTileset_FuchsiaCity,
-    gTileset_SaffronCity, gTileset_IndigoPlateau, gTileset_SeviiIslands123;
+    gTileset_SaffronCity, gTileset_IndigoPlateau, gTileset_CinnabarIsland, gTileset_SeviiIslands123,
+    gTileset_SeviiIslands45, gTileset_SeviiIslands67;
 
 #define LIGHTS(tileset, table) {&gTileset_##tileset, table, sizeof(table) / sizeof(table[0])}
 static const struct
@@ -80,7 +84,10 @@ static const struct
     LIGHTS(FuchsiaCity, kCtrLights_FuchsiaCity),
     LIGHTS(SaffronCity, kCtrLights_SaffronCity),
     LIGHTS(IndigoPlateau, kCtrLights_IndigoPlateau),
+    LIGHTS(CinnabarIsland, kCtrLights_CinnabarIsland),
     LIGHTS(SeviiIslands123, kCtrLights_SeviiIslands123),
+    LIGHTS(SeviiIslands45, kCtrLights_SeviiIslands45),
+    LIGHTS(SeviiIslands67, kCtrLights_SeviiIslands67),
 };
 #undef LIGHTS
 
@@ -611,6 +618,7 @@ void VBlankIntrWait(void)
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
+    CtrVideo_SetForestPreview(ForestMapPreviewScreenIsRunning() == FALSE);
     UpdateDayNight();
     GbaShadow_SetHeldKeys((uint16_t)(CtrBottom_FilterGameKeys(CtrInput_Get()->held) | CtrBottom_InjectedKeys()));
     CtrPerf_End(PERF_VBLANK, perfVblank);
@@ -619,8 +627,15 @@ void VBlankIntrWait(void)
      * the game, its VBlank handler, input, bottom screen and save still run.
      * START (a new press) cycles it where CtrBottom_TurboCanCycle allows, and it is in force only where
      * CtrBottom_TurboApplies says the stable field, or a battle's stable core, is the screen's owner. */
+    static bool turboRestored;
+    if (!turboRestored)
+    {
+        turboRestored = true;
+        sFastForward.turbo = CtrSettings_Turbo();   /* the speed chosen in an earlier session */
+    }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
-                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0);
+                         CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);
+    CtrSettings_SetTurbo(sFastForward.turbo);   /* writes the file only when a press changed it */
     bool shown = CtrFastForward_Show(&sFastForward);
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();

@@ -45,7 +45,8 @@ typedef struct { unsigned held; int touchActive, touchDown, touchX, touchY; } Ct
 static CtrInput input;
 static const CtrInput *CtrInput_Get(void) { return &input; }
 /* PRODUCTION TOUCH TRANSFORM */
-static struct { int mode; } sShown;
+static struct { int mode; CtrPokeTouchView touch; } sShown;   /* touch.box.on 0: FireRed's own picture */
+int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y) { (void)v; (void)x; (void)y; return -1; }
 static int sHaveShown;
 static uint16_t sRouteKey;
 /* PRODUCTION STRUCTS */

@@ -47,9 +47,16 @@ const u8 gMultiBootProgram_PokemonColosseum_Start[1] = {0};
 const u8 gMultiBootProgram_BerryGlitchFix_Start[0x3bf4] = {0};
 const u8 gMultiBootProgram_BerryGlitchFix_End[1] = {0};
 
+/* Set by the full game's entry point (main_game_full.c): puts the game's RAM
+ * back and enters AgbMain again, never returning. Without it the game saves
+ * and quits, as before. */
+void (*gCtrSoftReset)(void);
+
 void SoftReset(u32 flags)
 {
     (void)flags;
+    if (gCtrSoftReset != NULL)
+        gCtrSoftReset();
     CtrFlash_Close();
     exit(0);
 }

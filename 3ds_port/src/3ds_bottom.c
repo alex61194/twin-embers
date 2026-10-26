@@ -43,6 +43,7 @@
 #include "3ds_summary.h"
 #include "3ds_poketouch.h"
 #include "3ds_poketouch_options.h"
+#include "3ds_ui_strings.h"
 #include "3ds_perf.h"
 
 int CtrBattleAction_Next(int cursor, int dir)
@@ -88,6 +89,7 @@ extern int CtrBottomParty_Message(char *out);
 extern int CtrBottomParty_InputReady(void);
 extern int CtrBottomParty_TouchSlot(int slot);
 extern int CtrBottomParty_ChooseMultiple(void);
+extern int CtrBottomParty_EntryState(int slot);
 extern int CtrBottomParty_CanAdvanceText(void);
 extern unsigned CtrBottomParty_MenuSerial(void);
 extern void CtrBottomParty_Description(int slot, char *out);
@@ -158,6 +160,10 @@ extern void CtrBottomBag_PocketName(char *out, int size);
 extern void CtrBottomBag_ItemName(unsigned item, char *out, int size);
 extern unsigned CtrBottomBag_Money(void);
 extern int CtrBottomBag_HitAt(int gx, int gy);
+extern int CtrBottomBag_TouchDrawn(void);
+extern int CtrBottomBag_TossCount(void);
+extern int CtrBottomBag_TossMax(void);
+extern int CtrBottomBag_Prompt(char *out, int size);
 extern int CtrBottomTMCase_IsOpen(void);
 extern int CtrBottomTMCase_State(void);
 extern int CtrBottomTMCase_Count(void);
@@ -168,6 +174,14 @@ extern unsigned CtrBottomTMCase_Item(int index);
 extern void CtrBottomTMCase_Title(char *out, int size);
 extern void CtrBottomTMCase_MoveName(unsigned item, char *out, int size);
 extern int CtrBottomTMCase_HitAt(int gx, int gy);
+extern unsigned CtrBottomTMCase_Quantity(int index);
+extern int CtrBottomTMCase_ActionCount(void);
+extern void CtrBottomTMCase_ActionName(int index, char *out, int size);
+extern int CtrBottomTMCase_Message(char *out, int size);
+extern void CtrBottomTMCase_CloseLabel(char *out, int size);
+extern unsigned CtrBottomTMCase_CaseItem(void);
+extern int CtrBottomTMCase_MoveInfo(unsigned item, int *type, int *power, int *accuracy, int *pp, char *typeName,
+                                    int size);
 extern int CtrBottomPouch_IsOpen(void);
 extern int CtrBottomPouch_State(void);
 extern int CtrBottomPouch_Count(void);
@@ -178,6 +192,14 @@ extern unsigned CtrBottomPouch_Item(int index);
 extern unsigned CtrBottomPouch_Quantity(int index);
 extern void CtrBottomPouch_Title(char *out, int size);
 extern int CtrBottomPouch_HitAt(int gx, int gy);
+extern int CtrBottomPouch_ActionCount(void);
+extern void CtrBottomPouch_ActionName(int index, char *out, int size);
+extern int CtrBottomPouch_TossCount(void);
+extern int CtrBottomPouch_TossMax(void);
+extern int CtrBottomPouch_Prompt(char *out, int size);
+extern int CtrBottomPouch_Message(char *out, int size);
+extern void CtrBottomPouch_CloseLabel(char *out, int size);
+extern unsigned CtrBottomPouch_PouchItem(void);
 extern int CtrSave_Begin(void);
 extern void CtrMenu_SetSwitchTarget(int target);
 extern int CtrMenu_TakeSwitched(void);
@@ -194,6 +216,52 @@ extern unsigned CtrSave_Money(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
 extern int CtrBottomCard_State(void);
+extern int CtrBottomCard_TouchDrawn(void);
+extern int CtrBottomLearn_IsOpen(void);
+extern int CtrBottomLearn_Ready(void);
+extern int CtrBottomLearn_Cursor(void);
+extern unsigned CtrBottomLearn_Species(void);
+extern void CtrBottomLearn_Name(char *nickname, int nsize, char *level, int lsize);
+extern unsigned CtrBottomLearn_Move(int i, int *type, char *name, int nsize, char *pp, int psize, char *power, int wsize,
+                                    char *accuracy, int asize);
+extern void CtrBottomLearn_Description(unsigned move, char *out, int size);
+extern void CtrBottomLearn_TypeName(int type, char *out, int size);
+extern void CtrBottomLearn_Question(char *out, int size);
+extern int CtrBottomLearn_Locked(int i);
+extern int CtrBottomBag_Use(void);
+extern int CtrBottomShop_IsOpen(void);
+extern int CtrBottomShop_State(void);
+extern int CtrBottomShop_Count(void);
+extern int CtrBottomShop_MaxShowed(void);
+extern int CtrBottomShop_Cursor(void);
+extern unsigned CtrBottomShop_Serial(void);
+extern int CtrBottomShop_HitAt(int x, int y);
+extern unsigned CtrBottomShop_Item(int index);
+extern unsigned CtrBottomShop_Price(int index);
+extern int CtrBottomShop_Quantity(void);
+extern int CtrBottomShop_QuantityMax(void);
+extern unsigned CtrBottomShop_Total(void);
+extern unsigned CtrBottomShop_Money(void);
+extern void CtrBottomShop_Title(char *out, int size);
+extern int CtrBottomShop_Text(char *out, int size);
+extern unsigned CtrBottomBag_SalePrice(void);
+extern int CtrBottomNaming_IsOpen(void);
+extern int CtrBottomNaming_Ready(void);
+extern int CtrBottomNaming_Page(void);
+extern int CtrBottomNaming_Columns(void);
+extern int CtrBottomNaming_Key(int row, int col);
+extern int CtrBottomNaming_MaxChars(void);
+extern void CtrBottomNaming_Text(unsigned char *out, int size);
+extern void CtrBottomNaming_Title(unsigned char *out, int size);
+extern int CtrBottomNaming_Species(void);
+extern int CtrBottomNaming_Gender(void);
+extern void CtrBottomNaming_Cursor(int *col, int *row);
+extern int CtrBottomNaming_Touch(int col, int row);
+extern int CtrBottomCard_OnBack(void);
+extern void CtrBottomCard_Label(int which, char *out, int size);
+extern void CtrBottomCard_Name(char *out, int size);
+extern void CtrBottomCard_Numbers(unsigned out[8]);
+extern int CtrBottomCard_BackRow(int index, char *label, int lsize, char *value, int vsize);
 extern int CtrField_TryOpenDex(void);
 extern int CtrTurbo_FieldStable(void);
 extern int CtrTurbo_BattleStable(void);
@@ -207,6 +275,26 @@ extern int CtrBottomDex_PageSlotAt(int x, int y);
 extern int CtrBottomDex_PageSlot(void);
 extern int CtrBottomDex_Page(void);
 extern int CtrBottomDex_PageCanFlip(int direction);
+extern int CtrBottomDex_National(void);
+extern void CtrBottomDex_Counts(unsigned *out);
+extern int CtrBottomDex_MenuCount(void);
+extern int CtrBottomDex_MenuItem(int index, char *out, int size);
+extern int CtrBottomDex_MenuUnlocked(int id);
+extern int CtrBottomDex_ListOrder(void);
+extern int CtrBottomDex_ListCount(void);
+extern unsigned CtrBottomDex_ListEntry(int index);
+extern int CtrBottomDex_CategoryPage(int *category, int *page, int *pages, int *slots, int *slot);
+extern unsigned CtrBottomDex_CategorySpecies(int slot);
+extern unsigned CtrBottomDex_MonSpecies(void);
+extern int CtrBottomDex_MonArea(void);
+extern int CtrBottomDex_Flags(unsigned species);
+extern unsigned CtrBottomDex_Number(unsigned species);
+extern void CtrBottomDex_Name(unsigned species, char *out, int size);
+extern void CtrBottomDex_Category(unsigned species, char *out, int size);
+extern unsigned CtrBottomDex_Height(unsigned species);
+extern unsigned CtrBottomDex_Weight(unsigned species);
+extern void CtrBottomDex_Description(unsigned species, char *out, int size);
+extern int CtrBottomDex_Types(unsigned species, int *types, char *first, char *second, int size);
 
 /* CtrBottomDex_State (pokedex_screen.c): the real Pokedex is not taking input (set up, fading, flipping,
  * closing), or takes it on its top menu or a list (rows to choose), a category page or a Pokemon's page. B
@@ -224,7 +312,8 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 /* Modes shown on the bottom screen for this milestone. */
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
-       MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13 };
+       MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
+       MODE_NAMING = 14, MODE_SHOP = 15 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -322,6 +411,7 @@ typedef struct {
     CtrPokeTouchView touch;
     CtrBattleView battle;
     unsigned char battleUi;         /* the battle's design is what the lower screen shows (the battle, or its Bag) */
+    unsigned char idleLogo;         /* nothing to show for a while (IDLE_LOGO_FRAMES): the logo on the backdrop */
 } Snapshot;
 
 static void SummaryFill(CtrSummaryUiView *v);
@@ -343,6 +433,8 @@ static char sLatchNames[PARTY_MAX_ACTIONS][ACTION_NAME_LEN];
 static uint16_t sCanvas[CTR_BOTTOM_WIDTH * CTR_BOTTOM_HEIGHT];
 static Snapshot sShown;
 static int sHaveShown;
+#define IDLE_LOGO_FRAMES 45
+static int sIdleFrames;
 static int sForceRedraw;
 static int sEnabled = 1;
 static int sInitDone;
@@ -476,9 +568,41 @@ static struct {
     uint8_t inside;
 } sPoke = {PT_NONE, 0};
 
+/* The field Bag's touch (ProcessFieldBagTouch): the hit under the touch-down, whether the touch is still on it, and the
+ * pocket a tab asked for (-1 none) with the frames left to get there. */
+static struct {
+    int down, inside, code;
+    int pocketTarget, pocketWait;
+} sFieldBag = {0, 0, -1, -1, 0};
+
+/* The move-to-forget screen's touch (ProcessLearnTouch), as the Bag's, and its walk to a row. */
+static struct {
+    int down, inside, code;
+} sLearnTap = {0, 0, -1};
+static struct {
+    int active, target, steps, release;
+} sLearnPlan;
+
+/* The naming screen's touch (ProcessNameTouch), as the Bag's, and its turn of pages to a tab's. */
+static struct {
+    int down, inside, code;
+} sNameTap = {0, 0, -1};
+static struct {
+    int active, target, steps, release;
+} sNamePlan;
+
+/* The Trainer Card's touch (ProcessCardTouch): pressed on the card, and still on it. */
+static struct {
+    int down, inside;
+} sCardTap;
+
+/* The Pokedex's touch (ProcessFieldDexTouch), as the Bag's. */
+static struct {
+    int down, inside, code;
+} sFieldDex = {0, 0, -1};
+
 /* Colors RGB565. */
 #define RGB565(r, g, b) ((uint16_t)(((r) & 31) << 11 | ((g) & 63) << 5 | ((b) & 31)))
-#define C_BG RGB565(4, 8, 12)
 #define C_CARD RGB565(28, 60, 28)
 #define C_EMPTY RGB565(10, 20, 14)
 #define C_BORDER RGB565(0, 0, 0)
@@ -495,23 +619,11 @@ static struct {
 #define K_START (1u << 3)
 #define K_A (1u << 0)
 #define K_B (1u << 1)
+#define K_SELECT (1u << 2)
 #define K_UP (1u << 6)
 #define K_DOWN (1u << 7)
 #define K_LEFT (1u << 5)
 #define K_RIGHT (1u << 4)
-
-static void FillRect(int x, int y, int w, int h, uint16_t c)
-{
-    int x0 = x < 0 ? 0 : x;
-    int y0 = y < 0 ? 0 : y;
-    int x1 = x + w > CTR_BOTTOM_WIDTH ? CTR_BOTTOM_WIDTH : x + w;
-    int y1 = y + h > CTR_BOTTOM_HEIGHT ? CTR_BOTTOM_HEIGHT : y + h;
-    for (int cx = x0; cx < x1; ++cx) {
-        uint16_t *p = sCanvas + (size_t)cx * CTR_BOTTOM_HEIGHT + (CTR_BOTTOM_HEIGHT - (size_t)y1);
-        for (int n = y1 - y0; n > 0; --n)
-            *p++ = c;
-    }
-}
 
 /* Party-owned callback remembered while Task_HandleChooseMonInput runs.
  * The action/context menu, switch, item and field-move substates run under
@@ -530,6 +642,9 @@ static int CurrentMode(void)
         return MODE_OFF;
     if (!CtrBottom_HasSave())
         return MODE_OFF;
+    /* FireRed's naming screen, wherever it comes from (a new game, a catch, the Name Rater, a box): its keyboard. */
+    if (CtrBottomNaming_IsOpen())
+        return MODE_NAMING;
     if (CtrBottomStorage_PCMenu())
         return MODE_FIELD; /* Withdraw/Deposit/Move choices remain on TOP. */
     if (CtrBottomStorage_BoxOpen())
@@ -556,6 +671,9 @@ static int CurrentMode(void)
     /* The real Pokedex, from its setup to its close, with all its screens and transitions. */
     if (CtrBottomDex_IsOpen())
         return MODE_DEX;
+    /* A mart's BUY list, from its setup to its fade out. */
+    if (CtrBottomShop_IsOpen())
+        return MODE_SHOP;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
     /* FireRed's battle on the upper screen (its own main callback: not a Bag, Party or Summary opened from it):
@@ -641,6 +759,431 @@ static void BagBar(CtrPokeTouchView *v)
         snprintf(v->bar[2], PT_BAR_LEN, "On the X button");
     else
         snprintf(v->bar[2], PT_BAR_LEN, "Money  %u", CtrBottomBag_Money());
+}
+
+/* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
+ * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The Old Man's
+ * and the battle's keep their own pictures. */
+static int FieldBagNative(void)
+{
+    return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;
+}
+
+/* What the lower screen draws a list screen from: the Bag's bridge, or a case's. A NULL question has no answer there
+ * (the TM Case has no quantity box nor YES/NO). */
+typedef struct {
+    int mode, kind;
+    const ListScreen *list;
+    unsigned (*item)(int index);
+    unsigned (*quantity)(int index);
+    int (*actionCount)(void);
+    void (*actionName)(int index, char *out, int size);
+    int (*tossCount)(void);
+    int (*tossMax)(void);
+    int (*prompt)(char *out, int size);
+    int (*message)(char *out, int size);
+} FieldList;
+
+/* Defined with the list screens' touch plans below. */
+static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen;
+
+static const FieldList sFieldBagList = {
+    MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
+    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message,
+};
+static const FieldList sFieldTMCaseList = {
+    MODE_TMCASE, PT_BAG_KIND_TMCASE, &sTMCaseScreen, CtrBottomTMCase_Item, CtrBottomTMCase_Quantity,
+    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message,
+};
+static const FieldList sFieldPouchList = {
+    MODE_POUCH, PT_BAG_KIND_POUCH, &sPouchScreen, CtrBottomPouch_Item, CtrBottomPouch_Quantity,
+    CtrBottomPouch_ActionCount, CtrBottomPouch_ActionName, CtrBottomPouch_TossCount, CtrBottomPouch_TossMax,
+    CtrBottomPouch_Prompt, CtrBottomPouch_Message,
+};
+/* A mart's BUY list: its rows' "quantity" is their price; it has no menu of actions. */
+static int ShopNoActions(void) { return 0; }
+static void ShopNoActionName(int index, char *out, int size) { (void)index; if (size > 0) out[0] = 0; }
+static const FieldList sFieldShopList = {
+    MODE_SHOP, PT_BAG_KIND_SHOP, &sShopScreen, CtrBottomShop_Item, CtrBottomShop_Price, ShopNoActions,
+    ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text,
+};
+
+/* The list the lower screen draws itself in this mode (the field's Bag and the cases it opens), or NULL. */
+static const FieldList *FieldListFor(int mode)
+{
+    if (mode == MODE_SHOP)
+        return &sFieldShopList;
+    if (sStorageSession)
+        return NULL;
+    if (mode == MODE_BAG)
+        return FieldBagNative() ? &sFieldBagList : NULL;
+    return mode == MODE_TMCASE ? &sFieldTMCaseList : mode == MODE_POUCH ? &sFieldPouchList : NULL;
+}
+
+/* A row's name: the item's, and for a TM/HM its move's after it ("TM01 FOCUS PUNCH"). */
+static void FieldListName(const FieldList *f, unsigned item, char *out, int size)
+{
+    CtrBottomBag_ItemName(item, out, size);
+    if (f->kind == PT_BAG_KIND_TMCASE || f->kind == PT_BAG_KIND_SHOP) {
+        char move[16];
+        int n = (int)strlen(out);
+
+        CtrBottomTMCase_MoveName(item, move, sizeof(move));
+        if (move[0] && n + 1 < size)
+            snprintf(out + n, (size_t)(size - n), " %s", move);
+    }
+}
+
+/* The field Bag (or a case) as it is now: its pocket, the rows around the cursor (CLOSE the row after the last item),
+ * the selected item's detail, and what it has open. While it is busy (a pocket sliding in, a message printing) the
+ * picture last shown stays. */
+static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
+{
+    CtrPokeTouchBag *b = &v->bag;
+    const ListScreen *list = f->list;
+    int count, total, state = list->state();
+
+    if (state == BAG_BUSY && sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on) {
+        *b = sShown.touch.bag;
+        b->pressed = -1;
+        return;
+    }
+    memset(b, 0, sizeof(*b));
+    b->on = 1;
+    b->kind = (uint8_t)f->kind;
+    b->moveType = -1;
+    b->pressed = (int16_t)pressed;
+    b->state = (uint8_t)(state == BAG_BUSY ? BAG_LIST : state);
+    if (f->kind == PT_BAG_KIND_BAG) {
+        b->use = (uint8_t)CtrBottomBag_Use();
+        if (b->use == PT_BAG_USE_SELL) {
+            b->money = CtrBottomBag_Money();
+            b->sale = state == BAG_QUANTITY ? CtrBottomBag_SalePrice() : 0;
+        }
+    }
+    if (f->kind == PT_BAG_KIND_TMCASE) {
+        CtrBottomTMCase_Title(b->title, sizeof(b->title));
+        CtrBottomTMCase_CloseLabel(b->closeName, sizeof(b->closeName));
+        b->titleItem = (uint16_t)CtrBottomTMCase_CaseItem();
+    } else if (f->kind == PT_BAG_KIND_POUCH) {
+        CtrBottomPouch_Title(b->title, sizeof(b->title));
+        CtrBottomPouch_CloseLabel(b->closeName, sizeof(b->closeName));
+        b->titleItem = (uint16_t)CtrBottomPouch_PouchItem();
+    } else if (f->kind == PT_BAG_KIND_SHOP) {
+        CtrBottomShop_Title(b->title, sizeof(b->title));
+        snprintf(b->closeName, sizeof(b->closeName), "%s", CtrUiText(UIS_CANCEL));
+        b->money = CtrBottomShop_Money();
+        b->sale = state == BAG_QUANTITY ? CtrBottomShop_Total() : 0;
+    } else
+        b->pocket = (uint8_t)CtrBottomBag_Pocket();
+    b->count = (int16_t)(count = list->count());
+    b->cursor = (int16_t)list->cursor();
+    total = count + 1;
+    b->first = (int16_t)(b->cursor - 2 < 0 ? 0 : b->cursor - 2);
+    if (b->first > total - PT_BAG_ROWS)
+        b->first = (int16_t)(total - PT_BAG_ROWS < 0 ? 0 : total - PT_BAG_ROWS);
+    for (int i = 0; i < PT_BAG_ROWS; ++i) {
+        unsigned item = f->item(b->first + i);
+
+        b->row[i].item = (uint16_t)item;
+        if (item) {
+            if (f->kind == PT_BAG_KIND_SHOP)
+                b->row[i].price = (uint16_t)f->quantity(b->first + i);
+            else
+                b->row[i].qty = (uint16_t)f->quantity(b->first + i);
+            FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
+        }
+    }
+    if (b->cursor >= 0 && b->cursor < count) {
+        b->selItem = (uint16_t)f->item(b->cursor);
+        if (b->selItem) {
+            int type = -1, power, accuracy, pp;
+
+            if (f->kind == PT_BAG_KIND_TMCASE)
+                CtrBottomTMCase_MoveName(b->selItem, b->selName, sizeof(b->selName));
+            else
+                CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
+            CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
+            if ((f->kind == PT_BAG_KIND_TMCASE || f->kind == PT_BAG_KIND_SHOP)
+                && CtrBottomTMCase_MoveInfo(b->selItem, &type, &power, &accuracy, &pp, b->typeName, sizeof(b->typeName)))
+                b->moveType = (int8_t)type;
+        }
+    }
+    if (state == BAG_ACTIONS || state == BAG_YESNO) {
+        int n = state == BAG_YESNO ? 2 : f->actionCount();
+
+        b->menuCount = (uint8_t)(n > PT_BAG_MENU_MAX ? PT_BAG_MENU_MAX : n);
+        b->menuCursor = (int8_t)CtrBottomBag_MenuCursor();
+        for (int i = 0; state == BAG_ACTIONS && i < b->menuCount; ++i)
+            f->actionName(i, b->menuName[i], sizeof(b->menuName[i]));
+    }
+    if (state == BAG_QUANTITY && f->tossCount != NULL) {
+        b->tossCount = (uint16_t)f->tossCount();
+        b->tossMax = (uint16_t)f->tossMax();
+    }
+    if (state == BAG_YESNO && f->prompt != NULL) {
+        f->prompt(b->prompt, sizeof(b->prompt));
+        const CtrPokeTouchBag *was = &sShown.touch.bag;   /* the count asked for just before (one: none was asked) */
+
+        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == f->mode && was->on && was->tossCount
+                                  && (was->state == BAG_QUANTITY || was->state == BAG_YESNO) ? was->tossCount : 1);
+    }
+    if (state == BAG_MESSAGE)
+        f->message(b->prompt, sizeof(b->prompt));
+}
+
+/* The player's Trainer Card as the card shows it: its side, FireRed's labels and numbers, and its back's records. */
+static void FieldCardFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchCard *c = &v->card;
+    unsigned n[8];
+    int rows = 0;
+
+    memset(c, 0, sizeof(*c));
+    c->on = 1;
+    c->back = (uint8_t)(CtrBottomCard_OnBack() != 0);
+    c->pressed = (uint8_t)(pressed != 0);
+    CtrBottomCard_Name(c->name, sizeof(c->name));
+    for (int i = 0; i < 6; ++i)
+        CtrBottomCard_Label(i, c->label[i], sizeof(c->label[i]));
+    CtrBottomCard_Numbers(n);
+    c->id = n[0];
+    c->money = n[1];
+    c->hasDex = (uint8_t)n[2];
+    c->caught = (uint16_t)n[3];
+    c->hours = (uint16_t)n[4];
+    c->minutes = (uint8_t)n[5];
+    c->stars = (uint8_t)n[6];
+    c->badges = (uint8_t)n[7];
+    while (rows < PT_CARD_ROWS && CtrBottomCard_BackRow(rows, c->row[rows].label, sizeof(c->row[rows].label),
+                                                         c->row[rows].value, sizeof(c->row[rows].value)))
+        ++rows;
+    c->rows = (uint8_t)rows;
+}
+
+/* The Summary choosing the move to forget, as it is now. While it does not take a key the picture last shown stays. */
+static void FieldLearnFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchLearn *l = &v->learn;
+
+    if (!CtrBottomLearn_Ready() && sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on) {
+        *l = sShown.touch.learn;
+        l->pressed = -1;
+        return;
+    }
+    memset(l, 0, sizeof(*l));
+    l->on = 1;
+    l->pressed = (int16_t)pressed;
+    l->cursor = (int8_t)CtrBottomLearn_Cursor();
+    l->species = (uint16_t)CtrBottomLearn_Species();
+    CtrBottomLearn_Name(l->nickname, sizeof(l->nickname), l->level, sizeof(l->level));
+    CtrBottomLearn_Question(l->question, sizeof(l->question));
+    for (int i = 0; i < PT_LEARN_ROWS; ++i) {
+        int type = -1;
+
+        l->row[i].move = (uint16_t)CtrBottomLearn_Move(i, &type, l->row[i].name, sizeof(l->row[i].name), l->row[i].pp,
+                                                       sizeof(l->row[i].pp), l->row[i].power, sizeof(l->row[i].power),
+                                                       l->row[i].accuracy, sizeof(l->row[i].accuracy));
+        l->row[i].type = (int8_t)type;
+        l->row[i].locked = (uint8_t)(CtrBottomLearn_Locked(i) != 0);
+        CtrBottomLearn_TypeName(type, l->row[i].typeName, sizeof(l->row[i].typeName));
+    }
+    if (l->cursor >= 0 && l->cursor < PT_LEARN_ROWS)
+        CtrBottomLearn_Description(l->row[l->cursor].move, l->desc, sizeof(l->desc));
+}
+
+/* The move to forget, when that is the child screen: drawn here, BACK is the Summary's B. */
+static void LearnSnapshot(Snapshot *s, int mode)
+{
+    if (!CtrBottomLearn_IsOpen())
+        return;
+    FieldLearnFill(&s->touch, sLearnTap.down && sLearnTap.inside ? sLearnTap.code : -1);
+    s->touch.viewport = 0;
+    s->touch.backVisible = 1;
+    s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+    s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+}
+
+/* The naming screen as it is now. While it does not take a key (a page turning, the cursor going to OK) the picture
+ * last shown stays. */
+static void FieldNameFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchName *n = &v->name;
+    int col, row;
+
+    if (!CtrBottomNaming_Ready() && sHaveShown && sShown.mode == MODE_NAMING && sShown.touch.name.on) {
+        *n = sShown.touch.name;
+        n->pressed = -1;
+        return;
+    }
+    memset(n, 0, sizeof(*n));
+    n->on = 1;
+    n->pressed = (int16_t)pressed;
+    n->page = (uint8_t)CtrBottomNaming_Page();
+    n->cols = (uint8_t)CtrBottomNaming_Columns();
+    n->maxChars = (uint8_t)CtrBottomNaming_MaxChars();
+    if (n->maxChars > PT_NAME_MAX)
+        n->maxChars = PT_NAME_MAX;
+    for (int r = 0; r < PT_NAME_ROWS; ++r)
+        for (int c = 0; c < PT_NAME_COLS; ++c)
+            n->key[r][c] = (uint8_t)CtrBottomNaming_Key(r, c);
+    memset(n->text, 0xff, sizeof(n->text));
+    CtrBottomNaming_Text(n->text, (int)sizeof(n->text));
+    while (n->len < n->maxChars && n->text[n->len] != 0xff)
+        ++n->len;
+    CtrBottomNaming_Title(n->title, (int)sizeof(n->title));
+    n->species = (uint16_t)CtrBottomNaming_Species();
+    n->gender = (uint8_t)CtrBottomNaming_Gender();
+    CtrBottomNaming_Cursor(&col, &row);
+    n->curCol = (int8_t)col;
+    n->curRow = (int8_t)row;
+}
+
+/* A PC box, drawn here while FireRed's box is in a state the port draws (not moving items, carrying several or
+ * marking one). While it does not take a key the picture last shown stays. */
+static void BoxSnapshot(Snapshot *s)
+{
+    CtrPokeTouchBox *b = &s->touch.box;
+
+    if (!CtrBottomStorage_BoxFill(b))
+        return;
+    if (b->state == PT_BOX_STATE_BUSY && sHaveShown && sShown.mode == MODE_STORAGE_BOX && sShown.touch.box.on)
+        *b = sShown.touch.box;
+    b->pressed = (int16_t)(sStoreTouch.active && sStoreTouch.inside ? sStoreTouch.hit : -1);
+    s->touch.viewport = 0;
+}
+
+/* A mart's BUY list: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
+static void ShopSnapshot(Snapshot *s, int mode)
+{
+    FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, &sFieldShopList);
+    s->touch.viewport = 0;
+    s->touch.backVisible = 1;
+    s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+    s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+}
+
+/* The naming screen: drawn here, modal (no BACK: its own DELETE and OK). */
+static void NameSnapshot(Snapshot *s)
+{
+    FieldNameFill(&s->touch, sNameTap.down && sNameTap.inside ? sNameTap.code : -1);
+    s->touch.viewport = 0;
+}
+
+/* A Pokemon as the Pokedex knows it: number, flags and (once seen) name. */
+static void FieldDexMon(CtrPokeTouchDexMon *m, unsigned species)
+{
+    memset(m, 0, sizeof(*m));
+    if (species == 0)
+        return;
+    m->species = (uint16_t)species;
+    m->number = (uint16_t)CtrBottomDex_Number(species);
+    m->flags = (uint8_t)CtrBottomDex_Flags(species);
+    if (m->flags & 1)
+        CtrBottomDex_Name(species, m->name, sizeof(m->name));
+}
+
+/* The selected Pokemon's types; on its page, its category, size, weight and entry too (FireRed tells them only for a
+ * caught one). */
+static void FieldDexDetail(CtrPokeTouchDex *d, int page)
+{
+    unsigned species = d->sel.species;
+    int types[2];
+
+    d->type[0] = d->type[1] = -1;
+    if (CtrBottomDex_Types(species, types, d->typeName[0], d->typeName[1], sizeof(d->typeName[0]))) {
+        d->type[0] = (int8_t)types[0];
+        d->type[1] = (int8_t)types[1];
+    }
+    if (!page)
+        return;
+    CtrBottomDex_Category(species, d->kind, sizeof(d->kind));
+    d->height = (uint16_t)CtrBottomDex_Height(species);
+    d->weight = (uint16_t)CtrBottomDex_Weight(species);
+    CtrBottomDex_Description(species, d->desc, sizeof(d->desc));
+}
+
+/* The Pokedex as it is now, for the lower screen to draw: 0 for its AREA page, which FireRed draws (the viewport
+ * shows it). While the Pokedex is busy (a fade, a page flip) the picture last shown stays. */
+static int FieldDexFill(CtrPokeTouchView *v, int pressed)
+{
+    CtrPokeTouchDex *d = &v->dex;
+    int state = CtrBottomDex_State();
+    unsigned counts[4];
+
+    if (state == DEX_PAGE && CtrBottomDex_MonArea()) {
+        memset(d, 0, sizeof(*d));
+        return 0;
+    }
+    if (state == DEX_BUSY) {
+        if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on)
+            *d = sShown.touch.dex;
+        else if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.viewport)
+            return 0;                   /* leaving the AREA page: FireRed's picture until the page is back */
+        else {
+            memset(d, 0, sizeof(*d));
+            d->on = 1;
+        }
+        d->pressed = -1;
+        return 1;
+    }
+    memset(d, 0, sizeof(*d));
+    d->on = 1;
+    d->pressed = (int16_t)pressed;
+    d->state = (uint8_t)state;
+    d->national = (uint8_t)(CtrBottomDex_National() != 0);
+    CtrBottomDex_Counts(counts);
+    d->seen[0] = (uint16_t)counts[0];
+    d->owned[0] = (uint16_t)counts[1];
+    d->seen[1] = (uint16_t)counts[2];
+    d->owned[1] = (uint16_t)counts[3];
+    d->type[0] = d->type[1] = -1;
+    if (state == DEX_MENU) {
+        int n = CtrBottomDex_MenuCount();
+
+        d->menuCount = (uint8_t)(n > PT_DEX_MENU_MAX ? PT_DEX_MENU_MAX : n);
+        for (int i = 0; i < d->menuCount; ++i) {
+            int id = CtrBottomDex_MenuItem(i, d->menu[i].name, sizeof(d->menu[i].name));
+
+            d->menu[i].id = (int8_t)id;
+            d->menu[i].locked = (uint8_t)(!CtrBottomDex_MenuUnlocked(id));
+        }
+        d->menuCursor = (int8_t)CtrBottomDex_Cursor();
+    } else if (state == DEX_LIST) {
+        int count = CtrBottomDex_ListCount();
+
+        d->order = (uint8_t)CtrBottomDex_ListOrder();
+        d->listCount = (int16_t)count;
+        d->listCursor = (int16_t)CtrBottomDex_Cursor();
+        d->listFirst = (int16_t)(d->listCursor - 2 < 0 ? 0 : d->listCursor - 2);
+        if (d->listFirst > count - PT_DEX_ROWS)
+            d->listFirst = (int16_t)(count - PT_DEX_ROWS < 0 ? 0 : count - PT_DEX_ROWS);
+        for (int i = 0; i < PT_DEX_ROWS && d->listFirst + i < count; ++i)
+            FieldDexMon(&d->row[i], CtrBottomDex_ListEntry(d->listFirst + i) & 0xFFFFu);
+        FieldDexMon(&d->sel, CtrBottomDex_ListEntry(d->listCursor) & 0xFFFFu);
+        FieldDexDetail(d, 0);
+    } else if (state == DEX_CATEGORY) {
+        int category, page, pages, slots, slot;
+
+        if (CtrBottomDex_CategoryPage(&category, &page, &pages, &slots, &slot)) {
+            d->category = (uint8_t)category;
+            d->page = (uint8_t)page;
+            d->pages = (uint8_t)pages;
+            d->slots = (uint8_t)(slots > 4 ? 4 : slots);
+            d->slot = (uint8_t)slot;
+            d->canPrev = (uint8_t)(CtrBottomDex_PageCanFlip(-1) != 0);
+            d->canNext = (uint8_t)(CtrBottomDex_PageCanFlip(1) != 0);
+            for (int i = 0; i < d->slots; ++i)
+                FieldDexMon(&d->mon[i], CtrBottomDex_CategorySpecies(i));
+            if (slot >= 0 && slot < d->slots)
+                d->sel = d->mon[slot];
+            FieldDexDetail(d, 0);
+        }
+    } else if (state == DEX_PAGE) {
+        FieldDexMon(&d->sel, CtrBottomDex_MonSpecies());
+        FieldDexDetail(d, 1);
+    }
+    return 1;
 }
 
 /* The bar under the TM Case: its title, the TM/HM under the cursor and the
@@ -924,13 +1467,6 @@ static void BatCopy(char *dst, size_t size, const char *src)
 
 /* The battle Party as the Party is now (the lower screen's own Party snapshot `s`, which reads FireRed's Party): the six
  * slots, the Party's selection, what it was opened for, and its menu or message when it has one open. */
-/* The Party drawn as the port's own screen (the battle's, and the field's too) rather than FireRed's picture: all but the
- * picks of several Pokemon (a link or the Battle Tower), whose CONFIRM only FireRed's screen has. */
-static int PartyNative(void)
-{
-    return CtrBottomParty_InBattle() || !CtrBottomParty_ChooseMultiple();
-}
-
 static void BattlePartyFill(Snapshot *s)
 {
     CtrBattleView *v = &s->battle;
@@ -941,8 +1477,10 @@ static void BattlePartyFill(Snapshot *s)
     v->state = BUI_PARTY;
     p->cursor = (int8_t)(s->cursor >= 0 && s->cursor < PARTY_SIZE ? s->cursor : -1);
     /* SEND_OUT cannot be cancelled. Out of battle the Party says what it is for itself (its own prompt). */
-    p->mode = !CtrBottomParty_InBattle() ? BUI_PTY_SWITCH
+    p->mode = s->chooseMultiple ? BUI_PTY_MULTI : !CtrBottomParty_InBattle() ? BUI_PTY_SWITCH
             : action == 1 ? BUI_PTY_FORCED : action == 3 ? BUI_PTY_TARGET : BUI_PTY_SWITCH;
+    /* Picking several: FireRed's cursor may be on CONFIRM (slot 6) or CANCEL (7). */
+    p->button = (int8_t)(p->mode == BUI_PTY_MULTI && s->cursor >= PARTY_SIZE ? s->cursor - PARTY_SIZE : -1);
     p->lead = (uint8_t)(CtrBottomParty_Layout() == 0 ? 1 : 2);
     p->caption[0] = 0;
     if (!CtrBottomParty_InBattle() && s->panel != PANEL_MESSAGE)
@@ -957,6 +1495,11 @@ static void BattlePartyFill(Snapshot *s)
         p->hp[i] = s->hp[i];
         p->maxHp[i] = s->maxHp[i];
         p->icon[i] = s->icon[i];
+        if (p->mode == BUI_PTY_MULTI) {
+            int entry = CtrBottomParty_EntryState(i);
+
+            p->entry[i] = (uint8_t)(entry < 0 ? BUI_PTY_ABLE : entry);
+        }
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {
@@ -1132,6 +1675,15 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.selected = sSession.active ? sSession.owner : PT_POKEMON;
         snprintf(s->touch.bar[0], PT_BAR_LEN, "MOVE / ITEM");
         snprintf(s->touch.bar[1], PT_BAR_LEN, "Use A and B to follow the prompts.");
+        LearnSnapshot(s, mode);
+        return;
+    }
+    if (mode == MODE_NAMING) {
+        NameSnapshot(s);
+        return;
+    }
+    if (mode == MODE_SHOP) {
+        ShopSnapshot(s, mode);
         return;
     }
     if (mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD) {
@@ -1150,6 +1702,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             snprintf(s->touch.bar[0], PT_BAR_LEN, "BOX %02d", StorageGetCurrentBox() + 1);
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap a slot to open its menu.");
             snprintf(s->touch.bar[2], PT_BAR_LEN, "BACK returns to the PC.");
+            BoxSnapshot(s);
         } else {
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeMON STORAGE SYSTEM");
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
@@ -1223,18 +1776,28 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->cursor = (signed char)CtrBottomPouch_Cursor();
             PouchBar(&s->touch);
         }
+        if (FieldListFor(mode) != NULL) {
+            FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, FieldListFor(mode));
+            s->touch.viewport = 0;
+        }
         if (mode == MODE_CARD) {
             /* The card itself shows its statistics: the bar only says how to turn it. */
-            snprintf(s->touch.bar[0], PT_BAR_LEN, "TRAINER CARD");
-            snprintf(s->touch.bar[1], PT_BAR_LEN, "Tap card to turn it over.");
+            snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TITLE));
+            snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TURN));
+            if (CtrBottomCard_TouchDrawn()) {
+                FieldCardFill(&s->touch, sCardTap.down && sCardTap.inside);
+                s->touch.viewport = 0;
+            }
         }
         if (mode == MODE_DEX) {
-            /* The Pokedex draws everything itself: the bar only says how to use it. */
+            /* The lower screen draws the Pokedex itself, but for its AREA page (FireRed's map in the viewport). */
             int state = CtrBottomDex_State();
 
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeDEX");
             snprintf(s->touch.bar[1], PT_BAR_LEN, state == DEX_MENU || state == DEX_LIST
                      ? "Tap to select, again to open." : "BACK goes one step back.");
+            if (FieldDexFill(&s->touch, sFieldDex.down && sFieldDex.inside ? sFieldDex.code : -1))
+                s->touch.viewport = 0;
         }
         return;
     }
@@ -1329,8 +1892,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.enabled[PT_SAVE] = (uint8_t)CanRouteDestination(PT_SAVE, mode);
         s->touch.viewport = 1;
         PartyBar(s, &s->touch);
-        if (PartyNative())
-            BattlePartyFill(s);
+        BattlePartyFill(s);
     }
 }
 
@@ -1417,7 +1979,7 @@ static void Render(const Snapshot *s)
     else if (s->mode != MODE_OFF || sSession.active)
         CtrPokeTouch_Draw(sCanvas, &s->touch);
     else
-        FillRect(0, 0, CTR_BOTTOM_WIDTH, CTR_BOTTOM_HEIGHT, C_BG);
+        CtrPokeTouch_DrawIdle(sCanvas, s->idleLogo);
 }
 
 /* Plan helpers. */
@@ -1573,6 +2135,10 @@ static const ListScreen sTMCaseScreen = {
     CtrBottomTMCase_State, CtrBottomTMCase_Count, CtrBottomTMCase_MaxShowed, CtrBottomTMCase_Cursor,
     CtrBottomTMCase_Serial, CtrBottomTMCase_HitAt,
 };
+static const ListScreen sShopScreen = {
+    CtrBottomShop_State, CtrBottomShop_Count, CtrBottomShop_MaxShowed, CtrBottomShop_Cursor,
+    CtrBottomShop_Serial, CtrBottomShop_HitAt,
+};
 static const ListScreen sPouchScreen = {
     CtrBottomPouch_State, CtrBottomPouch_Count, CtrBottomPouch_MaxShowed, CtrBottomPouch_Cursor,
     CtrBottomPouch_Serial, CtrBottomPouch_HitAt,
@@ -1582,7 +2148,7 @@ static const ListScreen sPouchScreen = {
 static const ListScreen *ListFor(int mode)
 {
     return mode == MODE_BAG ? &sBagScreen : mode == MODE_TMCASE ? &sTMCaseScreen
-         : mode == MODE_POUCH ? &sPouchScreen : NULL;
+         : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen : NULL;
 }
 
 /* Bag plan: presses for the Bag's own input states, apart from the Party plan.
@@ -1980,6 +2546,8 @@ static int BackVisible(int mode)
 {
     if (mode == MODE_FIELD)
         return NativeActive() && sScreen != PT_SAVE;   /* a native screen: back to HOME (SAVE has NO and B) */
+    if (mode == MODE_PARTY_CHILD)
+        return CtrBottomLearn_IsOpen();
     if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX
         || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
         return 1;
@@ -2021,6 +2589,8 @@ static int BackEnabled(int mode)
         return CtrBottomCard_State() != CARD_BUSY;
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
+    if (mode == MODE_PARTY_CHILD)
+        return CtrBottomLearn_Ready();
     if (ListFor(mode) != NULL)
         return ListFor(mode)->state() != BAG_BUSY;
     return mode == MODE_SUMMARY && CtrBottomSummary_Ready();
@@ -2040,6 +2610,8 @@ static void BackPress(int mode)
         sRouteKey = CardLeaveKey();     /* the card's own exit: B on its front, A on its back */
     else if (mode == MODE_DEX)
         sRouteKey = K_B;                /* the Pokedex's own: a level back, out of it from its top menu */
+    else if (mode == MODE_PARTY_CHILD)
+        sRouteKey = K_B;                /* the Summary's own: give up the new move (FireRed asks) */
     else if (ListFor(mode) != NULL)
         BagPlanStart(ListFor(mode), BAGPLAN_PRESS, 0, 0, K_B);
     else if (mode == MODE_SUMMARY)
@@ -2999,6 +3571,69 @@ static void ProcessBattleBagTouch(const CtrInput *in)
     sBat.down = sBat.inside = 0;
 }
 
+/* The field Bag's touch: press, track, release, one action, on what the lower screen showed (CtrPokeTouch_BagHit).
+ * A row selects its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the
+ * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
+ * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
+ * Bag's own keys, so FireRed decides what each does. A held physical button cancels it. */
+static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
+{
+    const ListScreen *list = f->list;
+    int state = list->state(), hit = -1;
+    int ready = sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on && !CtrBottom_IsFading();
+
+    if (sFieldBag.pocketTarget >= 0 && f->kind == PT_BAG_KIND_BAG) {
+        int pocket = CtrBottomBag_Pocket();
+
+        if (pocket == sFieldBag.pocketTarget || --sFieldBag.pocketWait <= 0 || (state != BAG_LIST && state != BAG_BUSY))
+            sFieldBag.pocketTarget = -1;
+        else if (state == BAG_LIST && sBagPlan.kind == BAGPLAN_NONE)
+            BagPlanStart(list, BAGPLAN_PRESS, 0, 0, pocket < sFieldBag.pocketTarget ? K_RIGHT : K_LEFT);
+    }
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_BagHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sFieldBag.down = sFieldBag.inside = 0;
+        if (in->held & 0x3ffu)
+            sFieldBag.pocketTarget = -1;
+        return;
+    }
+    if (in->touchDown) {
+        sFieldBag.down = sFieldBag.inside = hit >= 0;
+        sFieldBag.code = hit;
+        return;
+    }
+    if (!sFieldBag.down)
+        return;
+    if (in->touchActive) {
+        sFieldBag.inside = hit == sFieldBag.code;
+        return;
+    }
+    if (sFieldBag.inside && state == sShown.touch.bag.state) {
+        const CtrPokeTouchBag *b = &sShown.touch.bag;
+        int code = sFieldBag.code, page = PT_BAG_ROWS - 1;
+
+        if (code >= PT_BAG_HIT_ROW && code < PT_BAG_HIT_ROW + PT_BAG_ROWS) {
+            int index = b->first + code - PT_BAG_HIT_ROW;
+
+            BagPlanStart(list, BAGPLAN_LIST, index, index == b->cursor || index == b->count, 0);
+        } else if (code >= PT_BAG_HIT_TAB && code < PT_BAG_HIT_TAB + 3) {
+            sFieldBag.pocketTarget = code - PT_BAG_HIT_TAB;
+            sFieldBag.pocketWait = 90;
+        } else if (code >= PT_BAG_HIT_MENU && code < PT_BAG_HIT_MENU + PT_BAG_MENU_MAX)
+            BagPlanStart(list, BAGPLAN_MENU, code - PT_BAG_HIT_MENU, 1, 0);
+        else if (code == PT_BAG_HIT_UP)
+            BagPlanStart(list, BAGPLAN_LIST, b->cursor - page < 0 ? 0 : b->cursor - page, 0, 0);
+        else if (code == PT_BAG_HIT_DOWN)
+            BagPlanStart(list, BAGPLAN_LIST, b->cursor + page > b->count ? b->count : b->cursor + page, 0, 0);
+        else if (code == PT_BAG_HIT_QTY_UP || code == PT_BAG_HIT_QTY_DOWN || code == PT_BAG_HIT_QTY_OK
+                 || code == PT_BAG_HIT_QTY_CANCEL || code == PT_BAG_HIT_MESSAGE)
+            BagPlanStart(list, BAGPLAN_PRESS, 0, 0, code == PT_BAG_HIT_QTY_UP ? K_UP : code == PT_BAG_HIT_QTY_DOWN ? K_DOWN
+                                                  : code == PT_BAG_HIT_QTY_CANCEL ? K_B : K_A);
+    }
+    sFieldBag.down = sFieldBag.inside = 0;
+}
+
 /* The battle Party's touch: press, track, release, one action. A slot is the Party's own touch (it selects that slot and takes
  * its A, so FireRed's Party decides what A means here: its menu, or the item's use, or the switch), CANCEL its B; a row of the
  * menu or the YES / NO it has open is walked to with the Party's plans, and a message it waits on takes A. Nothing is taken while
@@ -3035,6 +3670,9 @@ static void ProcessBattlePartyTouch(const CtrInput *in)
         } else if (code == BUI_PTY_CANCEL) {
             if (!open && CtrBottomParty_IsOpen() && !CtrBottomParty_CanAdvanceText())
                 CtrBottomParty_TouchSlot(PARTY_SIZE + 1);
+        } else if (code == BUI_PTY_CONFIRM) {
+            if (!open && CtrBottomParty_IsOpen() && !CtrBottomParty_CanAdvanceText())
+                CtrBottomParty_TouchSlot(PARTY_SIZE);
         } else if (code >= BUI_PTY_MENU && code < BUI_PTY_MENU + 8) {
             if (open)
                 PlanStart(PLAN_MENU, code - BUI_PTY_MENU);
@@ -3049,13 +3687,12 @@ static void ProcessBattlePartyTouch(const CtrInput *in)
  * front, which flips it (FireRed's own flip animation, not ours), B on its back,
  * which flips it back. Only while the card takes input, so never during the flip
  * or a fade; a held physical button wins. */
-static struct {
-    int down, inside;
-} sCardTap;
 
 static void ProcessCardTouch(const CtrInput *in)
 {
-    int gx, gy, on = in->touchActive && CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &gx, &gy);
+    int gx, gy, on = in->touchActive && (sHaveShown && sShown.touch.card.on
+                                         ? CtrPokeTouch_CardHit(&sShown.touch, (int)in->touchX, (int)in->touchY)
+                                         : CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &gx, &gy));
     int ready = CtrBottomCard_State() != CARD_BUSY && !CtrBottom_IsFading() && !(sHaveShown && sShown.mode != MODE_CARD);
 
     if ((in->held & 0x3ffu) || !ready) {
@@ -3246,6 +3883,232 @@ static void ProcessDexPageTouch(const CtrInput *in)
 }
 
 
+/* The Pokedex drawn on the lower screen: press, track, release, one action, on what it showed (CtrPokeTouch_DexHit).
+ * A tab or a card walks FireRed's cursor to that row with its own UP / DOWN and a tap on the selected one sends A; the
+ * arrows move a page; a slot of a habitat page is walked to with LEFT / RIGHT and PREV / NEXT flip the page; on a
+ * Pokemon's page AREA is its A and CRY its START. A held physical button cancels it. */
+static void DexPlanTo(int kind, int target, int state)
+{
+    DexPlanClear();
+    sDexPlan.active = 1;
+    sDexPlan.kind = kind;
+    sDexPlan.target = target;
+    sDexPlan.state = state;
+    if (kind == DEXPLAN_FLIP)
+        sDexPlan.page = CtrBottomDex_Page();
+}
+
+static void ProcessFieldDexTouch(const CtrInput *in)
+{
+    int state = CtrBottomDex_State(), hit = -1;
+    int ready = sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_DexHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sFieldDex.down = sFieldDex.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sFieldDex.down = sFieldDex.inside = hit >= 0;
+        sFieldDex.code = hit;
+        if (hit >= 0)
+            DexPlanClear();
+        return;
+    }
+    if (!sFieldDex.down)
+        return;
+    if (in->touchActive) {
+        sFieldDex.inside = hit == sFieldDex.code;
+        return;
+    }
+    if (sFieldDex.inside && state == sShown.touch.dex.state && !sDexPlan.active) {
+        const CtrPokeTouchDex *d = &sShown.touch.dex;
+        int code = sFieldDex.code, row;
+
+        if (state == DEX_MENU) {
+            if (code >= PT_DEX_HIT_TAB && code < PT_DEX_HIT_TAB + 3) {
+                row = CtrPokeTouch_DexTabRow(&sShown.touch, code - PT_DEX_HIT_TAB);
+                if (row >= 0 && row != d->menuCursor)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+            } else if (code >= PT_DEX_HIT_ITEM && code < PT_DEX_HIT_ITEM + PT_DEX_MENU_MAX) {
+                row = code - PT_DEX_HIT_ITEM;
+                if (row < d->menuCount && !d->menu[row].locked) {
+                    if (row == d->menuCursor)
+                        sRouteKey = K_A;
+                    else
+                        DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+                }
+            } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
+                row = CtrPokeTouch_DexGridPageRow(&sShown.touch, code == PT_DEX_HIT_UP ? -1 : 1);
+                if (row >= 0)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+            }
+        } else if (state == DEX_LIST) {
+            if (code >= PT_DEX_HIT_ROW && code < PT_DEX_HIT_ROW + PT_DEX_ROWS) {
+                row = d->listFirst + code - PT_DEX_HIT_ROW;
+                if (row == d->listCursor)
+                    sRouteKey = K_A;
+                else if (row < d->listCount)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
+            } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
+                row = d->listCursor + (code == PT_DEX_HIT_UP ? -(PT_DEX_ROWS - 1) : PT_DEX_ROWS - 1);
+                if (row < 0)
+                    row = 0;
+                if (row > d->listCount - 1)
+                    row = d->listCount - 1;
+                if (row != d->listCursor)
+                    DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
+            }
+        } else if (state == DEX_CATEGORY) {
+            if (code >= PT_DEX_HIT_SLOT && code < PT_DEX_HIT_SLOT + 4) {
+                row = code - PT_DEX_HIT_SLOT;
+                if (row == d->slot)
+                    sRouteKey = K_A;
+                else if (row < d->slots)
+                    DexPlanTo(DEXPLAN_SLOT, row, DEX_CATEGORY);
+            } else if ((code == PT_DEX_HIT_PREV || code == PT_DEX_HIT_NEXT)
+                       && CtrBottomDex_PageCanFlip(code == PT_DEX_HIT_PREV ? -1 : 1))
+                DexPlanTo(DEXPLAN_FLIP, code == PT_DEX_HIT_PREV ? -1 : 1, DEX_CATEGORY);
+        } else if (state == DEX_PAGE) {
+            if (code == PT_DEX_HIT_AREA)
+                sRouteKey = K_A;
+            else if (code == PT_DEX_HIT_CRY)
+                sRouteKey = K_START;
+        }
+    }
+    sFieldDex.down = sFieldDex.inside = 0;
+}
+
+/* The move to forget: a row walks the Summary's cursor there with its UP / DOWN, a tap on the selected row is its A
+ * (FireRed refuses an HM with its own sound). A held physical button cancels it. */
+static void RunLearnPlan(void)
+{
+    int cur;
+
+    if (!sLearnPlan.active)
+        return;
+    if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomLearn_IsOpen() || ++sLearnPlan.steps > 32) {
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        return;
+    }
+    if (sLearnPlan.release) {
+        sLearnPlan.release = 0;
+        return;
+    }
+    if (!CtrBottomLearn_Ready())
+        return;                         /* the cursor's own short pause between steps */
+    cur = CtrBottomLearn_Cursor();
+    if (cur == sLearnPlan.target) {
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        return;
+    }
+    sInjected = cur < sLearnPlan.target ? K_DOWN : K_UP;
+    sLearnPlan.release = 1;
+}
+
+static void ProcessLearnTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on
+                          && CtrBottomLearn_Ready() && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_LearnHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sLearnTap.down = sLearnTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sLearnTap.down = sLearnTap.inside = hit >= 0;
+        sLearnTap.code = hit;
+        return;
+    }
+    if (!sLearnTap.down)
+        return;
+    if (in->touchActive) {
+        sLearnTap.inside = hit == sLearnTap.code;
+        return;
+    }
+    if (sLearnTap.inside && !sLearnPlan.active) {
+        int row = sLearnTap.code - PT_LEARN_HIT_ROW;
+
+        if (row == CtrBottomLearn_Cursor())
+            sRouteKey = K_A;
+        else {
+            memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+            sLearnPlan.active = 1;
+            sLearnPlan.target = row;
+        }
+    }
+    sLearnTap.down = sLearnTap.inside = 0;
+}
+
+/* A tab: FireRed's SELECT, one page at a time, until its page is the tab's. */
+static void RunNamePlan(void)
+{
+    if (!sNamePlan.active)
+        return;
+    if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomNaming_IsOpen() || ++sNamePlan.steps > 240) {
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
+        return;
+    }
+    if (sNamePlan.release) {
+        sNamePlan.release = 0;
+        return;
+    }
+    if (!CtrBottomNaming_Ready())
+        return;                         /* the page's own turn */
+    if (CtrBottomNaming_Page() == sNamePlan.target) {
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
+        return;
+    }
+    sInjected = K_SELECT;
+    sNamePlan.release = 1;
+}
+
+static void ProcessNameTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_NAMING && sShown.touch.name.on
+                          && CtrBottomNaming_Ready() && !CtrBottom_IsFading();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_NameHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sNameTap.down = sNameTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sNameTap.down = sNameTap.inside = hit >= 0;
+        sNameTap.code = hit;
+        return;
+    }
+    if (!sNameTap.down)
+        return;
+    if (in->touchActive) {
+        sNameTap.inside = hit == sNameTap.code;
+        return;
+    }
+    if (sNameTap.inside && !sNamePlan.active) {
+        int code = sNameTap.code;
+
+        if (code >= PT_NAME_HIT_TAB && code < PT_NAME_HIT_TAB + 3) {
+            memset(&sNamePlan, 0, sizeof(sNamePlan));
+            sNamePlan.active = 1;
+            sNamePlan.target = code - PT_NAME_HIT_TAB;
+        } else if (code == PT_NAME_HIT_DELETE)
+            sRouteKey = K_B;
+        else if (code == PT_NAME_HIT_OK) {
+            if (CtrBottomNaming_Touch(CtrBottomNaming_Columns(), 2))
+                sRouteKey = K_A;
+        } else if (code >= PT_NAME_HIT_KEY && code < PT_NAME_HIT_KEY + PT_NAME_ROWS * PT_NAME_COLS) {
+            code -= PT_NAME_HIT_KEY;
+            if (CtrBottomNaming_Touch(code % PT_NAME_COLS, code / PT_NAME_COLS))
+                sRouteKey = K_A;
+        }
+    }
+    sNameTap.down = sNameTap.inside = 0;
+}
+
 /* Touch of a storage screen never calls any Pokemon mutation function. Every
  * operation (including RELEASE, DEPOSIT and item changes) remains owned by
  * FireRed's task/controller; a touch yields only one real D-pad/A/B key. */
@@ -3283,6 +4146,10 @@ static int StoreHit(int mode, int gx, int gy)
 static void StoreBeginTouch(int mode, int hit)
 {
     StorePlanClear();
+    if (hit == PT_BOX_HIT_MESSAGE) {
+        sRouteKey = K_A;                /* the box's message waits for A */
+        return;
+    }
     sStorePlan.context = mode == MODE_STORAGE_PC ? CtrBottomStorage_PCInputContext()
                                                 : CtrBottomStorage_InputContext();
     if (mode == MODE_STORAGE_PC && hit >= ST_HIT_PC_BASE) {
@@ -3322,6 +4189,8 @@ static void ProcessStorageTouch(int mode, const CtrInput *in)
     int on = in->touchActive && CtrPokeTouch_ViewportToGba(
                         (int)in->touchX, (int)in->touchY, &gx, &gy);
     int hit = on ? StoreHit(mode, gx, gy) : ST_HIT_NONE;
+    if (mode == MODE_STORAGE_BOX && sHaveShown && sShown.mode == mode && sShown.touch.box.on)   /* the box drawn here */
+        hit = in->touchActive ? CtrPokeTouch_BoxHit(&sShown.touch, (int)in->touchX, (int)in->touchY) : ST_HIT_NONE;
     if ((in->held & 0x3ffu) || (sHaveShown && sShown.mode != mode)) {
         sStoreTouch.active = sStoreTouch.inside = 0;
         StorePlanClear();
@@ -3455,7 +4324,7 @@ static int ProcessTouch(int mode)
         ProcessBattleTouch(in);
         return HIT_NONE;
     }
-    if (mode == MODE_PARTY && PartyNative()) {
+    if (mode == MODE_PARTY) {
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
@@ -3478,6 +4347,33 @@ static int ProcessTouch(int mode)
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
     }
+    if (mode == MODE_SHOP) {
+        /* A mart's BUY list: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        ProcessFieldBagTouch(&sFieldShopList, in);
+        return HIT_NONE;
+    }
+    if (mode == MODE_NAMING) {
+        /* The naming screen: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        sBack.down = sBack.inside = 0;
+        ProcessNameTouch(in);
+        return HIT_NONE;
+    }
+    if (mode == MODE_PARTY_CHILD && CtrBottomLearn_IsOpen()) {
+        /* The move to forget: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        ProcessLearnTouch(in);
+        return HIT_NONE;
+    }
     if (sStorageSession && (mode == MODE_SUMMARY || mode == MODE_BAG || IS_CASE_MODE(mode))) {
         /* Keep the real GBA child touchscreen handler and BACK. Prevent the
          * field sidebar from unwinding the still-active PC context. */
@@ -3499,10 +4395,16 @@ static int ProcessTouch(int mode)
         return HIT_NONE;
     }
     if (mode == MODE_DEX) {
-        if (CtrBottomDex_State() == DEX_CATEGORY || sDexPage.down)
+        if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.dex.on && !sDexTap.down && !sDexPage.down)
+            ProcessFieldDexTouch(in);
+        else if (CtrBottomDex_State() == DEX_CATEGORY || sDexPage.down)
             ProcessDexPageTouch(in);
         else
             ProcessDexTouch(in);
+        return HIT_NONE;
+    }
+    if (FieldListFor(mode) != NULL) {
+        ProcessFieldBagTouch(FieldListFor(mode), in);
         return HIT_NONE;
     }
     if (in->held & 0x3ffu || (sHaveShown && mode != sShown.mode))
@@ -3675,7 +4577,7 @@ static int StorageBridge(int mode)
     if (CtrBottom_IsFading()) return 1;
     if (mode == MODE_STORAGE_PC) return !CtrBottomStorage_PCMenuReady();
     if (mode == MODE_STORAGE_BOX) return !CtrBottomStorage_BoxPresented();
-    if (mode == MODE_STORAGE_CHILD) return !CtrBottomStorage_NamingPresented();
+    if (mode == MODE_STORAGE_CHILD || mode == MODE_NAMING) return !CtrBottomStorage_NamingPresented();
     if (mode == MODE_SUMMARY) return !CtrBottomSummary_Ready();
     if (ListFor(mode) != NULL) return ListFor(mode)->state() == BAG_BUSY;
     return 0;
@@ -3740,6 +4642,16 @@ void CtrBottom_Init(void)
     sBatHold = sBatHoldFrames = 0;
     sBatBag.pocketTarget = -1;
     sBatBag.pocketWait = sBatBag.autoWait = 0;
+    memset(&sFieldBag, 0, sizeof(sFieldBag));
+    sFieldBag.code = sFieldBag.pocketTarget = -1;
+    memset(&sFieldDex, 0, sizeof(sFieldDex));
+    sFieldDex.code = -1;
+    memset(&sLearnTap, 0, sizeof(sLearnTap));
+    sLearnTap.code = -1;
+    memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    memset(&sNamePlan, 0, sizeof(sNamePlan));
+    memset(&sNameTap, 0, sizeof(sNameTap));
+    sNameTap.code = -1;
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));
@@ -3805,8 +4717,12 @@ static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
 {
     int picture;
 
-    if ((s->battleUi && s->battle.state != BUI_PARTY) || s->mode == MODE_OFF)
+    if (s->battleUi && s->battle.state != BUI_PARTY)
         return;
+    if (s->mode == MODE_OFF && !sSession.active) {
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);   /* the idle backdrop */
+        return;
+    }
     if (s->battleUi) {
         CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);
         return;
@@ -3874,6 +4790,14 @@ void CtrBottom_Frame(void)
         RunDexPlan();
     else
         DexPlanClear();
+    if (mode == MODE_PARTY_CHILD)
+        RunLearnPlan();
+    else
+        memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    if (mode == MODE_NAMING)
+        RunNamePlan();
+    else
+        memset(&sNamePlan, 0, sizeof(sNamePlan));
     if (ListFor(mode) != NULL)
         RunBagPlan(ListFor(mode));
     else
@@ -3887,8 +4811,7 @@ void CtrBottom_Frame(void)
     else
         BatPlanClear();
     RunStoragePlan(mode);
-    if (mode != MODE_BATTLE && !(mode == MODE_BAG && CtrBottomBag_InBattle())
-        && !(mode == MODE_PARTY && PartyNative()))
+    if (mode != MODE_BATTLE && !(mode == MODE_BAG && CtrBottomBag_InBattle()) && mode != MODE_PARTY)
         sBat.down = sBat.inside = 0;
     /* The battle keeps the upper screen from the pick of BAG or POKeMON (or a replacement), before the Bag or Party exists (its fade and setup are never shown). */
     if (mode == MODE_BATTLE)
@@ -3943,6 +4866,10 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
+    /* The logo only once nothing has been shown for a while: a screen's few frames of change show the backdrop. */
+    sIdleFrames = state.mode == MODE_OFF && !sSession.active ? (sIdleFrames < IDLE_LOGO_FRAMES ? sIdleFrames + 1
+                                                                                                 : sIdleFrames) : 0;
+    state.idleLogo = (unsigned char)(sIdleFrames >= IDLE_LOGO_FRAMES);
     ProfSpan(&sProf.frameSnapshot, profT);
     /* Party's and the Bag's viewport is drawn by the GPU, sampling the GBA
      * picture: the bottom screen goes through it while one is shown. */
@@ -4049,6 +4976,15 @@ bool CtrBottom_TurboApplies(void)
         return CurrentMode() == MODE_BATTLE && !sSession.active && !sRouteHold && !SaveActive() && !sBatHold;
     return CurrentMode() == MODE_FIELD && !sSession.active && sScreen == PT_NONE && sPendingScreen == PT_NONE
         && !sRouteHold && !SaveActive();
+}
+
+/* The lower screen keeps its picture and TOP its frame (a route in flight, a bridge between two screens of a session,
+ * the battle's Bag or Party being opened): nothing the game draws meanwhile is seen, so the game may skip showing it. */
+bool CtrBottom_MenuChangingOver(void)
+{
+    if (!sEnabled || !sInitDone || !CtrBottom_HasSave() || !sHeldTop)
+        return false;
+    return sRouteHold || sBridging || sBatHold;
 }
 
 /* START cycles the multiplier in the same two places: in the battle at any moment of its stable core (a message, an

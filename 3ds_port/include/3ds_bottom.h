@@ -35,5 +35,7 @@ bool CtrBottom_IsEnabled(void);
  * PokeTouch screen, route, battle, load or fade); CanCycle also needs nothing said or scripted. */
 bool CtrBottom_TurboApplies(void);
 bool CtrBottom_TurboCanCycle(void);
+/* Both screens hold their last picture while a menu changes over: the frames in between are not shown. */
+bool CtrBottom_MenuChangingOver(void);
 
 #endif

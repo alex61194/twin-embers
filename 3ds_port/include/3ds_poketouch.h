@@ -73,6 +73,193 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
 #define PT_BAR_LINES 3
 #define PT_BAR_LEN 40
 
+/* The field Bag drawn by the port in the viewport (3ds_field_bag_impl.h), a remote for FireRed's own Bag: its pockets
+ * as tabs, the rows of the list it shows (items, then CLOSE BAG), the item's description in the note, and over the
+ * list the menu, the quantity box, the question or the message it has open. Everything is the Bag's own state.
+ * The TM Case and the Berry Pouch it opens are drawn the same way, with their title in place of the pockets. */
+#define PT_BAG_ROWS 5
+#define PT_BAG_MENU_MAX 6
+enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP };   /* SHOP: a mart's BUY list */
+enum { PT_BAG_USE_FIELD = 0, PT_BAG_USE_SELL, PT_BAG_USE_DEPOSIT };   /* the field's Bag, a shop's, the item PC's */
+enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
+       PT_BAG_STATE_MESSAGE };
+/* Hit codes (CtrPokeTouch_BagHit). */
+enum { PT_BAG_HIT_TAB = 100, PT_BAG_HIT_ROW = 200, PT_BAG_HIT_MENU = 300, PT_BAG_HIT_MESSAGE = 500, PT_BAG_HIT_UP = 600,
+       PT_BAG_HIT_DOWN, PT_BAG_HIT_QTY_UP = 610, PT_BAG_HIT_QTY_DOWN, PT_BAG_HIT_QTY_OK, PT_BAG_HIT_QTY_CANCEL };
+typedef struct {
+    uint8_t on;                     /* the viewport shows this Bag (no GBA picture) */
+    uint8_t kind;                   /* PT_BAG_KIND_*: the Bag, or a case it opens */
+    uint16_t titleItem;             /* a case: its own item (the title's icon), its name and its CLOSE row */
+    char title[20];
+    char closeName[16];
+    uint8_t pocket;                 /* FireRed's pocket: 0 Items, 1 Key Items, 2 Poke Balls */
+    uint8_t state;                  /* PT_BAG_STATE_*: the Bag's own input state */
+    int16_t count;                  /* items in the pocket; row `count` is CLOSE BAG */
+    int16_t cursor;                 /* the Bag's selection (count: CLOSE BAG) */
+    int16_t first;                  /* the list index of the first row shown */
+    struct {
+        uint16_t item;
+        uint16_t qty;
+        uint16_t price;             /* a mart's row: what one costs */
+        char name[20];
+    } row[PT_BAG_ROWS];
+    uint16_t selItem;               /* the selected item, its name and description */
+    char selName[20];
+    char selDesc[112];
+    int8_t moveType;                /* a TM/HM: the move's type (-1: none) and its name */
+    char typeName[10];
+    uint8_t menuCount;              /* the open menu's rows (USE, GIVE, TOSS ... CANCEL) */
+    int8_t menuCursor;
+    char menuName[PT_BAG_MENU_MAX][14];
+    uint16_t tossCount, tossMax;    /* the quantity box: how many, of how many */
+    uint8_t use;                    /* PT_BAG_USE_*: what the Bag is open for */
+    uint32_t sale, money;           /* selling or buying: what that many come to, and the player's money */
+    char prompt[96];                /* the Bag's question (YES/NO) or the message it waits on */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchBag;
+
+/* The Pokedex drawn by the port (3ds_field_dex_impl.h), a remote for FireRed's own Pokedex like the Bag: its top menu
+ * (lists, habitats, search) as tabs of cards, an ordered list as rows, a habitat page as its Pokemon, and a Pokemon's
+ * page. Its AREA page stays FireRed's picture in the viewport. */
+#define PT_DEX_MENU_MAX 24
+#define PT_DEX_ROWS 5
+enum { PT_DEX_STATE_BUSY = 0, PT_DEX_STATE_MENU, PT_DEX_STATE_LIST, PT_DEX_STATE_CATEGORY, PT_DEX_STATE_PAGE };
+/* Menu ids as FireRed's (a habitat 0-8, a list 9-14, CANCEL -2, a header -3). */
+#define PT_DEX_ID_KANTO 9
+#define PT_DEX_ID_NATIONAL 14
+#define PT_DEX_ID_HEADER (-3)
+#define PT_DEX_ID_CANCEL (-2)
+/* Hit codes (CtrPokeTouch_DexHit). */
+enum { PT_DEX_HIT_TAB = 100, PT_DEX_HIT_ITEM = 200, PT_DEX_HIT_ROW = 300, PT_DEX_HIT_SLOT = 400, PT_DEX_HIT_UP = 500,
+       PT_DEX_HIT_DOWN, PT_DEX_HIT_PREV, PT_DEX_HIT_NEXT, PT_DEX_HIT_AREA = 510, PT_DEX_HIT_CRY };
+typedef struct {
+    uint16_t species, number;
+    uint8_t flags;                  /* seen (1) and caught (2) */
+    char name[12];
+} CtrPokeTouchDexMon;
+/* The choice of the move to forget for a new one, drawn by the port (3ds_field_learn_impl.h), a remote for FireRed's
+ * Summary in that mode: the Pokemon, its four moves and the new one (row 4), the selected move's numbers and
+ * description. A row is walked to with the Summary's UP / DOWN and taken with its A; BACK is its B. */
+#define PT_LEARN_ROWS 5
+enum { PT_LEARN_HIT_ROW = 100 };
+typedef struct {
+    uint8_t on;
+    int8_t cursor;
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint16_t species;
+    char nickname[12], level[8];
+    char question[48];
+    struct {
+        uint16_t move;
+        int8_t type;
+        uint8_t locked;             /* an HM: FireRed will not forget it */
+        char name[16], pp[12], power[8], accuracy[8], typeName[10];
+    } row[PT_LEARN_ROWS];
+    char desc[160];
+} CtrPokeTouchLearn;
+
+/* FireRed's naming screen drawn by the port (3ds_field_naming_impl.h), a remote for it: the name so far, the keys of
+ * its page (FireRed's own character codes, 0xff for no key), tabs for its three pages, DELETE and OK. A key moves
+ * FireRed's cursor there and presses its A; a tab is its SELECT, DELETE its B. */
+#define PT_NAME_ROWS 4
+#define PT_NAME_COLS 8
+#define PT_NAME_MAX 12
+enum { PT_NAME_HIT_KEY = 200, PT_NAME_HIT_TAB = 240, PT_NAME_HIT_DELETE = 250, PT_NAME_HIT_OK = 251 };
+typedef struct {
+    uint8_t on;
+    uint8_t page;                   /* FireRed's: 0 symbols, 1 capitals, 2 small letters */
+    uint8_t cols, maxChars, len;
+    int8_t curCol, curRow;          /* FireRed's cursor; curCol == cols is its button column */
+    uint8_t gender;                 /* 1 male, 2 female, 0 none */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint16_t species;               /* the Pokemon being named, or 0 */
+    uint8_t key[PT_NAME_ROWS][PT_NAME_COLS];
+    uint8_t text[PT_NAME_MAX];
+    uint8_t title[32];              /* FireRed's question, its codes, 0xff ended */
+} CtrPokeTouchName;
+
+/* A PC box drawn by the port (3ds_field_box_impl.h), a remote for FireRed's own box: its name between the arrows, its
+ * thirty places with their icons, PARTY and CLOSE BOX, the Pokemon in hand, the Party when the cursor is in it, and
+ * over them the box's menu, its YES/NO, its box chooser or its message. Texts are FireRed's own codes, 0xff ended.
+ * A touch is the PC's own controller (3ds_storage_touch.h hit codes): the cursor walked there and A. */
+#define PT_BOX_SLOTS 30
+#define PT_BOX_MENU_MAX 7
+enum { PT_BOX_STATE_BUSY = 0, PT_BOX_STATE_BOX, PT_BOX_STATE_MENU, PT_BOX_STATE_YESNO, PT_BOX_STATE_CHOOSE,
+       PT_BOX_STATE_MESSAGE };
+enum { PT_BOX_HIT_MESSAGE = 300 };  /* besides the ST_HIT_* codes: a message that waits for A */
+typedef struct {
+    uint16_t species;               /* 0: empty */
+    uint8_t egg;
+    uint32_t personality;
+} CtrPokeTouchBoxMon;
+typedef struct {
+    uint8_t on, state;
+    int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
+    uint8_t holding;                /* a Pokemon in hand (held) */
+    uint8_t box;
+    uint8_t boxName[12];
+    CtrPokeTouchBoxMon slot[PT_BOX_SLOTS];
+    CtrPokeTouchBoxMon party[6];
+    uint8_t partyName[6][12];
+    uint8_t partyLevel[6];
+    CtrPokeTouchBoxMon held;
+    CtrPokeTouchBoxMon mon;         /* the Pokemon under the cursor, and FireRed's lines about it */
+    uint8_t monText[4][20];         /* nickname, species, gender and level, item */
+    uint8_t menuCount;
+    int8_t menuCursor;
+    uint8_t menu[PT_BOX_MENU_MAX][16];
+    uint8_t chooseName[12];
+    uint8_t chooseCount;
+    uint8_t message[48];            /* FireRed's line in the box's window, while it shows */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchBox;
+
+/* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
+ * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
+ * on it turns it over with the card's own key. A link card stays FireRed's picture. */
+#define PT_CARD_ROWS 5
+typedef struct {
+    uint8_t on;                     /* the viewport shows this card (no GBA picture) */
+    uint8_t back;                   /* its back is up */
+    uint8_t pressed;                /* the card is held */
+    char name[16];
+    char label[6][16];              /* FireRed's NAME, IDNo., MONEY, yen sign, POKeDEX, TIME */
+    uint32_t id, money;
+    uint8_t hasDex, minutes, stars, badges;   /* badges: bit i, badge i */
+    uint16_t caught, hours;
+    uint8_t rows;                   /* the back's records */
+    struct {
+        char label[28];
+        char value[20];
+    } row[PT_CARD_ROWS];
+} CtrPokeTouchCard;
+
+typedef struct {
+    uint8_t on;                     /* the viewport shows this Pokedex (no GBA picture) */
+    uint8_t state;                  /* PT_DEX_STATE_*: the Pokedex's own input state */
+    uint8_t national;               /* the National Pokedex is on */
+    uint16_t seen[2], owned[2];     /* KANTO, NATIONAL */
+    uint8_t menuCount;              /* the top menu's rows, headers included */
+    int8_t menuCursor;              /* its selected row */
+    struct {
+        int8_t id;                  /* PT_DEX_ID_* or a habitat */
+        uint8_t locked;             /* a habitat with nothing seen yet */
+        char name[28];              /* FireRed's label */
+    } menu[PT_DEX_MENU_MAX];
+    uint8_t order;                  /* the ordered list's order (FireRed's DEX_ORDER_*) */
+    int16_t listCount, listCursor, listFirst;
+    CtrPokeTouchDexMon row[PT_DEX_ROWS];
+    uint8_t category, page, pages, slots, slot, canPrev, canNext;
+    CtrPokeTouchDexMon mon[4];      /* a habitat page's Pokemon */
+    CtrPokeTouchDexMon sel;         /* the selected Pokemon (list, habitat page) or the one whose page is open */
+    char kind[28];                  /* its category, height in decimeters, weight in hectograms, types and entry: */
+    uint16_t height, weight;        /* only for a caught one */
+    int8_t type[2];
+    char typeName[2][10];
+    char desc[200];
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+} CtrPokeTouchDex;
+
 typedef struct {
     uint8_t enabled[PT_COUNT];  /* usable now: drawn normally, else dimmed */
     uint8_t pressed;            /* element under a held touch, or PT_NONE */
@@ -113,6 +300,12 @@ typedef struct {
     uint16_t bikeItem;          /* the Bicycle's item id, 0 when not owned */
     char bar[PT_BAR_LINES][PT_BAR_LEN]; /* contextual text, "" for no line */
     char playerName[16];        /* the Trainer Card button's label (UTF-8) */
+    CtrPokeTouchBag bag;        /* the field Bag, when bag.on */
+    CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
+    CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
+    CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
+    CtrPokeTouchName name;      /* the naming screen, when name.on */
+    CtrPokeTouchBox box;        /* a PC box, when box.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -133,6 +326,39 @@ int CtrPokeTouch_SaveHit(int x, int y, int state);
 
 /* PT_* under a bottom-screen pixel, or PT_NONE. */
 int CtrPokeTouch_HitTest(int x, int y);
+/* What the field Bag (view->bag.on) shows under lower-screen point (x, y): a PT_BAG_HIT_* code, or -1. */
+int CtrPokeTouch_BagHit(const CtrPokeTouchView *view, int x, int y);
+/* What the Pokedex (view->dex.on) shows under lower-screen point (x, y): a PT_DEX_HIT_* code, or -1. */
+int CtrPokeTouch_DexHit(const CtrPokeTouchView *view, int x, int y);
+/* The top menu row a tab (0-2) leads to, and the first row of the habitat/search page before (-1) or after (1) the
+ * one shown; -1 when there is none. */
+int CtrPokeTouch_DexTabRow(const CtrPokeTouchView *view, int tab);
+int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
+/* The Pokedex's pictures, from FireRed's tables (pokedex_screen.c): a species' front picture (64x64 4bpp, 8x8 tiles
+ * in rows of eight) and palette, a top menu row's icon (64x48, the same layout), a footprint (16x16 1bpp, four 8x8
+ * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
+/* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
+int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
+/* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
+ * (a key's is PT_NAME_HIT_KEY + row * PT_NAME_COLS + column, a tab's PT_NAME_HIT_TAB + page), or -1. */
+int CtrPokeTouch_NameHit(const CtrPokeTouchView *view, int x, int y);
+/* What of the PC box (view->box.on) is under lower-screen point (x, y): a 3ds_storage_touch.h ST_HIT_* code, or
+ * PT_BOX_HIT_MESSAGE, or ST_HIT_NONE. */
+int CtrPokeTouch_BoxHit(const CtrPokeTouchView *view, int x, int y);
+/* The game's side: a Pokemon's icon (its first frame, 4bpp 32x32) and palette; and the box as it is now (0 while the
+ * port should show FireRed's own picture). */
+int CtrPokeTouch_MonIcon(unsigned species, unsigned personality, int egg, unsigned char *tiles, unsigned short *palette);
+int CtrBottomStorage_BoxFill(CtrPokeTouchBox *box);
+/* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
+int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
+/* The card's pictures, from FireRed's (trainer_card.c): the trainer's front picture (64x64 4bpp, 8x8 tiles in rows of
+ * eight) and the badges (128x16 4bpp: badge i at tiles 2i, 2i + 1 and 2i + 16, 2i + 17). 0 when there is none. */
+int CtrPokeTouch_CardTrainerPic(unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_CardBadges(unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_DexMonPic(unsigned species, unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_DexMenuIcon(int id, unsigned char *tiles, unsigned short *palette);
+int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits);
+int CtrPokeTouch_DexCaughtMarker(unsigned char *tiles, unsigned short *palette);
 /* A bottom-screen pixel inside the viewport as GBA coordinates; false
  * outside the viewport. */
 bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy);
@@ -148,6 +374,9 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
  * Summary): drawn only where the backdrop shows and, with `pictureShown`, off the GBA picture; with `on` false they
  * are only taken away. What changed is added to `dirty`. */
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyList *dirty);
+/* The lower screen with nothing to show for FireRed's screen above (its title, naming, a shop, an evolution, a trade):
+ * the ember backdrop, and the project's logo when `logo`. */
+void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo);
 
 /*
  * The battle screen (3ds_battle_ui.inc, CtrBattleUi_*): the whole lower screen while FireRed's battle is on the
@@ -204,8 +433,10 @@ typedef struct {
     char menuName[3][12];
     char message[96];               /* what the Bag printed and waits on */
 } CtrBattleBag;
-enum { BUI_PTY_SLOT = 700, BUI_PTY_CANCEL = 710, BUI_PTY_MENU = 720, BUI_PTY_MESSAGE = 730 };
-enum { BUI_PTY_SWITCH = 0, BUI_PTY_TARGET, BUI_PTY_FORCED };
+enum { BUI_PTY_SLOT = 700, BUI_PTY_CANCEL = 710, BUI_PTY_CONFIRM = 711, BUI_PTY_MENU = 720, BUI_PTY_MESSAGE = 730 };
+/* BUI_PTY_MULTI: the picks of several Pokemon (a link battle, the Union Room), with CONFIRM over CANCEL. */
+enum { BUI_PTY_SWITCH = 0, BUI_PTY_TARGET, BUI_PTY_FORCED, BUI_PTY_MULTI };
+enum { BUI_PTY_NOT_ABLE = 0, BUI_PTY_ABLE, BUI_PTY_FIRST };
 enum { BUI_PTY_NONE = 0, BUI_PTY_ACTIONS, BUI_PTY_TEXT, BUI_PTY_YESNO };
 typedef struct {
     uint8_t present[6];             /* a Pokemon in the slot */
@@ -224,6 +455,8 @@ typedef struct {
     char message[96];
     char caption[64];               /* what the Party says under the slots ("" for the mode's own words) */
     uint8_t lead;                   /* the slots in the left column, as FireRed lays them out (1, or 2 in a double) */
+    uint8_t entry[6];               /* BUI_PTY_MULTI: BUI_PTY_NOT_ABLE, BUI_PTY_ABLE, or BUI_PTY_FIRST + its place in the order */
+    int8_t button;                  /* BUI_PTY_MULTI: the Party's cursor on CONFIRM (0) or CANCEL (1), else -1 */
 } CtrBattleParty;
 /* BUI_TARGET: a double battle's move being aimed. The four cards are the opposing battlers on top and the player's
  * below (left, right); only the ones FireRed lets the move be aimed at are `present`. The hit codes are the card

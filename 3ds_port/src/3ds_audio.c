@@ -367,6 +367,12 @@ void CtrAudio_ResetCatchUp(void)
     memset(&sCatchUp, 0, sizeof(sCatchUp));
 }
 
+void CtrAudio_ResetPsg(void)
+{
+    /* The next sound frame starts the PSG clock again (CtrAudio_OnSoundMain). */
+    sCgbRate = 0;
+}
+
 const CtrCgbStats *CtrAudio_CgbStats(void)
 {
     return &sCgb.stats;

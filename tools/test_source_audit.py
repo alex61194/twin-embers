@@ -182,6 +182,38 @@ class Rejections(unittest.TestCase):
                 path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(raw)
             git('add','.'); git('commit','-qm','synthetic image')
             self.assertEqual(audit.history(root),1)
+    def test_owner_exclusion_of_a_removed_image_is_exact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def git(*args): return audit.git(root,*args)
+            git('init','-q'); git('config','user.name','Synthetic'); git('config','user.email','synthetic@example.invalid')
+            def write(files):
+                for name,raw in files.items():
+                    path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(raw)
+            write(reviewed({'README.md':b'a\n'}))
+            git('add','.'); git('commit','-qm','clean')
+            big=synthetic_png(b'x'*(audit.MEDIA_LIMIT//8+16))
+            self.assertGreater(len(big),audit.MEDIA_LIMIT)
+            (root/'docs/media').mkdir(parents=True); (root/'docs/media/big.png').write_bytes(big)
+            git('add','.'); git('commit','-qm','unreviewed oversized upload')
+            commit=git('rev-parse','HEAD').decode().strip()
+            (root/'docs/media/big.png').unlink()
+            git('add','-A'); git('commit','-qm','removed again')
+            files=reviewed({'README.md':b'a\n'}); doc=json.loads(files[audit.MANIFEST])
+            row={'commit':commit,'path':'docs/media/big.png','sha256':hashlib.sha256(big).hexdigest(),'basis':'Synthetic owner decision'}
+            def record(rows):
+                doc['historical_exclusions']=rows; (root/audit.MANIFEST).write_text(json.dumps(doc))
+                git('add','-A'); git('commit','-qm','record','--allow-empty')
+            with self.assertRaises(ValueError): audit.history(root)
+            record([row])
+            self.assertEqual(audit.history(root),4)
+            for rows in ([dict(row,sha256='0'*64)],[dict(row,commit='0'*40)],[dict(row,path='docs/a.png')],
+                         [dict(row,basis='')],[row,row]):
+                record(rows)
+                with self.assertRaises(ValueError): audit.history(root)
+            # The image must still be gone from the current tree.
+            record([row]); (root/'docs/media/big.png').write_bytes(big)
+            with self.assertRaises(ValueError): audit.history(root)
     def test_source_directive_rejected(self):
         with self.assertRaises(ValueError): audit.check(reviewed({'data.c':b'const u8 game[] = INCBIN_U8("x.bin");\n'}))
     def test_local_rom_window(self):

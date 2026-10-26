@@ -122,6 +122,9 @@ static void BeginSessionPending(int owner) { BeginSession(owner); }
 #define IS_CASE_MODE(m) ((m)==MODE_TMCASE || (m)==MODE_POUCH)
 ''' + update + '''
 typedef struct { unsigned char mode,pressed; int cursor,tapped; CtrPokeTouchView touch; } Snapshot;
+static void LearnSnapshot(Snapshot *s,int mode) { (void)s; (void)mode; }   /* no move to forget open */
+static void NameSnapshot(Snapshot *s) { (void)s; }   /* no naming screen open */
+static void ShopSnapshot(Snapshot *s,int mode) { (void)s; (void)mode; }   /* no mart open */
 static void snapshot(Snapshot *s,int mode,int pressed) {
 ''' + snapshot + '''
 }
