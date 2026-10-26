@@ -567,8 +567,8 @@ typedef struct
     unsigned map;
 } DayNightCamera;
 static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
-/* Per field layer cell: 1 where a lit window was drawn (the glow under it), 2 for a gatehouse's (no glow). */
-static uint8_t sCellLight[4][4096];
+/* Per field layer cell: 1 + the glow slot (GlowSlot) of a lit window tile drawn there, 0 for any other. */
+static uint8_t sCellGlow[4][4096];
 /* The background colours that are glass, lit, as texels; 0 for the others.
  * sLitAny: every colour lit, for the windows of CTR_LIGHT_MASKED. */
 static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
@@ -2242,12 +2242,7 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
                                 sDayNightMinute * 60u);
 }
 
-/* The route gatehouses' window band (General tiles 611-614 and 627-630): lit, but the wall, door and steps
- * under it stay as they are, so it throws no glow. */
-static bool GateWindowTile(unsigned index, unsigned bank)
-{
-    return bank == 3 && ((index >= 611 && index <= 614) || (index >= 627 && index <= 630));
-}
+static unsigned GlowSlot(unsigned address, unsigned entry);
 
 static bool LayerRenderCells(unsigned bg)
 {
@@ -2312,7 +2307,7 @@ static bool LayerRenderCells(unsigned bg)
                 bool on = WindowLit(map, size, chars, column, row, entry);
 
                 slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
-                light = on ? (GateWindowTile(index, entry >> 12) ? 2 : 1) : 0;
+                light = on ? (uint8_t)GlowSlot(chars + index * 32, entry) : 0;
             }
             else if (memoStamp[index] == stamp && memoEntry[index] == entry)
                 slot = memoSlot[index];
@@ -2327,7 +2322,7 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
-            sCellLight[bg][cell] = light;
+            sCellGlow[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0
                 : (((sTiles[slot].serial << 2) | ((entry >> 10) & 3)) | 1u << 31);
@@ -3450,41 +3445,101 @@ static bool IntroClipLayer(int bg, bool scenery)
 }
 
 /*
- * The light a lit window throws on the ground: a soft warm glow under each
- * window's bottom tiles, added over the field's ground layers before the
- * sprites of their priority, as strong as the night is deep.
+ * The light of a lit window: a soft bloom around its glass, not a shape of its own. Each lit tile has a 24x24
+ * glow texture (the tile and 8 pixels all round) made by blurring the tile's glass pixels, added over the field's
+ * layers before the sprites of their priority and as strong as the night is deep. Added light is linear, so
+ * the glows of a window's tiles sum to the blur of the whole window: the light follows the panes, brightest
+ * at the glass, fading out over a few pixels, and the wall, the door and the ground under it are barely touched.
+ * The textures depend only on which pixels of the tile are glass, so they are kept by that 64-bit mask.
  */
+#define GLOW_CELL 32
+#define GLOW_SLOTS 64
+#define GLOW_SPAN 24
+#define GLOW_SIGMA 2.2f
 static C3D_Tex sGlowTex;
 static bool sGlowReady, sGlowFailed;
+static uint64_t sGlowMask[GLOW_SLOTS];
+static unsigned sGlowCount;
 
-static void GlowPrepare(void)
+static bool GlowPrepare(void)
 {
-    if (sGlowReady || sGlowFailed) return;
-    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
-    uint32_t *texels = (uint32_t *)sGlowTex.data;
-    for (unsigned y = 0; y < 32; ++y)
-        for (unsigned x = 0; x < 32; ++x)
-        {
-            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
-            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
-
-            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
-        }
-    C3D_TexFlush(&sGlowTex);
+    if (sGlowReady) return true;
+    if (sGlowFailed) return false;
+    if (!C3D_TexInit(&sGlowTex, 256, 256, GPU_RGBA8)) { sGlowFailed = true; return false; }
+    memset(sGlowTex.data, 0, 256 * 256 * 4);
     C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
     sGlowReady = true;
+    return true;
+}
+
+/* The glow texture of a window tile: 1 + its slot, or 0 when it has no glass or the slots are spent. */
+static unsigned GlowSlot(unsigned address, unsigned entry)
+{
+    const uint8_t *tile = sMemory.vram + address;
+    uint16_t own[16];
+    const uint16_t *glass = WindowGlass(address / 32, entry >> 12, own);
+    uint64_t mask = 0;
+    unsigned slot;
+
+    for (unsigned y = 0; y < 8; ++y)
+        for (unsigned x = 0; x < 8; ++x)
+        {
+            unsigned sx = (entry & 0x400) ? 7 - x : x, sy = (entry & 0x800) ? 7 - y : y;
+            unsigned index = (tile[sy * 4 + sx / 2] >> ((sx & 1) * 4)) & 15;
+
+            if (index && glass[index]) mask |= 1ull << (y * 8 + x);
+        }
+    if (!mask || !GlowPrepare()) return 0;
+    for (slot = 0; slot < sGlowCount; ++slot)
+        if (sGlowMask[slot] == mask) return slot + 1;
+    if (sGlowCount >= GLOW_SLOTS) return 0;
+    slot = sGlowCount++;
+    sGlowMask[slot] = mask;
+    {
+        uint32_t *texels = (uint32_t *)sGlowTex.data;
+        unsigned ox = slot % 8 * GLOW_CELL, oy = slot / 8 * GLOW_CELL;
+        const float norm = 2.0f * 3.14159265f * GLOW_SIGMA * GLOW_SIGMA;
+
+        float weight[17];
+
+        for (int d = -8; d <= 8; ++d)
+            weight[d + 8] = expf(-(float)(d * d) / (2.0f * GLOW_SIGMA * GLOW_SIGMA));
+        for (int y = 0; y < GLOW_SPAN; ++y)
+            for (int x = 0; x < GLOW_SPAN; ++x)
+            {
+                float sum = 0.0f;
+
+                /* Pixel (x, y) of the texture is pixel (x - 8, y - 8) of the tile; the light settles a pixel below its pane. */
+                for (int gy = 0; gy < 8; ++gy)
+                {
+                    int dy = y - 9 - gy;
+
+                    if (dy < -8 || dy > 8) continue;
+                    for (int gx = 0; gx < 8; ++gx)
+                    {
+                        int dx = x - 8 - gx;
+
+                        if (dx < -8 || dx > 8 || !(mask >> (gy * 8 + gx) & 1)) continue;
+                        sum += weight[dx + 8] * weight[dy + 8];
+                    }
+                }
+                sum /= norm;
+                if (sum > 1.0f) sum = 1.0f;
+                texels[CtrVideo_Texel(ox + (unsigned)x, oy + (unsigned)y, 256)] =
+                    (255u << 24) | (197u << 16) | (90u << 8) | (unsigned)(255.0f * sum);
+            }
+    }
+    C3D_TexFlush(&sGlowTex);
+    return slot + 1;
 }
 
 static void DrawDayNightGlow(unsigned mask)
 {
-    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
     unsigned display = Reg(0);
     C2D_ImageTint tint;
     bool begun = false;
 
-    if (!sDayNightLit || !sFieldLayers) return;
-    GlowPrepare();
-    if (!sGlowReady) return;
+    if (!sDayNightLit || !sFieldLayers || !sGlowReady) return;
     for (unsigned bg = 1; bg < 4; ++bg)
     {
         unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -3496,7 +3551,7 @@ static void DrawDayNightGlow(unsigned mask)
         if (fade <= 0.0f) continue;
         /* Only the layers this window shows: an exit wipe leaves the rest black. */
         if (!(mask & (1u << bg))) continue;
-        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.6f * fade);
         unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
         int width = (int)columns * 8, height = (int)rows * 8;
         int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
@@ -3504,20 +3559,21 @@ static void DrawDayNightGlow(unsigned mask)
         if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
         for (unsigned row = 0; row < rows; ++row)
         {
-            const uint8_t *light = sCellLight[bg] + row * columns;
-            const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
+            const uint8_t *light = sCellGlow[bg] + row * columns;
             int y = (((int)row * 8 - sy) % height + height) % height;
 
-            if (y >= VIEW_BOTTOM) y -= height;
-            /* The glow lights the ground below its window tile: only for tiles the view shows. */
-            if (y <= VIEW_TOP - 8) continue;
+            if (y >= VIEW_BOTTOM + 8) y -= height;
+            if (y <= VIEW_TOP - 16) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
-                if (light[column] != 1 || below[column]) continue;
+                unsigned slot = light[column];
                 int x = (((int)column * 8 - sx) % width + width) % width;
+                int u, v;
+                Tex3DS_SubTexture sub;
 
-                if (x >= VIEW_RIGHT) x -= width;
-                if (x <= VIEW_LEFT - 8) continue;
+                if (!slot) continue;
+                if (x >= VIEW_RIGHT + 8) x -= width;
+                if (x <= VIEW_LEFT - 16) continue;
                 if (!begun)
                 {
                     C2D_Flush();
@@ -3525,9 +3581,13 @@ static void DrawDayNightGlow(unsigned mask)
                     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
                     begun = true;
                 }
+                u = (int)((slot - 1) % 8 * GLOW_CELL);
+                v = (int)((slot - 1) / 8 * GLOW_CELL);
+                sub = (Tex3DS_SubTexture){GLOW_SPAN, GLOW_SPAN, u / 256.0f, 1.0f - v / 256.0f,
+                                          (u + GLOW_SPAN) / 256.0f, 1.0f - (v + GLOW_SPAN) / 256.0f};
                 ++sStats.tiles;
                 C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
-                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+                                y - 8 + CTR_VIEW_Y, 0, &tint, 1.0f, 1.0f);
             }
         }
     }
