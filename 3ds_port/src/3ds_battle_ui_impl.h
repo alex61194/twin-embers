@@ -813,23 +813,74 @@ static void BActCard(int i, const CtrBattleView *v)
 }
 
 /* ---- The moves ---- */
+/* The PP count's ink: red at 0, orange and amber when low. On the amber card the orange and amber vanish into it, so
+ * there only 0 is red and the pips tell the rest. */
 static uint16_t BEmPpInk(unsigned pp, unsigned max, const EmPal *p)
 {
-    return pp == 0 ? EM_VALUE : pp * 4 <= max ? UI_RGB(222, 96, 24) : pp * 2 <= max ? UI_RGB(196, 128, 0) : p->ink;
+    if (pp == 0)
+        return EM_VALUE;
+    if (p == &kEmAmber)
+        return p->ink;
+    return pp * 4 <= max ? UI_RGB(222, 96, 24) : pp * 2 <= max ? UI_RGB(196, 128, 0) : p->ink;
 }
 
 /* What the move does to the foe, on a pill: green when it is super effective, orange when not very, grey otherwise. */
 static const uint16_t kBFxColor[] = {0, UI_RGB(110, 100, 110), UI_RGB(204, 84, 24), UI_RGB(214, 112, 30),
                                      UI_RGB(40, 150, 70), UI_RGB(30, 170, 60), UI_RGB(100, 106, 132)};
 
+/* The mark before the pill's words, as in the mockup: two arrows up for super effective, one down for not very, a red
+ * cross for no effect; a plain hit has none. 7 pixels tall, `x` its left edge; returns its width. */
+enum { BFX_MARK_NONE, BFX_MARK_UP, BFX_MARK_DOWN, BFX_MARK_CROSS };
+
+static int BFxMarkW(int mark)
+{
+    return mark == BFX_MARK_UP ? 11 : mark == BFX_MARK_DOWN ? 7 : mark == BFX_MARK_CROSS ? 7 : 0;
+}
+
+static void BFxMark(int mark, int x, int y, uint16_t ink, uint16_t shadow)
+{
+    for (int pass = 0; pass < 2; ++pass) {
+        uint16_t c = pass ? ink : shadow;
+        int sx = x + !pass, sy = y + !pass;      /* the shadow first, a pixel down and right, as the font's */
+
+        if (mark == BFX_MARK_UP)
+            for (int k = 0; k < 2; ++k)
+                for (int row = 0; row < 6; ++row)
+                    Fill(sx + 6 * k + 2 - row / 2, sy + 1 + row, 1 + row / 2 * 2, 1, c);
+        else if (mark == BFX_MARK_DOWN)
+            for (int row = 0; row < 7; ++row)
+                Fill(sx + (row + 1) / 2, sy + row, 7 - (row + 1) / 2 * 2, 1, c);
+        else if (mark == BFX_MARK_CROSS) {
+            if (pass)
+                c = UI_RGB(240, 72, 64);
+            for (int k = 0; k < 6; ++k) {
+                Fill(sx + k, sy + k, 2, 1, c);
+                Fill(sx + 5 - k, sy + k, 2, 1, c);
+            }
+        }
+    }
+}
+
 static void BMatchupPill(uint8_t matchup, int right, int y)
 {
     static const char *const kText[] = {"", "NO EFFECT", "NOT VERY", "NOT VERY", "SUPER", "SUPER x4", "EFFECTIVE"};
+    static const uint8_t kMark[] = {BFX_MARK_NONE, BFX_MARK_CROSS, BFX_MARK_DOWN, BFX_MARK_DOWN, BFX_MARK_UP, BFX_MARK_UP,
+                                    BFX_MARK_NONE};
     const uint16_t *kColor = kBFxColor;
+    uint16_t shadow;
+    int markW, w, x;
 
     if (matchup == CTR_FX_NONE || matchup > CTR_FX_NEUTRAL)
         return;
-    BPill(right - BPillW(kText[matchup]), y, kText[matchup], kColor[matchup], EM_WHITE, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 4));
+    markW = BFxMarkW(kMark[matchup]);
+    w = BPillW(kText[matchup]) + (markW ? markW + 2 : 0);
+    x = right - w;
+    shadow = UiMix(kColor[matchup], UI_RGB(0, 0, 0), 4);
+    UiRoundFill(x, y, w, 15, 5, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 3));
+    UiRoundFill(x + 1, y + 1, w - 2, 13, 4, kColor[matchup]);
+    if (markW)
+        BFxMark(kMark[matchup], x + 6, y + 4, EM_WHITE, shadow);
+    UiText(kText[matchup], x + 7 + (markW ? markW + 2 : 0), y + 3, EM_WHITE, shadow, 1, x + w);
 }
 
 static void BMoveCard(int i, const CtrBattleView *v)
@@ -860,7 +911,8 @@ static void BMoveCard(int i, const CtrBattleView *v)
         int lit = m->maxPp ? ((int)m->pp * 10 + m->maxPp - 1) / m->maxPp : 0;
         uint16_t on = m->pp * 4 <= m->maxPp ? UI_RGB(232, 110, 30) : m->pp * 2 <= m->maxPp ? UI_RGB(236, 190, 30)
                     : UI_RGB(72, 190, 96);
-        uint16_t off = UiMix(p->bottom, p->edge, 3);
+        /* On the amber card the unlit pips are its dark brown: its orange looked like lit pips (a move at 0 PP read full). */
+        uint16_t off = focused ? UiMix(p->lip, p->edge, 4) : UiMix(p->bottom, p->edge, 3);
         char pp[16];
 
         for (int k = 0; k < 10; ++k)
