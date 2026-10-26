@@ -2950,10 +2950,13 @@ static void DrawAffineBg(unsigned bg)
 
 static CtrEffectOam sEffectOamPending[CTR_EFFECT_OAM_COUNT];
 static CtrEffectOam sEffectOamShown[CTR_EFFECT_OAM_COUNT];
+static CtrEffectOam sMapOamPending[CTR_EFFECT_OAM_COUNT];
+static CtrEffectOam sMapOamShown[CTR_EFFECT_OAM_COUNT];
 
 void CtrVideo_ClearEffectOam(void)
 {
     memset(sEffectOamPending, 0, sizeof(sEffectOamPending));
+    memset(sMapOamPending, 0, sizeof(sMapOamPending));
 }
 
 void CtrVideo_MarkEffectOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y)
@@ -2962,9 +2965,16 @@ void CtrVideo_MarkEffectOam(unsigned index, uint16_t attr0, uint16_t attr1, int 
         sEffectOamPending[index] = (CtrEffectOam){x, y, attr0, attr1, true};
 }
 
+void CtrVideo_MarkMapOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y)
+{
+    if (index < CTR_EFFECT_OAM_COUNT)
+        sMapOamPending[index] = (CtrEffectOam){x, y, attr0, attr1, true};
+}
+
 void CtrVideo_CommitEffectOam(void)
 {
     memcpy(sEffectOamShown, sEffectOamPending, sizeof(sEffectOamShown));
+    memcpy(sMapOamShown, sMapOamPending, sizeof(sMapOamShown));
 }
 
 static void DrawObjects(unsigned priority, bool effects)
@@ -3009,8 +3019,12 @@ static void DrawObjects(unsigned priority, bool effects)
         }
         else if (!effectPosition)
         {
-            x = CtrObj_UnwrapX(x, VIEW_RIGHT);
-            y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
+            /* A map sprite where it really is; anything else the 400x240 way. */
+            if (!sFieldLayers || !CtrEffectOam_Resolve(sMapOamShown, (unsigned)i, attr0, attr1, &x, &y))
+            {
+                x = CtrObj_UnwrapX(x, VIEW_RIGHT);
+                y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
+            }
 #if CTR_VOXEL_ENABLED
             if (sVoxelWeatherOnly)
             {
@@ -3402,10 +3416,16 @@ static void DrawDayNightGlow(void)
     if (!sDayNightLit || !sFieldLayers) return;
     GlowPrepare();
     if (!sGlowReady) return;
-    C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f);
     for (unsigned bg = 1; bg < 4; ++bg)
     {
         unsigned control = Reg(8 + bg * 2), size = control >> 14;
+        /* The glow fades with the layer it lights: a fade to black (a warp, a battle) takes it out too. */
+        bool white;
+        float fade = 1.0f - LayerBrightness(bg, &white);
+
+        if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
+        if (fade <= 0.0f) continue;
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
         unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
         int width = (int)columns * 8, height = (int)rows * 8;
         int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
@@ -3418,14 +3438,15 @@ static void DrawDayNightGlow(void)
             int y = (((int)row * 8 - sy) % height + height) % height;
 
             if (y >= VIEW_BOTTOM) y -= height;
-            if (y < VIEW_TOP - 24) continue;
+            /* The glow lights the ground below its window tile: only for tiles the view shows. */
+            if (y <= VIEW_TOP - 8) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
                 if (!light[column] || below[column]) continue;
                 int x = (((int)column * 8 - sx) % width + width) % width;
 
                 if (x >= VIEW_RIGHT) x -= width;
-                if (x < VIEW_LEFT - 24) continue;
+                if (x <= VIEW_LEFT - 8) continue;
                 if (!begun)
                 {
                     C2D_Flush();

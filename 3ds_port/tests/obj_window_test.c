@@ -31,8 +31,16 @@ static int off(int x, int y, int w, int h, int minX)
     return legacy_off(x, y, w, h, minX) || CtrObj_OffScreen(x, y, x + w, y + h, minX - OFFX, -OFFY - 16);
 }
 
-/* Where a sprite that survived the decision ends up: OAM keeps 9 and 8 bits. */
+/* Where a map sprite that survived the decision ends up: sprite.c publishes its true
+ * position with the OAM entry and the compositor draws it there. Only the raw OAM
+ * reading (legacy, and the fallback for unpublished entries) aliases. */
 static void drawn_at(int x, int y, int *dx, int *dy)
+{
+    *dx = x;
+    *dy = y;
+}
+
+static void raw_drawn_at(int x, int y, int *dx, int *dy)
 {
     *dx = CtrObj_UnwrapX(x & 511, W);
     *dy = CtrObj_UnwrapY(y & 255, H);
@@ -54,7 +62,7 @@ static int ghosts(int (*decide)(int, int, int, int, int), int minX, int *firstX,
                     int w = sizes[si], h = sizes[sj];
                     if (decide(x, y, w, h, minX)) continue;
                     int dx, dy;
-                    drawn_at(x, y, &dx, &dy);
+                    raw_drawn_at(x, y, &dx, &dy);
                     if (dx != x || dy != y)
                     {
                         if (!n) { *firstX = x; *firstY = y; *firstW = w; *firstH = h; }
@@ -72,11 +80,17 @@ static void test_the_old_decision_ghosts(void)
     printf("legacy decision: %d aliased placements, first %dx%d at (%d,%d)\n", n, fw, fh, fx, fy);
 }
 
+/* Production draws every map sprite it keeps at its true position, aliased or not. */
 static void test_no_sprite_is_drawn_elsewhere(void)
 {
-    int fx, fy, fw, fh;
-    CHECK(ghosts(off, -16, &fx, &fy, &fw, &fh) == 0, "aliased placement %dx%d at (%d,%d)", fw, fh, fx, fy);
-    CHECK(ghosts(off, -32, &fx, &fy, &fw, &fh) == 0, "Ss Anne margin: aliased %dx%d at (%d,%d)", fw, fh, fx, fy);
+    for (int y = -400; y <= 700; y += 3)
+        for (int x = -700; x <= 900; x += 3)
+        {
+            int dx, dy;
+            if (off(x, y, 16, 32, -16)) continue;
+            drawn_at(x, y, &dx, &dy);
+            CHECK(dx == x && dy == y, "(%d,%d) drawn at (%d,%d)", x, y, dx, dy);
+        }
 }
 
 /* Anything representable that shows a pixel must still be shown. */
@@ -88,30 +102,27 @@ static void test_visible_sprites_survive(void)
                 for (int x = -200; x < 500; ++x)
                 {
                     int w = sizes[si], h = sizes[sj];
-                    if (!touches_screen(x, y, w, h) || !CtrObj_TopLeftRepresentable(x, y)) continue;
+                    if (!touches_screen(x, y, w, h)) continue;
                     CHECK(!off(x, y, w, h, -16), "%dx%d at (%d,%d) shows pixels but was hidden", w, h, x, y);
                 }
 }
 
 static void test_edges(void)
 {
-    /* Y: -16 and 0 are shown; 239 is the last line; 240, 255, 256 and 288 are below. */
+    /* Y: a person 32 tall keeps showing its feet after its top has left the view. */
     CHECK(!off(100, -16, 16, 32, -16), "16x32 at y=-16 must show its lower half");
+    CHECK(!off(100, -31, 16, 32, -16), "16x32 at y=-31 still shows its last line");
+    CHECK(!off(100, -80, 16, 32, -16), "16x32 at y=-80 touches the margin, kept and clipped");
+    CHECK(off(100, -81, 16, 32, -16), "16x32 at y=-81 is wholly above the margin");
     CHECK(!off(100, 0, 16, 16, -16), "y=0");
     CHECK(!off(100, 239, 16, 16, -16), "y=239 shows one line");
-    CHECK(off(100, 240, 16, 16, -16), "y=240 is below the screen");
-    CHECK(off(100, 255, 16, 16, -16), "y=255");
-    CHECK(off(100, 256, 16, 16, -16), "y=256 aliases y=0");
-    CHECK(off(100, 288, 16, 16, -16), "y=288 aliases y=32");
-    /* Tall sprites above the top: the part of the range that OAM cannot carry. */
-    CHECK(!off(100, -15, 16, 16, -16), "16x16 at y=-15 shows one line");
-    CHECK(off(100, -17, 16, 16, -16), "16x16 at y=-17 shows nothing");
+    CHECK(!off(100, 240, 16, 16, -16), "y=240 is below the view, kept and clipped");
+    CHECK(!off(100, 256, 16, 16, -16), "y=256 aliases y=0 in OAM; its true position is published");
     /* X */
     CHECK(!off(-15, 100, 16, 16, -16), "x=-15 shows one column");
     CHECK(!off(399, 100, 16, 16, -16), "x=399 shows one column");
-    CHECK(off(400, 100, 16, 16, -16), "x=400 is right of the screen");
-    CHECK(off(480, 100, 32, 16, -16), "x=480 aliases x=-32: a 32-wide sprite would reappear on the left");
-    CHECK(off(512, 100, 16, 16, -16), "x=512 aliases x=0");
+    CHECK(!off(480, 100, 32, 16, -16), "x=480 aliases x=-32 in OAM; its true position is published");
+    CHECK(off(496, 100, 16, 16, -16), "x=496 is past the game's own right margin");
     CHECK(!off(-100, 100, 128, 64, -32), "a wide sprite entering from the left is still carried");
 }
 
@@ -157,8 +168,10 @@ static void test_route8_reported_case(void)
         if (sy < 256 || sy >= 288) continue;     /* the old margin that aliases 0..31 */
         found = 1;
         drawn_at(sx, sy, &dx, &dy);
-        CHECK(!legacy_off(sx, sy, 16, 32, -16) && dy < 32, "legacy test should keep it and wrap it to the top (sy=%d dy=%d)", sy, dy);
-        CHECK(off(sx, sy, 16, 32, -16), "the tree 256+ lines below the view must be hidden (sy=%d)", sy);
+        int rx, ry;
+        raw_drawn_at(sx, sy, &rx, &ry);
+        CHECK(!legacy_off(sx, sy, 16, 32, -16) && ry < 32, "legacy test should keep it and wrap it to the top (sy=%d ry=%d)", sy, ry);
+        CHECK(!off(sx, sy, 16, 32, -16) && dy == sy, "the tree 256+ lines below the view stays below it (sy=%d dy=%d)", sy, dy);
     }
     CHECK(found, "no camera position put the tree in the old margin");
 }
@@ -191,8 +204,8 @@ static void test_scrolling_is_continuous(void)
 static void test_neighbouring_sprites_are_independent(void)
 {
     /* Two trees 16 lines apart straddling the old margin: each decided on its own geometry. */
-    CHECK(off(100, 256, 16, 32, -16) && !off(100, 224, 16, 32, -16), "neighbours at y=256 and y=224");
-    CHECK(off(100, -48, 16, 32, -16) && !off(100, -16, 16, 32, -16), "neighbours at y=-48 and y=-16");
+    CHECK(!off(100, 256, 16, 32, -16) && !off(100, 224, 16, 32, -16), "neighbours at y=256 and y=224");
+    CHECK(off(100, -96, 16, 32, -16) && !off(100, -16, 16, 32, -16), "neighbours at y=-96 and y=-16");
 }
 
 /* Entering a map rebuilds every object's sprite and decides again from scratch: the decision is a
@@ -216,6 +229,6 @@ int main(void)
     test_neighbouring_sprites_are_independent();
     test_decision_is_stateless();
     if (failures) { printf("%d failures\n", failures); return 1; }
-    printf("PASS sprite window: no aliasing, partial edges kept, Route 8 Cut trees, scrolling\n");
+    printf("PASS sprite window: true positions, partial edges kept, Route 8 Cut trees, scrolling\n");
     return 0;
 }
