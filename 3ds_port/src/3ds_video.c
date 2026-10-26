@@ -3387,10 +3387,16 @@ static void DrawDayNightGlow(void)
     if (!sDayNightLit || !sFieldLayers) return;
     GlowPrepare();
     if (!sGlowReady) return;
-    C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f);
     for (unsigned bg = 1; bg < 4; ++bg)
     {
         unsigned control = Reg(8 + bg * 2), size = control >> 14;
+        /* The glow fades with the layer it lights: a fade to black (a warp, a battle) takes it out too. */
+        bool white;
+        float fade = 1.0f - LayerBrightness(bg, &white);
+
+        if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
+        if (fade <= 0.0f) continue;
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
         unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
         int width = (int)columns * 8, height = (int)rows * 8;
         int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
