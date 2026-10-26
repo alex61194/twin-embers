@@ -1945,6 +1945,11 @@ typedef struct
     uint32_t walked;
     uint32_t walkedGeneration;
     bool walkedPlain;
+    /* Or, for a field layer, the walk of its window at this scroll, tinted
+     * or not, against this fade base (the same skip, for the cells in view). */
+    bool walkedWindow, walkedTint;
+    unsigned walkedScrollX, walkedScrollY;
+    uint32_t walkedFade;
     bool valid;
 } LayerTexture;
 static LayerTexture sLayers[4];
@@ -2274,18 +2279,32 @@ static bool LayerRenderCells(unsigned bg)
         windowed = visible < cells;
     }
     /* Nothing the walk reads has changed since the last whole-layer walk:
-     * no cell can differ. Anything uncertain (windowed, tinted, a new cache
-     * generation, a changed palette or map/tile VRAM) walks. */
-    if (!full && !windowed && !sLayerFadeTint[bg]
-        && layer->walkedPlain
+     * no cell can differ. Anything uncertain (a new cache generation, a
+     * changed palette or map/tile VRAM) walks. A field layer, windowed and
+     * tinted, skips the same way while its scroll, its tint and the fade base
+     * are those of its last walk: the cells in view are the ones that walk
+     * checked. Standing still on the field, that was ~1600 cells a layer
+     * walked every frame for nothing; on an Old 3DS a few milliseconds. */
+    unsigned scrollX = Reg(0x10 + bg * 4) & 511, scrollY = Reg(0x12 + bg * 4) & 511;
+    bool sameWalk = !full
+        && (layer->walkedPlain ? !windowed && !sLayerFadeTint[bg]
+            : layer->walkedWindow && layer->walkedTint == sLayerFadeTint[bg]
+              && layer->walkedFade == sFadeVersion[32]
+              && (!windowed || (layer->walkedScrollX == scrollX && layer->walkedScrollY == scrollY)))
         && layer->walkedGeneration == sCacheGeneration
         && sBgPaletteStamp <= layer->walked
         && !VramChangedAfter(map, rows * columns * 2, layer->walked)
-        && !VramChangedAfter(chars, Min(1024u * (color256 ? 64 : 32), 0x10000u - chars), layer->walked))
+        && !VramChangedAfter(chars, Min(1024u * (color256 ? 64 : 32), 0x10000u - chars), layer->walked);
+    if (sameWalk)
         return false;
     layer->walked = sStats.frames + 1;
     layer->walkedGeneration = sCacheGeneration;
     layer->walkedPlain = !windowed && !sLayerFadeTint[bg];
+    layer->walkedWindow = !layer->walkedPlain;
+    layer->walkedTint = sLayerFadeTint[bg];
+    layer->walkedScrollX = scrollX;
+    layer->walkedScrollY = scrollY;
+    layer->walkedFade = sFadeVersion[32];
     ++stamp;
     ++sWindowStamp;
     for (unsigned row = 0; row < rows; ++row)
@@ -2352,7 +2371,7 @@ static bool LayerRenderCells(unsigned bg)
     if (sStats.tiles + count >= MAX_DRAWS / 2)
     {
         sLayerReady[bg] = false;
-        layer->walkedPlain = false;
+        layer->walkedPlain = layer->walkedWindow = false;
         return false;
     }
     if (full)
