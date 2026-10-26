@@ -25,7 +25,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 ## New in v0.2.1
 
 - **Mart and item PC on the lower screen.** Buying keeps the field on the top screen, and selling or depositing in the item PC now really opens the drawn Bag instead of the GBA one.
-- **Thinner window glow at night:** a soft rim around the lit glass instead of a blob over the wall.
+- **Window glow that follows the glass at night:** lit windows bloom softly around their panes instead of throwing a blob over the wall, and Vermilion houses no longer light a stripe along the wall.
 - **The PC box note** shows the level and the gender sign properly instead of garbled letters.
 - **The version on the title screen** (v0.2.1), and the Twin Embers name and icon in the Homebrew Launcher.
 
