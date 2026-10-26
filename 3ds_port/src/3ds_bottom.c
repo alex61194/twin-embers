@@ -1468,6 +1468,24 @@ static void BatCopy(char *dst, size_t size, const char *src)
     dst[n] = 0;
 }
 
+/* The Party icons' clock: one tick a frame the Party is drawn (a snapshot is taken every frame). */
+static unsigned sIconTick;
+
+/* FireRed's icon animation (sMonIconAnim_*): two frames held 6, 8, 14 or 22 ticks (+1 each) by the HP bar's colour,
+ * and a fainted one's only changes its hop. Bit 0 the frame, bit 1 the hop's phase. */
+static uint8_t PartyIconFrame(unsigned tick, unsigned hp, unsigned maxHp, int egg)
+{
+    unsigned hold = 29, phase;
+
+    if (hp != 0 || egg) {
+        unsigned pct = maxHp ? hp * 100 / maxHp : 100;
+
+        hold = hp == maxHp ? 6 : pct > 50 ? 8 : pct > 20 ? 14 : 22;
+    }
+    phase = (tick / (hold + 1)) & 1;
+    return (uint8_t)((hp != 0 || egg ? phase : 0) | phase << 1);
+}
+
 /* The battle Party as the Party is now (the lower screen's own Party snapshot `s`, which reads FireRed's Party): the six
  * slots, the Party's selection, what it was opened for, and its menu or message when it has one open. */
 static void BattlePartyFill(Snapshot *s)
@@ -1475,6 +1493,8 @@ static void BattlePartyFill(Snapshot *s)
     CtrBattleView *v = &s->battle;
     CtrBattleParty *p = &v->pty;
     int action = CtrBottomParty_Action();
+
+    ++sIconTick;
 
     BattleCommon(v);
     v->state = BUI_PARTY;
@@ -1498,6 +1518,7 @@ static void BattlePartyFill(Snapshot *s)
         p->hp[i] = s->hp[i];
         p->maxHp[i] = s->maxHp[i];
         p->icon[i] = s->icon[i];
+        p->iconFrame[i] = PartyIconFrame(sIconTick, s->hp[i], s->maxHp[i], s->isEgg[i]);
         if (p->mode == BUI_PTY_MULTI) {
             int entry = CtrBottomParty_EntryState(i);
 

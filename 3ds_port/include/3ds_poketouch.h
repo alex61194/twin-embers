@@ -445,6 +445,7 @@ typedef struct {
     uint8_t level[6];
     uint16_t hp[6], maxHp[6];
     uint16_t icon[6];               /* FireRed's icon species of the slot (the icon is read through the bridge) */
+    uint8_t iconFrame[6];           /* bit 0: which of the icon's two frames it shows (0 when fainted); bit 1: the hop's phase */
     char name[6][11];
     int8_t cursor;                  /* the Party's own selection: a slot 0-5 */
     uint8_t mode;                   /* BUI_PTY_SWITCH, BUI_PTY_TARGET (an item's target), BUI_PTY_FORCED (no CANCEL) */
