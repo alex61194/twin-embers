@@ -148,7 +148,10 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
         return;
     }
     UiText(b->row[i].name, r.x + 30, fy + 7, p->ink, p->inkSh, 1, r.x + r.w - 40);
-    if (b->kind != PT_BAG_KIND_BAG ? b->row[i].qty != 0 : b->pocket != 1) {   /* key items and HMs: no count */
+    if (b->kind == PT_BAG_KIND_BAG && b->pocket == 1 && b->row[i].item
+        && (b->row[i].item == b->regX || b->row[i].item == b->regY)) {
+        UiTextRight(b->row[i].item == b->regX ? "X" : "Y", r.x + r.w - 8, fy + 7, p->ink, p->inkSh, 1);   /* its button */
+    } else if (b->kind != PT_BAG_KIND_BAG ? b->row[i].qty != 0 : b->pocket != 1) {   /* key items and HMs: no count */
         char qty[8];
 
         snprintf(qty, sizeof(qty), "x%u", b->row[i].qty > 999 ? 999 : b->row[i].qty);
