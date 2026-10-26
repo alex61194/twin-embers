@@ -28,6 +28,7 @@
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "3ds_fast_forward.h"
+#include "3ds_settings.h"
 #include "3ds_poketouch_options.h"
 #include "3ds_day_night_lights.h"
 
@@ -619,8 +620,15 @@ void VBlankIntrWait(void)
      * the game, its VBlank handler, input, bottom screen and save still run.
      * START (a new press) cycles it where CtrBottom_TurboCanCycle allows, and it is in force only where
      * CtrBottom_TurboApplies says the stable field, or a battle's stable core, is the screen's owner. */
+    static bool turboRestored;
+    if (!turboRestored)
+    {
+        turboRestored = true;
+        sFastForward.turbo = CtrSettings_Turbo();   /* the speed chosen in an earlier session */
+    }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
                          CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0);
+    CtrSettings_SetTurbo(sFastForward.turbo);   /* writes the file only when a press changed it */
     bool shown = CtrFastForward_Show(&sFastForward);
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();
