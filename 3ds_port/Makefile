@@ -199,6 +199,9 @@ SOUND_WRAPPED := m4aSoundVSync m4aSoundMain m4aSoundInit m4aSoundVSyncOn m4aSoun
     SetPokemonCryPriority SetPokemonCryTone IsPokemonCryPlaying
 GAME_FULL_OBJS += build/3ds_asset_memory.o
 GAME_LDFLAGS := $(foreach f,$(SOUND_WRAPPED),-Wl,--wrap=$(f))
+# The game's own variables in their own section, for the soft reset: gcc finds
+# this copy of devkitARM's 3dsx.ld (../tools/game_ram_ld.py) before its own.
+GAME_LDFLAGS += -Bbuild/ld/
 # Pointer targets of the NOBITS tables: their relocations are gone, so the
 # linker needs them as roots (build/rex-roots.rsp) or it would collect the
 # handlers they name.
@@ -209,6 +212,9 @@ build/firered_game.elf: verify-game-source verify-game-data verify-sound-data ve
 
 # A fresh tree must build the real mixer before the full-game link.
 build/firered_game.elf: $(GAME_M4A_OBJS)
+build/firered_game.elf: build/ld/3dsx.ld
+build/ld/3dsx.ld: $(DEVKITARM)/arm-none-eabi/lib/3dsx.ld ../tools/game_ram_ld.py
+	$(PYTHON) ../tools/game_ram_ld.py $< $@
 
 build/firered_game_3dsx.elf: build/firered_game.elf ../tools/filter_3dsx_relocs.py
 	$(PYTHON) ../tools/filter_3dsx_relocs.py --expect-thunks 1 build/firered_game.elf build/firered_game_3dsx.elf
