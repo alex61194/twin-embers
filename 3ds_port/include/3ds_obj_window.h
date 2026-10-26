@@ -36,10 +36,16 @@ static inline int CtrObj_TopLeftRepresentable(int x, int y)
 
 /* The object-event visibility decision (nonzero: hide). x,y is the sprite's top-left
  * and x2,y2 its bottom-right in screen coordinates, as event_object_movement.c computes
- * them; leftCut/topCut are the game's own margins, kept as they were. */
+ * them; leftCut/topCut are the game's own margins, kept as they were.
+ *
+ * A map sprite is drawn at the position the game gave it (sprite.c publishes it with
+ * the OAM entry, CtrVideo_MarkMapOam), so it need not be representable in OAM's 9 and
+ * 8 bits: a 16x32 person walking off the top keeps showing the part still in view. */
 static inline int CtrObj_OffScreen(int x, int y, int x2, int y2, int leftCut, int topCut)
 {
-    return !CtrObj_TopLeftRepresentable(x, y) || x2 < leftCut || y2 < topCut;
+    (void)x;
+    (void)y;
+    return x2 < leftCut || y2 < topCut;
 }
 
 #endif

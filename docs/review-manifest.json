@@ -531,7 +531,7 @@
   },
   {
    "path": "3ds_port/include/3ds_obj_window.h",
-   "sha256": "c328c67a37a03203b970b43c7295e6b27ede210636133169134f2e12ff442eb2",
+   "sha256": "2e212a9897887fdfac85a905dec830d87747b99bb81fd1b6e44a8b1770e66686",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1766,7 +1766,7 @@
   },
   {
    "path": "3ds_port/tests/obj_window_test.c",
-   "sha256": "22f2efa7f20d4c5b8e3dbd1f183e49cfd5cdba278914410fedac8eb6340aa7ac",
+   "sha256": "aa1fd95dc03585f2d82698c40f68c0028a5b05d11cd31611ef32dcab247466af",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
