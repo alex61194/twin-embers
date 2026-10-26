@@ -21,6 +21,7 @@
 #include "3ds_palette_fade.h"
 #include "3ds_day_night.h"
 #include "3ds_poketouch.h"
+#include "twin_font.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
 static CtrPresentation sPresentation;
@@ -5381,6 +5382,97 @@ void CtrVideo_SetFpsCounter(bool on)
 #endif
 
 /*
+ * The build's version on the title screen (main_game_full.c sets it from git_version.h): the game's small font,
+ * right-aligned in the red copyright footer at the canvas's bottom (canvas rows 230-239), its letters on the rows and in
+ * the white-to-grey shades of the copyright's own, with the same black shadow. FireRed fades the footer with its
+ * palette (CtrGame_ScreenFade), so the label is blended the same way and leaves with the title.
+ */
+static char sBuildLabel[32];
+
+void CtrVideo_SetBuildLabel(const char *label)
+{
+    snprintf(sBuildLabel, sizeof(sBuildLabel), "%s", label ? label : "");
+}
+
+__attribute__((weak)) const uint8_t *CtrTwinSmallFontData(void) { return NULL; }
+__attribute__((weak)) unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 0; }
+__attribute__((weak)) unsigned CtrGame_ScreenFade(uint16_t *target) { *target = 0; return 0; }
+
+/* FireRed's charmap for what a version label holds: digits, letters, '.' and '-'. */
+static unsigned VersionGlyphCode(char c)
+{
+    if (c >= '0' && c <= '9') return 0xa1 + (unsigned)(c - '0');
+    if (c >= 'A' && c <= 'Z') return 0xbb + (unsigned)(c - 'A');
+    if (c >= 'a' && c <= 'z') return 0xd5 + (unsigned)(c - 'a');
+    if (c == '.') return 0xad;
+    if (c == '-') return 0xae;
+    return 0;
+}
+
+#define VERSION_RIGHT (CTR_GAME_WIDTH - 4)
+#define VERSION_TOP 227             /* glyph row 0: the small font's capitals (rows 4-10) land on rows 231-237 */
+
+static void DrawBuildLabel(C3D_RenderTarget *target)
+{
+    static const uint16_t shades[] = {0x7fff, 0x6f7b, 0x6318};  /* the copyright's 31, 27 and 24 grey levels */
+    const uint8_t *font = CtrTwinSmallFontData();
+    uint16_t fadeTarget = 0;
+    unsigned fade, width = 0;
+    uint32_t ink[3], shadow;
+    float x;
+
+    if (!sBuildLabel[0] || !font || !sIntro || NativeIntroActive() || sNativeIntroScene != CTR_INTRO_TITLE)
+        return;
+    fade = CtrGame_ScreenFade(&fadeTarget);
+    if (fade >= 16 && fadeTarget == 0)
+        return;
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        uint32_t rgb = CtrVideo_RGBA8(CtrPal_Blend(shades[i], fade, fadeTarget), true);
+        ink[i] = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
+    }
+    {
+        uint32_t rgb = CtrVideo_RGBA8(CtrPal_Blend(0, fade, fadeTarget), true);
+        shadow = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
+    }
+    for (const char *c = sBuildLabel; *c; ++c)
+    {
+        unsigned w = CtrTwinSmallFontWidth(VersionGlyphCode(*c));
+        width += w > 8 ? 8 : w;
+    }
+
+    C2D_Prepare();
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+    BlendForget();
+    C2D_SceneBegin(target);
+    C2D_ViewReset();
+    Blend(5, false, false);
+    x = (float)(VERSION_RIGHT - (int)width);
+    for (const char *c = sBuildLabel; *c; ++c)
+    {
+        unsigned code = VersionGlyphCode(*c), w = CtrTwinSmallFontWidth(code);
+        uint32_t rows[16];
+
+        if (w > 8) w = 8;
+        TwinSmallGlyphDecode(font + code * 32, w, rows);
+        for (unsigned row = 0; row < 16; ++row)
+        {
+            int y = VERSION_TOP + (int)row;
+            uint32_t colour = ink[y <= 233 ? 0 : y == 234 ? 1 : 2];
+
+            for (unsigned col = 0; col < w; ++col)
+            {
+                unsigned v = (rows[row] >> (2 * col)) & 3;
+                if (v)
+                    C2D_DrawRectSolid(x + col, (float)y, 0, 1, 1, v == 1 ? colour : shadow);
+            }
+        }
+        x += w;
+    }
+    C2D_Flush();
+}
+
+/*
  * The bottom screen runs some of the game's menus without showing them (the
  * party menu, the bag): while it does, the top screen keeps the last frame it
  * presented, the world as it was when the menu opened. Nothing is rendered;
@@ -5708,6 +5800,8 @@ void CtrVideo_Present(void)
         if (stereo) DrawFps(sTopRight);
     }
 #endif
+    if (!sHoldTop) DrawBuildLabel(sTop);
+    if (stereo) DrawBuildLabel(sTopRight);
     if (sFastForward > 1)
     {
         if (!sHoldTop) DrawFastForward(sTop);

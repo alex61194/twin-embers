@@ -31,6 +31,7 @@
 #include "3ds_settings.h"
 #include "3ds_poketouch_options.h"
 #include "3ds_day_night_lights.h"
+#include "3ds_palette_fade.h"
 
 extern IntrFunc gIntrTable[];
 
@@ -295,6 +296,18 @@ static void UpdateStage(void)
     CtrVideo_SetFieldMoveShowMon(CtrFieldEffect_ShowMonActive() != 0);
 }
 
+
+/* How far FireRed's palette fade has taken the backgrounds towards one colour (0 none, 16 all the way), for what the
+ * port draws over the screen (the title's version label). 0 when they are not one uniform fade. */
+unsigned CtrGame_ScreenFade(uint16_t *target)
+{
+    unsigned coeff = 0;
+
+    *target = 0;
+    if (!CtrPal_DetectBlend(gPlttBufferUnfaded, gPlttBufferFaded, 256, &coeff, target))
+        return 0;
+    return coeff;
+}
 
 static void ProbeAudio(unsigned frame)
 {
