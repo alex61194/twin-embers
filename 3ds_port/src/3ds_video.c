@@ -3403,14 +3403,15 @@ static void DrawDayNightGlow(void)
             int y = (((int)row * 8 - sy) % height + height) % height;
 
             if (y >= VIEW_BOTTOM) y -= height;
-            if (y < VIEW_TOP - 24) continue;
+            /* The glow lights the ground below its window tile: only for tiles the view shows. */
+            if (y <= VIEW_TOP - 8) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
                 if (!light[column] || below[column]) continue;
                 int x = (((int)column * 8 - sx) % width + width) % width;
 
                 if (x >= VIEW_RIGHT) x -= width;
-                if (x < VIEW_LEFT - 24) continue;
+                if (x <= VIEW_LEFT - 8) continue;
                 if (!begun)
                 {
                     C2D_Flush();
