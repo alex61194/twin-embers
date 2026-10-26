@@ -34,13 +34,11 @@ build/%.o: src/%.c Makefile
 	@mkdir -p build
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-# The version this checkout builds: the title screen shows it, followed by the commit (v0.2.0-1a2b3c4) unless HEAD is
-# tagged v$(TWIN_EMBERS_VERSION) or the build is the release's own (make RELEASE=1). Change it here when a release starts.
+# The version this checkout builds, shown on the title screen as v$(TWIN_EMBERS_VERSION). Change it here when a release starts.
 TWIN_EMBERS_VERSION := 0.2.0
-RELEASE ?= 0
 .PHONY: force-git-version
 build/git_version.h: force-git-version ../tools/gen_git_version.py
-	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION) --release $(RELEASE)
+	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION)
 build/main_game_full.o: build/git_version.h
 
 VOXEL := 0
