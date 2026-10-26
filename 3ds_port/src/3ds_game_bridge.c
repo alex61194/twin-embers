@@ -64,7 +64,8 @@ static bool FieldOutdoors(void)
 /* The windows lit at night, by tileset (3ds_day_night_lights.h). */
 extern const struct Tileset gTileset_General, gTileset_PalletTown, gTileset_ViridianCity, gTileset_PewterCity,
     gTileset_VermilionCity, gTileset_LavenderTown, gTileset_CeladonCity, gTileset_FuchsiaCity,
-    gTileset_SaffronCity, gTileset_IndigoPlateau, gTileset_SeviiIslands123;
+    gTileset_SaffronCity, gTileset_IndigoPlateau, gTileset_CinnabarIsland, gTileset_SeviiIslands123,
+    gTileset_SeviiIslands45, gTileset_SeviiIslands67;
 
 #define LIGHTS(tileset, table) {&gTileset_##tileset, table, sizeof(table) / sizeof(table[0])}
 static const struct
@@ -83,7 +84,10 @@ static const struct
     LIGHTS(FuchsiaCity, kCtrLights_FuchsiaCity),
     LIGHTS(SaffronCity, kCtrLights_SaffronCity),
     LIGHTS(IndigoPlateau, kCtrLights_IndigoPlateau),
+    LIGHTS(CinnabarIsland, kCtrLights_CinnabarIsland),
     LIGHTS(SeviiIslands123, kCtrLights_SeviiIslands123),
+    LIGHTS(SeviiIslands45, kCtrLights_SeviiIslands45),
+    LIGHTS(SeviiIslands67, kCtrLights_SeviiIslands67),
 };
 #undef LIGHTS
 

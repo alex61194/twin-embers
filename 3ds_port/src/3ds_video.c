@@ -551,6 +551,11 @@ static const uint16_t *sDayNightLights[2];
  * and of those the ones lit all night (CTR_LIGHT_PUBLIC). */
 static uint16_t sLitBanks[1024];
 static uint16_t sPublicBanks[1024];
+/* The windows whose glass is given by colour index (CTR_LIGHT_MASKED): the
+ * entry without its flags, and the indices. */
+#define DAY_NIGHT_GLASS_MASKS 64
+static uint16_t sGlassMaskEntry[DAY_NIGHT_GLASS_MASKS], sGlassMask[DAY_NIGHT_GLASS_MASKS];
+static unsigned sGlassMasks;
 /* The windows' hours (CtrDayNight_WindowOn) are read in minutes. */
 static uint32_t sDayNightMinute = ~0u;
 /* Where the field's tilemap stands on the map (CtrVideo_SetDayNightCamera). */
@@ -563,8 +568,10 @@ typedef struct
 static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
 /* Per field layer cell: 1 where a lit window was drawn (the glow under it). */
 static uint8_t sCellLight[4][4096];
-/* The background colours that are glass, lit, as texels; 0 for the others. */
+/* The background colours that are glass, lit, as texels; 0 for the others.
+ * sLitAny: every colour lit, for the windows of CTR_LIGHT_MASKED. */
 static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
+static uint16_t sLitAny[DAY_NIGHT_BG_BANKS * 16];
 static bool sFieldLayers;
 
 void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
@@ -601,8 +608,28 @@ static uint16_t DayNightTexel(unsigned p, uint16_t color)
 static void DayNightLitEntry(unsigned p)
 {
     if (p >= DAY_NIGHT_BG_BANKS * 16) return;
-    sLitTexture[p] = sDayNightLit && CtrDayNight_Glass(sPalette[p])
-        ? CtrVideo_RGBA5551(CtrDayNight_Lit(sPalette[p], sDayNightColor, sDayNightLit)) : 0;
+    sLitAny[p] = sDayNightLit ? CtrVideo_RGBA5551(CtrDayNight_Lit(sPalette[p], sDayNightColor, sDayNightLit)) : 0;
+    sLitTexture[p] = CtrDayNight_Glass(sPalette[p]) ? sLitAny[p] : 0;
+}
+
+/* The glass colour indices of a window tile with its palette; 0 for the blue test. */
+static unsigned GlassMask(unsigned tile, unsigned bank)
+{
+    uint16_t key = (uint16_t)(tile | bank << 12);
+
+    for (unsigned i = 0; i < sGlassMasks; ++i)
+        if (sGlassMaskEntry[i] == key) return sGlassMask[i];
+    return 0;
+}
+
+/* A window tile's lit colours: its glass, lit; 0 for the rest. */
+static const uint16_t *WindowGlass(unsigned tile, unsigned bank, uint16_t *own)
+{
+    unsigned mask = GlassMask(tile, bank);
+
+    if (!mask) return sLitTexture + bank * 16;
+    for (unsigned i = 0; i < 16; ++i) own[i] = (mask >> i & 1) ? sLitAny[bank * 16 + i] : 0;
+    return own;
 }
 
 /* After UpdatePalette, before UpdateFade: a new hour, or a map with other
@@ -630,12 +657,22 @@ static void DayNightUpdate(void)
     {
         memset(sLitBanks, 0, sizeof(sLitBanks));
         memset(sPublicBanks, 0, sizeof(sPublicBanks));
+        sGlassMasks = 0;
         for (unsigned k = 0; k < 2; ++k)
             for (unsigned i = 0; on && i < sDayNightRequestCount[k]; ++i)
             {
                 uint16_t entry = sDayNightRequestLights[k][i];
                 sLitBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
                 if (entry & CTR_LIGHT_PUBLIC) sPublicBanks[entry & 1023] |= (uint16_t)(1u << (entry >> 12));
+                if ((entry & CTR_LIGHT_MASKED) && i + 1 < sDayNightRequestCount[k])
+                {
+                    if (sGlassMasks < DAY_NIGHT_GLASS_MASKS)
+                    {
+                        sGlassMaskEntry[sGlassMasks] = entry & 0xf3ffu;
+                        sGlassMask[sGlassMasks++] = sDayNightRequestLights[k][i + 1];
+                    }
+                    ++i;
+                }
             }
         sDayNightLights[0] = lights0;
         sDayNightLights[1] = lights1;
@@ -843,8 +880,9 @@ static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool f
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
             /* A window of the field's character block at night: its glass is lit (DayNightUpdate). */
+            uint16_t litOwn[16];
             const uint16_t *lit = sDayNightLit && !dark && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
-                && (sLitBanks[address / 32] & (1u << bank)) ? sLitTexture + paletteBase : NULL;
+                && (sLitBanks[address / 32] & (1u << bank)) ? WindowGlass(address / 32, bank, litOwn) : NULL;
             memset(tile->colors, 0, sizeof(tile->colors));
             tile->visible = false;
             for (unsigned pixel = 0; pixel < 64; ++pixel)
@@ -2122,6 +2160,9 @@ static bool VramChangedAfter(unsigned address, unsigned bytes, uint32_t after)
  * whose glass meets across their edges, keyed by its top-left tile's place
  * on the map, so the tiles of one window switch together.
  */
+/* A walk of the field's layers: GlassEdges' memo holds within one. */
+static uint32_t sWindowStamp;
+
 static bool WindowTile(unsigned chars, unsigned entry, bool color256)
 {
     unsigned address = chars + (entry & 1023) * 32, bank = entry >> 12;
@@ -2130,22 +2171,41 @@ static bool WindowTile(unsigned chars, unsigned entry, bool color256)
         && (sLitBanks[address / 32] & (1u << bank));
 }
 
-/* Which edges of a window tile have glass, flips applied: 1 left, 2 right, 4 top, 8 bottom. */
+/* Which edges of a window tile have glass near them (within GLASS_BAND
+ * pixels, so panes split by a mullion or a frame still meet), flips applied:
+ * 1 left, 2 right, 4 top, 8 bottom. */
+#define GLASS_BAND 3
 static unsigned GlassEdges(unsigned chars, unsigned entry)
 {
-    const uint8_t *tile = sMemory.vram + chars + (entry & 1023) * 32;
-    const uint16_t *glass = sLitTexture + (entry >> 12) * 16;
+    static uint32_t memoStamp[1024];
+    static uint16_t memoKey[1024];
+    static uint8_t memoEdges[1024];
+    unsigned address = chars + (entry & 1023) * 32, key = entry & 0xf3ffu;
+    const uint8_t *tile = sMemory.vram + address;
+    uint16_t own[16];
+    const uint16_t *glass;
     unsigned edges = 0;
 
-#define GLASS(index) ((index) && glass[(index)])
-    for (unsigned i = 0; i < 8; ++i)
+    if (memoStamp[address / 32] == sWindowStamp && memoKey[address / 32] == key)
+        edges = memoEdges[address / 32];
+    else
     {
-        if (GLASS(tile[i * 4] & 15)) edges |= 1;
-        if (GLASS(tile[i * 4 + 3] >> 4)) edges |= 2;
-        if (GLASS((tile[i / 2] >> ((i & 1) * 4)) & 15)) edges |= 4;
-        if (GLASS((tile[28 + i / 2] >> ((i & 1) * 4)) & 15)) edges |= 8;
+        glass = WindowGlass(address / 32, entry >> 12, own);
+        for (unsigned y = 0; y < 8; ++y)
+            for (unsigned x = 0; x < 8; ++x)
+            {
+                unsigned index = (tile[y * 4 + x / 2] >> ((x & 1) * 4)) & 15;
+
+                if (!index || !glass[index]) continue;
+                if (x < GLASS_BAND) edges |= 1;
+                if (x >= 8 - GLASS_BAND) edges |= 2;
+                if (y < GLASS_BAND) edges |= 4;
+                if (y >= 8 - GLASS_BAND) edges |= 8;
+            }
+        memoStamp[address / 32] = sWindowStamp;
+        memoKey[address / 32] = (uint16_t)key;
+        memoEdges[address / 32] = (uint8_t)edges;
     }
-#undef GLASS
     if (entry & 1024) edges = (edges & 12) | ((edges & 1) << 1) | ((edges & 2) >> 1);
     if (entry & 2048) edges = (edges & 3) | ((edges & 4) << 1) | ((edges & 8) >> 1);
     return edges;
@@ -2158,7 +2218,7 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
     unsigned address = chars + (entry & 1023) * 32;
 
     if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
-    for (unsigned step = 0; step < 4; ++step)
+    for (unsigned step = 0; step < 16; ++step)
     {
         unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
 
@@ -2166,7 +2226,7 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
         column = left;
         entry = next;
     }
-    for (unsigned step = 0; step < 4; ++step)
+    for (unsigned step = 0; step < 16; ++step)
     {
         unsigned up = (row + rows - 1) & (rows - 1), next = MapEntry(map, size, column, up);
 
@@ -2224,6 +2284,7 @@ static bool LayerRenderCells(unsigned bg)
     layer->walkedGeneration = sCacheGeneration;
     layer->walkedPlain = !windowed && !sLayerFadeTint[bg];
     ++stamp;
+    ++sWindowStamp;
     for (unsigned row = 0; row < rows; ++row)
     {
         unsigned rowBase = map + CtrVideo_TextMapOffset(0, row, size);

@@ -169,13 +169,17 @@ kept in the save and is CLOCK again after a restart.
   (`tile | palette << 12`) takes a warm lamp colour instead of the shade, fading in from dusk. Only the
   glass pixels of those tiles (light blue, `CtrDayNight_Glass`) are lit; frames and sills stay dark. The
   list is by tile, not by colour, because the Poke Mart roof uses the same blues as the windows and must
-  stay dark. Not lit: Silph Co.'s glass front, the Bike Shop skylight, and the houses with grey windows.
+  stay dark. Glass that is not light blue (Lavender's grey panes, the Pokemon Tower's and the Pewter
+  Museum's dark ones, Silph Co.'s bands, the Cinnabar Lab's white panes) is listed with
+  `CTR_LIGHT_GLASS(entry, mask)`: the mask names the colour indices that are glass in that tile. Not lit:
+  the Bike Shop skylight and the Pokemon Mansion.
 - Not every window is lit all night: Pokemon Centers, Marts, Gyms and the route gatehouses
   (`CTR_LIGHT_PUBLIC`) are, the houses keep their own hours (`CtrDayNight_WindowOn`): on between 18:30
   and 20:00, off one by one between 21:45 and 02:15, about one in eight on all night, about a third on
   again from 05:00. The hours come from a hash of where the window stands on the map, so a window keeps
   them every night and walking past does not make them flicker. A window is the run of window tiles whose
-  glass meets across their edges, so it switches as a whole.
+  glass comes within 3 pixels of their shared edge (so panes split by a mullion, and the two halves of a
+  glass door, still meet), so it switches as a whole.
 - Where the tilemap stands on the map: `field_camera.c` keeps its tile offset to itself, so the bridge finds
   it by matching the tilemap buffers against the map's metatiles in view (`UpdateCamera`), then only checks
   it each frame; twice the camera position minus the offset stays the same while walking. Until it is
