@@ -4541,7 +4541,7 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0148-settings-kept-and-run-indoors.json",
+   "path": "patches/pokefirered/0150-settings-kept-and-run-indoors.json",
    "sha256": "b187c7dc8558a54c01194305481263970f28f24451e809fdc77b58fa60bc8710",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
