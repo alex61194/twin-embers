@@ -184,8 +184,10 @@ kept in the save and is CLOCK again after a restart.
   it by matching the tilemap buffers against the map's metatiles in view (`UpdateCamera`), then only checks
   it each frame; twice the camera position minus the offset stays the same while walking. Until it is
   found every listed window is lit.
-- Each lit window throws a soft warm glow on the ground under it (`DrawDayNightGlow`): one additive quad
-  per window bottom tile, drawn after the priority-2 backgrounds and before the sprites of that priority.
+- Lit windows bloom (`DrawDayNightGlow`): each lit tile has a 24x24 glow texture, its glass pixels blurred (`GlowSlot`,
+  kept by the tile's 64-bit glass mask), added over the priority-2 backgrounds before that priority's sprites and
+  only on the layers the current window shows (so not through an exit wipe). The light hugs the panes and fades
+  within a few pixels: no shape of its own, nothing painted on walls, doors or steps.
 - The night itself is a moonlit grade (`CtrDayNight_Moon`: a quarter of the way to grey, gamma 1.3, a
   blue multiply) that the hour's multiply goes over to as the night deepens, so dusk stays warm.
 - Where: `3ds_game_bridge.c` asks for it each frame only while the field's own main callback runs
