@@ -18,20 +18,20 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.1.4). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.2.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
-## New in v0.1.4
+## New in v0.2.0
 
-- **Day and night.** The outdoors follow the hour of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, day from 09:00 to 17:30 and dusk at 19:00, with smooth blends in between. At night Pokémon Centers, Marts and Gyms stay lit, each house turns its own lights on and off through the evening, lit windows cast a warm pool on the ground and the night itself turns a moonlit blue. Indoors, caves, battles and menus are not tinted. OPTIONS, page 2, DAY/NIGHT turns it off.
-- **Night-time Pokémon.** From 21:00 to 05:00 some wild slots give a night species: Hoothoot, Noctowl, Murkrow and Spinarak take over from the daytime birds and bugs, Haunter and Misdreavus haunt the Pokémon Tower, Gastly and Houndour the Pokémon Mansion, and Chinchou and Lanturn bite on the Super Rod around Five, Six and Seven Island. Johto species wait for the National Pokédex; before it the matching Kanto species appears. Eevee becomes Espeon by day and Umbreon at night again.
-- **LeafGreen's exclusives.** Wherever a FireRed-only Pokémon appears in the wild, half of the time its LeafGreen counterpart appears instead, at the same level.
-- **Trade evolutions without a trade.** Pokémon that evolve by trading also evolve on levelling up from level 40; the held item picks the branch.
-- **A new look for the lower screen.** Rounded, glowing buttons on a red ember backdrop with slowly rising sparks, now in every battle screen too, and the column switches straight from one screen to another.
-- **Full-screen battle extras.** The Poké Ball transition and move backgrounds such as Solar Beam or Psychic now fill the whole 400 × 240 top screen.
+- **The whole lower screen in the ember look.** The field Bag, the Pokédex, the TM Case and Berry Pouch, the Trainer Card, the move to forget, the naming keyboard, the Mart's BUY list, selling and PC deposits, the PC boxes and picking several Pokémon for an event are now drawn by the touch screen itself, with the game's font and icons. An idle lower screen shows the ember backdrop with the logo.
+- **Soft reset back to the title.** A+B+START+SELECT no longer freezes the console and no longer quits: the game starts again in place, as on the GBA.
+- **Full-screen area banners.** The picture shown on entering Viridian Forest, the Safari Zone, Mt. Moon, the Pokémon Tower, Victory Road and the other 23 areas that have one now fills the whole top screen.
+- **Smoother field.** Sprites leaving the view no longer flash on the opposite edge, people walking off the top stay visible until they are gone, and menus switch without the 1-2 s pause.
+- **Turbo and auto-run are remembered** between sessions, and you can run indoors.
+- **Brighter nights.** Windows light up whole, and Lavender Town's houses, the Pokémon Tower, Silph Co., Cinnabar's lab, the Celadon and Fuchsia flats and the Sevii houses light up too.
 
-The [v0.1.4 release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
+The [v0.2.0 release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
 
 <img src="docs/media/03-day-night-off.png" width="300" alt="Cerulean City with DAY/NIGHT off, next to the option that controls it"> <img src="docs/media/04-night-saffron.png" width="300" alt="Saffron City at night, with the touch map of Kanto">
 

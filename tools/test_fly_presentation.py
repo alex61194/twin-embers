@@ -18,7 +18,7 @@ class FlyPresentation(unittest.TestCase):
             exe = folder / ('test.exe' if os.name == 'nt' else 'test')
             subprocess.run([os.environ.get('CC', 'gcc'), '-std=c11', '-O2',
                             '-Wall', '-Wextra', '-Werror', '-I' + str(ROOT / '3ds_port/include'),
-                            str(c), '-o', str(exe)], check=True)
+                            str(c), '-o', str(exe), '-lm'], check=True)
             subprocess.run([str(exe)], check=True)
 
     def test_exact_oam_is_published_with_the_matching_frame(self):
@@ -30,6 +30,7 @@ class FlyPresentation(unittest.TestCase):
 #include <string.h>
 #include "3ds_effect_oam.h"
 static CtrEffectOam sEffectOamPending[128],sEffectOamShown[128];
+static CtrEffectOam sMapOamPending[128],sMapOamShown[128];
 ''' + code + '''
 int main(void) {
     int x,y;
@@ -166,7 +167,7 @@ int main(void) {
 #define VIEW_RIGHT 400
 #define VIEW_BOTTOM 240
 static bool sFieldLayers=true,sIntro,sStage,sCentred,sBattle;
-static CtrEffectOam sEffectOamShown[128];
+static CtrEffectOam sEffectOamShown[128],sMapOamShown[128];
 static int px,py;
 static void decode(int i,unsigned attr0,unsigned attr1,unsigned boxW,unsigned boxH) {
 ''' + draw[start:end] + '''
@@ -189,15 +190,19 @@ int main(void) {
         code = '\n'.join(function(video, name) for name in ('DrawFieldUiRect', 'DrawFieldUi'))
         self.run_c('''
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #define CTR_GAME_WIDTH 400
 #define CTR_GAME_HEIGHT 240
+#define CTR_PREVIEW_ZOOM ((float)CTR_GAME_WIDTH / 240)
 #define CTR_STAGE_X 80
 #define CTR_STAGE_Y 40
 #define MAP_NAME_POPUP_MAP_Y 224
 #define MAP_NAME_POPUP_HEIGHT 32
 static int sClipX0,sClipX1=400,sClipY0,sClipY1=240,sViewX,sViewY;
 static bool sFieldMoveShowMon,sQuestLogLayout,sMapNamePopup,sBattleTransition;
+static bool sForestPreview;
+static float sZoom=1.0f;
 static int calls,vx,vy,right;
 static unsigned Reg(unsigned n) { (void)n; return 0; }
 static void ViewBase(void) {}
