@@ -118,6 +118,11 @@ static int sCameraKX, sCameraKY;
 static unsigned sCameraMap = ~0u;
 /* Frames to wait before searching again after a search found nothing. */
 static unsigned sCameraWait;
+/* Frames in a row the known offset has failed its check. */
+static unsigned sCameraBad;
+/* A step moves the player before the field redraws its new row or column, so for a frame or two the buffers
+ * disagree with a right offset: that is not a lost camera. Losing it lit every window until it was found again. */
+#define CAMERA_GRACE 12
 
 /* How many sampled in-map metatiles the buffers disagree with at this offset
  * (stops past limit); *samples counts the ones looked at. */
@@ -162,8 +167,16 @@ static bool UpdateCamera(void)
     if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
     if (map != sCameraMap) sCameraKnown = false;
     sCameraMap = map;
-    if (sCameraKnown && CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
-        return true;
+    if (sCameraKnown)
+    {
+        if (CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
+        {
+            sCameraBad = 0;
+            return true;
+        }
+        if (++sCameraBad <= CAMERA_GRACE) return true;
+    }
+    sCameraBad = 0;
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
     for (int ty = 0; ty < 32 && best; ty += 2)
