@@ -283,6 +283,28 @@ static void FBoxFrame(const CtrPokeTouchView *v)
     sUiS = &sUiNavy;
 }
 
+/* The note's gender and level line ("<gender> Lv5"): FireRed colours the sign, so it is blue or red here too. */
+static void FXGenderLevel(const uint8_t *raw, int n, int x, int y, int right)
+{
+    char text[32], sign[3];
+    const char *rest = text;
+    int g = 0;
+
+    FNText(raw, n, text, (int)sizeof(text));
+    if (text[0] == 0x01 && (text[1] == (char)0xb5 || text[1] == (char)0xb6)) {
+        g = text[1] == (char)0xb6 ? 2 : 1;
+        rest += 2;
+    }
+    while (*rest == ' ')
+        ++rest;
+    if (g) {
+        FNChar(g == 2 ? 0xb6 : 0xb5, sign);
+        UiText(sign, x, y, g == 2 ? UI_RGB(225, 70, 80) : UI_RGB(60, 120, 230), EM_DARK_SH, 1, right);
+        x += UiTextWidth(sign, 1) + 4;
+    }
+    UiText(rest, x, y, EM_DIM, EM_DARK_SH, 1, right);
+}
+
 /* The note: the box's message while it shows one, else the Pokemon under the cursor and its picture. */
 static void FBoxNote(const CtrPokeTouchView *v, int w)
 {
@@ -304,7 +326,7 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
         int right = NOTE_X + w - (b->mon.egg ? 8 : 72);
 
         FXText(b->monText[0], (int)sizeof(b->monText[0]), NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, right);
-        FXText(b->monText[2], (int)sizeof(b->monText[2]), NOTE_X + 12, NOTE_Y + 21, EM_DIM, EM_DARK_SH, right);
+        FXGenderLevel(b->monText[2], (int)sizeof(b->monText[2]), NOTE_X + 12, NOTE_Y + 21, right);
         FXText(b->monText[1], (int)sizeof(b->monText[1]), NOTE_X + 12, NOTE_Y + 36, EM_DIM, EM_DARK_SH, right);
         FXText(b->monText[3], (int)sizeof(b->monText[3]), NOTE_X + 12, NOTE_Y + 49, EM_VALUE, EM_DARK_SH, right);
         if (!b->mon.egg)
