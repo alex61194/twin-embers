@@ -120,6 +120,8 @@ void CtrVideo_SetNativeUi(bool nativeUi);
  * its description and bottom bar on the canvas bottom, both full width. */
 void CtrVideo_SetQuestLogLayout(bool layout);
 void CtrVideo_SetMapNamePopup(bool active);
+/* While FireRed's forest map preview fades into the field: its picture covers the canvas. */
+void CtrVideo_SetForestPreview(bool active);
 /* Whether the field being shown is outdoors with the day/night option on: the
  * compositor then tints the map and its sprites by the 3DS clock's hour
  * (3ds_day_night.h), and lights the windows its tilesets list
