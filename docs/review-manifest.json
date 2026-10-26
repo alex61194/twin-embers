@@ -1029,7 +1029,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "2c7d23a70deb3dc9a7e3645db980ae02ad647ebaf39a2be56b5c741d304c3414",
+   "sha256": "d7260132601c55074ed0ef7fb486c40dda6fbf91403fa09726c1a71da0907b7c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1061,7 +1061,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_naming_impl.h",
-   "sha256": "363bbc0a80acfa77e29a67bc28486ef13f82f961a37a058bdf58f4a9ad617c4e",
+   "sha256": "8e4be722cc567bd313f0dd0147f5f8f4bd6a7f0a0bb3b0b479997020f461d454",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
