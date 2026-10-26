@@ -567,6 +567,8 @@ typedef struct
     unsigned map;
 } DayNightCamera;
 static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
+/* Per field layer cell: 1 where a lit window was drawn (the glow under it), 2 for a gatehouse's (no glow). */
+static uint8_t sCellLight[4][4096];
 /* The background colours that are glass, lit, as texels; 0 for the others.
  * sLitAny: every colour lit, for the windows of CTR_LIGHT_MASKED. */
 static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
@@ -2240,6 +2242,13 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
                                 sDayNightMinute * 60u);
 }
 
+/* The route gatehouses' window band (General tiles 611-614 and 627-630): lit, but the wall, door and steps
+ * under it stay as they are, so it throws no glow. */
+static bool GateWindowTile(unsigned index, unsigned bank)
+{
+    return bank == 3 && ((index >= 611 && index <= 614) || (index >= 627 && index <= 630));
+}
+
 static bool LayerRenderCells(unsigned bg)
 {
     static uint16_t dirty[LAYER_CELLS];
@@ -2296,12 +2305,14 @@ static bool LayerRenderCells(unsigned bg)
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             int slot;
+            uint8_t light = 0;
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
                 bool on = WindowLit(map, size, chars, column, row, entry);
 
                 slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
+                light = on ? (GateWindowTile(index, entry >> 12) ? 2 : 1) : 0;
             }
             else if (memoStamp[index] == stamp && memoEntry[index] == entry)
                 slot = memoSlot[index];
@@ -2316,6 +2327,7 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
+            sCellLight[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0
                 : (((sTiles[slot].serial << 2) | ((entry >> 10) & 3)) | 1u << 31);
@@ -3437,6 +3449,93 @@ static bool IntroClipLayer(int bg, bool scenery)
     return true;
 }
 
+/*
+ * The light a lit window throws on the ground: a soft warm glow under each
+ * window's bottom tiles, added over the field's ground layers before the
+ * sprites of their priority, as strong as the night is deep.
+ */
+static C3D_Tex sGlowTex;
+static bool sGlowReady, sGlowFailed;
+
+static void GlowPrepare(void)
+{
+    if (sGlowReady || sGlowFailed) return;
+    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
+    uint32_t *texels = (uint32_t *)sGlowTex.data;
+    for (unsigned y = 0; y < 32; ++y)
+        for (unsigned x = 0; x < 32; ++x)
+        {
+            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
+            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
+
+            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
+        }
+    C3D_TexFlush(&sGlowTex);
+    C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    sGlowReady = true;
+}
+
+static void DrawDayNightGlow(unsigned mask)
+{
+    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
+    unsigned display = Reg(0);
+    C2D_ImageTint tint;
+    bool begun = false;
+
+    if (!sDayNightLit || !sFieldLayers) return;
+    GlowPrepare();
+    if (!sGlowReady) return;
+    for (unsigned bg = 1; bg < 4; ++bg)
+    {
+        unsigned control = Reg(8 + bg * 2), size = control >> 14;
+        /* The glow fades with the layer it lights: a fade to black (a warp, a battle) takes it out too. */
+        bool white;
+        float fade = 1.0f - LayerBrightness(bg, &white);
+
+        if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
+        if (fade <= 0.0f) continue;
+        /* Only the layers this window shows: an exit wipe leaves the rest black. */
+        if (!(mask & (1u << bg))) continue;
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
+        unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+        int width = (int)columns * 8, height = (int)rows * 8;
+        int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
+
+        if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
+        for (unsigned row = 0; row < rows; ++row)
+        {
+            const uint8_t *light = sCellLight[bg] + row * columns;
+            const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
+            int y = (((int)row * 8 - sy) % height + height) % height;
+
+            if (y >= VIEW_BOTTOM) y -= height;
+            /* The glow lights the ground below its window tile: only for tiles the view shows. */
+            if (y <= VIEW_TOP - 8) continue;
+            for (unsigned column = 0; column < columns; ++column)
+            {
+                if (light[column] != 1 || below[column]) continue;
+                int x = (((int)column * 8 - sx) % width + width) % width;
+
+                if (x >= VIEW_RIGHT) x -= width;
+                if (x <= VIEW_LEFT - 8) continue;
+                if (!begun)
+                {
+                    C2D_Flush();
+                    ViewBase();
+                    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
+                    begun = true;
+                }
+                ++sStats.tiles;
+                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
+                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+            }
+        }
+    }
+    if (!begun) return;
+    C2D_Flush();
+    BlendForget();
+}
+
 static void Layers(unsigned mask)
 {
     unsigned display = Reg(0), mode = display & 7;
@@ -3490,6 +3589,7 @@ static void Layers(unsigned mask)
                 if ((mode == 1 && bg == 2) || mode == 2) gCtrPerf.ticks[PERF_BG_AFFINE] += elapsed;
             }
         }
+        if (priority == 2) DrawDayNightGlow(mask);
         if ((mask & 16) && (display & 0x1000))
         {
             uint64_t start = svcGetSystemTick();
