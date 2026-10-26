@@ -173,8 +173,11 @@ static bool sStageUiRequested, sStageUi;
 static bool sCentredRequested, sCentred;
 static bool sNativeUiRequested, sNativeUi;
 static bool sBattleRequested, sBattle;
-/* Optional strict GBA clipping; native field is the default. */
+/* Optional strict GBA clipping; native field is the default. Only the cave change of map (fldeff_flash.c) asks for it:
+ * its flash and its map preview, a letterboxed 240x160 picture, are scaled by the canvas width (CTR_PREVIEW_ZOOM) from
+ * the canvas top, so they cover the screen and lose only the last 16 lines of the picture's bottom black bar. */
 static bool sNativeRequested, sNative;
+#define CTR_PREVIEW_ZOOM ((float)CTR_GAME_WIDTH / 240)
 /* FireRed's battle transition owns the screen (battle_transition.c's VBlank callback): the field stays the native canvas
  * under it. This is NOT sNative, the strict 240x160 viewport. */
 static bool sBattleTransitionRequested, sBattleTransition;
@@ -1081,6 +1084,7 @@ static void Scissor(int x0, int y0, int x1, int y1)
 
     if (sx0 < 0) sx0 = 0;
     if (sy0 < 0) sy0 = 0;
+    if (sy1 > sSurfaceH) sy1 = sSurfaceH;   /* a zoomed 160-line view (CTR_PREVIEW_ZOOM) reaches past the surface */
     C3D_SetScissor(GPU_SCISSOR_NORMAL, (unsigned)roundf(sx0), (unsigned)(sSurfaceH - roundf(sy1)),
                    (unsigned)roundf(sx1), (unsigned)(sSurfaceH - roundf(sy0)));
 }
@@ -3080,8 +3084,7 @@ void CtrVideo_SetMapNamePopup(bool active) { sMapNamePopup = active; }
 
 /* FireRed's forest map preview (map_preview_screen.c: Viridian Forest, the Safari Zone, the Rocket Hideout...) is a
  * 240x160 picture on BG0 that fades into the field once it has loaded. The picture is letterboxed (black lines 0-23
- * and 136-159, the name tab in the top bar), so scaled by the canvas width it covers the canvas and loses only the
- * last 16 lines of the bottom bar. */
+ * and 136-159, the name tab in the top bar), so it is scaled like the cave previews (CTR_PREVIEW_ZOOM). */
 static bool sForestPreview;
 
 void CtrVideo_SetForestPreview(bool active) { sForestPreview = active; }
@@ -3200,7 +3203,7 @@ static void DrawFieldUi(unsigned bg)
     {
         float zoom = sZoom;
 
-        sZoom = (float)CTR_GAME_WIDTH / 240;
+        sZoom = CTR_PREVIEW_ZOOM;
         sViewX = sViewY = 0;
         sClipX0 = (int)floorf(x0 / sZoom);
         sClipX1 = (int)ceilf(x1 / sZoom);
@@ -5378,9 +5381,9 @@ static void ApplyPresentationView(void)
     sTargetW = CTR_GAME_WIDTH;
     sTargetH = CTR_GAME_HEIGHT;
     sSurfaceH = 256;
-    sZoom = sBattle ? CTR_BATTLE_ZOOM : 1.0f;
-    sOffX = sBattle ? CTR_GAME_WIDTH / 2 - 120 * sZoom : 0;
-    sOffY = sBattle ? CTR_GAME_HEIGHT - 48 - 112 * sZoom : 0;
+    sZoom = sBattle ? CTR_BATTLE_ZOOM : sNative ? CTR_PREVIEW_ZOOM : 1.0f;
+    sOffX = sBattle ? CTR_GAME_WIDTH / 2 - 120 * sZoom : sNative ? -CTR_STAGE_X * sZoom : 0;
+    sOffY = sBattle ? CTR_GAME_HEIGHT - 48 - 112 * sZoom : sNative ? -CTR_STAGE_Y * sZoom : 0;
     sShiftZoom = sZoom;
     sViewX = (sIntro && !CtrIntroNative_Active()) || sStage || sCentred || sNative ? CTR_STAGE_X : 0;
     sViewY = (sIntro && !CtrIntroNative_Active()) || sStage || sCentred || sNative ? CTR_STAGE_Y : 0;
