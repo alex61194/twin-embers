@@ -231,6 +231,7 @@ extern int CtrBottomLearn_Locked(int i);
 extern int CtrBottomBag_Use(void);
 extern int CtrBottomShop_IsOpen(void);
 extern int CtrBottomShop_HoldsTop(void);
+extern int CtrBottomBag_ShopOrPCHoldsTop(void);
 extern int CtrBottomShop_State(void);
 extern int CtrBottomShop_Count(void);
 extern int CtrBottomShop_MaxShowed(void);
@@ -4827,7 +4828,7 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop();   /* SAVE keeps TOP on the frozen frame */
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
