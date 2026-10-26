@@ -98,6 +98,7 @@ extern int CtrBattle_State(void);
 extern int CtrBattle_ActionCursor(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
+extern void CtrBattle_AskCursor(int slot);
 extern int CtrBattle_TargetLegal(int target);
 extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
@@ -3286,51 +3287,18 @@ static void ProcessPokeTouch(const CtrInput *in)
         PokeTouchActivate(id);
 }
 
-/* The battle screen's touch: press, track, release, one action. A button walks the controller's own cursor to
- * it with its own D-pad and then sends its A; CANCEL sends its B. The buttons exist only while the controller
+/* The battle screen's touch: press, track, release, one action. A button puts the controller's own cursor on
+ * it (CtrBattle_AskCursor) and then sends its A; CANCEL sends its B. The buttons exist only while the controller
  * waits at the screen they belong to, so nothing is taken during a message, an animation, a command being taken or the battle's end; a held
  * physical button cancels it. */
 static struct {
     int active, target, state, steps, release;
-    uint16_t press;                 /* one key to send as it is (CANCEL's B), instead of walking */
+    uint16_t press;                 /* one key to send as it is (CANCEL's B), instead of moving the cursor */
 } sBatPlan;
 
 static void BatPlanClear(void)
 {
     memset(&sBatPlan, 0, sizeof(sBatPlan));
-}
-
-/* The next D-pad key from slot `cur` toward `target`. The action menu follows the graph of 3ds_battle_nav.h
- * (the one the controller's own D-pad uses); the move list is the controller's 2x2 grid, without stepping onto
- * a slot that has nothing in it (the controller would refuse). 0 if there is no way. */
-static uint16_t BatActionKey(int cur, int target)
-{
-    static const uint16_t keys[CTR_NAV_DIRS] = {K_UP, K_DOWN, K_LEFT, K_RIGHT};
-    int dir = CtrBattleActionDir(cur, target);
-
-    return dir < 0 ? 0 : keys[dir];
-}
-
-static uint16_t BatKey(int cur, int target, int count)
-{
-    int diff = cur ^ target;
-
-    if ((diff & 1) && (cur ^ 1) < count)
-        return (cur & 1) ? K_LEFT : K_RIGHT;
-    if ((diff & 2) && (cur ^ 2) < count)
-        return (cur & 2) ? K_UP : K_DOWN;
-    return 0;
-}
-
-static int BatCount(int state)
-{
-    int n = 0;
-
-    if (state == BATTLE_ACTION || state == BATTLE_SAFARI)
-        return 4;
-    for (int i = 0; i < 4; ++i)
-        n += sShown.battle.move[i].present;
-    return n;
 }
 
 static void RunBatPlan(void)
@@ -3356,28 +3324,17 @@ static void RunBatPlan(void)
         BatPlanClear();
         return;
     }
-    if (state == BATTLE_TARGET) {
-        /* The controller's target cursor goes round the legal battlers with RIGHT; A when it is on the one asked. */
-        if (CtrBattle_TargetCursor() == sBatPlan.target) {
-            sInjected = K_A;
-            BatPlanClear();
-            return;
-        }
-        sInjected = K_RIGHT;
-        sBatPlan.release = 1;
-        return;
-    }
-    cur = state == BATTLE_ACTION || state == BATTLE_SAFARI ? CtrBattle_ActionCursor() : CtrBattle_MoveCursor();
+    /* The controller puts its cursor on the slot (or target battler) asked, on its next frame and without the D-pad's
+     * steps and clicks; A once it is there. One it refuses (an empty slot, a battler that cannot be aimed at) is
+     * asked again until the step limit drops the plan. */
+    cur = state == BATTLE_TARGET ? CtrBattle_TargetCursor()
+        : state == BATTLE_ACTION || state == BATTLE_SAFARI ? CtrBattle_ActionCursor() : CtrBattle_MoveCursor();
     if (cur == sBatPlan.target) {
         sInjected = K_A;
         BatPlanClear();
         return;
     }
-    sInjected = state == BATTLE_ACTION ? BatActionKey(cur, sBatPlan.target) : BatKey(cur, sBatPlan.target, BatCount(state));
-    if (sInjected == 0) {
-        BatPlanClear();
-        return;
-    }
+    CtrBattle_AskCursor(sBatPlan.target);
     sBatPlan.release = 1;
 }
 
