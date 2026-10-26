@@ -230,6 +230,8 @@ extern void CtrBottomLearn_Question(char *out, int size);
 extern int CtrBottomLearn_Locked(int i);
 extern int CtrBottomBag_Use(void);
 extern int CtrBottomShop_IsOpen(void);
+extern int CtrBottomShop_HoldsTop(void);
+extern int CtrBottomBag_ShopOrPCHoldsTop(void);
 extern int CtrBottomShop_State(void);
 extern int CtrBottomShop_Count(void);
 extern int CtrBottomShop_MaxShowed(void);
@@ -824,7 +826,8 @@ static const FieldList *FieldListFor(int mode)
 static void FieldListName(const FieldList *f, unsigned item, char *out, int size)
 {
     CtrBottomBag_ItemName(item, out, size);
-    if (f->kind == PT_BAG_KIND_TMCASE || f->kind == PT_BAG_KIND_SHOP) {
+    /* Only a TM/HM has a move: for any other item the move table would be read out of range. */
+    if (f->kind == PT_BAG_KIND_TMCASE || (f->kind == PT_BAG_KIND_SHOP && item >= 289 /* ITEM_TM01 */ && item <= 346 /* ITEM_HM08 */)) {
         char move[16];
         int n = (int)strlen(out);
 
@@ -4825,7 +4828,7 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop();   /* SAVE keeps TOP on the frozen frame */
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
