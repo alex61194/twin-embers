@@ -52,6 +52,10 @@ game data out. The pictures are made at build time:
   on one's own console; publishing it is a separate decision.
 - Neither: `make_art.py` draws two flames and the name, with nothing from any game.
 
+The game's 3DSX uses the same icon in the Homebrew Launcher, with the name "Twin Embers":
+`make -C 3ds_port ICON_SRC=/path/to/icon.jpg` fits the owner's picture with `prepare_art.py`
+(icon only, no banner), and without `ICON_SRC` it takes `make_art.py`'s two flames.
+
 The ZIP's icon (official box art) and banner (the Pokemon logo, plus 576 KB of audio of unknown
 origin) are not used. The banner sound is make_art.py's two-note chime in both cases.
 

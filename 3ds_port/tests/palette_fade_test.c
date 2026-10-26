@@ -21,8 +21,8 @@ int main(void)
         seed = seed * 1103515245u + 12345u;
         sBase[i] = (uint16_t)((seed >> 8) & 0x7fff);
     }
-    unsigned coeff;
-    uint16_t target;
+    unsigned coeff = 0;
+    uint16_t target = 0;
 
     /* Unchanged palette: identity. */
     for (unsigned i = 0; i < 256; ++i) sCur[i] = sBase[i] | 0x8000;

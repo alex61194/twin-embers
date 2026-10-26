@@ -48,6 +48,8 @@ void CtrVideo_DumpState(void);
 void CtrVideo_HoldTop(bool hold);
 /* The FPS counter (top-right corner of the top screen): shown by default; off, it is not drawn at all. */
 void CtrVideo_SetFpsCounter(bool on);
+/* The build's version (e.g. "v0.2.1"), shown in the title screen's footer; empty, nothing is shown. */
+void CtrVideo_SetBuildLabel(const char *label);
 /* The field's barn-door wipe encodes its horizontal bounds in GBA window units. */
 void CtrVideo_SetFieldBarnDoorWipe(bool active);
 /* Field-move Pokemon and streak strip share the native screen centre. */

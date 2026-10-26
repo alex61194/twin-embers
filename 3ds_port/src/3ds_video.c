@@ -21,6 +21,7 @@
 #include "3ds_palette_fade.h"
 #include "3ds_day_night.h"
 #include "3ds_poketouch.h"
+#include "twin_font.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
 static CtrPresentation sPresentation;
@@ -3442,34 +3443,50 @@ static bool IntroClipLayer(int bg, bool scenery)
 }
 
 /*
- * The light a lit window throws on the ground: a soft warm glow under each
- * window's bottom tiles, added over the field's ground layers before the
- * sprites of their priority, as strong as the night is deep.
+ * The light a lit window throws around itself: a thin warm rim just outside
+ * the window's edges, added over the field's ground layers before the
+ * sprites of their priority, as strong as the night is deep. It hugs the
+ * window, so the wall, the door and the steps under it keep their colours.
  */
+enum { GLOW_RIM = 4, GLOW_SIZE = 8 + 2 * GLOW_RIM };
 static C3D_Tex sGlowTex;
 static bool sGlowReady, sGlowFailed;
 
 static void GlowPrepare(void)
 {
     if (sGlowReady || sGlowFailed) return;
-    if (!C3D_TexInit(&sGlowTex, 32, 32, GPU_RGBA8)) { sGlowFailed = true; return; }
+    if (!C3D_TexInit(&sGlowTex, GLOW_SIZE, GLOW_SIZE, GPU_RGBA8)) { sGlowFailed = true; return; }
     uint32_t *texels = (uint32_t *)sGlowTex.data;
-    for (unsigned y = 0; y < 32; ++y)
-        for (unsigned x = 0; x < 32; ++x)
+    for (int y = 0; y < GLOW_SIZE; ++y)
+        for (int x = 0; x < GLOW_SIZE; ++x)
         {
-            float dx = (x + 0.5f - 16.0f) / 16.0f, dy = (y + 0.5f - 16.0f) / 16.0f, d = dx * dx + dy * dy;
-            unsigned alpha = d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
+            /* Distance from the tile's 8x8 box: none on the glass, fading out across the rim. */
+            float dx = fmaxf(fmaxf(GLOW_RIM - (x + 0.5f), x + 0.5f - (GLOW_RIM + 8)), 0.0f);
+            float dy = fmaxf(fmaxf(GLOW_RIM - (y + 0.5f), y + 0.5f - (GLOW_RIM + 8)), 0.0f);
+            float d = sqrtf(dx * dx + dy * dy) / (GLOW_RIM + 0.5f);
+            unsigned alpha = d > 0.0f && d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
 
-            texels[CtrVideo_Texel(x, y, 32)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
+            texels[CtrVideo_Texel((unsigned)x, (unsigned)y, GLOW_SIZE)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
         }
     C3D_TexFlush(&sGlowTex);
-    C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    C3D_TexSetFilter(&sGlowTex, GPU_NEAREST, GPU_NEAREST);
     sGlowReady = true;
+}
+
+/* One piece of the rim: texture box (x0, y0)-(x1, y1), drawn that far from the tile's corner. */
+static void GlowPiece(int x, int y, C2D_ImageTint *tint, int x0, int y0, int x1, int y1)
+{
+    Tex3DS_SubTexture sub = {(u16)(x1 - x0), (u16)(y1 - y0), x0 / (float)GLOW_SIZE, 1.0f - y0 / (float)GLOW_SIZE,
+                             x1 / (float)GLOW_SIZE, 1.0f - y1 / (float)GLOW_SIZE};
+
+    ++sStats.tiles;
+    C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x + x0 - GLOW_RIM + CTR_VIEW_X + sLayerShift,
+                    y + y0 - GLOW_RIM + CTR_VIEW_Y, 0, tint, 1.0f, 1.0f);
 }
 
 static void DrawDayNightGlow(void)
 {
-    static const Tex3DS_SubTexture sub = {32, 32, 0.0f, 1.0f, 1.0f, 0.0f};
+    enum { A = 0, B = GLOW_RIM, C = GLOW_RIM + 8, D = GLOW_SIZE };
     unsigned display = Reg(0);
     C2D_ImageTint tint;
     bool begun = false;
@@ -3486,7 +3503,7 @@ static void DrawDayNightGlow(void)
 
         if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
         if (fade <= 0.0f) continue;
-        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.32f * fade);
+        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.45f * fade);
         unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
         int width = (int)columns * 8, height = (int)rows * 8;
         int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
@@ -3495,19 +3512,23 @@ static void DrawDayNightGlow(void)
         for (unsigned row = 0; row < rows; ++row)
         {
             const uint8_t *light = sCellLight[bg] + row * columns;
+            const uint8_t *above = sCellLight[bg] + ((row + rows - 1) & (rows - 1)) * columns;
             const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
             int y = (((int)row * 8 - sy) % height + height) % height;
 
-            if (y >= VIEW_BOTTOM) y -= height;
-            /* The glow lights the ground below its window tile: only for tiles the view shows. */
-            if (y <= VIEW_TOP - 8) continue;
+            if (y >= VIEW_BOTTOM + GLOW_RIM) y -= height;
+            if (y <= VIEW_TOP - 8 - GLOW_RIM) continue;
             for (unsigned column = 0; column < columns; ++column)
             {
-                if (!light[column] || below[column]) continue;
+                if (!light[column]) continue;
+                unsigned left = (column + columns - 1) & (columns - 1), right = (column + 1) & (columns - 1);
+                /* The rim runs only along the window's outer edges: none between two of its lit tiles. */
+                bool l = !light[left], r = !light[right], t = !above[column], b = !below[column];
                 int x = (((int)column * 8 - sx) % width + width) % width;
 
-                if (x >= VIEW_RIGHT) x -= width;
-                if (x <= VIEW_LEFT - 8) continue;
+                if (!(l || r || t || b)) continue;
+                if (x >= VIEW_RIGHT + GLOW_RIM) x -= width;
+                if (x <= VIEW_LEFT - 8 - GLOW_RIM) continue;
                 if (!begun)
                 {
                     C2D_Flush();
@@ -3515,9 +3536,14 @@ static void DrawDayNightGlow(void)
                     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
                     begun = true;
                 }
-                ++sStats.tiles;
-                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
-                                y + 2 + CTR_VIEW_Y, 0, &tint, 0.75f, 0.75f);
+                if (l) GlowPiece(x, y, &tint, A, B, B, C);
+                if (r) GlowPiece(x, y, &tint, C, B, D, C);
+                if (t) GlowPiece(x, y, &tint, B, A, C, B);
+                if (b) GlowPiece(x, y, &tint, B, C, C, D);
+                if (l && t && !above[left]) GlowPiece(x, y, &tint, A, A, B, B);
+                if (r && t && !above[right]) GlowPiece(x, y, &tint, C, A, D, B);
+                if (l && b && !below[left]) GlowPiece(x, y, &tint, A, C, B, D);
+                if (r && b && !below[right]) GlowPiece(x, y, &tint, C, C, D, D);
             }
         }
     }
@@ -5356,6 +5382,97 @@ void CtrVideo_SetFpsCounter(bool on)
 #endif
 
 /*
+ * The build's version on the title screen (main_game_full.c sets it from git_version.h): the game's small font,
+ * right-aligned in the red copyright footer at the canvas's bottom (canvas rows 230-239), its letters on the rows and in
+ * the white-to-grey shades of the copyright's own, with the same black shadow. FireRed fades the footer with its
+ * palette (CtrGame_ScreenFade), so the label is blended the same way and leaves with the title.
+ */
+static char sBuildLabel[32];
+
+void CtrVideo_SetBuildLabel(const char *label)
+{
+    snprintf(sBuildLabel, sizeof(sBuildLabel), "%s", label ? label : "");
+}
+
+__attribute__((weak)) const uint8_t *CtrTwinSmallFontData(void) { return NULL; }
+__attribute__((weak)) unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 0; }
+__attribute__((weak)) unsigned CtrGame_ScreenFade(uint16_t *target) { *target = 0; return 0; }
+
+/* FireRed's charmap for what a version label holds: digits, letters, '.' and '-'. */
+static unsigned VersionGlyphCode(char c)
+{
+    if (c >= '0' && c <= '9') return 0xa1 + (unsigned)(c - '0');
+    if (c >= 'A' && c <= 'Z') return 0xbb + (unsigned)(c - 'A');
+    if (c >= 'a' && c <= 'z') return 0xd5 + (unsigned)(c - 'a');
+    if (c == '.') return 0xad;
+    if (c == '-') return 0xae;
+    return 0;
+}
+
+#define VERSION_RIGHT (CTR_GAME_WIDTH - 4)
+#define VERSION_TOP 227             /* glyph row 0: the small font's capitals (rows 4-10) land on rows 231-237 */
+
+static void DrawBuildLabel(C3D_RenderTarget *target)
+{
+    static const uint16_t shades[] = {0x7fff, 0x6f7b, 0x6318};  /* the copyright's 31, 27 and 24 grey levels */
+    const uint8_t *font = CtrTwinSmallFontData();
+    uint16_t fadeTarget = 0;
+    unsigned fade, width = 0;
+    uint32_t ink[3], shadow;
+    float x;
+
+    if (!sBuildLabel[0] || !font || !sIntro || NativeIntroActive() || sNativeIntroScene != CTR_INTRO_TITLE)
+        return;
+    fade = CtrGame_ScreenFade(&fadeTarget);
+    if (fade >= 16 && fadeTarget == 0)
+        return;
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        uint32_t rgb = CtrVideo_RGBA8(CtrPal_Blend(shades[i], fade, fadeTarget), true);
+        ink[i] = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
+    }
+    {
+        uint32_t rgb = CtrVideo_RGBA8(CtrPal_Blend(0, fade, fadeTarget), true);
+        shadow = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
+    }
+    for (const char *c = sBuildLabel; *c; ++c)
+    {
+        unsigned w = CtrTwinSmallFontWidth(VersionGlyphCode(*c));
+        width += w > 8 ? 8 : w;
+    }
+
+    C2D_Prepare();
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+    BlendForget();
+    C2D_SceneBegin(target);
+    C2D_ViewReset();
+    Blend(5, false, false);
+    x = (float)(VERSION_RIGHT - (int)width);
+    for (const char *c = sBuildLabel; *c; ++c)
+    {
+        unsigned code = VersionGlyphCode(*c), w = CtrTwinSmallFontWidth(code);
+        uint32_t rows[16];
+
+        if (w > 8) w = 8;
+        TwinSmallGlyphDecode(font + code * 32, w, rows);
+        for (unsigned row = 0; row < 16; ++row)
+        {
+            int y = VERSION_TOP + (int)row;
+            uint32_t colour = ink[y <= 233 ? 0 : y == 234 ? 1 : 2];
+
+            for (unsigned col = 0; col < w; ++col)
+            {
+                unsigned v = (rows[row] >> (2 * col)) & 3;
+                if (v)
+                    C2D_DrawRectSolid(x + col, (float)y, 0, 1, 1, v == 1 ? colour : shadow);
+            }
+        }
+        x += w;
+    }
+    C2D_Flush();
+}
+
+/*
  * The bottom screen runs some of the game's menus without showing them (the
  * party menu, the bag): while it does, the top screen keeps the last frame it
  * presented, the world as it was when the menu opened. Nothing is rendered;
@@ -5683,6 +5800,8 @@ void CtrVideo_Present(void)
         if (stereo) DrawFps(sTopRight);
     }
 #endif
+    if (!sHoldTop) DrawBuildLabel(sTop);
+    if (stereo) DrawBuildLabel(sTopRight);
     if (sFastForward > 1)
     {
         if (!sHoldTop) DrawFastForward(sTop);

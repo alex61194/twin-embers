@@ -59,6 +59,37 @@ static const char *FNChar(uint8_t code, char out[3])
     return out;
 }
 
+/* How many argument bytes FireRed's text effect `code` (after 0xfc) takes, as GetStringWidth in text.c counts them. */
+static int FNEffectArgs(uint8_t code)
+{
+    switch (code) {
+    case 0x04:                          /* colour, highlight and shadow */
+        return 3;
+    case 0x0b: case 0x10:               /* play a song or a sound */
+        return 2;
+    case 0x01: case 0x02: case 0x03: case 0x05: case 0x06: case 0x08: case 0x0c: case 0x0d: case 0x0e:
+    case 0x11: case 0x12: case 0x13: case 0x14:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* FireRed's extra symbol `code` (after 0xf9) as text for UiText, or NULL when it has no glyph here. */
+static const char *FNSymbol(uint8_t code)
+{
+    switch (code) {
+    case 0x04: return "\x01\x2e";          /* + */
+    case 0x05: return "\x01\x34";          /* Lv, FireRed's own glyph */
+    case 0x06: return "PP";
+    case 0x07: return "ID";
+    case 0x08: return "No";
+    case 0x13: return "(";
+    case 0x14: return ")";
+    default: return NULL;
+    }
+}
+
 /* FireRed codes (0xff ended) as text for UiText: its control codes are left out, a line break is a space. */
 static void FNText(const uint8_t *raw, int n, char *out, int size)
 {
@@ -67,8 +98,20 @@ static void FNText(const uint8_t *raw, int n, char *out, int size)
     for (int i = 0; i < n && raw[i] != 0xff && o + 3 <= size; ++i) {
         uint8_t c = raw[i];
 
-        if (c == 0xfc) {                /* a text effect: its code and argument are not glyphs */
-            i += raw[i + 1 < n ? i + 1 : i] <= 0x03 ? 2 : 1;
+        if (c == 0xfc) {                /* a text effect: its code and arguments are not glyphs */
+            i += 1 + (i + 1 < n ? FNEffectArgs(raw[i + 1]) : 0);
+            continue;
+        }
+        if (c == 0xf9) {                /* an extra symbol: Lv in the box's note, PP, ID... */
+            const char *sym = i + 1 < n ? FNSymbol(raw[i + 1]) : NULL;
+
+            for (; sym && *sym && o + 1 < size; ++sym)
+                out[o++] = *sym;
+            ++i;
+            continue;
+        }
+        if (c == 0xf7 || c == 0xf8 || c == 0xfd) {     /* a buffer, a button icon or a placeholder: one more byte */
+            ++i;
             continue;
         }
         if (c == 0xfe || c == 0)
