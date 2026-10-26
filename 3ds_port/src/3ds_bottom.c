@@ -575,7 +575,13 @@ static struct {
 static struct {
     int down, inside, code;
     int pocketTarget, pocketWait;
-} sFieldBag = {0, 0, -1, -1, 0};
+    int y0, cursor0, scrolling;         /* the touch-down's row and cursor, and whether it became a drag */
+} sFieldBag = {0, 0, -1, -1, 0, 0, 0, 0};
+
+/* Dragging a list: a finger on a row that moves this far up or down scrolls instead of tapping, one row per
+ * LIST_DRAG_ROW pixels (the lower screen's row pitch), the content following the finger. */
+#define LIST_DRAG_SLOP 8
+#define LIST_DRAG_ROW 26
 
 /* The move-to-forget screen's touch (ProcessLearnTouch), as the Bag's, and its walk to a row. */
 static struct {
@@ -601,7 +607,8 @@ static struct {
 /* The Pokedex's touch (ProcessFieldDexTouch), as the Bag's. */
 static struct {
     int down, inside, code;
-} sFieldDex = {0, 0, -1};
+    int y0, cursor0, scrolling;
+} sFieldDex = {0, 0, -1, 0, 0, 0};
 
 /* Colors RGB565. */
 #define RGB565(r, g, b) ((uint16_t)(((r) & 31) << 11 | ((g) & 63) << 5 | ((b) & 31)))
@@ -3604,12 +3611,27 @@ static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
     if (in->touchDown) {
         sFieldBag.down = sFieldBag.inside = hit >= 0;
         sFieldBag.code = hit;
+        sFieldBag.y0 = (int)in->touchY;
+        sFieldBag.cursor0 = list->cursor();
+        sFieldBag.scrolling = 0;
         return;
     }
     if (!sFieldBag.down)
         return;
     if (in->touchActive) {
-        sFieldBag.inside = hit == sFieldBag.code;
+        int dy = (int)in->touchY - sFieldBag.y0;
+
+        if (state == BAG_LIST && sFieldBag.code >= PT_BAG_HIT_ROW && sFieldBag.code < PT_BAG_HIT_ROW + PT_BAG_ROWS
+            && (sFieldBag.scrolling || dy >= LIST_DRAG_SLOP || -dy >= LIST_DRAG_SLOP)) {
+            int target = sFieldBag.cursor0 - (dy + (dy < 0 ? -LIST_DRAG_ROW / 2 : LIST_DRAG_ROW / 2)) / LIST_DRAG_ROW;
+
+            sFieldBag.scrolling = 1;
+            sFieldBag.pocketTarget = -1;
+            target = target < 0 ? 0 : target > sShown.touch.bag.count ? sShown.touch.bag.count : target;
+            if (target != list->cursor() && sBagPlan.kind == BAGPLAN_NONE)
+                BagPlanStart(list, BAGPLAN_LIST, target, 0, 0);
+        }
+        sFieldBag.inside = !sFieldBag.scrolling && hit == sFieldBag.code;
         return;
     }
     if (sFieldBag.inside && state == sShown.touch.bag.state) {
@@ -3915,6 +3937,9 @@ static void ProcessFieldDexTouch(const CtrInput *in)
     if (in->touchDown) {
         sFieldDex.down = sFieldDex.inside = hit >= 0;
         sFieldDex.code = hit;
+        sFieldDex.y0 = (int)in->touchY;
+        sFieldDex.cursor0 = CtrBottomDex_Cursor();
+        sFieldDex.scrolling = 0;
         if (hit >= 0)
             DexPlanClear();
         return;
@@ -3922,7 +3947,27 @@ static void ProcessFieldDexTouch(const CtrInput *in)
     if (!sFieldDex.down)
         return;
     if (in->touchActive) {
-        sFieldDex.inside = hit == sFieldDex.code;
+        int dy = (int)in->touchY - sFieldDex.y0, far = dy >= LIST_DRAG_SLOP || -dy >= LIST_DRAG_SLOP;
+        const CtrPokeTouchDex *d = &sShown.touch.dex;
+
+        if (state == DEX_LIST && sFieldDex.code >= PT_DEX_HIT_ROW && sFieldDex.code < PT_DEX_HIT_ROW + PT_DEX_ROWS
+            && (sFieldDex.scrolling || far)) {
+            int target = sFieldDex.cursor0 - (dy + (dy < 0 ? -LIST_DRAG_ROW / 2 : LIST_DRAG_ROW / 2)) / LIST_DRAG_ROW;
+
+            sFieldDex.scrolling = 1;
+            target = target < 0 ? 0 : target > d->listCount - 1 ? d->listCount - 1 : target;
+            if (target != CtrBottomDex_Cursor() && !sDexPlan.active)
+                DexPlanTo(DEXPLAN_LIST, target, DEX_LIST);
+        } else if (state == DEX_MENU && sFieldDex.code >= PT_DEX_HIT_ITEM && !sFieldDex.scrolling
+                   && (dy >= 3 * LIST_DRAG_SLOP || -dy >= 3 * LIST_DRAG_SLOP)) {
+            /* The habitat and search grids go a page at a time. */
+            int row = CtrPokeTouch_DexGridPageRow(&sShown.touch, dy < 0 ? 1 : -1);
+
+            sFieldDex.scrolling = 1;
+            if (row >= 0 && !sDexPlan.active)
+                DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+        }
+        sFieldDex.inside = !sFieldDex.scrolling && hit == sFieldDex.code;
         return;
     }
     if (sFieldDex.inside && state == sShown.touch.dex.state && !sDexPlan.active) {
