@@ -1,6 +1,7 @@
 """The forwarder's icon and banner from the owner's own pictures (kept outside the repository).
 
     python3 prepare_art.py --icon ICON.jpg --banner LOGO.jpg OUT_DIR
+    python3 prepare_art.py --icon ICON.jpg OUT_DIR          (icon.png only: the game's 3DSX)
 
 Writes OUT_DIR/icon.png (48x48) and OUT_DIR/banner.png (256x128, transparent around the logo:
 the HOME Menu's theme shows through), and the banner chime of make_art.py (banner.wav).
@@ -161,7 +162,7 @@ def icon(path, crop):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--icon', type=Path, required=True)
-    ap.add_argument('--banner', type=Path, required=True)
+    ap.add_argument('--banner', type=Path, help='left out: only icon.png (the 3DSX icon)')
     ap.add_argument('--icon-crop', type=float, default=0.09, help='fraction cut from each side of the icon')
     ap.add_argument('--cut-subtitle', default='auto',
                     help="top,left,right of the logo's subtitle as fractions, or 'none'")
@@ -172,6 +173,8 @@ def main():
     subtitle = (None if a.cut_subtitle == 'none' else 'auto' if a.cut_subtitle == 'auto'
                 else tuple(float(v) for v in a.cut_subtitle.split(',')))
     icon(a.icon, a.icon_crop).save(a.out / 'icon.png')
+    if a.banner is None:
+        return
     banner(a.banner, subtitle, a.base_column).save(a.out / 'banner.png')
     make_art.write_chime(a.out / 'banner.wav')
 
