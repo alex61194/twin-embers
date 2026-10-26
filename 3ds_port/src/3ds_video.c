@@ -2946,10 +2946,13 @@ static void DrawAffineBg(unsigned bg)
 
 static CtrEffectOam sEffectOamPending[CTR_EFFECT_OAM_COUNT];
 static CtrEffectOam sEffectOamShown[CTR_EFFECT_OAM_COUNT];
+static CtrEffectOam sMapOamPending[CTR_EFFECT_OAM_COUNT];
+static CtrEffectOam sMapOamShown[CTR_EFFECT_OAM_COUNT];
 
 void CtrVideo_ClearEffectOam(void)
 {
     memset(sEffectOamPending, 0, sizeof(sEffectOamPending));
+    memset(sMapOamPending, 0, sizeof(sMapOamPending));
 }
 
 void CtrVideo_MarkEffectOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y)
@@ -2958,9 +2961,16 @@ void CtrVideo_MarkEffectOam(unsigned index, uint16_t attr0, uint16_t attr1, int 
         sEffectOamPending[index] = (CtrEffectOam){x, y, attr0, attr1, true};
 }
 
+void CtrVideo_MarkMapOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y)
+{
+    if (index < CTR_EFFECT_OAM_COUNT)
+        sMapOamPending[index] = (CtrEffectOam){x, y, attr0, attr1, true};
+}
+
 void CtrVideo_CommitEffectOam(void)
 {
     memcpy(sEffectOamShown, sEffectOamPending, sizeof(sEffectOamShown));
+    memcpy(sMapOamShown, sMapOamPending, sizeof(sMapOamShown));
 }
 
 static void DrawObjects(unsigned priority, bool effects)
@@ -3005,8 +3015,12 @@ static void DrawObjects(unsigned priority, bool effects)
         }
         else if (!effectPosition)
         {
-            x = CtrObj_UnwrapX(x, VIEW_RIGHT);
-            y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
+            /* A map sprite where it really is; anything else the 400x240 way. */
+            if (!sFieldLayers || !CtrEffectOam_Resolve(sMapOamShown, (unsigned)i, attr0, attr1, &x, &y))
+            {
+                x = CtrObj_UnwrapX(x, VIEW_RIGHT);
+                y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
+            }
 #if CTR_VOXEL_ENABLED
             if (sVoxelWeatherOnly)
             {

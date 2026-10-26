@@ -33,5 +33,10 @@ static inline bool CtrEffectOam_Resolve(const CtrEffectOam *entries, unsigned in
 
 void CtrVideo_ClearEffectOam(void);
 void CtrVideo_MarkEffectOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y);
+/* Every other map sprite (people, items, field effects) keeps its true canvas
+ * position the same way, so one that is off the view stays off it instead of
+ * coming back a turn of OAM (512 x 256) away, on the other side of the screen.
+ * Cleared and committed with the effect entries. */
+void CtrVideo_MarkMapOam(unsigned index, uint16_t attr0, uint16_t attr1, int x, int y);
 void CtrVideo_CommitEffectOam(void);
 #endif
