@@ -567,8 +567,6 @@ typedef struct
     unsigned map;
 } DayNightCamera;
 static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
-/* Per field layer cell: 1 where a lit window was drawn (the glow under it). */
-static uint8_t sCellLight[4][4096];
 /* The background colours that are glass, lit, as texels; 0 for the others.
  * sLitAny: every colour lit, for the windows of CTR_LIGHT_MASKED. */
 static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
@@ -2298,14 +2296,12 @@ static bool LayerRenderCells(unsigned bg)
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             int slot;
-            uint8_t light = 0;
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
                 bool on = WindowLit(map, size, chars, column, row, entry);
 
                 slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
-                light = on;
             }
             else if (memoStamp[index] == stamp && memoEntry[index] == entry)
                 slot = memoSlot[index];
@@ -2320,7 +2316,6 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
-            sCellLight[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0
                 : (((sTiles[slot].serial << 2) | ((entry >> 10) & 3)) | 1u << 31);
@@ -3442,116 +3437,6 @@ static bool IntroClipLayer(int bg, bool scenery)
     return true;
 }
 
-/*
- * The light a lit window throws around itself: a thin warm rim just outside
- * the window's edges, added over the field's ground layers before the
- * sprites of their priority, as strong as the night is deep. It hugs the
- * window, so the wall, the door and the steps under it keep their colours.
- */
-enum { GLOW_RIM = 4, GLOW_SIZE = 8 + 2 * GLOW_RIM };
-static C3D_Tex sGlowTex;
-static bool sGlowReady, sGlowFailed;
-
-static void GlowPrepare(void)
-{
-    if (sGlowReady || sGlowFailed) return;
-    if (!C3D_TexInit(&sGlowTex, GLOW_SIZE, GLOW_SIZE, GPU_RGBA8)) { sGlowFailed = true; return; }
-    uint32_t *texels = (uint32_t *)sGlowTex.data;
-    for (int y = 0; y < GLOW_SIZE; ++y)
-        for (int x = 0; x < GLOW_SIZE; ++x)
-        {
-            /* Distance from the tile's 8x8 box: none on the glass, fading out across the rim. */
-            float dx = fmaxf(fmaxf(GLOW_RIM - (x + 0.5f), x + 0.5f - (GLOW_RIM + 8)), 0.0f);
-            float dy = fmaxf(fmaxf(GLOW_RIM - (y + 0.5f), y + 0.5f - (GLOW_RIM + 8)), 0.0f);
-            float d = sqrtf(dx * dx + dy * dy) / (GLOW_RIM + 0.5f);
-            unsigned alpha = d > 0.0f && d < 1.0f ? (unsigned)(255.0f * (1.0f - d) * (1.0f - d)) : 0;
-
-            texels[CtrVideo_Texel((unsigned)x, (unsigned)y, GLOW_SIZE)] = (255u << 24) | (197u << 16) | (90u << 8) | alpha;
-        }
-    C3D_TexFlush(&sGlowTex);
-    C3D_TexSetFilter(&sGlowTex, GPU_NEAREST, GPU_NEAREST);
-    sGlowReady = true;
-}
-
-/* One piece of the rim: texture box (x0, y0)-(x1, y1), drawn that far from the tile's corner. */
-static void GlowPiece(int x, int y, C2D_ImageTint *tint, int x0, int y0, int x1, int y1)
-{
-    Tex3DS_SubTexture sub = {(u16)(x1 - x0), (u16)(y1 - y0), x0 / (float)GLOW_SIZE, 1.0f - y0 / (float)GLOW_SIZE,
-                             x1 / (float)GLOW_SIZE, 1.0f - y1 / (float)GLOW_SIZE};
-
-    ++sStats.tiles;
-    C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x + x0 - GLOW_RIM + CTR_VIEW_X + sLayerShift,
-                    y + y0 - GLOW_RIM + CTR_VIEW_Y, 0, tint, 1.0f, 1.0f);
-}
-
-static void DrawDayNightGlow(void)
-{
-    enum { A = 0, B = GLOW_RIM, C = GLOW_RIM + 8, D = GLOW_SIZE };
-    unsigned display = Reg(0);
-    C2D_ImageTint tint;
-    bool begun = false;
-
-    if (!sDayNightLit || !sFieldLayers) return;
-    GlowPrepare();
-    if (!sGlowReady) return;
-    for (unsigned bg = 1; bg < 4; ++bg)
-    {
-        unsigned control = Reg(8 + bg * 2), size = control >> 14;
-        /* The glow fades with the layer it lights: a fade to black (a warp, a battle) takes it out too. */
-        bool white;
-        float fade = 1.0f - LayerBrightness(bg, &white);
-
-        if (sLayerFadeTint[bg]) fade *= 1.0f - Min(sFadeCoeff, 16u) / 16.0f;
-        if (fade <= 0.0f) continue;
-        C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.45f * fade);
-        unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
-        int width = (int)columns * 8, height = (int)rows * 8;
-        int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
-
-        if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
-        for (unsigned row = 0; row < rows; ++row)
-        {
-            const uint8_t *light = sCellLight[bg] + row * columns;
-            const uint8_t *above = sCellLight[bg] + ((row + rows - 1) & (rows - 1)) * columns;
-            const uint8_t *below = sCellLight[bg] + ((row + 1) & (rows - 1)) * columns;
-            int y = (((int)row * 8 - sy) % height + height) % height;
-
-            if (y >= VIEW_BOTTOM + GLOW_RIM) y -= height;
-            if (y <= VIEW_TOP - 8 - GLOW_RIM) continue;
-            for (unsigned column = 0; column < columns; ++column)
-            {
-                if (!light[column]) continue;
-                unsigned left = (column + columns - 1) & (columns - 1), right = (column + 1) & (columns - 1);
-                /* The rim runs only along the window's outer edges: none between two of its lit tiles. */
-                bool l = !light[left], r = !light[right], t = !above[column], b = !below[column];
-                int x = (((int)column * 8 - sx) % width + width) % width;
-
-                if (!(l || r || t || b)) continue;
-                if (x >= VIEW_RIGHT + GLOW_RIM) x -= width;
-                if (x <= VIEW_LEFT - 8 - GLOW_RIM) continue;
-                if (!begun)
-                {
-                    C2D_Flush();
-                    ViewBase();
-                    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
-                    begun = true;
-                }
-                if (l) GlowPiece(x, y, &tint, A, B, B, C);
-                if (r) GlowPiece(x, y, &tint, C, B, D, C);
-                if (t) GlowPiece(x, y, &tint, B, A, C, B);
-                if (b) GlowPiece(x, y, &tint, B, C, C, D);
-                if (l && t && !above[left]) GlowPiece(x, y, &tint, A, A, B, B);
-                if (r && t && !above[right]) GlowPiece(x, y, &tint, C, A, D, B);
-                if (l && b && !below[left]) GlowPiece(x, y, &tint, A, C, B, D);
-                if (r && b && !below[right]) GlowPiece(x, y, &tint, C, C, D, D);
-            }
-        }
-    }
-    if (!begun) return;
-    C2D_Flush();
-    BlendForget();
-}
-
 static void Layers(unsigned mask)
 {
     unsigned display = Reg(0), mode = display & 7;
@@ -3605,7 +3490,6 @@ static void Layers(unsigned mask)
                 if ((mode == 1 && bg == 2) || mode == 2) gCtrPerf.ticks[PERF_BG_AFFINE] += elapsed;
             }
         }
-        if (priority == 2) DrawDayNightGlow();
         if ((mask & 16) && (display & 0x1000))
         {
             uint64_t start = svcGetSystemTick();

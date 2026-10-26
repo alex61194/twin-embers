@@ -58,7 +58,8 @@ static const uint16_t kCtrLights_PewterCity[] = {
     CTR_LIGHT_GLASS(655 | 10 << 12, 1u << 7),
 };
 static const uint16_t kCtrLights_VermilionCity[] = {
-    601 | 8 << 12, 602 | 8 << 12, 603 | 8 << 12, 644 | 9 << 12, 645 | 9 << 12, 646 | 9 << 12,
+    /* Not 601-603 (palette 8): the house walls' base trim and corners use them too, and lit a stripe along the wall. */
+    644 | 9 << 12, 645 | 9 << 12, 646 | 9 << 12,
     660 | 9 << 12, 661 | 9 << 12, 662 | 9 << 12, 739 | 10 << 12,
 };
 static const uint16_t kCtrLights_LavenderTown[] = {
