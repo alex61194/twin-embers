@@ -30,6 +30,8 @@ void CtrAudio_OnSoundMain(const CtrAudioFrame *frame);
 unsigned CtrAudio_CatchUpFrames(void);
 /* After HOME/sleep: the time the game was suspended is not owed sound. */
 void CtrAudio_ResetCatchUp(void);
+/* Soft reset: the Game Boy channels start again from silence. */
+void CtrAudio_ResetPsg(void);
 
 /* The game's sound engine (m4a) on another core.
  *
