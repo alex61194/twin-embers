@@ -225,8 +225,26 @@ build/ld/3dsx.ld: $(DEVKITARM)/arm-none-eabi/lib/3dsx.ld ../tools/game_ram_ld.py
 build/firered_game_3dsx.elf: build/firered_game.elf ../tools/filter_3dsx_relocs.py
 	$(PYTHON) ../tools/filter_3dsx_relocs.py --expect-thunks 1 build/firered_game.elf build/firered_game_3dsx.elf
 
-build/firered_game.smdh: Makefile
-	$(DEVKITPRO)/tools/bin/smdhtool --create "Twin Embers Port" "Native ARM11 port" "FireRed 3DS contributors" $(CTRULIB)/default_icon.png $@
+# The Homebrew Launcher's name and 48x48 icon, the same as the forwarder's
+# (forwarder/Makefile). No artwork is stored in the repository:
+#   ICON_SRC=icon.jpg   the owner's picture, kept outside the repository, fitted
+#                       into 48x48 by forwarder/prepare_art.py (Pillow)
+#   (none)              the two flames drawn by forwarder/make_art.py
+APP_TITLE := Twin Embers
+APP_DESCRIPTION := A FireRed port for the 3DS
+APP_AUTHOR := alex61194
+ICON_SRC ?=
+ICON_ART := build/icon-art
+ifneq ($(ICON_SRC),)
+$(ICON_ART)/icon.png: forwarder/prepare_art.py forwarder/make_art.py $(ICON_SRC)
+	$(PYTHON) forwarder/prepare_art.py --icon "$(ICON_SRC)" $(ICON_ART)
+else
+$(ICON_ART)/icon.png: forwarder/make_art.py
+	$(PYTHON) forwarder/make_art.py $(ICON_ART)
+endif
+
+build/firered_game.smdh: $(ICON_ART)/icon.png Makefile
+	$(DEVKITPRO)/tools/bin/smdhtool --create "$(APP_TITLE)" "$(APP_DESCRIPTION)" "$(APP_AUTHOR)" $(ICON_ART)/icon.png $@
 
 # Engine metadata (what the executable expects from the pack) is always in the
 # RomFS. The game bytes only travel with the executable in a PRIVATE development
