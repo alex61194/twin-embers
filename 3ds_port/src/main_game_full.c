@@ -159,8 +159,8 @@ int main(void)
      * an Old 3DS. Frame pacing stays on the VBlank, so only headroom grows. */
     osSetSpeedupEnable(true);
     CtrLog_Write(CTR_LOG_BOOT, "native main reached");
-    CtrLog_Write(CTR_LOG_BOOT, "FireRed3DS git=%s dirty=%u AgbMain=%p",
-                 CTR_BUILD_GIT, CTR_BUILD_DIRTY, (void *)AgbMain);
+    CtrLog_Write(CTR_LOG_BOOT, "FireRed3DS %s git=%s dirty=%u AgbMain=%p",
+                 CTR_BUILD_LABEL, CTR_BUILD_GIT, CTR_BUILD_DIRTY, (void *)AgbMain);
     {
         bool isNew3ds = false;
         APT_CheckNew3DS(&isNew3ds);
@@ -189,6 +189,7 @@ int main(void)
     if (!CtrVideo_Init())
         CtrPlatform_Fatal("FireRed compositor init failed");
     BindVideo();
+    CtrVideo_SetBuildLabel(CTR_BUILD_LABEL);
     CtrLog_Write(CTR_LOG_VIDEO, "video initialized");
     /* Bottom UI takes the bottom screen after boot logs; console stays as
      * fallback when bottom is disabled or fails. First FIELD redraw overwrites
