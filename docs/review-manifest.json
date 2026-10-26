@@ -4446,7 +4446,7 @@
   },
   {
    "path": "patches/pokefirered/0139-touch-drawn-trainer-card.json",
-   "sha256": "db9bd17864f3342609964dce61810269599759e355b85e430638302d2d65f54e",
+   "sha256": "7ce788d28fbd437ff0beb65bfb6918ead9a4cb82460d44d1648d1dbbf20688e9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
