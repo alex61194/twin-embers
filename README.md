@@ -18,9 +18,16 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.2.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.2.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
+
+## New in v0.2.1
+
+- **Mart and item PC on the lower screen.** Buying keeps the field on the top screen, and selling or depositing in the item PC now really opens the drawn Bag instead of the GBA one.
+- **Thinner window glow at night:** a soft rim around the lit glass instead of a blob over the wall.
+- **The PC box note** shows the level and the gender sign properly instead of garbled letters.
+- **The version on the title screen** (v0.2.1), and the Twin Embers name and icon in the Homebrew Launcher.
 
 ## New in v0.2.0
 
@@ -31,7 +38,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Turbo and auto-run are remembered** between sessions, and you can run indoors.
 - **Brighter nights.** Windows light up whole, and Lavender Town's houses, the Pokémon Tower, Silph Co., Cinnabar's lab, the Celadon and Fuchsia flats and the Sevii houses light up too.
 
-The [v0.2.0 release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
+The [release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
 
 <img src="docs/media/03-day-night-off.png" width="300" alt="Cerulean City with DAY/NIGHT off, next to the option that controls it"> <img src="docs/media/04-night-saffron.png" width="300" alt="Saffron City at night, with the touch map of Kanto">
 
