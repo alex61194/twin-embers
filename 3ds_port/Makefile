@@ -57,7 +57,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -79,6 +79,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/audio_catchup_test.exe
 	./build/vram_track_test.exe
 	./build/fast_forward_test.exe
+	./build/settings_test.exe
 	./build/palette_fade_test.exe
 	./build/day_night_test.exe
 	./build/data_error_text_test.exe
@@ -142,6 +143,9 @@ GAME_PLATFORM_OBJS += build/3ds_touch_text.o
 build/3ds_touch_text.o: CFLAGS += -iquote ../include
 build/3ds_touch_text.o: include/3ds_touch_text.h
 # Night encounters (wild_encounter.c); the map constants are generated with the game sources.
+# The turbo and auto-run that are chosen, kept on the SD card (3ds_game_bridge.c, ctr_poketouch.c).
+GAME_PLATFORM_OBJS += build/3ds_settings.o
+build/3ds_settings.o: include/3ds_settings.h
 GAME_PLATFORM_OBJS += build/3ds_night_wild.o
 build/3ds_night_wild.o: CFLAGS += -iquote ../include
 build/3ds_night_wild.o: include/3ds_night_wild.h build/game_sources.stamp
@@ -364,6 +368,10 @@ build/dma_test.exe: tests/dma_test.c src/3ds_dma.c src/gba_shadow.c include/3ds_
 build/flash_test.exe: tests/flash_test.c src/3ds_flash.c include/3ds_flash.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -DPLATFORM_3DS -DMODERN=1 -DFIRERED -DENGLISH -DREVISION=0 -iquote include -iquote ../include -iquote .. tests/flash_test.c src/3ds_flash.c -o $@
+
+build/settings_test.exe: tests/settings_test.c src/3ds_settings.c include/3ds_settings.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/settings_test.cfg"' -Iinclude tests/settings_test.c src/3ds_settings.c -o $@
 
 build/obj_window_test.exe: tests/obj_window_test.c include/3ds_obj_window.h
 	@mkdir -p build
