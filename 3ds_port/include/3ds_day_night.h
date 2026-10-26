@@ -141,6 +141,11 @@ static inline uint16_t CtrDayNight_Lit(uint16_t color, uint32_t tint, unsigned l
 
 /* A lights table entry (3ds_day_night_lights.h) of a building open all night. */
 #define CTR_LIGHT_PUBLIC (1u << 10)
+/* A lights table entry whose glass is not blue (grey panes, dark arches): the
+ * word after it is the mask of its glass colour indices, lit whatever their
+ * colour. CTR_LIGHT_GLASS writes both words. */
+#define CTR_LIGHT_MASKED (1u << 11)
+#define CTR_LIGHT_GLASS(entry, mask) ((entry) | CTR_LIGHT_MASKED), (uint16_t)(mask)
 
 /*
  * Not every window is lit all night. Each lit window (the light table's

@@ -33,11 +33,21 @@ static void Table(const uint16_t *table, unsigned count, int general)
     for (unsigned i = 0; i < count; ++i)
     {
         unsigned tile = table[i] & 1023, bank = table[i] >> 12;
-        assert(bank < 13 && (table[i] & 0x0800) == 0);
+        assert(bank < 13);
         if (general) assert(tile < 640 && bank < 7);
         /* Only General's buildings are open all night, and not its houses. */
         if (table[i] & CTR_LIGHT_PUBLIC) assert(general && tile != 557 && tile != 558);
-        for (unsigned j = 0; j < i; ++j) assert(table[j] != table[i]);
+        for (unsigned j = 0; j < i; ++j)
+        {
+            assert((table[j] & 0xf3ffu) != (table[i] & 0xf3ffu));
+            if (table[j] & CTR_LIGHT_MASKED) ++j;
+        }
+        /* A masked entry's glass: some colour indices, never the transparent 0. */
+        if (table[i] & CTR_LIGHT_MASKED)
+        {
+            assert(i + 1 < count && table[i + 1] && !(table[i + 1] & 1u));
+            ++i;
+        }
     }
 }
 #define TABLE(t, general) Table(t, sizeof(t) / sizeof(t[0]), general)
@@ -132,7 +142,12 @@ int main(void)
     TABLE(kCtrLights_FuchsiaCity, 0);
     TABLE(kCtrLights_SaffronCity, 0);
     TABLE(kCtrLights_IndigoPlateau, 0);
+    TABLE(kCtrLights_CinnabarIsland, 0);
     TABLE(kCtrLights_SeviiIslands123, 0);
+    TABLE(kCtrLights_SeviiIslands45, 0);
+    TABLE(kCtrLights_SeviiIslands67, 0);
+    /* The Pokemon Tower's dark panes are lit by their index, with the houses' hours. */
+    assert(kCtrLights_LavenderTown[19] == (722 | CTR_LIGHT_MASKED | 9 << 12) && kCtrLights_LavenderTown[20] == 1u << 6);
     /* The Poke Mart's roof shares the windows' colours: none of its tiles is listed. */
     static const unsigned martRoof[] = {192, 193, 194, 195, 208, 209, 210, 224, 240, 241, 242, 243, 256, 257, 258, 259, 273, 275};
     for (unsigned i = 0; i < sizeof(martRoof) / sizeof(martRoof[0]); ++i)
