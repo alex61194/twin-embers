@@ -56,5 +56,8 @@ int CtrBottomSummary_HitAt(int x, int y);
  * none, and the picture. A box's Pokemon are not the party's, so the Summary's own Pokemon is asked, not a slot. */
 unsigned CtrBottomSummary_IconSpecies(void);
 int CtrBottomSummary_Icon(unsigned char *tiles, unsigned short *palette);
+/* The Pokemon shown, its picture as FireRed's Summary has it: the front picture (64x64 4bpp, 8x8 tiles in rows of
+ * eight; an egg's is the egg) and palette (shiny or not), and whether FireRed flips it. 0 when there is none. */
+int CtrBottomSummary_Pic(unsigned char *tiles, unsigned short *palette, int *flip);
 
 #endif
