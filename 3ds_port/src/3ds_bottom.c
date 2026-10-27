@@ -4723,15 +4723,15 @@ static void EmbersStep(const Snapshot *s, CtrDirtyList *dirty)
     if (s->battleUi && s->battle.state != BUI_PARTY)
         return;
     if (s->mode == MODE_OFF && !sSession.active) {
-        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);   /* the idle backdrop */
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), CtrOptions_EmbersLow(), 0, dirty);   /* the idle backdrop */
         return;
     }
     if (s->battleUi) {
-        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), 0, dirty);
+        CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), CtrOptions_EmbersLow(), 0, dirty);
         return;
     }
     picture = !s->summaryUi && (s->touch.viewport || (s->touch.home && !s->touch.options && !s->touch.save));
-    CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), picture, dirty);
+    CtrPokeTouch_Embers(sCanvas, CtrOptions_Embers(), CtrOptions_EmbersLow(), picture, dirty);
 }
 
 void CtrBottom_Frame(void)

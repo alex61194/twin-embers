@@ -6,11 +6,12 @@
 
 /*
  * The colour of the outdoors by the hour of the 3DS clock. FireRed has no
- * clock of its own, so nothing in the game reads this: the compositor
- * converts the map's and the sprites' palettes through it when it turns them
- * into texels (3ds_video.c, DayNight), which leaves the game's palettes, the
- * weather and the fades exactly as the game wrote them. Window glass on the
- * tiles listed in 3ds_day_night_lights.h is lit instead of darkened. The
+ * clock of its own, so nothing in the game reads this: the compositor draws
+ * the field's layers and sprites through it on the GPU (3ds_video.c,
+ * DayNightEnv, with CtrDayNight_Grade below), which leaves the game's
+ * palettes, the weather and the fades exactly as the game wrote them. Window
+ * glass on the tiles listed in 3ds_day_night_lights.h is lit instead of
+ * darkened, by an overlay drawn after its layer. The
  * hours follow Merrp's day/night system for pokeemerald (dawn, day, dusk,
  * night, blended through the minutes in between); the colours are this
  * port's own. Shared with the host test.
@@ -111,6 +112,67 @@ static inline uint16_t CtrDayNight_Shade(uint16_t color, uint32_t tint)
     out |= (uint16_t)(((g * (256 - night) + ((moon >> 5) & 31) * night + 128) >> 8) << 5);
     out |= (uint16_t)(((b * (256 - night) + ((moon >> 10) & 31) * night + 128) >> 8) << 10);
     return out;
+}
+
+/*
+ * The hour as the GPU applies it (3ds_video.c, DayNightEnv): two texture
+ * combiner stages after Citro2D's own, the way pokeemerald-3Ds-dualscreen
+ * tints its overworld, so a new hour changes two constants and re-decodes
+ * nothing. Stage 4 takes the colour a little towards its green (keep/255 of
+ * the colour stays), stage 5 multiplies by k. The night's grade above
+ * (CtrDayNight_Shade) has a gamma no combiner can do; this is its least
+ * squares fit over the field palettes (FireRed's General and Pallet Town, at
+ * 23:00): 0.144 of the way to green, times (77, 96, 180), off by 4.7/255 on
+ * average. Through the evening it goes from the plain multiply over to that
+ * fit as the night deepens (squared, as Shade does). white (0-256) is how far
+ * the layer is faded or brightened towards white, which has to stay white.
+ */
+typedef struct
+{
+    uint8_t keep;
+    uint8_t k[3];
+} CtrDayNightGrade;
+
+static const uint8_t kCtrDayNightGradeMoon[3] = {77, 96, 180};
+#define CTR_DAY_NIGHT_GRADE_GREEN 37u
+
+static inline CtrDayNightGrade CtrDayNight_Grade(uint32_t tint, unsigned white)
+{
+    unsigned night = CtrDayNight_Lights(tint);
+    CtrDayNightGrade grade;
+
+    night = night * night / 256;
+    if (white > 256) white = 256;
+    grade.keep = (uint8_t)(255 - (CTR_DAY_NIGHT_GRADE_GREEN * night * (256 - white) >> 16));
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        unsigned hour = (tint >> (16 - i * 8)) & 255;
+        unsigned k = (hour * (256 - night) + kCtrDayNightGradeMoon[i] * night) >> 8;
+
+        grade.k[i] = (uint8_t)(k + ((255 - k) * white >> 8));
+    }
+    return grade;
+}
+
+/* What the GPU makes of a GBA colour under a grade, as BGR555 (the backdrop,
+ * which is a clear colour and not drawn through the combiners). */
+static inline uint16_t CtrDayNight_Graded(uint16_t color, CtrDayNightGrade grade)
+{
+    unsigned c[3], out = 0;
+
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        c[i] = (color >> (i * 5)) & 31;
+        c[i] = (c[i] << 3) | (c[i] >> 2);
+    }
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        unsigned v = (c[i] * grade.keep + c[1] * (255u - grade.keep) + 127) / 255;
+
+        v = (v * grade.k[i] + 127) / 255;
+        out |= ((v * 31 + 127) / 255) << (i * 5);
+    }
+    return (uint16_t)out;
 }
 
 /* Window glass: a light blue. Which tiles are windows is the lights table's

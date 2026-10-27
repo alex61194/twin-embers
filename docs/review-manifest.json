@@ -367,11 +367,12 @@
   },
   {
    "path": "3ds_port/include/3ds_day_night.h",
-   "sha256": "acc5535b6fc7d3582431566693c795c4e6be6a2104e4c75da99726a99bfd2982",
+   "sha256": "f964e24be7d9f0f10ac7bfc347ff859e570cbd6f1eb095de72bfd6928969bc87",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "night_gpu_review": "Reviewed GPU night grade: CtrDayNight_Grade/Graded, a two-stage combiner fit of the night grade (0.144 to green, times 77/96/180), identity by day and under a white fade, host-tested against Shade over every BGR555 colour. Reviewed header comment for the GPU tint."
   },
   {
    "path": "3ds_port/include/3ds_day_night_lights.h",
@@ -593,7 +594,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "7120a409625d2e50b2fb00e4ca5608f39c1f71908513cba77ac0e9d5127852f1",
+   "sha256": "e08b642dc9a2f0f3f40f1b665780874bb0e514eeca72f6e8d206effba3402c03",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -606,7 +607,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "sha256": "a1f4e1ed7d7ddaad354603d48634adcd0e3b7313043c95e398aa005b83dd2908",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -870,7 +871,7 @@
   },
   {
    "path": "3ds_port/src/3ds_audio.c",
-   "sha256": "bc9038978ffd7b647130b7fa843be65782b20418bbfb7d2df6a77bfe71beeb0c",
+   "sha256": "fa4f67ac2af31c63efd54ac10082ecacd0830c6be29133574130e7bb0f723645",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -880,7 +881,8 @@
    "source_blob": "a184a157c2fe600565d86f0bd5c5451d07d86c03",
    "source_sha256": "310e8941d695a416846e1a0c763399139423f97ad5cbf4baf82d076d4965212f",
    "modified_for_distribution": true,
-   "audio_review": "Native sound-mode bandwidth only; unchanged gain, channels, data/ABI and GBA defaults; synthetic spectrum and cadence regressions"
+   "audio_review": "Native sound-mode bandwidth only; unchanged gain, channels, data/ABI and GBA defaults; synthetic spectrum and cadence regressions",
+   "old_3ds_perf_review": "Reviewed Old 3DS PSG choice: APT_CheckNew3DS at audio init keeps the band-limited PSG on a New 3DS only (CTR_AUDIO_PSG_BLEP still forces it off everywhere); an Old 3DS point-samples, logged once."
   },
   {
    "path": "3ds_port/src/3ds_audio_mix.c",
@@ -936,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "ff19e09792004b4b0829691e9506711c089e8ec909bfabbf9a266080bcc50137",
+   "sha256": "f151b613ad5589586a1612f259902a31d1fdebe8c1b34a479b23f01cf3a2a606",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1085,7 +1087,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "3335b0253742f4ac8472127c30c23f460d3a1945ed479fa883522708e3b477a2",
+   "sha256": "ea7106c28733a4a26f9874eaf2c00d7c3b1434a1a785042fed31d06522adb8ec",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1098,7 +1100,8 @@
    "field_ui_review": "Reviewed complete Flash WIN0H scanline composition, native window restoration, strict cave preview viewport and synthetic regression tests",
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged.",
-   "title_version_review": "Reviewed build label on the title screen: the version alone (v + TWIN_EMBERS_VERSION from 3ds_port/Makefile), drawn in the game's small font read from the user's pack at run time, faded with FireRed's own palette fade; the commit stays in the boot log; no game payload, save layout or pack ABI change."
+   "title_version_review": "Reviewed build label on the title screen: the version alone (v + TWIN_EMBERS_VERSION from 3ds_port/Makefile), drawn in the game's small font read from the user's pack at run time, faded with FireRed's own palette fade; the commit stays in the boot log; no game payload, save layout or pack ABI change.",
+   "night_gpu_review": "Reviewed window camera check: while the player stands still on a known offset, the 132-metatile check runs one frame in 16; any step, map change or failed check checks at once."
   },
   {
    "path": "3ds_port/src/3ds_game_memory.c",
@@ -1242,7 +1245,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "843f2ca9a062755d3fc120f45ff53ce515d42930b6c0607e00400916050501e7",
+   "sha256": "da78496f645ac2baed9f05d919b64845437ebf847382a41e77d2cdf3e32478bd",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1256,7 +1259,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "sha256": "247ad3f77ad7f88bebb9fda1db81c01505ffa4d7cfd4e90d81e3e97de4cc0686",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1337,11 +1340,12 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "d499357d17e37ffba5bffec7b544e5fc48456489e5b8b28b26ded430cd6f9e82",
+   "sha256": "9f11e015b8dc35b0b2296b0d35a63ffbd34ed7b0fd67af05e98a193715288583",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "old_3ds_perf_review": "Reviewed EMBERS LOW (default on an Old 3DS, from APT_CheckNew3DS at boot): 7 of 22 sparks, moved once in 3 frames by 3 steps so the speed is unchanged; the screen is touched a third as often. ON and OFF behave as before."
   },
   {
    "path": "3ds_port/src/3ds_touch_text.c",
@@ -1366,7 +1370,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "4c1bcc4efdd43574e3e9342eca738072d360e8369b3bee21efcfb1fba731b1f0",
+   "sha256": "5e0f3895216688834f3d8f5450409d66018016bf402aaaa5108d9d34703ed2c0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1380,7 +1384,9 @@
    "fly_presentation_review": "Reviewed centred invocation strip and actor alignment, signed Fly/OAM coordinates, matching-frame publication, build dependencies and synthetic regressions",
    "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged.",
-   "title_version_review": "Reviewed build label on the title screen: the version alone (v + TWIN_EMBERS_VERSION from 3ds_port/Makefile), drawn in the game's small font read from the user's pack at run time, faded with FireRed's own palette fade; the commit stays in the boot log; no game payload, save layout or pack ABI change."
+   "title_version_review": "Reviewed build label on the title screen: the version alone (v + TWIN_EMBERS_VERSION from 3ds_port/Makefile), drawn in the game's small font read from the user's pack at run time, faded with FireRed's own palette fade; the commit stays in the boot log; no game payload, save layout or pack ABI change.",
+   "old_3ds_perf_review": "Reviewed field layer walk skip: a windowed or fade-tinted field layer skips its per-frame cell walk while its scroll, tint, fade base, palette stamp, cache generation and map/tile VRAM blocks equal its last walk's; no change to what is drawn. Reviewed night glow loop: wrap by mask on power-of-two map sides instead of two modulos per cell, x computed only for lit cells; same positions (checked for -600..600 on 256/512).",
+   "night_gpu_review": "Reviewed GPU night tint: field BG1-3 and sprites drawn through texture combiner stages 4 (towards green) and 5 (multiply) set in Blend, off while filling layer textures and after the layers; texels and fade base are the plain palette, so a new hour re-decodes nothing; lit glass is an untinted lamplight overlay per window cell after its layer (alpha by Lights, faded with the layer), from a 64x64 nearest texture next to the glow; glow and glass walk a per-walk list of lit cells; GlowSlot memoised per walk; backdrop through CtrDayNight_Graded."
   },
   {
    "path": "3ds_port/src/3ds_video_decode.c",
@@ -1424,7 +1430,7 @@
   },
   {
    "path": "3ds_port/src/main_game_full.c",
-   "sha256": "22eb92b8c3f84760093ad517aeac9f139200684d545b8bd9330b6be39509abee",
+   "sha256": "217617abdcaf5adcdf6b228239e699ccb001c22ec87eee3f76bd7d0b3ae28a8b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1610,11 +1616,12 @@
   },
   {
    "path": "3ds_port/tests/day_night_test.c",
-   "sha256": "cec7f3a8cf1bf93878d1e1b6a3f603f5da89d76b5be5338118cad806c8a14afb",
+   "sha256": "e5f80e3220e2653e889fa2f6a1223939549972efc4173c7b7780636bcf6ec0d4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "night_gpu_review": "Reviewed host test of the GPU night grade: identity, never brighter, under one step from Shade on average."
   },
   {
    "path": "3ds_port/tests/dma_test.c",
@@ -1791,7 +1798,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "sha256": "b42c21c5be2daea5320ae34bc9f50cfdc87a445f9181c6d04552e6df480e00dc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

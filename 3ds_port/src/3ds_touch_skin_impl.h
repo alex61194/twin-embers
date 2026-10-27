@@ -177,9 +177,12 @@ static void EmIcon(int icon, int x, int y, int on)
  * pass behind every piece drawn over it) and outside `exclude` (the GBA picture). Each spark remembers the pixels it
  * painted and puts the backdrop back on those still showing its colour. */
 #define EM_SPARKS 22
+#define EM_SPARKS_LOW 7                     /* LOW: these, moved every EM_LOW_EVERY-th frame by that many steps */
+#define EM_LOW_EVERY 3
 #define EM_SPARK_PX 9
 static struct {
     int ready;
+    int frame;
     uint32_t seed;
     struct {
         int32_t x, y, vy;                   /* 16.16 */
@@ -235,8 +238,9 @@ static void EmPaint(int i, int x, int y, uint16_t c, CtrDirtyRect *box)
 }
 
 /* One step of the embers on `canvas`; the rectangles that changed are added to `dirty`. With `on` false the sparks
- * are only taken away. */
-static void EmbersStep(uint16_t *canvas, int on, const CtrPokeTouchRect *exclude, CtrDirtyList *dirty)
+ * are only taken away. With `low` only EM_SPARKS_LOW of them stay, and a step is made once in EM_LOW_EVERY frames
+ * (as long as the others took, so they rise as fast): the lower screen is then touched a third as often. */
+static void EmbersStep(uint16_t *canvas, int on, int low, const CtrPokeTouchRect *exclude, CtrDirtyList *dirty)
 {
     static const uint8_t hue[3][3] = {{255, 200, 80}, {255, 150, 40}, {255, 96, 32}};
 
@@ -246,6 +250,14 @@ static void EmbersStep(uint16_t *canvas, int on, const CtrPokeTouchRect *exclude
         sEm.seed = 0x7e3a11u;
         for (int i = 0; i < EM_SPARKS; ++i)
             EmSpawn(i, 1);
+    }
+    int steps = 1, count = EM_SPARKS;
+
+    if (on && low) {
+        steps = EM_LOW_EVERY;
+        count = EM_SPARKS_LOW;
+        if (++sEm.frame % EM_LOW_EVERY != 0)
+            return;
     }
     for (int i = 0; i < EM_SPARKS; ++i) {
         CtrDirtyRect box = {W, H, 0, 0};
@@ -259,9 +271,9 @@ static void EmbersStep(uint16_t *canvas, int on, const CtrPokeTouchRect *exclude
             EmGrow(&box, px, py);
         }
         sEm.s[i].n = 0;
-        if (on) {
-            sEm.s[i].y -= sEm.s[i].vy;
-            sEm.s[i].phase = (uint16_t)(sEm.s[i].phase + sEm.s[i].step);
+        if (on && i < count) {
+            sEm.s[i].y -= sEm.s[i].vy * steps;
+            sEm.s[i].phase = (uint16_t)(sEm.s[i].phase + sEm.s[i].step * steps);
             if (sEm.s[i].y < -(4 << 16))
                 EmSpawn(i, 0);
             x = (int)((sEm.s[i].x + EmSway(sEm.s[i].phase)) >> 16);

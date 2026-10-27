@@ -118,6 +118,12 @@ static int sCameraKX, sCameraKY;
 static unsigned sCameraMap = ~0u;
 /* Frames to wait before searching again after a search found nothing. */
 static unsigned sCameraWait;
+/* Where the offset was last checked, and for how many frames since nothing
+ * moved: standing still, the check (132 metatiles looked up) runs one frame
+ * in CAMERA_RECHECK, not every frame. */
+#define CAMERA_RECHECK 16u
+static int sCameraCheckedX = -1, sCameraCheckedY = -1;
+static unsigned sCameraStill;
 
 /* How many sampled in-map metatiles the buffers disagree with at this offset
  * (stops past limit); *samples counts the ones looked at. */
@@ -162,6 +168,11 @@ static bool UpdateCamera(void)
     if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
     if (map != sCameraMap) sCameraKnown = false;
     sCameraMap = map;
+    if (sCameraKnown && px == sCameraCheckedX && py == sCameraCheckedY && ++sCameraStill < CAMERA_RECHECK)
+        return true;
+    sCameraStill = 0;
+    sCameraCheckedX = px;
+    sCameraCheckedY = py;
     if (sCameraKnown && CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
         return true;
     sCameraKnown = false;

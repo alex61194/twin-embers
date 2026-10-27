@@ -1143,11 +1143,11 @@ void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo)
         }
 }
 
-void CtrPokeTouch_Embers(uint16_t *canvas, int on, int pictureShown, CtrDirtyList *dirty)
+void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, CtrDirtyList *dirty)
 {
     static const CtrPokeTouchRect picture = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
 
-    EmbersStep(canvas, on, pictureShown ? &picture : NULL, dirty);
+    EmbersStep(canvas, on, low, pictureShown ? &picture : NULL, dirty);
 }
 
 #include "3ds_battle_ui_impl.h"

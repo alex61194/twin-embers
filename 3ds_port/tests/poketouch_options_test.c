@@ -92,8 +92,11 @@ int main(void)
     Text(10, "CLOCK");
     Text(11, "ON");
     CtrOptions_Step(11, 1);
+    Text(11, "LOW");
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 1, "EMBERS stepped to LOW");
+    CtrOptions_Step(11, 1);
     Text(11, "OFF");
-    CHECK(CtrOptions_Embers() == 0, "EMBERS stepped to OFF");
+    CHECK(CtrOptions_Embers() == 0 && CtrOptions_EmbersLow() == 0, "EMBERS stepped to OFF");
     CtrOptions_Step(11, 1);
     Text(11, "ON");
     memset(&view, 0, sizeof(view));

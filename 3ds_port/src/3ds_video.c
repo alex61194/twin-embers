@@ -526,25 +526,25 @@ static unsigned Read16(unsigned offset)
 }
 
 /*
- * Day and night on the outdoor field (3ds_day_night.h). The map's palettes
- * (backgrounds 0-12; 13-15 are the text boxes and menus) and the sprites' are
- * turned into texels through the colour of the hour, and the glass of the
- * window tiles in the lights table (3ds_day_night_lights.h) is lit instead.
- * The game's palettes, its fades and the weather stay as the game wrote them:
- * only the conversion changes, so a new hour costs the tiles on screen one
- * re-decode, like a palette change. The clock is the console's own (osGetTime
- * counts local milliseconds from 1900, which starts on a midnight), read in
- * steps of DAY_NIGHT_STEP seconds so that a dusk re-decodes every few steps
- * rather than every second.
+ * Day and night on the outdoor field (3ds_day_night.h). The field's layers
+ * (BG1-3) and its sprites are drawn through the colour of the hour by the
+ * GPU: two texture combiner stages after Citro2D's own (DayNightEnv), the way
+ * pokeemerald-3Ds-dualscreen tints its overworld. The texels stay the game's
+ * colours, so a new hour changes two constants and nothing is decoded again;
+ * the game's palettes, its fades and the weather stay as the game wrote them.
+ * The glass of the window tiles in the lights table
+ * (3ds_day_night_lights.h) is lit by a lamplight overlay drawn after its
+ * layer, untinted (DrawDayNightGlass). The clock is the console's own
+ * (osGetTime counts local milliseconds from 1900, which starts on a
+ * midnight), read every frame to the second.
  */
-#define DAY_NIGHT_STEP 16u
 #define DAY_NIGHT_BG_BANKS 13u
 static bool sDayNightRequested;
 static uint32_t sDayNightRequestColor = 0xffffffu;
 static uint32_t sDayNightRequestSecond;
 static const uint16_t *sDayNightRequestLights[2];
 static unsigned sDayNightRequestCount[2];
-/* What the texels are converted with now. */
+/* The hour in force: what the combiners tint with. */
 static uint32_t sDayNightColor = 0xffffffu;
 static unsigned sDayNightLit;
 static const uint16_t *sDayNightLights[2];
@@ -569,11 +569,11 @@ typedef struct
 static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
 /* Per field layer cell: 1 + the glow slot (GlowSlot) of a lit window tile drawn there, 0 for any other. */
 static uint8_t sCellGlow[4][4096];
-/* The background colours that are glass, lit, as texels; 0 for the others.
- * sLitAny: every colour lit, for the windows of CTR_LIGHT_MASKED. */
-static uint16_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
-static uint16_t sLitAny[DAY_NIGHT_BG_BANKS * 16];
+/* Which background colours are glass (CtrDayNight_Glass): 1, 0 for the others. */
+static uint8_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
 static bool sFieldLayers;
+/* Stages 4 and 5 hold the hour (DayNightEnv); drawing into a layer texture, which is tinted when it is drawn. */
+static bool sDayNightEnv, sInLayerTexture;
 
 void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
                           const uint16_t *secondary, unsigned secondaryCount)
@@ -586,7 +586,7 @@ void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned prima
     if (outdoors)
     {
         uint32_t second = (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
-        sDayNightRequestColor = CtrDayNight_Tint(second / DAY_NIGHT_STEP * DAY_NIGHT_STEP);
+        sDayNightRequestColor = CtrDayNight_Tint(second);
         sDayNightRequestSecond = second;
     }
 }
@@ -596,21 +596,80 @@ void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, 
     sDayNightCameraRequest = (DayNightCamera){valid, tileX, tileY, viewLeft, mapX, mapY, map};
 }
 
-static bool DayNightBank(unsigned bank) { return bank < DAY_NIGHT_BG_BANKS || bank >= 16; }
-
-/* Palette entry p (colour color) as a texel, under the hour in force. */
-static uint16_t DayNightTexel(unsigned p, uint16_t color)
-{
-    if (sDayNightColor != 0xffffffu && DayNightBank(p / 16))
-        color = CtrDayNight_Shade(color, sDayNightColor);
-    return CtrVideo_RGBA5551(color);
-}
-
 static void DayNightLitEntry(unsigned p)
 {
-    if (p >= DAY_NIGHT_BG_BANKS * 16) return;
-    sLitAny[p] = sDayNightLit ? CtrVideo_RGBA5551(CtrDayNight_Lit(sPalette[p], sDayNightColor, sDayNightLit)) : 0;
-    sLitTexture[p] = CtrDayNight_Glass(sPalette[p]) ? sLitAny[p] : 0;
+    if (p < DAY_NIGHT_BG_BANKS * 16) sLitTexture[p] = CtrDayNight_Glass(sPalette[p]);
+}
+
+/*
+ * How far a layer is taken towards white (0-256): a palette fade to white or
+ * the brightness effect. The hour's multiply would tint that white, so the
+ * grade lets go of it as the white comes in. A fade to black needs nothing:
+ * black stays black.
+ */
+static unsigned DayNightWhite(unsigned layer)
+{
+    unsigned white = 0, control = Reg(0x50);
+
+    if (sFadeBaseValid && sFadeCoeff)
+    {
+        unsigned r = sFadeTarget & 31, g = (sFadeTarget >> 5) & 31, b = (sFadeTarget >> 10) & 31;
+        unsigned low = r < g ? r : g;
+
+        low = low < b ? low : b;
+        white = Min(sFadeCoeff, 16u) * 16u * low / 31u;
+    }
+    if (layer < 6 && ((control >> 6) & 3) == 2 && (control & (1u << layer)))
+    {
+        unsigned brightness = sBrightnessOverride ? sBrightnessValue : Reg(0x54);
+        unsigned effect = Min(brightness & 31, 16u) * 16u;
+
+        if (effect > white) white = effect;
+    }
+    return white;
+}
+
+/*
+ * The hour on the GPU, after Citro2D's stages 0-3 (which it resets as it
+ * changes mode) and in place of its fade (stage 5, which this port never
+ * uses): stage 4 takes the colour towards its green, stage 5 multiplies it
+ * (CtrDayNight_Grade). Only RGB: the alpha passes through. Changing the
+ * stages ends the batch, so the caller has flushed.
+ */
+static void DayNightEnv(bool on, unsigned white)
+{
+    if (!on)
+    {
+        if (!sDayNightEnv) return;
+        C3D_TexEnvInit(C3D_GetTexEnv(4));
+        C3D_TexEnvInit(C3D_GetTexEnv(5));
+        sDayNightEnv = false;
+        return;
+    }
+    CtrDayNightGrade grade = CtrDayNight_Grade(sDayNightColor, white);
+    C3D_TexEnv *env = C3D_GetTexEnv(4);
+
+    C3D_TexEnvInit(env);
+    C3D_TexEnvSrc(env, C3D_RGB, GPU_PREVIOUS, GPU_PREVIOUS, GPU_CONSTANT);
+    C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_G, GPU_TEVOP_RGB_SRC_ALPHA);
+    C3D_TexEnvFunc(env, C3D_RGB, GPU_INTERPOLATE);
+    C3D_TexEnvColor(env, C2D_Color32(0, 0, 0, grade.keep));
+    env = C3D_GetTexEnv(5);
+    C3D_TexEnvInit(env);
+    C3D_TexEnvSrc(env, C3D_RGB, GPU_PREVIOUS, GPU_CONSTANT, GPU_PREVIOUS);
+    C3D_TexEnvFunc(env, C3D_RGB, GPU_MODULATE);
+    C3D_TexEnvColor(env, C2D_Color32(grade.k[0], grade.k[1], grade.k[2], 255));
+    sDayNightEnv = true;
+}
+
+/* Back to Citro2D's own stages before anything that is not the hour's; the
+ * next Blend sets its state again, the hour's too. */
+static void DayNightEnvOff(void)
+{
+    if (!sDayNightEnv) return;
+    C2D_Flush();
+    DayNightEnv(false, 0);
+    BlendForget();
 }
 
 /* The glass colour indices of a window tile with its palette; 0 for the blue test. */
@@ -623,18 +682,19 @@ static unsigned GlassMask(unsigned tile, unsigned bank)
     return 0;
 }
 
-/* A window tile's lit colours: its glass, lit; 0 for the rest. */
-static const uint16_t *WindowGlass(unsigned tile, unsigned bank, uint16_t *own)
+/* A window tile's glass colours: 1 for its glass, 0 for the rest. */
+static const uint8_t *WindowGlass(unsigned tile, unsigned bank, uint8_t *own)
 {
     unsigned mask = GlassMask(tile, bank);
 
     if (!mask) return sLitTexture + bank * 16;
-    for (unsigned i = 0; i < 16; ++i) own[i] = (mask >> i & 1) ? sLitAny[bank * 16 + i] : 0;
+    for (unsigned i = 0; i < 16; ++i) own[i] = (uint8_t)(mask >> i & 1);
     return own;
 }
 
-/* After UpdatePalette, before UpdateFade: a new hour, or a map with other
- * windows, converts every tinted entry again and marks them all changed. */
+/* After UpdatePalette, before UpdateFade: the hour, and the windows of the
+ * map. Another map's windows walk the field's layers again; a new hour only
+ * changes what the combiners tint with. */
 static void DayNightUpdate(void)
 {
     bool on = sDayNightRequested && sFieldLayers;
@@ -656,6 +716,7 @@ static void DayNightUpdate(void)
     if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
     if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
     {
+        sBgPaletteStamp = sStats.frames + 1;
         memset(sLitBanks, 0, sizeof(sLitBanks));
         memset(sPublicBanks, 0, sizeof(sPublicBanks));
         sGlassMasks = 0;
@@ -678,35 +739,16 @@ static void DayNightUpdate(void)
         sDayNightLights[0] = lights0;
         sDayNightLights[1] = lights1;
     }
-    sDayNightColor = color;
-    sDayNightLit = color == 0xffffffu ? 0 : CtrDayNight_Lights(color);
-    for (unsigned p = 0; p < 512; ++p)
-        if (DayNightBank(p / 16)) sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
-    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) DayNightLitEntry(p);
-    for (unsigned bank = 0; bank < 32; ++bank)
     {
-        if (!DayNightBank(bank)) continue;
-        memset(sPaletteChanges[bank], 0, sizeof(sPaletteChanges[bank]));
-        sPaletteChanges[bank][0] = 0xffffu;
-        ++sPaletteVersion[bank];
+        unsigned lit = color == 0xffffffu ? 0 : CtrDayNight_Lights(color);
+
+        /* Only whether there are lit windows at all changes what the layers
+         * hold (the cells' glow, GlowSlot): a new hour is the combiners' and
+         * the overlays' alone. */
+        if (!lit != !sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
+        sDayNightColor = color;
+        sDayNightLit = lit;
     }
-    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
-        sPaletteChanges[32][entry / 32] |= 1u << (entry & 31);
-    memset(sPaletteChanges[33], 0xff, sizeof(sPaletteChanges[33]));
-    ++sPaletteVersion[32];
-    ++sPaletteVersion[33];
-    sBgPaletteStamp = sStats.frames + 1;
-    if (!sFadeBaseValid) return;
-    for (unsigned p = 0; p < DAY_NIGHT_BG_BANKS * 16; ++p) sFadeBaseTexture[p] = DayNightTexel(p, sFadeBase[p]);
-    for (unsigned bank = 0; bank < DAY_NIGHT_BG_BANKS; ++bank)
-    {
-        memset(sFadeChanges[bank], 0, sizeof(sFadeChanges[bank]));
-        sFadeChanges[bank][0] = 0xffffu;
-        ++sFadeVersion[bank];
-    }
-    for (unsigned entry = 0; entry < DAY_NIGHT_BG_BANKS * 16; ++entry)
-        sFadeChanges[32][entry / 32] |= 1u << (entry & 31);
-    ++sFadeVersion[32];
 }
 
 static void UpdatePalette(void)
@@ -725,7 +767,7 @@ static void UpdatePalette(void)
                 if (sPalette[p] == sMemory.palette[p]) continue;
                 CTR_PERF_COUNT(PERF_PALETTE_COLORS, 1);
                 sPalette[p] = sMemory.palette[p];
-                sTexturePalette[p] = DayNightTexel(p, sPalette[p]);
+                sTexturePalette[p] = CtrVideo_RGBA5551(sPalette[p]);
                 DayNightLitEntry(p);
                 sPaletteChanges[bank][0] |= 1u << index;
                 unsigned entry = p & 255;
@@ -806,21 +848,15 @@ static bool TilePaletteChanged(const Tile *tile, unsigned paletteId)
  */
 static uint32_t sTileSerial;
 
-static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark);
+static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase);
 
 static int GetTileSlot(unsigned address, unsigned bank, bool color256)
 {
-    return GetTileSlotKey(address, bank, color256, false, false);
+    return GetTileSlotFrom(address, bank, color256, false);
 }
 
+/* fadeBase: decode in sFadeBase (background tiles only), a separate slot. */
 static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool fadeBase)
-{
-    return GetTileSlotKey(address, bank, color256, fadeBase, false);
-}
-
-/* fadeBase: decode in sFadeBase (background tiles only), a separate slot.
- * dark: a window tile with its light off, a separate slot too. */
-static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool fadeBase, bool dark)
 {
     CTR_PERF_COUNT(PERF_CACHE_REQUEST,1);
     uint64_t perfCache=0;
@@ -835,7 +871,7 @@ static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool f
         address = 0;
     }
     unsigned paletteId = color256 ? 32 + (bank >= 16) : bank;
-    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0) | (dark ? 0x40000000u : 0);
+    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
     unsigned hash = (key * 2654435761u) & (HASH_COUNT - 1);
     while (sHash[hash] && sTiles[sHash[hash] - 1].key != key)
         hash = (hash + 1) & (HASH_COUNT - 1);
@@ -880,17 +916,13 @@ static int GetTileSlotKey(unsigned address, unsigned bank, bool color256, bool f
             unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
-            /* A window of the field's character block at night: its glass is lit (DayNightUpdate). */
-            uint16_t litOwn[16];
-            const uint16_t *lit = sDayNightLit && !dark && !color256 && bank < DAY_NIGHT_BG_BANKS && address < 0x8000
-                && (sLitBanks[address / 32] & (1u << bank)) ? WindowGlass(address / 32, bank, litOwn) : NULL;
             memset(tile->colors, 0, sizeof(tile->colors));
             tile->visible = false;
             for (unsigned pixel = 0; pixel < 64; ++pixel)
             {
                 unsigned index = color256 ? tile->bytes[pixel]
                     : (tile->bytes[pixel / 2] >> ((pixel & 1) * 4)) & 15;
-                dest[sMorton[pixel]] = !index ? 0 : lit && lit[index] ? lit[index] : palette[paletteBase + index];
+                dest[sMorton[pixel]] = !index ? 0 : palette[paletteBase + index];
                 if (index)
                 {
                     tile->visible = true;
@@ -946,14 +978,18 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
      * asked for it forty times.
      */
     unsigned brightness = sBrightnessOverride ? sBrightnessValue : Reg(0x54);
+    /* The field's layers and sprites under the hour, on the screen: a layer
+     * texture is tinted when it is drawn, not as it is filled. */
+    bool night = sDayNightColor != 0xffffffu && sFieldLayers && !sInLayerTexture && layer >= 1 && layer <= 4;
     unsigned key = layer | (effects << 8) | (semiTransparent << 9)
-                 | ((brightness & 31) << 10);
+                 | ((brightness & 31) << 10) | ((unsigned)night << 15);
 
     if (key == sBlendKey) return;
     sBlendKey = key;
     uint64_t perfStart=CtrPerf_Begin();
 
     C2D_Flush();
+    DayNightEnv(night, night ? DayNightWhite(layer) : 0);
     C3D_AlphaTest(true, GPU_GREATER, 0);
     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA,
                   GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
@@ -1945,6 +1981,11 @@ typedef struct
     uint32_t walked;
     uint32_t walkedGeneration;
     bool walkedPlain;
+    /* Or, for a field layer, the walk of its window at this scroll, tinted
+     * or not, against this fade base (the same skip, for the cells in view). */
+    bool walkedWindow, walkedTint;
+    unsigned walkedScrollX, walkedScrollY;
+    uint32_t walkedFade;
     bool valid;
 } LayerTexture;
 static LayerTexture sLayers[4];
@@ -2183,8 +2224,8 @@ static unsigned GlassEdges(unsigned chars, unsigned entry)
     static uint8_t memoEdges[1024];
     unsigned address = chars + (entry & 1023) * 32, key = entry & 0xf3ffu;
     const uint8_t *tile = sMemory.vram + address;
-    uint16_t own[16];
-    const uint16_t *glass;
+    uint8_t own[16];
+    const uint8_t *glass;
     unsigned edges = 0;
 
     if (memoStamp[address / 32] == sWindowStamp && memoKey[address / 32] == key)
@@ -2243,6 +2284,7 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
 }
 
 static unsigned GlowSlot(unsigned address, unsigned entry);
+static void GlowCellsCollect(unsigned bg, unsigned cells);
 
 static bool LayerRenderCells(unsigned bg)
 {
@@ -2274,18 +2316,32 @@ static bool LayerRenderCells(unsigned bg)
         windowed = visible < cells;
     }
     /* Nothing the walk reads has changed since the last whole-layer walk:
-     * no cell can differ. Anything uncertain (windowed, tinted, a new cache
-     * generation, a changed palette or map/tile VRAM) walks. */
-    if (!full && !windowed && !sLayerFadeTint[bg]
-        && layer->walkedPlain
+     * no cell can differ. Anything uncertain (a new cache generation, a
+     * changed palette or map/tile VRAM) walks. A field layer, windowed and
+     * tinted, skips the same way while its scroll, its tint and the fade base
+     * are those of its last walk: the cells in view are the ones that walk
+     * checked. Standing still on the field, that was ~1600 cells a layer
+     * walked every frame for nothing; on an Old 3DS a few milliseconds. */
+    unsigned scrollX = Reg(0x10 + bg * 4) & 511, scrollY = Reg(0x12 + bg * 4) & 511;
+    bool sameWalk = !full
+        && (layer->walkedPlain ? !windowed && !sLayerFadeTint[bg]
+            : layer->walkedWindow && layer->walkedTint == sLayerFadeTint[bg]
+              && layer->walkedFade == sFadeVersion[32]
+              && (!windowed || (layer->walkedScrollX == scrollX && layer->walkedScrollY == scrollY)))
         && layer->walkedGeneration == sCacheGeneration
         && sBgPaletteStamp <= layer->walked
         && !VramChangedAfter(map, rows * columns * 2, layer->walked)
-        && !VramChangedAfter(chars, Min(1024u * (color256 ? 64 : 32), 0x10000u - chars), layer->walked))
+        && !VramChangedAfter(chars, Min(1024u * (color256 ? 64 : 32), 0x10000u - chars), layer->walked);
+    if (sameWalk)
         return false;
     layer->walked = sStats.frames + 1;
     layer->walkedGeneration = sCacheGeneration;
     layer->walkedPlain = !windowed && !sLayerFadeTint[bg];
+    layer->walkedWindow = !layer->walkedPlain;
+    layer->walkedTint = sLayerFadeTint[bg];
+    layer->walkedScrollX = scrollX;
+    layer->walkedScrollY = scrollY;
+    layer->walkedFade = sFadeVersion[32];
     ++stamp;
     ++sWindowStamp;
     for (unsigned row = 0; row < rows; ++row)
@@ -2306,7 +2362,7 @@ static bool LayerRenderCells(unsigned bg)
             {
                 bool on = WindowLit(map, size, chars, column, row, entry);
 
-                slot = GetTileSlotKey(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg], !on);
+                slot = GetTileSlotFrom(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg]);
                 light = on ? (uint8_t)GlowSlot(chars + index * 32, entry) : 0;
             }
             else if (memoStamp[index] == stamp && memoEntry[index] == entry)
@@ -2330,6 +2386,7 @@ static bool LayerRenderCells(unsigned bg)
             dirty[count++] = (uint16_t)cell;
         }
     }
+    if (bg && sFieldLayers) GlowCellsCollect(bg, cells);
     if (count == 0) return false;
     /* Most of the window changed: clear it as whole rectangles (at most four
      * with wrap) and draw every cell in it, instead of a clear per cell. */
@@ -2352,7 +2409,7 @@ static bool LayerRenderCells(unsigned bg)
     if (sStats.tiles + count >= MAX_DRAWS / 2)
     {
         sLayerReady[bg] = false;
-        layer->walkedPlain = false;
+        layer->walkedPlain = layer->walkedWindow = false;
         return false;
     }
     if (full)
@@ -2392,6 +2449,7 @@ static bool LayerRenderCells(unsigned bg)
         C2D_Flush();
         BlendForget();
     }
+    sInLayerTexture = true;
     Blend(bg, false, false);
     for (unsigned i = 0; i < count; ++i)
     {
@@ -2402,6 +2460,7 @@ static bool LayerRenderCells(unsigned bg)
                      cellEntry[cell] & 1024, cellEntry[cell] & 2048);
     }
     C2D_Flush();
+    sInLayerTexture = false;
     BlendForget();
     return true;
 }
@@ -2412,6 +2471,7 @@ static void LayersRender(void)
     bool any = false;
     unsigned blend = Reg(0x50);
 
+    DayNightEnvOff();
     for (unsigned bg = 0; bg < 4; ++bg)
     {
         /* Only where the layer's own tint is plain: a brightness effect on
@@ -3456,28 +3516,60 @@ static bool IntroClipLayer(int bg, bool scenery)
 #define GLOW_SLOTS 64
 #define GLOW_SPAN 24
 #define GLOW_SIGMA 2.2f
-static C3D_Tex sGlowTex;
+/* Each slot also has its lit glass (DrawDayNightGlass): its glass pixels in lamplight, 8x8 in sGlassTex. */
+static C3D_Tex sGlowTex, sGlassTex;
 static bool sGlowReady, sGlowFailed;
 static uint64_t sGlowMask[GLOW_SLOTS];
 static unsigned sGlowCount;
+/* Per field layer, the cells that have a glow (sCellGlow), listed by the layer's last walk. */
+#define GLOW_CELLS 1024
+static uint16_t sGlowCells[4][GLOW_CELLS];
+static unsigned sGlowCellCount[4];
 
 static bool GlowPrepare(void)
 {
     if (sGlowReady) return true;
     if (sGlowFailed) return false;
     if (!C3D_TexInit(&sGlowTex, 256, 256, GPU_RGBA8)) { sGlowFailed = true; return false; }
+    if (!C3D_TexInit(&sGlassTex, 64, 64, GPU_RGBA8))
+    {
+        C3D_TexDelete(&sGlowTex);
+        sGlowFailed = true;
+        return false;
+    }
     memset(sGlowTex.data, 0, 256 * 256 * 4);
+    memset(sGlassTex.data, 0, 64 * 64 * 4);
     C3D_TexSetFilter(&sGlowTex, GPU_LINEAR, GPU_LINEAR);
+    C3D_TexSetFilter(&sGlassTex, GPU_NEAREST, GPU_NEAREST);
     sGlowReady = true;
     return true;
 }
 
-/* The glow texture of a window tile: 1 + its slot, or 0 when it has no glass or the slots are spent. */
+static unsigned GlowSlotFind(unsigned address, unsigned entry);
+
+/* The glow texture of a window tile: 1 + its slot, or 0 when it has no glass
+ * or the slots are spent. Kept for the walk (sWindowStamp): a window tile is
+ * looked at once per walk however many times the map has it. */
 static unsigned GlowSlot(unsigned address, unsigned entry)
 {
+    static uint32_t memoStamp[1024];
+    static uint8_t memoKey[1024], memoSlot[1024];
+    unsigned tile = address / 32, key = (entry >> 10) & 63;
+
+    if (memoStamp[tile] != sWindowStamp || memoKey[tile] != key)
+    {
+        memoStamp[tile] = sWindowStamp;
+        memoKey[tile] = (uint8_t)key;
+        memoSlot[tile] = (uint8_t)GlowSlotFind(address, entry);
+    }
+    return memoSlot[tile];
+}
+
+static unsigned GlowSlotFind(unsigned address, unsigned entry)
+{
     const uint8_t *tile = sMemory.vram + address;
-    uint16_t own[16];
-    const uint16_t *glass = WindowGlass(address / 32, entry >> 12, own);
+    uint8_t own[16];
+    const uint8_t *glass = WindowGlass(address / 32, entry >> 12, own);
     uint64_t mask = 0;
     unsigned slot;
 
@@ -3528,9 +3620,106 @@ static unsigned GlowSlot(unsigned address, unsigned entry)
                 texels[CtrVideo_Texel(ox + (unsigned)x, oy + (unsigned)y, 256)] =
                     (255u << 24) | (197u << 16) | (90u << 8) | (unsigned)(255.0f * sum);
             }
+        /* The glass itself, CTR_DAY_NIGHT_LAMP (255, 197, 90), opaque where the tile is glass. */
+        texels = (uint32_t *)sGlassTex.data;
+        for (unsigned y = 0; y < 8; ++y)
+            for (unsigned x = 0; x < 8; ++x)
+                texels[CtrVideo_Texel(slot % 8 * 8 + x, slot / 8 * 8 + y, 64)] =
+                    (mask >> (y * 8 + x) & 1) ? 0xffc55affu : 0;
     }
     C3D_TexFlush(&sGlowTex);
+    C3D_TexFlush(&sGlassTex);
     return slot + 1;
+}
+
+/* After a walk of a field layer: the cells with a glow, so that drawing the
+ * glow and the glass looks at those and not at every cell of the map. */
+static void GlowCellsCollect(unsigned bg, unsigned cells)
+{
+    unsigned count = 0;
+
+    if (sDayNightLit)
+        for (unsigned cell = 0; cell < cells && count < GLOW_CELLS; ++cell)
+            if (sCellGlow[bg][cell]) sGlowCells[bg][count++] = (uint16_t)cell;
+    sGlowCellCount[bg] = count;
+}
+
+/* Where cell (column, row) of a field layer is on the screen, GBA coordinates,
+ * wrapping as the layer does; false when no part of a 24-pixel square around
+ * it can be in sight. The map's sides are powers of two: a mask, not a
+ * division (none on the ARM11). */
+static bool GlowCellAt(unsigned bg, unsigned cell, int *x, int *y)
+{
+    unsigned size = Reg(8 + bg * 2) >> 14;
+    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    int width = (int)columns * 8, height = (int)rows * 8;
+    int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
+    unsigned row = cell >> ((size & 1) ? 6 : 5), column = cell & (columns - 1);
+
+    *y = ((int)row * 8 - sy) & (height - 1);
+    if (*y >= VIEW_BOTTOM + 8) *y -= height;
+    if (*y <= VIEW_TOP - 16 || *y >= VIEW_BOTTOM + 8) return false;
+    *x = ((int)column * 8 - sx) & (width - 1);
+    if (*x >= VIEW_RIGHT + 8) *x -= width;
+    return *x > VIEW_LEFT - 16 && *x < VIEW_RIGHT + 8;
+}
+
+/*
+ * The lit glass of a field layer's windows, drawn right after the layer and
+ * not through the hour: lamplight over the glass pixels of its lit window
+ * tiles, as strong as the windows are lit (CtrDayNight_Lights), which over
+ * the tinted glass is CtrDayNight_Lit's mix. Under a fade the lamplight is
+ * taken towards the fade's colour as far as the layer is, so over the faded
+ * layer it is the lit glass faded. The cells' glass is cut to the clip
+ * rectangle, as the layer is.
+ */
+static void DrawDayNightGlass(unsigned bg)
+{
+    C2D_ImageTint tint;
+    bool white, begun = false;
+    float toward;
+    uint32_t to;
+
+    if (!sDayNightLit || !sFieldLayers || !sGlowReady || bg == 0 || bg > 3 || !sGlowCellCount[bg]) return;
+    if (!LayerDrawable(bg)) return;
+    toward = LayerBrightness(bg, &white);
+    to = white ? C2D_Color32(255, 255, 255, 255) : C2D_Color32(0, 0, 0, 255);
+    if (sFadeBaseValid && sFadeCoeff && Min(sFadeCoeff, 16u) / 16.0f > toward)
+    {
+        uint32_t rgb = CtrVideo_RGBA8(sFadeTarget, true);
+
+        toward = Min(sFadeCoeff, 16u) / 16.0f;
+        to = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
+    }
+    if (toward >= 1.0f) return;
+    C2D_PlainImageTint(&tint, (to & 0x00ffffffu) | ((uint32_t)(sDayNightLit * 255u / 256u) << 24), toward);
+    for (unsigned i = 0; i < sGlowCellCount[bg]; ++i)
+    {
+        unsigned cell = sGlowCells[bg][i], slot = sCellGlow[bg][cell];
+        int x, y;
+        float u, v;
+        Tex3DS_SubTexture sub;
+
+        if (!slot || !GlowCellAt(bg, cell, &x, &y)) continue;
+        if (x < sClipX0 || x + 8 > sClipX1 || y < sClipY0 || y + 8 > sClipY1) continue;
+        if (!begun)
+        {
+            DayNightEnvOff();
+            C2D_Flush();
+            ViewBase();
+            C3D_AlphaTest(true, GPU_GREATER, 0);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
+            begun = true;
+        }
+        u = (float)((slot - 1) % 8 * 8);
+        v = (float)((slot - 1) / 8 * 8);
+        sub = (Tex3DS_SubTexture){8, 8, u / 64.0f, 1.0f - v / 64.0f, (u + 8) / 64.0f, 1.0f - (v + 8) / 64.0f};
+        ++sStats.tiles;
+        C2D_DrawImageAt((C2D_Image){&sGlassTex, &sub}, x + CTR_VIEW_X + sLayerShift, y + CTR_VIEW_Y, 0, &tint, 1.0f, 1.0f);
+    }
+    if (!begun) return;
+    C2D_Flush();
+    BlendForget();
 }
 
 static void DrawDayNightGlow(unsigned mask)
@@ -3542,7 +3731,6 @@ static void DrawDayNightGlow(unsigned mask)
     if (!sDayNightLit || !sFieldLayers || !sGlowReady) return;
     for (unsigned bg = 1; bg < 4; ++bg)
     {
-        unsigned control = Reg(8 + bg * 2), size = control >> 14;
         /* The glow fades with the layer it lights: a fade to black (a warp, a battle) takes it out too. */
         bool white;
         float fade = 1.0f - LayerBrightness(bg, &white);
@@ -3551,44 +3739,30 @@ static void DrawDayNightGlow(unsigned mask)
         if (fade <= 0.0f) continue;
         /* Only the layers this window shows: an exit wipe leaves the rest black. */
         if (!(mask & (1u << bg))) continue;
+        if (!sGlowCellCount[bg] || !(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
         C2D_AlphaImageTint(&tint, sDayNightLit / 256.0f * 0.6f * fade);
-        unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
-        int width = (int)columns * 8, height = (int)rows * 8;
-        int sx = Reg(0x10 + bg * 4) & 511, sy = Reg(0x12 + bg * 4) & 511;
-
-        if (!(display & (0x100u << bg)) || !LayerDrawable(bg)) continue;
-        for (unsigned row = 0; row < rows; ++row)
+        for (unsigned i = 0; i < sGlowCellCount[bg]; ++i)
         {
-            const uint8_t *light = sCellGlow[bg] + row * columns;
-            int y = (((int)row * 8 - sy) % height + height) % height;
+            unsigned cell = sGlowCells[bg][i], slot = sCellGlow[bg][cell];
+            int x, y, u, v;
+            Tex3DS_SubTexture sub;
 
-            if (y >= VIEW_BOTTOM + 8) y -= height;
-            if (y <= VIEW_TOP - 16) continue;
-            for (unsigned column = 0; column < columns; ++column)
+            if (!slot || !GlowCellAt(bg, cell, &x, &y)) continue;
+            if (!begun)
             {
-                unsigned slot = light[column];
-                int x = (((int)column * 8 - sx) % width + width) % width;
-                int u, v;
-                Tex3DS_SubTexture sub;
-
-                if (!slot) continue;
-                if (x >= VIEW_RIGHT + 8) x -= width;
-                if (x <= VIEW_LEFT - 16) continue;
-                if (!begun)
-                {
-                    C2D_Flush();
-                    ViewBase();
-                    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
-                    begun = true;
-                }
-                u = (int)((slot - 1) % 8 * GLOW_CELL);
-                v = (int)((slot - 1) / 8 * GLOW_CELL);
-                sub = (Tex3DS_SubTexture){GLOW_SPAN, GLOW_SPAN, u / 256.0f, 1.0f - v / 256.0f,
-                                          (u + GLOW_SPAN) / 256.0f, 1.0f - (v + GLOW_SPAN) / 256.0f};
-                ++sStats.tiles;
-                C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
-                                y - 8 + CTR_VIEW_Y, 0, &tint, 1.0f, 1.0f);
+                DayNightEnvOff();
+                C2D_Flush();
+                ViewBase();
+                C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE, GPU_ZERO, GPU_ONE);
+                begun = true;
             }
+            u = (int)((slot - 1) % 8 * GLOW_CELL);
+            v = (int)((slot - 1) / 8 * GLOW_CELL);
+            sub = (Tex3DS_SubTexture){GLOW_SPAN, GLOW_SPAN, u / 256.0f, 1.0f - v / 256.0f,
+                                      (u + GLOW_SPAN) / 256.0f, 1.0f - (v + GLOW_SPAN) / 256.0f};
+            ++sStats.tiles;
+            C2D_DrawImageAt((C2D_Image){&sGlowTex, &sub}, x - 8 + CTR_VIEW_X + sLayerShift,
+                            y - 8 + CTR_VIEW_Y, 0, &tint, 1.0f, 1.0f);
         }
     }
     if (!begun) return;
@@ -3633,6 +3807,8 @@ static void Layers(unsigned mask)
                 }
                 else if (DrawTitleBand(bg)) {}
                 else if (!DrawLineBg(bg) && !DrawIntroBgTex(bg) && !DrawFieldBgTex(bg) && !DrawStageBgTex(bg)) DrawTextBg(bg);
+                /* The windows' lit glass over the layer, before anything in front of it. */
+                if (sFieldLayers && bg) DrawDayNightGlass(bg);
             }
             if (clipped)
             {
@@ -3668,6 +3844,8 @@ static void Layers(unsigned mask)
             if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_OBJ] += elapsed;
         }
     }
+    /* Whatever is drawn after the layers is not under the hour. */
+    DayNightEnvOff();
 }
 
 /*
@@ -5749,7 +5927,8 @@ void CtrVideo_Present(void)
     CtrPerf_End(PERF_PALETTE,perfPalette);
     if (sStage || sBattle) RecordScroll();
     uint16_t backdrop = (Reg(0) & 128) ? 0x7fff
-        : sDayNightColor != 0xffffffu ? CtrDayNight_Shade(sPalette[0], sDayNightColor) : sPalette[0];
+        : sDayNightColor != 0xffffffu ? CtrDayNight_Graded(sPalette[0], CtrDayNight_Grade(sDayNightColor, DayNightWhite(5)))
+        : sPalette[0];
     uint32_t rgb = CtrVideo_RGBA8(backdrop, true);
     uint32_t clear = C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255);
     /*

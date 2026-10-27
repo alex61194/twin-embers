@@ -39,6 +39,9 @@ int CtrOptions_FieldSummary(void);
 int CtrOptions_DayNight(void);
 /* The embers rising behind the lower screen's menus: on unless set to OFF. */
 int CtrOptions_Embers(void);
+/* ... set to LOW: a third of the sparks, moved every third frame (what an Old 3DS starts with). */
+int CtrOptions_EmbersLow(void);
+void CtrOptions_EmbersDefaultLow(void);
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);
