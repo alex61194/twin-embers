@@ -50,20 +50,15 @@ static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
 static const CtrPokeTouchRect sBPConfirm = {244, 180, 72, 26}, sBPCancelLow = {244, 208, 72, 24};
 #define BP_DEPTH 3
 
-/* A slot's card, where FireRed puts it, so the D-pad walks the cards as they look: the lead (one, two in a double) on
- * the left, the others stacked on the right, down the slots' order. */
+/* A slot's card: two columns of three, the slots reading left to right and down, as the Party's D-pad walks them (the
+ * patched UpdatePartySelectionGrid). */
 static CtrPokeTouchRect BPanel(const CtrBattleParty *p, int i)
 {
-    int lead = p->lead == 2 ? 2 : 1, rest = 6 - lead;
+    int h = (164 - 4 * 2) / 3;     /* 4 apart: a card's glow never reaches its neighbour's redraw */
+    CtrPokeTouchRect r = {(int16_t)(i & 1 ? 163 : 6), (int16_t)(6 + (h + 4) * (i >> 1)), 151, (int16_t)h};
 
-    if (i < lead) {
-        CtrPokeTouchRect r = {6, (int16_t)(6 + 56 * i), 151, 50};
-        return r;
-    } else {
-        int h = (164 - 4 * (rest - 1)) / rest;     /* 4 apart: a card's glow never reaches its neighbour's redraw */
-        CtrPokeTouchRect r = {163, (int16_t)(6 + (h + 4) * (i - lead)), 151, (int16_t)h};
-        return r;
-    }
+    (void)p;
+    return r;
 }
 
 /* A row of the Party's menu: one column of up to four, two columns beyond. */

@@ -477,9 +477,9 @@ int main(int argc, char **argv)
     v.state = BUI_PARTY;
     {
         CtrBattleParty *p = &v.pty;
-        static const char *const nm[6] = {"CHARIZARD", "PIDGEOT", "SNORLAX", "ALAKAZAM", "GENGAR", ""};
+        static const char *const nm[6] = {"CHARIZARD", "PIDGEOT", "SNORLAX", "ALAKAZAM", "GENGAR", "BLASTOISE"};
 
-        for (k = 0; k < 5; ++k) {
+        for (k = 0; k < 6; ++k) {
             p->present[k] = 1; p->level[k] = (uint8_t)(50 + k); p->maxHp[k] = 150; p->hp[k] = (uint16_t)(150 - 30 * k);
             p->icon[k] = (uint16_t)(k + 1); names(p->name[k], sizeof(p->name[k]), nm[k]);
         }
