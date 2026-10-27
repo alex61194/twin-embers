@@ -113,6 +113,67 @@ static inline uint16_t CtrDayNight_Shade(uint16_t color, uint32_t tint)
     return out;
 }
 
+/*
+ * The hour as the GPU applies it (3ds_video.c, DayNightEnv): two texture
+ * combiner stages after Citro2D's own, the way pokeemerald-3Ds-dualscreen
+ * tints its overworld, so a new hour changes two constants and re-decodes
+ * nothing. Stage 4 takes the colour a little towards its green (keep/255 of
+ * the colour stays), stage 5 multiplies by k. The night's grade above
+ * (CtrDayNight_Shade) has a gamma no combiner can do; this is its least
+ * squares fit over the field palettes (FireRed's General and Pallet Town, at
+ * 23:00): 0.144 of the way to green, times (77, 96, 180), off by 4.7/255 on
+ * average. Through the evening it goes from the plain multiply over to that
+ * fit as the night deepens (squared, as Shade does). white (0-256) is how far
+ * the layer is faded or brightened towards white, which has to stay white.
+ */
+typedef struct
+{
+    uint8_t keep;
+    uint8_t k[3];
+} CtrDayNightGrade;
+
+static const uint8_t kCtrDayNightGradeMoon[3] = {77, 96, 180};
+#define CTR_DAY_NIGHT_GRADE_GREEN 37u
+
+static inline CtrDayNightGrade CtrDayNight_Grade(uint32_t tint, unsigned white)
+{
+    unsigned night = CtrDayNight_Lights(tint);
+    CtrDayNightGrade grade;
+
+    night = night * night / 256;
+    if (white > 256) white = 256;
+    grade.keep = (uint8_t)(255 - (CTR_DAY_NIGHT_GRADE_GREEN * night * (256 - white) >> 16));
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        unsigned hour = (tint >> (16 - i * 8)) & 255;
+        unsigned k = (hour * (256 - night) + kCtrDayNightGradeMoon[i] * night) >> 8;
+
+        grade.k[i] = (uint8_t)(k + ((255 - k) * white >> 8));
+    }
+    return grade;
+}
+
+/* What the GPU makes of a GBA colour under a grade, as BGR555 (the backdrop,
+ * which is a clear colour and not drawn through the combiners). */
+static inline uint16_t CtrDayNight_Graded(uint16_t color, CtrDayNightGrade grade)
+{
+    unsigned c[3], out = 0;
+
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        c[i] = (color >> (i * 5)) & 31;
+        c[i] = (c[i] << 3) | (c[i] >> 2);
+    }
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        unsigned v = (c[i] * grade.keep + c[1] * (255u - grade.keep) + 127) / 255;
+
+        v = (v * grade.k[i] + 127) / 255;
+        out |= ((v * 31 + 127) / 255) << (i * 5);
+    }
+    return (uint16_t)out;
+}
+
 /* Window glass: a light blue. Which tiles are windows is the lights table's
  * business; this only keeps a window's frame and sill out of the light. */
 static inline bool CtrDayNight_Glass(uint16_t color)

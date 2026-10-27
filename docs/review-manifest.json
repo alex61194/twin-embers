@@ -367,11 +367,12 @@
   },
   {
    "path": "3ds_port/include/3ds_day_night.h",
-   "sha256": "acc5535b6fc7d3582431566693c795c4e6be6a2104e4c75da99726a99bfd2982",
+   "sha256": "dd03a2719cd7236199594e943212eeac073f3b95339b29902d844278ce28fe86",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "night_gpu_review": "Reviewed GPU night grade: CtrDayNight_Grade/Graded, a two-stage combiner fit of the night grade (0.144 to green, times 77/96/180), identity by day and under a white fade, host-tested against Shade over every BGR555 colour."
   },
   {
    "path": "3ds_port/include/3ds_day_night_lights.h",
@@ -1612,11 +1613,12 @@
   },
   {
    "path": "3ds_port/tests/day_night_test.c",
-   "sha256": "cec7f3a8cf1bf93878d1e1b6a3f603f5da89d76b5be5338118cad806c8a14afb",
+   "sha256": "e5f80e3220e2653e889fa2f6a1223939549972efc4173c7b7780636bcf6ec0d4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "night_gpu_review": "Reviewed host test of the GPU night grade: identity, never brighter, under one step from Shade on average."
   },
   {
    "path": "3ds_port/tests/dma_test.c",

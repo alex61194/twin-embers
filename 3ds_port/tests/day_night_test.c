@@ -111,6 +111,29 @@ int main(void)
     assert(CtrDayNight_Lit(Bgr(156, 213, 255), night, 256) == CTR_DAY_NIGHT_LAMP);
     assert(CtrDayNight_Lit(Bgr(156, 213, 255), 0xffffffu, 0) == Bgr(156, 213, 255));
 
+    /* The GPU's grade: nothing by day or under a white fade, never brighter
+     * than the colour, and within a few steps of Shade at night. */
+    {
+        CtrDayNightGrade day = CtrDayNight_Grade(0xffffffu, 0), moon = CtrDayNight_Grade(night, 0);
+        CtrDayNightGrade faded = CtrDayNight_Grade(night, 256);
+        unsigned long off = 0;
+
+        assert(day.keep == 255 && day.k[0] == 255 && day.k[1] == 255 && day.k[2] == 255);
+        assert(faded.keep == 255 && faded.k[0] == 255 && faded.k[1] == 255 && faded.k[2] == 255);
+        assert(moon.keep == 255 - CTR_DAY_NIGHT_GRADE_GREEN && moon.k[0] == 77 && moon.k[1] == 96 && moon.k[2] == 180);
+        for (unsigned c = 0; c < 0x8000; ++c)
+        {
+            uint16_t g = CtrDayNight_Graded((uint16_t)c, moon), s = CtrDayNight_Shade((uint16_t)c, night);
+
+            assert(CtrDayNight_Graded((uint16_t)c, day) == c);
+            assert(Luma(g) <= Luma((uint16_t)c));
+            for (unsigned shift = 0; shift < 15; shift += 5)
+                off += (unsigned)abs((int)((g >> shift) & 31) - (int)((s >> shift) & 31));
+        }
+        /* Under one step of 31 per channel on average, over every colour. */
+        assert(off < 0x8000u * 3u);
+    }
+
     /* The windows' own hours: none lit at noon or 17:00, all at 21:00 (on by
      * 20:00, the first off at 21:45), fewer and fewer through the night, a
      * few all night and a few early risers. */
