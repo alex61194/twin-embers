@@ -12,17 +12,29 @@ static const char *const sSound[] = {"MONO", "STEREO"};
 static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
 static const char *const sSummaryMode[] = {"3DS", "GBA"};
-static const char *const sDayNight[] = {"CLOCK", "DAWN", "DAY", "DUSK", "NIGHT", "OFF"};
-/* The hour each fixed DAY/NIGHT value stands at (3ds_day_night.h's keys): dawn's
- * pink, noon, dusk's orange, and 21:30, full night with every window still lit. */
-static const int kDayNightSecond[] = {-1, 23400, 43200, 68400, 77400};
-#define DAY_NIGHT_OFF 5
+static const char *const sDayNight[] = {"CLOCK", "FIXED", "OFF"};
+enum { DAY_NIGHT_CLOCK, DAY_NIGHT_FIXED, DAY_NIGHT_OFF, DAY_NIGHT_COUNT };
+/* FIXED's hour, picked on the HOUR row: any half hour of the 24, 00:00 to 23:30. */
+#define HOUR_STEP_SECONDS 1800
+#define HOUR_COUNT (86400 / HOUR_STEP_SECONDS)
+#define HOUR_DEFAULT 24                     /* 12:00 */
+static const char *const sHourName[HOUR_COUNT] = {
+    "00:00", "00:30", "01:00", "01:30", "02:00", "02:30",
+    "03:00", "03:30", "04:00", "04:30", "05:00", "05:30",
+    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+    "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
+    "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
+};
 static const char *const sEmbers[] = {"OFF", "LOW", "HIGH"};     /* CTR_EMBERS_* */
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
 static int sPortFieldSummary;
 static int sPortDayNight;
+static int sPortHour = HOUR_DEFAULT;
 static int sPortEmbers = CTR_EMBERS_HIGH;
 
 static int TwoCount(void) { return 2; }
@@ -33,8 +45,17 @@ static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
 static int GetFieldSummary(void) { return sPortFieldSummary; }
 static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
 static int GetDayNight(void) { return sPortDayNight; }
-static int SixCount(void) { return 6; }
-static void SetDayNight(int v) { sPortDayNight = v < 0 || v > DAY_NIGHT_OFF ? 0 : v; }
+static int DayNightCount(void) { return DAY_NIGHT_COUNT; }
+static void SetDayNight(int v) { sPortDayNight = v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v; }
+static int GetHour(void) { return sPortHour; }
+static int HourCount(void) { return HOUR_COUNT; }
+/* Choosing an hour is choosing to use it: DAY/NIGHT moves to FIXED unless it is OFF. */
+static void SetHour(int v)
+{
+    sPortHour = v < 0 || v >= HOUR_COUNT ? HOUR_DEFAULT : v;
+    if (sPortDayNight == DAY_NIGHT_CLOCK)
+        sPortDayNight = DAY_NIGHT_FIXED;
+}
 static int ThreeCount(void) { return 3; }
 static int GetEmbers(void) { return sPortEmbers; }
 static void SetEmbers(int v)
@@ -47,7 +68,7 @@ int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
 int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
 int CtrOptions_DayNight(void) { return sPortDayNight != DAY_NIGHT_OFF; }
-int CtrOptions_DayNightSecond(void) { return sPortDayNight < DAY_NIGHT_OFF ? kDayNightSecond[sPortDayNight] : -1; }
+int CtrOptions_DayNightSecond(void) { return sPortDayNight == DAY_NIGHT_FIXED ? sPortHour * HOUR_STEP_SECONDS : -1; }
 int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
 int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 
@@ -78,8 +99,10 @@ static const CtrOptionRow sRows[] = {
      GetMoveDetails, TwoCount, SetMoveDetails},
     {"FIELD SUMMARY", {"Use the 3DS Summary", "screen from field Party."}, 0, sSummaryMode, NULL,
      GetFieldSummary, TwoCount, SetFieldSummary},
-    {"DAY/NIGHT", {"The 3DS clock's hour, or", "a fixed one, outdoors."}, 0, sDayNight, NULL,
-     GetDayNight, SixCount, SetDayNight},
+    {"DAY/NIGHT", {"The 3DS clock's hour, the", "HOUR below, or off."}, 0, sDayNight, NULL,
+     GetDayNight, DayNightCount, SetDayNight},
+    {"HOUR", {"The hour outdoors when", "DAY/NIGHT is FIXED."}, 0, sHourName, NULL,
+     GetHour, HourCount, SetHour},
     {"EMBERS", {"Sparks rising behind the", "menus. LOW suits an Old 3DS."}, 0, sEmbers, NULL,
      GetEmbers, ThreeCount, SetEmbers},
 };

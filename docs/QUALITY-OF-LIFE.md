@@ -160,7 +160,7 @@ On outdoor maps (FireRed's town and route map types) the map and its sprites tak
 of the 3DS clock: night from 21:00 to 05:00, dawn at 06:30, plain day from 09:00 to 17:30 and dusk at
 19:00, blended second by second in between (`3ds_day_night.h`; the hours follow Merrp's day/night system
 for pokeemerald, the colours are the port's own). Indoors, in caves, in battle and in every menu nothing
-changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default) or OFF; like the other page-2 options it is not
+changes. OPTIONS, page 2, DAY/NIGHT: CLOCK (the default), FIXED or OFF; FIXED shows the hour of the HOUR row below it, any half hour from 00:00 to 23:30 (touching or stepping HOUR from CLOCK switches to FIXED), and it also decides the night's wild Pokémon and Espeon/Umbreon; like the other page-2 options it is not
 kept in the save and is CLOCK again after a restart.
 
 - It is coloured, not played: the compositor shades each colour as it turns the palette into texels
