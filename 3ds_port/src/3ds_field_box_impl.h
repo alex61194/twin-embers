@@ -102,6 +102,43 @@ int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y)
     return ST_HIT_NONE;
 }
 
+/* The box's wallpaper, FireRed's own picture of it (160x144) in the lower screen's colours; decoded once per wallpaper.
+ * Its body (the frame's inside) sits behind the cells and its header strip behind the box's name, so choosing another
+ * wallpaper changes the box's whole look, as it does in the game. */
+static uint16_t sFXWall[160 * 144];
+static int sFXWallId = -1, sFXWallOk;
+
+static int FXWallpaper(unsigned id)
+{
+    static unsigned short raw[160 * 144];
+
+    if ((int)id != sFXWallId) {
+        sFXWallId = (int)id;
+        sFXWallOk = CtrPokeTouch_Wallpaper(id, raw);
+        for (int i = 0; sFXWallOk && i < 160 * 144; ++i) {
+            unsigned c = raw[i];
+            sFXWall[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        }
+    }
+    return sFXWallOk;
+}
+
+/* The wallpaper's pixel behind lower-screen point (x, y) of the grid (sFXGrid: the picture's body, 160x120 from its row
+ * 24, stretched to the grid) or of the title (its header strip, 128x24 from column 16, stretched to the title). */
+static uint16_t FXWallBody(int x, int y)
+{
+    int sx = (x - sFXGrid.x) * 160 / sFXGrid.w, sy = 24 + (y - sFXGrid.y) * 120 / sFXGrid.h;
+
+    return sFXWall[sy * 160 + sx];
+}
+
+static uint16_t FXWallHead(int x, int y)
+{
+    int sx = 16 + (x - sFXTitle.x) * 128 / sFXTitle.w, sy = (y - sFXTitle.y) * 24 / sFXTitle.h;
+
+    return sFXWall[sy * 160 + sx];
+}
+
 /* A Pokemon's icon (FireRed's, its first frame), its centre at (cx, cy). */
 static void FXIcon(const CtrPokeTouchBoxMon *m, int cx, int cy)
 {
@@ -152,15 +189,50 @@ static void FXTitle(const CtrPokeTouchBox *b)
     FXArrowButton(&sFXNext, 1, 0, b->pressed == ST_HIT_NEXT);
     fy = EmButton(t->x, t->y, t->w, t->h, onTitle ? &kEmAmber : &kEmCream, FB_DEPTH, b->pressed == ST_HIT_TITLE);
     FNText(b->boxName, (int)sizeof(b->boxName), name, (int)sizeof(name));
+    if (FXWallpaper(b->wallpaper)) {
+        /* The wallpaper's own header strip is the name's plate, its text FireRed's white on shadow. */
+        for (int y = fy + 2; y < fy + t->h - FB_DEPTH - 2; ++y)
+            for (int x = t->x + 3; x < t->x + t->w - 3; ++x)
+                Px(x, y, FXWallHead(x, y));
+        UiTextCentered(name, &line, fy + 6, EM_WHITE, UI_RGB(56, 56, 56), 1);
+        if (onTitle)
+            EmGlowRing(t->x, fy, t->w, t->h - FB_DEPTH);
+        return;
+    }
     UiTextCentered(name, &line, fy + 6, onTitle ? kEmAmber.ink : EM_DARK, onTitle ? kEmAmber.inkSh : EM_DARK_SH, 1);
+}
+
+/* A cell over the wallpaper: the wallpaper's picture shows through a light veil, so each box looks as its wallpaper does. */
+static void FXVeilCell(const CtrPokeTouchRect *r, uint16_t edge)
+{
+    UiRoundFill(r->x, r->y, r->w, r->h, 4, edge);
+    for (int y = r->y + 1; y < r->y + r->h - 1; ++y) {
+        int cut = y < r->y + 3 || y >= r->y + r->h - 3 ? 1 : 0;
+
+        for (int x = r->x + 1 + cut; x < r->x + r->w - 1 - cut; ++x)
+            Px(x, y, UiMix(FXWallBody(x, y), UI_RGB(255, 250, 240), 4));
+    }
 }
 
 static void FXGrid(const CtrPokeTouchBox *b)
 {
+    int wall = FXWallpaper(b->wallpaper);
+
+    if (wall) {
+        /* The wallpaper's picture behind the cells, in a frame of its own border colour. */
+        UiRoundFill(sFXGrid.x - 1, sFXGrid.y - 1, sFXGrid.w + 2, sFXGrid.h + 2, 4, sFXWall[70 * 160 + 4]);
+        for (int y = sFXGrid.y; y < sFXGrid.y + sFXGrid.h; ++y)
+            for (int x = sFXGrid.x; x < sFXGrid.x + sFXGrid.w; ++x)
+                Px(x, y, FXWallBody(x, y));
+    }
     for (int i = 0; i < PT_BOX_SLOTS; ++i) {
         CtrPokeTouchRect r = FXCell(i);
         int cursor = b->area == ST_AREA_BOX && b->pos == i && b->state != PT_BOX_STATE_BUSY;
 
+        if (wall && !cursor) {
+            FXVeilCell(&r, UI_RGB(150, 136, 126));
+            continue;
+        }
         UiRoundFill(r.x, r.y, r.w, r.h, 4, cursor ? kEmAmber.lip : UI_RGB(150, 136, 126));
         EmGradFill(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 3, cursor ? kEmAmber.top : UI_RGB(255, 250, 240),
                    cursor ? kEmAmber.bottom : UI_RGB(234, 226, 212));

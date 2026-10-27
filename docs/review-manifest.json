@@ -593,7 +593,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "7120a409625d2e50b2fb00e4ca5608f39c1f71908513cba77ac0e9d5127852f1",
+   "sha256": "818f56abcd77347fbcf9fb729ddb6c1a2466e3ce96f10a0daf2f693099c4613b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1030,7 +1030,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "d7260132601c55074ed0ef7fb486c40dda6fbf91403fa09726c1a71da0907b7c",
+   "sha256": "a1f27331d5eae60ac4a4141e3c0a5b317113f78003e57f5360c4598045452c98",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5229,6 +5229,14 @@
   {
    "path": "patches/pokefirered/0157-pc-box-summary-screen.json",
    "sha256": "90c3bba90214d3226ce25bd04a0e4d0e455d241945a3cdcabae04704bf22e2c6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0158-pc-box-wallpaper-picture.json",
+   "sha256": "35ea5c015779bbe59ee5d1dfc01ceede0e729ed5c6dbc4983a8da56843150388",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
