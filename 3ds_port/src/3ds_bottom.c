@@ -98,6 +98,14 @@ extern int CtrBattle_State(void);
 extern int CtrBattle_ActionCursor(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
+extern void CtrBattle_AskCursor(int slot);
+extern void CtrListMenu_Ask(int row);
+extern void CtrMenu_Ask(int row);
+extern void CtrStorage_AskPosition(int position);
+extern void CtrDex_AskSlot(int slot);
+extern void CtrDex_AskFlip(int cmd);
+extern void CtrSummary_AskMove(int row);
+extern void CtrSummary_AskPage(int page);
 extern int CtrBattle_TargetLegal(int target);
 extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
@@ -491,7 +499,7 @@ static struct {
 static struct {
     int kind, targetArea, targetPos, postDir, target, steps, release, wait, context;
 } sStorePlan;
-static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); }
+static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); CtrStorage_AskPosition(-1); }
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
@@ -2036,6 +2044,7 @@ static void PlanPress(uint16_t keys)
 
 static void PlanClear(void)
 {
+    CtrMenu_Ask(-1);
     sPlan.kind = PLAN_NONE;
     sPlan.target = 0;
     sPlan.steps = 0;
@@ -2151,6 +2160,12 @@ static void RunPlan(void)
         sPlan.release = 1;
         return;
     }
+    if (sPlan.kind == PLAN_MENU) {
+        /* The menu's cursor goes straight to the row (the game takes it on its next frame): no steps, no clicks. */
+        CtrMenu_Ask(sPlan.target);
+        sPlan.release = 1;
+        return;
+    }
     sInjected = PlanStep(cur, sPlan.target);
     sPlan.release = 1;
 }
@@ -2201,6 +2216,8 @@ static struct {
 static void BagPlanClear(void)
 {
     memset(&sBagPlan, 0, sizeof(sBagPlan));
+    CtrListMenu_Ask(-1);
+    CtrMenu_Ask(-1);
 }
 
 static void BagPlanStart(const ListScreen *list, int kind, int target, int activate, uint16_t keys)
@@ -2251,7 +2268,11 @@ static void RunBagPlan(const ListScreen *list)
         BagPlanClear();
         return;
     }
-    sInjected = cur < sBagPlan.target ? K_DOWN : K_UP;
+    /* The row goes straight to the list's or menu's cursor (the game takes it on its next frame). */
+    if (sBagPlan.kind == BAGPLAN_LIST)
+        CtrListMenu_Ask(sBagPlan.target);
+    else
+        CtrMenu_Ask(sBagPlan.target);
     sBagPlan.release = 1;
 }
 
@@ -2332,6 +2353,8 @@ static struct {
 
 static void SumPlanClear(void)
 {
+    CtrSummary_AskMove(-1);
+    CtrSummary_AskPage(-1);
     memset(&sSumPlan, 0, sizeof(sSumPlan));
 }
 
@@ -2392,8 +2415,11 @@ static void RunSumPlan(void)
             SumPlanClear();
         else if (page == SUMMARY_MOVES_INFO)
             SumPlanPress(K_B, SUMMARY_MOVES);
-        else
-            SumPlanPress(sSumPlan.target > page ? K_RIGHT : K_LEFT, sSumPlan.target > page ? page + 1 : page - 1);
+        else {
+            /* One flip straight to the page, however many tabs away; the plan ends when the page has changed. */
+            CtrSummary_AskPage(sSumPlan.target);
+            sSumPlan.release = 1;
+        }
         return;
     case SUMPLAN_MOVE: {
         int cur = CtrBottomSummary_MoveCursor();
@@ -2405,8 +2431,10 @@ static void RunSumPlan(void)
             if (sSumPlan.activate)
                 sInjected = K_A;
             SumPlanClear();
-        } else
-            SumPlanPress(cur < sSumPlan.target ? K_DOWN : K_UP, SUMMARY_MOVES_INFO);
+        } else {
+            CtrSummary_AskMove(sSumPlan.target);        /* the cursor goes straight to the row */
+            sSumPlan.release = 1;
+        }
         return;
     }
     }
@@ -3311,51 +3339,18 @@ static void ProcessPokeTouch(const CtrInput *in)
         PokeTouchActivate(id);
 }
 
-/* The battle screen's touch: press, track, release, one action. A button walks the controller's own cursor to
- * it with its own D-pad and then sends its A; CANCEL sends its B. The buttons exist only while the controller
+/* The battle screen's touch: press, track, release, one action. A button puts the controller's own cursor on
+ * it (CtrBattle_AskCursor) and then sends its A; CANCEL sends its B. The buttons exist only while the controller
  * waits at the screen they belong to, so nothing is taken during a message, an animation, a command being taken or the battle's end; a held
  * physical button cancels it. */
 static struct {
     int active, target, state, steps, release;
-    uint16_t press;                 /* one key to send as it is (CANCEL's B), instead of walking */
+    uint16_t press;                 /* one key to send as it is (CANCEL's B), instead of moving the cursor */
 } sBatPlan;
 
 static void BatPlanClear(void)
 {
     memset(&sBatPlan, 0, sizeof(sBatPlan));
-}
-
-/* The next D-pad key from slot `cur` toward `target`. The action menu follows the graph of 3ds_battle_nav.h
- * (the one the controller's own D-pad uses); the move list is the controller's 2x2 grid, without stepping onto
- * a slot that has nothing in it (the controller would refuse). 0 if there is no way. */
-static uint16_t BatActionKey(int cur, int target)
-{
-    static const uint16_t keys[CTR_NAV_DIRS] = {K_UP, K_DOWN, K_LEFT, K_RIGHT};
-    int dir = CtrBattleActionDir(cur, target);
-
-    return dir < 0 ? 0 : keys[dir];
-}
-
-static uint16_t BatKey(int cur, int target, int count)
-{
-    int diff = cur ^ target;
-
-    if ((diff & 1) && (cur ^ 1) < count)
-        return (cur & 1) ? K_LEFT : K_RIGHT;
-    if ((diff & 2) && (cur ^ 2) < count)
-        return (cur & 2) ? K_UP : K_DOWN;
-    return 0;
-}
-
-static int BatCount(int state)
-{
-    int n = 0;
-
-    if (state == BATTLE_ACTION || state == BATTLE_SAFARI)
-        return 4;
-    for (int i = 0; i < 4; ++i)
-        n += sShown.battle.move[i].present;
-    return n;
 }
 
 static void RunBatPlan(void)
@@ -3381,28 +3376,17 @@ static void RunBatPlan(void)
         BatPlanClear();
         return;
     }
-    if (state == BATTLE_TARGET) {
-        /* The controller's target cursor goes round the legal battlers with RIGHT; A when it is on the one asked. */
-        if (CtrBattle_TargetCursor() == sBatPlan.target) {
-            sInjected = K_A;
-            BatPlanClear();
-            return;
-        }
-        sInjected = K_RIGHT;
-        sBatPlan.release = 1;
-        return;
-    }
-    cur = state == BATTLE_ACTION || state == BATTLE_SAFARI ? CtrBattle_ActionCursor() : CtrBattle_MoveCursor();
+    /* The controller puts its cursor on the slot (or target battler) asked, on its next frame and without the D-pad's
+     * steps and clicks; A once it is there. One it refuses (an empty slot, a battler that cannot be aimed at) is
+     * asked again until the step limit drops the plan. */
+    cur = state == BATTLE_TARGET ? CtrBattle_TargetCursor()
+        : state == BATTLE_ACTION || state == BATTLE_SAFARI ? CtrBattle_ActionCursor() : CtrBattle_MoveCursor();
     if (cur == sBatPlan.target) {
         sInjected = K_A;
         BatPlanClear();
         return;
     }
-    sInjected = state == BATTLE_ACTION ? BatActionKey(cur, sBatPlan.target) : BatKey(cur, sBatPlan.target, BatCount(state));
-    if (sInjected == 0) {
-        BatPlanClear();
-        return;
-    }
+    CtrBattle_AskCursor(sBatPlan.target);
     sBatPlan.release = 1;
 }
 
@@ -3754,6 +3738,8 @@ static struct {
 } sDexTap;
 static void DexPlanClear(void)
 {
+    CtrListMenu_Ask(-1);
+    CtrDex_AskSlot(-1);
     memset(&sDexPlan, 0, sizeof(sDexPlan));
 }
 
@@ -3782,7 +3768,7 @@ static void RunDexPlan(void)
             DexPlanClear();
             return;
         }
-        sInjected = sDexPlan.target < 0 ? K_LEFT : K_RIGHT;
+        CtrDex_AskFlip(sDexPlan.target < 0 ? 1 : 2);        /* the page turns on the game's next frame */
         sDexPlan.release = 1;
         return;
     }
@@ -3791,8 +3777,11 @@ static void RunDexPlan(void)
         DexPlanClear();
         return;
     }
-    sInjected = sDexPlan.kind == DEXPLAN_SLOT ? (cur < sDexPlan.target ? K_RIGHT : K_LEFT)
-              : cur < sDexPlan.target ? K_DOWN : K_UP;
+    /* The cursor goes straight to the row or slot (the game takes it on its next frame): no steps, no clicks. */
+    if (sDexPlan.kind == DEXPLAN_SLOT)
+        CtrDex_AskSlot(sDexPlan.target);
+    else
+        CtrListMenu_Ask(sDexPlan.target);
     sDexPlan.release = 1;
 }
 
@@ -4031,9 +4020,10 @@ static void RunLearnPlan(void)
     cur = CtrBottomLearn_Cursor();
     if (cur == sLearnPlan.target) {
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        CtrSummary_AskMove(-1);
         return;
     }
-    sInjected = cur < sLearnPlan.target ? K_DOWN : K_UP;
+    CtrSummary_AskMove(sLearnPlan.target);              /* straight to the row, no steps */
     sLearnPlan.release = 1;
 }
 
@@ -4280,7 +4270,12 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
+        if (cur != sStorePlan.target) {        /* the menu's cursor goes straight to the row, no steps */
+            CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.release = 1;
+            return;
+        }
+        dir = ST_DIR_A;
     } else if (sStorePlan.kind == ST_PLAN_CONTEXT) {
         if (!CtrBottomStorage_ContextMenu() && !CtrBottomStorage_YesNo()) { StorePlanClear(); return; }
         cur = CtrBottomStorage_ContextCursor();
@@ -4288,10 +4283,26 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
+        if (cur != sStorePlan.target) {
+            CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.release = 1;
+            return;
+        }
+        dir = ST_DIR_A;
     } else {
         if (!CtrBottomStorage_BoxOpen()) { StorePlanClear(); return; }
         if (!CtrBottomStorage_BoxReady()) return; /* wait for cursor animations */
+        if (CtrBottomStorage_CursorArea() == sStorePlan.targetArea && sStorePlan.targetArea != ST_AREA_TITLE
+            && sStorePlan.targetArea != ST_AREA_BUTTONS && CtrBottomStorage_CursorPos() != sStorePlan.targetPos
+            && !CtrBottomStorage_MultiMove()) {
+            /* In the box or the party the cursor goes straight to the cell, not across the ones between. */
+            CtrStorage_AskPosition(sStorePlan.targetPos);
+            if (++sStorePlan.steps > 40)
+                StorePlanClear();
+            else
+                sStorePlan.release = 1;
+            return;
+        }
         dir = CtrStorage_Next(CtrBottomStorage_CursorArea(), CtrBottomStorage_CursorPos(),
                               sStorePlan.targetArea, sStorePlan.targetPos);
         if (dir == ST_DIR_A && sStorePlan.postDir)

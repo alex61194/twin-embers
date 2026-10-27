@@ -938,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "5ef8b2781f8a572e6af872f88ebcf35697730ae9633ab6c96273508cbb52d9d2",
+   "sha256": "236b86b244a94cbdf048ef1fdf7c0523fea3d24087732308bbd9b91e31b01d6e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5276,6 +5276,22 @@
   {
    "path": "patches/pokefirered/0154-party-icon-second-frame.json",
    "sha256": "40adbd10bb139b29d855aac6b42435dc471f064d080f33464511fc75c475011e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0154-battle-tap-sets-cursor.json",
+   "sha256": "90d46549127a0599923bee957dff0e497d1794a159f76065e4e60d8f53de92f1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0156-touch-cursor-direct.json",
+   "sha256": "f083916a3d2058280e765d51bf0a890d22d78bf15c68ca417c2aa64cb6ffb0aa",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
