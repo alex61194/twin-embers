@@ -1,4 +1,5 @@
-"""gDisplayedStringBattle holds every trainer's defeat and victory text (0155), checked against the pinned decompilation."""
+"""gDisplayedStringBattle holds every trainer's defeat and victory text (0155) and is never written past its end (0165),
+checked against the pinned decompilation."""
 import json
 import re
 import unittest
@@ -7,10 +8,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = ROOT/'build/upstream'
 RECIPE = '0155-battle-string-room-for-brock.json'
+GUARD = '0165-battle-string-stops-at-buffer-end.json'
+# What BattleStringExpandPlaceholders keeps free at the end of the buffer (0165).
+MARGIN = 16
 
 
-def additions(path):
-    doc = json.loads((ROOT/'patches/pokefirered'/RECIPE).read_text())
+def additions(path, recipe=RECIPE):
+    doc = json.loads((ROOT/'patches/pokefirered'/recipe).read_text())
     row = next(row for row in doc['files'] if row['path'] == path)
     return ''.join(op['port'] for op in row['lines'] if 'port' in op)
 
@@ -87,6 +91,24 @@ class BattleStringRoom(unittest.TestCase):
             with self.subTest(name):
                 self.assertLess(encoded_length(text, table) + 3, size)
         self.assertGreater(encoded_length(texts['PewterCity_Gym_Text_BrockDefeat'], table) + 3, 300)
+
+    def test_expansion_stops_before_the_end(self):
+        # A text that ran on past the buffer reached battle_setup.c's sTrainerABattleScriptRetAddr, the script
+        # that sets a leader's badge flag after the battle: Brock's badge was not given.
+        guard = additions('src/battle_message.c', GUARD)
+        self.assertIn(f'const u32 room = dst == gDisplayedStringBattle ? DISPLAYED_STRING_BATTLE_SIZE - {MARGIN} : (u32)-1;',
+                      guard)
+        self.assertIn('    while (*src != EOS && dstId < room)\n', guard)
+        self.assertIn('            while (*toCpy != EOS && dstId < room)\n', guard)
+        self.assertIn('    dst[dstId++] = EOS;\n', guard)
+
+    @unittest.skipUnless((UPSTREAM/'charmap.txt').exists(), 'needs tools/bootstrap.py')
+    def test_no_trainer_text_is_cut(self):
+        # The longest name {PLAYER} can stand for is 7 letters, 5 more than its code and argument.
+        table, room = charmap(), port_size() - MARGIN
+        for name, text in trainer_texts().items():
+            with self.subTest(name):
+                self.assertLess(encoded_length(text, table) + 5 * text.count('{PLAYER}'), room)
 
 
 if __name__ == '__main__':
