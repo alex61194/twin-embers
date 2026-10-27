@@ -5233,6 +5233,14 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_battle_string_room.py",
+   "sha256": "9913ba3f0f872e4e64942e89b206da284c305ccafbfa63afe408893d919ea261",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original port work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; external game/dependency rights unchanged",
+   "basis": "Reviewed synthetic regression test; measures trainer texts of the pinned decompilation at test time, embeds no game assets, strings or payloads"
   }
  ],
  "historical_reviews": [
