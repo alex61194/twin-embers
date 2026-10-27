@@ -104,6 +104,7 @@ extern void CtrMenu_Ask(int row);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
+extern void CtrNaming_AskPage(int page);
 extern void CtrDex_AskSlot(int slot);
 extern void CtrDex_AskFlip(int cmd);
 extern void CtrSummary_AskMove(int row);
@@ -4123,13 +4124,15 @@ static void ProcessLearnTouch(const CtrInput *in)
     sLearnTap.down = sLearnTap.inside = 0;
 }
 
-/* A tab: FireRed's SELECT, one page at a time, until its page is the tab's. */
+/* A tab: FireRed's SELECT, the page asked for first (CtrNaming_AskPage), so the keyboard turns once, straight to the
+ * tab's page, even the one two turns away. */
 static void RunNamePlan(void)
 {
     if (!sNamePlan.active)
         return;
     if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomNaming_IsOpen() || ++sNamePlan.steps > 240) {
         memset(&sNamePlan, 0, sizeof(sNamePlan));
+        CtrNaming_AskPage(-1);
         return;
     }
     if (sNamePlan.release) {
@@ -4142,6 +4145,7 @@ static void RunNamePlan(void)
         memset(&sNamePlan, 0, sizeof(sNamePlan));
         return;
     }
+    CtrNaming_AskPage(sNamePlan.target);
     sInjected = K_SELECT;
     sNamePlan.release = 1;
 }
