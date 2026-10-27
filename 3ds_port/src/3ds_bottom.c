@@ -431,10 +431,10 @@ typedef struct {
 static void SummaryFill(CtrSummaryUiView *v);
 static int NavPending(int mode);
 
-/* The premium Summary is used for battle Party, or when enabled via Options for the field's Party and the PC's boxes. */
+/* The premium Summary is used everywhere: battle Party, field Party and the PC's boxes. */
 static int SummaryPremium(void)
 {
-    return CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY || CtrOptions_FieldSummary() == 0;
+    return 1;
 }
 
 /* Latched action list: kept while the selection menu is closed so the panel

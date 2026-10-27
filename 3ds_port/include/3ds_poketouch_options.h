@@ -38,7 +38,6 @@ void CtrOptions_Fill(CtrPokeTouchView *view, int selected);
 /* 3DS port QoL options (Page 2 of OPTIONS). */
 int CtrOptions_TypeMatchup(void);
 int CtrOptions_MoveDetails(void);
-int CtrOptions_FieldSummary(void);
 /* The day/night tint of the outdoor field (3ds_day_night.h): on unless set to OFF. */
 int CtrOptions_DayNight(void);
 /* ... the second of the day it shows: the one chosen (DAWN, DAY, DUSK, NIGHT), -1 for CLOCK (the 3DS clock's). */

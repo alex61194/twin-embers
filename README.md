@@ -78,7 +78,7 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 ### Settings
 
-OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, the field summary, DAY/NIGHT and the rising EMBERS.
+OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, DAY/NIGHT and the rising EMBERS.
 
 <img src="docs/media/17-options-1.png" width="300" alt="Options, page 1"> <img src="docs/media/18-options-2.png" width="300" alt="Options, page 2">
 

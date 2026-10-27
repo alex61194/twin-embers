@@ -290,6 +290,8 @@ typedef struct {
     uint8_t optSelected;        /* the row the bar describes (within the current page) */
     int8_t optPressed;          /* the row under a held touch, or -1, and where on it: PT_OPT_ZONE_* */
     uint8_t optZone;
+    uint8_t optFrameShow;       /* the selected row is FRAME: the bar shows a sample of its type ... */
+    uint8_t optFrameType;       /* ... 0..9 */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
     uint8_t optSegCount[PT_OPT_MAX];    /* a row of levels: how many (0: the "<" value ">" row) ... */
