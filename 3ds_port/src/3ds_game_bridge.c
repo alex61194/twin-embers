@@ -294,6 +294,10 @@ extern int CtrField_CaveTransitionActive(void);
 extern int CtrFieldEffect_ShowMonActive(void);
 extern int CtrField_FlashMaskActive(void);
 extern int CtrBottom_IsFieldCallback(void);
+/* The trainer-pic transition's banners (battle_transition.c): running, and BG0's scroll per line. */
+extern int CtrMugshot_Active(void);
+extern int CtrTransition_Bg0Canvas(void);
+extern void CtrMugshot_LineScroll(uint16_t *lines);
 
 static void UpdateStage(void)
 {
@@ -316,6 +320,7 @@ static void UpdateStage(void)
     /* The battle transition owns the effect, not the viewport: its masks are authored for 240x160, but the field under
      * them stays the native 400x240 canvas (CtrVideo_SetNativeViewport, the strict centred viewport, is no longer used). */
     CtrVideo_SetBattleTransition(sTransition.on);
+    CtrVideo_SetTransitionBg0Canvas(sTransition.on ? (unsigned)CtrTransition_Bg0Canvas() : 0);
     CtrVideo_SetNativeUi(sNativeUi.on);
     CtrVideo_SetFieldBarnDoorWipe(CtrField_BarnDoorWipeActive() != 0);
     CtrVideo_SetNativeViewport(CtrField_CaveTransitionActive() != 0);
@@ -629,7 +634,8 @@ void VBlankIntrWait(void)
     else
         CtrVideo_SetLineBrightness(NULL, 0);
     uint16_t flashWindow[160];
-    if (CtrField_FlashMaskActive() && CtrBottom_IsFieldCallback()
+    /* The banners' edges are a WIN0H value per line, like the cave's flash. */
+    if (((CtrField_FlashMaskActive() && CtrBottom_IsFieldCallback()) || CtrMugshot_Active())
         && CtrDma_ReadHBlank16(0, gGbaShadow.regs + 0x40, flashWindow, 160))
         CtrVideo_SetFlashWindow(flashWindow, 160);
     else
@@ -641,7 +647,16 @@ void VBlankIntrWait(void)
      * the callback writes it at the end of the line before. */
     {
         const uint16_t *flip = CtrTrainerCard_FlipScroll();
-        CtrVideo_SetLineScroll(2, false, flip, flip != NULL ? 160 : 0);
+        uint16_t banners[160];
+
+        if (flip == NULL && CtrMugshot_Active())
+        {
+            /* The banners slide the other way in the lower half (HBlankCB_Mugshots). */
+            CtrMugshot_LineScroll(banners);
+            CtrVideo_SetLineScroll(0, false, banners, 160);
+        }
+        else
+            CtrVideo_SetLineScroll(2, false, flip, flip != NULL ? 160 : 0);
     }
     /* Input and the bottom UI run before composition so an already-decided
      * TOP hold suppresses the very frame that requests it: opening Party via

@@ -103,6 +103,7 @@ void CtrVideo_SetIntroEdgeFill(unsigned mask);
 void CtrVideo_SetNativeViewport(bool native);
 /* FireRed's battle transition is running: the field stays the 400x240 canvas under its effect (it is not the strict 240x160 viewport). */
 void CtrVideo_SetBattleTransition(bool active);
+void CtrVideo_SetTransitionBg0Canvas(unsigned mode);
 /* Called from FireRed's code (battle_transition.c, battle_anim.c). */
 void CtrPokeballTrail_Reset(void);
 unsigned CtrPokeballTrail_Count(void);
