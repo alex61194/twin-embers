@@ -1210,6 +1210,8 @@ static int BPartySlotsOnly(const CtrBattleParty *a, const CtrBattleParty *b)
     if (a->panel != BUI_PTY_NONE || b->panel != BUI_PTY_NONE)
         return 0;
     copy.cursor = b->cursor;
+    /* A card's icon changes frames by itself (FireRed's icon animation): its own card is drawn again, not all of them. */
+    memcpy(copy.iconFrame, b->iconFrame, sizeof(copy.iconFrame));
     return memcmp(&copy, b, sizeof(copy)) == 0;
 }
 
@@ -1223,6 +1225,7 @@ static int BPartyMenuOnly(const CtrBattleView *a, const CtrBattleView *b)
         return 0;
     copy.pty.menuCursor = b->pty.menuCursor;
     copy.pressed = b->pressed;
+    memcpy(copy.pty.iconFrame, b->pty.iconFrame, sizeof(copy.pty.iconFrame));
     return memcmp(&copy, b, sizeof(copy)) == 0;
 }
 
@@ -1250,7 +1253,14 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
     CtrDirty_Clear(dirty);
     if (v->state == BUI_PARTY || old->state == BUI_PARTY) {
         /* The Party: a move of the selection or a press redraws its cards, anything else all of it. */
-        if (BPartyMenuOnly(old, v)) {
+        CtrBattleView still = *old;
+
+        memcpy(still.pty.iconFrame, v->pty.iconFrame, sizeof(still.pty.iconFrame));
+        if (v->state == BUI_PARTY && old->state == BUI_PARTY && v->pty.panel != BUI_PTY_NONE
+            && memcmp(&still, v, sizeof(still)) == 0) {
+            /* Only the icons' frames: with a menu or a message over the cards they stay as they were (a full compose,
+             * ~35 ms, every few frames for a hop nobody is looking at). */
+        } else if (BPartyMenuOnly(old, v)) {
             /* A menu's cursor or press: the picture is composed in the canvas, but only the rows that changed are presented
              * (the whole screen written at once to the shown buffer tears). */
             int n = v->pty.menuCount > 8 ? 8 : v->pty.menuCount;
@@ -1274,6 +1284,7 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
         } else {
             for (int i = 0; i < 6; ++i)
                 if ((old->pty.cursor == i) != (v->pty.cursor == i)
+                    || old->pty.iconFrame[i] != v->pty.iconFrame[i]
                     || (old->pressed == BUI_PTY_SLOT + i) != (v->pressed == BUI_PTY_SLOT + i)) {
                     CtrPokeTouchRect r = BPanel(&v->pty, i);
 

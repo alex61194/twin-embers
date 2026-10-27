@@ -2154,6 +2154,8 @@ static void LayersPrepare(void)
  */
 #define LAYER_CELLS 4096
 static uint32_t sCellSig[4][LAYER_CELLS];
+/* The tilemap entry each cell's signature was last worked out from (a cell is read again only when it differs). */
+static uint16_t sCellEnt[4][LAYER_CELLS];
 static unsigned sCellControl[4];
 
 /*
@@ -2351,24 +2353,24 @@ static bool LayerRenderCells(unsigned bg)
         && sBgPaletteStamp <= layer->walked
         && !VramChangedAfter(map, rows * columns * 2, layer->walked);
     uint64_t changedBlocks = 0, usedBlocks = 0;
-    /* Only the scroll moved since the last walk of this window (walking: the camera moves a pixel a frame and the
-     * game rewrites the map a row or a column once in 8 to 16 frames): the cells that were in view still hold what
-     * the last walk found, so only those coming into view are read. ~4500 cells and ~550 tile lookups a frame on the
-     * walking port.log, 5-7 ms of PERF_PREPARE on the Old 3DS, for one new column in eight frames. */
+    /* The window moved, the game rewrote some of the map, a tile it shows animated: the cells that were in view still
+     * hold what the last walk found (their entry, their signature), so only those coming into view, and those whose
+     * entry or tile changed, are read again. Walking, the camera moves a pixel a frame and the game rewrites a row or
+     * a column once in 8 to 16 frames; reading the whole window each time was ~4500 cells and ~550 tile lookups on
+     * the 0.2.5 port.log, 5-7 ms of PERF_PREPARE on the Old 3DS (a frame in five over 16.7 ms). */
     bool scrolled = !sameInputs && !full && windowed && layer->walkedWindow && layer->walkedWindowed
         && layer->walkedTint == sLayerFadeTint[bg] && layer->walkedFade == sFadeVersion[32]
-        && (layer->walkedScrollX != scrollX || layer->walkedScrollY != scrollY)
         && layer->walkedGeneration == sCacheGeneration
-        && sBgPaletteStamp <= layer->walked
-        && !VramChangedAfter(map, rows * columns * 2, layer->walked);
+        && sBgPaletteStamp <= layer->walked;
+    bool mapChanged = false, needRead = false;
     CellSpans prevX = {0}, prevY = {0};
     if (sameInputs || scrolled)
         for (unsigned b = 0; b < charBlocks && b < 64; ++b)
             if (sVramStamp[chars / CTR_VRAM_TRACK_BLOCK + b] > layer->walked) changedBlocks |= 1ull << b;
-    if (scrolled && (changedBlocks & layer->usedBlocks))
-        scrolled = false;   /* a tile it shows changed (flowers, water): the window is read whole, as before */
     if (scrolled)
     {
+        mapChanged = VramChangedAfter(map, rows * columns * 2, layer->walked);
+        needRead = mapChanged || (changedBlocks & layer->usedBlocks) != 0;
         VisibleSpans(&prevX, layer->walkedScrollX, Min(columns * 8, CTR_GAME_WIDTH), columns);
         VisibleSpans(&prevY, layer->walkedScrollY, Min(rows * 8, CTR_GAME_HEIGHT), rows);
     }
@@ -2400,10 +2402,12 @@ static bool LayerRenderCells(unsigned bg)
         {
             unsigned cell = row * columns + column;
             if (windowed && !InSpans(&spanX, column)) continue;
-            if (rowSeen && InSpans(&prevX, column)) continue;
+            bool seen = rowSeen && InSpans(&prevX, column);
+            if (seen && !needRead) continue;
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             unsigned block = index * tileBytes / CTR_VRAM_TRACK_BLOCK;
+            if (seen && entry == sCellEnt[bg][cell] && !(changedBlocks >> block & 1)) continue;
             int slot;
             uint8_t light = 0;
 
@@ -2430,6 +2434,7 @@ static bool LayerRenderCells(unsigned bg)
             }
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
+            sCellEnt[bg][cell] = (uint16_t)entry;
             sCellGlow[bg][cell] = light;
             /* Nothing drawn is 0; anything drawn has the top bit set. */
             cellSig[cell] = slot < 0 ? 0

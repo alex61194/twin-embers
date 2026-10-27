@@ -19,6 +19,7 @@ uint64_t CtrPlatform_Milliseconds(void)
 #define CTR_LOG_PATH "sdmc:/3ds/twinembers/port.log"
 #define CTR_LOG_PREV_PATH "sdmc:/3ds/twinembers/port-prev.log"
 #define CTR_LOG_QUEUE_BYTES (64u * 1024u)
+#define CTR_LOG_BATCH_NS 500000000LL
 
 /*
  * port.log writer. Each line used to create both directories, open, append
@@ -86,6 +87,11 @@ static void LogThreadMain(void *arg)
     while (!sLogStop)
     {
         LightEvent_Wait(&sLogWake);
+        /* Every write goes through the SD card's single file service, which the game's own reads and its save share:
+         * one open, write and close per line (a PERF_SPIKE line is ~400 bytes, dozens a second) had the game wait
+         * seconds on it (five 3.4 s frames, one of them a pack read, in the 0.2.6 Old 3DS port.log). The lines
+         * are gathered for half a second and go in one write. */
+        if (!sLogStop) svcSleepThread(CTR_LOG_BATCH_NS);
         LogWriteBatch();
         LogWriteDeferred();
     }
