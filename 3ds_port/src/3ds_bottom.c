@@ -506,10 +506,12 @@ static struct {
 } sStorePlan;
 static void StorePlanClear(void)
 {
+    if (sStorePlan.kind != ST_PLAN_NONE) {
+        CtrMenu_Ask(-1);
+        CtrStorage_Tap(-1, 0);
+        CtrMarkings_Tap(-1);
+    }
     memset(&sStorePlan, 0, sizeof(sStorePlan));
-    CtrMenu_Ask(-1);
-    CtrStorage_Tap(-1, 0);
-    CtrMarkings_Tap(-1);
 }
 
 static void BeginSessionPending(int owner);
@@ -2255,9 +2257,12 @@ static struct {
 
 static void BagPlanClear(void)
 {
+    /* Run every frame outside the Bag: only a Bag plan's own asks are taken back, or the Party's tap on a menu row is lost. */
+    if (sBagPlan.kind != BAGPLAN_NONE) {
+        CtrListMenu_Ask(-1);
+        CtrMenu_Ask(-1);
+    }
     memset(&sBagPlan, 0, sizeof(sBagPlan));
-    CtrListMenu_Ask(-1);
-    CtrMenu_Ask(-1);
 }
 
 static void BagPlanStart(const ListScreen *list, int kind, int target, int activate, uint16_t keys)
@@ -2393,8 +2398,10 @@ static struct {
 
 static void SumPlanClear(void)
 {
-    CtrSummary_AskMove(-1);
-    CtrSummary_AskPage(-1);
+    if (sSumPlan.kind != SUMPLAN_NONE) {
+        CtrSummary_AskMove(-1);
+        CtrSummary_AskPage(-1);
+    }
     memset(&sSumPlan, 0, sizeof(sSumPlan));
 }
 
@@ -3796,8 +3803,10 @@ static struct {
 } sDexTap;
 static void DexPlanClear(void)
 {
-    CtrListMenu_Ask(-1);
-    CtrDex_AskSlot(-1);
+    if (sDexPlan.active) {
+        CtrListMenu_Ask(-1);
+        CtrDex_AskSlot(-1);
+    }
     memset(&sDexPlan, 0, sizeof(sDexPlan));
 }
 
