@@ -161,6 +161,41 @@ static void SIcon(const CtrSummaryUiView *v, int x, int y, int scale)
         UiImage(pixels, pal, 32, 32, 32, x, y, scale, 1);
 }
 
+/* The Pokemon's picture, FireRed's Summary's own (the 64x64 front picture, flipped where FireRed flips it), decoded
+ * once per Pokemon shown; 0 when there is none (the caller draws the icon). */
+static int SPic(const CtrSummaryUiView *v, int x, int y)
+{
+    static unsigned shownSerial, shownIcon;
+    static int shownMon = -1, ok;
+    static uint8_t pixels[64 * 64];
+    static uint16_t pal[16];
+
+    if (v->loading || !v->icon)
+        return 0;
+    if (shownSerial != v->data.serial || shownMon != v->data.mon || shownIcon != v->icon) {
+        static unsigned char tiles[0x800];
+        static unsigned short raw[16];
+        int flip = 0;
+
+        shownSerial = v->data.serial;
+        shownMon = v->data.mon;
+        shownIcon = v->icon;
+        ok = CtrBottomSummary_Pic(tiles, raw, &flip);
+        for (int py = 0; ok && py < 64; ++py)
+            for (int px = 0; px < 64; ++px) {
+                unsigned byte = tiles[(py / 8 * 8 + px / 8) * 32 + py % 8 * 4 + px % 8 / 2];
+                pixels[py * 64 + (flip ? 63 - px : px)] = (uint8_t)((byte >> (px & 1) * 4) & 15);
+            }
+        for (int i = 0; ok && i < 16; ++i) {
+            unsigned c = raw[i];
+            pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        }
+    }
+    if (ok)
+        UiImage(pixels, pal, 64, 64, 64, x, y, 1, 1);
+    return ok;
+}
+
 /* The Summary's pieces in PokeTouch's ember look: light cards on the embers (FireRed's grey ink, labels a softer
  * grey), cream buttons, the chosen tab amber, BACK violet, the hint on a note card. */
 #define S_INK EM_DARK
@@ -262,7 +297,8 @@ static void SInfo(const CtrSummaryUiView *v)
 
     SCardBox(plate.x, plate.y, plate.w, plate.h);
     UiDisc(plate.x + 42, plate.y + 42, 34, UiMix(kEmCream.top, kEmCream.bottom, 7));
-    SIcon(v, plate.x + 10, plate.y + 8, 2);
+    if (!SPic(v, plate.x + 10, plate.y + 10))
+        SIcon(v, plate.x + 10, plate.y + 8, 2);
     SCardBox(side.x, side.y, side.w, side.h);
     if (d->egg) {
         UiText("EGG", 101, 82, S_INK, EM_DARK_SH, 1, 307);

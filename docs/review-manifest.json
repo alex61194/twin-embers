@@ -673,7 +673,7 @@
   },
   {
    "path": "3ds_port/include/3ds_summary.h",
-   "sha256": "9a273f02ca4fdb3717b62c6d2bd7ae8855a64f14d0a64ce5fe4da6b935c75a80",
+   "sha256": "bb1827fcfbc33a19b784c78e0032e3e56b991be6baf7359643f2f3b0de305bbd",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1328,7 +1328,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "bf6d0289714a47245eca7ad8125d44377660c76fd82e54810de9296c73160671",
+   "sha256": "d26c9a96991f6ca42f2e2b480716e29b890fb63b27780cbf4eb35e288f24b4db",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1522,7 +1522,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "9fc3722c9ae62e92d2565cc216cf5b8f258669171ebfeb7a71977ff2c1aaf43e",
+   "sha256": "cb53f1049d42ac4da335d26c7c1ec0859c0c9508a21d31eec002affc568ee09d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1811,7 +1811,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "7c563bbb1a3b0f7ca15158ec70686b6cb77df29de1a8a6867d95084c0155a6f9"
+   "sha256": "2f1a3e7510893f5c9debe233d1635dcee68b72c1727aeceb4d6a4b5c87751c12"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -5333,6 +5333,14 @@
   {
    "path": "patches/pokefirered/0165-battle-string-stops-at-buffer-end.json",
    "sha256": "456eb0ed541a1cd6696b0fcd44c5b7b1f7d4758215beb937299abe9a42f3d183",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0166-pc-summary-message-and-picture.json",
+   "sha256": "b2c61b1a35884809106348ce4bf9ef88747447b6dbdbc0a3212498a1847f642b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
