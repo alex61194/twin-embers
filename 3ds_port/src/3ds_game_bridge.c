@@ -118,6 +118,11 @@ static int sCameraKX, sCameraKY;
 static unsigned sCameraMap = ~0u;
 /* Frames to wait before searching again after a search found nothing. */
 static unsigned sCameraWait;
+/* Searches in a row that found nothing: each one waits longer (CAMERA_WAIT_MAX at most). A search is ~500
+ * offsets of up to 132 metatile lookups, ~47 ms on the emulated Old 3DS. */
+static unsigned sCameraFails;
+#define CAMERA_WAIT_MAX 64u
+extern int CtrBottom_IsFieldCallback(void);
 /* Where the offset was last checked, and for how many frames since nothing
  * moved: standing still, the check (132 metatiles looked up) runs one frame
  * in CAMERA_RECHECK, not every frame. */
@@ -173,6 +178,10 @@ static bool UpdateCamera(void)
     if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
     if (map != sCameraMap) sCameraKnown = false;
     sCameraMap = map;
+    /* A menu over the map (Party, Pokedex, Bag, Summary...) has replaced the tilemap buffers with its own: there is
+     * nothing to check or to find in them, and looking cost a 47 ms frame every nine (port.log, 0.2.5 Old 3DS mode).
+     * What was found stays for the return to the field, whose own buffers are checked again then. */
+    if (!CtrBottom_IsFieldCallback()) return sCameraKnown;
     if (sCameraKnown && px == sCameraCheckedX && py == sCameraCheckedY && ++sCameraStill < CAMERA_RECHECK)
         return true;
     sCameraStill = 0;
@@ -205,9 +214,18 @@ static bool UpdateCamera(void)
                 sCameraKnown = true;
             }
         }
-    if (!sCameraKnown) sCameraWait = 8;
-    else CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera map=%04x pos=%d,%d offset=%d,%d misses=%u", map, px, py,
-                      (px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, best);
+    if (!sCameraKnown)
+    {
+        sCameraWait = 8u << (sCameraFails < 3 ? sCameraFails : 3);
+        if (sCameraWait > CAMERA_WAIT_MAX) sCameraWait = CAMERA_WAIT_MAX;
+        ++sCameraFails;
+    }
+    else
+    {
+        sCameraFails = 0;
+        CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera map=%04x pos=%d,%d offset=%d,%d misses=%u", map, px, py,
+                     (px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, best);
+    }
     return sCameraKnown;
 }
 

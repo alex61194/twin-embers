@@ -4686,7 +4686,15 @@ static void ProfInit(void)
 
     memset(&sProf, 0, sizeof(sProf));
     if (file == NULL)
+    {
+#if CTR_FORCE_OLD3DS
+        /* The Old 3DS test build exists to read its port.log: the lower screen's share is in it without a bottom.perf. */
+        sProf.on = 1;
+        sProf.slowUs = PROF_DEFAULT_SLOW_US;
+        CtrLog_Write(CTR_LOG_BOOT, "bottom: profiling on, slow frame over %u us", sProf.slowUs);
+#endif
         return;
+    }
     sProf.on = 1;
     sProf.slowUs = fscanf(file, "%u", &slow) == 1 && slow ? slow : PROF_DEFAULT_SLOW_US;
     fclose(file);
