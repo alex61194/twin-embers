@@ -124,6 +124,11 @@ static unsigned sCameraWait;
 #define CAMERA_RECHECK 16u
 static int sCameraCheckedX = -1, sCameraCheckedY = -1;
 static unsigned sCameraStill;
+/* Frames in a row the known offset has failed its check. */
+static unsigned sCameraBad;
+/* A step moves the player before the field redraws its new row or column, so for a frame or two the buffers
+ * disagree with a right offset: that is not a lost camera. Losing it lit every window until it was found again. */
+#define CAMERA_GRACE 12
 
 /* How many sampled in-map metatiles the buffers disagree with at this offset
  * (stops past limit); *samples counts the ones looked at. */
@@ -173,8 +178,18 @@ static bool UpdateCamera(void)
     sCameraStill = 0;
     sCameraCheckedX = px;
     sCameraCheckedY = py;
-    if (sCameraKnown && CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
-        return true;
+    if (sCameraKnown)
+    {
+        if (CameraMisses((px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, 8, &samples) <= 8)
+        {
+            sCameraBad = 0;
+            return true;
+        }
+        /* Not a settled check: look again next frame. */
+        sCameraCheckedX = -1;
+        if (++sCameraBad <= CAMERA_GRACE) return true;
+    }
+    sCameraBad = 0;
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
     for (int ty = 0; ty < 32 && best; ty += 2)
