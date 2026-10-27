@@ -157,15 +157,17 @@ int main(void)
     uint64_t restoredTid = RestoreLumaHbldrTitle();
 
     /* New 3DS: the application core at 804 MHz with its L2 cache. Ignored by
-     * an Old 3DS. Frame pacing stays on the VBlank, so only headroom grows. */
-    osSetSpeedupEnable(true);
+     * an Old 3DS. Frame pacing stays on the VBlank, so only headroom grows.
+     * A New 3DS acting as an Old 3DS asks for 268 MHz without L2 instead. */
+    osSetSpeedupEnable(CtrPlatform_IsNew3DS());
     CtrLog_Write(CTR_LOG_BOOT, "native main reached");
     CtrLog_Write(CTR_LOG_BOOT, "FireRed3DS %s git=%s dirty=%u AgbMain=%p",
                  CTR_BUILD_LABEL, CTR_BUILD_GIT, CTR_BUILD_DIRTY, (void *)AgbMain);
     {
-        bool isNew3ds = false;
-        APT_CheckNew3DS(&isNew3ds);
-        CtrLog_Write(CTR_LOG_BOOT, "console: %s", isNew3ds ? "New 3DS, 804 MHz + L2 requested" : "Old 3DS");
+        bool isNew3ds = CtrPlatform_IsNew3DS();
+        CtrLog_Write(CTR_LOG_BOOT, "console: %s", isNew3ds ? "New 3DS, 804 MHz + L2 requested"
+                     : CtrPlatform_Old3DSForced() ? "New 3DS acting as Old 3DS (forced: 268 MHz, no L2, no core 2)"
+                     : "Old 3DS");
         if (!isNew3ds)
             CtrOptions_EmbersDefaultLow();      /* the sparks cost frames there: LOW until the player says otherwise */
         if (restoredTid != 0)

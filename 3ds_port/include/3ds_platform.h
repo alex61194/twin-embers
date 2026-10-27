@@ -37,6 +37,12 @@ void CtrPlatform_Fatal(const char *reason) __attribute__((noreturn));
 void CtrPlatform_ShowDataError(const char *title, const char *detail) __attribute__((noreturn));
 /* Error screen on the bottom console until A, then exit(1). detail may be NULL. */
 void CtrPlatform_ShowError(const char *heading, const char *title, const char *detail) __attribute__((noreturn));
+/* The console as the game plays it: false on an Old 3DS, and also on a New 3DS
+ * told to act as one (built with CTR_FORCE_OLD3DS=1, or with the file
+ * sdmc:/3ds/twinembers/force_old3ds on the card), to measure Old 3DS speed. */
+bool CtrPlatform_IsNew3DS(void);
+/* True when a New 3DS is acting as an Old 3DS. */
+bool CtrPlatform_Old3DSForced(void);
 uint64_t CtrPlatform_Milliseconds(void);
 /* Raw ARM11 ticks, for game translation units that cannot include libctru. */
 uint64_t CtrPlatform_Ticks(void);

@@ -25,6 +25,11 @@ CFLAGS += -DCTR_AUDIO_POLYPHASE=$(CTR_AUDIO_POLYPHASE)
 # 0 keeps the PSG (Game Boy channels) point-sampled instead of band-limited.
 CTR_AUDIO_PSG_BLEP ?= 1
 CFLAGS += -DCTR_AUDIO_PSG_BLEP=$(CTR_AUDIO_PSG_BLEP)
+# 1 makes a New 3DS play as an Old 3DS (268 MHz, no L2, no core 2, Old 3DS
+# settings) and writes port.log without debug.txt: a build to measure Old 3DS
+# speed. The file sdmc:/3ds/twinembers/force_old3ds does the same at run time.
+CTR_FORCE_OLD3DS ?= 0
+CFLAGS += -DCTR_FORCE_OLD3DS=$(CTR_FORCE_OLD3DS)
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
 
 .PHONY: all clean verify verify-host verify-game-core verify-title-units verify-game-source verify-game-data verify-sound-data verify-sound-songs verify-m4a-arm11 verify-naming-exit verify-map-load-wait verify-battle-transition-exit link-game-probe verify-game-relocs romfs-bundles game-3dsx verify-game-3dsx
@@ -35,7 +40,7 @@ build/%.o: src/%.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # The version this checkout builds, shown on the title screen as v$(TWIN_EMBERS_VERSION). Change it here when a release starts.
-TWIN_EMBERS_VERSION := 0.2.1
+TWIN_EMBERS_VERSION := 0.2.2
 .PHONY: force-git-version
 build/git_version.h: force-git-version ../tools/gen_git_version.py
 	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION)

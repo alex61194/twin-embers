@@ -22,6 +22,7 @@
 #include "3ds_audio_mix.h"
 #include "3ds_log.h"
 #include "3ds_perf.h"
+#include "3ds_platform.h"
 #include "gba_shadow.h"
 
 enum {
@@ -85,9 +86,7 @@ int CtrAudio_Init(void)
     }
     sNdspUp = 1;
     {
-        bool isNew3ds = false;
-
-        if (sPsgBlep && R_SUCCEEDED(APT_CheckNew3DS(&isNew3ds)) && !isNew3ds)
+        if (sPsgBlep && !CtrPlatform_IsNew3DS())
         {
             sPsgBlep = 0;
             CtrLog_Write(CTR_LOG_AUDIO, "Old 3DS: PSG point-sampled (band-limited only on a New 3DS)");
@@ -464,8 +463,8 @@ bool CtrAudio_StartWorker(void (*mix)(void))
     svcGetThreadPriority(&priority, CUR_THREAD_HANDLE);
     /* Above the game thread: the game only ever waits on the mix it asked for. */
     priority = priority > 0x18 ? priority - 1 : priority;
-    /* Core 2 exists on a New 3DS only; an Old 3DS refuses it. */
-    sWorker = threadCreate(Worker, NULL, 32 * 1024, priority, core, false);
+    /* Core 2 exists on a New 3DS only; an Old 3DS refuses it, and one acting as an Old 3DS skips it. */
+    sWorker = CtrPlatform_IsNew3DS() ? threadCreate(Worker, NULL, 32 * 1024, priority, core, false) : NULL;
     if (sWorker == NULL && R_SUCCEEDED(APT_SetAppCpuTimeLimit(CTR_AUDIO_SYSCORE_PERCENT)))
     {
         core = 1;

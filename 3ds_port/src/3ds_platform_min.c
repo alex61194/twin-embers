@@ -117,13 +117,42 @@ static bool FileExists(const char *path)
     return true;
 }
 
+#ifndef CTR_FORCE_OLD3DS
+#define CTR_FORCE_OLD3DS 0
+#endif
+#define CTR_FORCE_OLD3DS_PATH "sdmc:/3ds/twinembers/force_old3ds"
+static int sNew3ds = -1;
+static bool sOld3dsForced;
+
+static void ConsoleInit(void)
+{
+    bool isNew3ds = false;
+
+    if (sNew3ds >= 0) return;
+    if (R_FAILED(APT_CheckNew3DS(&isNew3ds))) isNew3ds = false;
+    sOld3dsForced = isNew3ds && (CTR_FORCE_OLD3DS || FileExists(CTR_FORCE_OLD3DS_PATH));
+    sNew3ds = isNew3ds && !sOld3dsForced;
+}
+
+bool CtrPlatform_IsNew3DS(void)
+{
+    ConsoleInit();
+    return sNew3ds;
+}
+
+bool CtrPlatform_Old3DSForced(void)
+{
+    ConsoleInit();
+    return sOld3dsForced;
+}
+
 static void LogInit(void)
 {
     sLogMode = LOG_OFF;
     sWarpTrace = FileExists("sdmc:/3ds/twinembers/warp.trace");
     sMoveTrace = FileExists("sdmc:/3ds/twinembers/tm.trace");
     bool sync = FileExists("sdmc:/3ds/twinembers/log.sync");
-    if (!sWarpTrace && !sMoveTrace && !sync && !FileExists("sdmc:/3ds/twinembers/debug.txt"))
+    if (!sWarpTrace && !sMoveTrace && !sync && !CTR_FORCE_OLD3DS && !FileExists("sdmc:/3ds/twinembers/debug.txt"))
         return;
     mkdir("sdmc:/3ds", 0777);
     mkdir("sdmc:/3ds/twinembers", 0777);
