@@ -101,6 +101,7 @@ extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
 extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
+extern void CtrStorage_AskPosition(int position);
 extern void CtrDex_AskSlot(int slot);
 extern void CtrDex_AskFlip(int cmd);
 extern void CtrSummary_AskMove(int row);
@@ -497,7 +498,7 @@ static struct {
 static struct {
     int kind, targetArea, targetPos, postDir, target, steps, release, wait, context;
 } sStorePlan;
-static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); }
+static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); CtrStorage_AskPosition(-1); }
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
@@ -4264,6 +4265,17 @@ static void RunStoragePlan(int mode)
     } else {
         if (!CtrBottomStorage_BoxOpen()) { StorePlanClear(); return; }
         if (!CtrBottomStorage_BoxReady()) return; /* wait for cursor animations */
+        if (CtrBottomStorage_CursorArea() == sStorePlan.targetArea && sStorePlan.targetArea != ST_AREA_TITLE
+            && sStorePlan.targetArea != ST_AREA_BUTTONS && CtrBottomStorage_CursorPos() != sStorePlan.targetPos
+            && !CtrBottomStorage_MultiMove()) {
+            /* In the box or the party the cursor goes straight to the cell, not across the ones between. */
+            CtrStorage_AskPosition(sStorePlan.targetPos);
+            if (++sStorePlan.steps > 40)
+                StorePlanClear();
+            else
+                sStorePlan.release = 1;
+            return;
+        }
         dir = CtrStorage_Next(CtrBottomStorage_CursorArea(), CtrBottomStorage_CursorPos(),
                               sStorePlan.targetArea, sStorePlan.targetPos);
         if (dir == ST_DIR_A && sStorePlan.postDir)
