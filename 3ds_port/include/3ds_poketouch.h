@@ -198,6 +198,7 @@ typedef struct {
     int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
     uint8_t holding;                /* a Pokemon in hand (held) */
     uint8_t box;
+    uint8_t wallpaper;              /* the box's wallpaper (FireRed's WALLPAPER_*) */
     uint8_t boxName[12];
     CtrPokeTouchBoxMon slot[PT_BOX_SLOTS];
     CtrPokeTouchBoxMon party[6];
@@ -350,6 +351,8 @@ int CtrPokeTouch_BoxHit(const CtrPokeTouchView *view, int x, int y);
 /* The game's side: a Pokemon's icon (its first frame, 4bpp 32x32) and palette; and the box as it is now (0 while the
  * port should show FireRed's own picture). */
 int CtrPokeTouch_MonIcon(unsigned species, unsigned personality, int egg, unsigned char *tiles, unsigned short *palette);
+/* A box wallpaper's 160x144 picture, as FireRed draws it: BGR555, 0 when there is none. */
+int CtrPokeTouch_Wallpaper(unsigned id, unsigned short *rgb555);
 int CtrBottomStorage_BoxFill(CtrPokeTouchBox *box);
 /* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);

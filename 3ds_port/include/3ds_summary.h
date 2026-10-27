@@ -2,14 +2,16 @@
 #define CTR_SUMMARY_H
 
 /* Where a Summary the lower screen shows was opened from: FireRed's normal Summary of the player's party, from the
- * field's Party or from the battle's Party (it returns there through CB2_ReturnToPartyMenuFromSummaryScreen). Fixed
- * when ShowPokemonSummaryScreen starts, before any callback changes, and kept for the Summary's whole life: a battle's
- * Summary is the battle's even though BattleMainCB2 is not running. Every other Summary (learning or forgetting a
- * move, the PC, a trade, ...) is NONE and stays FireRed's own picture. */
+ * field's Party or from the battle's Party (it returns there through CB2_ReturnToPartyMenuFromSummaryScreen), or a PC
+ * box's SUMMARY (of a Pokemon in the box, in the Party beside it or in hand; it returns through
+ * CB2_ReturnToPokeStorage). Fixed when ShowPokemonSummaryScreen starts, before any callback changes, and kept for the
+ * Summary's whole life: a battle's Summary is the battle's even though BattleMainCB2 is not running. Every other
+ * Summary (learning or forgetting a move, a trade, ...) is NONE and stays FireRed's own picture. */
 enum CtrSummaryOrigin {
     CTR_SUMMARY_NONE = 0,
     CTR_SUMMARY_FIELD_PARTY,
     CTR_SUMMARY_BATTLE_PARTY,
+    CTR_SUMMARY_PC_BOX,
 };
 
 /* Display snapshot only; the FireRed Summary allocation owns all state. */
@@ -50,5 +52,9 @@ int CtrBottomSummary_Mon(void);
 unsigned CtrBottomSummary_Serial(void);
 int CtrBottomSummary_MoveCursor(void);
 int CtrBottomSummary_HitAt(int x, int y);
+/* The Pokemon shown, its icon (FireRed's, the first frame, as CtrPokeTouch_MonIcon gives it): its icon species, 0 with
+ * none, and the picture. A box's Pokemon are not the party's, so the Summary's own Pokemon is asked, not a slot. */
+unsigned CtrBottomSummary_IconSpecies(void);
+int CtrBottomSummary_Icon(unsigned char *tiles, unsigned short *palette);
 
 #endif

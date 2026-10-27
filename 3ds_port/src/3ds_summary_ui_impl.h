@@ -131,14 +131,34 @@ static uint16_t SStatusColor(const char *status)
     return 0;
 }
 
-/* The Pokemon's icon (FireRed's 32x32 party icon of its slot) at `scale`. */
+/* The Pokemon's icon (FireRed's 32x32 icon of the Pokemon shown, a box's too) at `scale`, decoded once per icon. */
 static void SIcon(const CtrSummaryUiView *v, int x, int y, int scale)
 {
-    int slot = v->data.mon;
+    static unsigned shown;
+    static int ok;
+    static uint8_t pixels[32 * 32];
+    static uint16_t pal[16];
 
-    if (v->loading || slot < 0 || slot >= 6 || !BPartyIcon(slot, v->icon))
+    if (v->loading || !v->icon)
         return;
-    UiImage(sBPIcon[slot].pixels, sBPIcon[slot].pal, 32, 32, 32, x, y, scale, 1);
+    if (shown != v->icon + 1u) {
+        static unsigned char tiles[512];
+        static unsigned short raw[16];
+
+        shown = v->icon + 1u;
+        ok = CtrBottomSummary_Icon(tiles, raw);
+        for (int py = 0; ok && py < 32; ++py)
+            for (int px = 0; px < 32; ++px) {
+                unsigned byte = tiles[(py / 8 * 4 + px / 8) * 32 + py % 8 * 4 + px % 8 / 2];
+                pixels[py * 32 + px] = (uint8_t)((byte >> (px & 1) * 4) & 15);
+            }
+        for (int i = 0; ok && i < 16; ++i) {
+            unsigned c = raw[i];
+            pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        }
+    }
+    if (ok)
+        UiImage(pixels, pal, 32, 32, 32, x, y, scale, 1);
 }
 
 /* The Summary's pieces in PokeTouch's ember look: light cards on the embers (FireRed's grey ink, labels a softer

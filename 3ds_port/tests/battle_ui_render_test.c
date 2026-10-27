@@ -88,6 +88,12 @@ int CtrBottomParty_Icon(int slot, unsigned char *tiles, unsigned short *pal)
     return 1;
 }
 
+unsigned CtrBottomSummary_IconSpecies(void) { return 0; }
+int CtrBottomSummary_Icon(unsigned char *tiles, unsigned short *pal)
+{ (void)tiles; (void)pal; return 0; }
+int CtrPokeTouch_Wallpaper(unsigned id, unsigned short *rgb555)
+{ (void)id; (void)rgb555; return 0; }
+
 static uint16_t canvas[W * H], reference[W * H];
 static uint16_t at(int x, int y) { return canvas[x * H + H - 1 - y]; }
 
