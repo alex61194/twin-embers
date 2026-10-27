@@ -1,4 +1,4 @@
-"""Storage touch geometry and cursor routes; no emulator or real game data."""
+"""Storage touch geometry; no emulator or real game data."""
 import os
 import subprocess
 import tempfile
@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 class StorageTouch(unittest.TestCase):
-    def test_geometry_and_routes(self):
+    def test_geometry(self):
         program = r'''
 #include <assert.h>
 #include <stdio.h>
@@ -44,31 +44,11 @@ int main(void)
     assert(CtrStorage_PcHit(20, 88, 5) == ST_HIT_NONE);
     assert(CtrStorage_BoxHit(145, 58, 1) != ST_HIT_NONE);
     assert(CtrStorage_BoxHit(95, 10, 1) == ST_HIT_NONE);
-    assert(CtrStorage_Next(ST_AREA_BOX, 10, ST_AREA_TITLE, 0) == ST_DIR_START);
-    assert(CtrStorage_Next(ST_AREA_TITLE, 0, ST_AREA_BOX, 2) == ST_DIR_DOWN);
-    assert(CtrStorage_Next(ST_AREA_BUTTONS, 1, ST_AREA_BUTTONS, 0) == ST_DIR_RIGHT);
-    assert(CtrStorage_Next(ST_AREA_PARTY, 3, ST_AREA_BOX, 3) == ST_DIR_B);
-    assert(CtrStorage_Next(ST_AREA_PARTY, 3, ST_AREA_TITLE, 0) == ST_DIR_B);
-    assert(CtrStorage_Next(ST_AREA_PARTY, 3, ST_AREA_BUTTONS, 1) == ST_DIR_B);
     assert(CtrStorage_BoxHit(104, 64, 1) == ST_HIT_PARTY_BASE);
     for (int slot = 1; slot < 6; ++slot)
         assert(CtrStorage_BoxHit(152, 16 + 24 * (slot - 1), 1) == ST_HIT_PARTY_BASE + slot);
     assert(CtrStorage_BoxHit(152, 132, 1) == ST_HIT_PARTY_BASE + 6);
-    for (int from = 0; from < 30; ++from)
-    for (int to = 0; to < 30; ++to) {
-        int at=from, n=0;
-        while (at!=to && ++n<40) {
-            int d=CtrStorage_Next(ST_AREA_BOX,at,ST_AREA_BOX,to);
-            if (d==ST_DIR_UP) at-=6;
-            else if (d==ST_DIR_DOWN) at+=6;
-            else if (d==ST_DIR_LEFT) --at;
-            else if (d==ST_DIR_RIGHT) ++at;
-            else assert(0);
-            assert(at>=0 && at<30);
-        }
-        assert(at==to);
-    }
-    puts("storage-touch: all box slots, menu bounds and 900 cursor routes PASS");
+    puts("storage-touch: all box slots and menu bounds PASS");
     return 0;
 }
 '''

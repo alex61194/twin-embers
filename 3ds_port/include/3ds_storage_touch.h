@@ -1,6 +1,6 @@
 #ifndef CTR_STORAGE_TOUCH_H
 #define CTR_STORAGE_TOUCH_H
-/* Standalone geometry/route rules for the GBA 240x160 PC image sampled 1:1.
+/* Standalone geometry rules for the GBA 240x160 PC image sampled 1:1.
  * UI touch coordinates are source GBA pixels; no Pokemon state is written. */
 enum {
     ST_HIT_NONE = -1, ST_HIT_TITLE = 40, ST_HIT_BUTTON_PARTY = 41,
@@ -60,39 +60,5 @@ static inline int CtrStorage_PcHit(int x, int y, int count)
     if (count < 1 || count > 5 || x < 8 || x >= 146 || y < 8 || y >= 8 + 16 * count)
         return ST_HIT_NONE;
     return ST_HIT_PC_BASE + (y - 8) / 16;
-}
-/* Each move follows FireRed's own cursor graph; no direct data mutation. */
-static inline int CtrStorage_Next(int area, int pos, int targetArea, int targetPos)
-{
-    if (targetArea == ST_AREA_TITLE) {
-        if (area == ST_AREA_TITLE) return ST_DIR_A;
-        if (area == ST_AREA_PARTY) return ST_DIR_B;
-        return ST_DIR_START;
-    }
-    if (targetArea == ST_AREA_PARTY) {
-        if (area == ST_AREA_PARTY)
-            return pos == targetPos ? ST_DIR_A : (pos < targetPos ? ST_DIR_DOWN : ST_DIR_UP);
-        if (area == ST_AREA_BOX) return ST_DIR_DOWN;
-        if (area == ST_AREA_TITLE) return ST_DIR_UP;
-        if (area == ST_AREA_BUTTONS) return pos == 0 ? ST_DIR_A : ST_DIR_LEFT;
-        return ST_DIR_NONE;
-    }
-    if (targetArea == ST_AREA_BUTTONS) {
-        if (area == ST_AREA_BUTTONS) return pos == targetPos ? ST_DIR_A : ST_DIR_RIGHT;
-        if (area == ST_AREA_TITLE) return ST_DIR_UP;
-        if (area == ST_AREA_BOX) return ST_DIR_DOWN;
-        if (area == ST_AREA_PARTY) return ST_DIR_B;
-        return ST_DIR_NONE;
-    }
-    if (targetArea != ST_AREA_BOX || targetPos < 0 || targetPos >= 30) return ST_DIR_NONE;
-    if (area == ST_AREA_TITLE) return ST_DIR_DOWN;
-    if (area == ST_AREA_BUTTONS) return ST_DIR_UP;
-    if (area == ST_AREA_PARTY) return ST_DIR_B;
-    if (area != ST_AREA_BOX || pos < 0 || pos >= 30) return ST_DIR_NONE;
-    if (pos / 6 > targetPos / 6) return ST_DIR_UP;
-    if (pos / 6 < targetPos / 6) return ST_DIR_DOWN;
-    if (pos % 6 > targetPos % 6) return ST_DIR_LEFT;
-    if (pos % 6 < targetPos % 6) return ST_DIR_RIGHT;
-    return ST_DIR_A;
 }
 #endif

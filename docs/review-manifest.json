@@ -663,7 +663,7 @@
   },
   {
    "path": "3ds_port/include/3ds_storage_touch.h",
-   "sha256": "d1fa015094c1421e540b780b618864a38d79fd39a7cc4b3a9fa13323b406466f",
+   "sha256": "2a23fcce8ee59c2c70aac5cdde0495b9d06eb2011ef0ea93fe49a55d2238976b",
    "review_status": "reviewed",
    "credit": "alex61194 (original source-only port work with disclosed AI assistance)",
    "license": "MIT for original port changes only; inherited/external game rights excluded",
@@ -938,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "703212e1391a2231c8fcf47693c1a7f30bb1f71d0e0d822a75cb8e326db68333",
+   "sha256": "fbfbdd0475bd0c0cdf9b424529e5128f4cfb03eb41152e135a010ca294c81ad8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1861,7 +1861,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "ec829778e6767cbd2811995670a709364aec883847a868d46ba4bece7a0ff5dc",
+   "sha256": "5c0b788ed014f50fa8906bfc594b0f4107cbd50a3b1b6186d4e1bafec2db8ff7",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
@@ -5056,7 +5056,7 @@
   },
   {
    "path": "tools/test_storage_touch.py",
-   "sha256": "87b0eeac90da3789e29a12d5d42958d70203c70d9acb09d2c3f0f854e0d39d92",
+   "sha256": "f84c05c799fc9c8b0745ec5828e9fef3269d2aa954add05fef63c55624881d7b",
    "review_status": "reviewed",
    "credit": "alex61194 (original source-only port work with disclosed AI assistance)",
    "license": "MIT for original port changes only; inherited/external game rights excluded",
@@ -5300,6 +5300,14 @@
   {
    "path": "patches/pokefirered/0161-key-items-on-x-and-y.json",
    "sha256": "35879065c390286ec43311afe910e27e4b7cc84afb8f5ba1a77d8acc1b005bc6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0162-pc-box-tap-acts-at-once.json",
+   "sha256": "adacbb35a1e747bd57a40c8e226c268c879cc6f844b99f95925c9a71b8bd38ed",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
