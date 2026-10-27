@@ -5251,7 +5251,7 @@
   },
   {
    "path": "tools/test_battle_string_room.py",
-   "sha256": "9913ba3f0f872e4e64942e89b206da284c305ccafbfa63afe408893d919ea261",
+   "sha256": "f8a80bb5b883f27744304d2f678c973da92ce16332666a31355bfcfe3d77c82c",
    "review_status": "reviewed",
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; external game/dependency rights unchanged",
@@ -5300,6 +5300,14 @@
   {
    "path": "patches/pokefirered/0161-key-items-on-x-and-y.json",
    "sha256": "35879065c390286ec43311afe910e27e4b7cc84afb8f5ba1a77d8acc1b005bc6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0165-battle-string-stops-at-buffer-end.json",
+   "sha256": "456eb0ed541a1cd6696b0fcd44c5b7b1f7d4758215beb937299abe9a42f3d183",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
