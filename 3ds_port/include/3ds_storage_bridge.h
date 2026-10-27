@@ -18,6 +18,7 @@ int CtrBottomStorage_ContextY(void);
 int CtrBottomStorage_ContextW(void);
 int CtrBottomStorage_BoxChoose(void);
 int CtrBottomStorage_YesNo(void);
+int CtrBottomStorage_MarkMenu(void);
 int CtrBottomStorage_InputContext(void);
 int CtrBottomStorage_PCInputContext(void);
 int CtrBottomStorage_BoxPresented(void);

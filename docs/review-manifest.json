@@ -594,7 +594,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "673bd04f2961d1d98626810b3efebcf5ffc02c0fd5eb4463a61bcd0fb9537049",
+   "sha256": "200b1badd21f4b3b8f40576c95d08ad19dc2a62a2e1e9851a570045a0d04f9e5",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -658,7 +658,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "8a9e8bc4b39ab6fb9d495a0a2a1fe057c7996a5e7615c16adb0428286ea3eab3",
+   "sha256": "5e8dc7aaf01f513112941cceed566874367db80fd07508345bb2d42282df5144",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
@@ -938,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "fbfbdd0475bd0c0cdf9b424529e5128f4cfb03eb41152e135a010ca294c81ad8",
+   "sha256": "e2a9c5f58ed64fdbdf3a5ad26fe34c0955f623e55f8817b6a1d4f51305bb19e8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1032,7 +1032,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "d18dc14a079449e603e3fe1f36443a308aa62d3fecfcfcab8c53b4c877ddd1c3",
+   "sha256": "4a5d91616026d2fa01208f19a527eb7d353ccba61afcd3d50b707d025ba2be18",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1810,7 +1810,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "08cc56cb1711846bcaf438cd64199a5e7acb9dc659aa00b96f0c1c2d925ec3d6"
+   "sha256": "7c563bbb1a3b0f7ca15158ec70686b6cb77df29de1a8a6867d95084c0155a6f9"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -1861,7 +1861,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "5c0b788ed014f50fa8906bfc594b0f4107cbd50a3b1b6186d4e1bafec2db8ff7",
+   "sha256": "8e97d837752a27d18117cea73a76d9132c3767eab73c26a70b0f31289804f90d",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
@@ -5308,6 +5308,14 @@
   {
    "path": "patches/pokefirered/0162-pc-box-tap-acts-at-once.json",
    "sha256": "adacbb35a1e747bd57a40c8e226c268c879cc6f844b99f95925c9a71b8bd38ed",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0163-pc-marks-drawn-and-tapped.json",
+   "sha256": "92473c7dfe640303da52568241e08a7ac61341c3cecbe756152a382b9818b51d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

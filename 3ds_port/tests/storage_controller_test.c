@@ -49,10 +49,14 @@ static int askedRow = -1, tappedArea = -1, tappedPos = -1;
 static void CtrMenu_Ask(int row) { askedRow = row; }
 static void CtrStorage_Tap(int area, int position) { tappedArea = area; tappedPos = position; }
 static int CtrStorage_TapPending(void) { return tappedArea >= 0; }
+static int markTap = -1, markMenu;
+static void CtrMarkings_Tap(int position) { markTap = position; }
+int CtrBottomStorage_MarkMenu(void) { return markMenu; }
 
 /* PRODUCTION TOUCH TRANSFORM */
 static struct { int mode; CtrPokeTouchView touch; } sShown;   /* touch.box.on 0: FireRed's own picture */
-int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y) { (void)v; (void)x; (void)y; return -1; }
+static int boxHitOverride = -1;
+int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y) { (void)v; (void)x; (void)y; return boxHitOverride; }
 static int sHaveShown;
 static uint16_t sRouteKey;
 /* PRODUCTION STRUCTS */
@@ -158,6 +162,17 @@ int main(void)
     tap(MODE_STORAGE_BOX,172,44); sRouteKey=0;
     task(Task_OnSelectedMon,2); RunStoragePlan(MODE_STORAGE_BOX);
     assert(!sStorePlan.kind && !sRouteKey && tappedArea<0);
+    /* The marking card: a tapped mark, OK or CANCEL goes to the card at once, nothing pressed. */
+    {
+        static const int cx[6]={35,73,111,149,55,129}, cy[6]={94,94,94,94,132,132};
+        task(Task_PokeStorageMain,1); markMenu=1;
+        sHaveShown=1; sShown.mode=MODE_STORAGE_BOX; sShown.touch.box.on=1; sShown.touch.box.state=PT_BOX_STATE_MARKS;
+        for (int i=0;i<6;++i) {
+            markTap=-1; boxHitOverride=ST_HIT_MENU_BASE+i;
+            tap(MODE_STORAGE_BOX,cx[i],cy[i]); assert(markTap==i && !sRouteKey && !sStorePlan.kind);
+        }
+        boxHitOverride=-1; sHaveShown=0; sShown.touch.box.on=0; markMenu=0;
+    }
     task(Task_JumpBox,1);
     tap(MODE_STORAGE_BOX,124,88); assert(sRouteKey==K_LEFT); no_repeat(MODE_STORAGE_BOX);
     tap(MODE_STORAGE_BOX,196,88); assert(sRouteKey==K_RIGHT); no_repeat(MODE_STORAGE_BOX);

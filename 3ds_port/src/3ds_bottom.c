@@ -103,6 +103,7 @@ extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
+extern void CtrMarkings_Tap(int position);
 extern void CtrDex_AskSlot(int slot);
 extern void CtrDex_AskFlip(int cmd);
 extern void CtrSummary_AskMove(int row);
@@ -501,7 +502,13 @@ static struct {
     int kind, targetArea, targetPos, target, steps, release, wait, context;
     int asked;                      /* CtrMenu_Ask or CtrStorage_Tap sent */
 } sStorePlan;
-static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); CtrStorage_Tap(-1, 0); }
+static void StorePlanClear(void)
+{
+    memset(&sStorePlan, 0, sizeof(sStorePlan));
+    CtrMenu_Ask(-1);
+    CtrStorage_Tap(-1, 0);
+    CtrMarkings_Tap(-1);
+}
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
@@ -4232,6 +4239,11 @@ static void StoreBeginTouch(int mode, int hit)
                && hit >= ST_HIT_MENU_BASE && hit < ST_HIT_PC_BASE) {
         sStorePlan.kind = ST_PLAN_CONTEXT;
         sStorePlan.target = hit - ST_HIT_MENU_BASE;
+    } else if (mode == MODE_STORAGE_BOX && CtrBottomStorage_MarkMenu()) {
+        /* The marking card takes the tap on its next input: a mark turns on or off, OK or CANCEL closes it. */
+        if (hit >= ST_HIT_MENU_BASE && hit < ST_HIT_MENU_BASE + 6)
+            CtrMarkings_Tap(hit - ST_HIT_MENU_BASE);
+        return;
     } else if (mode == MODE_STORAGE_BOX && CtrBottomStorage_BoxChoose()) {
         sRouteKey = hit == ST_HIT_PREV ? K_LEFT : hit == ST_HIT_NEXT ? K_RIGHT
                   : hit == ST_HIT_TITLE ? K_A : 0;
