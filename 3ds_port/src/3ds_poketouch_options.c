@@ -11,7 +11,6 @@ static const char *const sBattleStyle[] = {"SHIFT", "SET"};
 static const char *const sSound[] = {"MONO", "STEREO"};
 static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
-static const char *const sSummaryMode[] = {"3DS", "GBA"};
 static const char *const sDayNight[] = {"CLOCK", "FIXED", "OFF"};
 enum { DAY_NIGHT_CLOCK, DAY_NIGHT_FIXED, DAY_NIGHT_OFF, DAY_NIGHT_COUNT };
 /* FIXED's hour, picked on the HOUR row: any half hour of the 24, 00:00 to 23:30. */
@@ -32,7 +31,6 @@ static const char *const sEmbers[] = {"OFF", "LOW", "HIGH"};     /* CTR_EMBERS_*
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
-static int sPortFieldSummary;
 static int sPortDayNight;
 static int sPortHour = HOUR_DEFAULT;
 static int sPortEmbers = CTR_EMBERS_HIGH;
@@ -42,8 +40,6 @@ static int GetTypeMatchup(void) { return sPortTypeMatchup; }
 static void SetTypeMatchup(int v) { sPortTypeMatchup = v & 1; }
 static int GetMoveDetails(void) { return sPortMoveDetails; }
 static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
-static int GetFieldSummary(void) { return sPortFieldSummary; }
-static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
 static int GetDayNight(void) { return sPortDayNight; }
 static int DayNightCount(void) { return DAY_NIGHT_COUNT; }
 static void SetDayNight(int v) { sPortDayNight = v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v; }
@@ -66,7 +62,6 @@ static void SetEmbers(int v)
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
-int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
 int CtrOptions_DayNight(void) { return sPortDayNight != DAY_NIGHT_OFF; }
 int CtrOptions_DayNightSecond(void) { return sPortDayNight == DAY_NIGHT_FIXED ? sPortHour * HOUR_STEP_SECONDS : -1; }
 int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
@@ -97,8 +92,6 @@ static const CtrOptionRow sRows[] = {
      GetTypeMatchup, TwoCount, SetTypeMatchup},
     {"MOVE DETAILS", {"Show live move details", "and category in battle."}, 0, sFps, NULL,
      GetMoveDetails, TwoCount, SetMoveDetails},
-    {"FIELD SUMMARY", {"Use the 3DS Summary", "screen from field Party."}, 0, sSummaryMode, NULL,
-     GetFieldSummary, TwoCount, SetFieldSummary},
     {"DAY/NIGHT", {"The 3DS clock's hour, the", "HOUR below, or off."}, 0, sDayNight, NULL,
      GetDayNight, DayNightCount, SetDayNight},
     {"HOUR", {"The hour outdoors when", "DAY/NIGHT is FIXED."}, 0, sHourName, NULL,
