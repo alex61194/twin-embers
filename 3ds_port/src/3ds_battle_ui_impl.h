@@ -1213,6 +1213,19 @@ static int BPartySlotsOnly(const CtrBattleParty *a, const CtrBattleParty *b)
     return memcmp(&copy, b, sizeof(copy)) == 0;
 }
 
+/* Whether two Party views with the same menu or YES / NO open differ only by its cursor row and the row pressed. */
+static int BPartyMenuOnly(const CtrBattleView *a, const CtrBattleView *b)
+{
+    CtrBattleView copy = *a;
+
+    if (a->state != BUI_PARTY || b->state != BUI_PARTY || a->pty.panel != b->pty.panel
+        || (b->pty.panel != BUI_PTY_ACTIONS && b->pty.panel != BUI_PTY_YESNO))
+        return 0;
+    copy.pty.menuCursor = b->pty.menuCursor;
+    copy.pressed = b->pressed;
+    return memcmp(&copy, b, sizeof(copy)) == 0;
+}
+
 /* Whether a screen with the balls must be drawn again whole: another screen, other balls, other cards. */
 static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
 {
@@ -1237,7 +1250,22 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
     CtrDirty_Clear(dirty);
     if (v->state == BUI_PARTY || old->state == BUI_PARTY) {
         /* The Party: a move of the selection or a press redraws its cards, anything else all of it. */
-        if (old->state != v->state || !BPartySlotsOnly(&old->pty, &v->pty) || old->pty.lead != v->pty.lead
+        if (BPartyMenuOnly(old, v)) {
+            /* A menu's cursor or press: the picture is composed in the canvas, but only the rows that changed are presented
+             * (the whole screen written at once to the shown buffer tears). */
+            int n = v->pty.menuCount > 8 ? 8 : v->pty.menuCount;
+
+            CtrBattleUi_Draw(canvas, v);
+            EmSurface();
+            for (int i = 0; i < n; ++i)
+                if ((old->pty.menuCursor == i) != (v->pty.menuCursor == i)
+                    || (old->pressed == BUI_PTY_MENU + i) != (v->pressed == BUI_PTY_MENU + i)) {
+                    CtrPokeTouchRect r = BPMenuRow(n, i);
+
+                    r = UiInset(&r, -3);
+                    BMark(dirty, &r);
+                }
+        } else if (old->state != v->state || !BPartySlotsOnly(&old->pty, &v->pty) || old->pty.lead != v->pty.lead
             || ((old->pressed >= BUI_PTY_MENU && old->pressed < BUI_PTY_MESSAGE) != (v->pressed >= BUI_PTY_MENU && v->pressed < BUI_PTY_MESSAGE))
             || (v->pty.panel != BUI_PTY_NONE && old->pressed != v->pressed)) {
             CtrBattleUi_Draw(canvas, v);
