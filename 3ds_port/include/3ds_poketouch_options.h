@@ -41,6 +41,8 @@ int CtrOptions_MoveDetails(void);
 int CtrOptions_FieldSummary(void);
 /* The day/night tint of the outdoor field (3ds_day_night.h): on unless set to OFF. */
 int CtrOptions_DayNight(void);
+/* ... the second of the day it shows: the one chosen (DAWN, DAY, DUSK, NIGHT), -1 for CLOCK (the 3DS clock's). */
+int CtrOptions_DayNightSecond(void);
 /* The embers rising behind the lower screen's menus: OFF, LOW or HIGH (CTR_EMBERS_*). LOW is a third of the
  * sparks, moved every third frame. The choice is kept in settings.cfg (3ds_settings.h); until the player makes
  * one, CtrOptions_EmbersInit gives the console's: HIGH on a New 3DS, LOW on an Old 3DS. */

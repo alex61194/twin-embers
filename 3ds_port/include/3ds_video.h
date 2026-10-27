@@ -125,11 +125,11 @@ void CtrVideo_SetMapNamePopup(bool active);
 /* While FireRed's forest map preview fades into the field: its picture covers the canvas. */
 void CtrVideo_SetForestPreview(bool active);
 /* Whether the field being shown is outdoors with the day/night option on: the
- * compositor then tints the map and its sprites by the 3DS clock's hour
- * (3ds_day_night.h), and lights the windows its tilesets list
- * (3ds_day_night_lights.h; either list may be NULL). Menus and text boxes keep
- * their colours. */
-void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+ * compositor then tints the map and its sprites by the hour (3ds_day_night.h),
+ * and lights the windows its tilesets list (3ds_day_night_lights.h; either list
+ * may be NULL). Menus and text boxes keep their colours. second is the second
+ * of the day the player chose in OPTIONS, or negative for the 3DS clock's. */
+void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, unsigned primaryCount,
                           const uint16_t *secondary, unsigned secondaryCount);
 /* Where the field's tilemap stands on the map, for the windows' own hours:
  * the BG cell (tileX, tileY) holds the top-left tile of map metatile (mapX,
