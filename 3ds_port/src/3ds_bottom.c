@@ -1522,6 +1522,20 @@ static uint8_t PartyIconFrame(unsigned tick, unsigned hp, unsigned maxHp, int eg
     return (uint8_t)((hp != 0 || egg ? phase : 0) | phase << 1);
 }
 
+/* What FireRed's card says in its description box when a TM, HM, tutor or stone is being offered to the Party. */
+static uint8_t PartyTag(const char *text)
+{
+    if (!strcmp(text, "ABLE") || !strcmp(text, "ABLE!"))
+        return BUI_PTY_TAG_ABLE;
+    if (!strcmp(text, "NOT ABLE") || !strcmp(text, "NOT ABLE!"))
+        return BUI_PTY_TAG_NOT_ABLE;
+    if (!strcmp(text, "LEARNED"))
+        return BUI_PTY_TAG_LEARNED;
+    if (!strncmp(text, "No use", 6))
+        return BUI_PTY_TAG_NO_USE;
+    return BUI_PTY_TAG_NONE;
+}
+
 /* The battle Party as the Party is now (the lower screen's own Party snapshot `s`, which reads FireRed's Party): the six
  * slots, the Party's selection, what it was opened for, and its menu or message when it has one open. */
 static void BattlePartyFill(Snapshot *s)
@@ -1560,6 +1574,8 @@ static void BattlePartyFill(Snapshot *s)
 
             p->entry[i] = (uint8_t)(entry < 0 ? BUI_PTY_ABLE : entry);
         }
+        else
+            p->tag[i] = PartyTag(s->description[i]);
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {

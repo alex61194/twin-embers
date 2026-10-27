@@ -50,20 +50,15 @@ static const CtrPokeTouchRect sBPCancel = {244, 180, 72, 52};
 static const CtrPokeTouchRect sBPConfirm = {244, 180, 72, 26}, sBPCancelLow = {244, 208, 72, 24};
 #define BP_DEPTH 3
 
-/* A slot's card, where FireRed puts it, so the D-pad walks the cards as they look: the lead (one, two in a double) on
- * the left, the others stacked on the right, down the slots' order. */
+/* A slot's card: two columns of three, the slots reading left to right and down, as the Party's D-pad walks them (the
+ * patched UpdatePartySelectionGrid). */
 static CtrPokeTouchRect BPanel(const CtrBattleParty *p, int i)
 {
-    int lead = p->lead == 2 ? 2 : 1, rest = 6 - lead;
+    int h = (164 - 4 * 2) / 3;     /* 4 apart: a card's glow never reaches its neighbour's redraw */
+    CtrPokeTouchRect r = {(int16_t)(i & 1 ? 163 : 6), (int16_t)(6 + (h + 4) * (i >> 1)), 151, (int16_t)h};
 
-    if (i < lead) {
-        CtrPokeTouchRect r = {6, (int16_t)(6 + 56 * i), 151, 50};
-        return r;
-    } else {
-        int h = (164 - 4 * (rest - 1)) / rest;     /* 4 apart: a card's glow never reaches its neighbour's redraw */
-        CtrPokeTouchRect r = {163, (int16_t)(6 + (h + 4) * (i - lead)), 151, (int16_t)h};
-        return r;
-    }
+    (void)p;
+    return r;
 }
 
 /* A row of the Party's menu: one column of up to four, two columns beyond. */
@@ -307,6 +302,22 @@ static int BPartyBounce(const CtrBattleParty *p, int i)
     return p->cursor == i ? (p->iconFrame[i] & 2 ? 1 : -3) : 0;
 }
 
+/* The card's verdict on the item or move being taught, on a pill where its HP numbers would be. */
+static int BPartyTagPill(const CtrBattleParty *p, int i, const CtrPokeTouchRect *r, int fy, int y, int h)
+{
+    static const char *const text[5] = {"", "ABLE", "NOT ABLE", "LEARNED", "NO USE"};
+    static const uint16_t tint[5] = {0, UI_RGB(70, 168, 84), UI_RGB(112, 112, 128), UI_RGB(70, 132, 214), UI_RGB(112, 112, 128)};
+    int tag = p->tag[i], w;
+    CtrPokeTouchRect pill;
+
+    if (tag <= BUI_PTY_TAG_NONE || tag > BUI_PTY_TAG_NO_USE || p->egg[i] || p->mode == BUI_PTY_MULTI)
+        return 0;
+    w = UiTextWidth(text[tag], 1) + 12;
+    pill = (CtrPokeTouchRect){(int16_t)(r->x + r->w - 6 - w), (int16_t)(fy + y), (int16_t)w, (int16_t)h};
+    UiBadge(&pill, tint[tag], text[tag]);
+    return 1;
+}
+
 /* A Party card: a raised card (amber and glowing for the Party's selection, grey for one that fainted) with the icon
  * on its round plate, the name, the level or a status chip, the HP bar and numbers. An empty slot is a hollow. */
 static void BPartyPanel(int i, const CtrBattleView *v)
@@ -318,7 +329,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     CtrPokeTouchRect r = BPanel(p, i);
     int fainted = p->present[i] && !p->egg[i] && p->hp[i] == 0, selected = p->cursor == i;
     int press = v->pressed == BUI_PTY_SLOT + i;
-    int barred = p->mode == BUI_PTY_MULTI && p->entry[i] == BUI_PTY_NOT_ABLE;
+    int barred = (p->mode == BUI_PTY_MULTI && p->entry[i] == BUI_PTY_NOT_ABLE)
+              || p->tag[i] == BUI_PTY_TAG_NOT_ABLE || p->tag[i] == BUI_PTY_TAG_NO_USE;
     const EmPal *pal = selected ? &kEmAmber : fainted || barred ? &kEmGrey : &kEmCream;
     int fy, fh = r.h - BP_DEPTH;
 
@@ -364,7 +376,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
             UiRoundFill(bar.x - 1, bar.y - 1, bar.w + 2, bar.h + 2, 2, UI_RGB(64, 72, 104));
             UiHpBar(&bar, p->hp[i], p->maxHp[i]);
             snprintf(text, sizeof(text), "%u/%u", p->hp[i], p->maxHp[i]);
-            UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), ly, pal->ink, pal->inkSh, 1, r.x + r.w);
+            if (!BPartyTagPill(p, i, &r, fy, fh - 12, 11))
+                UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), ly, pal->ink, pal->inkSh, 1, r.x + r.w);
         }
         return;
     }
@@ -395,7 +408,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
         UiRoundFill(bar.x - 1, bar.y - 1, bar.w + 2, bar.h + 2, 2, UI_RGB(64, 72, 104));
         UiHpBar(&bar, p->hp[i], p->maxHp[i]);
         snprintf(text, sizeof(text), "%u/%u", p->hp[i], p->maxHp[i]);
-        UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), fy + 30, pal->ink, pal->inkSh, 1, r.x + r.w);
+        if (!BPartyTagPill(p, i, &r, fy, 28, 13))
+            UiText(text, r.x + r.w - 6 - UiTextWidth(text, 1), fy + 30, pal->ink, pal->inkSh, 1, r.x + r.w);
     }
 }
 

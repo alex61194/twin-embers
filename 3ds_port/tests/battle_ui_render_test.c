@@ -79,6 +79,7 @@ int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned short *p
 int CtrPokeTouch_MapArt(int group, uint16_t *map, uint8_t *tiles, uint16_t *pal, uint16_t *bgMap, uint8_t *bgTiles)
 { (void)group; (void)map; (void)tiles; (void)pal; (void)bgMap; (void)bgTiles; return 0; }
 int CtrPokeTouch_MapPlayerIcon(uint8_t *tiles, uint16_t *pal) { (void)tiles; (void)pal; return 0; }
+int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes) { (void)mark; (void)indexes; return 0; }
 int CtrPokeTouch_MapCursorIcon(uint8_t *tiles, uint16_t *pal) { (void)tiles; (void)pal; return 0; }
 int CtrBottomParty_Icon(int slot, unsigned char *tiles, unsigned short *pal)
 {
@@ -480,9 +481,9 @@ int main(int argc, char **argv)
     v.state = BUI_PARTY;
     {
         CtrBattleParty *p = &v.pty;
-        static const char *const nm[6] = {"CHARIZARD", "PIDGEOT", "SNORLAX", "ALAKAZAM", "GENGAR", ""};
+        static const char *const nm[6] = {"CHARIZARD", "PIDGEOT", "SNORLAX", "ALAKAZAM", "GENGAR", "BLASTOISE"};
 
-        for (k = 0; k < 5; ++k) {
+        for (k = 0; k < 6; ++k) {
             p->present[k] = 1; p->level[k] = (uint8_t)(50 + k); p->maxHp[k] = 150; p->hp[k] = (uint16_t)(150 - 30 * k);
             p->icon[k] = (uint16_t)(k + 1); names(p->name[k], sizeof(p->name[k]), nm[k]);
         }
@@ -498,7 +499,10 @@ int main(int argc, char **argv)
     settle(&old, &v); old = v;
     v.pty.panel = BUI_PTY_TEXT; names(v.pty.message, sizeof(v.pty.message), "CHARIZARD is already in battle!");
     settle(&old, &v); old = v; put(out, "14_party_message"); hits(&v);
-    v.pty.panel = BUI_PTY_NONE; v.pty.mode = BUI_PTY_FORCED; settle(&old, &v); old = v; put(out, "15_party_forced"); hits(&v);
+    v.pty.panel = BUI_PTY_NONE; v.pty.tag[0] = BUI_PTY_TAG_ABLE; v.pty.tag[1] = BUI_PTY_TAG_NOT_ABLE; v.pty.tag[2] = BUI_PTY_TAG_LEARNED;
+    v.pty.tag[3] = BUI_PTY_TAG_NO_USE; v.pty.tag[4] = BUI_PTY_TAG_ABLE; settle(&old, &v); old = v; put(out, "12b_party_teach");
+    memset(v.pty.tag, 0, sizeof(v.pty.tag)); settle(&old, &v); old = v;
+    v.pty.mode = BUI_PTY_FORCED; settle(&old, &v); old = v; put(out, "15_party_forced"); hits(&v);
     v.state = BUI_ACTION; settle(&old, &v); old = v;
     v.state = BUI_IDLE; settle(&old, &v);
 
