@@ -89,6 +89,7 @@ enum { PT_BAG_HIT_TAB = 100, PT_BAG_HIT_ROW = 200, PT_BAG_HIT_MENU = 300, PT_BAG
 typedef struct {
     uint8_t on;                     /* the viewport shows this Bag (no GBA picture) */
     uint8_t kind;                   /* PT_BAG_KIND_*: the Bag, or a case it opens */
+    uint16_t regX, regY;            /* the items on the X and Y buttons (0 none), tagged on their key-item rows */
     uint16_t titleItem;             /* a case: its own item (the title's icon), its name and its CLOSE row */
     char title[20];
     char closeName[16];

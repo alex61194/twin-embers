@@ -775,6 +775,8 @@ static void BagBar(CtrPokeTouchView *v)
         CtrBottomBag_ItemName(item, v->bar[1], PT_BAR_LEN);
     if (item != 0 && item == v->registeredItem)
         snprintf(v->bar[2], PT_BAR_LEN, "On the X button");
+    else if (item != 0 && item == v->bikeItem)
+        snprintf(v->bar[2], PT_BAR_LEN, "On the Y button");
     else
         snprintf(v->bar[2], PT_BAR_LEN, "Money  %u", CtrBottomBag_Money());
 }
@@ -894,7 +896,11 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         b->money = CtrBottomShop_Money();
         b->sale = state == BAG_QUANTITY ? CtrBottomShop_Total() : 0;
     } else
+    {
         b->pocket = (uint8_t)CtrBottomBag_Pocket();
+        b->regX = (uint16_t)CtrPokeTouch_RegisteredItem();
+        b->regY = (uint16_t)CtrPokeTouch_BikeItem();
+    }
     b->count = (int16_t)(count = list->count());
     b->cursor = (int16_t)list->cursor();
     total = count + 1;

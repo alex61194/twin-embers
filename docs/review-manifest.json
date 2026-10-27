@@ -594,7 +594,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "98099eccebac5d3a02c62c2fe718998c6e33b101638a29d2ab94ed48e1199b2a",
+   "sha256": "673bd04f2961d1d98626810b3efebcf5ffc02c0fd5eb4463a61bcd0fb9537049",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -938,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "8b23719b1ce14401a227dbdce196035fe236c1c5a192df38f113ffa96fb1795c",
+   "sha256": "d7ac902ed3eebcbb1884409d41c5625eda6a5074548aecdb777bfbad0e26b9d8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1024,7 +1024,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "96f6a3332b38ac7d3820e8474da95e578b3402bc2b36664aeff4f5726efd3aa4",
+   "sha256": "4865faf28d8fd05c8ca4c0601da024ab1e11fc8fb38756a57b5d1b2ed702f3ef",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5292,6 +5292,14 @@
   {
    "path": "patches/pokefirered/0156-touch-cursor-direct.json",
    "sha256": "f083916a3d2058280e765d51bf0a890d22d78bf15c68ca417c2aa64cb6ffb0aa",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0155-key-items-on-x-and-y.json",
+   "sha256": "92b5b8c70e39aeb1965e53d2b9547b5f56563f3817d9c930e55e3eaf2e7011c3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
