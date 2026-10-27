@@ -1986,6 +1986,10 @@ typedef struct
     bool walkedWindow, walkedTint;
     unsigned walkedScrollX, walkedScrollY;
     uint32_t walkedFade;
+    /* The 1 KiB VRAM blocks, from the layer's tile base, holding a tile some
+     * cell of that walk shows: a tile animation elsewhere (the flowers every
+     * 8 frames, the water every 16) changes nothing on this layer. */
+    uint64_t usedBlocks;
     bool valid;
 } LayerTexture;
 static LayerTexture sLayers[4];
@@ -2321,19 +2325,36 @@ static bool LayerRenderCells(unsigned bg)
      * tinted, skips the same way while its scroll, its tint and the fade base
      * are those of its last walk: the cells in view are the ones that walk
      * checked. Standing still on the field, that was ~1600 cells a layer
-     * walked every frame for nothing; on an Old 3DS a few milliseconds. */
+     * walked every frame for nothing; on an Old 3DS a few milliseconds.
+     *
+     * Tile VRAM is judged by the blocks the last walk showed: FireRed swaps
+     * the flowers' tiles every 8 frames and the water's twice every 16, on
+     * every outdoor map, and each swap walked all three layers again (~2.5 ms
+     * on an Old 3DS, the port.log's PERF_SPIKE every 8 frames). A swap in a
+     * block the layer does not show skips; one it shows walks only the cells
+     * whose tile is in a changed block (partial), the water and its shore. */
     unsigned scrollX = Reg(0x10 + bg * 4) & 511, scrollY = Reg(0x12 + bg * 4) & 511;
-    bool sameWalk = !full
+    unsigned tileBytes = color256 ? 64 : 32;
+    unsigned charBlocks = (Min(1024u * tileBytes, 0x10000u - chars) + CTR_VRAM_TRACK_BLOCK - 1) / CTR_VRAM_TRACK_BLOCK;
+    bool sameInputs = !full
         && (layer->walkedPlain ? !windowed && !sLayerFadeTint[bg]
             : layer->walkedWindow && layer->walkedTint == sLayerFadeTint[bg]
               && layer->walkedFade == sFadeVersion[32]
               && (!windowed || (layer->walkedScrollX == scrollX && layer->walkedScrollY == scrollY)))
         && layer->walkedGeneration == sCacheGeneration
         && sBgPaletteStamp <= layer->walked
-        && !VramChangedAfter(map, rows * columns * 2, layer->walked)
-        && !VramChangedAfter(chars, Min(1024u * (color256 ? 64 : 32), 0x10000u - chars), layer->walked);
-    if (sameWalk)
+        && !VramChangedAfter(map, rows * columns * 2, layer->walked);
+    uint64_t changedBlocks = 0, usedBlocks = 0;
+    if (sameInputs)
+        for (unsigned b = 0; b < charBlocks && b < 64; ++b)
+            if (sVramStamp[chars / CTR_VRAM_TRACK_BLOCK + b] > layer->walked) changedBlocks |= 1ull << b;
+    if (sameInputs && !(changedBlocks & layer->usedBlocks))
+    {
+        /* Everything the walk read still holds as of this frame. */
+        layer->walked = sStats.frames + 1;
         return false;
+    }
+    bool partial = sameInputs;
     layer->walked = sStats.frames + 1;
     layer->walkedGeneration = sCacheGeneration;
     layer->walkedPlain = !windowed && !sLayerFadeTint[bg];
@@ -2355,8 +2376,12 @@ static bool LayerRenderCells(unsigned bg)
             if (windowed && !InSpans(&spanX, column)) continue;
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
+            unsigned block = index * tileBytes / CTR_VRAM_TRACK_BLOCK;
             int slot;
             uint8_t light = 0;
+
+            usedBlocks |= 1ull << block;
+            if (partial && !(changedBlocks >> block & 1)) continue;
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
@@ -2386,11 +2411,15 @@ static bool LayerRenderCells(unsigned bg)
             dirty[count++] = (uint16_t)cell;
         }
     }
+    /* A partial walk reads the same map, so the same blocks. */
+    if (!partial) layer->usedBlocks = usedBlocks;
     if (bg && sFieldLayers) GlowCellsCollect(bg, cells);
     if (count == 0) return false;
     /* Most of the window changed: clear it as whole rectangles (at most four
-     * with wrap) and draw every cell in it, instead of a clear per cell. */
-    bool wholeWindow = windowed && count > visible / 2;
+     * with wrap) and draw every cell in it, instead of a clear per cell.
+     * Not after a partial walk: the cells it skipped were not read this
+     * frame (cellSlot is shared by the four layers). */
+    bool wholeWindow = windowed && !partial && count > visible / 2;
     if (wholeWindow)
     {
         count = 0;
@@ -2399,7 +2428,7 @@ static bool LayerRenderCells(unsigned bg)
                 for (unsigned column = 0; column < columns; ++column)
                     if (InSpans(&spanX, column)) dirty[count++] = (uint16_t)(row * columns + column);
     }
-    else if (full || count > cells / 2)
+    else if (!partial && (full || count > cells / 2))
     {
         full = true;
         count = cells;
