@@ -101,7 +101,10 @@ extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
 extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
-extern void CtrStorage_AskPosition(int position);
+extern void CtrStorage_Tap(int area, int position);
+extern int CtrStorage_TapPending(void);
+extern void CtrMarkings_Tap(int position);
+extern void CtrNaming_AskPage(int page);
 extern void CtrDex_AskSlot(int slot);
 extern void CtrDex_AskFlip(int cmd);
 extern void CtrSummary_AskMove(int row);
@@ -497,10 +500,16 @@ static struct {
     int active, mode, hit, inside, context;
 } sStoreTouch;
 static struct {
-    int kind, targetArea, targetPos, postDir, target, steps, release, wait, context;
-    int asked;                      /* CtrMenu_Ask sent: if the cursor did not move, step there */
+    int kind, targetArea, targetPos, target, steps, release, wait, context;
+    int asked;                      /* CtrMenu_Ask or CtrStorage_Tap sent */
 } sStorePlan;
-static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); CtrStorage_AskPosition(-1); }
+static void StorePlanClear(void)
+{
+    memset(&sStorePlan, 0, sizeof(sStorePlan));
+    CtrMenu_Ask(-1);
+    CtrStorage_Tap(-1, 0);
+    CtrMarkings_Tap(-1);
+}
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
@@ -4119,13 +4128,15 @@ static void ProcessLearnTouch(const CtrInput *in)
     sLearnTap.down = sLearnTap.inside = 0;
 }
 
-/* A tab: FireRed's SELECT, one page at a time, until its page is the tab's. */
+/* A tab: FireRed's SELECT, the page asked for first (CtrNaming_AskPage), so the keyboard turns once, straight to the
+ * tab's page, even the one two turns away. */
 static void RunNamePlan(void)
 {
     if (!sNamePlan.active)
         return;
     if ((CtrInput_Get()->held & 0x3ffu) || !CtrBottomNaming_IsOpen() || ++sNamePlan.steps > 240) {
         memset(&sNamePlan, 0, sizeof(sNamePlan));
+        CtrNaming_AskPage(-1);
         return;
     }
     if (sNamePlan.release) {
@@ -4138,6 +4149,7 @@ static void RunNamePlan(void)
         memset(&sNamePlan, 0, sizeof(sNamePlan));
         return;
     }
+    CtrNaming_AskPage(sNamePlan.target);
     sInjected = K_SELECT;
     sNamePlan.release = 1;
 }
@@ -4235,6 +4247,11 @@ static void StoreBeginTouch(int mode, int hit)
                && hit >= ST_HIT_MENU_BASE && hit < ST_HIT_PC_BASE) {
         sStorePlan.kind = ST_PLAN_CONTEXT;
         sStorePlan.target = hit - ST_HIT_MENU_BASE;
+    } else if (mode == MODE_STORAGE_BOX && CtrBottomStorage_MarkMenu()) {
+        /* The marking card takes the tap on its next input: a mark turns on or off, OK or CANCEL closes it. */
+        if (hit >= ST_HIT_MENU_BASE && hit < ST_HIT_MENU_BASE + 6)
+            CtrMarkings_Tap(hit - ST_HIT_MENU_BASE);
+        return;
     } else if (mode == MODE_STORAGE_BOX && CtrBottomStorage_BoxChoose()) {
         sRouteKey = hit == ST_HIT_PREV ? K_LEFT : hit == ST_HIT_NEXT ? K_RIGHT
                   : hit == ST_HIT_TITLE ? K_A : 0;
@@ -4247,10 +4264,8 @@ static void StoreBeginTouch(int mode, int hit)
             sStorePlan.targetArea = ST_AREA_PARTY;
             sStorePlan.targetPos = hit - ST_HIT_PARTY_BASE;
         } else if (hit == ST_HIT_TITLE || hit == ST_HIT_PREV || hit == ST_HIT_NEXT) {
-            sStorePlan.targetArea = ST_AREA_TITLE;
-            sStorePlan.targetPos = 0;
-            if (hit == ST_HIT_PREV) sStorePlan.postDir = ST_DIR_LEFT;
-            else if (hit == ST_HIT_NEXT) sStorePlan.postDir = ST_DIR_RIGHT;
+            sStorePlan.targetArea = ST_AREA_TITLE;      /* the title's A, or its arrows' scroll (positions 1, 2) */
+            sStorePlan.targetPos = hit == ST_HIT_PREV ? 1 : hit == ST_HIT_NEXT ? 2 : 0;
         } else if (hit == ST_HIT_BUTTON_PARTY || hit == ST_HIT_BUTTON_CLOSE) {
             sStorePlan.targetArea = ST_AREA_BUTTONS;
             sStorePlan.targetPos = hit == ST_HIT_BUTTON_PARTY ? 0 : 1;
@@ -4350,29 +4365,24 @@ static void RunStoragePlan(int mode)
         dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
     } else {
         if (!CtrBottomStorage_BoxOpen()) { StorePlanClear(); return; }
-        if (!CtrBottomStorage_BoxReady()) return; /* wait for cursor animations */
-        if (CtrBottomStorage_CursorArea() == sStorePlan.targetArea && sStorePlan.targetArea != ST_AREA_TITLE
-            && sStorePlan.targetArea != ST_AREA_BUTTONS && CtrBottomStorage_CursorPos() != sStorePlan.targetPos
-            && !CtrBottomStorage_MultiMove()) {
-            /* In the box or the party the cursor goes straight to the cell, not across the ones between. */
-            CtrStorage_AskPosition(sStorePlan.targetPos);
-            if (++sStorePlan.steps > 40)
-                StorePlanClear();
-            else
-                sStorePlan.release = 1;
+        if (sStorePlan.asked) {
+            /* The box takes the tap on its next input: the cursor straight on the place and the place's own A, the
+             * scroll or the button's action, all at once. Taken or dropped, the tap is over. */
+            if (!CtrStorage_TapPending())
+                memset(&sStorePlan, 0, sizeof(sStorePlan));
             return;
         }
-        dir = CtrStorage_Next(CtrBottomStorage_CursorArea(), CtrBottomStorage_CursorPos(),
-                              sStorePlan.targetArea, sStorePlan.targetPos);
-        if (dir == ST_DIR_A && sStorePlan.postDir)
-            dir = sStorePlan.postDir;
+        if (!CtrBottomStorage_BoxReady()) return; /* wait for the cursor's own animation */
+        CtrStorage_Tap(sStorePlan.targetArea, sStorePlan.targetPos);
+        sStorePlan.asked = 1;
+        return;
     }
     if (dir == ST_DIR_NONE || ++sStorePlan.steps > 40) {
         StorePlanClear();
         return;
     }
     sRouteKey = StoreDirKey(dir);
-    if (!sRouteKey || dir == ST_DIR_A || sStorePlan.postDir == dir)
+    if (!sRouteKey || dir == ST_DIR_A)
         StorePlanClear();
     else
         sStorePlan.release = 1;

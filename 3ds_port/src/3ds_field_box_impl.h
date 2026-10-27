@@ -2,7 +2,7 @@
  * screen, whose FireRed text it shares, and the Pokedex, whose picture helpers it shares. A remote for FireRed's own
  * box: its name between the arrows on an amber band, its thirty places as light cells with the Pokemon's icons, PARTY
  * and CLOSE BOX on the right with the Pokemon in hand under them, the Party over the cells while the cursor is in it,
- * and over them the box's menu, YES/NO or box chooser. FireRed's cursor is amber. The box's message and the Pokemon
+ * and over them the box's menu, YES/NO, box chooser or marking card. FireRed's cursor is amber. The box's message and the Pokemon
  * under the cursor (FireRed's lines about it and its picture) are in the note. Every word is FireRed's (CtrBottomStorage_
  * BoxFill) but for the buttons' labels (3ds_ui_strings.h). */
 #include "3ds_storage_touch.h"
@@ -16,6 +16,15 @@ static const CtrPokeTouchRect sFXYes = {20, 96, 70, 30}, sFXNo = {94, 96, 70, 30
 static const CtrPokeTouchRect sFXAsk = {12, 56, 160, 82};
 static const CtrPokeTouchRect sFXChoosePrev = {22, 86, 30, 32}, sFXChooseNext = {132, 86, 30, 32};
 static const CtrPokeTouchRect sFXChooseName = {56, 86, 72, 32};
+static const CtrPokeTouchRect sFXMarkCard = {12, 46, 160, 110};
+static const CtrPokeTouchRect sFXMarkOk = {20, 118, 70, 30}, sFXMarkCancel = {94, 118, 70, 30};
+
+/* The marking card's four marks, in a row under the Pokemon's icon. */
+static CtrPokeTouchRect FXMark(int i)
+{
+    CtrPokeTouchRect r = {(int16_t)(18 + 38 * i), 80, 34, 30};
+    return r;
+}
 
 static CtrPokeTouchRect FXCell(int pos)
 {
@@ -69,6 +78,14 @@ int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y)
     case PT_BOX_STATE_CHOOSE:
         return UiIn(&sFXChoosePrev, x, y) ? ST_HIT_PREV : UiIn(&sFXChooseNext, x, y) ? ST_HIT_NEXT
              : UiIn(&sFXChooseName, x, y) ? ST_HIT_TITLE : ST_HIT_NONE;
+    case PT_BOX_STATE_MARKS:
+        for (int i = 0; i < 4; ++i) {
+            CtrPokeTouchRect r = FXMark(i);
+            if (UiIn(&r, x, y))
+                return ST_HIT_MENU_BASE + i;
+        }
+        return UiIn(&sFXMarkOk, x, y) ? ST_HIT_MENU_BASE + 4 : UiIn(&sFXMarkCancel, x, y) ? ST_HIT_MENU_BASE + 5
+             : ST_HIT_NONE;
     case PT_BOX_STATE_BOX:
         break;
     default:
@@ -335,6 +352,47 @@ static void FXChoose(const CtrPokeTouchBox *b)
     UiTextCentered(count, &line, fy + 16, kEmAmber.ink, kEmAmber.inkSh, 1);
 }
 
+/* FireRed's own mark (its 8x8 shape, twice the size) centred at (cx, cy): white while on, slate while off. */
+static void FXMarkShape(int mark, int on, int cx, int cy)
+{
+    unsigned char px[64];
+    uint16_t ink = on ? EM_WHITE : UI_RGB(112, 116, 136), edge = on ? UI_RGB(255, 226, 170) : UI_RGB(170, 168, 178);
+
+    if (!CtrPokeTouch_MarkShape(mark, px))
+        return;
+    for (int i = 0; i < 64; ++i)
+        if (px[i] == 3 || px[i] == 4)
+            Fill(cx - 8 + 2 * (i % 8), cy - 8 + 2 * (i / 8), 2, 2, px[i] == 3 ? ink : edge);
+}
+
+/* The marking card: the Pokemon's icon, its four marks as switches (amber while on) and OK and CANCEL. FireRed's cursor
+ * glows round its piece. */
+static void FXMarks(const CtrPokeTouchBox *b)
+{
+    CtrPokeTouchRect dim = sFXGrid;
+
+    UiDim(&dim);
+    FBCard(&sFXMarkCard);
+    FXIcon(&b->mon, sFXMarkCard.x + sFXMarkCard.w / 2, sFXMarkCard.y + 18);
+    for (int i = 0; i < 4; ++i) {
+        CtrPokeTouchRect r = FXMark(i);
+        int on = (b->marks >> i) & 1;
+        int fy = EmButton(r.x, r.y, r.w, r.h, on ? &kEmAmber : &kEmCream, FB_DEPTH, b->pressed == ST_HIT_MENU_BASE + i);
+
+        FXMarkShape(i, on, r.x + r.w / 2, fy + (r.h - FB_DEPTH) / 2);
+        if (b->menuCursor == i)
+            EmGlowRing(r.x, fy, r.w, r.h - FB_DEPTH);
+    }
+    FXButton(&sFXMarkOk, CtrUiText(UIS_OK), &kEmAmber, b->pressed == ST_HIT_MENU_BASE + 4);
+    FXButton(&sFXMarkCancel, CtrUiText(UIS_CANCEL), &kEmViolet, b->pressed == ST_HIT_MENU_BASE + 5);
+    if (b->menuCursor == 4 || b->menuCursor == 5) {
+        const CtrPokeTouchRect *r = b->menuCursor == 4 ? &sFXMarkOk : &sFXMarkCancel;
+        int fy = b->pressed == ST_HIT_MENU_BASE + b->menuCursor ? r->y + FB_DEPTH : r->y;
+
+        EmGlowRing(r->x, fy, r->w, r->h - FB_DEPTH);
+    }
+}
+
 static void FBoxFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchBox *b = &v->box;
@@ -344,7 +402,8 @@ static void FBoxFrame(const CtrPokeTouchView *v)
     FXTitle(b);
     FXGrid(b);
     FXSide(b);
-    if (b->area == ST_AREA_PARTY && b->state != PT_BOX_STATE_MENU && b->state != PT_BOX_STATE_YESNO)
+    if (b->area == ST_AREA_PARTY && b->state != PT_BOX_STATE_MENU && b->state != PT_BOX_STATE_YESNO
+        && b->state != PT_BOX_STATE_MARKS)
         FXParty(b);
     if (b->state == PT_BOX_STATE_MENU)
         FXMenu(b);
@@ -352,6 +411,8 @@ static void FBoxFrame(const CtrPokeTouchView *v)
         FXYesNo(b);
     else if (b->state == PT_BOX_STATE_CHOOSE)
         FXChoose(b);
+    else if (b->state == PT_BOX_STATE_MARKS)
+        FXMarks(b);
     sUiS = &sUiNavy;
 }
 

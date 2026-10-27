@@ -191,7 +191,7 @@ typedef struct {
 #define PT_BOX_SLOTS 30
 #define PT_BOX_MENU_MAX 7
 enum { PT_BOX_STATE_BUSY = 0, PT_BOX_STATE_BOX, PT_BOX_STATE_MENU, PT_BOX_STATE_YESNO, PT_BOX_STATE_CHOOSE,
-       PT_BOX_STATE_MESSAGE };
+       PT_BOX_STATE_MESSAGE, PT_BOX_STATE_MARKS };
 enum { PT_BOX_HIT_MESSAGE = 300 };  /* besides the ST_HIT_* codes: a message that waits for A */
 typedef struct {
     uint16_t species;               /* 0: empty */
@@ -212,8 +212,9 @@ typedef struct {
     CtrPokeTouchBoxMon held;
     CtrPokeTouchBoxMon mon;         /* the Pokemon under the cursor, and FireRed's lines about it */
     uint8_t monText[4][20];         /* nickname, species, gender and level, item */
-    uint8_t menuCount;
+    uint8_t menuCount;              /* MARKS: the four marks, OK and CANCEL */
     int8_t menuCursor;
+    uint8_t marks;                  /* MARKS: the marks on so far, bit 0 the circle .. bit 3 the heart */
     uint8_t menu[PT_BOX_MENU_MAX][16];
     uint8_t chooseName[12];
     uint8_t chooseCount;
@@ -363,6 +364,8 @@ int CtrPokeTouch_BoxHit(const CtrPokeTouchView *view, int x, int y);
 int CtrPokeTouch_MonIcon(unsigned species, unsigned personality, int egg, unsigned char *tiles, unsigned short *palette);
 /* A box wallpaper's 160x144 picture, as FireRed draws it: BGR555, 0 when there is none. */
 int CtrPokeTouch_Wallpaper(unsigned id, unsigned short *rgb555);
+/* A mark's 8x8 shape (0 circle .. 3 heart) from FireRed's marking sheet: 0 none, 3 the mark, 4 its edge. */
+int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes);
 int CtrBottomStorage_BoxFill(CtrPokeTouchBox *box);
 /* Whether the Trainer Card (view->card.on) is under lower-screen point (x, y). */
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
