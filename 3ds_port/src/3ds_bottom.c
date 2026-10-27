@@ -99,6 +99,12 @@ extern int CtrBattle_ActionCursor(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
+extern void CtrListMenu_Ask(int row);
+extern void CtrMenu_Ask(int row);
+extern void CtrDex_AskSlot(int slot);
+extern void CtrDex_AskFlip(int cmd);
+extern void CtrSummary_AskMove(int row);
+extern void CtrSummary_AskPage(int page);
 extern int CtrBattle_TargetLegal(int target);
 extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
@@ -491,7 +497,7 @@ static struct {
 static struct {
     int kind, targetArea, targetPos, postDir, target, steps, release, wait, context;
 } sStorePlan;
-static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); }
+static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); }
 
 static void BeginSessionPending(int owner);
 static void OpenSave(void);
@@ -2012,6 +2018,7 @@ static void PlanPress(uint16_t keys)
 
 static void PlanClear(void)
 {
+    CtrMenu_Ask(-1);
     sPlan.kind = PLAN_NONE;
     sPlan.target = 0;
     sPlan.steps = 0;
@@ -2127,6 +2134,12 @@ static void RunPlan(void)
         sPlan.release = 1;
         return;
     }
+    if (sPlan.kind == PLAN_MENU) {
+        /* The menu's cursor goes straight to the row (the game takes it on its next frame): no steps, no clicks. */
+        CtrMenu_Ask(sPlan.target);
+        sPlan.release = 1;
+        return;
+    }
     sInjected = PlanStep(cur, sPlan.target);
     sPlan.release = 1;
 }
@@ -2177,6 +2190,8 @@ static struct {
 static void BagPlanClear(void)
 {
     memset(&sBagPlan, 0, sizeof(sBagPlan));
+    CtrListMenu_Ask(-1);
+    CtrMenu_Ask(-1);
 }
 
 static void BagPlanStart(const ListScreen *list, int kind, int target, int activate, uint16_t keys)
@@ -2227,7 +2242,11 @@ static void RunBagPlan(const ListScreen *list)
         BagPlanClear();
         return;
     }
-    sInjected = cur < sBagPlan.target ? K_DOWN : K_UP;
+    /* The row goes straight to the list's or menu's cursor (the game takes it on its next frame). */
+    if (sBagPlan.kind == BAGPLAN_LIST)
+        CtrListMenu_Ask(sBagPlan.target);
+    else
+        CtrMenu_Ask(sBagPlan.target);
     sBagPlan.release = 1;
 }
 
@@ -2308,6 +2327,8 @@ static struct {
 
 static void SumPlanClear(void)
 {
+    CtrSummary_AskMove(-1);
+    CtrSummary_AskPage(-1);
     memset(&sSumPlan, 0, sizeof(sSumPlan));
 }
 
@@ -2368,8 +2389,11 @@ static void RunSumPlan(void)
             SumPlanClear();
         else if (page == SUMMARY_MOVES_INFO)
             SumPlanPress(K_B, SUMMARY_MOVES);
-        else
-            SumPlanPress(sSumPlan.target > page ? K_RIGHT : K_LEFT, sSumPlan.target > page ? page + 1 : page - 1);
+        else {
+            /* One flip straight to the page, however many tabs away; the plan ends when the page has changed. */
+            CtrSummary_AskPage(sSumPlan.target);
+            sSumPlan.release = 1;
+        }
         return;
     case SUMPLAN_MOVE: {
         int cur = CtrBottomSummary_MoveCursor();
@@ -2381,8 +2405,10 @@ static void RunSumPlan(void)
             if (sSumPlan.activate)
                 sInjected = K_A;
             SumPlanClear();
-        } else
-            SumPlanPress(cur < sSumPlan.target ? K_DOWN : K_UP, SUMMARY_MOVES_INFO);
+        } else {
+            CtrSummary_AskMove(sSumPlan.target);        /* the cursor goes straight to the row */
+            sSumPlan.release = 1;
+        }
         return;
     }
     }
@@ -3686,6 +3712,8 @@ static struct {
 } sDexTap;
 static void DexPlanClear(void)
 {
+    CtrListMenu_Ask(-1);
+    CtrDex_AskSlot(-1);
     memset(&sDexPlan, 0, sizeof(sDexPlan));
 }
 
@@ -3714,7 +3742,7 @@ static void RunDexPlan(void)
             DexPlanClear();
             return;
         }
-        sInjected = sDexPlan.target < 0 ? K_LEFT : K_RIGHT;
+        CtrDex_AskFlip(sDexPlan.target < 0 ? 1 : 2);        /* the page turns on the game's next frame */
         sDexPlan.release = 1;
         return;
     }
@@ -3723,8 +3751,11 @@ static void RunDexPlan(void)
         DexPlanClear();
         return;
     }
-    sInjected = sDexPlan.kind == DEXPLAN_SLOT ? (cur < sDexPlan.target ? K_RIGHT : K_LEFT)
-              : cur < sDexPlan.target ? K_DOWN : K_UP;
+    /* The cursor goes straight to the row or slot (the game takes it on its next frame): no steps, no clicks. */
+    if (sDexPlan.kind == DEXPLAN_SLOT)
+        CtrDex_AskSlot(sDexPlan.target);
+    else
+        CtrListMenu_Ask(sDexPlan.target);
     sDexPlan.release = 1;
 }
 
@@ -3961,9 +3992,10 @@ static void RunLearnPlan(void)
     cur = CtrBottomLearn_Cursor();
     if (cur == sLearnPlan.target) {
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+        CtrSummary_AskMove(-1);
         return;
     }
-    sInjected = cur < sLearnPlan.target ? K_DOWN : K_UP;
+    CtrSummary_AskMove(sLearnPlan.target);              /* straight to the row, no steps */
     sLearnPlan.release = 1;
 }
 
@@ -4210,7 +4242,12 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
+        if (cur != sStorePlan.target) {        /* the menu's cursor goes straight to the row, no steps */
+            CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.release = 1;
+            return;
+        }
+        dir = ST_DIR_A;
     } else if (sStorePlan.kind == ST_PLAN_CONTEXT) {
         if (!CtrBottomStorage_ContextMenu() && !CtrBottomStorage_YesNo()) { StorePlanClear(); return; }
         cur = CtrBottomStorage_ContextCursor();
@@ -4218,7 +4255,12 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
+        if (cur != sStorePlan.target) {
+            CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.release = 1;
+            return;
+        }
+        dir = ST_DIR_A;
     } else {
         if (!CtrBottomStorage_BoxOpen()) { StorePlanClear(); return; }
         if (!CtrBottomStorage_BoxReady()) return; /* wait for cursor animations */
