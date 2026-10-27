@@ -131,7 +131,8 @@ enum { PT_DEX_STATE_BUSY = 0, PT_DEX_STATE_MENU, PT_DEX_STATE_LIST, PT_DEX_STATE
 #define PT_DEX_ID_CANCEL (-2)
 /* Hit codes (CtrPokeTouch_DexHit). */
 enum { PT_DEX_HIT_TAB = 100, PT_DEX_HIT_ITEM = 200, PT_DEX_HIT_ROW = 300, PT_DEX_HIT_SLOT = 400, PT_DEX_HIT_UP = 500,
-       PT_DEX_HIT_DOWN, PT_DEX_HIT_PREV, PT_DEX_HIT_NEXT, PT_DEX_HIT_AREA = 510, PT_DEX_HIT_CRY };
+       PT_DEX_HIT_DOWN, PT_DEX_HIT_PREV, PT_DEX_HIT_NEXT, PT_DEX_HIT_AREA = 510, PT_DEX_HIT_CRY,
+       PT_DEX_HIT_CONTINUE };
 typedef struct {
     uint16_t species, number;
     uint8_t flags;                  /* seen (1) and caught (2) */
@@ -258,6 +259,7 @@ typedef struct {
     char typeName[2][10];
     char desc[200];
     int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint8_t added;                  /* the page a catch has just added (from the battle): no AREA or CRY */
 } CtrPokeTouchDex;
 
 typedef struct {
