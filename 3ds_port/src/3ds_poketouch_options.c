@@ -84,7 +84,7 @@ static const CtrOptionRow sRows[] = {
     {"SOUND", {"Mono or stereo sound.", ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
     {"BUTTON MODE", {"What the L and R buttons", "do: HELP, LR or L=A."}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
-    {"FRAME", {"The style of the text", "box's frame."}, PT_OPT_FRAME, NULL, "TYPE", NULL, NULL, NULL},
+    {"FRAME", {"The frame of menu", "and YES/NO boxes."}, PT_OPT_FRAME, NULL, "TYPE", NULL, NULL, NULL},
     /* The 3DS's own: the counter in the top-right corner of the top screen (stored in the save's spare bit). */
     {"FPS COUNTER", {"Show the frames per", "second on the top screen."}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
     /* Page 2: 3DS Port QoL options. */
@@ -223,6 +223,13 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
             for (int k = 0; k < n; ++k)
                 snprintf(v->optSegName[i][k], PT_OPT_SEG_LEN, "%s", sRows[base + i].names[k]);
         }
+    }
+    v->optFrameShow = 0;
+    if (sRows[selected].game == PT_OPT_FRAME && sRows[selected].get == NULL) {
+        int type = CtrOptions_Get(selected);
+
+        v->optFrameShow = type >= 0 && type < 10;
+        v->optFrameType = (uint8_t)(v->optFrameShow ? type : 0);
     }
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);
     snprintf(v->bar[1], PT_BAR_LEN, "%s", sRows[selected].description[0]);

@@ -145,6 +145,17 @@ int main(void)
     CHECK(CtrOptions_EmbersLow() == 1, "a kept LOW wins over the New 3DS default");
     CtrOptions_Set(11, CTR_EMBERS_HIGH);
     memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 5);
+    CHECK(view.optFrameShow == 1 && view.optFrameType == 0, "FRAME selected shows its sample (TYPE1)");
+    sStored[PT_OPT_FRAME] = 3;
+    CtrOptions_Fill(&view, 5);
+    CHECK(view.optFrameShow == 1 && view.optFrameType == 3, "the sample follows the type");
+    sStored[PT_OPT_FRAME] = 31;
+    CtrOptions_Fill(&view, 5);
+    CHECK(view.optFrameShow == 0, "no sample for a frame type the menu does not have");
+    sStored[PT_OPT_FRAME] = 0;
+    CtrOptions_Fill(&view, 0);
+    CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
     CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 5 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");

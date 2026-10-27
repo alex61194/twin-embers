@@ -892,6 +892,78 @@ static void OptPageButton(const CtrPokeTouchView *v)
 
 /* The bar: the note card with up to three lines, 15 pixels apart and centred on it; the first line is the subject,
  * the others what is known about it (dimmer). It is narrower when BACK, PAGE or SAVE's buttons are on its right. */
+
+/* FRAME's sample: the chosen frame (the game's own graphics/text_window/typeN, 3x3 tiles of 8x8) as FireRed draws a
+ * window with it, stretched to the sample's size, with YES / NO inside. The tiles and palette are read from the
+ * pack when the type changes; if they are not there the sample is left out. */
+#define FRAME_W 56
+#define FRAME_H 40
+
+static int FrameLoadFile(const char *base, const char *ext, uint8_t *out, uint32_t cap, uint32_t want)
+{
+    char path[64];
+    uint32_t len = 0;
+    uint8_t *data;
+    int n = 0;
+
+    snprintf(path, sizeof(path), "graphics/text_window/%s.%s", base, ext);
+    data = CtrData_Load(path, &len);
+    if (data != NULL && len == want) {
+        memcpy(out, data, want);
+        n = (int)want;
+    }
+    free(data);
+    if (n == (int)want)
+        return n;
+    snprintf(path, sizeof(path), "graphics/text_window/%s.%s.lz", base, ext);
+    return PokeTouch_LoadLz(path, out, cap) == (int)want ? (int)want : 0;
+}
+
+static int FrameSample(int type, int x, int y)
+{
+    static int loaded = -1;
+    static uint16_t px[24 * 24];
+    static int ok;
+
+    if (loaded != type) {
+        uint8_t tiles[9 * 32], colors[32];
+        char base[8];
+        uint16_t pal[16];
+
+        loaded = type;
+        ok = 0;
+        snprintf(base, sizeof(base), "type%d", type + 1);
+        if (FrameLoadFile(base, "4bpp", tiles, sizeof(tiles), sizeof(tiles))
+            && FrameLoadFile(base, "gbapal", colors, sizeof(colors), sizeof(colors))) {
+            for (int i = 0; i < 16; ++i) {
+                unsigned c = (unsigned)colors[i * 2] | (unsigned)colors[i * 2 + 1] << 8;
+
+                pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+            }
+            for (int ty = 0; ty < 24; ++ty)
+                for (int tx = 0; tx < 24; ++tx) {
+                    uint8_t b = tiles[(ty / 8 * 3 + tx / 8) * 32 + ty % 8 * 4 + tx % 8 / 2];
+                    uint8_t v = (tx & 1) ? b >> 4 : b & 15;
+
+                    px[ty * 24 + tx] = v ? pal[v] : RGB(255, 255, 255);
+                }
+            ok = 1;
+        }
+    }
+    if (!ok)
+        return 0;
+    for (int dy = 0; dy < FRAME_H; ++dy)
+        for (int dx = 0; dx < FRAME_W; ++dx) {
+            int sx = dx < 8 ? dx : dx >= FRAME_W - 8 ? 16 + dx - (FRAME_W - 8) : 8 + dx % 8;
+            int sy = dy < 8 ? dy : dy >= FRAME_H - 8 ? 16 + dy - (FRAME_H - 8) : 8 + dy % 8;
+
+            Px(x + dx, y + dy, px[sy * 24 + sx]);
+        }
+    UiText("YES", x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText("NO", x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    return 1;
+}
+
 static void Bar(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sBar;
@@ -919,10 +991,14 @@ static void Bar(const CtrPokeTouchView *v)
     else {
         int pitch = 16, top = NOTE_Y + (NOTE_H - (lines - 1) * pitch - UI_TEXT_H) / 2;
 
+        int right = NOTE_X + w - 4;
+
         EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
+        if (v->options && v->optFrameShow && FrameSample(v->optFrameType, NOTE_X + w - FRAME_W - 8,
+                                                         NOTE_Y + (NOTE_H - FRAME_H) / 2 - 1))
+            right -= FRAME_W + 4;
         for (int i = 0; i < lines; ++i)
-            UiText(v->bar[i], NOTE_X + 12, top + i * pitch, i == 0 ? EM_DARK : EM_DIM, EM_DARK_SH, 1,
-                   NOTE_X + w - 4);
+            UiText(v->bar[i], NOTE_X + 12, top + i * pitch, i == 0 ? EM_DARK : EM_DIM, EM_DARK_SH, 1, right);
     }
     if (hasPage)
         OptPageButton(v);
@@ -1128,7 +1204,8 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
             }
         }
     }
-    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->backVisible != v->backVisible || old->save != v->save
+    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->optFrameShow != v->optFrameShow
+        || old->optFrameType != v->optFrameType || old->backVisible != v->backVisible || old->save != v->save
         || oldHasPage != newHasPage) {
         Bar(v);
         Mark(dirty, &sBar);
