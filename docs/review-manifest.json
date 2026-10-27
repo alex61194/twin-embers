@@ -367,12 +367,12 @@
   },
   {
    "path": "3ds_port/include/3ds_day_night.h",
-   "sha256": "dd03a2719cd7236199594e943212eeac073f3b95339b29902d844278ce28fe86",
+   "sha256": "f964e24be7d9f0f10ac7bfc347ff859e570cbd6f1eb095de72bfd6928969bc87",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
-   "night_gpu_review": "Reviewed GPU night grade: CtrDayNight_Grade/Graded, a two-stage combiner fit of the night grade (0.144 to green, times 77/96/180), identity by day and under a white fade, host-tested against Shade over every BGR555 colour."
+   "night_gpu_review": "Reviewed GPU night grade: CtrDayNight_Grade/Graded, a two-stage combiner fit of the night grade (0.144 to green, times 77/96/180), identity by day and under a white fade, host-tested against Shade over every BGR555 colour. Reviewed header comment for the GPU tint."
   },
   {
    "path": "3ds_port/include/3ds_day_night_lights.h",
@@ -1368,7 +1368,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "294c8622ec5c3e081a2391b9e1718f30d15a1d439ac6c71ce580bc0975ded163",
+   "sha256": "5e0f3895216688834f3d8f5450409d66018016bf402aaaa5108d9d34703ed2c0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1383,7 +1383,8 @@
    "fly_followup_review": "Reviewed actual BG walker width and phase-synchronized boarding/dismount, with production-function regressions for the recorded remaining faults",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged.",
    "title_version_review": "Reviewed build label on the title screen: the version alone (v + TWIN_EMBERS_VERSION from 3ds_port/Makefile), drawn in the game's small font read from the user's pack at run time, faded with FireRed's own palette fade; the commit stays in the boot log; no game payload, save layout or pack ABI change.",
-   "old_3ds_perf_review": "Reviewed field layer walk skip: a windowed or fade-tinted field layer skips its per-frame cell walk while its scroll, tint, fade base, palette stamp, cache generation and map/tile VRAM blocks equal its last walk's; no change to what is drawn. Reviewed night glow loop: wrap by mask on power-of-two map sides instead of two modulos per cell, x computed only for lit cells; same positions (checked for -600..600 on 256/512)."
+   "old_3ds_perf_review": "Reviewed field layer walk skip: a windowed or fade-tinted field layer skips its per-frame cell walk while its scroll, tint, fade base, palette stamp, cache generation and map/tile VRAM blocks equal its last walk's; no change to what is drawn. Reviewed night glow loop: wrap by mask on power-of-two map sides instead of two modulos per cell, x computed only for lit cells; same positions (checked for -600..600 on 256/512).",
+   "night_gpu_review": "Reviewed GPU night tint: field BG1-3 and sprites drawn through texture combiner stages 4 (towards green) and 5 (multiply) set in Blend, off while filling layer textures and after the layers; texels and fade base are the plain palette, so a new hour re-decodes nothing; lit glass is an untinted lamplight overlay per window cell after its layer (alpha by Lights, faded with the layer), from a 64x64 nearest texture next to the glow; glow and glass walk a per-walk list of lit cells; GlowSlot memoised per walk; backdrop through CtrDayNight_Graded."
   },
   {
    "path": "3ds_port/src/3ds_video_decode.c",

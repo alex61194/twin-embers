@@ -6,11 +6,12 @@
 
 /*
  * The colour of the outdoors by the hour of the 3DS clock. FireRed has no
- * clock of its own, so nothing in the game reads this: the compositor
- * converts the map's and the sprites' palettes through it when it turns them
- * into texels (3ds_video.c, DayNight), which leaves the game's palettes, the
- * weather and the fades exactly as the game wrote them. Window glass on the
- * tiles listed in 3ds_day_night_lights.h is lit instead of darkened. The
+ * clock of its own, so nothing in the game reads this: the compositor draws
+ * the field's layers and sprites through it on the GPU (3ds_video.c,
+ * DayNightEnv, with CtrDayNight_Grade below), which leaves the game's
+ * palettes, the weather and the fades exactly as the game wrote them. Window
+ * glass on the tiles listed in 3ds_day_night_lights.h is lit instead of
+ * darkened, by an overlay drawn after its layer. The
  * hours follow Merrp's day/night system for pokeemerald (dawn, day, dusk,
  * night, blended through the minutes in between); the colours are this
  * port's own. Shared with the host test.
