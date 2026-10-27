@@ -498,6 +498,7 @@ static struct {
 } sStoreTouch;
 static struct {
     int kind, targetArea, targetPos, postDir, target, steps, release, wait, context;
+    int asked;                      /* CtrMenu_Ask sent: if the cursor did not move, step there */
 } sStorePlan;
 static void StorePlanClear(void) { memset(&sStorePlan, 0, sizeof(sStorePlan)); CtrMenu_Ask(-1); CtrStorage_AskPosition(-1); }
 
@@ -4321,12 +4322,14 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        if (cur != sStorePlan.target) {        /* the menu's cursor goes straight to the row, no steps */
+        if (cur != sStorePlan.target && !sStorePlan.asked) {   /* the menu's cursor goes straight to the row, no steps */
             CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.asked = 1;
             sStorePlan.release = 1;
             return;
         }
-        dir = ST_DIR_A;
+        /* An ask the menu did not take (its error message only answers A, B or an arrow): an arrow, as before. */
+        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
     } else if (sStorePlan.kind == ST_PLAN_CONTEXT) {
         if (!CtrBottomStorage_ContextMenu() && !CtrBottomStorage_YesNo()) { StorePlanClear(); return; }
         cur = CtrBottomStorage_ContextCursor();
@@ -4334,12 +4337,13 @@ static void RunStoragePlan(int mode)
             StorePlanClear();
             return;
         }
-        if (cur != sStorePlan.target) {
+        if (cur != sStorePlan.target && !sStorePlan.asked) {
             CtrMenu_Ask(sStorePlan.target);
+            sStorePlan.asked = 1;
             sStorePlan.release = 1;
             return;
         }
-        dir = ST_DIR_A;
+        dir = cur == sStorePlan.target ? ST_DIR_A : cur < sStorePlan.target ? ST_DIR_DOWN : ST_DIR_UP;
     } else {
         if (!CtrBottomStorage_BoxOpen()) { StorePlanClear(); return; }
         if (!CtrBottomStorage_BoxReady()) return; /* wait for cursor animations */

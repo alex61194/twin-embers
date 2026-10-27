@@ -44,6 +44,10 @@ enum { K_A=1, K_B=2, K_START=8, K_RIGHT=16, K_LEFT=32, K_UP=64, K_DOWN=128 };
 typedef struct { unsigned held; int touchActive, touchDown, touchX, touchY; } CtrInput;
 static CtrInput input;
 static const CtrInput *CtrInput_Get(void) { return &input; }
+/* The row and cell the controller asks the game's cursor to take (-1: none). */
+static int askedRow = -1, askedPosition = -1;
+static void CtrMenu_Ask(int row) { askedRow = row; }
+static void CtrStorage_AskPosition(int position) { askedPosition = position; }
 /* PRODUCTION TOUCH TRANSFORM */
 static struct { int mode; CtrPokeTouchView touch; } sShown;   /* touch.box.on 0: FireRed's own picture */
 int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y) { (void)v; (void)x; (void)y; return -1; }
@@ -122,12 +126,12 @@ int main(void)
     }
     /* Animation stalls navigation; it must not generate held D-pad repeats. */
     task(Task_PokeStorageMain,0); sCursorPosition=0;
-    tap(MODE_STORAGE_BOX,124,44); assert(sRouteKey==K_RIGHT); sRouteKey=0;
+    tap(MODE_STORAGE_BOX,124,44); assert(!sRouteKey && askedPosition==1); /* straight to the cell */
     storage.state=1;
     for (int i=0;i<10;++i) { RunStoragePlan(MODE_STORAGE_BOX); assert(!sRouteKey); }
     storage.state=0; sCursorPosition=1;
     RunStoragePlan(MODE_STORAGE_BOX); assert(sRouteKey==K_A); no_repeat(MODE_STORAGE_BOX);
-    tap(MODE_STORAGE_BOX,148,44); assert(sRouteKey==K_RIGHT); sRouteKey=0;
+    tap(MODE_STORAGE_BOX,148,44); assert(!sRouteKey && askedPosition==2);
     input.held=K_B; RunStoragePlan(MODE_STORAGE_BOX); assert(!sStorePlan.kind && !sRouteKey); input.held=0;
     /* A different input controller cancels a navigation plan. */
     tap(MODE_STORAGE_BOX,172,44); sRouteKey=0;
@@ -150,11 +154,11 @@ int main(void)
     }
     /* Clearing a root error with one arrow keeps navigation in that root. */
     gTasks[0].tState=STATE_ERROR_MSG; gTasks[0].tSelectedOption=0;
-    tap(MODE_STORAGE_PC,20,12+16*2); assert(sRouteKey==K_DOWN); sRouteKey=0;
-    gTasks[0].tState=STATE_HANDLE_INPUT; gTasks[0].tSelectedOption=1;
+    /* The menu's error message does not take the asked row: the cursor stays and an arrow follows. */
+    tap(MODE_STORAGE_PC,20,12+16*2); assert(!sRouteKey && askedRow==2);
     RunStoragePlan(MODE_STORAGE_PC); assert(!sRouteKey);
     RunStoragePlan(MODE_STORAGE_PC); assert(sRouteKey==K_DOWN); sRouteKey=0;
-    gTasks[0].tSelectedOption=2;
+    gTasks[0].tState=STATE_HANDLE_INPUT; gTasks[0].tSelectedOption=2;   /* the pending ask took the row */
     RunStoragePlan(MODE_STORAGE_PC); assert(!sRouteKey);
     RunStoragePlan(MODE_STORAGE_PC); assert(sRouteKey==K_A); no_repeat(MODE_STORAGE_PC);
     puts("storage controller: bridge guards, touch hold/drag, popup identity, physical cancellation and single release PASS");
