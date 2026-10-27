@@ -269,6 +269,7 @@ extern int CtrTurbo_FieldStable(void);
 extern int CtrTurbo_BattleStable(void);
 extern int CtrTurbo_CanCycle(void);
 extern int CtrBottomDex_IsOpen(void);
+extern int CtrBottomDex_Registering(void);
 extern int CtrBottomDex_State(void);
 extern int CtrBottomDex_Cursor(void);
 extern int CtrBottomDex_RowAt(int x, int y);
@@ -1123,6 +1124,8 @@ static int FieldDexFill(CtrPokeTouchView *v, int pressed)
             *d = sShown.touch.dex;
         else if (sHaveShown && sShown.mode == MODE_DEX && sShown.touch.viewport)
             return 0;                   /* leaving the AREA page: FireRed's picture until the page is back */
+        else if (CtrBottomDex_Registering())
+            return 0;                   /* a catch's page coming in (its habitat, the zoom): FireRed's picture */
         else {
             memset(d, 0, sizeof(*d));
             d->on = 1;
@@ -1185,6 +1188,7 @@ static int FieldDexFill(CtrPokeTouchView *v, int pressed)
     } else if (state == DEX_PAGE) {
         FieldDexMon(&d->sel, CtrBottomDex_MonSpecies());
         FieldDexDetail(d, 1);
+        d->added = (uint8_t)(CtrBottomDex_Registering() != 0);
     }
     return 1;
 }
@@ -2879,7 +2883,7 @@ static void BeginSession(int owner)
         CtrLog_Write(CTR_LOG_VIDEO, "bottom: hidden %s session", RootName(owner));
     sSession.owner = owner;
     sSession.battle = CtrBottomParty_InBattle() || CtrBottomBag_InBattle()
-                   || CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY;
+                   || CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY || CtrBottomDex_Registering();
     sScreen = owner;
     sSession.active = 1;
     sSession.entered = 0;
@@ -3974,7 +3978,9 @@ static void ProcessFieldDexTouch(const CtrInput *in)
                        && CtrBottomDex_PageCanFlip(code == PT_DEX_HIT_PREV ? -1 : 1))
                 DexPlanTo(DEXPLAN_FLIP, code == PT_DEX_HIT_PREV ? -1 : 1, DEX_CATEGORY);
         } else if (state == DEX_PAGE) {
-            if (code == PT_DEX_HIT_AREA)
+            if (code == PT_DEX_HIT_CONTINUE)
+                sRouteKey = K_A;        /* a catch's page: back to the battle */
+            else if (code == PT_DEX_HIT_AREA)
                 sRouteKey = K_A;
             else if (code == PT_DEX_HIT_CRY)
                 sRouteKey = K_START;

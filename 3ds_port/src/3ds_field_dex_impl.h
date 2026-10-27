@@ -365,6 +365,12 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
         }
         return -1;
     case PT_DEX_STATE_PAGE:
+        if (d->added) {
+            /* The page a catch added: anywhere on it or its note goes on with the battle (its A). */
+            CtrPokeTouchRect note = {NOTE_X, NOTE_Y, NOTE_W_SIDE, NOTE_H};
+
+            return UiIn(&sFBArea, x, y) || UiIn(&note, x, y) ? PT_DEX_HIT_CONTINUE : -1;
+        }
         if (UiIn(&sFDArea, x, y))
             return PT_DEX_HIT_AREA;
         if (UiIn(&sFDCry, x, y))
@@ -601,7 +607,7 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
     char title[40], body[96];
 
     EmSurface();
-    if (d->state == PT_DEX_STATE_PAGE) {
+    if (d->state == PT_DEX_STATE_PAGE && !d->added) {
         FBButton(&sFDArea, &kEmCream, CtrUiText(UIS_DEX_AREA), d->pressed == PT_DEX_HIT_AREA);
         FBButton(&sFDCry, &kEmCream, CtrUiText(UIS_DEX_CRY), d->pressed == PT_DEX_HIT_CRY);
         sUiS = &sUiNavy;
@@ -617,6 +623,9 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
                                                    : id >= 0 && id < 9 ? (d->menu[d->menuCursor].locked ? UIS_DEX_NOTE_LOCKED
                                                                                                        : UIS_DEX_NOTE_HABITAT)
                                                    : UIS_DEX_NOTE_SEARCH));
+    } else if (d->state == PT_DEX_STATE_PAGE) {
+        snprintf(title, sizeof(title), "%s", d->sel.name);
+        snprintf(body, sizeof(body), "%s", CtrUiText(UIS_DEX_NOTE_ADDED));
     } else if (d->state == PT_DEX_STATE_LIST || d->state == PT_DEX_STATE_CATEGORY) {
         snprintf(title, sizeof(title), "%s", d->sel.flags & 1 ? d->sel.name : "-----");
         if (d->state == PT_DEX_STATE_CATEGORY)
