@@ -5299,7 +5299,7 @@
   },
   {
    "path": "patches/pokefirered/0161-key-items-on-x-and-y.json",
-   "sha256": "92b5b8c70e39aeb1965e53d2b9547b5f56563f3817d9c930e55e3eaf2e7011c3",
+   "sha256": "35879065c390286ec43311afe910e27e4b7cc84afb8f5ba1a77d8acc1b005bc6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
