@@ -182,6 +182,9 @@ static bool sNativeRequested, sNative;
 /* FireRed's battle transition owns the screen (battle_transition.c's VBlank callback): the field stays the native canvas
  * under it. This is NOT sNative, the strict 240x160 viewport. */
 static bool sBattleTransitionRequested, sBattleTransition;
+/* How the transition's BG0 spreads over the canvas (battle_transition.c): 1 the trainer-pic banners across it, 2 the grid
+ * squares across and down it, 0 only its own 240x160 centred. */
+static unsigned sCanvasBg0Requested, sCanvasBg0;
 /* Visible extent in GBA coordinates. */
 #define VIEW_LEFT (sNative ? 0 : (int)floorf(-sOffX / sZoom) - sViewX)
 #define VIEW_TOP (sNative ? 0 : (int)floorf(-sOffY / sZoom) - sViewY)
@@ -3408,6 +3411,17 @@ static void DrawFieldUi(unsigned bg)
         }
         DrawFieldUiRect(bg, CTR_STAGE_X, CTR_GAME_HEIGHT - 160, 0, 240, gy, 160, x0, x1, y0, y1);
     }
+    else if (sBattleTransition && sCanvasBg0)
+    {
+        /* The streaks and the squares repeat every 256 pixels (BG0's map), authored for 240x160 of them. On the 400x240
+         * canvas the map repeats around the centred picture, each repeat placed as the wrap places it. */
+        bool down = sCanvasBg0 == 2;
+
+        for (int viewY = down ? CTR_STAGE_Y - 256 * ((CTR_STAGE_Y + 255) / 256) : CTR_STAGE_Y; viewY < CTR_GAME_HEIGHT;
+             viewY += down ? 256 : CTR_GAME_HEIGHT)
+            for (int viewX = CTR_STAGE_X - 256 * ((CTR_STAGE_X + 255) / 256); viewX < CTR_GAME_WIDTH; viewX += 256)
+                DrawFieldUiRect(bg, viewX, viewY, 0, 256, 0, down ? 256 : 160, x0, x1, y0, y1);
+    }
     else
         /* The transition's own BG0 (its tile patterns) is centred on the canvas, like the GBA's centre under the player;
          * the field's text boxes sit at the bottom. */
@@ -5829,6 +5843,7 @@ static void ApplyPresentationView(void)
     sNativeUi = sNativeUiRequested && !sStage && !sCentred && !sBattle && !sIntro;
     sNative = sNativeRequested && !sStage && !sCentred && !sBattle && !sNativeUi && !sIntro;
     sBattleTransition = sBattleTransitionRequested && !sStage && !sCentred && !sBattle && !sNativeUi && !sNative && !sIntro;
+    sCanvasBg0 = sBattleTransition ? sCanvasBg0Requested : 0;
     sTargetW = CTR_GAME_WIDTH;
     sTargetH = CTR_GAME_HEIGHT;
     sSurfaceH = 256;
@@ -6123,6 +6138,7 @@ void CtrVideo_SetStage(bool stage) { sStageRequested = stage; }
 void CtrVideo_SetStageUi(bool active) { sStageUiRequested = active; }
 void CtrVideo_SetNativeViewport(bool native) { sNativeRequested = native; }
 void CtrVideo_SetBattleTransition(bool active) { sBattleTransitionRequested = active; }
+void CtrVideo_SetTransitionBg0Canvas(unsigned mode) { sCanvasBg0Requested = mode; }
 void CtrVideo_SetCentred(bool centred) { sCentredRequested = centred; }
 void CtrVideo_SetNativeUi(bool nativeUi) { sNativeUiRequested = nativeUi; }
 void CtrVideo_SetBattle(bool battle) { sBattleRequested = battle; }
