@@ -707,7 +707,13 @@ void VBlankIntrWait(void)
     }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
                          CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);
-    CtrSettings_SetTurbo(sFastForward.turbo);   /* writes the file only when a press changed it */
+    {
+        u64 settingsStart = osGetTime();
+        CtrSettings_SetTurbo(sFastForward.turbo);   /* writes the file only when a press changed it */
+        u64 settingsMs = osGetTime() - settingsStart;
+        if (settingsMs >= 5)
+            CtrLog_Write(CTR_LOG_FS, "settings: the turbo change held the game thread %lu ms", (unsigned long)settingsMs);
+    }
     bool shown = CtrFastForward_Show(&sFastForward);
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();

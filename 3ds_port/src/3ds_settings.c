@@ -7,12 +7,20 @@
 
 #ifdef __3DS__
 #include <3ds.h>
+#include "3ds_log.h"
 #endif
 
 static unsigned sTurbo;
 static int sAutoRun;
 static int sEmbers = -1;
 static int sLoaded;
+
+/* The file stays open from the first read to the exit and is rewritten in place, padded to a fixed size: creating or
+ * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
+ * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
+ * is created here, on the first read, which happens while the game starts. */
+#define SETTINGS_FILE_BYTES 64
+static FILE *sFile;
 
 static void Load(void)
 {
@@ -22,7 +30,10 @@ static void Load(void)
     if (sLoaded)
         return;
     sLoaded = 1;
-    file = fopen(CTR_SETTINGS_PATH, "rb");
+    sFile = fopen(CTR_SETTINGS_PATH, "r+b");
+    if (sFile == NULL)
+        sFile = fopen(CTR_SETTINGS_PATH, "w+b");
+    file = sFile;
     if (file == NULL)
         return;
     while (fgets(line, sizeof(line), file) != NULL)
@@ -36,17 +47,22 @@ static void Load(void)
         else if (sscanf(line, "embers=%u", &value) == 1)
             sEmbers = value <= 2 ? (int)value : -1;
     }
-    fclose(file);
 }
 
 static void WriteText(const char *text)
 {
-    FILE *file = fopen(CTR_SETTINGS_PATH, "wb");
+    char block[SETTINGS_FILE_BYTES];
+    size_t length = strlen(text);
 
-    if (file == NULL)
+    if (sFile == NULL)
         return;
-    fputs(text, file);
-    fclose(file);
+    if (length > sizeof(block))
+        length = sizeof(block);
+    memset(block, '\n', sizeof(block));   /* blank lines, which the reader skips */
+    memcpy(block, text, length);
+    if (fseek(sFile, 0, SEEK_SET) == 0)
+        fwrite(block, 1, sizeof(block), sFile);
+    fflush(sFile);
 }
 
 static void Format(char *text, size_t size)
@@ -58,9 +74,8 @@ static void Format(char *text, size_t size)
 }
 
 #ifdef __3DS__
-/* Creating the file on the SD card stalled the game thread for 3.4 s a time (the 0.2.6 Old 3DS port.log: each START
- * that cycled the turbo, each EMBERS change in OPTIONS). The text is worked out at once and written by a thread of
- * its own, half a second later so a run of presses is one write; what is still waiting is written on exit. */
+/* The text is worked out at once and written by a thread of its own, half a second later so a run of presses is one
+ * write; what is still waiting is written on exit. Each write logs how long it took. */
 #define SETTINGS_DELAY_NS 500000000LL
 static LightEvent sWake;
 static LightLock sLock;
@@ -80,7 +95,11 @@ static void FlushPending(void)
     sHavePending = 0;
     LightLock_Unlock(&sLock);
     if (have)
+    {
+        u64 start = osGetTime();
         WriteText(text);
+        CtrLog_Write(CTR_LOG_FS, "settings: written in place in %lu ms", (unsigned long)(osGetTime() - start));
+    }
 }
 
 static void WorkerMain(void *arg)
@@ -104,6 +123,9 @@ static void Shutdown(void)
     threadFree(sThread);
     sThread = NULL;
     FlushPending();
+    if (sFile != NULL)
+        fclose(sFile);
+    sFile = NULL;
 }
 
 static void Save(void)
@@ -120,6 +142,8 @@ static void Save(void)
     if (sThread == NULL)
     {
         char text[sizeof(sPending)];
+
+        CtrLog_Write(CTR_LOG_FS, "settings: no writer thread, written on the game thread");
 
         Format(text, sizeof(text));
         WriteText(text);
