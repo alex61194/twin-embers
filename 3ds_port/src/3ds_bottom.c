@@ -490,6 +490,7 @@ enum { DEXPLAN_LIST = 0, DEXPLAN_SLOT, DEXPLAN_FLIP };
 static struct {
     int active, target, state, steps, release;
     int kind, page;                 /* DEXPLAN_*; the habitat page a flip began on */
+    int press;                      /* a tap's plan: A once the cursor is there, so the tapped row opens */
 } sDexPlan;
 
 /* Storage touch belongs to the screen the finger first pressed. The source
@@ -3769,9 +3770,8 @@ static void ProcessCardTouch(const CtrInput *in)
 }
 
 /* The real Pokedex's lists (its top menu, the numerical and search lists). Rows are FireRed's own
- * (CtrBottomDex_RowAt): a tap on one moves the list's cursor there with the list's own UP/DOWN presses,
- * and a tap on the row that is already selected sends its A, so the Pokedex opens it. The scroll arrows
- * send UP/DOWN once on a tap, and repeat while held. Nothing happens on touch-down; a release off the
+ * (CtrBottomDex_RowAt): a tap on one puts the list's cursor there and sends its A, so the Pokedex opens it.
+ * The scroll arrows send UP/DOWN once on a tap, and repeat while held. Nothing happens on touch-down; a release off the
  * row (or arrow) it began on cancels; a held physical button or a state change drops it. */
 #define DEX_REPEAT_DELAY 20
 #define DEX_REPEAT_EVERY 6
@@ -3816,7 +3816,11 @@ static void RunDexPlan(void)
     }
     cur = sDexPlan.kind == DEXPLAN_SLOT ? CtrBottomDex_PageSlot() : CtrBottomDex_Cursor();
     if (cur == sDexPlan.target) {
+        int press = sDexPlan.press;
+
         DexPlanClear();
+        if (press)
+            sRouteKey = K_A;            /* the tapped row or slot itself, not only the cursor on it */
         return;
     }
     /* The cursor goes straight to the row or slot (the game takes it on its next frame): no steps, no clicks. */
@@ -3867,14 +3871,14 @@ static void ProcessDexTouch(const CtrInput *in)
             sDexPlan.active = 1;
             sDexPlan.target = sDexTap.row;
             sDexPlan.state = state;
+            sDexPlan.press = 1;
         }
     }
     sDexTap.down = sDexTap.inside = 0;
 }
 
 /* The habitat/group page (up to four Pokemon, "PAGE 01/10"): a tap on a slot (its picture, number and name)
- * walks FireRed's cursor to it with its own LEFT/RIGHT, a tap on the selected slot sends its A (CHECK); a
- * swipe across the viewport flips the page with the same LEFT/RIGHT at the edge of the page (the page
+ * puts FireRed's cursor on it and sends its A (CHECK); a swipe across the viewport flips the page with the same LEFT/RIGHT at the edge of the page (the page
  * flips by LEFT/RIGHT whatever the button mode, and L/R only in some modes), once, and only toward a page
  * that exists. A tap moves at most DEX_TAP_SLOP pixels; a swipe at least DEX_SWIPE_MIN, mostly sideways.
  * Nothing on touch-down or while held; sliding off the slot cancels; physical input wins. */
@@ -3936,6 +3940,7 @@ static void ProcessDexPageTouch(const CtrInput *in)
                 sDexPlan.kind = DEXPLAN_SLOT;
                 sDexPlan.target = sDexPage.slot;
                 sDexPlan.state = DEX_CATEGORY;
+                sDexPlan.press = 1;
             }
         }
     }
@@ -3943,9 +3948,9 @@ static void ProcessDexPageTouch(const CtrInput *in)
 
 
 /* The Pokedex drawn on the lower screen: press, track, release, one action, on what it showed (CtrPokeTouch_DexHit).
- * A tab or a card walks FireRed's cursor to that row with its own UP / DOWN and a tap on the selected one sends A; the
- * arrows move a page; a slot of a habitat page is walked to with LEFT / RIGHT and PREV / NEXT flip the page; on a
- * Pokemon's page AREA is its A and CRY its START. A held physical button cancels it. */
+ * A tab puts FireRed's cursor on its section; a card or a slot of a habitat page puts the cursor there and sends its A
+ * in the same tap, so what was tapped opens; the arrows move a page and PREV / NEXT flip it; on a Pokemon's page AREA
+ * is its A and CRY its START. A held physical button cancels it. */
 static void DexPlanTo(int kind, int target, int state)
 {
     DexPlanClear();
@@ -3955,6 +3960,13 @@ static void DexPlanTo(int kind, int target, int state)
     sDexPlan.state = state;
     if (kind == DEXPLAN_FLIP)
         sDexPlan.page = CtrBottomDex_Page();
+}
+
+/* A tap on a row, card or slot: the cursor straight there and then its A, in one tap. */
+static void DexPlanPick(int kind, int target, int state)
+{
+    DexPlanTo(kind, target, state);
+    sDexPlan.press = 1;
 }
 
 static void ProcessFieldDexTouch(const CtrInput *in)
@@ -4019,7 +4031,7 @@ static void ProcessFieldDexTouch(const CtrInput *in)
                     if (row == d->menuCursor)
                         sRouteKey = K_A;
                     else
-                        DexPlanTo(DEXPLAN_LIST, row, DEX_MENU);
+                        DexPlanPick(DEXPLAN_LIST, row, DEX_MENU);
                 }
             } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
                 row = CtrPokeTouch_DexGridPageRow(&sShown.touch, code == PT_DEX_HIT_UP ? -1 : 1);
@@ -4032,7 +4044,7 @@ static void ProcessFieldDexTouch(const CtrInput *in)
                 if (row == d->listCursor)
                     sRouteKey = K_A;
                 else if (row < d->listCount)
-                    DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
+                    DexPlanPick(DEXPLAN_LIST, row, DEX_LIST);
             } else if (code == PT_DEX_HIT_UP || code == PT_DEX_HIT_DOWN) {
                 row = d->listCursor + (code == PT_DEX_HIT_UP ? -(PT_DEX_ROWS - 1) : PT_DEX_ROWS - 1);
                 if (row < 0)
@@ -4048,7 +4060,7 @@ static void ProcessFieldDexTouch(const CtrInput *in)
                 if (row == d->slot)
                     sRouteKey = K_A;
                 else if (row < d->slots)
-                    DexPlanTo(DEXPLAN_SLOT, row, DEX_CATEGORY);
+                    DexPlanPick(DEXPLAN_SLOT, row, DEX_CATEGORY);
             } else if ((code == PT_DEX_HIT_PREV || code == PT_DEX_HIT_NEXT)
                        && CtrBottomDex_PageCanFlip(code == PT_DEX_HIT_PREV ? -1 : 1))
                 DexPlanTo(DEXPLAN_FLIP, code == PT_DEX_HIT_PREV ? -1 : 1, DEX_CATEGORY);
