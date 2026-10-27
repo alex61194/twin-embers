@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "3ds_poketouch_options.h"
+#include "3ds_settings.h"
 
 static const char *const sTextSpeed[] = {"SLOW", "MID", "FAST"};
 static const char *const sBattleScene[] = {"ON", "OFF"};
@@ -12,13 +13,13 @@ static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
 static const char *const sSummaryMode[] = {"3DS", "GBA"};
 static const char *const sDayNight[] = {"CLOCK", "OFF"};
-static const char *const sEmbers[] = {"ON", "LOW", "OFF"};
+static const char *const sEmbers[] = {"OFF", "LOW", "HIGH"};     /* CTR_EMBERS_* */
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
 static int sPortFieldSummary;
 static int sPortDayNight;
-static int sPortEmbers;
+static int sPortEmbers = CTR_EMBERS_HIGH;
 
 static int TwoCount(void) { return 2; }
 static int GetTypeMatchup(void) { return sPortTypeMatchup; }
@@ -31,15 +32,25 @@ static int GetDayNight(void) { return sPortDayNight; }
 static void SetDayNight(int v) { sPortDayNight = v & 1; }
 static int ThreeCount(void) { return 3; }
 static int GetEmbers(void) { return sPortEmbers; }
-static void SetEmbers(int v) { sPortEmbers = v < 0 || v > 2 ? 0 : v; }
+static void SetEmbers(int v)
+{
+    sPortEmbers = v < 0 || v >= CTR_EMBERS_COUNT ? CTR_EMBERS_HIGH : v;
+    CtrSettings_SetEmbers(sPortEmbers);     /* kept for the next session; the file is written only on a change */
+}
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
 int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
 int CtrOptions_DayNight(void) { return sPortDayNight == 0; }
-int CtrOptions_Embers(void) { return sPortEmbers != 2; }
-int CtrOptions_EmbersLow(void) { return sPortEmbers == 1; }
-void CtrOptions_EmbersDefaultLow(void) { sPortEmbers = 1; }
+int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
+int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
+
+void CtrOptions_EmbersInit(int isNew3ds)
+{
+    int stored = CtrSettings_Embers();
+
+    sPortEmbers = stored >= 0 && stored < CTR_EMBERS_COUNT ? stored : isNew3ds ? CTR_EMBERS_HIGH : CTR_EMBERS_LOW;
+}
 
 /* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
 static const CtrOptionRow sRows[] = {
@@ -63,7 +74,7 @@ static const CtrOptionRow sRows[] = {
      GetFieldSummary, TwoCount, SetFieldSummary},
     {"DAY/NIGHT", {"Tint the outdoors by the", "hour of the 3DS clock."}, 0, sDayNight, NULL,
      GetDayNight, TwoCount, SetDayNight},
-    {"EMBERS", {"Embers behind the menus.", "LOW: fewer, for the Old 3DS."}, 0, sEmbers, NULL,
+    {"EMBERS", {"Sparks rising behind the", "menus. LOW suits an Old 3DS."}, 0, sEmbers, NULL,
      GetEmbers, ThreeCount, SetEmbers},
 };
 
@@ -118,6 +129,25 @@ void CtrOptions_Step(int row, int dir)
         CtrPokeTouch_OptionSet(r->game, value);
 }
 
+int CtrOptions_IsLevels(int row)
+{
+    const CtrOptionRow *r = CtrOptions_Row(row);
+
+    return r != NULL && r->names == sEmbers;
+}
+
+void CtrOptions_Set(int row, int value)
+{
+    const CtrOptionRow *r = CtrOptions_Row(row);
+
+    if (r == NULL || value < 0 || value >= CtrOptions_Count(row))
+        return;
+    if (r->set != NULL)
+        r->set(value);
+    else
+        CtrPokeTouch_OptionSet(r->game, value);
+}
+
 void CtrOptions_ValueText(int row, char *out, int size)
 {
     const CtrOptionRow *r = CtrOptions_Row(row);
@@ -160,6 +190,16 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
         } else {
             v->optLabel[i][0] = 0;
             v->optValue[i][0] = 0;
+        }
+        v->optSegCount[i] = 0;
+        if (i < count && CtrOptions_IsLevels(base + i)) {
+            int n = CtrOptions_Count(base + i), value = CtrOptions_Get(base + i);
+
+            n = n > PT_OPT_SEGS ? PT_OPT_SEGS : n;
+            v->optSegCount[i] = (uint8_t)n;
+            v->optSegValue[i] = (uint8_t)(value >= 0 && value < n ? value : n);   /* n: none lit */
+            for (int k = 0; k < n; ++k)
+                snprintf(v->optSegName[i][k], PT_OPT_SEG_LEN, "%s", sRows[base + i].names[k]);
         }
     }
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);

@@ -143,8 +143,11 @@ with YES and NO. The battle Summary keeps its layout on the same backdrop. The b
   (`ember_skin*.h`); the BAG icon is the port's battle Bag reduced. The text is FireRed's font at run time.
 - Embers rise slowly over the backdrop (about twenty sparks, `3ds_touch_skin_impl.h`): one step a frame,
   drawn only on pixels that show the backdrop, so they pass behind every button and never over the GBA
-  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS: ON (the default) or OFF; like
-  the other page-2 options it is not kept in the save.
+  picture; each spark puts back what it painted. OPTIONS, page 2, EMBERS: OFF, LOW or HIGH, shown side
+  by side with the chosen one lit (a touch picks one; Left and Right step through them). LOW keeps 7 of
+  the sparks and moves them once every 3 frames, as fast as before. The default is HIGH on a New 3DS and
+  LOW on an Old 3DS; once the player picks a level it is kept in `sdmc:/3ds/twinembers/settings.cfg`
+  (`embers=0..2`), not in the game save.
 - The old artwork skin (`poketouch_skin*.h`, `tools/make_touch_skin.py`) is removed.
 
 Checked: `tests/poketouch_render_test.c` (new hit geometry, every incremental redraw equal to a full one);

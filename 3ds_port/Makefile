@@ -428,9 +428,9 @@ build/night_wild_test.exe: tests/night_wild_test.c src/3ds_night_wild.c include/
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_HOST_TEST -Iinclude -iquote ../include tests/night_wild_test.c src/3ds_night_wild.c -o $@
 
-build/poketouch_options_test.exe: tests/poketouch_options_test.c src/3ds_poketouch_options.c include/3ds_poketouch_options.h include/3ds_poketouch.h
+build/poketouch_options_test.exe: tests/poketouch_options_test.c src/3ds_poketouch_options.c src/3ds_settings.c include/3ds_poketouch_options.h include/3ds_poketouch.h include/3ds_settings.h
 	@mkdir -p build
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/poketouch_options_test.c src/3ds_poketouch_options.c -o $@
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/poketouch_options_test.cfg"' -Iinclude tests/poketouch_options_test.c src/3ds_poketouch_options.c src/3ds_settings.c -o $@
 
 build/rex_test.exe: tests/rex_test.c src/3ds_rex_core.c src/3ds_pak.c include/3ds_rex.h include/3ds_pak.h
 	@mkdir -p build

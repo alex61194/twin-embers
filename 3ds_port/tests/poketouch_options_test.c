@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "3ds_poketouch_options.h"
+#include "3ds_settings.h"
 
 static int failures;
 #define CHECK(c, ...) do { if (!(c)) { printf("FAIL: " __VA_ARGS__); printf("\n"); failures++; } } while (0)
@@ -47,6 +48,8 @@ int main(void)
                                            {"MONO", "STEREO"}, {"HELP", "LR", "L=A"}, {0}, {"ON", "OFF"}};
     CtrPokeTouchView view;
     char small[4];
+
+    remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
     CHECK(CtrOptions_RowCount() == 12, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
@@ -90,15 +93,33 @@ int main(void)
     CHECK(CtrOptions_DayNight() == 0, "DAY/NIGHT stepped to OFF");
     CtrOptions_Step(10, 1);
     Text(10, "CLOCK");
-    Text(11, "ON");
-    CtrOptions_Step(11, 1);
-    Text(11, "LOW");
-    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 1, "EMBERS stepped to LOW");
+    /* EMBERS: OFF / LOW / HIGH, HIGH until a console default or a choice says otherwise; a row of levels. */
+    Text(11, "HIGH");
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 0, "EMBERS starts on HIGH");
     CtrOptions_Step(11, 1);
     Text(11, "OFF");
     CHECK(CtrOptions_Embers() == 0 && CtrOptions_EmbersLow() == 0, "EMBERS stepped to OFF");
     CtrOptions_Step(11, 1);
-    Text(11, "ON");
+    Text(11, "LOW");
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 1, "EMBERS stepped to LOW");
+    CtrOptions_Step(11, -1);
+    Text(11, "OFF");
+    CtrOptions_Set(11, CTR_EMBERS_HIGH);
+    Text(11, "HIGH");
+    CtrOptions_Set(11, 3);
+    Text(11, "HIGH");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 11);
+    CHECK(view.optSegCount[4] == 3 && view.optSegValue[4] == CTR_EMBERS_HIGH && strcmp(view.optSegName[4][0], "OFF") == 0
+          && strcmp(view.optSegName[4][2], "HIGH") == 0 && view.optSegCount[3] == 0, "EMBERS shown as levels");
+    /* The choice outlives the session (settings.cfg); without one the console decides. */
+    CHECK(CtrSettings_Embers() == CTR_EMBERS_HIGH, "EMBERS kept in the settings");
+    CtrOptions_EmbersInit(0);
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 0, "a kept HIGH wins over the Old 3DS default");
+    CtrOptions_Set(11, CTR_EMBERS_LOW);
+    CtrOptions_EmbersInit(1);
+    CHECK(CtrOptions_EmbersLow() == 1, "a kept LOW wins over the New 3DS default");
+    CtrOptions_Set(11, CTR_EMBERS_HIGH);
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 8);
     CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 5 && view.optSelected == 1

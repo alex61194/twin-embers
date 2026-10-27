@@ -168,8 +168,6 @@ int main(void)
         CtrLog_Write(CTR_LOG_BOOT, "console: %s", isNew3ds ? "New 3DS, 804 MHz + L2 requested"
                      : CtrPlatform_Old3DSForced() ? "New 3DS acting as Old 3DS (forced: 268 MHz, no L2, no core 2)"
                      : "Old 3DS");
-        if (!isNew3ds)
-            CtrOptions_EmbersDefaultLow();      /* the sparks cost frames there: LOW until the player says otherwise */
         if (restoredTid != 0)
             CtrLog_Write(CTR_LOG_BOOT, "started by the HOME Menu forwarder; Luma 3DSX title %016llX restored",
                          (unsigned long long)restoredTid);
@@ -183,6 +181,8 @@ int main(void)
     consoleInit(GFX_BOTTOM, NULL);
     mkdir("sdmc:/3ds", 0777);
     mkdir("sdmc:/3ds/twinembers", 0777);
+    CtrOptions_EmbersInit(CtrPlatform_IsNew3DS());     /* the saved choice, else HIGH on a New 3DS and LOW on an Old one */
+    CtrLog_Write(CTR_LOG_BOOT, "embers: %s", !CtrOptions_Embers() ? "OFF" : CtrOptions_EmbersLow() ? "LOW" : "HIGH");
     if (!CtrFlash_InitMigrating("sdmc:/3ds/twinembers/twinembers.sav",
                                   "sdmc:/3ds/pokefirered/twinembers.sav",
                                   "sdmc:/3ds/pokefirered/firered.sav"))

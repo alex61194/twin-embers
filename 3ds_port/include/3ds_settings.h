@@ -4,7 +4,7 @@
 /* The port's own settings that outlive a session, kept in a small text file on the SD card
  * (sdmc:/3ds/twinembers/settings.cfg, lines of "name=number") and not in the game save, so they
  * travel with the console and never touch the save format. Read once on first use; a missing or
- * damaged file means the defaults (turbo off, auto-run off). Each setter writes the file only when
+ * damaged file means the defaults (turbo off, auto-run off, EMBERS not chosen). Each setter writes the file only when
  * the value changes. */
 
 #ifndef CTR_SETTINGS_PATH
@@ -18,5 +18,9 @@ void CtrSettings_SetTurbo(unsigned turbo);
 /* Whether the RUN toggle (auto-run) is on. */
 int CtrSettings_AutoRun(void);
 void CtrSettings_SetAutoRun(int on);
+
+/* The EMBERS level the player chose (CTR_EMBERS_*, 0..2), or -1 when none was: the console's default then. */
+int CtrSettings_Embers(void);
+void CtrSettings_SetEmbers(int level);
 
 #endif

@@ -3145,7 +3145,7 @@ static int FieldEnabled(int id)
 
 /* A touch on an OPTIONS row or the PAGE switcher button (the viewport shows no map then): selected on
  * touch-down, one step on release over the same zone ("<" back, the value or
- * ">" forward; the label only selects). Moving off cancels it; a held
+ * ">" forward; the label only selects; on a row of levels, the level touched). Moving off cancels it; a held
  * physical button cancels it too. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
@@ -3160,6 +3160,8 @@ static void ProcessOptionsTouch(const CtrInput *in)
                                                        pageRows, &relRow, &zone);
     int globalRow = base + relRow;
 
+    if (on && CtrOptions_IsLevels(globalRow) && zone != PT_OPT_ZONE_LABEL)
+        zone = PT_OPT_ZONE_SEG + CtrPokeTouch_OptionSegment((int)in->touchX, CtrOptions_Count(globalRow));
     if (in->held & 0x3ffu) {
         sOpt.down = sOpt.inside = 0;
         sOpt.pageDown = sOpt.pageInside = 0;
@@ -3194,7 +3196,9 @@ static void ProcessOptionsTouch(const CtrInput *in)
         sOpt.inside = on && globalRow == sOpt.row && zone == sOpt.zone;
         return;
     }
-    if (sOpt.inside && sOpt.zone != PT_OPT_ZONE_LABEL)
+    if (sOpt.inside && sOpt.zone >= PT_OPT_ZONE_SEG)
+        CtrOptions_Set(sOpt.row, sOpt.zone - PT_OPT_ZONE_SEG);
+    else if (sOpt.inside && sOpt.zone != PT_OPT_ZONE_LABEL)
         CtrOptions_Step(sOpt.row, sOpt.zone == PT_OPT_ZONE_PREV ? -1 : 1);
     sOpt.down = sOpt.inside = 0;
 }

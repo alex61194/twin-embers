@@ -27,6 +27,10 @@ int CtrOptions_Count(int row);                  /* values of a row */
 int CtrOptions_Get(int row);
 /* One step, `dir` +1 or -1, wrapping; the game's own side effect (SOUND's mono or stereo) applies. */
 void CtrOptions_Step(int row, int dir);
+/* Whether a row's values are levels (EMBERS), shown side by side and picked with a touch. */
+int CtrOptions_IsLevels(int row);
+/* A value picked outright (a touch on one of a row of levels); out of range does nothing. */
+void CtrOptions_Set(int row, int value);
 void CtrOptions_ValueText(int row, char *out, int size);
 /* The view's rows, their values and the bar for the selected row. */
 void CtrOptions_Fill(CtrPokeTouchView *view, int selected);
@@ -37,11 +41,13 @@ int CtrOptions_MoveDetails(void);
 int CtrOptions_FieldSummary(void);
 /* The day/night tint of the outdoor field (3ds_day_night.h): on unless set to OFF. */
 int CtrOptions_DayNight(void);
-/* The embers rising behind the lower screen's menus: on unless set to OFF. */
-int CtrOptions_Embers(void);
-/* ... set to LOW: a third of the sparks, moved every third frame (what an Old 3DS starts with). */
+/* The embers rising behind the lower screen's menus: OFF, LOW or HIGH (CTR_EMBERS_*). LOW is a third of the
+ * sparks, moved every third frame. The choice is kept in settings.cfg (3ds_settings.h); until the player makes
+ * one, CtrOptions_EmbersInit gives the console's: HIGH on a New 3DS, LOW on an Old 3DS. */
+enum { CTR_EMBERS_OFF, CTR_EMBERS_LOW, CTR_EMBERS_HIGH, CTR_EMBERS_COUNT };
+void CtrOptions_EmbersInit(int isNew3ds);
+int CtrOptions_Embers(void);        /* on unless OFF */
 int CtrOptions_EmbersLow(void);
-void CtrOptions_EmbersDefaultLow(void);
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);

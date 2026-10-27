@@ -571,8 +571,48 @@ static int TextWidth(const char *s)
     return w;
 }
 
+/* A row of levels: its values share the pill's inside, OPT_SEG_W wide in all (they need no arrows). */
+#define OPT_SEG_X(boxX) ((boxX) + 3)
+#define OPT_SEG_W (OPT_BOX_W - 8)
+
+int CtrPokeTouch_OptionSegment(int x, int count)
+{
+    int at = x - OPT_SEG_X(OPT_X + OPT_W - OPT_BOX_W), k;
+
+    if (count <= 0)
+        return 0;
+    k = at < 0 ? 0 : at * count / OPT_SEG_W;
+    return k >= count ? count - 1 : k;
+}
+
+/* The levels side by side in the pill: the chosen one an amber face with white ink, the others the game's grey on the
+ * pill, split by thin lines; the one under a held touch darkens. */
+static void OptSegments(int row, const CtrPokeTouchView *v, int boxX, int fy, int h, int zone)
+{
+    int count = v->optSegCount[row], chosen = v->optSegValue[row], x0 = OPT_SEG_X(boxX);
+
+    for (int k = 0; k < count; ++k) {
+        int sx = x0 + k * OPT_SEG_W / count, sw = x0 + (k + 1) * OPT_SEG_W / count - sx;
+        const char *name = v->optSegName[row][k];
+        int tx = sx + (sw - TextWidth(name)) / 2;
+
+        if (k == chosen) {
+            UiRoundFill(sx, fy + 3, sw, h, 4, kEmAmber.lip);
+            EmGradFill(sx + 1, fy + 3, sw - 2, h - 1, 3, kEmAmber.top, kEmAmber.bottom);
+            UiText(name, tx, fy + 4, EM_WHITE, kEmAmber.inkSh, 1, sx + sw);
+            continue;
+        }
+        if (zone == PT_OPT_ZONE_SEG + k)
+            UiRoundFill(sx + 1, fy + 3, sw - 2, h, 4, UI_RGB(255, 214, 160));
+        if (k > 0 && k - 1 != chosen)
+            Fill(sx, fy + 5, 1, h - 4, kEmCream.bottom);
+        UiText(name, tx, fy + 4, EM_DIM, EM_DARK_SH, 1, sx + sw);
+    }
+}
+
 /* One row: a raised cream row with the label (amber, glowing, when selected) and on its right the value in a light pill
- * between "<" and ">" (a switch for ON and OFF); the zone under a held touch darkens. */
+ * between "<" and ">" (a switch for ON and OFF, all the levels for a row of levels); the zone under a held touch
+ * darkens. */
 static void OptRow(int row, const CtrPokeTouchView *v)
 {
     CtrPokeTouchRect r = OptRect(row);
@@ -589,6 +629,10 @@ static void OptRow(int row, const CtrPokeTouchView *v)
     UiText(v->optLabel[row], r.x + 8, fy + 4, pal->ink, pal->inkSh, 1, boxX - 2);
     UiRoundFill(boxX + 2, fy + 2, OPT_BOX_W - 6, r.h - COL_DEPTH - 4, 5, kEmAmber.lip);
     UiRoundFill(boxX + 3, fy + 3, OPT_BOX_W - 8, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 248, 236));
+    if (v->optSegCount[row]) {
+        OptSegments(row, v, boxX, fy, r.h - COL_DEPTH - 6, zone);
+        return;
+    }
     if (zone == PT_OPT_ZONE_PREV)
         UiRoundFill(boxX + 3, fy + 3, OPT_ARROW_W - 3, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 214, 160));
     if (zone == PT_OPT_ZONE_NEXT)

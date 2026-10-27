@@ -55,11 +55,15 @@ enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COU
 /* The native OPTIONS screen (3ds_poketouch_options.c holds the rows): it fills the viewport with up
  * to PT_OPT_MAX rows, each a label on the left and, on the right, "<" value ">". A row is 228x20 at
  * (PT_VIEW_X + 6, PT_VIEW_Y + 4 + 22 row). On a row, the label selects it (its description goes to
- * the bar), "<" steps the value back and the value or ">" steps it forward. */
+ * the bar), "<" steps the value back and the value or ">" steps it forward. A row of levels (EMBERS'
+ * OFF / LOW / HIGH) shows all its values side by side instead, the chosen one lit: a touch on one
+ * picks it (zone PT_OPT_ZONE_SEG + its index). */
 #define PT_OPT_MAX 7
 #define PT_OPT_LABEL_LEN 16
 #define PT_OPT_VALUE_LEN 12
-enum { PT_OPT_ZONE_NONE, PT_OPT_ZONE_LABEL, PT_OPT_ZONE_PREV, PT_OPT_ZONE_NEXT };
+#define PT_OPT_SEGS 3
+#define PT_OPT_SEG_LEN 6
+enum { PT_OPT_ZONE_NONE, PT_OPT_ZONE_LABEL, PT_OPT_ZONE_PREV, PT_OPT_ZONE_NEXT, PT_OPT_ZONE_SEG };
 /* FireRed's own options (the game bridge, ctr_poketouch_options.c), in the order of its menu. */
 enum { PT_OPT_TEXT_SPEED, PT_OPT_BATTLE_SCENE, PT_OPT_BATTLE_STYLE, PT_OPT_SOUND, PT_OPT_BUTTON_MODE, PT_OPT_FRAME,
        PT_OPT_FPS, PT_OPT_GAME_COUNT };
@@ -287,6 +291,9 @@ typedef struct {
     uint8_t optZone;
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
+    uint8_t optSegCount[PT_OPT_MAX];    /* a row of levels: how many (0: the "<" value ">" row) ... */
+    uint8_t optSegValue[PT_OPT_MAX];    /* ... the one chosen, and their names */
+    char optSegName[PT_OPT_MAX][PT_OPT_SEGS][PT_OPT_SEG_LEN];
     uint8_t save;               /* the SAVE screen fills the viewport (no GBA picture, no map) */
     uint8_t saveState;          /* SAVE_* */
     uint8_t saveSel;            /* the selected button: 0 YES, 1 NO */
@@ -323,6 +330,8 @@ bool CtrPokeTouch_HitOptPage(int x, int y);
 
 /* The OPTIONS row and zone (PT_OPT_ZONE_*) under a bottom-screen pixel; false when none. */
 bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone);
+/* On a row of `count` levels, the one under bottom-screen column `x` (the zone was not LABEL). */
+int CtrPokeTouch_OptionSegment(int x, int count);
 
 /* SAVE's button under a bottom-screen pixel (PT_SAVE_*) in the bar for the dialogue state: YES and NO
  * while confirming, OK (PT_SAVE_FIRST) after a result, none while writing. */

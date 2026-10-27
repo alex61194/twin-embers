@@ -6,6 +6,7 @@
 
 static unsigned sTurbo;
 static int sAutoRun;
+static int sEmbers = -1;
 static int sLoaded;
 
 static void Load(void)
@@ -27,6 +28,8 @@ static void Load(void)
             sTurbo = value == 0 || (value >= 2 && value <= 4) ? value : 0;
         else if (sscanf(line, "autorun=%u", &value) == 1)
             sAutoRun = value != 0;
+        else if (sscanf(line, "embers=%u", &value) == 1)
+            sEmbers = value <= 2 ? (int)value : -1;
     }
     fclose(file);
 }
@@ -38,6 +41,8 @@ static void Save(void)
     if (file == NULL)
         return;
     fprintf(file, "turbo=%u\nautorun=%d\n", sTurbo, sAutoRun);
+    if (sEmbers >= 0)
+        fprintf(file, "embers=%d\n", sEmbers);
     fclose(file);
 }
 
@@ -71,5 +76,20 @@ void CtrSettings_SetAutoRun(int on)
     if (on == sAutoRun)
         return;
     sAutoRun = on;
+    Save();
+}
+
+int CtrSettings_Embers(void)
+{
+    Load();
+    return sEmbers;
+}
+
+void CtrSettings_SetEmbers(int level)
+{
+    Load();
+    if (level < 0 || level > 2 || level == sEmbers)
+        return;
+    sEmbers = level;
     Save();
 }
