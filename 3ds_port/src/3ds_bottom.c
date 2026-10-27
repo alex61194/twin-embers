@@ -419,7 +419,7 @@ typedef struct {
 static void SummaryFill(CtrSummaryUiView *v);
 static int NavPending(int mode);
 
-/* The premium Summary is used for battle Party, or when enabled for field Party via Options. */
+/* The premium Summary is used for battle Party, or when enabled via Options for the field's Party and the PC's boxes. */
 static int SummaryPremium(void)
 {
     return CtrBottomSummary_Origin() == CTR_SUMMARY_BATTLE_PARTY || CtrOptions_FieldSummary() == 0;
@@ -2418,7 +2418,7 @@ static void SummaryFill(CtrSummaryUiView *v)
     if (now.page != SUI_PAGE_INFO && sSumPlan.kind == SUMPLAN_NONE)
         sSum.trainer = 0;
     v->trainer = (uint8_t)(sSum.trainer && v->data.page == SUI_PAGE_INFO);
-    v->icon = (uint16_t)(v->loading ? 0 : CtrBottomParty_IconSpecies(v->data.mon));
+    v->icon = (uint16_t)(v->loading ? 0 : CtrBottomSummary_IconSpecies());
     v->pressed = (int16_t)(sSum.down && sSum.inside ? sSum.btn : -1);
 }
 
