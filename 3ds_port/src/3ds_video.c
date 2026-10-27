@@ -1988,6 +1988,8 @@ typedef struct
     /* Or, for a field layer, the walk of its window at this scroll, tinted
      * or not, against this fade base (the same skip, for the cells in view). */
     bool walkedWindow, walkedTint;
+    /* Whether that walk covered only the cells in view (a whole-layer walk has no window to move). */
+    bool walkedWindowed;
     unsigned walkedScrollX, walkedScrollY;
     uint32_t walkedFade;
     /* The 1 KiB VRAM blocks, from the layer's tile base, holding a tile some
@@ -2349,16 +2351,34 @@ static bool LayerRenderCells(unsigned bg)
         && sBgPaletteStamp <= layer->walked
         && !VramChangedAfter(map, rows * columns * 2, layer->walked);
     uint64_t changedBlocks = 0, usedBlocks = 0;
-    if (sameInputs)
+    /* Only the scroll moved since the last walk of this window (walking: the camera moves a pixel a frame and the
+     * game rewrites the map a row or a column once in 8 to 16 frames): the cells that were in view still hold what
+     * the last walk found, so only those coming into view are read. ~4500 cells and ~550 tile lookups a frame on the
+     * walking port.log, 5-7 ms of PERF_PREPARE on the Old 3DS, for one new column in eight frames. */
+    bool scrolled = !sameInputs && !full && windowed && layer->walkedWindow && layer->walkedWindowed
+        && layer->walkedTint == sLayerFadeTint[bg] && layer->walkedFade == sFadeVersion[32]
+        && (layer->walkedScrollX != scrollX || layer->walkedScrollY != scrollY)
+        && layer->walkedGeneration == sCacheGeneration
+        && sBgPaletteStamp <= layer->walked
+        && !VramChangedAfter(map, rows * columns * 2, layer->walked);
+    CellSpans prevX = {0}, prevY = {0};
+    if (sameInputs || scrolled)
         for (unsigned b = 0; b < charBlocks && b < 64; ++b)
             if (sVramStamp[chars / CTR_VRAM_TRACK_BLOCK + b] > layer->walked) changedBlocks |= 1ull << b;
+    if (scrolled && (changedBlocks & layer->usedBlocks))
+        scrolled = false;   /* a tile it shows changed (flowers, water): the window is read whole, as before */
+    if (scrolled)
+    {
+        VisibleSpans(&prevX, layer->walkedScrollX, Min(columns * 8, CTR_GAME_WIDTH), columns);
+        VisibleSpans(&prevY, layer->walkedScrollY, Min(rows * 8, CTR_GAME_HEIGHT), rows);
+    }
     if (sameInputs && !(changedBlocks & layer->usedBlocks))
     {
         /* Everything the walk read still holds as of this frame. */
         layer->walked = sStats.frames + 1;
         return false;
     }
-    bool partial = sameInputs;
+    bool partial = sameInputs || scrolled;
     layer->walked = sStats.frames + 1;
     layer->walkedGeneration = sCacheGeneration;
     layer->walkedPlain = !windowed && !sLayerFadeTint[bg];
@@ -2367,6 +2387,7 @@ static bool LayerRenderCells(unsigned bg)
     layer->walkedScrollX = scrollX;
     layer->walkedScrollY = scrollY;
     layer->walkedFade = sFadeVersion[32];
+    layer->walkedWindowed = windowed;
     ++stamp;
     ++sWindowStamp;
     for (unsigned row = 0; row < rows; ++row)
@@ -2374,10 +2395,12 @@ static bool LayerRenderCells(unsigned bg)
         unsigned rowBase = map + CtrVideo_TextMapOffset(0, row, size);
 
         if (windowed && !InSpans(&spanY, row)) continue;
+        bool rowSeen = scrolled && InSpans(&prevY, row);
         for (unsigned column = 0; column < columns; ++column)
         {
             unsigned cell = row * columns + column;
             if (windowed && !InSpans(&spanX, column)) continue;
+            if (rowSeen && InSpans(&prevX, column)) continue;
             unsigned entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             unsigned index = entry & 1023;
             unsigned block = index * tileBytes / CTR_VRAM_TRACK_BLOCK;
@@ -2385,7 +2408,7 @@ static bool LayerRenderCells(unsigned bg)
             uint8_t light = 0;
 
             usedBlocks |= 1ull << block;
-            if (partial && !(changedBlocks >> block & 1)) continue;
+            if (sameInputs && !(changedBlocks >> block & 1)) continue;
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
@@ -2416,7 +2439,8 @@ static bool LayerRenderCells(unsigned bg)
         }
     }
     /* A partial walk reads the same map, so the same blocks. */
-    if (!partial) layer->usedBlocks = usedBlocks;
+    if (scrolled) layer->usedBlocks |= usedBlocks;
+    else if (!partial) layer->usedBlocks = usedBlocks;
     if (bg && sFieldLayers) GlowCellsCollect(bg, cells);
     if (count == 0) return false;
     /* Most of the window changed: clear it as whole rectangles (at most four
