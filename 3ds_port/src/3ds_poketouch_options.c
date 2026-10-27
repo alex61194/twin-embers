@@ -12,7 +12,7 @@ static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
 static const char *const sSummaryMode[] = {"3DS", "GBA"};
 static const char *const sDayNight[] = {"CLOCK", "OFF"};
-static const char *const sEmbers[] = {"ON", "OFF"};
+static const char *const sEmbers[] = {"ON", "LOW", "OFF"};
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
@@ -29,14 +29,17 @@ static int GetFieldSummary(void) { return sPortFieldSummary; }
 static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
 static int GetDayNight(void) { return sPortDayNight; }
 static void SetDayNight(int v) { sPortDayNight = v & 1; }
+static int ThreeCount(void) { return 3; }
 static int GetEmbers(void) { return sPortEmbers; }
-static void SetEmbers(int v) { sPortEmbers = v & 1; }
+static void SetEmbers(int v) { sPortEmbers = v < 0 || v > 2 ? 0 : v; }
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
 int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
 int CtrOptions_DayNight(void) { return sPortDayNight == 0; }
-int CtrOptions_Embers(void) { return sPortEmbers == 0; }
+int CtrOptions_Embers(void) { return sPortEmbers != 2; }
+int CtrOptions_EmbersLow(void) { return sPortEmbers == 1; }
+void CtrOptions_EmbersDefaultLow(void) { sPortEmbers = 1; }
 
 /* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
 static const CtrOptionRow sRows[] = {
@@ -60,8 +63,8 @@ static const CtrOptionRow sRows[] = {
      GetFieldSummary, TwoCount, SetFieldSummary},
     {"DAY/NIGHT", {"Tint the outdoors by the", "hour of the 3DS clock."}, 0, sDayNight, NULL,
      GetDayNight, TwoCount, SetDayNight},
-    {"EMBERS", {"Embers rising behind the", "touch screen's menus."}, 0, sEmbers, NULL,
-     GetEmbers, TwoCount, SetEmbers},
+    {"EMBERS", {"Embers behind the menus.", "LOW: fewer, for the Old 3DS."}, 0, sEmbers, NULL,
+     GetEmbers, ThreeCount, SetEmbers},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))

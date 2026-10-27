@@ -18,6 +18,7 @@
 #include "3ds_flash.h"
 #include "3ds_forwarder.h"
 #include "3ds_input.h"
+#include "3ds_poketouch_options.h"
 #include "3ds_log.h"
 #include "3ds_platform.h"
 #include "3ds_rex.h"
@@ -165,6 +166,8 @@ int main(void)
         bool isNew3ds = false;
         APT_CheckNew3DS(&isNew3ds);
         CtrLog_Write(CTR_LOG_BOOT, "console: %s", isNew3ds ? "New 3DS, 804 MHz + L2 requested" : "Old 3DS");
+        if (!isNew3ds)
+            CtrOptions_EmbersDefaultLow();      /* the sparks cost frames there: LOW until the player says otherwise */
         if (restoredTid != 0)
             CtrLog_Write(CTR_LOG_BOOT, "started by the HOME Menu forwarder; Luma 3DSX title %016llX restored",
                          (unsigned long long)restoredTid);

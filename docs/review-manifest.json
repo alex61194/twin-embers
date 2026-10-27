@@ -594,7 +594,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "7120a409625d2e50b2fb00e4ca5608f39c1f71908513cba77ac0e9d5127852f1",
+   "sha256": "e08b642dc9a2f0f3f40f1b665780874bb0e514eeca72f6e8d206effba3402c03",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -607,7 +607,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "58fd50f80834fe08010d632187a2ed5c9f4c4bf6b6cc14d79c62cb971cc01724",
+   "sha256": "a1f4e1ed7d7ddaad354603d48634adcd0e3b7313043c95e398aa005b83dd2908",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -938,7 +938,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "ff19e09792004b4b0829691e9506711c089e8ec909bfabbf9a266080bcc50137",
+   "sha256": "f151b613ad5589586a1612f259902a31d1fdebe8c1b34a479b23f01cf3a2a606",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1245,7 +1245,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "843f2ca9a062755d3fc120f45ff53ce515d42930b6c0607e00400916050501e7",
+   "sha256": "da78496f645ac2baed9f05d919b64845437ebf847382a41e77d2cdf3e32478bd",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1259,7 +1259,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "d5d166746ba05b7104215fcbc7ce6f91f02399d766dedd014963a574ea667411",
+   "sha256": "247ad3f77ad7f88bebb9fda1db81c01505ffa4d7cfd4e90d81e3e97de4cc0686",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1340,11 +1340,12 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "d499357d17e37ffba5bffec7b544e5fc48456489e5b8b28b26ded430cd6f9e82",
+   "sha256": "9f11e015b8dc35b0b2296b0d35a63ffbd34ed7b0fd67af05e98a193715288583",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
+   "old_3ds_perf_review": "Reviewed EMBERS LOW (default on an Old 3DS, from APT_CheckNew3DS at boot): 7 of 22 sparks, moved once in 3 frames by 3 steps so the speed is unchanged; the screen is touched a third as often. ON and OFF behave as before."
   },
   {
    "path": "3ds_port/src/3ds_touch_text.c",
@@ -1429,7 +1430,7 @@
   },
   {
    "path": "3ds_port/src/main_game_full.c",
-   "sha256": "22eb92b8c3f84760093ad517aeac9f139200684d545b8bd9330b6be39509abee",
+   "sha256": "217617abdcaf5adcdf6b228239e699ccb001c22ec87eee3f76bd7d0b3ae28a8b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1797,7 +1798,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "216fe90d3b7f1ea0752e2a4c1f465fdafc51b0a0a97867d825fb322052f606af",
+   "sha256": "b42c21c5be2daea5320ae34bc9f50cfdc87a445f9181c6d04552e6df480e00dc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
