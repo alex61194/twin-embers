@@ -142,7 +142,7 @@ static uint16_t FXWallHead(int x, int y)
 /* A Pokemon's icon (FireRed's, its first frame), its centre at (cx, cy). */
 static void FXIcon(const CtrPokeTouchBoxMon *m, int cx, int cy)
 {
-    static unsigned char tiles[512];
+    static unsigned char tiles[1024];
     static unsigned short pal[16];
     static uint8_t px[32 * 32];
     static uint16_t pal565[16];

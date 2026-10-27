@@ -235,17 +235,18 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
 
 /* The battle Party: a header, the six Pokemon in two columns of three, CANCEL. */
 extern int CtrBottomParty_Icon(int slot, unsigned char *tilesOut, unsigned short *palOut);
-/* Party icons: FireRed's 32x32 icon of a slot, decoded once per species and slot. */
+/* Party icons: FireRed's 32x32 icon of a slot with both its frames (the second under the first), decoded once per
+ * species and slot. */
 static struct {
     unsigned icon;
     int ok;
-    uint8_t pixels[32 * 32];
+    uint8_t pixels[32 * 64];
     uint16_t pal[16];
 } sBPIcon[6];
 
 static int BPartyIcon(int slot, unsigned icon)
 {
-    static unsigned char tiles[512];
+    static unsigned char tiles[1024];
     static unsigned short pal[16];
 
     if (sBPIcon[slot].icon == icon + 1)
@@ -255,7 +256,7 @@ static int BPartyIcon(int slot, unsigned icon)
     sBPIcon[slot].ok = CtrBottomParty_Icon(slot, tiles, pal);
     if (!sBPIcon[slot].ok)
         return 0;
-    for (int y = 0; y < 32; ++y)
+    for (int y = 0; y < 64; ++y)
         for (int x = 0; x < 32; ++x) {
             unsigned byte = tiles[(y / 8 * 4 + x / 8) * 32 + y % 8 * 4 + x % 8 / 2];
             sBPIcon[slot].pixels[y * 32 + x] = (uint8_t)((byte >> (x & 1) * 4) & 15);
@@ -300,6 +301,12 @@ static void BPWrap(const char *text, int x, int y, int width, int maxLines, uint
         UiText(line, x, y + lines * 16, ink, shadow, 1, x + width);
 }
 
+/* The selected slot's icon hops with its frames, as FireRed's Party does: up on the first, down on the second. */
+static int BPartyBounce(const CtrBattleParty *p, int i)
+{
+    return p->cursor == i ? (p->iconFrame[i] & 2 ? 1 : -3) : 0;
+}
+
 /* A Party card: a raised card (amber and glowing for the Party's selection, grey for one that fainted) with the icon
  * on its round plate, the name, the level or a status chip, the HP bar and numbers. An empty slot is a hollow. */
 static void BPartyPanel(int i, const CtrBattleView *v)
@@ -333,8 +340,8 @@ static void BPartyPanel(int i, const CtrBattleView *v)
         if (BPartyIcon(i, p->icon[i]))
             for (int y = 2; y < 30; ++y)
                 for (int x = 0; x < 32; ++x) {
-                    uint8_t index = sBPIcon[i].pixels[y * 32 + x];
-                    int py = cy - 18 + y;
+                    uint8_t index = sBPIcon[i].pixels[(y + (p->iconFrame[i] & 1) * 32) * 32 + x];
+                    int py = cy - 18 + y + BPartyBounce(p, i);
                     if (index && py >= fy && py < fy + fh)
                         Px(r.x + 1 + x, py, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
                 }
@@ -366,9 +373,9 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     if (BPartyIcon(i, p->icon[i]))
         for (int y = 0; y < 32; ++y)
             for (int x = 0; x < 32; ++x) {
-                uint8_t index = sBPIcon[i].pixels[y * 32 + x];
+                uint8_t index = sBPIcon[i].pixels[(y + (p->iconFrame[i] & 1) * 32) * 32 + x];
                 if (index)
-                    Px(r.x + 5 + x, fy + 3 + y, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
+                    Px(r.x + 5 + x, fy + 3 + y + BPartyBounce(p, i), fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
             }
     UiText(p->name[i], r.x + 41, fy + 4, pal->ink, pal->inkSh, 1, r.x + r.w - 4);
     if (p->egg[i])
