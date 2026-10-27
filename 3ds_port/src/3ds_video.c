@@ -2309,7 +2309,7 @@ static bool LayerRenderCells(unsigned bg)
     unsigned cells = rows * columns;
     bool full = !layer->valid || sCellControl[bg] != control;
     unsigned count = 0, visible = cells;
-    CellSpans spanX, spanY;
+    CellSpans spanX = {0}, spanY = {0};   /* set when windowed; zeroed for gcc 16 */
     bool windowed = !full && FieldLayerWindowed(bg);
 
     if (windowed)
