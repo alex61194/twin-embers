@@ -5259,7 +5259,7 @@
   },
   {
    "path": "patches/pokefirered/0157-pc-box-summary-screen.json",
-   "sha256": "90c3bba90214d3226ce25bd04a0e4d0e455d241945a3cdcabae04704bf22e2c6",
+   "sha256": "4ce3e9a4f19e53fb8271730881ed44d2443d492f8ec2b96b75afd6f04ca1e282",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5274,15 +5274,15 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0154-party-icon-second-frame.json",
-   "sha256": "40adbd10bb139b29d855aac6b42435dc471f064d080f33464511fc75c475011e",
+   "path": "patches/pokefirered/0159-party-icon-second-frame.json",
+   "sha256": "24b8d4f195c1e01dfa6a25c4845a68b4ba700d0f1e4f451b82286421304c028d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0154-battle-tap-sets-cursor.json",
+   "path": "patches/pokefirered/0160-battle-tap-sets-cursor.json",
    "sha256": "90d46549127a0599923bee957dff0e497d1794a159f76065e4e60d8f53de92f1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
@@ -5291,14 +5291,14 @@
   },
   {
    "path": "patches/pokefirered/0156-touch-cursor-direct.json",
-   "sha256": "f083916a3d2058280e765d51bf0a890d22d78bf15c68ca417c2aa64cb6ffb0aa",
+   "sha256": "f5f2add2e3695c561765d97dc256f4a85e7e8c61e1d882cbf5174fd5219470a8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0155-key-items-on-x-and-y.json",
+   "path": "patches/pokefirered/0161-key-items-on-x-and-y.json",
    "sha256": "92b5b8c70e39aeb1965e53d2b9547b5f56563f3817d9c930e55e3eaf2e7011c3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
