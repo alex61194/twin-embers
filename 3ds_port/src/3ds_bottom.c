@@ -3799,7 +3799,15 @@ static void RunDexPlan(void)
         sDexPlan.release = 0;
         return;
     }
-    if (CtrBottomDex_State() != sDexPlan.state || ++sDexPlan.steps > 64) {
+    if (++sDexPlan.steps > 64) {
+        DexPlanClear();
+        return;
+    }
+    /* The cursor's own redraw keeps the Pokedex busy for a frame or two (its window copy): wait it out, or the A a tap
+     * still owes would be dropped with the plan. Only another screen ends it. */
+    if (CtrBottomDex_State() == DEX_BUSY)
+        return;
+    if (CtrBottomDex_State() != sDexPlan.state) {
         DexPlanClear();
         return;
     }
