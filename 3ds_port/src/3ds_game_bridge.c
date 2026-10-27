@@ -220,7 +220,7 @@ static void UpdateDayNight(void)
     const uint16_t *secondary = outdoors && layout ? TilesetLights(layout->secondaryTileset, &secondaryCount) : NULL;
     bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && UpdateCamera();
 
-    CtrVideo_SetDayNight(outdoors, primary, primaryCount, secondary, secondaryCount);
+    CtrVideo_SetDayNight(outdoors, CtrOptions_DayNightSecond(), primary, primaryCount, secondary, secondaryCount);
     if (camera)
         CtrVideo_SetDayNightCamera(true, (gSaveBlock1Ptr->pos.x * 2 - sCameraKX) & 63,
                                    (gSaveBlock1Ptr->pos.y * 2 - sCameraKY) & 31, CAMERA_VIEW_LEFT,

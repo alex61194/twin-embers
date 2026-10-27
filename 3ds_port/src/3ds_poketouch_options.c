@@ -11,14 +11,18 @@ static const char *const sSound[] = {"MONO", "STEREO"};
 static const char *const sButtonMode[] = {"HELP", "LR", "L=A"};
 static const char *const sFps[] = {"ON", "OFF"};
 static const char *const sSummaryMode[] = {"3DS", "GBA"};
-static const char *const sDayNight[] = {"CLOCK", "OFF"};
-static const char *const sEmbers[] = {"ON", "LOW", "OFF"};
+static const char *const sDayNight[] = {"CLOCK", "DAWN", "DAY", "DUSK", "NIGHT", "OFF"};
+/* The hour each fixed DAY/NIGHT value stands at (3ds_day_night.h's keys): dawn's
+ * pink, noon, dusk's orange, and 21:30, full night with every window still lit. */
+static const int kDayNightSecond[] = {-1, 23400, 43200, 68400, 77400};
+#define DAY_NIGHT_OFF 5
+static const char *const sEmbers[] = {"OFF", "LOW", "HIGH"};
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
 static int sPortFieldSummary;
 static int sPortDayNight;
-static int sPortEmbers;
+static int sPortEmbers = 2;
 
 static int TwoCount(void) { return 2; }
 static int GetTypeMatchup(void) { return sPortTypeMatchup; }
@@ -28,16 +32,18 @@ static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
 static int GetFieldSummary(void) { return sPortFieldSummary; }
 static void SetFieldSummary(int v) { sPortFieldSummary = v & 1; }
 static int GetDayNight(void) { return sPortDayNight; }
-static void SetDayNight(int v) { sPortDayNight = v & 1; }
+static int SixCount(void) { return 6; }
+static void SetDayNight(int v) { sPortDayNight = v < 0 || v > DAY_NIGHT_OFF ? 0 : v; }
 static int ThreeCount(void) { return 3; }
 static int GetEmbers(void) { return sPortEmbers; }
-static void SetEmbers(int v) { sPortEmbers = v < 0 || v > 2 ? 0 : v; }
+static void SetEmbers(int v) { sPortEmbers = v < 0 || v > 2 ? 2 : v; }
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
 int CtrOptions_FieldSummary(void) { return sPortFieldSummary; }
-int CtrOptions_DayNight(void) { return sPortDayNight == 0; }
-int CtrOptions_Embers(void) { return sPortEmbers != 2; }
+int CtrOptions_DayNight(void) { return sPortDayNight != DAY_NIGHT_OFF; }
+int CtrOptions_DayNightSecond(void) { return sPortDayNight < DAY_NIGHT_OFF ? kDayNightSecond[sPortDayNight] : -1; }
+int CtrOptions_Embers(void) { return sPortEmbers != 0; }
 int CtrOptions_EmbersLow(void) { return sPortEmbers == 1; }
 void CtrOptions_EmbersDefaultLow(void) { sPortEmbers = 1; }
 
@@ -61,8 +67,8 @@ static const CtrOptionRow sRows[] = {
      GetMoveDetails, TwoCount, SetMoveDetails},
     {"FIELD SUMMARY", {"Use the 3DS Summary", "screen from field Party."}, 0, sSummaryMode, NULL,
      GetFieldSummary, TwoCount, SetFieldSummary},
-    {"DAY/NIGHT", {"Tint the outdoors by the", "hour of the 3DS clock."}, 0, sDayNight, NULL,
-     GetDayNight, TwoCount, SetDayNight},
+    {"DAY/NIGHT", {"The 3DS clock's hour, or", "a fixed one, outdoors."}, 0, sDayNight, NULL,
+     GetDayNight, SixCount, SetDayNight},
     {"EMBERS", {"Embers behind the menus.", "LOW: fewer, for the Old 3DS."}, 0, sEmbers, NULL,
      GetEmbers, ThreeCount, SetEmbers},
 };

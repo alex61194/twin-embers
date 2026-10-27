@@ -536,7 +536,7 @@ static unsigned Read16(unsigned offset)
  * (3ds_day_night_lights.h) is lit by a lamplight overlay drawn after its
  * layer, untinted (DrawDayNightGlass). The clock is the console's own
  * (osGetTime counts local milliseconds from 1900, which starts on a
- * midnight), read every frame to the second.
+ * midnight), read every frame to the second, unless OPTIONS fixes the hour.
  */
 #define DAY_NIGHT_BG_BANKS 13u
 static bool sDayNightRequested;
@@ -575,7 +575,7 @@ static bool sFieldLayers;
 /* Stages 4 and 5 hold the hour (DayNightEnv); drawing into a layer texture, which is tinted when it is drawn. */
 static bool sDayNightEnv, sInLayerTexture;
 
-void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned primaryCount,
+void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, unsigned primaryCount,
                           const uint16_t *secondary, unsigned secondaryCount)
 {
     sDayNightRequested = outdoors;
@@ -585,9 +585,10 @@ void CtrVideo_SetDayNight(bool outdoors, const uint16_t *primary, unsigned prima
     sDayNightRequestCount[1] = secondary ? secondaryCount : 0;
     if (outdoors)
     {
-        uint32_t second = (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
-        sDayNightRequestColor = CtrDayNight_Tint(second);
-        sDayNightRequestSecond = second;
+        uint32_t at = second >= 0 ? (uint32_t)second % CTR_DAY_NIGHT_DAY_SECONDS
+                                  : (uint32_t)((osGetTime() / 1000u) % CTR_DAY_NIGHT_DAY_SECONDS);
+        sDayNightRequestColor = CtrDayNight_Tint(at);
+        sDayNightRequestSecond = at;
     }
 }
 

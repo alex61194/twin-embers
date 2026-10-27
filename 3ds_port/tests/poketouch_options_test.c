@@ -85,20 +85,39 @@ int main(void)
     CtrOptions_Step(9, 1);
     Text(9, "3DS");
     Text(10, "CLOCK");
+    CHECK(CtrOptions_DayNightSecond() == -1, "DAY/NIGHT on CLOCK follows the 3DS clock");
+    {
+        static const char *const hours[] = {"DAWN", "DAY", "DUSK", "NIGHT"};
+        static const int seconds[] = {23400, 43200, 68400, 77400};
+
+        for (int i = 0; i < 4; ++i) {
+            CtrOptions_Step(10, 1);
+            Text(10, hours[i]);
+            CHECK(CtrOptions_DayNight() == 1 && CtrOptions_DayNightSecond() == seconds[i],
+                  "DAY/NIGHT %s is second %d", hours[i], CtrOptions_DayNightSecond());
+        }
+    }
     CtrOptions_Step(10, 1);
     Text(10, "OFF");
-    CHECK(CtrOptions_DayNight() == 0, "DAY/NIGHT stepped to OFF");
+    CHECK(CtrOptions_DayNight() == 0 && CtrOptions_DayNightSecond() == -1, "DAY/NIGHT stepped to OFF");
     CtrOptions_Step(10, 1);
     Text(10, "CLOCK");
-    Text(11, "ON");
-    CtrOptions_Step(11, 1);
-    Text(11, "LOW");
-    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 1, "EMBERS stepped to LOW");
+    CtrOptions_Step(10, -1);
+    Text(10, "OFF");
+    CtrOptions_Step(10, 1);
+    Text(11, "HIGH");
     CtrOptions_Step(11, 1);
     Text(11, "OFF");
     CHECK(CtrOptions_Embers() == 0 && CtrOptions_EmbersLow() == 0, "EMBERS stepped to OFF");
     CtrOptions_Step(11, 1);
-    Text(11, "ON");
+    Text(11, "LOW");
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 1, "EMBERS stepped to LOW");
+    CtrOptions_Step(11, 1);
+    Text(11, "HIGH");
+    CHECK(CtrOptions_Embers() == 1 && CtrOptions_EmbersLow() == 0, "EMBERS stepped to HIGH");
+    CtrOptions_EmbersDefaultLow();
+    Text(11, "LOW");
+    CtrOptions_Step(11, 1);
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 8);
     CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 5 && view.optSelected == 1

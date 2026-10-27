@@ -134,8 +134,14 @@ unsigned CtrNightWild_Species(unsigned map, unsigned area, unsigned slot, unsign
 }
 
 #ifndef CTR_HOST_TEST
+/* 3ds_poketouch_options.h: the hour fixed in OPTIONS (DAY/NIGHT), -1 for the clock's. */
+extern int CtrOptions_DayNightSecond(void);
+
+/* The hour the outdoors shows: a fixed one makes its night (or day) the encounters' and the evolutions' too. */
 unsigned CtrNightWild_Second(void)
 {
-    return (unsigned)((osGetTime() / 1000u) % 86400u);
+    int fixed = CtrOptions_DayNightSecond();
+
+    return fixed >= 0 ? (unsigned)fixed % 86400u : (unsigned)((osGetTime() / 1000u) % 86400u);
 }
 #endif
