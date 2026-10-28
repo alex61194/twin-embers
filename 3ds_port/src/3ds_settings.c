@@ -1,7 +1,10 @@
 /* See 3ds_settings.h. */
+#define _POSIX_C_SOURCE 200809L   /* fileno, fsync */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "3ds_settings.h"
 
@@ -31,7 +34,7 @@ static void Load(void)
         return;
     sLoaded = 1;
     sFile = fopen(CTR_SETTINGS_PATH, "r+b");
-    if (sFile == NULL)
+    if (sFile == NULL && errno == ENOENT)   /* only a missing file is created: any other failure keeps the settings */
         sFile = fopen(CTR_SETTINGS_PATH, "w+b");
     file = sFile;
     if (file == NULL)
@@ -63,6 +66,7 @@ static void WriteText(const char *text)
     if (fseek(sFile, 0, SEEK_SET) == 0)
         fwrite(block, 1, sizeof(block), sFile);
     fflush(sFile);
+    fsync(fileno(sFile));   /* committed now (FSFILE_Flush on the SD card), not only when the file is closed at exit */
 }
 
 static void Format(char *text, size_t size)
