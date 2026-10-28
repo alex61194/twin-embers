@@ -93,11 +93,16 @@ static const char *FNSymbol(uint8_t code)
 /* FireRed codes (0xff ended) as text for UiText: its control codes are left out, a line break is a space. */
 static void FNText(const uint8_t *raw, int n, char *out, int size)
 {
-    int o = 0;
+    int o = 0, jp = 0;
 
     for (int i = 0; i < n && raw[i] != 0xff && o + 3 <= size; ++i) {
         uint8_t c = raw[i];
 
+        if (c == 0xfc && i + 1 < n && (raw[i + 1] == 0x15 || raw[i + 1] == 0x16)) {
+            jp = raw[i + 1] == 0x15;    /* a Japanese Pokemon's name, between JPN and ENG: its own glyphs */
+            ++i;
+            continue;
+        }
         if (c == 0xfc) {                /* a text effect: its code and arguments are not glyphs */
             i += 1 + (i + 1 < n ? FNEffectArgs(raw[i + 1]) : 0);
             continue;
@@ -117,7 +122,7 @@ static void FNText(const uint8_t *raw, int n, char *out, int size)
         if (c == 0xfe || c == 0)
             out[o++] = ' ';
         else if (c < 0xf7) {
-            out[o++] = 0x01;
+            out[o++] = jp ? 0x02 : 0x01;
             out[o++] = (char)c;
         }
     }

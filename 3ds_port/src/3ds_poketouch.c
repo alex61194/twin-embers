@@ -233,6 +233,7 @@ static unsigned GlyphCode(const char **s)
     else if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0x1b; }
     else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xb7; }
     else if (c == 0x01 && **s) code = (unsigned char)*(*s)++;   /* a FireRed code as it is (CtrPokeTouch name text) */
+    else if (c == 0x02 && **s) code = 0x100u | (unsigned char)*(*s)++;   /* a Japanese one (a Japanese Pokemon's name) */
     else switch (c) {
         case '!': code=0xab; break; case '?': code=0xac; break;
         case '.': code=0xad; break; case '-': code=0xae; break;
@@ -254,9 +255,10 @@ static const PtGlyph *Glyph(const char **s)
     TwinIconsPrepare();
     code = GlyphCode(s);
     if (!sPtFontReady[code]) {
-        const uint8_t *src = CtrTwinFontData() + code * 64;
+        static uint8_t jp[64];
+        const uint8_t *src = code & 0x100u ? CtrTwinJapaneseGlyph(code & 0xffu, jp) : CtrTwinFontData() + code * 64;
         PtGlyph *g = &sPtFont[code];
-        g->width = CtrTwinFontWidth(code);
+        g->width = code & 0x100u ? CtrTwinJapaneseFontWidth(code & 0xffu) : CtrTwinFontWidth(code);
         if (g->width > 16) g->width = 16;
         TwinGlyphDecode(src, g->width, g->rows);
         sPtFontReady[code] = true;

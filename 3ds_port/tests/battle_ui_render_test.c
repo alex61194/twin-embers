@@ -17,6 +17,8 @@
 static uint8_t font[256 * 64];
 const uint8_t *CtrTwinFontData(void) { return font; }
 unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 6; }
+const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]) { (void)code; memset(out, 0, 64); return out; }
+unsigned CtrTwinJapaneseFontWidth(unsigned code) { (void)code; return 8; }
 static uint8_t smallFont[256 * 32], smallWidth[256];
 const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
 unsigned CtrTwinSmallFontWidth(unsigned code) { return code < 256 && smallWidth[code] ? smallWidth[code] : 5; }

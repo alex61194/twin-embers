@@ -2,8 +2,9 @@
  * No ROM-derived pixels are initialized in this header. */
 typedef struct { uint8_t width; uint32_t rows[16]; } PtGlyph;
 typedef struct { uint8_t w, h; const uint8_t *pixels; uint16_t pal[16]; } PtImage;
-static PtGlyph sPtFont[256];
-static bool sPtFontReady[256];
+/* FireRed's latin_normal glyphs, then its japanese_normal ones (a Japanese Pokemon's name): 256 each. */
+static PtGlyph sPtFont[512];
+static bool sPtFontReady[512];
 static uint8_t sTwinIconPixels[7][12 * 12];
 static PtImage sPt_icon_pokedex, sPt_icon_pokemon, sPt_icon_bag, sPt_icon_card;
 static PtImage sPt_icon_save, sPt_icon_options, sPt_icon_shoes;
@@ -69,5 +70,8 @@ static void TwinIconsPrepare(void)
 }
 extern const uint8_t *CtrTwinFontData(void);
 extern unsigned CtrTwinFontWidth(unsigned code);
+/* FireRed's japanese_normal glyph for a code, laid out as a latin_normal one (64 bytes), and its width. */
+extern const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]);
+extern unsigned CtrTwinJapaneseFontWidth(unsigned code);
 extern const uint8_t *CtrTwinSmallFontData(void);
 extern unsigned CtrTwinSmallFontWidth(unsigned code);
