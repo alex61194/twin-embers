@@ -439,7 +439,7 @@
   },
   {
    "path": "3ds_port/include/3ds_first_battle_bridge.h",
-   "sha256": "5b388c6c2daf13a43bba719f60e786cc7ebac4f8cb2a4d081c08b3d5e7667c58",
+   "sha256": "835de8fae506a987f6077a7e42621e90a3320524f79bcb4bf1d0aaecff75bc4e",
    "review_status": "reviewed",
    "credit": "alex61194 (original port adaptation with disclosed AI assistance)",
    "license": "MIT only for original owned port additions; external game source remains outside distribution",
@@ -946,7 +946,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "60a8826db2959f8f912a43abc023a99867455e920016d5193882ca44410e0c15",
+   "sha256": "87851a8da344ab1dbf98d84ad5116b935e1bcc394236f16a885cd4d8c832ff7a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5405,6 +5405,14 @@
   {
    "path": "patches/pokefirered/0169-item-pc-withdraw-on-lower-screen.json",
    "sha256": "f5df7726f323c5b59d95b008783f6a98fb846b08db740a4f38d36c850f296e8f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0170-old-man-bag-on-battle-screen.json",
+   "sha256": "131f568fb2e276c35dbbf36daa0210267966f6d0dde7eb0d8cee878c87960cee",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

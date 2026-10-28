@@ -822,8 +822,8 @@ static void BagBar(CtrPokeTouchView *v)
 }
 
 /* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
- * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The Old Man's
- * and the battle's keep their own pictures. */
+ * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The battle's
+ * and the Old Man's demonstration are drawn by the battle screen (BattleBagFill). */
 static int FieldBagNative(void)
 {
     return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;

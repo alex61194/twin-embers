@@ -25,10 +25,11 @@ int CtrBattleFirst_Chooser(int *state)
     return -1;
 }
 
+/* The first battle's BAG, and the Old Man's demonstration opening his: the battle screen draws either Bag. */
 int CtrBattleFirst_BagPending(void)
 {
     int i;
-    if (!(gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE) || gMain.callback2 != BattleMainCB2)
+    if (!(gBattleTypeFlags & (BATTLE_TYPE_FIRST_BATTLE | BATTLE_TYPE_OLD_MAN_TUTORIAL)) || gMain.callback2 != BattleMainCB2)
         return 0;
     for (i = 0; i < gBattlersCount && i < MAX_BATTLERS_COUNT; ++i)
         if (gBattlerControllerFuncs[i] == OpenBagAndChooseItem)
