@@ -602,7 +602,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "3fd8b749fe3e75458eecb47a96702da6bb41ef847fa371e84b93c6c32efe1cde",
+   "sha256": "08de0e23bb78c007459a407b9960c5917ca8e523880c6b20f9a5ff82b097f56f",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -710,7 +710,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "6c1b25cf579fb2c4296600d9b8b36d56aff42a4993bc713a5432a22d9ccc7e62",
+   "sha256": "36e912289283a18a06beb301c96f46b9e3f7a8f65ecf342cc037d715552e02fb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1048,7 +1048,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "957dee251c4bbc5edb217bb312c72e998bd8b161a37a0f22e26ded4f28bfbb24",
+   "sha256": "51db33a32b2aaf4337bab6f5401e1cbccd7e40a5f8a558e669a48cc8dc09a992",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1272,7 +1272,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "bbe67f920e860a9dd01767575ad543f6d4fa10c7e03b8375f3dda2f2ce90bc30",
+   "sha256": "223f62703be3985cffe41c416c9b6865f79178d7e7d17f1e6acbdd79c6d4ad6e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",

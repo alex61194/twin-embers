@@ -4,7 +4,8 @@
  * and CLOSE BOX on the right with the Pokemon in hand under them, the Party over the cells while the cursor is in it,
  * and over them the box's menu, YES/NO, box chooser or marking card. FireRed's cursor is amber. The box's message and the Pokemon
  * under the cursor (FireRed's lines about it and its picture) are in the note. Every word is FireRed's (CtrBottomStorage_
- * BoxFill) but for the buttons' labels (3ds_ui_strings.h). */
+ * BoxFill) but for the buttons' labels (3ds_ui_strings.h). MOVE ITEMS is the same box: an amber tag on every Pokemon
+ * that holds an item, the item in hand on the plate under the buttons, and in the note the item under the cursor. */
 #include "3ds_storage_touch.h"
 
 static const CtrPokeTouchRect sFXPrev = {4, 4, 26, 24}, sFXTitle = {32, 4, 120, 24}, sFXNext = {154, 4, 26, 24};
@@ -171,6 +172,14 @@ static void FXIcon(const CtrPokeTouchBoxMon *m, int cx, int cy)
     UiImage(px, pal565, 32, 32, 32, cx - 16, cy - 18, 1, 1);
 }
 
+/* MOVE ITEMS: the tag of a Pokemon that holds an item, centred on (cx, cy). */
+static void FXItemTag(int cx, int cy)
+{
+    UiRoundFill(cx - 5, cy - 5, 11, 11, 3, kEmAmber.lip);
+    EmGradFill(cx - 4, cy - 4, 9, 9, 2, kEmAmber.top, kEmAmber.bottom);
+    UiRoundFill(cx - 1, cy - 2, 3, 5, 1, EM_WHITE);
+}
+
 static void FXText(const uint8_t *raw, int n, int x, int y, uint16_t ink, uint16_t sh, int right)
 {
     char text[64];
@@ -244,6 +253,8 @@ static void FXGrid(const CtrPokeTouchBox *b)
     for (int i = 0; i < PT_BOX_SLOTS; ++i) {
         CtrPokeTouchRect r = FXCell(i);
         FXIcon(&b->slot[i], r.x + r.w / 2, r.y + r.h / 2 + 2);
+        if (b->items && b->slot[i].species && b->slotItem[i])
+            FXItemTag(r.x + r.w - 6, r.y + r.h - 6);
     }
 }
 
@@ -256,10 +267,15 @@ static void FXSide(const CtrPokeTouchBox *b)
              b->pressed == ST_HIT_BUTTON_PARTY);
     FXButton(&sFXClose, CtrUiText(UIS_BOX_CLOSE), buttons && b->pos == 1 ? &kEmAmber : &kEmViolet,
              b->pressed == ST_HIT_BUTTON_CLOSE);
-    /* The Pokemon in hand, on a sunk plate. */
+    /* The Pokemon in hand, on a sunk plate; MOVE ITEMS: the item in hand. */
     UiRoundFill(h->x, h->y, h->w, h->h, 5, UI_RGB(24, 8, 10));
     EmGradFill(h->x + 1, h->y + 1, h->w - 2, h->h - 2, 4, UI_RGB(72, 26, 26), UI_RGB(44, 14, 16));
-    if (b->holding)
+    if (b->items && b->handItem) {
+        CtrPokeTouchRect line = {h->x, 0, h->w, 13};
+
+        ItemArt(ICON_BOX_HAND, b->handItem, h->x + h->w / 2 - 10, h->y + 8, 1);
+        UiTextCentered(CtrUiText(UIS_BOX_IN_HAND), &line, h->y + h->h - 15, UI_RGB(240, 200, 170), UI_RGB(30, 8, 8), 1);
+    } else if (b->holding)
         FXIcon(&b->held, h->x + h->w / 2, h->y + h->h / 2 + 2);
 }
 
@@ -280,6 +296,8 @@ static void FXParty(const CtrPokeTouchBox *b)
             continue;
         if (i == 0) {
             FXIcon(&b->party[0], r.x + r.w / 2, fy + 24);
+            if (b->items && b->partyItem[0])
+                FXItemTag(r.x + r.w - 10, fy + 32);
             FXText(b->partyName[0], (int)sizeof(b->partyName[0]), r.x + 6, fy + 44, p->ink, p->inkSh, r.x + r.w - 4);
             if (!b->party[0].egg) {
                 snprintf(level, sizeof(level), "Lv%u", (unsigned)b->partyLevel[0]);
@@ -288,6 +306,8 @@ static void FXParty(const CtrPokeTouchBox *b)
             continue;
         }
         FXIcon(&b->party[i], r.x + 14, fy + 11);
+        if (b->items && b->partyItem[i])
+            FXItemTag(r.x + 24, fy + 15);
         FXText(b->partyName[i], (int)sizeof(b->partyName[i]), r.x + 30, fy + 6, p->ink, p->inkSh, r.x + r.w - 4);
     }
     FXButton(&sFXCancel, CtrUiText(UIS_CANCEL), b->pos == 6 ? &kEmAmber : &kEmViolet,
@@ -441,6 +461,24 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
 
             UiText(tap, NOTE_X + w - 14 - UiTextWidth(tap, 1) - 9, NOTE_Y + NOTE_H - 16, EM_DIM, EM_DARK_SH, 1, NOTE_X + w);
             UiArrow(NOTE_X + w - 18, NOTE_Y + NOTE_H - 16, 1, EM_STRIPE);
+        }
+    } else if (b->items && b->mon.species) {
+        /* MOVE ITEMS: the item the Pokemon holds, its name by its icon, the Pokemon's on the right, its description. */
+        char name[32], desc[200];   /* two bytes a FireRed character */
+
+        FNText(b->monText[0], (int)sizeof(b->monText[0]), name, (int)sizeof(name));
+        if (b->monItem) {
+            int nameX = NOTE_X + w - 10 - UiTextWidth(name, 1);
+
+            /* Three lines of description: FireRed's are up to three (the note beside BACK is narrow). */
+            ItemArt(ICON_BOX_NOTE, b->monItem, NOTE_X + 10, NOTE_Y + 1, 1);
+            FXText(b->itemName, (int)sizeof(b->itemName), NOTE_X + 36, NOTE_Y + 5, EM_DARK, EM_DARK_SH, nameX - 6);
+            UiText(name, nameX, NOTE_Y + 5, EM_DIM, EM_DARK_SH, 1, NOTE_X + w);
+            FNText(b->itemDesc, (int)sizeof(b->itemDesc), desc, (int)sizeof(desc));
+            BPWrap(desc, NOTE_X + 12, NOTE_Y + 21, w - 22, 3, EM_DIM, EM_DARK_SH);
+        } else {
+            UiText(name, NOTE_X + 12, NOTE_Y + 8, EM_DARK, EM_DARK_SH, 1, NOTE_X + w - 8);
+            UiText(CtrUiText(UIS_BOX_NO_ITEM), NOTE_X + 12, NOTE_Y + 28, EM_DIM, EM_DARK_SH, 1, NOTE_X + w - 8);
         }
     } else if (b->mon.species) {
         int right = NOTE_X + w - (b->mon.egg ? 8 : 72);

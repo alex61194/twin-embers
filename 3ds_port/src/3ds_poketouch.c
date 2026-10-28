@@ -295,7 +295,7 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
 
 /* Shortcut item icons from FireRed's icon table, decoded once per item and
  * shown as the 20x20 around their drawn part. */
-enum { ICON_REGISTERED, ICON_BIKE, ICON_COUNT };
+enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_COUNT };
 
 static struct {
     unsigned item;

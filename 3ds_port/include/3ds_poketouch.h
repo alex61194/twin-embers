@@ -237,6 +237,15 @@ typedef struct {
     uint8_t chooseCount;
     uint8_t message[48];            /* FireRed's line in the box's window, while it shows */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
+    /* MOVE ITEMS: the items the Pokemon hold (a tag on each), the item in hand, and the one under the cursor with
+     * its name and description for the note. */
+    uint8_t items;
+    uint16_t slotItem[PT_BOX_SLOTS];
+    uint16_t partyItem[6];
+    uint16_t handItem;
+    uint16_t monItem;
+    uint8_t itemName[16];
+    uint8_t itemDesc[96];
 } CtrPokeTouchBox;
 
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
