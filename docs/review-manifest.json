@@ -73,7 +73,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "8e2fa0852d0fc60f7dc507ec65e8aef1137e82acab2dcf42d05f9b9a1321cdaf",
+   "sha256": "7b641aa790fac03e4b0642b06836e8f371fdcff5b855738c06dc35bdf35cc4c4",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1398,7 +1398,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "6a2321f1d0f5b285ef1f85863ecda8c152dddf86c5ed34d3269298d09b6fc618",
+   "sha256": "aab287507ab003297c357747bc07775b99772e083c4724d581fb8827a772fcb6",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5440,6 +5440,14 @@
   {
    "path": "patches/pokefirered/0174-viewers-return-to-lower-bag.json",
    "sha256": "d4bcd80237dab1882991e559c7fbae27edb936eb1bc1a685e3c875852d997eb8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_obj_window_impl.h",
+   "sha256": "8c1fa1cbd517b71ee18ef70f1c2f4201d64ebf31002f136340eceea85b626f31",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

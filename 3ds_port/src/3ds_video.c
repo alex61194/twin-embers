@@ -255,6 +255,10 @@ static uint16_t sPalette[512];
 static uint16_t sTexturePalette[512];
 static uint8_t sMorton[64];
 static C2D_ImageTint sTint;
+/* The pass composing the OBJ window's surface (ObjWindowCompose), if one is: its sprites into the mask, or the layers
+ * it adds over them. */
+enum { OBJWIN_NONE, OBJWIN_MASK, OBJWIN_LAYERS };
+static unsigned sObjWinPass;
 static uint32_t sPaletteVersion[34];
 /*
  * Whole-screen fades (the battle transition's gray flash, fades to black)
@@ -956,7 +960,7 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
      * texture is tinted when it is drawn, not as it is filled. */
     bool night = sDayNightColor != 0xffffffu && sFieldLayers && !sInLayerTexture && layer >= 1 && layer <= 4;
     unsigned key = layer | (effects << 8) | (semiTransparent << 9)
-                 | ((brightness & 31) << 10) | ((unsigned)night << 15);
+                 | ((brightness & 31) << 10) | ((unsigned)night << 15) | (sObjWinPass << 16);
 
     if (key == sBlendKey) return;
     sBlendKey = key;
@@ -969,6 +973,25 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
                   GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
     unsigned control = Reg(0x50), effect = (control >> 6) & 3;
     C2D_PlainImageTint(&sTint, C2D_Color32(255, 255, 255, 255), 0);
+    if (sObjWinPass != OBJWIN_NONE)
+    {
+        /* The OBJ window's surface keeps a coverage count in alpha: half from the window's sprites, written alone
+         * and the same however many overlap, then doubled where a layer draws. Only both together reach the
+         * threshold the surface is drawn with (ObjWindowDraw). Colours as they are. */
+        if (sObjWinPass == OBJWIN_MASK)
+        {
+            C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALPHA);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ZERO, GPU_ONE, GPU_CONSTANT_ALPHA, GPU_ZERO);
+            C3D_BlendingColor(C2D_Color32(0, 0, 0, 0x80));
+        }
+        else
+        {
+            C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_DST_ALPHA, GPU_ONE);
+        }
+        CtrPerf_End(PERF_BLEND,perfStart);
+        return;
+    }
     /* A semi-transparent OBJ is blended whatever the window it is in says about colour effects: the overworld's
      * windows never enable them, and its fog is translucent. */
     if (!effects && !semiTransparent) { CtrPerf_End(PERF_BLEND,perfStart); return; }
@@ -3192,7 +3215,8 @@ static void DrawObjects(unsigned priority, bool effects)
         bool affine = (attr0 & 0x100) != 0, color256 = (attr0 & 0x2000) != 0;
         if ((!affine && (attr0 & 0x200)) || ((attr2 >> 10) & 3) != priority) continue;
         unsigned mode = (attr0 >> 10) & 3, shape = attr0 >> 14;
-        if (mode == 2) continue;
+        /* A window's sprites are its shape, drawn only into its mask (ObjWindowCompose). */
+        if ((mode == 2) != (sObjWinPass == OBJWIN_MASK)) continue;
         if (mode == 3 || shape == 3) continue;
         if (attr0 & 0x1000) Error(8, "OBJ mosaic not supported");
         unsigned width = dimensions[shape][attr1 >> 14][0], height = dimensions[shape][attr1 >> 14][1];
@@ -4591,6 +4615,8 @@ void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count)
 }
 
 
+#include "3ds_obj_window_impl.h"
+
 static void ComposeObjWindow(unsigned display)
 {
     WindowCacheKey key;
@@ -4652,9 +4678,12 @@ static void ComposeObjWindow(unsigned display)
 static void ComposeImpl(void)
 {
     unsigned display = Reg(0);
-    if ((display & 0x8000) || (sFieldLayers && sFlashWindowCount && (display & 0x2000)))
+    /* A battle's OBJ window from its surface (ObjWindowCompose): the windows' rectangles as without it, the
+     * surface over those outside windows 0 and 1. */
+    bool objSurface = sObjWin.ready && (display & 0x8000) && !(sFieldLayers && sFlashWindowCount);
+    if (((display & 0x8000) && !objSurface) || (sFieldLayers && sFlashWindowCount && (display & 0x2000)))
     { ComposeObjWindow(display); return; }
-    if (!(display & 0x6000))
+    if (!(display & 0x6000) && !objSurface)
     {
         if (sLineBrightnessCount && ((Reg(0x50) >> 6) & 3) >= 2)
         {
@@ -4713,17 +4742,24 @@ static void ComposeImpl(void)
     {
         if (xs[x] == xs[x+1] || ys[y] == ys[y+1]) continue;
         unsigned mask = Reg(0x4a) & 63;
+        bool outside = true;
         for (int w = 1; w >= 0; --w)
             if ((display & (0x2000u << w))
              && Inside(xs[x], Reg(0x40+2*w), false, WindowCurtain(w))
              && Inside(ys[y], Reg(0x44+2*w), true, WindowCurtain(w)))
+            {
                 mask = (Reg(0x48) >> (8*w)) & 63;
+                outside = false;
+            }
         C2D_Flush();
         Scissor(xs[x], ys[y], xs[x+1], ys[y+1]);
         sScissored = true;
         sClipX0 = xs[x]; sClipX1 = xs[x+1];
         sClipY0 = ys[y]; sClipY1 = ys[y+1];
         Layers(mask);
+        /* The OBJ window opens only where windows 0 and 1 are not. */
+        if (objSurface && outside)
+            ObjWindowDraw(xs[x], ys[y], xs[x+1], ys[y+1]);
     }
     C2D_Flush();
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
@@ -5726,6 +5762,7 @@ void CtrVideo_Present(void)
     sVramToken = sStats.frames + 1;
     LayersPrepare();
     ScenePrepare();
+    ObjWindowPrepare();
     CtrPerf_End(PERF_PREPARE,perfPrepare);
     uint64_t waitStart = svcGetSystemTick();
     if (!C3D_FrameBegin(C3D_FRAME_SYNCDRAW)) return;
@@ -5778,6 +5815,9 @@ void CtrVideo_Present(void)
     uint64_t perfLayers=CtrPerf_Begin();
     if (!voxel && !blank) LayersRender();
     CtrPerf_End(PERF_PREPARE,perfLayers);
+    /* Once a frame, before any eye or the battle's scene is composed. */
+    sObjWin.ready = false;
+    if (!voxel && !blank) ObjWindowCompose();
 
     if (voxel)
     {
@@ -5927,6 +5967,7 @@ void CtrVideo_Shutdown(void)
     C3D_FrameSync();
     NativeIntroRelease();
     SceneRelease();
+    ObjWindowRelease();
     /* Target deletion waits for queued GPU work before buffers are freed. */
     if (sLogical) C3D_RenderTargetDelete(sLogical);
     if (sTop) C3D_RenderTargetDelete(sTop);

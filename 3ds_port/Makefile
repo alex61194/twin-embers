@@ -590,7 +590,7 @@ clean:
 $(GAME_C_OBJS) $(GAME_DATA_OBJS): build/game_sources.stamp
 $(GAME_DATA_OBJS) $(GAME_M4A_OBJS) $(GAME_SOUND_OBJS): ../asm/macros/music_voice.inc
 
-build/3ds_video.o: include/3ds_fast_cells.h include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h
+build/3ds_video.o: include/3ds_fast_cells.h include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h src/3ds_obj_window_impl.h
 build/3ds_fast_cells.o: include/3ds_fast_cells.h
 build/3ds_poketouch.o: include/poketouch_assets.h include/3ds_poketouch.h
 build/3ds_bottom.o: include/3ds_storage_touch.h include/3ds_storage_bridge.h
