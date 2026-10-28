@@ -80,6 +80,8 @@ int main(void)
     CtrBottom_HasSave_value=1; CtrBottom_IsFieldCallback_value=1;
     assert(CurrentMode()==MODE_FIELD);
     CtrBottomStorage_PCMenu_value=1; assert(CurrentMode()==MODE_FIELD);
+    CtrFieldChoice_IsOpen_value=1; assert(CurrentMode()==MODE_CHOICE);
+    CtrFieldChoice_IsOpen_value=0;
     CtrBottomStorage_PCMenu_value=0; sStorageSession=1;
     CtrBottom_IsFieldCallback_value=0;
     CtrBottomStorage_BoxOpen_value=1; assert(CurrentMode()==MODE_STORAGE_BOX);

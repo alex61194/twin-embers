@@ -732,8 +732,9 @@ static int CurrentMode(void)
     /* FireRed's naming screen, wherever it comes from (a new game, a catch, the Name Rater, a box): its keyboard. */
     if (CtrBottomNaming_IsOpen())
         return MODE_NAMING;
+    /* The PC's WITHDRAW/DEPOSIT/MOVE menu: its rows here as a field choice; its fades and messages stay above. */
     if (CtrBottomStorage_PCMenu())
-        return MODE_FIELD; /* Withdraw/Deposit/Move choices remain on TOP. */
+        return CtrFieldChoice_IsOpen() ? MODE_CHOICE : MODE_FIELD;
     if (CtrBottomStorage_BoxOpen())
         return MODE_STORAGE_BOX;
     if (CtrBottomSummary_IsMoveSelection() || CtrBottomPartyChild_IsOpen()
@@ -4922,7 +4923,7 @@ static void UpdateStorageOwner(int mode)
 {
     if (mode == MODE_STORAGE_BOX)
         sStorageSession = 1;
-    else if (mode == MODE_FIELD)
+    else if (mode == MODE_FIELD || mode == MODE_CHOICE)
         sStorageSession = 0; /* Includes returning to Withdraw/Deposit/Move. */
 }
 

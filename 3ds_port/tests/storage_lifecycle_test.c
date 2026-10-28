@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "3ds_video.h"
 #include "3ds_poketouch.h"
-enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9 };
+enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9,MODE_CHOICE };
 static int sStorageSession, fading, pcMenu, pcReady, boxPresented, namePresented, summaryReady, bagState;
 static int CtrBottom_IsFading(void) { return fading; }
 static int CtrBottomStorage_PCMenu(void) { return pcMenu; }
@@ -51,8 +51,8 @@ int main(void)
     assert(sStorageSession && StorageHoldTop() && StorageBridge(MODE_STORAGE_BOX));
     boxPresented=1; assert(!StorageBridge(MODE_STORAGE_BOX));
     UpdateStorageOwner(MODE_SUMMARY); assert(sStorageSession);
-    pcMenu=pcReady=1; UpdateStorageOwner(MODE_FIELD);
-    assert(!sStorageSession && !StorageHoldTop()); /* Choices return to TOP. */
+    pcMenu=pcReady=1; UpdateStorageOwner(MODE_CHOICE);
+    assert(!sStorageSession && !StorageHoldTop()); /* Back at the PC menu: its rows below as a field choice. */
     pcMenu=pcReady=boxPresented=0;
     assert(!StorageBridge(MODE_FIELD)); sStorageSession=1;
     assert(StorageBridge(MODE_STORAGE_PC)); pcReady=1; assert(!StorageBridge(MODE_STORAGE_PC));

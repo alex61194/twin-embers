@@ -946,7 +946,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "e5fc51747f286e5c333319ef8533271d5c292f6cab925ae5ddf51c734140dc93",
+   "sha256": "cdc5efc66fb864d419e52f19c9f97b69f8b88451a4b5c3da25c7ed32460b1638",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1898,7 +1898,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "5e5580e860808974f4145de0ace8086081b7af6f774f59c803ac6578656a89ed",
+   "sha256": "f4c000a63d27d1a13198ea9eee2ba8bba313f96ffcf23f00f3a1f01b35f44198",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
@@ -5077,7 +5077,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "a53d9b8de473bc22b581621207284ff1683343f52a7ac15bec7798d23635d022",
+   "sha256": "413f980a02ad8f3507d58ebc3d52256c4b4830d7b0b80822189bc93b733b3281",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
    "modified_for_distribution": true,
    "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return"
