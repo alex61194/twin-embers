@@ -926,25 +926,37 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
-            memset(tile->colors, 0, sizeof(tile->colors));
-            tile->visible = false;
-            for (unsigned pixel = 0; pixel < 64; ++pixel)
-            {
-                unsigned index = color256 ? tile->bytes[pixel]
-                    : (tile->bytes[pixel / 2] >> ((pixel & 1) * 4)) & 15;
-                dest[sMorton[pixel]] = !index ? 0 : palette[paletteBase + index];
-                if (index)
+            /* Decoded aside first: a tile that comes out texel for texel as the slot already holds keeps its
+             * serial, so no layer cell showing it is redrawn (a palette or VRAM write that changed nothing it
+             * shows). 4bpp is read a byte, two pixels, at a time. */
+            uint16_t texels[64];
+            uint32_t used[8] = {0};
+            if (color256)
+                for (unsigned pixel = 0; pixel < 64; ++pixel)
                 {
-                    tile->visible = true;
-                    tile->colors[index / 32] |= 1u << (index & 31);
+                    unsigned index = tile->bytes[pixel];
+                    texels[sMorton[pixel]] = !index ? 0 : palette[paletteBase + index];
+                    used[index / 32] |= 1u << (index & 31);
                 }
-            }
+            else
+                for (unsigned pair = 0; pair < 32; ++pair)
+                {
+                    unsigned lo = tile->bytes[pair] & 15, hi = tile->bytes[pair] >> 4;
+                    texels[sMorton[pair * 2]] = !lo ? 0 : palette[paletteBase + lo];
+                    texels[sMorton[pair * 2 + 1]] = !hi ? 0 : palette[paletteBase + hi];
+                    used[0] |= (1u << lo) | (1u << hi);
+                }
+            used[0] &= ~1u;   /* index 0 is transparent */
+            memcpy(tile->colors, used, sizeof(tile->colors));
+            tile->visible = (used[0] | used[1] | used[2] | used[3] | used[4] | used[5] | used[6] | used[7]) != 0;
+            bool same = tile->valid && memcmp(dest, texels, sizeof(texels)) == 0;
+            if (!same) memcpy(dest, texels, sizeof(texels));
             /* C3D_FrameEnd(0) flushes linear memory once before submitting
              * the queue, including this atlas and Citro2D's geometry. A
              * separate GSP service call per tile costs hundreds of calls
              * per palette-animation frame without improving visibility. */
             tile->valid = true;
-            tile->serial = ++sTileSerial;
+            if (!same) tile->serial = ++sTileSerial;
             ++sStats.uploads;
             CtrPerf_End(PERF_DECODE_SAMPLE,perfDecode);
         }
