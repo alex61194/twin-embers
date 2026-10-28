@@ -1241,7 +1241,7 @@ static void FieldNameFill(CtrPokeTouchView *v, int pressed)
     n->curRow = (int8_t)row;
 }
 
-/* A PC box, drawn here while FireRed's box is in a state the port draws (not moving items, carrying several or
+/* A PC box, drawn here while FireRed's box is in a state the port draws (MOVE ITEMS too; not carrying several or
  * marking one). While it does not take a key the picture last shown stays. */
 static void BoxSnapshot(Snapshot *s)
 {
