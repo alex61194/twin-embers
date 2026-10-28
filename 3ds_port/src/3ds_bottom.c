@@ -4940,8 +4940,17 @@ static int StorageHoldTop(void)
     /* STATE_ENTER_PC survives one frame after the palette fade completes.
      * Never release TOP in that gap: it would present black, then freeze it
      * when the box callback starts. Loading the root also keeps its last frame. */
-    return sStorageSession || (CtrBottomStorage_PCMenu()
-        && !CtrBottomStorage_PCMenuReady());
+    /* Back from a box the menu fades in, and once ready FireRed takes its first input a frame later: only then is it a
+     * field choice (MODE_CHOICE, which holds TOP). That frame is held too, or TOP would freeze with the menu on it. Once
+     * the choice has been up, a message ("party full") is TOP's own again. */
+    static int choiceSeen;
+    int pcMenu = CtrBottomStorage_PCMenu(), ready = CtrBottomStorage_PCMenuReady();
+
+    if (!pcMenu || !ready)
+        choiceSeen = 0;
+    else if (CtrFieldChoice_IsOpen())
+        choiceSeen = 1;
+    return sStorageSession || (pcMenu && (!ready || !choiceSeen));
 }
 
 static int SessionBridge(int mode)
