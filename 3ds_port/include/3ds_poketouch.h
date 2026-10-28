@@ -83,7 +83,8 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
  * The TM Case and the Berry Pouch it opens are drawn the same way, with their title in place of the pockets. */
 #define PT_BAG_ROWS 5
 #define PT_BAG_MENU_MAX 6
-enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP };   /* SHOP: a mart's BUY list */
+enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP,   /* SHOP: a mart's BUY list */
+       PT_BAG_KIND_ITEMPC };                                                          /* ITEMPC: the PC's WITHDRAW ITEM */
 enum { PT_BAG_USE_FIELD = 0, PT_BAG_USE_SELL, PT_BAG_USE_DEPOSIT };   /* the field's Bag, a shop's, the item PC's */
 enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
        PT_BAG_STATE_MESSAGE };

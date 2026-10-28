@@ -214,7 +214,8 @@ static void FBQuantity(const CtrPokeTouchBag *b)
     int fy;
 
     FBCard(&sFBAsk);
-    UiTextCentered(CtrUiText(b->kind == PT_BAG_KIND_SHOP ? UIS_BAG_BUY_HOW_MANY : b->use == PT_BAG_USE_SELL
+    UiTextCentered(CtrUiText(b->kind == PT_BAG_KIND_SHOP ? UIS_BAG_BUY_HOW_MANY
+                             : b->kind == PT_BAG_KIND_ITEMPC ? UIS_BAG_WITHDRAW_HOW_MANY : b->use == PT_BAG_USE_SELL
                              ? UIS_BAG_SELL_HOW_MANY : b->use == PT_BAG_USE_DEPOSIT ? UIS_BAG_DEPOSIT_HOW_MANY
                              : UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
     if (b->use == PT_BAG_USE_SELL || b->kind == PT_BAG_KIND_SHOP) {   /* the item, and what that many come to */

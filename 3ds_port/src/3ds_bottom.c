@@ -257,6 +257,24 @@ extern unsigned CtrBottomShop_Total(void);
 extern unsigned CtrBottomShop_Money(void);
 extern void CtrBottomShop_Title(char *out, int size);
 extern int CtrBottomShop_Text(char *out, int size);
+/* item_pc.c: the PC's WITHDRAW ITEM list, as the shop's. */
+extern int CtrBottomItemPc_IsOpen(void);
+extern int CtrBottomItemPc_HoldsTop(void);
+extern int CtrBottomItemPc_State(void);
+extern int CtrBottomItemPc_Count(void);
+extern int CtrBottomItemPc_MaxShowed(void);
+extern int CtrBottomItemPc_Cursor(void);
+extern unsigned CtrBottomItemPc_Serial(void);
+extern int CtrBottomItemPc_HitAt(int x, int y);
+extern unsigned CtrBottomItemPc_Item(int index);
+extern unsigned CtrBottomItemPc_Quantity(int index);
+extern int CtrBottomItemPc_ActionCount(void);
+extern void CtrBottomItemPc_ActionName(int index, char *out, int size);
+extern int CtrBottomItemPc_TossCount(void);
+extern int CtrBottomItemPc_TossMax(void);
+extern int CtrBottomItemPc_Message(char *out, int size);
+extern void CtrBottomItemPc_Title(char *out, int size);
+extern void CtrBottomItemPc_CloseLabel(char *out, int size);
 extern unsigned CtrBottomBag_SalePrice(void);
 extern int CtrBottomNaming_IsOpen(void);
 extern int CtrBottomNaming_Ready(void);
@@ -327,7 +345,7 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
        MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
-       MODE_NAMING = 14, MODE_SHOP = 15 };
+       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -711,6 +729,9 @@ static int CurrentMode(void)
     /* A mart's BUY list, from its setup to its fade out. */
     if (CtrBottomShop_IsOpen())
         return MODE_SHOP;
+    /* The item PC's WITHDRAW ITEM list, from its setup to its turn-off. */
+    if (CtrBottomItemPc_IsOpen())
+        return MODE_ITEMPC;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
     /* FireRed's battle on the upper screen (its own main callback: not a Bag, Party or Summary opened from it):
@@ -824,7 +845,7 @@ typedef struct {
 } FieldList;
 
 /* Defined with the list screens' touch plans below. */
-static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen;
+static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen, sItemPcScreen;
 
 static const FieldList sFieldBagList = {
     MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
@@ -846,12 +867,20 @@ static const FieldList sFieldShopList = {
     MODE_SHOP, PT_BAG_KIND_SHOP, &sShopScreen, CtrBottomShop_Item, CtrBottomShop_Price, ShopNoActions,
     ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text,
 };
+/* The item PC's WITHDRAW ITEM list: its menu (WITHDRAW, GIVE, CANCEL), how many, and its messages; no YES/NO. */
+static const FieldList sFieldItemPcList = {
+    MODE_ITEMPC, PT_BAG_KIND_ITEMPC, &sItemPcScreen, CtrBottomItemPc_Item, CtrBottomItemPc_Quantity,
+    CtrBottomItemPc_ActionCount, CtrBottomItemPc_ActionName, CtrBottomItemPc_TossCount, CtrBottomItemPc_TossMax, NULL,
+    CtrBottomItemPc_Message,
+};
 
 /* The list the lower screen draws itself in this mode (the field's Bag and the cases it opens), or NULL. */
 static const FieldList *FieldListFor(int mode)
 {
     if (mode == MODE_SHOP)
         return &sFieldShopList;
+    if (mode == MODE_ITEMPC)
+        return &sFieldItemPcList;
     if (sStorageSession)
         return NULL;
     if (mode == MODE_BAG)
@@ -914,6 +943,9 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         snprintf(b->closeName, sizeof(b->closeName), "%s", CtrUiText(UIS_CANCEL));
         b->money = CtrBottomShop_Money();
         b->sale = state == BAG_QUANTITY ? CtrBottomShop_Total() : 0;
+    } else if (f->kind == PT_BAG_KIND_ITEMPC) {
+        CtrBottomItemPc_Title(b->title, sizeof(b->title));
+        CtrBottomItemPc_CloseLabel(b->closeName, sizeof(b->closeName));
     } else
     {
         b->pocket = (uint8_t)CtrBottomBag_Pocket();
@@ -1097,10 +1129,10 @@ static void BoxSnapshot(Snapshot *s)
     s->touch.viewport = 0;
 }
 
-/* A mart's BUY list: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
+/* A mart's BUY list or the item PC's WITHDRAW ITEM: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
 static void ShopSnapshot(Snapshot *s, int mode)
 {
-    FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, &sFieldShopList);
+    FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, FieldListFor(mode));
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -1766,7 +1798,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         NameSnapshot(s);
         return;
     }
-    if (mode == MODE_SHOP) {
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC) {
         ShopSnapshot(s, mode);
         return;
     }
@@ -2230,6 +2262,10 @@ static const ListScreen sShopScreen = {
     CtrBottomShop_State, CtrBottomShop_Count, CtrBottomShop_MaxShowed, CtrBottomShop_Cursor,
     CtrBottomShop_Serial, CtrBottomShop_HitAt,
 };
+static const ListScreen sItemPcScreen = {
+    CtrBottomItemPc_State, CtrBottomItemPc_Count, CtrBottomItemPc_MaxShowed, CtrBottomItemPc_Cursor,
+    CtrBottomItemPc_Serial, CtrBottomItemPc_HitAt,
+};
 static const ListScreen sPouchScreen = {
     CtrBottomPouch_State, CtrBottomPouch_Count, CtrBottomPouch_MaxShowed, CtrBottomPouch_Cursor,
     CtrBottomPouch_Serial, CtrBottomPouch_HitAt,
@@ -2239,7 +2275,8 @@ static const ListScreen sPouchScreen = {
 static const ListScreen *ListFor(int mode)
 {
     return mode == MODE_BAG ? &sBagScreen : mode == MODE_TMCASE ? &sTMCaseScreen
-         : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen : NULL;
+         : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen
+         : mode == MODE_ITEMPC ? &sItemPcScreen : NULL;
 }
 
 /* Bag plan: presses for the Bag's own input states, apart from the Party plan.
@@ -4508,13 +4545,13 @@ static int ProcessTouch(int mode)
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
     }
-    if (mode == MODE_SHOP) {
-        /* A mart's BUY list: modal, nothing on the sidebar routes away from it. */
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC) {
+        /* A mart's BUY list, the item PC's WITHDRAW ITEM: modal, nothing on the sidebar routes away from them. */
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
         ProcessBack(mode, in);
-        ProcessFieldBagTouch(&sFieldShopList, in);
+        ProcessFieldBagTouch(FieldListFor(mode), in);
         return HIT_NONE;
     }
     if (mode == MODE_NAMING) {
@@ -4995,7 +5032,8 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop()
+        || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
