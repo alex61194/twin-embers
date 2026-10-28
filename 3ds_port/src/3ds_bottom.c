@@ -109,6 +109,8 @@ extern int CtrFieldChoice_Columns(void);
 extern int CtrFieldChoice_Cursor(void);
 extern void CtrFieldChoice_Label(int index, char *out, int size);
 extern int CtrFieldChoice_Prompt(char *out, int size);
+/* The PC menu's own note: its option's description, or the message that refused it ("party full"). */
+extern int CtrBottomStorage_PCMessage(char *out, int size);
 /* The screens the lower screen shows in its viewport, the field kept above (MODE_GBAVIEW). */
 extern int CtrBottomView_FameChecker(void);
 extern int CtrBottomView_TeachyTv(void);
@@ -1133,7 +1135,10 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
     c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
     for (int i = 0; i < c->count; ++i)
         CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
-    CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
+    if (CtrBottomStorage_PCMenu())
+        CtrBottomStorage_PCMessage(c->prompt, sizeof(c->prompt));
+    else
+        CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -4941,8 +4946,8 @@ static int StorageHoldTop(void)
      * Never release TOP in that gap: it would present black, then freeze it
      * when the box callback starts. Loading the root also keeps its last frame. */
     /* Back from a box the menu fades in, and once ready FireRed takes its first input a frame later: only then is it a
-     * field choice (MODE_CHOICE, which holds TOP). That frame is held too, or TOP would freeze with the menu on it. Once
-     * the choice has been up, a message ("party full") is TOP's own again. */
+     * field choice (MODE_CHOICE, which holds TOP). That frame is held too, or TOP would freeze with the menu on it. Its
+     * "party full" message stays a field choice (recipe 0175: the rows below, the message in their note). */
     static int choiceSeen;
     int pcMenu = CtrBottomStorage_PCMenu(), ready = CtrBottomStorage_PCMenuReady();
 

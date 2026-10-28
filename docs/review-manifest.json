@@ -946,7 +946,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "770e354cbf7486d405bc18288bb8a94f9af30fb896b0fddc51a1cba645826e2b",
+   "sha256": "7f3061e158127315ca3369c4f7124d2551162b2ea0bc5affe33de8de7796312b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5448,6 +5448,14 @@
   {
    "path": "3ds_port/src/3ds_obj_window_impl.h",
    "sha256": "8c1fa1cbd517b71ee18ef70f1c2f4201d64ebf31002f136340eceea85b626f31",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0175-pc-menu-message-on-lower-screen.json",
+   "sha256": "06c84e3e3deb16ca1062ff30a2f18343e9c3cbc69568ea4e3ee94b5af101bdc0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
