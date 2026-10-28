@@ -111,6 +111,8 @@ extern int CtrFieldChoice_Columns(void);
 extern int CtrFieldChoice_Cursor(void);
 extern void CtrFieldChoice_Label(int index, char *out, int size);
 extern int CtrFieldChoice_Prompt(char *out, int size);
+/* The BG0 window of the last field choice drawn below, while it is still up (menu.c, recipe 0180). */
+extern int CtrFieldChoice_WindowRect(int *x, int *y, int *w, int *h);
 /* The PC menu's own note: its option's description, or the message that refused it ("party full"). */
 extern int CtrBottomStorage_PCMessage(char *out, int size);
 /* The screens the lower screen shows in its viewport, the field kept above (MODE_GBAVIEW). */
@@ -5245,6 +5247,16 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
+    /* A field menu drawn below stays out of the upper screen for as long as its GBA window is up: through its pick's
+     * message and fade, and beside the next menu (ITEM STORAGE beside WITHDRAW / DEPOSIT). */
+    {
+        int x, y, w, h;
+
+        if (mode != MODE_OFF && CtrFieldChoice_WindowRect(&x, &y, &w, &h))
+            CtrVideo_HideBg0Rect(x, y, w, h);
+        else
+            CtrVideo_HideBg0Rect(0, 0, 0, 0);
+    }
     /* A choice handing over to the next (the PC's ITEM STORAGE to WITHDRAW / DEPOSIT, a pick to its item list) has a
      * few frames between them with neither open: released there, TOP drew the field with the first menu's window
      * still up and froze on it for the second. The hold outlasts a choice by CHOICE_HOLD_GRACE frames. */
