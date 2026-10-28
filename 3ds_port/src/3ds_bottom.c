@@ -101,6 +101,14 @@ extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
 extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
+/* menu.c: the field's choice the lower screen draws (MODE_CHOICE). */
+extern int CtrFieldChoice_IsOpen(void);
+extern int CtrFieldChoice_Ready(void);
+extern int CtrFieldChoice_Count(void);
+extern int CtrFieldChoice_Columns(void);
+extern int CtrFieldChoice_Cursor(void);
+extern void CtrFieldChoice_Label(int index, char *out, int size);
+extern int CtrFieldChoice_Prompt(char *out, int size);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
@@ -345,7 +353,7 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
        MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
-       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16 };
+       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -629,6 +637,11 @@ static struct {
 #define LIST_DRAG_SLOP 8
 #define LIST_DRAG_ROW 26
 
+/* The field's choice's touch (ProcessChoiceTouch), as the Bag's. */
+static struct {
+    int down, inside, code;
+} sChoiceTap = {0, 0, -1};
+
 /* The move-to-forget screen's touch (ProcessLearnTouch), as the Bag's, and its walk to a row. */
 static struct {
     int down, inside, code;
@@ -732,6 +745,9 @@ static int CurrentMode(void)
     /* The item PC's WITHDRAW ITEM list, from its setup to its turn-off. */
     if (CtrBottomItemPc_IsOpen())
         return MODE_ITEMPC;
+    /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
+    if (CtrFieldChoice_IsOpen())
+        return MODE_CHOICE;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
     /* FireRed's battle on the upper screen (its own main callback: not a Bag, Party or Summary opened from it):
@@ -1074,6 +1090,27 @@ static void LearnSnapshot(Snapshot *s, int mode)
     if (!CtrBottomLearn_IsOpen())
         return;
     FieldLearnFill(&s->touch, sLearnTap.down && sLearnTap.inside ? sLearnTap.code : -1);
+    s->touch.viewport = 0;
+    s->touch.backVisible = 1;
+    s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+    s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+}
+
+/* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
+static void ChoiceSnapshot(Snapshot *s, int mode)
+{
+    CtrPokeTouchChoice *c = &s->touch.choice;
+    int n = CtrFieldChoice_Count();
+
+    memset(c, 0, sizeof(*c));
+    c->on = 1;
+    c->count = (uint8_t)(n > PT_CHOICE_MAX ? PT_CHOICE_MAX : n);
+    c->cols = (uint8_t)CtrFieldChoice_Columns();
+    c->cursor = (int8_t)CtrFieldChoice_Cursor();
+    c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
+    for (int i = 0; i < c->count; ++i)
+        CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
+    CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -1800,6 +1837,10 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
     }
     if (mode == MODE_SHOP || mode == MODE_ITEMPC) {
         ShopSnapshot(s, mode);
+        return;
+    }
+    if (mode == MODE_CHOICE) {
+        ChoiceSnapshot(s, mode);
         return;
     }
     if (mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD) {
@@ -2694,7 +2735,7 @@ static int BackVisible(int mode)
         return NativeActive() && sScreen != PT_SAVE;   /* a native screen: back to HOME (SAVE has NO and B) */
     if (mode == MODE_PARTY_CHILD)
         return CtrBottomLearn_IsOpen();
-    if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX
+    if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX || mode == MODE_CHOICE
         || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
         return 1;
     return mode == MODE_SUMMARY && !SummaryPremium() && CtrBottomSummary_Page() > 0;   /* the premium one has its own BACK */
@@ -2733,6 +2774,8 @@ static int BackEnabled(int mode)
         return 0; /* its original child view handles exit, not a fake B */
     if (mode == MODE_CARD)
         return CtrBottomCard_State() != CARD_BUSY;
+    if (mode == MODE_CHOICE)
+        return CtrFieldChoice_Ready();
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
     if (mode == MODE_PARTY_CHILD)
@@ -2756,6 +2799,8 @@ static void BackPress(int mode)
         sRouteKey = CardLeaveKey();     /* the card's own exit: B on its front, A on its back */
     else if (mode == MODE_DEX)
         sRouteKey = K_B;                /* the Pokedex's own: a level back, out of it from its top menu */
+    else if (mode == MODE_CHOICE)
+        sRouteKey = K_B;                /* the menu's own B: CANCEL, NO, or nothing where it takes none */
     else if (mode == MODE_PARTY_CHILD)
         sRouteKey = K_B;                /* the Summary's own: give up the new move (FireRed asks) */
     else if (ListFor(mode) != NULL)
@@ -4180,6 +4225,35 @@ static void RunLearnPlan(void)
     sLearnPlan.release = 1;
 }
 
+/* A row of the field's choice: asked of FireRed's menu (CtrMenu_Ask) and taken with its A on the same frame. */
+static void ProcessChoiceTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_CHOICE && sShown.touch.choice.on && CtrFieldChoice_Ready();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_ChoiceHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sChoiceTap.down = sChoiceTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sChoiceTap.down = sChoiceTap.inside = hit >= 0;
+        sChoiceTap.code = hit;
+        return;
+    }
+    if (!sChoiceTap.down)
+        return;
+    if (in->touchActive) {
+        sChoiceTap.inside = hit == sChoiceTap.code;
+        return;
+    }
+    if (sChoiceTap.inside) {
+        CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        sRouteKey = K_A;
+    }
+    sChoiceTap.down = sChoiceTap.inside = 0;
+}
+
 static void ProcessLearnTouch(const CtrInput *in)
 {
     int hit = -1, ready = sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on
@@ -4561,6 +4635,15 @@ static int ProcessTouch(int mode)
         sTouch.active = 0;
         sBack.down = sBack.inside = 0;
         ProcessNameTouch(in);
+        return HIT_NONE;
+    }
+    if (mode == MODE_CHOICE) {
+        /* The field's choice: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        ProcessChoiceTouch(in);
         return HIT_NONE;
     }
     if (mode == MODE_PARTY_CHILD && CtrBottomLearn_IsOpen()) {
@@ -5033,7 +5116,7 @@ void CtrBottom_Frame(void)
         sInjected = sRouteKey;
     sRouteKey = 0;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop()
-        || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;

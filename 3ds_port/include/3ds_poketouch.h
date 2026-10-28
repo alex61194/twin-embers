@@ -165,6 +165,20 @@ typedef struct {
     char desc[160];
 } CtrPokeTouchLearn;
 
+/* A choice of the field (a script's multichoice, YES/NO or grid, the PC's menus) drawn by the port
+ * (3ds_field_choice_impl.h), a remote for FireRed's menu: its rows as buttons (cols > 0: a grid of that many columns),
+ * the cursor's, and the question of the message box. A row is asked of the menu and taken with its A; BACK is its B. */
+#define PT_CHOICE_MAX 8
+enum { PT_CHOICE_HIT_ROW = 100 };
+typedef struct {
+    uint8_t on;
+    uint8_t count, cols;
+    int8_t cursor;
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    char label[PT_CHOICE_MAX][24];
+    char prompt[160];
+} CtrPokeTouchChoice;
+
 /* FireRed's naming screen drawn by the port (3ds_field_naming_impl.h), a remote for it: the name so far, the keys of
  * its page (FireRed's own character codes, 0xff for no key), tabs for its three pages, DELETE and OK. A key moves
  * FireRed's cursor there and presses its A; a tab is its SELECT, DELETE its B. */
@@ -321,6 +335,7 @@ typedef struct {
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
     CtrPokeTouchBox box;        /* a PC box, when box.on */
+    CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -356,6 +371,8 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
 /* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
 int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
+/* The row of the field's choice (view->choice.on) under lower-screen point (x, y): PT_CHOICE_HIT_ROW + row, or -1. */
+int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *view, int x, int y);
 /* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
  * (a key's is PT_NAME_HIT_KEY + row * PT_NAME_COLS + column, a tab's PT_NAME_HIT_TAB + page), or -1. */
 int CtrPokeTouch_NameHit(const CtrPokeTouchView *view, int x, int y);
