@@ -20,7 +20,7 @@ typedef struct {
     int origin;                     /* CTR_SUMMARY_* */
     int ready, page, mon, egg, cursor, swapping, swapCursor;
     unsigned short moves[4];
-    char nickname[12], species[12], level[8], gender[2], status[8];
+    char nickname[13], species[12], level[8], gender[2], status[8];   /* nickname: six kana, two bytes each */
     char dex[8], ot[16], id[8], item[20], types[2][12];
     char hp[12], stats[5][8], exp[12], nextExp[12];
     char ability[16], abilityDesc[64], memo[256], hatch[128];

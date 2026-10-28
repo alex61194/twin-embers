@@ -465,7 +465,7 @@ typedef struct {
     uint16_t hp[PARTY_SIZE];
     uint16_t maxHp[PARTY_SIZE];
     uint16_t icon[PARTY_SIZE];
-    char nick[PARTY_SIZE][11];
+    char nick[PARTY_SIZE][13];   /* a Japanese name's six kana take two bytes each */
     char description[PARTY_SIZE][24];
     unsigned char pressed;
     unsigned char panel;
@@ -2106,7 +2106,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->isEgg[i] = (unsigned char)CtrBottomParty_IsEgg(i);
             s->icon[i] = (uint16_t)CtrBottomParty_IconSpecies(i);
             CtrBottomParty_Nickname(i, s->nick[i]);
-            s->nick[i][10] = 0;
+            s->nick[i][12] = 0;
             CtrBottomParty_Description(i, s->description[i]);
             s->description[i][23] = 0;
         }

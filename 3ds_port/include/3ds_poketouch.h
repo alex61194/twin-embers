@@ -156,7 +156,7 @@ typedef struct {
     int8_t cursor;
     int16_t pressed;                /* the hit code under a held touch, or -1 */
     uint16_t species;
-    char nickname[12], level[8];
+    char nickname[13], level[8];   /* nickname: six kana, two bytes each */
     char question[48];
     struct {
         uint16_t move;
