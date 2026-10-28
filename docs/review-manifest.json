@@ -731,7 +731,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "a1e88186daf6ffc1e14c467ec9c647e47ace7ed84e0701ecaa48b60a0551d545",
+   "sha256": "4c81e501e9c8a9a1a104a778d05e54daeb66cc2050eb838e553a9388933a1530",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1111,7 +1111,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "0afe8eadb9ea1b564941b1422ab6cc57b354674e724ca81632a9b18e09234fb3",
+   "sha256": "29cf8806993cfc92d8a831d8f77cc1fa143eee29484375f2c4662329efc460e4",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1398,7 +1398,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "6ebb0aef6946755437a9b87ab0984efea42996a84ac978d4c40d39a3092f35d4",
+   "sha256": "9228c4ad7646041de9e11175e675d6a271ce45ce9288eaa3eec71bbfb01d7782",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",

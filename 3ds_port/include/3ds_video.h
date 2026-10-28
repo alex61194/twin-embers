@@ -134,6 +134,8 @@ void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, un
  * mapY), the cells left of it reach viewLeft (negative), and map tells one
  * map from another. Not valid: every listed window is lit. */
 void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
+/* The field's tile on BG1-3 at a place on the map, in tiles, or 0xffff (the night windows walk their glass on it). */
+void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y));
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

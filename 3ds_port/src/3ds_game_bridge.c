@@ -235,6 +235,36 @@ static bool UpdateCamera(void)
     return sCameraKnown;
 }
 
+/* The tile the field draws on a background (1-3) at a place on the map, in tiles: the metatile's half on that layer,
+ * as field_camera.c DrawMetatile lays it out (BG1 the top layer, BG2 the middle, BG3 the bottom). 0xffff off the map
+ * the camera was found on. */
+static uint16_t DayNightMapTile(unsigned bg, int x, int y)
+{
+    const struct MapLayout *layout = gMapHeader.mapLayout;
+    unsigned map, k;
+    u32 id;
+    u8 type;
+    const u16 *tiles;
+
+    if (!layout || !gSaveBlock1Ptr || x < 0 || y < 0 || bg < 1 || bg > 3) return 0xffff;
+    map = ((unsigned)gSaveBlock1Ptr->location.mapGroup << 8) | gSaveBlock1Ptr->location.mapNum;
+    if (map != sCameraMap || !sCameraFound) return 0xffff;
+    id = MapGridGetMetatileIdAt(x / 2, y / 2);
+    if (id >= NUM_METATILES_TOTAL) return 0xffff;
+    tiles = id < NUM_METATILES_IN_PRIMARY
+        ? layout->primaryTileset->metatiles + id * NUM_TILES_PER_METATILE
+        : layout->secondaryTileset->metatiles + (id - NUM_METATILES_IN_PRIMARY) * NUM_TILES_PER_METATILE;
+    CTR_ASSET_READ(tiles, NUM_TILES_PER_METATILE * sizeof(*tiles));
+    type = MapGridGetMetatileLayerTypeAt(x / 2, y / 2);
+    k = (unsigned)(x & 1) + (unsigned)(y & 1) * 2;
+    switch (bg)
+    {
+    case 1: return type == METATILE_LAYER_TYPE_COVERED ? 0 : tiles[4 + k];
+    case 2: return type == METATILE_LAYER_TYPE_NORMAL ? tiles[k] : type == METATILE_LAYER_TYPE_COVERED ? tiles[4 + k] : 0;
+    default: return type == METATILE_LAYER_TYPE_NORMAL ? 0x3014 : tiles[k];
+    }
+}
+
 static void UpdateDayNight(void)
 {
     bool outdoors = CtrOptions_DayNight() && FieldOutdoors();
@@ -245,6 +275,7 @@ static void UpdateDayNight(void)
     bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && (UpdateCamera() || sCameraFound);
 
     CtrVideo_SetDayNight(outdoors, CtrOptions_DayNightSecond(), primary, primaryCount, secondary, secondaryCount);
+    CtrVideo_SetDayNightMapTile(DayNightMapTile);
     if (camera)
         CtrVideo_SetDayNightCamera(true, (gSaveBlock1Ptr->pos.x * 2 - sCameraKX) & 63,
                                    (gSaveBlock1Ptr->pos.y * 2 - sCameraKY) & 31, CAMERA_VIEW_LEFT,

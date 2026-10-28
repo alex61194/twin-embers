@@ -2279,71 +2279,71 @@ static unsigned GlassEdges(unsigned chars, unsigned entry)
     return edges;
 }
 
-/* Where a tilemap column or row stands on the map, in tiles (the camera's tile and the map's move together). */
-static int WindowAbs(int origin, int camera, int view, unsigned column, unsigned size)
-{
-    int d = (int)((column - (unsigned)camera) & (size - 1));
+/* The field's tile on a layer at a place on the map, in tiles (the game bridge's, from the map's own metatiles), or
+ * 0xffff: NULL until the bridge sets it. */
+static uint16_t (*sDayNightMapTile)(unsigned bg, int x, int y);
 
-    if (d >= view + (int)size) d -= (int)size;
-    return origin * 2 + d;
+void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y))
+{
+    sDayNightMapTile = tile;
 }
 
-/* A window is a run of glass tiles that meet across their edges, found by walking from a cell. A long facade (Silph
- * Co.'s floors, Celadon's department store) runs past the loaded part of the tilemap, where the walk can not see its
- * end: its top-left tile was wherever the loaded part ended, which moves with the camera, and its floors switched
- * on and off as the player walked past. Cutting the run at fixed map coordinates stopped that but lit a floor in
- * parts. A run of WINDOW_WIDE tiles or more (Silph Co.'s is seven, and a facade half off the screen shows less) is a band of panes with one set of hours, keyed by its row alone; a
- * shorter one is a window, keyed by its top-left tile. */
-#define WINDOW_WIDE 5
-#define WINDOW_SEGMENT 16
-/* The rows were never unwrapped, as the columns are. */
-#define WINDOW_NO_WRAP (1 << 20)
-
-static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+/*
+ * A window is the run of glass tiles that meet across their edges, keyed by its top-left tile's place on the map.
+ * The run is walked on the map's own metatiles (sDayNightMapTile), not on the tilemap: the tilemap holds only the
+ * part of the map around the camera, so a long facade (Silph Co.'s floors, Celadon's department store) ended
+ * wherever that part did, which moved with the camera, and its floors switched on and off or lit in parts as the
+ * player walked by. On the map the run is the same from any cell of it and wherever the camera is.
+ *
+ * A cell's place: its column from the camera's tile (unwrapped around the view's left edge, as the field draws it),
+ * its row from the screen's top row (the tilemap's rows barely outnumber the screen's, so the wrap is the two rows
+ * out of sight).
+ */
+static bool WindowCell(unsigned bg, unsigned size, unsigned column, unsigned row, int *x, int *y)
 {
     const DayNightCamera *camera = &sDayNightCamera;
-    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    int columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    int dx = (int)((column - (unsigned)camera->tileX) & (unsigned)(columns - 1));
+    int top = (((int)(Reg(0x12 + bg * 4) & 511) + VIEW_TOP) >> 3) & (rows - 1);
+    int base = (top - camera->tileY) & (rows - 1);
+
+    if (dx >= camera->viewLeft + columns) dx -= columns;
+    if (base >= rows / 2) base -= rows;
+    *x = camera->mapX * 2 + dx;
+    *y = camera->mapY * 2 + base + (int)(((int)row - top) & (rows - 1));
+    return true;
+}
+
+static bool WindowLit(unsigned bg, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+{
+    const DayNightCamera *camera = &sDayNightCamera;
     unsigned address = chars + (entry & 1023) * 32;
-    unsigned run = 1;
-    int x;
+    int x, y;
 
     if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
+    WindowCell(bg, size, column, row, &x, &y);
+    if (sDayNightMapTile && sDayNightMapTile(bg, x, y) == (entry & 0xffffu))
     {
-        unsigned right = column, rightEntry = entry;
-
-        for (unsigned step = 0; step < WINDOW_WIDE && run < WINDOW_WIDE; ++step)
+        for (unsigned step = 0; step < 16; ++step)
         {
-            unsigned next = (right + 1) & (columns - 1), nextEntry = MapEntry(map, size, next, row);
+            unsigned next = sDayNightMapTile(bg, x - 1, y);
 
-            if (!(GlassEdges(chars, rightEntry) & 2) || !WindowTile(chars, nextEntry, false)
-                || !(GlassEdges(chars, nextEntry) & 1)) break;
-            right = next;
-            rightEntry = nextEntry;
-            ++run;
+            if (next == 0xffffu || !(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false)
+                || !(GlassEdges(chars, next) & 2)) break;
+            --x;
+            entry = next;
+        }
+        for (unsigned step = 0; step < 16; ++step)
+        {
+            unsigned next = sDayNightMapTile(bg, x, y - 1);
+
+            if (next == 0xffffu || !(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false)
+                || !(GlassEdges(chars, next) & 8)) break;
+            --y;
+            entry = next;
         }
     }
-    for (unsigned step = 0; step < 16; ++step)
-    {
-        unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
-
-        if (!(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 2)) break;
-        column = left;
-        entry = next;
-        if (run < WINDOW_WIDE) ++run;
-    }
-    for (unsigned step = 0; step < 16; ++step)
-    {
-        unsigned up = (row + rows - 1) & (rows - 1), next = MapEntry(map, size, column, up);
-
-        if (!((unsigned)WindowAbs(camera->mapY, camera->tileY, WINDOW_NO_WRAP, row, rows) % WINDOW_SEGMENT)) break;
-        if (!(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 8)) break;
-        row = up;
-        entry = next;
-    }
-    x = run >= WINDOW_WIDE ? 0 : WindowAbs(camera->mapX, camera->tileX, camera->viewLeft, column, columns);
-    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(x, WindowAbs(camera->mapY, camera->tileY, WINDOW_NO_WRAP, row, rows),
-                                                       camera->map),
-                                sDayNightMinute * 60u);
+    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(x, y, camera->map), sDayNightMinute * 60u);
 }
 
 static unsigned GlowSlot(unsigned address, unsigned entry);
@@ -2470,7 +2470,7 @@ static bool LayerRenderCells(unsigned bg)
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
-                bool on = WindowLit(map, size, chars, column, row, entry);
+                bool on = WindowLit(bg, size, chars, column, row, entry);
 
                 slot = GetTileSlotFrom(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg]);
                 light = on ? (uint8_t)GlowSlot(chars + index * 32, entry) : 0;
