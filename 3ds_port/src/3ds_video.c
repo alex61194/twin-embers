@@ -3741,7 +3741,9 @@ static void DrawDayNightGlass(unsigned bg)
             C2D_Flush();
             ViewBase();
             C3D_AlphaTest(true, GPU_GREATER, 0);
-            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
+            /* The glass keeps the layer's alpha: the scene's is one bit, and the lamplight's own (under half at
+             * dawn and dusk) wrote 0 there, so the glass went see-through to the black behind the scene. */
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_ZERO, GPU_ONE);
             begun = true;
         }
         u = (float)((slot - 1) % 8 * 8);
