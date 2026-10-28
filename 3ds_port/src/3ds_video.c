@@ -670,14 +670,23 @@ static void DayNightUpdate(void)
     uint32_t minute = on ? sDayNightRequestSecond / 60u : ~0u;
     DayNightCamera camera = on ? sDayNightCameraRequest : (DayNightCamera){0};
 
-    /* Another minute or another camera: windows may switch, so the field's
-     * layers walk again (only the cells that change are drawn). */
-    if (minute != sDayNightMinute || memcmp(&camera, &sDayNightCamera, sizeof(camera)))
+    /* Another minute or another place for the camera: windows may switch, so the field's layers walk again (only
+     * the cells that change are drawn). Walking moves the camera a tile at a time, but a window's hours are keyed by
+     * where it stands on the map, which the camera's tile and the map's move together: that is what the walk reads
+     * (WindowLit), and it only changes with the map, the offset between the two, or the camera being lost. Walking
+     * every layer on each step cost 12-18 ms a step at night in the 0.2.14 port.log; the cells that scroll into view
+     * are read anyway. */
+    bool cameraMoved = camera.valid != sDayNightCamera.valid || camera.map != sDayNightCamera.map
+        || camera.viewLeft != sDayNightCamera.viewLeft
+        || ((camera.mapX * 2 - camera.tileX) & 63) != ((sDayNightCamera.mapX * 2 - sDayNightCamera.tileX) & 63)
+        || ((camera.mapY * 2 - camera.tileY) & 63) != ((sDayNightCamera.mapY * 2 - sDayNightCamera.tileY) & 63);
+
+    if (minute != sDayNightMinute || cameraMoved)
     {
         sDayNightMinute = minute;
-        sDayNightCamera = camera;
         if (sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
     }
+    sDayNightCamera = camera;
     if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
     if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
     {
