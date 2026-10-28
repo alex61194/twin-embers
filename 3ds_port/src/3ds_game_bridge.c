@@ -739,7 +739,6 @@ void VBlankIntrWait(void)
      * keys: touch drives the real Party state machine via injected D-pad/A.
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
-    CtrBottom_BlitFrameEnd();
     u64 phaseField = svcGetSystemTick();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
     CtrVideo_SetForestPreview(ForestMapPreviewScreenIsRunning() == FALSE);
@@ -791,8 +790,12 @@ void VBlankIntrWait(void)
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();
     /* FrameBegin inside the compositor is the frame pacing boundary. */
-    if (shown)
+    /* The lower screen swaps with the frames shown: a turbo frame not shown keeps drawing into the same hidden buffer
+     * (a swap a frame would have written the shown one before the screen took the last). */
+    if (shown) {
+        CtrBottom_BlitFrameEnd();
         CtrVideo_Present();
+    }
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is
      * retried on the next frames; only one that persists for a second stops the game, on
