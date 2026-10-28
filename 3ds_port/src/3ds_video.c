@@ -2288,10 +2288,13 @@ static int WindowAbs(int origin, int camera, int view, unsigned column, unsigned
     return origin * 2 + d;
 }
 
-/* A window's glass run is cut every WINDOW_SEGMENT tiles of the map. A long facade (Celadon's department store) runs
- * past the tilemap's loaded part, where the walk below can not see its end: its top-left tile was then wherever the
- * loaded part ended, which moves with the camera, and its rows switched on and off as the player walked past. A cut
- * in map coordinates is the same wherever the camera is. */
+/* A window is a run of glass tiles that meet across their edges, found by walking from a cell. A long facade (Silph
+ * Co.'s floors, Celadon's department store) runs past the loaded part of the tilemap, where the walk can not see its
+ * end: its top-left tile was wherever the loaded part ended, which moves with the camera, and its floors switched
+ * on and off as the player walked past. Cutting the run at fixed map coordinates stopped that but lit a floor in
+ * parts. A run of WINDOW_WIDE tiles or more is a band of panes with one set of hours, keyed by its row alone; a
+ * shorter one is a window, keyed by its top-left tile. */
+#define WINDOW_WIDE 8
 #define WINDOW_SEGMENT 16
 /* The rows were never unwrapped, as the columns are. */
 #define WINDOW_NO_WRAP (1 << 20)
@@ -2301,16 +2304,32 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
     const DayNightCamera *camera = &sDayNightCamera;
     unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
     unsigned address = chars + (entry & 1023) * 32;
+    unsigned run = 1;
+    int x;
 
     if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
+    {
+        unsigned right = column, rightEntry = entry;
+
+        for (unsigned step = 0; step < WINDOW_WIDE && run < WINDOW_WIDE; ++step)
+        {
+            unsigned next = (right + 1) & (columns - 1), nextEntry = MapEntry(map, size, next, row);
+
+            if (!(GlassEdges(chars, rightEntry) & 2) || !WindowTile(chars, nextEntry, false)
+                || !(GlassEdges(chars, nextEntry) & 1)) break;
+            right = next;
+            rightEntry = nextEntry;
+            ++run;
+        }
+    }
     for (unsigned step = 0; step < 16; ++step)
     {
         unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
 
-        if (!((unsigned)WindowAbs(camera->mapX, camera->tileX, camera->viewLeft, column, columns) % WINDOW_SEGMENT)) break;
         if (!(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 2)) break;
         column = left;
         entry = next;
+        if (run < WINDOW_WIDE) ++run;
     }
     for (unsigned step = 0; step < 16; ++step)
     {
@@ -2321,8 +2340,8 @@ static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned colu
         row = up;
         entry = next;
     }
-    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(WindowAbs(camera->mapX, camera->tileX, camera->viewLeft, column, columns),
-                                                       WindowAbs(camera->mapY, camera->tileY, WINDOW_NO_WRAP, row, rows),
+    x = run >= WINDOW_WIDE ? 0 : WindowAbs(camera->mapX, camera->tileX, camera->viewLeft, column, columns);
+    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(x, WindowAbs(camera->mapY, camera->tileY, WINDOW_NO_WRAP, row, rows),
                                                        camera->map),
                                 sDayNightMinute * 60u);
 }
