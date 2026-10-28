@@ -5228,7 +5228,7 @@
   },
   {
    "path": "3ds_port/src/3ds_settings.c",
-   "sha256": "9307865c9ee13b9b79b37786a9146127a9ef28dcf802fa65f9d2405dc02cf340",
+   "sha256": "6801da961340dc5fe6eb87d3b3b358554f2903640ada152c2c0e20d599109442",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

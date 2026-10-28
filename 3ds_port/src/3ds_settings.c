@@ -8,7 +8,10 @@
 
 #include "3ds_settings.h"
 
-#ifdef __3DS__
+/* __3DS__ comes from <3ds.h> itself, so it cannot choose whether to include it: the 0.2.8 builds tested __3DS__ here,
+ * never had the writer thread and wrote settings.cfg on the game thread (5-16 ms per turbo change, no "written in place"
+ * line in the Old 3DS port.log). __arm__, as in 3ds_flash.c, is the console; the host tests build the #else. */
+#ifdef __arm__
 #include <3ds.h>
 #include "3ds_log.h"
 #endif
@@ -77,7 +80,7 @@ static void Format(char *text, size_t size)
         snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
 }
 
-#ifdef __3DS__
+#ifdef __arm__
 /* The text is worked out at once and written by a thread of its own, half a second later so a run of presses is one
  * write; what is still waiting is written on exit. Each write logs how long it took. */
 #define SETTINGS_DELAY_NS 500000000LL
@@ -139,7 +142,8 @@ static void Save(void)
         sStarted = 1;
         LightLock_Init(&sLock);
         LightEvent_Init(&sWake, RESET_ONESHOT);
-        sThread = threadCreate(WorkerMain, NULL, 8 * 1024, 0x3F, -2, false);
+        /* 16 KiB, as the log writer: this thread formats a log line and goes through stdio and the SD card. */
+        sThread = threadCreate(WorkerMain, NULL, 16 * 1024, 0x3F, -2, false);
         if (sThread != NULL)
             atexit(Shutdown);
     }
