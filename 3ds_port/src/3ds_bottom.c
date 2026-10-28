@@ -3728,6 +3728,14 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     /* On TRAINER (the Summary's last tab) RIGHT goes nowhere: FireRed would turn its first page to the next. */
     if (CurrentMode() == MODE_SUMMARY && sHaveShown && sShown.summaryUi && sShown.sum.trainer)
         held &= ~K_RIGHT;
+    /* The box's YES / NO is drawn side by side, FireRed's one above the other: LEFT and RIGHT are its UP and DOWN. */
+    if (CurrentMode() == MODE_STORAGE_BOX && sHaveShown && sShown.mode == MODE_STORAGE_BOX && sShown.touch.box.on
+        && CtrBottomStorage_YesNo()) {
+        uint16_t side = held & (K_LEFT | K_RIGHT);
+
+        held &= ~(K_LEFT | K_RIGHT | K_UP | K_DOWN);
+        held |= (side & K_LEFT ? K_UP : 0) | (side & K_RIGHT ? K_DOWN : 0);
+    }
     return held;
 }
 
