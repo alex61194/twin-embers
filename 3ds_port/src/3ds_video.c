@@ -1075,6 +1075,10 @@ static void ViewAffine(C3D_Mtx *matrix)
     C2D_ViewRestore(matrix);
 }
 
+/* A GBA menu window on BG0 whose rows the lower screen draws (CtrVideo_HideBg0Rect), in tiles, frame included: its
+ * tiles are left out of the upper screen, which shows the field and the message without it. w 0 for none. */
+static struct { int x, y, w, h; } sHideBg0;
+
 static void DrawTextSpanAt(unsigned bg, int left, int right, int top, int bottom,
                            int mirrorX2, int mirrorY2)
 {
@@ -1117,6 +1121,11 @@ static void DrawTextSpanAt(unsigned bg, int left, int right, int top, int bottom
             /* Inside the GBA area the wrap-around is kept exactly as on
              * hardware; only the margins are denied to a narrow background. */
             if (px + 8 <= left || px >= right) continue;
+            /* The field's BG0 is drawn here, not through LayerRenderCells: a menu drawn below is left out. */
+            if (bg == 0 && sHideBg0.w && (int)column >= sHideBg0.x && (int)column < sHideBg0.x + sHideBg0.w
+                && (int)(row & ((size & 2) ? 63u : 31u)) >= sHideBg0.y
+                && (int)(row & ((size & 2) ? 63u : 31u)) < sHideBg0.y + sHideBg0.h)
+                continue;
             /* Columns past 31 live in the next screenblock, 1024 entries on. */
             entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             index = entry & 1023;
@@ -2014,9 +2023,6 @@ typedef struct
     bool valid;
 } LayerTexture;
 static LayerTexture sLayers[4];
-/* A GBA menu window on BG0 whose rows the lower screen draws (CtrVideo_HideBg0Rect), in tiles, frame included: its
- * cells are left out of the upper screen, which shows the field and the message without it. w 0 for none. */
-static struct { int x, y, w, h; } sHideBg0;
 /* Whether each background is drawn from its texture this frame. */
 static bool sLayerReady[4];
 /* When each background's texture last failed to be placed (0: not failing): only that layer waits. */
