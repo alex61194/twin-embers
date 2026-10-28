@@ -290,6 +290,23 @@ extern int CtrBottomItemPc_TossMax(void);
 extern int CtrBottomItemPc_Message(char *out, int size);
 extern void CtrBottomItemPc_Title(char *out, int size);
 extern void CtrBottomItemPc_CloseLabel(char *out, int size);
+/* The PC's mailbox (player_pc.c): its list of mails, a mail's menu, MOVE TO BAG's YES/NO and its messages. */
+extern int CtrBottomMailbox_IsOpen(void);
+extern int CtrBottomMailbox_HoldsTop(void);
+extern int CtrBottomMailbox_State(void);
+extern int CtrBottomMailbox_Count(void);
+extern int CtrBottomMailbox_MaxShowed(void);
+extern int CtrBottomMailbox_Cursor(void);
+extern unsigned CtrBottomMailbox_Serial(void);
+extern int CtrBottomMailbox_HitAt(int x, int y);
+extern unsigned CtrBottomMailbox_Item(int index);
+extern unsigned CtrBottomMailbox_Quantity(int index);
+extern void CtrBottomMailbox_Name(int index, char *out, int size);
+extern int CtrBottomMailbox_ActionCount(void);
+extern void CtrBottomMailbox_ActionName(int index, char *out, int size);
+extern int CtrBottomMailbox_Message(char *out, int size);
+extern void CtrBottomMailbox_Title(char *out, int size);
+extern void CtrBottomMailbox_CloseLabel(char *out, int size);
 extern unsigned CtrBottomBag_SalePrice(void);
 extern int CtrBottomNaming_IsOpen(void);
 extern int CtrBottomNaming_Ready(void);
@@ -360,7 +377,7 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
        MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
-       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17, MODE_GBAVIEW = 18 };
+       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17, MODE_GBAVIEW = 18, MODE_MAILBOX = 19 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -767,6 +784,9 @@ static int CurrentMode(void)
     /* The item PC's WITHDRAW ITEM list, from its setup to its turn-off. */
     if (CtrBottomItemPc_IsOpen())
         return MODE_ITEMPC;
+    /* The PC's mailbox, from its list's first frame: before the field choices (a mail's menu, its YES/NO). */
+    if (CtrBottomMailbox_IsOpen())
+        return MODE_MAILBOX;
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen())
         return MODE_CHOICE;
@@ -883,10 +903,12 @@ typedef struct {
     int (*tossMax)(void);
     int (*prompt)(char *out, int size);
     int (*message)(char *out, int size);
+    /* A row's name when it is not its item's (the mailbox: the mail's writer), or NULL. */
+    void (*name)(int index, char *out, int size);
 } FieldList;
 
 /* Defined with the list screens' touch plans below. */
-static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen, sItemPcScreen;
+static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen, sItemPcScreen, sMailboxScreen;
 
 static const FieldList sFieldBagList = {
     MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
@@ -914,6 +936,13 @@ static const FieldList sFieldItemPcList = {
     CtrBottomItemPc_ActionCount, CtrBottomItemPc_ActionName, CtrBottomItemPc_TossCount, CtrBottomItemPc_TossMax, NULL,
     CtrBottomItemPc_Message,
 };
+/* The PC's mailbox: a row per mail (its item, its writer, no count), a mail's menu (READ, MOVE TO BAG, GIVE, EXIT),
+ * MOVE TO BAG's YES/NO and the messages. Drawn as the item PC's list. */
+static const FieldList sFieldMailboxList = {
+    MODE_MAILBOX, PT_BAG_KIND_ITEMPC, &sMailboxScreen, CtrBottomMailbox_Item, CtrBottomMailbox_Quantity,
+    CtrBottomMailbox_ActionCount, CtrBottomMailbox_ActionName, NULL, NULL, CtrBottomMailbox_Message,
+    CtrBottomMailbox_Message, CtrBottomMailbox_Name,
+};
 
 /* The list the lower screen draws itself in this mode (the field's Bag and the cases it opens), or NULL. */
 static const FieldList *FieldListFor(int mode)
@@ -922,6 +951,8 @@ static const FieldList *FieldListFor(int mode)
         return &sFieldShopList;
     if (mode == MODE_ITEMPC)
         return &sFieldItemPcList;
+    if (mode == MODE_MAILBOX)
+        return &sFieldMailboxList;
     if (sStorageSession)
         return NULL;
     if (mode == MODE_BAG)
@@ -984,6 +1015,9 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         snprintf(b->closeName, sizeof(b->closeName), "%s", CtrUiText(UIS_CANCEL));
         b->money = CtrBottomShop_Money();
         b->sale = state == BAG_QUANTITY ? CtrBottomShop_Total() : 0;
+    } else if (f->mode == MODE_MAILBOX) {
+        CtrBottomMailbox_Title(b->title, sizeof(b->title));
+        CtrBottomMailbox_CloseLabel(b->closeName, sizeof(b->closeName));
     } else if (f->kind == PT_BAG_KIND_ITEMPC) {
         CtrBottomItemPc_Title(b->title, sizeof(b->title));
         CtrBottomItemPc_CloseLabel(b->closeName, sizeof(b->closeName));
@@ -1008,7 +1042,10 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
                 b->row[i].price = (uint16_t)f->quantity(b->first + i);
             else
                 b->row[i].qty = (uint16_t)f->quantity(b->first + i);
-            FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
+            if (f->name != NULL)
+                f->name(b->first + i, b->row[i].name, sizeof(b->row[i].name));
+            else
+                FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
         }
     }
     if (b->cursor >= 0 && b->cursor < count) {
@@ -1018,6 +1055,8 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
 
             if (f->kind == PT_BAG_KIND_TMCASE)
                 CtrBottomTMCase_MoveName(b->selItem, b->selName, sizeof(b->selName));
+            else if (f->name != NULL)
+                f->name(b->cursor, b->selName, sizeof(b->selName));
             else
                 CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
             CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
@@ -1863,7 +1902,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         NameSnapshot(s);
         return;
     }
-    if (mode == MODE_SHOP || mode == MODE_ITEMPC) {
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC || mode == MODE_MAILBOX) {
         ShopSnapshot(s, mode);
         return;
     }
@@ -2348,6 +2387,10 @@ static const ListScreen sItemPcScreen = {
     CtrBottomItemPc_State, CtrBottomItemPc_Count, CtrBottomItemPc_MaxShowed, CtrBottomItemPc_Cursor,
     CtrBottomItemPc_Serial, CtrBottomItemPc_HitAt,
 };
+static const ListScreen sMailboxScreen = {
+    CtrBottomMailbox_State, CtrBottomMailbox_Count, CtrBottomMailbox_MaxShowed, CtrBottomMailbox_Cursor,
+    CtrBottomMailbox_Serial, CtrBottomMailbox_HitAt,
+};
 static const ListScreen sPouchScreen = {
     CtrBottomPouch_State, CtrBottomPouch_Count, CtrBottomPouch_MaxShowed, CtrBottomPouch_Cursor,
     CtrBottomPouch_Serial, CtrBottomPouch_HitAt,
@@ -2358,7 +2401,7 @@ static const ListScreen *ListFor(int mode)
 {
     return mode == MODE_BAG ? &sBagScreen : mode == MODE_TMCASE ? &sTMCaseScreen
          : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen
-         : mode == MODE_ITEMPC ? &sItemPcScreen : NULL;
+         : mode == MODE_ITEMPC ? &sItemPcScreen : mode == MODE_MAILBOX ? &sMailboxScreen : NULL;
 }
 
 /* Bag plan: presses for the Bag's own input states, apart from the Party plan.
@@ -4668,8 +4711,8 @@ static int ProcessTouch(int mode)
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
     }
-    if (mode == MODE_SHOP || mode == MODE_ITEMPC) {
-        /* A mart's BUY list, the item PC's WITHDRAW ITEM: modal, nothing on the sidebar routes away from them. */
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC || mode == MODE_MAILBOX) {
+        /* A mart's BUY list, the item PC's WITHDRAW ITEM, the mailbox: modal, nothing on the sidebar routes away. */
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
@@ -5181,7 +5224,7 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop()
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
         || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || mode == MODE_GBAVIEW;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);

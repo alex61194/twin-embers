@@ -81,7 +81,9 @@ int main(void)
     assert(CurrentMode()==MODE_FIELD);
     CtrBottomStorage_PCMenu_value=1; assert(CurrentMode()==MODE_FIELD);
     CtrFieldChoice_IsOpen_value=1; assert(CurrentMode()==MODE_CHOICE);
-    CtrFieldChoice_IsOpen_value=0;
+    /* The mailbox owns its mail's menu and YES/NO: before the field choices. */
+    CtrBottomStorage_PCMenu_value=0; CtrBottomMailbox_IsOpen_value=1; assert(CurrentMode()==MODE_MAILBOX);
+    CtrBottomMailbox_IsOpen_value=0; CtrFieldChoice_IsOpen_value=0; CtrBottomStorage_PCMenu_value=1;
     CtrBottomStorage_PCMenu_value=0; sStorageSession=1;
     CtrBottom_IsFieldCallback_value=0;
     CtrBottomStorage_BoxOpen_value=1; assert(CurrentMode()==MODE_STORAGE_BOX);
