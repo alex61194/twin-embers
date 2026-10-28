@@ -594,7 +594,7 @@ $(GAME_DATA_OBJS) $(GAME_M4A_OBJS) $(GAME_SOUND_OBJS): ../asm/macros/music_voice
 build/3ds_intro_bridge.o: src/3ds_intro_bridge.c include/3ds_intro_native.h
 	@mkdir -p build
 	$(CC) $(GAMEFLAGS) -DCTR_GBA_STAGE -c $< -o $@
-build/3ds_video.o: include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h
+build/3ds_video.o: include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h
 build/3ds_poketouch.o: include/poketouch_assets.h include/3ds_poketouch.h
 build/3ds_bottom.o: include/3ds_storage_touch.h include/3ds_storage_bridge.h
 build/game/pokemon_storage_system_tasks.o build/game/pokemon_storage_system_menu.o build/game/pokemon_storage_system_data.o build/game/naming_screen.o: include/3ds_storage_bridge.h
