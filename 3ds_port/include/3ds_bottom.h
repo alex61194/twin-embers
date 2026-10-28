@@ -20,6 +20,9 @@
 /* Native side (libctru): copy the rectangle [x0, x1) x [y0, y1) (screen
  * coordinates, y down) of the canvas to the screen, nothing else. */
 void CtrBottom_BlitRect(const uint16_t *canvas, int x0, int y0, int x1, int y1);
+/* Once a frame, after CtrBottom_Frame: what was copied this frame is shown from the next VBlank (the copies go to the
+ * buffer not shown, so the screen never shows half a picture). */
+void CtrBottom_BlitFrameEnd(void);
 
 /* Game side. Init once before AgbMain; Frame once per frame after input is
  * scanned and before the game reads its keys. */

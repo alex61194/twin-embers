@@ -702,6 +702,7 @@ void VBlankIntrWait(void)
      * keys: touch drives the real Party state machine via injected D-pad/A.
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
+    CtrBottom_BlitFrameEnd();
     u64 phaseField = svcGetSystemTick();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
     CtrVideo_SetForestPreview(ForestMapPreviewScreenIsRunning() == FALSE);

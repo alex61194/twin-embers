@@ -5597,8 +5597,8 @@ bool CtrVideo_SetBottomViewport(bool on)
     on = on && sBottom && sChrome.data;
     if (on != sBottomGpu)
     {
-        /* The CPU path writes the shown buffer; the GPU path swaps two. */
-        gfxSetDoubleBuffering(GFX_BOTTOM, on);
+        /* Both paths swap two buffers: the GPU's at the frame's end, the CPU's in CtrBottom_BlitFrameEnd. */
+        gfxSetDoubleBuffering(GFX_BOTTOM, true);
         CtrLog_Write(CTR_LOG_VIDEO, "bottom screen %s at frame %lu", on ? "on the GPU" : "on the CPU",
                      (unsigned long)sStats.frames);
         sBottomGpu = on;
