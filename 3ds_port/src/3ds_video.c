@@ -2292,9 +2292,9 @@ static int WindowAbs(int origin, int camera, int view, unsigned column, unsigned
  * Co.'s floors, Celadon's department store) runs past the loaded part of the tilemap, where the walk can not see its
  * end: its top-left tile was wherever the loaded part ended, which moves with the camera, and its floors switched
  * on and off as the player walked past. Cutting the run at fixed map coordinates stopped that but lit a floor in
- * parts. A run of WINDOW_WIDE tiles or more is a band of panes with one set of hours, keyed by its row alone; a
+ * parts. A run of WINDOW_WIDE tiles or more (Silph Co.'s is seven, and a facade half off the screen shows less) is a band of panes with one set of hours, keyed by its row alone; a
  * shorter one is a window, keyed by its top-left tile. */
-#define WINDOW_WIDE 8
+#define WINDOW_WIDE 5
 #define WINDOW_SEGMENT 16
 /* The rows were never unwrapped, as the columns are. */
 #define WINDOW_NO_WRAP (1 << 20)
