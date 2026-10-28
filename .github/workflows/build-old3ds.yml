@@ -1,0 +1,37 @@
+name: Build 0.2.8-old3ds (test)
+on:
+  push:
+    branches: [ci/build-0.2.8-old3ds]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    timeout-minutes: 60
+    steps:
+      - name: Tools
+        run: apt-get update && apt-get install -y --no-install-recommends python3 git ca-certificates make
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Bootstrap
+        run: |
+          git config --global --add safe.directory '*'
+          python3 --version
+          python3 tools/bootstrap.py --dir build/old3ds
+      - name: Build old3ds
+        env:
+          DEVKITPRO: /opt/devkitpro
+          DEVKITARM: /opt/devkitpro/devkitARM
+        run: |
+          cd build/old3ds/3ds_port
+          make CLEAN_RELEASE=1 CTR_FORCE_OLD3DS=1 TWIN_EMBERS_VERSION=0.2.8-old3ds verify-game-3dsx
+          sha256sum twinembers.3dsx | tee SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twinembers-0.2.8-old3ds
+          path: |
+            build/old3ds/3ds_port/twinembers.3dsx
+            build/old3ds/3ds_port/SHA256SUMS.txt
