@@ -1048,7 +1048,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "4a5d91616026d2fa01208f19a527eb7d353ccba61afcd3d50b707d025ba2be18",
+   "sha256": "033afd347881e9830a498acc33c76d505d7843f8b6f589d53fbce4d2b9c045a1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

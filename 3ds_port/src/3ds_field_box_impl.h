@@ -219,18 +219,6 @@ static void FXTitle(const CtrPokeTouchBox *b)
     UiTextCentered(name, &line, fy + 6, onTitle ? kEmAmber.ink : EM_DARK, onTitle ? kEmAmber.inkSh : EM_DARK_SH, 1);
 }
 
-/* A cell over the wallpaper: the wallpaper's picture shows through a light veil, so each box looks as its wallpaper does. */
-static void FXVeilCell(const CtrPokeTouchRect *r, uint16_t edge)
-{
-    UiRoundFill(r->x, r->y, r->w, r->h, 4, edge);
-    for (int y = r->y + 1; y < r->y + r->h - 1; ++y) {
-        int cut = y < r->y + 3 || y >= r->y + r->h - 3 ? 1 : 0;
-
-        for (int x = r->x + 1 + cut; x < r->x + r->w - 1 - cut; ++x)
-            Px(x, y, UiMix(FXWallBody(x, y), UI_RGB(255, 250, 240), 4));
-    }
-}
-
 static void FXGrid(const CtrPokeTouchBox *b)
 {
     int wall = FXWallpaper(b->wallpaper);
@@ -246,10 +234,9 @@ static void FXGrid(const CtrPokeTouchBox *b)
         CtrPokeTouchRect r = FXCell(i);
         int cursor = b->area == ST_AREA_BOX && b->pos == i && b->state != PT_BOX_STATE_BUSY;
 
-        if (wall && !cursor) {
-            FXVeilCell(&r, UI_RGB(150, 136, 126));
+        /* Over a wallpaper only the cursor's cell is drawn: the other places show the picture itself, as in FireRed. */
+        if (wall && !cursor)
             continue;
-        }
         UiRoundFill(r.x, r.y, r.w, r.h, 4, cursor ? kEmAmber.lip : UI_RGB(150, 136, 126));
         EmGradFill(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 3, cursor ? kEmAmber.top : UI_RGB(255, 250, 240),
                    cursor ? kEmAmber.bottom : UI_RGB(234, 226, 212));
