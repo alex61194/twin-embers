@@ -109,6 +109,11 @@ extern int CtrFieldChoice_Columns(void);
 extern int CtrFieldChoice_Cursor(void);
 extern void CtrFieldChoice_Label(int index, char *out, int size);
 extern int CtrFieldChoice_Prompt(char *out, int size);
+/* The screens the lower screen shows in its viewport, the field kept above (MODE_GBAVIEW). */
+extern int CtrBottomView_FameChecker(void);
+extern int CtrBottomView_TeachyTv(void);
+extern int CtrBottomView_Mail(void);
+extern int CtrBottomView_EasyChat(void);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
@@ -353,7 +358,7 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
        MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
-       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17 };
+       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17, MODE_GBAVIEW = 18 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -704,6 +709,20 @@ extern int CtrBottomPartyChild_IsOpen(void);
 extern int CtrBottomPartyChild_IsMovePanel(void);
 extern int CtrBottomSummary_IsMoveSelection(void);
 
+/* The title of the screen MODE_GBAVIEW shows, or NULL when none is open. */
+static const char *GbaViewTitle(void)
+{
+    if (CtrBottomView_FameChecker())
+        return "FAME CHECKER";
+    if (CtrBottomView_TeachyTv())
+        return "TEACHY TV";
+    if (CtrBottomView_Mail())
+        return "MAIL";
+    if (CtrBottomView_EasyChat())
+        return "EASY CHAT";
+    return NULL;
+}
+
 static int CurrentMode(void)
 {
     if (!sEnabled || !sInitDone)
@@ -748,6 +767,9 @@ static int CurrentMode(void)
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen())
         return MODE_CHOICE;
+    /* The Fame Checker, the Teachy TV, a mail, Easy Chat: FireRed's own screen in the viewport. */
+    if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat())
+        return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
     /* FireRed's battle on the upper screen (its own main callback: not a Bag, Party or Summary opened from it):
@@ -1839,10 +1861,6 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         ShopSnapshot(s, mode);
         return;
     }
-    if (mode == MODE_CHOICE) {
-        ChoiceSnapshot(s, mode);
-        return;
-    }
     if (mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD) {
         /* Pixel-perfect copy of FireRed's existing GBA storage artwork in the
          * PokeTouch viewport. No reimplemented Pokemon, names, menus or sprites. */
@@ -1864,6 +1882,23 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeMON STORAGE SYSTEM");
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
         }
+        return;
+    }
+    if (mode == MODE_CHOICE) {
+        ChoiceSnapshot(s, mode);
+        return;
+    }
+    if (mode == MODE_GBAVIEW) {
+        /* FireRed's own screen, as it draws it, in the viewport; BACK is its B. */
+        const char *title = GbaViewTitle();
+
+        s->touch.viewport = 1;
+        s->touch.backVisible = 1;
+        s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+        s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+        snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
+        snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
+        snprintf(s->touch.bar[2], PT_BAR_LEN, "BACK is the B button.");
         return;
     }
     if (mode == MODE_BATTLE) {
@@ -2736,7 +2771,7 @@ static int BackVisible(int mode)
     if (mode == MODE_PARTY_CHILD)
         return CtrBottomLearn_IsOpen();
     if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX || mode == MODE_CHOICE
-        || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
+        || mode == MODE_GBAVIEW || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
         return 1;
     return mode == MODE_SUMMARY && !SummaryPremium() && CtrBottomSummary_Page() > 0;   /* the premium one has its own BACK */
 }
@@ -2776,6 +2811,8 @@ static int BackEnabled(int mode)
         return CtrBottomCard_State() != CARD_BUSY;
     if (mode == MODE_CHOICE)
         return CtrFieldChoice_Ready();
+    if (mode == MODE_GBAVIEW)
+        return 1;
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
     if (mode == MODE_PARTY_CHILD)
@@ -2799,7 +2836,7 @@ static void BackPress(int mode)
         sRouteKey = CardLeaveKey();     /* the card's own exit: B on its front, A on its back */
     else if (mode == MODE_DEX)
         sRouteKey = K_B;                /* the Pokedex's own: a level back, out of it from its top menu */
-    else if (mode == MODE_CHOICE)
+    else if (mode == MODE_CHOICE || mode == MODE_GBAVIEW)
         sRouteKey = K_B;                /* the menu's own B: CANCEL, NO, or nothing where it takes none */
     else if (mode == MODE_PARTY_CHILD)
         sRouteKey = K_B;                /* the Summary's own: give up the new move (FireRed asks) */
@@ -4637,6 +4674,14 @@ static int ProcessTouch(int mode)
         ProcessNameTouch(in);
         return HIT_NONE;
     }
+    if (mode == MODE_GBAVIEW) {
+        /* FireRed's own screen in the viewport: modal, its buttons and BACK. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        return HIT_NONE;
+    }
     if (mode == MODE_CHOICE) {
         /* The field's choice: modal, nothing on the sidebar routes away from it. */
         sPoke.id = PT_NONE;
@@ -5116,7 +5161,7 @@ void CtrBottom_Frame(void)
         sInjected = sRouteKey;
     sRouteKey = 0;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop()
-        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || mode == MODE_GBAVIEW;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
