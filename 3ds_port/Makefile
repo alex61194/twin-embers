@@ -31,6 +31,8 @@ CFLAGS += -DCTR_AUDIO_PSG_BLEP=$(CTR_AUDIO_PSG_BLEP)
 CTR_FORCE_OLD3DS ?= 0
 CFLAGS += -DCTR_FORCE_OLD3DS=$(CTR_FORCE_OLD3DS)
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
+# Every link that has src/3ds_video.c: it routes the GPU data cache flushes past the GSP service.
+VIDEO_LDFLAGS := -Wl,--wrap=GSPGPU_FlushDataCache
 
 .PHONY: all clean verify verify-host verify-game-core verify-title-units verify-game-source verify-game-data verify-sound-data verify-sound-songs verify-m4a-arm11 verify-naming-exit verify-map-load-wait verify-battle-transition-exit link-game-probe verify-game-relocs romfs-bundles game-3dsx verify-game-3dsx
 all: $(TARGET).3dsx
@@ -52,7 +54,7 @@ $(error Voxel is disabled for FireRed 3DS)
 endif
 
 $(TARGET).elf: build/main.o build/gba_shadow.o build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o build/3ds_perf.o
-	$(CC) $(LDFLAGS) $^ -lcitro2d -lcitro3d -lctru -lm -o $@
+	$(CC) $(LDFLAGS) $(VIDEO_LDFLAGS) $^ -lcitro2d -lcitro3d -lctru -lm -o $@
 
 $(TARGET).smdh: Makefile
 	$(DEVKITPRO)/tools/bin/smdhtool --create "FireRed 3DS port" "ARM11 bootstrap diagnostic" "FireRed 3DS contributors" $(CTRULIB)/default_icon.png $@
@@ -179,7 +181,7 @@ link-game-probe: verify-game-source verify-game-data verify-sound-data verify-so
 # constants, so no --defsym absolute symbols are needed in the 3DS link.
 build/firered_game_probe.elf: $(GAME_C_OBJS) $(GAME_DATA_OBJS) $(GAME_SOUND_OBJS) $(GAME_M4A_OBJS) $(GAME_NATIVE_OBJS)
 	$(file >build/game-link.rsp,$(GAME_C_OBJS) $(GAME_DATA_OBJS) $(GAME_SOUND_OBJS) $(GAME_M4A_OBJS) $(GAME_NATIVE_OBJS))
-	$(CC) $(LDFLAGS) -Wl,-Map,build/firered_game_probe.map @build/game-link.rsp -lcitro2d -lcitro3d -lctru -lm -o $@
+	$(CC) $(LDFLAGS) $(VIDEO_LDFLAGS) -Wl,-Map,build/firered_game_probe.map @build/game-link.rsp -lcitro2d -lcitro3d -lctru -lm -o $@
 
 # CHECKPOINT B: drop only the verified vestigial R_ARM_THM_CALL branch
 # relocations (statically resolved, PC-relative, ignored by 3dsxtool's own
@@ -219,7 +221,7 @@ GAME_LDFLAGS += -Bbuild/ld/
 build/firered_game.elf: verify-game-source verify-game-data verify-sound-data verify-sound-songs $(GAME_FULL_OBJS) ../tools/rex_link.py
 	$(PYTHON) ../tools/rex_link.py --roots build/rex-roots.rsp
 	$(file >build/game-full-link.rsp,$(GAME_C_OBJS) $(GAME_DATA_OBJS) $(GAME_SOUND_OBJS) $(GAME_M4A_OBJS) $(GAME_FULL_OBJS))
-	$(CC) $(LDFLAGS) $(GAME_LDFLAGS) -Wl,-Map,build/firered_game.map @build/game-full-link.rsp @build/rex-roots.rsp -lcitro2d -lcitro3d -lctru -lm -o $@
+	$(CC) $(LDFLAGS) $(VIDEO_LDFLAGS) $(GAME_LDFLAGS) -Wl,-Map,build/firered_game.map @build/game-full-link.rsp @build/rex-roots.rsp -lcitro2d -lcitro3d -lctru -lm -o $@
 
 # A fresh tree must build the real mixer before the full-game link.
 build/firered_game.elf: $(GAME_M4A_OBJS)
