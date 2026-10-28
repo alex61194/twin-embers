@@ -911,8 +911,9 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         bool paletteDirty=tile->valid && (fadeBase
             ? TileVersionChanged(tile, sFadeVersion[fadeId], sFadeChanges[fadeId], fadeId < 32 ? 1u : 8u)
             : TilePaletteChanged(tile,paletteId));
-        bool vramDirty=tile->valid && !paletteDirty
-            && VramStamp(address / CTR_VRAM_TRACK_BLOCK) > tile->checked
+        /* Compared now whatever follows: the tile is marked checked at this token below. */
+        uint32_t stamp = VramStamp(address / CTR_VRAM_TRACK_BLOCK);
+        bool vramDirty=tile->valid && !paletteDirty && stamp > tile->checked
             && memcmp(tile->bytes,sMemory.vram+address,bytes);
         if (!tile->valid || paletteDirty || vramDirty)
         {
@@ -2365,6 +2366,9 @@ static bool LayerRenderCells(unsigned bg)
     unsigned scrollX = Reg(0x10 + bg * 4) & 511, scrollY = Reg(0x12 + bg * 4) & 511;
     unsigned tileBytes = color256 ? 64 : 32;
     unsigned charBlocks = (Min(1024u * tileBytes, 0x10000u - chars) + CTR_VRAM_TRACK_BLOCK - 1) / CTR_VRAM_TRACK_BLOCK;
+    /* Every block this walk may read is compared at this token, as `walked` will say it was. */
+    for (unsigned b = 0; b < charBlocks; ++b) VramStamp(chars / CTR_VRAM_TRACK_BLOCK + b);
+    VramChangedAfter(map, rows * columns * 2, ~0u);
     bool sameInputs = !full
         && (layer->walkedPlain ? !windowed && !sLayerFadeTint[bg]
             : layer->walkedWindow && layer->walkedTint == sLayerFadeTint[bg]
@@ -2547,7 +2551,7 @@ static bool LayerRenderCells(unsigned bg)
         C2D_DrawImageAt((C2D_Image){&sAtlas, &none}, 0, 0, 0, &sTint, 1, 1);
         C2D_Flush();
         CtrFastCells_Draw(dirty, count, cellSlot, cellEntry, columns, ATLAS_SIZE);
-        sStats.tiles += count;
+        for (unsigned i = 0; i < count; ++i) sStats.tiles += cellSlot[dirty[i]] >= 0;   /* as DrawSlot counts */
         BlendForget();
     }
     else
