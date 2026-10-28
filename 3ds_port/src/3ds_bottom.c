@@ -121,6 +121,8 @@ extern int CtrBottomView_TeachyTv(void);
 extern int CtrBottomView_Mail(void);
 extern int CtrBottomView_EasyChat(void);
 extern int CtrBottomView_HallOfFame(void);
+/* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
+extern int CtrBottomHof_HoldsTop(void);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
@@ -5265,7 +5267,7 @@ void CtrBottom_Frame(void)
     else if (sChoiceGrace)
         --sChoiceGrace;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomHof_HoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
