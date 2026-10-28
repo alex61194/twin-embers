@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+defaults:
+  run:
+    shell: bash
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,9 +29,11 @@ jobs:
           DEVKITPRO: /opt/devkitpro
           DEVKITARM: /opt/devkitpro/devkitARM
         run: |
-          cd build/old3ds/3ds_port
           set -o pipefail
-          make CLEAN_RELEASE=1 CTR_FORCE_OLD3DS=1 TWIN_EMBERS_VERSION=0.2.8-old3ds verify-game-3dsx 2>&1 | tee $GITHUB_WORKSPACE/build.log
+          exec > >(tee $GITHUB_WORKSPACE/build.log) 2>&1
+          which arm-none-eabi-gcc || ls $DEVKITARM/bin | head
+          cd build/old3ds/3ds_port
+          make CLEAN_RELEASE=1 CTR_FORCE_OLD3DS=1 TWIN_EMBERS_VERSION=0.2.8-old3ds verify-game-3dsx
           sha256sum twinembers.3dsx | tee SHA256SUMS.txt
       - name: Publish output to branch ci/build-output
         if: always()
