@@ -535,6 +535,9 @@ static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
 static uint8_t sCellGlow[4][4096];
 /* Which background colours are glass (CtrDayNight_Glass): 1, 0 for the others. */
 static uint8_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
+/* Window cells whose tile was not the map's at the place worked out for them (a wrong place: they were keyed by it
+ * alone), and those walked; logged once a minute, for the port.log. */
+static unsigned sWindowMisses, sWindowWalks;
 static bool sFieldLayers;
 /* Stages 4 and 5 hold the hour (DayNightEnv); drawing into a layer texture, which is tinted when it is drawn. */
 static bool sDayNightEnv, sInLayerTexture;
@@ -683,6 +686,12 @@ static void DayNightUpdate(void)
 
     if (minute != sDayNightMinute || cameraMoved)
     {
+        if (minute != sDayNightMinute && sWindowWalks)
+        {
+            CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT windows walked=%u misplaced=%u map=%04x", sWindowWalks, sWindowMisses,
+                         sDayNightCamera.map);
+            sWindowWalks = sWindowMisses = 0;
+        }
         sDayNightMinute = minute;
         if (sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
     }
@@ -2314,6 +2323,20 @@ static bool WindowCell(unsigned bg, unsigned size, unsigned column, unsigned row
     return true;
 }
 
+/* The glass tile at a place on the map that meets a neighbour's glass across edge (1 left, 2 right, 4 top, 8 bottom),
+ * on any field layer: a window's panes and its top row may be on different layers (a metatile's bottom half on BG2,
+ * the one above it on BG1), and walking one layer split such a window in two. 0xffff for none. */
+static unsigned WindowNeighbour(unsigned chars, int x, int y, unsigned edge)
+{
+    for (unsigned bg = 1; bg <= 3; ++bg)
+    {
+        unsigned tile = sDayNightMapTile(bg, x, y);
+
+        if (tile != 0xffffu && WindowTile(chars, tile, false) && (GlassEdges(chars, tile) & edge)) return tile;
+    }
+    return 0xffffu;
+}
+
 static bool WindowLit(unsigned bg, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
 {
     const DayNightCamera *camera = &sDayNightCamera;
@@ -2322,23 +2345,23 @@ static bool WindowLit(unsigned bg, unsigned size, unsigned chars, unsigned colum
 
     if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
     WindowCell(bg, size, column, row, &x, &y);
-    if (sDayNightMapTile && sDayNightMapTile(bg, x, y) == (entry & 0xffffu))
+    ++sWindowWalks;
+    if (sDayNightMapTile && sDayNightMapTile(bg, x, y) != (entry & 0xffffu)) ++sWindowMisses;
+    else if (sDayNightMapTile)
     {
         for (unsigned step = 0; step < 16; ++step)
         {
-            unsigned next = sDayNightMapTile(bg, x - 1, y);
+            unsigned next = (GlassEdges(chars, entry) & 1) ? WindowNeighbour(chars, x - 1, y, 2) : 0xffffu;
 
-            if (next == 0xffffu || !(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false)
-                || !(GlassEdges(chars, next) & 2)) break;
+            if (next == 0xffffu) break;
             --x;
             entry = next;
         }
         for (unsigned step = 0; step < 16; ++step)
         {
-            unsigned next = sDayNightMapTile(bg, x, y - 1);
+            unsigned next = (GlassEdges(chars, entry) & 4) ? WindowNeighbour(chars, x, y - 1, 8) : 0xffffu;
 
-            if (next == 0xffffu || !(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false)
-                || !(GlassEdges(chars, next) & 8)) break;
+            if (next == 0xffffu) break;
             --y;
             entry = next;
         }
