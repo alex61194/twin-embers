@@ -118,6 +118,7 @@ extern int CtrBottomView_FameChecker(void);
 extern int CtrBottomView_TeachyTv(void);
 extern int CtrBottomView_Mail(void);
 extern int CtrBottomView_EasyChat(void);
+extern int CtrBottomView_HallOfFame(void);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
@@ -741,6 +742,8 @@ static const char *GbaViewTitle(void)
         return "MAIL";
     if (CtrBottomView_EasyChat())
         return "EASY CHAT";
+    if (CtrBottomView_HallOfFame())
+        return "HALL OF FAME";
     return NULL;
 }
 
@@ -792,8 +795,9 @@ static int CurrentMode(void)
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen())
         return MODE_CHOICE;
-    /* The Fame Checker, the Teachy TV, a mail, Easy Chat: FireRed's own screen in the viewport. */
-    if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat())
+    /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
+    if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
+        || CtrBottomView_HallOfFame())
         return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
