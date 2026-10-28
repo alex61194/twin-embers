@@ -136,6 +136,8 @@ void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, un
 void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
 /* The field's tile on BG1-3 at a place on the map, in tiles, or 0xffff (the night windows walk their glass on it). */
 void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y));
+/* Leaves a BG0 rectangle (tiles) out of the upper screen: a field menu the lower screen draws. w 0 for none. */
+void CtrVideo_HideBg0Rect(int x, int y, int w, int h);
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

@@ -2014,6 +2014,9 @@ typedef struct
     bool valid;
 } LayerTexture;
 static LayerTexture sLayers[4];
+/* A GBA menu window on BG0 whose rows the lower screen draws (CtrVideo_HideBg0Rect), in tiles, frame included: its
+ * cells are left out of the upper screen, which shows the field and the message without it. w 0 for none. */
+static struct { int x, y, w, h; } sHideBg0;
 /* Whether each background is drawn from its texture this frame. */
 static bool sLayerReady[4];
 /* When each background's texture last failed to be placed (0: not failing): only that layer waits. */
@@ -2509,6 +2512,9 @@ static bool LayerRenderCells(unsigned bg)
                 memoEntry[index] = (uint16_t)entry;
                 memoSlot[index] = (int16_t)slot;
             }
+            if (bg == 0 && sHideBg0.w && (int)column >= sHideBg0.x && (int)column < sHideBg0.x + sHideBg0.w
+                && (int)row >= sHideBg0.y && (int)row < sHideBg0.y + sHideBg0.h)
+                slot = -1;
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
             sCellEnt[bg][cell] = (uint16_t)entry;
@@ -6060,4 +6066,17 @@ void CtrVideo_Shutdown(void)
     sC2d = sC3d = false;
     memset(&sSurface, 0, sizeof(sSurface));
     memset(&sAtlas, 0, sizeof(sAtlas));
+}
+
+void CtrVideo_HideBg0Rect(int x, int y, int w, int h)
+{
+    if (w <= 0 || h <= 0)
+        x = y = w = h = 0;
+    if (x == sHideBg0.x && y == sHideBg0.y && w == sHideBg0.w && h == sHideBg0.h)
+        return;
+    sHideBg0.x = x;
+    sHideBg0.y = y;
+    sHideBg0.w = w;
+    sHideBg0.h = h;
+    sCellControl[0] = ~0u;   /* its cells are walked again, all of them, with or without the rectangle */
 }
