@@ -1082,21 +1082,21 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
     /* The count chosen last in this list's quantity box, for the YES/NO that confirms it: a message printed between
      * them (a mart's "and you want 17. That will be...") left the frame shown just before without one, and the
      * confirmation said x1. A new pick from the list or its menu forgets it. */
-    static int countMode = -1;
-    static uint16_t count;
+    static int chosenMode = -1;
+    static uint16_t chosen;
 
-    if (state == BAG_LIST || state == BAG_ACTIONS || countMode != f->mode) {
-        countMode = f->mode;
-        count = 0;
+    if (state == BAG_LIST || state == BAG_ACTIONS || chosenMode != f->mode) {
+        chosenMode = f->mode;
+        chosen = 0;
     }
     if (state == BAG_QUANTITY && f->tossCount != NULL) {
         b->tossCount = (uint16_t)f->tossCount();
         b->tossMax = (uint16_t)f->tossMax();
-        count = b->tossCount;
+        chosen = b->tossCount;
     }
     if (state == BAG_YESNO && f->prompt != NULL) {
         f->prompt(b->prompt, sizeof(b->prompt));
-        b->tossCount = count ? count : 1;   /* one when none was asked */
+        b->tossCount = chosen ? chosen : 1;   /* one when none was asked */
     }
     if (state == BAG_MESSAGE)
         f->message(b->prompt, sizeof(b->prompt));
