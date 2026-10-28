@@ -5225,7 +5225,7 @@ void CtrBottom_Frame(void)
         sInjected = sRouteKey;
     sRouteKey = 0;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || mode == MODE_GBAVIEW;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
