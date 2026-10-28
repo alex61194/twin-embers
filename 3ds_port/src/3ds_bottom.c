@@ -4995,6 +4995,9 @@ static void UpdateStorageOwner(int mode)
         sStorageSession = 0; /* Includes returning to Withdraw/Deposit/Move. */
 }
 
+#define CHOICE_HOLD_GRACE 12
+static unsigned sChoiceGrace;
+
 static int StorageHoldTop(void)
 {
     /* Keep the last TOP choice frame through entry's fade, while HOME stays
@@ -5238,8 +5241,15 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
+    /* A choice handing over to the next (the PC's ITEM STORAGE to WITHDRAW / DEPOSIT, a pick to its item list) has a
+     * few frames between them with neither open: released there, TOP drew the field with the first menu's window
+     * still up and froze on it for the second. The hold outlasts a choice by CHOICE_HOLD_GRACE frames. */
+    if (mode == MODE_CHOICE)
+        sChoiceGrace = CHOICE_HOLD_GRACE;
+    else if (sChoiceGrace)
+        --sChoiceGrace;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
