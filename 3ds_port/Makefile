@@ -31,7 +31,7 @@ CFLAGS += -DCTR_AUDIO_PSG_BLEP=$(CTR_AUDIO_PSG_BLEP)
 CTR_FORCE_OLD3DS ?= 0
 CFLAGS += -DCTR_FORCE_OLD3DS=$(CTR_FORCE_OLD3DS)
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
-# Every link that has src/3ds_video.c: it routes the GPU data cache flushes past the GSP service.
+# Every link that has src/3ds_video.c and src/3ds_gpu_flush.c, which routes the GPU data cache flushes past the GSP service.
 VIDEO_LDFLAGS := -Wl,--wrap=GSPGPU_FlushDataCache
 
 .PHONY: all clean verify verify-host verify-game-core verify-title-units verify-game-source verify-game-data verify-sound-data verify-sound-songs verify-m4a-arm11 verify-naming-exit verify-map-load-wait verify-battle-transition-exit link-game-probe verify-game-relocs romfs-bundles game-3dsx verify-game-3dsx
@@ -53,7 +53,7 @@ ifneq ($(VOXEL),0)
 $(error Voxel is disabled for FireRed 3DS)
 endif
 
-$(TARGET).elf: build/main.o build/gba_shadow.o build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o build/3ds_perf.o
+$(TARGET).elf: build/main.o build/gba_shadow.o build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o build/3ds_perf.o build/3ds_gpu_flush.o
 	$(CC) $(LDFLAGS) $(VIDEO_LDFLAGS) $^ -lcitro2d -lcitro3d -lctru -lm -o $@
 
 $(TARGET).smdh: Makefile
@@ -141,7 +141,7 @@ GAME_PLATFORM_OBJS := build/gba_shadow.o build/3ds_bios.o build/3ds_bios_math.o 
 GAME_PLATFORM_OBJS += build/3ds_flash.o build/3ds_rng.o build/3ds_rng_platform.o
 GAME_PLATFORM_OBJS += build/3ds_link_peripherals.o
 GAME_PLATFORM_OBJS += build/3ds_cgb_audio.o build/3ds_audio_mix.o build/3ds_audio.o
-GAME_PLATFORM_OBJS += build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o
+GAME_PLATFORM_OBJS += build/3ds_video.o build/3ds_gpu_flush.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o
 GAME_PLATFORM_OBJS += build/3ds_perf.o
 # LeafGreen's version exclusives in the wild encounters (wild_encounter.c calls it).
 GAME_PLATFORM_OBJS += build/3ds_leafgreen.o
