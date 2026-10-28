@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "3ds_platform.h"
 #include "3ds_perf.h"
 #include "3ds_data_error_text.h"
@@ -27,7 +28,8 @@ uint64_t CtrPlatform_Milliseconds(void)
  * the game thread, so every periodic stats line dropped several frames. Lines
  * are now formatted by the caller into a RAM queue, in call order, and a
  * lowest-priority thread appends them while the game waits for VBlank. The
- * file content is unchanged; each batch still ends with fclose. The game
+ * writer keeps port.log open for the whole session (see LogAppendKept), and
+ * each line starts with the session time, "[   s.mmm] ". The game
  * thread never waits for the writer: a line that does not fit in a full queue
  * is dropped and counted, and atexit drains the queue and appends one
  * "LOG dropped=N" line, so Fatal and normal exits keep every queued line.
@@ -51,6 +53,9 @@ static unsigned sLogDropped;
 static char sLogBatch[CTR_LOG_QUEUE_BYTES];
 static CtrLogDeferredFormatter sDeferredFormatter;
 static bool sWarpTrace;
+static FILE *sLogFile;          /* the writer's own handle, open for the whole session */
+static unsigned sLogBatches;
+static uint64_t sLogStartMs;
 
 static void LogAppend(const char *text, size_t length)
 {
@@ -60,6 +65,27 @@ static void LogAppend(const char *text, size_t length)
     fclose(file);
 }
 
+/* An open, append and close per batch was still two lookups and a directory
+ * update on the card every half second, and the game's own reads queue behind
+ * them in the SD card's single file service (a 3.9 s pack read in battle in
+ * the 0.2.8 Old 3DS port.log). The writer now opens port.log once and only
+ * appends; every 20 batches (10 s) it is committed with fsync, so a crash
+ * loses at most those seconds (log.sync still writes each line at once). */
+#define CTR_LOG_COMMIT_BATCHES 20u
+
+static void LogAppendKept(const char *text, size_t length)
+{
+    if (sLogFile == NULL) sLogFile = fopen(CTR_LOG_PATH, "a");
+    if (sLogFile == NULL) return;
+    fwrite(text, 1, length, sLogFile);
+    fflush(sLogFile);
+}
+
+static void LogCommit(void)
+{
+    if (sLogFile != NULL) fsync(fileno(sLogFile));
+}
+
 static void LogWriteBatch(void)
 {
     LightLock_Lock(&sLogLock);
@@ -67,7 +93,7 @@ static void LogWriteBatch(void)
     memcpy(sLogBatch, sLogQueue, length);
     sLogQueued = 0;
     LightLock_Unlock(&sLogLock);
-    if (length) LogAppend(sLogBatch, length);
+    if (length) LogAppendKept(sLogBatch, length);
 }
 
 static void LogWriteDeferred(void)
@@ -78,7 +104,7 @@ static void LogWriteDeferred(void)
     if (!formatter) return;
     size_t length;
     while ((length = formatter(sLogBatch, sizeof(sLogBatch))) != 0)
-        LogAppend(sLogBatch, length);
+        LogAppendKept(sLogBatch, length);
 }
 
 static void LogThreadMain(void *arg)
@@ -94,6 +120,7 @@ static void LogThreadMain(void *arg)
         if (!sLogStop) svcSleepThread(CTR_LOG_BATCH_NS);
         LogWriteBatch();
         LogWriteDeferred();
+        if (++sLogBatches % CTR_LOG_COMMIT_BATCHES == 0) LogCommit();
     }
 }
 
@@ -109,8 +136,10 @@ static void LogShutdown(void)
     {
         char summary[48];
         int length = snprintf(summary, sizeof(summary), "LOG dropped=%u\n", sLogDropped);
-        if (length > 0) LogAppend(summary, (size_t)length);
+        if (length > 0) LogAppendKept(summary, (size_t)length);
     }
+    if (sLogFile != NULL) fclose(sLogFile);
+    sLogFile = NULL;
     /* Lines from later exit handlers go straight to SD. */
     sLogMode = LOG_SYNC;
 }
@@ -155,6 +184,7 @@ bool CtrPlatform_Old3DSForced(void)
 static void LogInit(void)
 {
     sLogMode = LOG_OFF;
+    sLogStartMs = CtrPlatform_Milliseconds();
     sWarpTrace = FileExists("sdmc:/3ds/twinembers/warp.trace");
     sMoveTrace = FileExists("sdmc:/3ds/twinembers/tm.trace");
     bool sync = FileExists("sdmc:/3ds/twinembers/log.sync");
@@ -228,18 +258,24 @@ void CtrLog_Write(CtrLogCategory category, const char *format, ...)
     char stack[512];
     char *line = stack;
     va_list args;
+    /* The session time first, so a stall can be set against the writer's batches and the other threads' lines. */
+    uint64_t ms = CtrPlatform_Milliseconds() - sLogStartMs;
+    int prefix = snprintf(stack, sizeof(stack), "[%6lu.%03u] ", (unsigned long)(ms / 1000u), (unsigned)(ms % 1000u));
+    if (prefix < 0 || (size_t)prefix >= sizeof(stack)) return;
     va_start(args, format);
-    int length = vsnprintf(stack, sizeof(stack) - 1, format, args);
+    int length = vsnprintf(stack + prefix, sizeof(stack) - 1 - (size_t)prefix, format, args);
     va_end(args);
     if (length < 0) return;
-    if ((size_t)length >= sizeof(stack) - 1)
+    if ((size_t)(prefix + length) >= sizeof(stack) - 1)
     {
-        line = malloc((size_t)length + 2);
+        line = malloc((size_t)prefix + (size_t)length + 2);
         if (line == NULL) return;
+        memcpy(line, stack, (size_t)prefix);
         va_start(args, format);
-        vsnprintf(line, (size_t)length + 1, format, args);
+        vsnprintf(line + prefix, (size_t)length + 1, format, args);
         va_end(args);
     }
+    length += prefix;
     line[length++] = '\n';
     if (sLogMode != LOG_ASYNC)
     {
