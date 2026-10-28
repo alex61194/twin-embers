@@ -196,14 +196,27 @@ static void Px(int x, int y, uint16_t c)
         sCanvas[(size_t)x * H + (H - 1 - (size_t)y)] = c;
 }
 
+/* Two pixels a store where the column allows it: the ARM11 writes a word as fast as a halfword. */
+typedef uint32_t __attribute__((may_alias)) PtPair;
+
 static void Fill(int x, int y, int w, int h, uint16_t c)
 {
     int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y;
     int x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
+    uint32_t pair = (uint32_t)c * 0x10001u;
+
     for (int cx = x0; cx < x1; ++cx) {
         uint16_t *p = sCanvas + (size_t)cx * H + (H - (size_t)y1);
-        for (int n = y1 - y0; n > 0; --n)
+        int n = y1 - y0;
+
+        if (n > 0 && ((uintptr_t)p & 2)) {
             *p++ = c;
+            --n;
+        }
+        for (; n >= 2; n -= 2, p += 2)
+            *(PtPair *)p = pair;
+        if (n > 0)
+            *p = c;
     }
 }
 
