@@ -120,6 +120,8 @@ typedef struct {
     uint16_t tossCount, tossMax;    /* the quantity box: how many, of how many */
     uint8_t use;                    /* PT_BAG_USE_*: what the Bag is open for */
     uint32_t sale, money;           /* selling or buying: what that many come to, and the player's money */
+    uint8_t showOwned;              /* a mart's selected item: how many the Bag holds (owned), shown */
+    uint16_t owned;
     char prompt[96];                /* the Bag's question (YES/NO) or the message it waits on */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
 } CtrPokeTouchBag;

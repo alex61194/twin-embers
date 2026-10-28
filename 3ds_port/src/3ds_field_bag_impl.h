@@ -287,6 +287,13 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
             UiTypeBadge(&t, b->moveType, b->typeName);
             right = t.x - 4;
         }
+        if (b->showOwned) {                             /* buying: how many the Bag already holds, on the right */
+            char owned[24];
+
+            snprintf(owned, sizeof(owned), "%s %u", CtrUiText(UIS_BAG_IN_BAG), (unsigned)b->owned);
+            UiTextRight(owned, right - 4, NOTE_Y + 6, EM_DIM, EM_DARK_SH, 1);
+            right -= UiTextWidth(owned, 1) + 10;
+        }
         if (b->use == PT_BAG_USE_SELL) {                /* selling: the player's money on the right */
             char money[16];
 

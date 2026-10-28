@@ -62,6 +62,8 @@ extern int CtrBottom_IsFieldTransition(void);
 extern int CtrBottom_IsBattleMain(void);
 extern int CtrBottom_IsFading(void);
 extern unsigned char StorageGetCurrentBox(void);
+/* How many of an item the Bag holds, as a mart's quantity box says ("IN BAG"). */
+extern unsigned short BagGetQuantityByItemId(unsigned short item);
 extern int CtrBottom_HasSave(void);
 extern int CtrBottomParty_Slot(void);
 extern int CtrBottomParty_Count(void);
@@ -1060,6 +1062,10 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
             else
                 CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
             CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
+            if (f->kind == PT_BAG_KIND_SHOP) {
+                b->showOwned = 1;
+                b->owned = BagGetQuantityByItemId((unsigned short)b->selItem);
+            }
             if ((f->kind == PT_BAG_KIND_TMCASE || f->kind == PT_BAG_KIND_SHOP)
                 && CtrBottomTMCase_MoveInfo(b->selItem, &type, &power, &accuracy, &pp, b->typeName, sizeof(b->typeName)))
                 b->moveType = (int8_t)type;
