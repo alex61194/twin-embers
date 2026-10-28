@@ -115,6 +115,9 @@ static const uint16_t *TilesetLights(const struct Tileset *tileset, unsigned *co
 #define CAMERA_VIEW_LEFT (-4 - FIELD_VIEW_OFFSET_X / 8)
 static bool sCameraKnown;
 static int sCameraKX, sCameraKY;
+/* An offset was found on this map: while it is searched for again the windows keep it (it only changes with a map
+ * load or a connection) rather than all lighting up, which switched the windows of a whole building on and off. */
+static bool sCameraFound;
 static unsigned sCameraMap = ~0u;
 /* Frames to wait before searching again after a search found nothing. */
 static unsigned sCameraWait;
@@ -176,7 +179,7 @@ static bool UpdateCamera(void)
     unsigned samples, best = ~0u;
 
     if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
-    if (map != sCameraMap) sCameraKnown = false;
+    if (map != sCameraMap) sCameraKnown = sCameraFound = false;
     sCameraMap = map;
     /* A menu over the map (Party, Pokedex, Bag, Summary...) has replaced the tilemap buffers with its own: there is
      * nothing to check or to find in them, and looking cost a 47 ms frame every nine (port.log, 0.2.5 Old 3DS mode).
@@ -199,6 +202,8 @@ static bool UpdateCamera(void)
         if (++sCameraBad <= CAMERA_GRACE) return true;
     }
     sCameraBad = 0;
+    if (sCameraKnown)
+        CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera lost map=%04x pos=%d,%d", map, px, py);
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
     for (int ty = 0; ty < 32 && best; ty += 2)
@@ -223,10 +228,41 @@ static bool UpdateCamera(void)
     else
     {
         sCameraFails = 0;
+        sCameraFound = true;
         CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera map=%04x pos=%d,%d offset=%d,%d misses=%u", map, px, py,
                      (px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, best);
     }
     return sCameraKnown;
+}
+
+/* The tile the field draws on a background (1-3) at a place on the map, in tiles: the metatile's half on that layer,
+ * as field_camera.c DrawMetatile lays it out (BG1 the top layer, BG2 the middle, BG3 the bottom). 0xffff off the map
+ * the camera was found on. */
+static uint16_t DayNightMapTile(unsigned bg, int x, int y)
+{
+    const struct MapLayout *layout = gMapHeader.mapLayout;
+    unsigned map, k;
+    u32 id;
+    u8 type;
+    const u16 *tiles;
+
+    if (!layout || !gSaveBlock1Ptr || x < 0 || y < 0 || bg < 1 || bg > 3) return 0xffff;
+    map = ((unsigned)gSaveBlock1Ptr->location.mapGroup << 8) | gSaveBlock1Ptr->location.mapNum;
+    if (map != sCameraMap || !sCameraFound) return 0xffff;
+    id = MapGridGetMetatileIdAt(x / 2, y / 2);
+    if (id >= NUM_METATILES_TOTAL) return 0xffff;
+    tiles = id < NUM_METATILES_IN_PRIMARY
+        ? layout->primaryTileset->metatiles + id * NUM_TILES_PER_METATILE
+        : layout->secondaryTileset->metatiles + (id - NUM_METATILES_IN_PRIMARY) * NUM_TILES_PER_METATILE;
+    CTR_ASSET_READ(tiles, NUM_TILES_PER_METATILE * sizeof(*tiles));
+    type = MapGridGetMetatileLayerTypeAt(x / 2, y / 2);
+    k = (unsigned)(x & 1) + (unsigned)(y & 1) * 2;
+    switch (bg)
+    {
+    case 1: return type == METATILE_LAYER_TYPE_COVERED ? 0 : tiles[4 + k];
+    case 2: return type == METATILE_LAYER_TYPE_NORMAL ? tiles[k] : type == METATILE_LAYER_TYPE_COVERED ? tiles[4 + k] : 0;
+    default: return type == METATILE_LAYER_TYPE_NORMAL ? 0x3014 : tiles[k];
+    }
 }
 
 static void UpdateDayNight(void)
@@ -236,9 +272,10 @@ static void UpdateDayNight(void)
     unsigned primaryCount = 0, secondaryCount = 0;
     const uint16_t *primary = outdoors && layout ? TilesetLights(layout->primaryTileset, &primaryCount) : NULL;
     const uint16_t *secondary = outdoors && layout ? TilesetLights(layout->secondaryTileset, &secondaryCount) : NULL;
-    bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && UpdateCamera();
+    bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && (UpdateCamera() || sCameraFound);
 
     CtrVideo_SetDayNight(outdoors, CtrOptions_DayNightSecond(), primary, primaryCount, secondary, secondaryCount);
+    CtrVideo_SetDayNightMapTile(DayNightMapTile);
     if (camera)
         CtrVideo_SetDayNightCamera(true, (gSaveBlock1Ptr->pos.x * 2 - sCameraKX) & 63,
                                    (gSaveBlock1Ptr->pos.y * 2 - sCameraKY) & 31, CAMERA_VIEW_LEFT,
@@ -531,6 +568,10 @@ static unsigned sFlashFailures;   /* consecutive frames whose save flush failed 
 /* A VBlank span (input, lower screen, field state, keys) over 100 ms is logged part by part. */
 #define VBLANK_SLOW_TICKS (SYSCLOCK_ARM11 / 10)
 static unsigned long TicksMs(u64 ticks) { return (unsigned long)(ticks / (SYSCLOCK_ARM11 / 1000)); }
+/* The turbo's time budget: one refresh of the screen (59.83 Hz), less what a shown frame does before it waits for the
+ * refresh (the compositor's preparation) and some slack. */
+#define TURBO_REFRESH_TICKS ((u64)SYSCLOCK_ARM11 * 1671 / 100000)
+#define TURBO_SLACK_TICKS ((u64)SYSCLOCK_ARM11 / 500)
 
 static aptHookCookie sAptHook;
 static volatile bool sSuspended, sResumed;
@@ -733,12 +774,28 @@ void VBlankIntrWait(void)
         if (settingsMs >= 5)
             CtrLog_Write(CTR_LOG_FS, "settings: the turbo change held the game thread %lu ms", (unsigned long)settingsMs);
     }
-    bool shown = CtrFastForward_Show(&sFastForward);
+    /* A turbo frame is shown before its Nth when one more hidden frame (its cost measured as the game goes) would
+     * not fit before the screen's next refresh: missing it would halve the frames shown and leave the time idle. */
+    static u64 hiddenTicks = (u64)SYSCLOCK_ARM11 / 400, lastDecision;
+    static bool lastShown = true;
+    u64 decision = svcGetSystemTick();
+    if (!lastShown) {
+        u64 sample = decision - lastDecision;   /* a stall (a load) counts as one refresh, not as many */
+        hiddenTicks = (hiddenTicks * 3 + (sample < TURBO_REFRESH_TICKS ? sample : TURBO_REFRESH_TICKS)) / 4;
+    }
+    bool late = decision - CtrVideo_FrameStartTick() + hiddenTicks + TURBO_SLACK_TICKS > TURBO_REFRESH_TICKS;
+    bool shown = CtrFastForward_ShowBy(&sFastForward, late);
+    lastDecision = decision;
+    lastShown = shown;
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();
     /* FrameBegin inside the compositor is the frame pacing boundary. */
-    if (shown)
+    /* The lower screen swaps with the frames shown: a turbo frame not shown keeps drawing into the same hidden buffer
+     * (a swap a frame would have written the shown one before the screen took the last). */
+    if (shown) {
+        CtrBottom_BlitFrameEnd();
         CtrVideo_Present();
+    }
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is
      * retried on the next frames; only one that persists for a second stops the game, on

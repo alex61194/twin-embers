@@ -154,7 +154,7 @@ static void SIcon(const CtrSummaryUiView *v, int x, int y, int scale)
             }
         for (int i = 0; ok && i < 16; ++i) {
             unsigned c = raw[i];
-            pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+            pal[i] = GbaColor(c);
         }
     }
     if (ok)
@@ -188,7 +188,7 @@ static int SPic(const CtrSummaryUiView *v, int x, int y)
             }
         for (int i = 0; ok && i < 16; ++i) {
             unsigned c = raw[i];
-            pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+            pal[i] = GbaColor(c);
         }
     }
     if (ok)

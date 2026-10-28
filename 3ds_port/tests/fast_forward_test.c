@@ -55,6 +55,14 @@ int main(void)
     ff.turbo = 0;
     CtrFastForward_Turbo(&ff, false, false, false, true); assert(CtrFastForward_Speed(&ff) == CTR_UNSEEN_SPEED && Shown(&ff, 40) == 10);
     CtrFastForward_Turbo(&ff, false, false, false, false); assert(CtrFastForward_Speed(&ff) == 1 && CtrFastForward_Show(&ff));
+    /* Out of time before the Nth frame: shown now, and the count starts again from it. */
+    ff.turbo = 4; Frame(&ff, false, true, true); assert(CtrFastForward_Speed(&ff) == 4);
+    assert(CtrFastForward_ShowBy(&ff, false) && !CtrFastForward_ShowBy(&ff, false) && !CtrFastForward_ShowBy(&ff, false));
+    assert(CtrFastForward_ShowBy(&ff, true));                                                       /* the third frame, late */
+    assert(!CtrFastForward_ShowBy(&ff, false) && !CtrFastForward_ShowBy(&ff, false) && !CtrFastForward_ShowBy(&ff, false));
+    assert(CtrFastForward_ShowBy(&ff, false));                                                      /* then every 4th again */
+    /* Off, late changes nothing: every frame is shown. */
+    ff.turbo = 0; Frame(&ff, false, true, true); assert(CtrFastForward_ShowBy(&ff, true) && CtrFastForward_ShowBy(&ff, false));
     puts("PASS turbo: starts off, START cycles 2x/3x/4x/off one step a press, remembered through menus, applied only in the stable field, first frame shown at once");
     return 0;
 }

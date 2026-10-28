@@ -5,6 +5,7 @@
 #include "3ds_battle_nav.h"
 /* PORT NAVIGATION FUNCTION */
 #define BATTLE_TYPE_FIRST_BATTLE 1u
+#define BATTLE_TYPE_OLD_MAN_TUTORIAL 2u
 #define MAX_BATTLERS_COUNT 4
 enum { CTR_BATTLE_BUSY, CTR_BATTLE_ACTION, CTR_BATTLE_MOVE };
 typedef void (*Callback)(void);
@@ -45,6 +46,11 @@ int main(void)
     gBattleTypeFlags = 0;
     gBattlerControllerFuncs[1] = HandleInputChooseAction;
     assert(CtrBattleFirst_Chooser(&state) == -1);
+    /* The Old Man's demonstration plays itself: no input, but its Bag is the battle screen's. */
+    gBattleTypeFlags = BATTLE_TYPE_OLD_MAN_TUTORIAL;
+    assert(CtrBattleFirst_Chooser(&state) == -1);
+    gBattlerControllerFuncs[1] = OpenBagAndChooseItem;
+    assert(CtrBattleFirst_BagPending() && CtrBattleFirst_Chooser(&state) == -1);
     gBattleTypeFlags = BATTLE_TYPE_FIRST_BATTLE;
     gBattlerControllerFuncs[1] = SimulateInputChooseAction;
     assert(CtrBattleFirst_Chooser(&state) == -1);

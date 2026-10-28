@@ -62,6 +62,8 @@ extern int CtrBottom_IsFieldTransition(void);
 extern int CtrBottom_IsBattleMain(void);
 extern int CtrBottom_IsFading(void);
 extern unsigned char StorageGetCurrentBox(void);
+/* How many of an item the Bag holds, as a mart's quantity box says ("IN BAG"). */
+extern unsigned short BagGetQuantityByItemId(unsigned short item);
 extern int CtrBottom_HasSave(void);
 extern int CtrBottomParty_Slot(void);
 extern int CtrBottomParty_Count(void);
@@ -101,6 +103,28 @@ extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
 extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
+/* menu.c: the field's choice the lower screen draws (MODE_CHOICE). */
+extern int CtrFieldChoice_IsOpen(void);
+extern int CtrFieldChoice_Ready(void);
+extern int CtrFieldChoice_Count(void);
+extern int CtrFieldChoice_Columns(void);
+extern int CtrFieldChoice_Cursor(void);
+extern void CtrFieldChoice_Label(int index, char *out, int size);
+extern int CtrFieldChoice_Prompt(char *out, int size);
+/* The BG0 window of the last field choice drawn below, while it is still up (menu.c, recipe 0180). */
+extern int CtrFieldChoice_WindowRect(int *x, int *y, int *w, int *h);
+/* The PC menu's own note: its option's description, or the message that refused it ("party full"). */
+extern int CtrBottomStorage_PCMessage(char *out, int size);
+/* The screens the lower screen shows in its viewport, the field kept above (MODE_GBAVIEW). */
+extern int CtrBottomView_FameChecker(void);
+extern int CtrBottomView_TeachyTv(void);
+extern int CtrBottomView_Mail(void);
+extern int CtrBottomView_EasyChat(void);
+extern int CtrBottomView_HallOfFame(void);
+/* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
+extern int CtrBottomHof_HoldsTop(void);
+/* The item PC back from DEPOSIT ITEM's Bag or WITHDRAW ITEM's list to its menu (player_pc.c, recipe 0186). */
+extern int CtrPlayerPc_ItemStorageReturnHoldsTop(void);
 extern void CtrStorage_Tap(int area, int position);
 extern int CtrStorage_TapPending(void);
 extern void CtrMarkings_Tap(int position);
@@ -257,6 +281,41 @@ extern unsigned CtrBottomShop_Total(void);
 extern unsigned CtrBottomShop_Money(void);
 extern void CtrBottomShop_Title(char *out, int size);
 extern int CtrBottomShop_Text(char *out, int size);
+/* item_pc.c: the PC's WITHDRAW ITEM list, as the shop's. */
+extern int CtrBottomItemPc_IsOpen(void);
+extern int CtrBottomItemPc_HoldsTop(void);
+extern int CtrBottomItemPc_State(void);
+extern int CtrBottomItemPc_Count(void);
+extern int CtrBottomItemPc_MaxShowed(void);
+extern int CtrBottomItemPc_Cursor(void);
+extern unsigned CtrBottomItemPc_Serial(void);
+extern int CtrBottomItemPc_HitAt(int x, int y);
+extern unsigned CtrBottomItemPc_Item(int index);
+extern unsigned CtrBottomItemPc_Quantity(int index);
+extern int CtrBottomItemPc_ActionCount(void);
+extern void CtrBottomItemPc_ActionName(int index, char *out, int size);
+extern int CtrBottomItemPc_TossCount(void);
+extern int CtrBottomItemPc_TossMax(void);
+extern int CtrBottomItemPc_Message(char *out, int size);
+extern void CtrBottomItemPc_Title(char *out, int size);
+extern void CtrBottomItemPc_CloseLabel(char *out, int size);
+/* The PC's mailbox (player_pc.c): its list of mails, a mail's menu, MOVE TO BAG's YES/NO and its messages. */
+extern int CtrBottomMailbox_IsOpen(void);
+extern int CtrBottomMailbox_HoldsTop(void);
+extern int CtrBottomMailbox_State(void);
+extern int CtrBottomMailbox_Count(void);
+extern int CtrBottomMailbox_MaxShowed(void);
+extern int CtrBottomMailbox_Cursor(void);
+extern unsigned CtrBottomMailbox_Serial(void);
+extern int CtrBottomMailbox_HitAt(int x, int y);
+extern unsigned CtrBottomMailbox_Item(int index);
+extern unsigned CtrBottomMailbox_Quantity(int index);
+extern void CtrBottomMailbox_Name(int index, char *out, int size);
+extern int CtrBottomMailbox_ActionCount(void);
+extern void CtrBottomMailbox_ActionName(int index, char *out, int size);
+extern int CtrBottomMailbox_Message(char *out, int size);
+extern void CtrBottomMailbox_Title(char *out, int size);
+extern void CtrBottomMailbox_CloseLabel(char *out, int size);
 extern unsigned CtrBottomBag_SalePrice(void);
 extern int CtrBottomNaming_IsOpen(void);
 extern int CtrBottomNaming_Ready(void);
@@ -327,7 +386,7 @@ enum { CARD_BUSY = 0, CARD_FRONT, CARD_BACK };
 enum { MODE_OFF = 0, MODE_FIELD = 1, MODE_PARTY = 2, MODE_SUMMARY = 3, MODE_BAG = 4, MODE_TMCASE = 5,
        MODE_POUCH = 6, MODE_CARD = 7, MODE_DEX = 8, MODE_BATTLE = 9,
        MODE_STORAGE_PC = 10, MODE_STORAGE_BOX = 11, MODE_STORAGE_CHILD = 12, MODE_PARTY_CHILD = 13,
-       MODE_NAMING = 14, MODE_SHOP = 15 };
+       MODE_NAMING = 14, MODE_SHOP = 15, MODE_ITEMPC = 16, MODE_CHOICE = 17, MODE_GBAVIEW = 18, MODE_MAILBOX = 19 };
 
 /* CtrBattle_State (battle_controller_player.c): the player's controller waits at the action menu, at the move
  * list, or at neither (messages, animations, a command taken: not ready). */
@@ -406,7 +465,7 @@ typedef struct {
     uint16_t hp[PARTY_SIZE];
     uint16_t maxHp[PARTY_SIZE];
     uint16_t icon[PARTY_SIZE];
-    char nick[PARTY_SIZE][11];
+    char nick[PARTY_SIZE][13];   /* a Japanese name's six kana take two bytes each */
     char description[PARTY_SIZE][24];
     unsigned char pressed;
     unsigned char panel;
@@ -611,6 +670,11 @@ static struct {
 #define LIST_DRAG_SLOP 8
 #define LIST_DRAG_ROW 26
 
+/* The field's choice's touch (ProcessChoiceTouch), as the Bag's. */
+static struct {
+    int down, inside, code;
+} sChoiceTap = {0, 0, -1};
+
 /* The move-to-forget screen's touch (ProcessLearnTouch), as the Bag's, and its walk to a row. */
 static struct {
     int down, inside, code;
@@ -673,6 +737,22 @@ extern int CtrBottomPartyChild_IsOpen(void);
 extern int CtrBottomPartyChild_IsMovePanel(void);
 extern int CtrBottomSummary_IsMoveSelection(void);
 
+/* The title of the screen MODE_GBAVIEW shows, or NULL when none is open. */
+static const char *GbaViewTitle(void)
+{
+    if (CtrBottomView_FameChecker())
+        return "FAME CHECKER";
+    if (CtrBottomView_TeachyTv())
+        return "TEACHY TV";
+    if (CtrBottomView_Mail())
+        return "MAIL";
+    if (CtrBottomView_EasyChat())
+        return "EASY CHAT";
+    if (CtrBottomView_HallOfFame())
+        return "HALL OF FAME";
+    return NULL;
+}
+
 static int CurrentMode(void)
 {
     if (!sEnabled || !sInitDone)
@@ -682,8 +762,9 @@ static int CurrentMode(void)
     /* FireRed's naming screen, wherever it comes from (a new game, a catch, the Name Rater, a box): its keyboard. */
     if (CtrBottomNaming_IsOpen())
         return MODE_NAMING;
+    /* The PC's WITHDRAW/DEPOSIT/MOVE menu: its rows here as a field choice; its fades and messages stay above. */
     if (CtrBottomStorage_PCMenu())
-        return MODE_FIELD; /* Withdraw/Deposit/Move choices remain on TOP. */
+        return CtrFieldChoice_IsOpen() ? MODE_CHOICE : MODE_FIELD;
     if (CtrBottomStorage_BoxOpen())
         return MODE_STORAGE_BOX;
     if (CtrBottomSummary_IsMoveSelection() || CtrBottomPartyChild_IsOpen()
@@ -711,6 +792,19 @@ static int CurrentMode(void)
     /* A mart's BUY list, from its setup to its fade out. */
     if (CtrBottomShop_IsOpen())
         return MODE_SHOP;
+    /* The item PC's WITHDRAW ITEM list, from its setup to its turn-off. */
+    if (CtrBottomItemPc_IsOpen())
+        return MODE_ITEMPC;
+    /* The PC's mailbox, from its list's first frame: before the field choices (a mail's menu, its YES/NO). */
+    if (CtrBottomMailbox_IsOpen())
+        return MODE_MAILBOX;
+    /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
+    if (CtrFieldChoice_IsOpen())
+        return MODE_CHOICE;
+    /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
+    if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
+        || CtrBottomView_HallOfFame())
+        return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
     /* FireRed's battle on the upper screen (its own main callback: not a Bag, Party or Summary opened from it):
@@ -801,8 +895,8 @@ static void BagBar(CtrPokeTouchView *v)
 }
 
 /* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
- * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The Old Man's
- * and the battle's keep their own pictures. */
+ * own Bag, Party's GIVE Bag, a shop's (selling) and the item PC's (depositing), outside the Pokemon PC. The battle's
+ * and the Old Man's demonstration are drawn by the battle screen (BattleBagFill). */
 static int FieldBagNative(void)
 {
     return CtrBottomBag_TouchDrawn() && !CtrBottomBag_InBattle() && !sStorageSession;
@@ -821,30 +915,45 @@ typedef struct {
     int (*tossMax)(void);
     int (*prompt)(char *out, int size);
     int (*message)(char *out, int size);
+    /* A row's name when it is not its item's (the mailbox: the mail's writer), or NULL. */
+    void (*name)(int index, char *out, int size);
 } FieldList;
 
 /* Defined with the list screens' touch plans below. */
-static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen;
+static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen, sItemPcScreen, sMailboxScreen;
 
 static const FieldList sFieldBagList = {
     MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
-    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message,
+    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message, NULL,
 };
 static const FieldList sFieldTMCaseList = {
     MODE_TMCASE, PT_BAG_KIND_TMCASE, &sTMCaseScreen, CtrBottomTMCase_Item, CtrBottomTMCase_Quantity,
-    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message,
+    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message, NULL,
 };
 static const FieldList sFieldPouchList = {
     MODE_POUCH, PT_BAG_KIND_POUCH, &sPouchScreen, CtrBottomPouch_Item, CtrBottomPouch_Quantity,
     CtrBottomPouch_ActionCount, CtrBottomPouch_ActionName, CtrBottomPouch_TossCount, CtrBottomPouch_TossMax,
-    CtrBottomPouch_Prompt, CtrBottomPouch_Message,
+    CtrBottomPouch_Prompt, CtrBottomPouch_Message, NULL,
 };
 /* A mart's BUY list: its rows' "quantity" is their price; it has no menu of actions. */
 static int ShopNoActions(void) { return 0; }
 static void ShopNoActionName(int index, char *out, int size) { (void)index; if (size > 0) out[0] = 0; }
 static const FieldList sFieldShopList = {
     MODE_SHOP, PT_BAG_KIND_SHOP, &sShopScreen, CtrBottomShop_Item, CtrBottomShop_Price, ShopNoActions,
-    ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text,
+    ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text, NULL,
+};
+/* The item PC's WITHDRAW ITEM list: its menu (WITHDRAW, GIVE, CANCEL), how many, and its messages; no YES/NO. */
+static const FieldList sFieldItemPcList = {
+    MODE_ITEMPC, PT_BAG_KIND_ITEMPC, &sItemPcScreen, CtrBottomItemPc_Item, CtrBottomItemPc_Quantity,
+    CtrBottomItemPc_ActionCount, CtrBottomItemPc_ActionName, CtrBottomItemPc_TossCount, CtrBottomItemPc_TossMax, NULL,
+    CtrBottomItemPc_Message, NULL,
+};
+/* The PC's mailbox: a row per mail (its item, its writer, no count), a mail's menu (READ, MOVE TO BAG, GIVE, EXIT),
+ * MOVE TO BAG's YES/NO and the messages. Drawn as the item PC's list. */
+static const FieldList sFieldMailboxList = {
+    MODE_MAILBOX, PT_BAG_KIND_ITEMPC, &sMailboxScreen, CtrBottomMailbox_Item, CtrBottomMailbox_Quantity,
+    CtrBottomMailbox_ActionCount, CtrBottomMailbox_ActionName, NULL, NULL, CtrBottomMailbox_Message,
+    CtrBottomMailbox_Message, CtrBottomMailbox_Name,
 };
 
 /* The list the lower screen draws itself in this mode (the field's Bag and the cases it opens), or NULL. */
@@ -852,6 +961,10 @@ static const FieldList *FieldListFor(int mode)
 {
     if (mode == MODE_SHOP)
         return &sFieldShopList;
+    if (mode == MODE_ITEMPC)
+        return &sFieldItemPcList;
+    if (mode == MODE_MAILBOX)
+        return &sFieldMailboxList;
     if (sStorageSession)
         return NULL;
     if (mode == MODE_BAG)
@@ -914,6 +1027,12 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         snprintf(b->closeName, sizeof(b->closeName), "%s", CtrUiText(UIS_CANCEL));
         b->money = CtrBottomShop_Money();
         b->sale = state == BAG_QUANTITY ? CtrBottomShop_Total() : 0;
+    } else if (f->mode == MODE_MAILBOX) {
+        CtrBottomMailbox_Title(b->title, sizeof(b->title));
+        CtrBottomMailbox_CloseLabel(b->closeName, sizeof(b->closeName));
+    } else if (f->kind == PT_BAG_KIND_ITEMPC) {
+        CtrBottomItemPc_Title(b->title, sizeof(b->title));
+        CtrBottomItemPc_CloseLabel(b->closeName, sizeof(b->closeName));
     } else
     {
         b->pocket = (uint8_t)CtrBottomBag_Pocket();
@@ -935,7 +1054,10 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
                 b->row[i].price = (uint16_t)f->quantity(b->first + i);
             else
                 b->row[i].qty = (uint16_t)f->quantity(b->first + i);
-            FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
+            if (f->name != NULL)
+                f->name(b->first + i, b->row[i].name, sizeof(b->row[i].name));
+            else
+                FieldListName(f, item, b->row[i].name, sizeof(b->row[i].name));
         }
     }
     if (b->cursor >= 0 && b->cursor < count) {
@@ -945,9 +1067,15 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
 
             if (f->kind == PT_BAG_KIND_TMCASE)
                 CtrBottomTMCase_MoveName(b->selItem, b->selName, sizeof(b->selName));
+            else if (f->name != NULL)
+                f->name(b->cursor, b->selName, sizeof(b->selName));
             else
                 CtrBottomBag_ItemName(b->selItem, b->selName, sizeof(b->selName));
             CtrBottomBag_ItemDescription(b->selItem, b->selDesc, sizeof(b->selDesc));
+            if (f->kind == PT_BAG_KIND_SHOP) {
+                b->showOwned = 1;
+                b->owned = BagGetQuantityByItemId((unsigned short)b->selItem);
+            }
             if ((f->kind == PT_BAG_KIND_TMCASE || f->kind == PT_BAG_KIND_SHOP)
                 && CtrBottomTMCase_MoveInfo(b->selItem, &type, &power, &accuracy, &pp, b->typeName, sizeof(b->typeName)))
                 b->moveType = (int8_t)type;
@@ -961,16 +1089,24 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         for (int i = 0; state == BAG_ACTIONS && i < b->menuCount; ++i)
             f->actionName(i, b->menuName[i], sizeof(b->menuName[i]));
     }
+    /* The count chosen last in this list's quantity box, for the YES/NO that confirms it: a message printed between
+     * them (a mart's "and you want 17. That will be...") left the frame shown just before without one, and the
+     * confirmation said x1. A new pick from the list or its menu forgets it. */
+    static int chosenMode = -1;
+    static uint16_t chosen;
+
+    if (state == BAG_LIST || state == BAG_ACTIONS || chosenMode != f->mode) {
+        chosenMode = f->mode;
+        chosen = 0;
+    }
     if (state == BAG_QUANTITY && f->tossCount != NULL) {
         b->tossCount = (uint16_t)f->tossCount();
         b->tossMax = (uint16_t)f->tossMax();
+        chosen = b->tossCount;
     }
     if (state == BAG_YESNO && f->prompt != NULL) {
         f->prompt(b->prompt, sizeof(b->prompt));
-        const CtrPokeTouchBag *was = &sShown.touch.bag;   /* the count asked for just before (one: none was asked) */
-
-        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == f->mode && was->on && was->tossCount
-                                  && (was->state == BAG_QUANTITY || was->state == BAG_YESNO) ? was->tossCount : 1);
+        b->tossCount = chosen ? chosen : 1;   /* one when none was asked */
     }
     if (state == BAG_MESSAGE)
         f->message(b->prompt, sizeof(b->prompt));
@@ -1048,6 +1184,30 @@ static void LearnSnapshot(Snapshot *s, int mode)
     s->touch.backPressed = (uint8_t)(sBack.inside != 0);
 }
 
+/* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
+static void ChoiceSnapshot(Snapshot *s, int mode)
+{
+    CtrPokeTouchChoice *c = &s->touch.choice;
+    int n = CtrFieldChoice_Count();
+
+    memset(c, 0, sizeof(*c));
+    c->on = 1;
+    c->count = (uint8_t)(n > PT_CHOICE_MAX ? PT_CHOICE_MAX : n);
+    c->cols = (uint8_t)CtrFieldChoice_Columns();
+    c->cursor = (int8_t)CtrFieldChoice_Cursor();
+    c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
+    for (int i = 0; i < c->count; ++i)
+        CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
+    if (CtrBottomStorage_PCMenu())
+        CtrBottomStorage_PCMessage(c->prompt, sizeof(c->prompt));
+    else
+        CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
+    s->touch.viewport = 0;
+    s->touch.backVisible = 1;
+    s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+    s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+}
+
 /* The naming screen as it is now. While it does not take a key (a page turning, the cursor going to OK) the picture
  * last shown stays. */
 static void FieldNameFill(CtrPokeTouchView *v, int pressed)
@@ -1083,7 +1243,7 @@ static void FieldNameFill(CtrPokeTouchView *v, int pressed)
     n->curRow = (int8_t)row;
 }
 
-/* A PC box, drawn here while FireRed's box is in a state the port draws (not moving items, carrying several or
+/* A PC box, drawn here while FireRed's box is in a state the port draws (MOVE ITEMS too; not carrying several or
  * marking one). While it does not take a key the picture last shown stays. */
 static void BoxSnapshot(Snapshot *s)
 {
@@ -1097,10 +1257,10 @@ static void BoxSnapshot(Snapshot *s)
     s->touch.viewport = 0;
 }
 
-/* A mart's BUY list: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
+/* A mart's BUY list or the item PC's WITHDRAW ITEM: drawn here, modal; BACK is its B (CANCEL, or back from how many). */
 static void ShopSnapshot(Snapshot *s, int mode)
 {
-    FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, &sFieldShopList);
+    FieldBagFill(&s->touch, sFieldBag.down && sFieldBag.inside ? sFieldBag.code : -1, FieldListFor(mode));
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -1766,7 +1926,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         NameSnapshot(s);
         return;
     }
-    if (mode == MODE_SHOP) {
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC || mode == MODE_MAILBOX) {
         ShopSnapshot(s, mode);
         return;
     }
@@ -1791,6 +1951,23 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             snprintf(s->touch.bar[0], PT_BAR_LEN, "POKeMON STORAGE SYSTEM");
             snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
         }
+        return;
+    }
+    if (mode == MODE_CHOICE) {
+        ChoiceSnapshot(s, mode);
+        return;
+    }
+    if (mode == MODE_GBAVIEW) {
+        /* FireRed's own screen, as it draws it, in the viewport; BACK is its B. */
+        const char *title = GbaViewTitle();
+
+        s->touch.viewport = 1;
+        s->touch.backVisible = 1;
+        s->touch.backEnabled = (uint8_t)BackEnabled(mode);
+        s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+        snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
+        snprintf(s->touch.bar[1], PT_BAR_LEN, "Use the game's own controls.");
+        snprintf(s->touch.bar[2], PT_BAR_LEN, "BACK is the B button.");
         return;
     }
     if (mode == MODE_BATTLE) {
@@ -1929,7 +2106,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->isEgg[i] = (unsigned char)CtrBottomParty_IsEgg(i);
             s->icon[i] = (uint16_t)CtrBottomParty_IconSpecies(i);
             CtrBottomParty_Nickname(i, s->nick[i]);
-            s->nick[i][10] = 0;
+            s->nick[i][12] = 0;
             CtrBottomParty_Description(i, s->description[i]);
             s->description[i][23] = 0;
         }
@@ -2230,6 +2407,14 @@ static const ListScreen sShopScreen = {
     CtrBottomShop_State, CtrBottomShop_Count, CtrBottomShop_MaxShowed, CtrBottomShop_Cursor,
     CtrBottomShop_Serial, CtrBottomShop_HitAt,
 };
+static const ListScreen sItemPcScreen = {
+    CtrBottomItemPc_State, CtrBottomItemPc_Count, CtrBottomItemPc_MaxShowed, CtrBottomItemPc_Cursor,
+    CtrBottomItemPc_Serial, CtrBottomItemPc_HitAt,
+};
+static const ListScreen sMailboxScreen = {
+    CtrBottomMailbox_State, CtrBottomMailbox_Count, CtrBottomMailbox_MaxShowed, CtrBottomMailbox_Cursor,
+    CtrBottomMailbox_Serial, CtrBottomMailbox_HitAt,
+};
 static const ListScreen sPouchScreen = {
     CtrBottomPouch_State, CtrBottomPouch_Count, CtrBottomPouch_MaxShowed, CtrBottomPouch_Cursor,
     CtrBottomPouch_Serial, CtrBottomPouch_HitAt,
@@ -2239,7 +2424,8 @@ static const ListScreen sPouchScreen = {
 static const ListScreen *ListFor(int mode)
 {
     return mode == MODE_BAG ? &sBagScreen : mode == MODE_TMCASE ? &sTMCaseScreen
-         : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen : NULL;
+         : mode == MODE_POUCH ? &sPouchScreen : mode == MODE_SHOP ? &sShopScreen
+         : mode == MODE_ITEMPC ? &sItemPcScreen : mode == MODE_MAILBOX ? &sMailboxScreen : NULL;
 }
 
 /* Bag plan: presses for the Bag's own input states, apart from the Party plan.
@@ -2657,8 +2843,8 @@ static int BackVisible(int mode)
         return NativeActive() && sScreen != PT_SAVE;   /* a native screen: back to HOME (SAVE has NO and B) */
     if (mode == MODE_PARTY_CHILD)
         return CtrBottomLearn_IsOpen();
-    if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX
-        || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
+    if (ListFor(mode) != NULL || mode == MODE_CARD || mode == MODE_DEX || mode == MODE_CHOICE
+        || mode == MODE_GBAVIEW || mode == MODE_STORAGE_PC || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD)
         return 1;
     return mode == MODE_SUMMARY && !SummaryPremium() && CtrBottomSummary_Page() > 0;   /* the premium one has its own BACK */
 }
@@ -2696,6 +2882,10 @@ static int BackEnabled(int mode)
         return 0; /* its original child view handles exit, not a fake B */
     if (mode == MODE_CARD)
         return CtrBottomCard_State() != CARD_BUSY;
+    if (mode == MODE_CHOICE)
+        return CtrFieldChoice_Ready();
+    if (mode == MODE_GBAVIEW)
+        return 1;
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
     if (mode == MODE_PARTY_CHILD)
@@ -2719,6 +2909,8 @@ static void BackPress(int mode)
         sRouteKey = CardLeaveKey();     /* the card's own exit: B on its front, A on its back */
     else if (mode == MODE_DEX)
         sRouteKey = K_B;                /* the Pokedex's own: a level back, out of it from its top menu */
+    else if (mode == MODE_CHOICE || mode == MODE_GBAVIEW)
+        sRouteKey = K_B;                /* the menu's own B: CANCEL, NO, or nothing where it takes none */
     else if (mode == MODE_PARTY_CHILD)
         sRouteKey = K_B;                /* the Summary's own: give up the new move (FireRed asks) */
     else if (ListFor(mode) != NULL)
@@ -3031,6 +3223,12 @@ static int UpdateSession(int mode, int planRunning)
     }
     if (mode == MODE_PARTY_CHILD) {
         sSession.entered = 1;
+        sSession.away = 0;
+        return 1;
+    }
+    /* A Fame Checker or Teachy TV opened from the session's Bag: still the session, which keeps TOP's picture through
+     * its fades and the Bag's return (counted as away, it ran out and TOP froze a black frame). */
+    if (mode == MODE_GBAVIEW) {
         sSession.away = 0;
         return 1;
     }
@@ -3530,6 +3728,14 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     /* On TRAINER (the Summary's last tab) RIGHT goes nowhere: FireRed would turn its first page to the next. */
     if (CurrentMode() == MODE_SUMMARY && sHaveShown && sShown.summaryUi && sShown.sum.trainer)
         held &= ~K_RIGHT;
+    /* The box's YES / NO is drawn side by side, FireRed's one above the other: LEFT and RIGHT are its UP and DOWN. */
+    if (CurrentMode() == MODE_STORAGE_BOX && sHaveShown && sShown.mode == MODE_STORAGE_BOX && sShown.touch.box.on
+        && CtrBottomStorage_YesNo()) {
+        uint16_t side = held & (K_LEFT | K_RIGHT);
+
+        held &= ~(K_LEFT | K_RIGHT | K_UP | K_DOWN);
+        held |= (side & K_LEFT ? K_UP : 0) | (side & K_RIGHT ? K_DOWN : 0);
+    }
     return held;
 }
 
@@ -4143,6 +4349,35 @@ static void RunLearnPlan(void)
     sLearnPlan.release = 1;
 }
 
+/* A row of the field's choice: asked of FireRed's menu (CtrMenu_Ask) and taken with its A on the same frame. */
+static void ProcessChoiceTouch(const CtrInput *in)
+{
+    int hit = -1, ready = sHaveShown && sShown.mode == MODE_CHOICE && sShown.touch.choice.on && CtrFieldChoice_Ready();
+
+    if (in->touchActive && ready)
+        hit = CtrPokeTouch_ChoiceHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
+    if ((in->held & 0x3ffu) || !ready) {
+        sChoiceTap.down = sChoiceTap.inside = 0;
+        return;
+    }
+    if (in->touchDown) {
+        sChoiceTap.down = sChoiceTap.inside = hit >= 0;
+        sChoiceTap.code = hit;
+        return;
+    }
+    if (!sChoiceTap.down)
+        return;
+    if (in->touchActive) {
+        sChoiceTap.inside = hit == sChoiceTap.code;
+        return;
+    }
+    if (sChoiceTap.inside) {
+        CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        sRouteKey = K_A;
+    }
+    sChoiceTap.down = sChoiceTap.inside = 0;
+}
+
 static void ProcessLearnTouch(const CtrInput *in)
 {
     int hit = -1, ready = sHaveShown && sShown.mode == MODE_PARTY_CHILD && sShown.touch.learn.on
@@ -4508,13 +4743,13 @@ static int ProcessTouch(int mode)
         sBack.down = sBack.inside = 0;
         return ProcessSummaryTouch(in);
     }
-    if (mode == MODE_SHOP) {
-        /* A mart's BUY list: modal, nothing on the sidebar routes away from it. */
+    if (mode == MODE_SHOP || mode == MODE_ITEMPC || mode == MODE_MAILBOX) {
+        /* A mart's BUY list, the item PC's WITHDRAW ITEM, the mailbox: modal, nothing on the sidebar routes away. */
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
         ProcessBack(mode, in);
-        ProcessFieldBagTouch(&sFieldShopList, in);
+        ProcessFieldBagTouch(FieldListFor(mode), in);
         return HIT_NONE;
     }
     if (mode == MODE_NAMING) {
@@ -4524,6 +4759,23 @@ static int ProcessTouch(int mode)
         sTouch.active = 0;
         sBack.down = sBack.inside = 0;
         ProcessNameTouch(in);
+        return HIT_NONE;
+    }
+    if (mode == MODE_GBAVIEW) {
+        /* FireRed's own screen in the viewport: modal, its buttons and BACK. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        return HIT_NONE;
+    }
+    if (mode == MODE_CHOICE) {
+        /* The field's choice: modal, nothing on the sidebar routes away from it. */
+        sPoke.id = PT_NONE;
+        sPoke.inside = 0;
+        sTouch.active = 0;
+        ProcessBack(mode, in);
+        ProcessChoiceTouch(in);
         return HIT_NONE;
     }
     if (mode == MODE_PARTY_CHILD && CtrBottomLearn_IsOpen()) {
@@ -4757,9 +5009,12 @@ static void UpdateStorageOwner(int mode)
 {
     if (mode == MODE_STORAGE_BOX)
         sStorageSession = 1;
-    else if (mode == MODE_FIELD)
+    else if (mode == MODE_FIELD || mode == MODE_CHOICE)
         sStorageSession = 0; /* Includes returning to Withdraw/Deposit/Move. */
 }
+
+#define CHOICE_HOLD_GRACE 12
+static unsigned sChoiceGrace;
 
 static int StorageHoldTop(void)
 {
@@ -4768,8 +5023,17 @@ static int StorageHoldTop(void)
     /* STATE_ENTER_PC survives one frame after the palette fade completes.
      * Never release TOP in that gap: it would present black, then freeze it
      * when the box callback starts. Loading the root also keeps its last frame. */
-    return sStorageSession || (CtrBottomStorage_PCMenu()
-        && !CtrBottomStorage_PCMenuReady());
+    /* Back from a box the menu fades in, and once ready FireRed takes its first input a frame later: only then is it a
+     * field choice (MODE_CHOICE, which holds TOP). That frame is held too, or TOP would freeze with the menu on it. Its
+     * "party full" message stays a field choice (recipe 0175: the rows below, the message in their note). */
+    static int choiceSeen;
+    int pcMenu = CtrBottomStorage_PCMenu(), ready = CtrBottomStorage_PCMenuReady();
+
+    if (!pcMenu || !ready)
+        choiceSeen = 0;
+    else if (CtrFieldChoice_IsOpen())
+        choiceSeen = 1;
+    return sStorageSession || (pcMenu && (!ready || !choiceSeen));
 }
 
 static int SessionBridge(int mode)
@@ -4995,7 +5259,25 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomBag_ShopOrPCHoldsTop();   /* SAVE keeps TOP on the frozen frame */
+    /* A field menu drawn below stays out of the upper screen for as long as its GBA window is up: through its pick's
+     * message and fade, and beside the next menu (ITEM STORAGE beside WITHDRAW / DEPOSIT). */
+    {
+        int x, y, w, h;
+
+        if (mode != MODE_OFF && CtrFieldChoice_WindowRect(&x, &y, &w, &h))
+            CtrVideo_HideBg0Rect(x, y, w, h);
+        else
+            CtrVideo_HideBg0Rect(0, 0, 0, 0);
+    }
+    /* A choice handing over to the next (the PC's ITEM STORAGE to WITHDRAW / DEPOSIT, a pick to its item list) has a
+     * few frames between them with neither open: released there, TOP drew the field with the first menu's window
+     * still up and froze on it for the second. The hold outlasts a choice by CHOICE_HOLD_GRACE frames. */
+    if (mode == MODE_CHOICE)
+        sChoiceGrace = CHOICE_HOLD_GRACE;
+    else if (sChoiceGrace)
+        --sChoiceGrace;
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
+        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
@@ -5050,7 +5332,8 @@ void CtrBottom_Frame(void)
         int gpu = CtrVideo_SetBottomViewport((mode == MODE_STORAGE_PC
                                                || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD
                                                || mode == MODE_PARTY || mode == MODE_SUMMARY || mode == MODE_PARTY_CHILD || mode == MODE_BAG
-                                              || IS_CASE_MODE(mode) || mode == MODE_CARD || mode == MODE_DEX) && state.touch.viewport);
+                                              || IS_CASE_MODE(mode) || mode == MODE_CARD || mode == MODE_DEX || mode == MODE_GBAVIEW)
+                                              && state.touch.viewport);
         if (gpu != sGpu) {
             sGpu = gpu;
             sForceRedraw = 1;
@@ -5121,11 +5404,6 @@ void CtrBottom_Frame(void)
 uint16_t CtrBottom_InjectedKeys(void)
 {
     return sInjected;
-}
-
-bool CtrBottom_IsEnabled(void)
-{
-    return sEnabled != 0;
 }
 
 /* The turbo runs in two places, each only while FireRed says it is stable. The plain field (its own CB2, nothing fading,

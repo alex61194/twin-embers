@@ -396,11 +396,6 @@ unsigned CtrAudio_PsgPeak(void)
     return sPsgPeak;
 }
 
-const CtrAudioStats *CtrAudio_Stats(void)
-{
-    return &sStats;
-}
-
 /* ── Sound engine worker (see 3ds_audio.h) ───────────────────────────────── */
 
 #ifndef CTR_AUDIO_WORKER

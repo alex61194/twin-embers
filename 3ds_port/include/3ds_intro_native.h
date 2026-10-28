@@ -29,5 +29,4 @@ int CtrIntro_ReadTitleFooterX(void);
 void CtrIntro_SetScene(unsigned scene);
 unsigned CtrIntro_GetScene(void);
 bool CtrIntroNative_Active(void);
-unsigned CtrIntro_ReadActors(CtrIntroActor *actors, unsigned capacity);
 #endif

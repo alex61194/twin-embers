@@ -61,6 +61,8 @@ void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count);
 void CtrVideo_HoldBottom(bool hold);
 /* Fast-forward speed (1 = off), shown as >>N in the top screen's corner. */
 void CtrVideo_SetFastForward(unsigned speed);
+/* The system tick at which the last shown frame began, just after the refresh it waited for. */
+uint64_t CtrVideo_FrameStartTick(void);
 /*
  * The bottom screen presented by the GPU: every frame draws the bottom canvas
  * and, over its viewport (3ds_poketouch.h), the GBA picture sampled straight
@@ -77,11 +79,6 @@ void CtrVideo_BottomCanvasRect(const uint16_t *canvas, int x0, int y0, int x1, i
 /* The bottom canvas upload since the last call: texels written and the ticks
  * it took (both reset). Opt-in profiling of the bottom subsystem. */
 void CtrVideo_BottomUploadStats(uint32_t *pixels, uint64_t *ticks);
-/* OAM entries belonging to field weather, tagged while BuildOamBuffer sorts sprites. */
-void CtrVideo_ClearVoxelWeatherOam(void);
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end);
-void CtrVideo_NotifyTilesetAnimWrite(const void *dest, unsigned bytes);
-const uint8_t *CtrVideo_GetBgVram(void);
 /* Frees the 2D compositor's 3D depth planes before the next frame, for the
  * overworld when it cannot place an atlas. */
 void CtrVideo_RequestPlaneRelease(void);
@@ -137,6 +134,10 @@ void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, un
  * mapY), the cells left of it reach viewLeft (negative), and map tells one
  * map from another. Not valid: every listed window is lit. */
 void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
+/* The field's tile on BG1-3 at a place on the map, in tiles, or 0xffff (the night windows walk their glass on it). */
+void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y));
+/* Leaves a BG0 rectangle (tiles) out of the upper screen: a field menu the lower screen draws. w 0 for none. */
+void CtrVideo_HideBg0Rect(int x, int y, int w, int h);
 /*
  * Whether the frames that follow are the battle scene: the 240x160 picture 1:1
  * at (CTR_BATTLE_X, CTR_BATTLE_Y), so that its text box lies on the bottom

@@ -39,7 +39,6 @@
 /* State colours. */
 #define UI_WARN        UI_RGB(238, 104, 52)
 #define UI_DANGER      UI_RGB(226, 64, 60)
-#define UI_OK          UI_RGB(72, 206, 104)
 #define UI_HP_HIGH     UI_RGB(72, 208, 96)
 #define UI_HP_MID      UI_RGB(242, 194, 48)
 #define UI_HP_LOW      UI_RGB(234, 72, 56)

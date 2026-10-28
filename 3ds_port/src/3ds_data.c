@@ -363,7 +363,6 @@ void CtrData_Shutdown(void)
 CtrDataBackend CtrData_GetBackend(void) { return sBackend; }
 const char *CtrData_ErrorTitle(void) { return sErrorTitle; }
 const char *CtrData_ErrorDetail(void) { return sErrorDetail; }
-uint32_t CtrData_EngineAbi(void) { return sEngineAbi; }
 
 const char *CtrData_BackendName(void)
 {
@@ -510,11 +509,6 @@ bool CtrData_Size(const char *path, uint32_t *outSize)
     if (outSize != NULL)
         *outSize = (uint32_t)size;
     return true;
-}
-
-bool CtrData_Exists(const char *path)
-{
-    return CtrData_Size(path, NULL);
 }
 
 bool CtrData_ReadIntoCrc(const char *path, void *buffer, uint32_t size, uint32_t *outCrc)

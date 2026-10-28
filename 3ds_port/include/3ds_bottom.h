@@ -20,6 +20,9 @@
 /* Native side (libctru): copy the rectangle [x0, x1) x [y0, y1) (screen
  * coordinates, y down) of the canvas to the screen, nothing else. */
 void CtrBottom_BlitRect(const uint16_t *canvas, int x0, int y0, int x1, int y1);
+/* Once a frame, after CtrBottom_Frame: what was copied this frame is shown from the next VBlank (the copies go to the
+ * buffer not shown, so the screen never shows half a picture). */
+void CtrBottom_BlitFrameEnd(void);
 
 /* Game side. Init once before AgbMain; Frame once per frame after input is
  * scanned and before the game reads its keys. */
@@ -29,8 +32,6 @@ void CtrBottom_Frame(void);
 uint16_t CtrBottom_InjectedKeys(void);
 /* Filter physical keys before combining them with the bottom UI's injected keys. */
 uint16_t CtrBottom_FilterGameKeys(uint16_t held);
-/* False when disabled or resources missing: TOP fallback stays visible. */
-bool CtrBottom_IsEnabled(void);
 /* The overworld turbo (3ds_fast_forward.h): Applies is true while the stable field is the screen's owner (no menu,
  * PokeTouch screen, route, battle, load or fade); CanCycle also needs nothing said or scripted. */
 bool CtrBottom_TurboApplies(void);

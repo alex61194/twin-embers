@@ -141,6 +141,12 @@ int main(void) {
     assert(UpdateSession(MODE_FIELD,0) && sSession.active);
     CtrBottom_IsFading_value=0;
     assert(!UpdateSession(MODE_FIELD,0) && !sSession.active && sScreen==PT_NONE);
+    /* A Fame Checker opened from the session's Bag, however long, keeps the session and TOP through the Bag's return. */
+    CtrBottom_IsFieldCallback_value=0;
+    BeginSession(PT_BAG);
+    for (int i=0;i<3000;++i) assert(UpdateSession(MODE_GBAVIEW,0));
+    assert(sSession.active && sSession.away==0);
+    assert(UpdateSession(MODE_OFF,0) && UpdateSession(MODE_BAG,0) && sSession.owner==PT_BAG);
 }
 ''')
 

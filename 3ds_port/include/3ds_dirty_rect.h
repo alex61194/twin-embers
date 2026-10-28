@@ -101,20 +101,26 @@ static inline void CtrDirty_Add(CtrDirtyList *list, int x0, int y0, int x1, int 
     list->rects[list->count++] = r;
 }
 
-/* The canvas pixels of every rectangle into a 512-wide RGB565 texture:
- * texels[texel(x, y, 512)] = canvas(x, y). Nothing outside the rectangles is
- * read or written. */
-static inline void CtrDirty_Upload(const uint16_t *canvas, const CtrDirtyList *list, uint16_t *texels,
-                                   uint32_t (*texel)(unsigned x, unsigned y, unsigned width))
+/* The canvas pixels of every rectangle into a 512-wide RGB565 texture in the GPU's tiled order (8x8 tiles, Morton
+ * order inside them: CtrVideo_Texel's layout), texels[texel(x, y)] = canvas(x, y). Nothing outside the rectangles is
+ * read or written. A texel's offset is its column's part plus its row's (their bits never overlap), the column's
+ * worked out once a column and the row's from a table, so no call is made per pixel. */
+static inline void CtrDirty_Upload(const uint16_t *canvas, const CtrDirtyList *list, uint16_t *texels)
 {
+    static uint32_t rowPart[CTR_DIRTY_H];
+
+    if (rowPart[CTR_DIRTY_H - 1] == 0)
+        for (unsigned y = 0; y < CTR_DIRTY_H; ++y)
+            rowPart[y] = (y / 8) * (512 / 8) * 64 + (((y & 1) << 1) | ((y & 2) << 2) | ((y & 4) << 3));
     for (int i = 0; i < list->count; ++i) {
         const CtrDirtyRect *r = &list->rects[i];
 
         for (int x = r->x0; x < r->x1; ++x) {
             const uint16_t *column = canvas + x * CTR_DIRTY_H;
+            uint32_t colPart = (uint32_t)(x / 8) * 64 + ((x & 1) | ((x & 2) << 1) | ((x & 4) << 2));
 
             for (int y = r->y0; y < r->y1; ++y)
-                texels[texel((unsigned)x, (unsigned)y, 512)] = column[CTR_DIRTY_H - 1 - y];
+                texels[colPart + rowPart[y]] = column[CTR_DIRTY_H - 1 - y];
         }
     }
 }

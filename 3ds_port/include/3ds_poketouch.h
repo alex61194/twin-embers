@@ -83,7 +83,8 @@ enum { PT_SAVE_NONE, PT_SAVE_FIRST, PT_SAVE_SECOND };  /* the button: YES or OK,
  * The TM Case and the Berry Pouch it opens are drawn the same way, with their title in place of the pockets. */
 #define PT_BAG_ROWS 5
 #define PT_BAG_MENU_MAX 6
-enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP };   /* SHOP: a mart's BUY list */
+enum { PT_BAG_KIND_BAG = 0, PT_BAG_KIND_TMCASE, PT_BAG_KIND_POUCH, PT_BAG_KIND_SHOP,   /* SHOP: a mart's BUY list */
+       PT_BAG_KIND_ITEMPC };                                                          /* ITEMPC: the PC's WITHDRAW ITEM */
 enum { PT_BAG_USE_FIELD = 0, PT_BAG_USE_SELL, PT_BAG_USE_DEPOSIT };   /* the field's Bag, a shop's, the item PC's */
 enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_STATE_YESNO, PT_BAG_STATE_QUANTITY,
        PT_BAG_STATE_MESSAGE };
@@ -119,6 +120,8 @@ typedef struct {
     uint16_t tossCount, tossMax;    /* the quantity box: how many, of how many */
     uint8_t use;                    /* PT_BAG_USE_*: what the Bag is open for */
     uint32_t sale, money;           /* selling or buying: what that many come to, and the player's money */
+    uint8_t showOwned;              /* a mart's selected item: how many the Bag holds (owned), shown */
+    uint16_t owned;
     char prompt[96];                /* the Bag's question (YES/NO) or the message it waits on */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
 } CtrPokeTouchBag;
@@ -153,7 +156,7 @@ typedef struct {
     int8_t cursor;
     int16_t pressed;                /* the hit code under a held touch, or -1 */
     uint16_t species;
-    char nickname[12], level[8];
+    char nickname[13], level[8];   /* nickname: six kana, two bytes each */
     char question[48];
     struct {
         uint16_t move;
@@ -163,6 +166,20 @@ typedef struct {
     } row[PT_LEARN_ROWS];
     char desc[160];
 } CtrPokeTouchLearn;
+
+/* A choice of the field (a script's multichoice, YES/NO or grid, the PC's menus) drawn by the port
+ * (3ds_field_choice_impl.h), a remote for FireRed's menu: its rows as buttons (cols > 0: a grid of that many columns),
+ * the cursor's, and the question of the message box. A row is asked of the menu and taken with its A; BACK is its B. */
+#define PT_CHOICE_MAX 8
+enum { PT_CHOICE_HIT_ROW = 100 };
+typedef struct {
+    uint8_t on;
+    uint8_t count, cols;
+    int8_t cursor;
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    char label[PT_CHOICE_MAX][24];
+    char prompt[160];
+} CtrPokeTouchChoice;
 
 /* FireRed's naming screen drawn by the port (3ds_field_naming_impl.h), a remote for it: the name so far, the keys of
  * its page (FireRed's own character codes, 0xff for no key), tabs for its three pages, DELETE and OK. A key moves
@@ -220,6 +237,15 @@ typedef struct {
     uint8_t chooseCount;
     uint8_t message[48];            /* FireRed's line in the box's window, while it shows */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
+    /* MOVE ITEMS: the items the Pokemon hold (a tag on each), the item in hand, and the one under the cursor with
+     * its name and description for the note. */
+    uint8_t items;
+    uint16_t slotItem[PT_BOX_SLOTS];
+    uint16_t partyItem[6];
+    uint16_t handItem;
+    uint16_t monItem;
+    uint8_t itemName[16];
+    uint8_t itemDesc[96];
 } CtrPokeTouchBox;
 
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
@@ -320,6 +346,7 @@ typedef struct {
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
     CtrPokeTouchBox box;        /* a PC box, when box.on */
+    CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
 } CtrPokeTouchView;
 
 extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
@@ -355,6 +382,8 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
 /* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
 int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
+/* The row of the field's choice (view->choice.on) under lower-screen point (x, y): PT_CHOICE_HIT_ROW + row, or -1. */
+int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *view, int x, int y);
 /* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
  * (a key's is PT_NAME_HIT_KEY + row * PT_NAME_COLS + column, a tab's PT_NAME_HIT_TAB + page), or -1. */
 int CtrPokeTouch_NameHit(const CtrPokeTouchView *view, int x, int y);

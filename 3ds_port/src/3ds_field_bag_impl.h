@@ -214,7 +214,8 @@ static void FBQuantity(const CtrPokeTouchBag *b)
     int fy;
 
     FBCard(&sFBAsk);
-    UiTextCentered(CtrUiText(b->kind == PT_BAG_KIND_SHOP ? UIS_BAG_BUY_HOW_MANY : b->use == PT_BAG_USE_SELL
+    UiTextCentered(CtrUiText(b->kind == PT_BAG_KIND_SHOP ? UIS_BAG_BUY_HOW_MANY
+                             : b->kind == PT_BAG_KIND_ITEMPC ? UIS_BAG_WITHDRAW_HOW_MANY : b->use == PT_BAG_USE_SELL
                              ? UIS_BAG_SELL_HOW_MANY : b->use == PT_BAG_USE_DEPOSIT ? UIS_BAG_DEPOSIT_HOW_MANY
                              : UIS_BAG_TOSS_HOW_MANY), &name, sFBAsk.y + 8, EM_DARK, EM_DARK_SH, 1);
     if (b->use == PT_BAG_USE_SELL || b->kind == PT_BAG_KIND_SHOP) {   /* the item, and what that many come to */
@@ -285,6 +286,13 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
 
             UiTypeBadge(&t, b->moveType, b->typeName);
             right = t.x - 4;
+        }
+        if (b->showOwned) {                             /* buying: how many the Bag already holds, on the right */
+            char owned[24];
+
+            snprintf(owned, sizeof(owned), "%s %u", CtrUiText(UIS_BAG_IN_BAG), (unsigned)b->owned);
+            UiTextRight(owned, right - 4, NOTE_Y + 6, EM_DIM, EM_DARK_SH, 1);
+            right -= UiTextWidth(owned, 1) + 10;
         }
         if (b->use == PT_BAG_USE_SELL) {                /* selling: the player's money on the right */
             char money[16];

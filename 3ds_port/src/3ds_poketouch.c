@@ -32,6 +32,12 @@ extern int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned s
 #define W CTR_BOTTOM_WIDTH
 #define H CTR_BOTTOM_HEIGHT
 #define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
+/* A GBA colour (BGR555) as the canvas's RGB565, green's low bit clear: FireRed's palettes as its icons and pictures
+ * are drawn here. */
+static inline uint16_t GbaColor(uint16_t c)
+{
+    return RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+}
 
 
 /* Native menu icons: the six themed item graphics already reconstructed from
@@ -190,14 +196,27 @@ static void Px(int x, int y, uint16_t c)
         sCanvas[(size_t)x * H + (H - 1 - (size_t)y)] = c;
 }
 
+/* Two pixels a store where the column allows it: the ARM11 writes a word as fast as a halfword. */
+typedef uint32_t __attribute__((may_alias)) PtPair;
+
 static void Fill(int x, int y, int w, int h, uint16_t c)
 {
     int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y;
     int x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
+    uint32_t pair = (uint32_t)c * 0x10001u;
+
     for (int cx = x0; cx < x1; ++cx) {
         uint16_t *p = sCanvas + (size_t)cx * H + (H - (size_t)y1);
-        for (int n = y1 - y0; n > 0; --n)
+        int n = y1 - y0;
+
+        if (n > 0 && ((uintptr_t)p & 2)) {
             *p++ = c;
+            --n;
+        }
+        for (; n >= 2; n -= 2, p += 2)
+            *(PtPair *)p = pair;
+        if (n > 0)
+            *p = c;
     }
 }
 
@@ -214,6 +233,7 @@ static unsigned GlyphCode(const char **s)
     else if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0x1b; }
     else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xb7; }
     else if (c == 0x01 && **s) code = (unsigned char)*(*s)++;   /* a FireRed code as it is (CtrPokeTouch name text) */
+    else if (c == 0x02 && **s) code = 0x100u | (unsigned char)*(*s)++;   /* a Japanese one (a Japanese Pokemon's name) */
     else switch (c) {
         case '!': code=0xab; break; case '?': code=0xac; break;
         case '.': code=0xad; break; case '-': code=0xae; break;
@@ -235,9 +255,10 @@ static const PtGlyph *Glyph(const char **s)
     TwinIconsPrepare();
     code = GlyphCode(s);
     if (!sPtFontReady[code]) {
-        const uint8_t *src = CtrTwinFontData() + code * 64;
+        static uint8_t jp[64];
+        const uint8_t *src = code & 0x100u ? CtrTwinJapaneseGlyph(code & 0xffu, jp) : CtrTwinFontData() + code * 64;
         PtGlyph *g = &sPtFont[code];
-        g->width = CtrTwinFontWidth(code);
+        g->width = code & 0x100u ? CtrTwinJapaneseFontWidth(code & 0xffu) : CtrTwinFontWidth(code);
         if (g->width > 16) g->width = 16;
         TwinGlyphDecode(src, g->width, g->rows);
         sPtFontReady[code] = true;
@@ -245,23 +266,6 @@ static const PtGlyph *Glyph(const char **s)
     return &sPtFont[code];
 }
 
-/* The game's small font (latin_small): 5 pixels wide for most letters, capitals on glyph rows 4-10. */
-static const PtGlyph *GlyphSmall(const char **s)
-{
-    unsigned code;
-
-    TwinIconsPrepare();
-    code = GlyphCode(s);
-    if (!sPtFontSmallReady[code]) {
-        const uint8_t *src = CtrTwinSmallFontData() + code * 32;
-        PtGlyph *g = &sPtFontSmall[code];
-        g->width = CtrTwinSmallFontWidth(code);
-        if (g->width > 8) g->width = 8;
-        TwinSmallGlyphDecode(src, g->width, g->rows);
-        sPtFontSmallReady[code] = true;
-    }
-    return &sPtFontSmall[code];
-}
 /* Images: palette indices, 0 clear; disabled art is a light grey. */
 static uint16_t Tone(uint16_t c, int on)
 {
@@ -293,7 +297,7 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
 
 /* Shortcut item icons from FireRed's icon table, decoded once per item and
  * shown as the 20x20 around their drawn part. */
-enum { ICON_REGISTERED, ICON_BIKE, ICON_COUNT };
+enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_COUNT };
 
 static struct {
     unsigned item;
@@ -333,7 +337,7 @@ static int ItemIcon(int slot, unsigned item)
     sIcons[slot].y0 = y0 < 0 ? 0 : y0 > 4 ? 4 : y0;
     for (int i = 0; i < 16; ++i) {
         unsigned c = pal[i];
-        sIcons[slot].pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        sIcons[slot].pal[i] = GbaColor(c);
     }
     return 1;
 }
@@ -810,6 +814,9 @@ static void FCardNote(const CtrPokeTouchView *v, int w);
 /* The move to forget the port draws (3ds_field_learn_impl.h, included at the end). */
 static void FLearnFrame(const CtrPokeTouchView *v);
 static void FLearnNote(const CtrPokeTouchView *v, int w);
+/* The field's choice the port draws (3ds_field_choice_impl.h, included at the end). */
+static void FChoiceFrame(const CtrPokeTouchView *v);
+static void FChoiceNote(const CtrPokeTouchView *v, int w);
 /* The naming screen the port draws (3ds_field_naming_impl.h, included at the end). */
 static void FNameFrame(const CtrPokeTouchView *v);
 static void FNameNote(const CtrPokeTouchView *v, int w);
@@ -833,6 +840,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->learn.on && !v->viewport) {
         FLearnFrame(v);
+        return;
+    }
+    if (v->choice.on && !v->viewport) {
+        FChoiceFrame(v);
         return;
     }
     if (v->name.on && !v->viewport) {
@@ -938,7 +949,7 @@ static int FrameSample(int type, int x, int y)
             for (int i = 0; i < 16; ++i) {
                 unsigned c = (unsigned)colors[i * 2] | (unsigned)colors[i * 2 + 1] << 8;
 
-                pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+                pal[i] = GbaColor(c);
             }
             for (int ty = 0; ty < 24; ++ty)
                 for (int tx = 0; tx < 24; ++tx) {
@@ -982,6 +993,8 @@ static void Bar(const CtrPokeTouchView *v)
         FCardNote(v, w);
     else if (v->learn.on && !v->viewport)
         FLearnNote(v, w);
+    else if (v->choice.on && !v->viewport)
+        FChoiceNote(v, w);
     else if (v->name.on && !v->viewport)
         FNameNote(v, w);
     else if (v->box.on && !v->viewport)
@@ -1145,7 +1158,8 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     sCanvas = canvas;
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
         || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
-        || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))) {
+        || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))
+        || memcmp(&old->choice, &v->choice, sizeof(v->choice))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
@@ -1277,5 +1291,6 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_dex_impl.h"
 #include "3ds_field_card_impl.h"
 #include "3ds_field_learn_impl.h"
+#include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
 #include "3ds_field_box_impl.h"

@@ -258,7 +258,7 @@ static int BPartyIcon(int slot, unsigned icon)
         }
     for (int i = 0; i < 16; ++i) {
         unsigned c = pal[i];
-        sBPIcon[slot].pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        sBPIcon[slot].pal[i] = GbaColor(c);
     }
     return 1;
 }
@@ -554,7 +554,7 @@ static int BItemIcon(unsigned item)
         }
     for (int i = 0; i < 16; ++i) {
         unsigned c = pal[i];
-        sBIcon[slot].pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        sBIcon[slot].pal[i] = GbaColor(c);
     }
     return slot;
 }
@@ -639,7 +639,7 @@ static void BBagPrepare(int maxH)
         return;
     for (int i = 1; i < 16; ++i) {
         unsigned c = (unsigned)colors[i * 2] | (unsigned)colors[i * 2 + 1] << 8;
-        pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        pal[i] = GbaColor(c);
     }
     for (int y = 0; y < 64; ++y)
         for (int x = 0; x < 64; ++x) {

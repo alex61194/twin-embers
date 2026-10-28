@@ -40,9 +40,11 @@ static void ComposeLineBrightness(void)
 {
     int left = VIEW_LEFT, right = VIEW_RIGHT, top = VIEW_TOP, bottom = VIEW_BOTTOM;
     bool stencil = StencilTarget();
+    /* The rectangles of this target's set (sWindowSets); the OBJ window's partitions are made again after it. */
     sWindowCacheValid = false;
-    sWindowRectCount = 0;
-    ++sWindowRectSerial;
+    sWin = &sWindowSets[sDrawTarget && sDrawTarget == sScene ? 0 : 1];
+    sWin->count = 0;
+    sWin->serial = ++sWindowSerials;
     sBrightnessKeyCount = 0;
     for (int y = top; stencil && y < bottom; )
     {
@@ -59,8 +61,8 @@ static void ComposeLineBrightness(void)
         WindowCollectRect(left, y, right, end, key);
         y = end;
     }
-    stencil = stencil && sWindowRectCount <= WINDOW_RECTS
-           && sStats.tiles + sWindowRectCount < MAX_DRAWS / 2 && StencilReady();
+    stencil = stencil && sWin->count <= WINDOW_RECTS
+           && sStats.tiles + sWin->count < MAX_DRAWS / 2 && StencilReady();
     if (stencil)
     {
         ComposeStencil(BrightnessDrawKey);

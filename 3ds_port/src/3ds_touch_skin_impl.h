@@ -9,16 +9,32 @@ static uint16_t TsGet(int x, int y)
     return sCanvas[(size_t)x * H + (H - 1 - (size_t)y)];
 }
 
+/* The backdrop in the canvas' own order (column by column, bottom up), made the first time it is drawn: a rectangle of
+ * it is then a copy per column instead of a lookup per pixel, which every screen pays more than once a redraw. */
+static uint16_t sTsBg[W * H];
+static int sTsBgReady;
+
+static void TsBgPrepare(void)
+{
+    for (int cx = 0; cx < W; ++cx)
+        for (int cy = 0; cy < H; ++cy)
+            sTsBg[(size_t)cx * H + (H - 1 - (size_t)cy)] = EMBER_BG(cx, cy);
+    sTsBgReady = 1;
+}
+
 /* The backdrop back over a rectangle. */
 static void TsBgRect(int x, int y, int w, int h)
 {
     int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y, x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
 
+    if (x0 >= x1 || y0 >= y1)
+        return;
+    if (!sTsBgReady)
+        TsBgPrepare();
     for (int cx = x0; cx < x1; ++cx) {
-        uint16_t *p = sCanvas + (size_t)cx * H + (H - (size_t)y1);
+        size_t at = (size_t)cx * H + (H - (size_t)y1);
 
-        for (int cy = y1 - 1; cy >= y0; --cy)
-            *p++ = EMBER_BG(cx, cy);
+        memcpy(sCanvas + at, sTsBg + at, (size_t)(y1 - y0) * sizeof(uint16_t));
     }
 }
 
@@ -63,11 +79,26 @@ static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uin
         radius = 5;
     if (radius * 2 > h)
         radius = h / 2;
-    for (int row = 0; row < h; ++row) {
-        int edge = row < h - 1 - row ? row : h - 1 - row, cut = edge < 4 ? sUiCut[radius][edge] : 0;
-        uint16_t c = UiMix(top, bottom, h > 1 ? row * 8 / (h - 1) : 0);
+    /* Column by column, the canvas' own order: a row at a time would step a whole column of memory per pixel. A pixel
+     * is drawn where its row's corner cut does not reach its column. */
+    uint16_t colour[H];
+    int r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
 
-        Fill(x + cut, y + row, w - 2 * cut, 1, c);
+    for (int row = r0; row < r1; ++row)
+        colour[row - r0] = UiMix(top, bottom, h > 1 ? row * 8 / (h - 1) : 0);
+    for (int col = 0; col < w; ++col) {
+        int cx = x + col, edgeX = col < w - 1 - col ? col : w - 1 - col, first = r0, last = r1;
+
+        if ((unsigned)cx >= W)
+            continue;
+        while (first < last && first < 4 && sUiCut[radius][first] > edgeX)
+            ++first;
+        while (last > first && h - last < 4 && sUiCut[radius][h - last] > edgeX)
+            --last;
+        uint16_t *p = sCanvas + (size_t)cx * H + (H - 1 - (size_t)(y + first));
+
+        for (int row = first; row < last; ++row)
+            *p-- = colour[row - r0];
     }
 }
 

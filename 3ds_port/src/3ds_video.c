@@ -101,15 +101,6 @@ static void PerfSceneBegin(C3D_RenderTarget *target)
 #define C2D_Flush PerfFlush
 #define C2D_SceneBegin PerfSceneBegin
 
-/* The voxel overworld replaces this compositor's output while the player is
- * walking around; every other game state keeps the 2D path below. */
-#ifndef CTR_VOXEL_ENABLED
-#define CTR_VOXEL_ENABLED 0
-#endif
-#if CTR_VOXEL_ENABLED
-#include "voxel/ctr_voxel.h"
-#endif
-
 /*
  * The game lays itself out over the whole 400x240 viewport, so screen and
  * logical coordinates are the same. A background only covers the part of the
@@ -220,53 +211,12 @@ typedef struct
     bool valid, visible;
 } Tile;
 
-#if CTR_VOXEL_ENABLED
-static uint32_t sVoxelWeatherOam[4];
-static bool sVoxelWeatherOnly;
-
-void CtrVideo_ClearVoxelWeatherOam(void)
-{
-    memset(sVoxelWeatherOam, 0, sizeof(sVoxelWeatherOam));
-}
-
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end)
-{
-    if (end > 128) end = 128;
-    for (unsigned i = first; i < end; ++i)
-        sVoxelWeatherOam[i >> 5] |= 1u << (i & 31);
-}
-#else
-void CtrVideo_ClearVoxelWeatherOam(void) {}
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end)
-{
-    (void)first;
-    (void)end;
-}
-#endif
-
 static CtrVideoMemory sMemory;
 /* OBJ Window is an OAM alpha mask, not visible sprite geometry. */
 static uint8_t sObjWindow[240][400];
 /* Rows of sObjWindow holding at least one OBJ window pixel. */
 static bool sObjWindowRow[240];
 
-const uint8_t *CtrVideo_GetBgVram(void) { return sMemory.vram; }
-
-void CtrVideo_NotifyTilesetAnimWrite(const void *dest, unsigned bytes)
-{
-#if CTR_VOXEL_ENABLED
-    uintptr_t base = (uintptr_t)sMemory.vram;
-    uintptr_t address = (uintptr_t)dest;
-    if (base == 0 || address < base || address - base >= 0x8000 || bytes == 0)
-        return;
-    unsigned offset = (unsigned)(address - base);
-    if (bytes > 0x8000 - offset) bytes = 0x8000 - offset;
-    CtrVoxel_NotifyTilesetAnimWrite(offset / 32, (offset % 32 + bytes + 31) / 32);
-#else
-    (void)dest;
-    (void)bytes;
-#endif
-}
 static CtrVideoStats sStats;
 /* Bumped when the tile cache is emptied: slots a walk saw are then stale. */
 static uint32_t sCacheGeneration;
@@ -305,6 +255,10 @@ static uint16_t sPalette[512];
 static uint16_t sTexturePalette[512];
 static uint8_t sMorton[64];
 static C2D_ImageTint sTint;
+/* The pass composing the OBJ window's surface (ObjWindowCompose), if one is: its sprites into the mask, or the layers
+ * it adds over them. */
+enum { OBJWIN_NONE, OBJWIN_MASK, OBJWIN_LAYERS };
+static unsigned sObjWinPass;
 static uint32_t sPaletteVersion[34];
 /*
  * Whole-screen fades (the battle transition's gray flash, fades to black)
@@ -581,6 +535,9 @@ static DayNightCamera sDayNightCameraRequest, sDayNightCamera;
 static uint8_t sCellGlow[4][4096];
 /* Which background colours are glass (CtrDayNight_Glass): 1, 0 for the others. */
 static uint8_t sLitTexture[DAY_NIGHT_BG_BANKS * 16];
+/* Window cells whose tile was not the map's at the place worked out for them (a wrong place: they were keyed by it
+ * alone), and those walked; logged once a minute, for the port.log. */
+static unsigned sWindowMisses, sWindowWalks;
 static bool sFieldLayers;
 /* Stages 4 and 5 hold the hour (DayNightEnv); drawing into a layer texture, which is tinted when it is drawn. */
 static bool sDayNightEnv, sInLayerTexture;
@@ -716,14 +673,29 @@ static void DayNightUpdate(void)
     uint32_t minute = on ? sDayNightRequestSecond / 60u : ~0u;
     DayNightCamera camera = on ? sDayNightCameraRequest : (DayNightCamera){0};
 
-    /* Another minute or another camera: windows may switch, so the field's
-     * layers walk again (only the cells that change are drawn). */
-    if (minute != sDayNightMinute || memcmp(&camera, &sDayNightCamera, sizeof(camera)))
+    /* Another minute or another place for the camera: windows may switch, so the field's layers walk again (only
+     * the cells that change are drawn). Walking moves the camera a tile at a time, but a window's hours are keyed by
+     * where it stands on the map, which the camera's tile and the map's move together: that is what the walk reads
+     * (WindowLit), and it only changes with the map, the offset between the two, or the camera being lost. Walking
+     * every layer on each step cost 12-18 ms a step at night in the 0.2.14 port.log; the cells that scroll into view
+     * are read anyway. */
+    bool cameraMoved = camera.valid != sDayNightCamera.valid || camera.map != sDayNightCamera.map
+        || camera.viewLeft != sDayNightCamera.viewLeft
+        || ((camera.mapX * 2 - camera.tileX) & 63) != ((sDayNightCamera.mapX * 2 - sDayNightCamera.tileX) & 63)
+        || ((camera.mapY * 2 - camera.tileY) & 31) != ((sDayNightCamera.mapY * 2 - sDayNightCamera.tileY) & 31);   /* tileY wraps at 32 */
+
+    if (minute != sDayNightMinute || cameraMoved)
     {
+        if (minute != sDayNightMinute && sWindowWalks)
+        {
+            CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT windows walked=%u misplaced=%u map=%04x", sWindowWalks, sWindowMisses,
+                         sDayNightCamera.map);
+            sWindowWalks = sWindowMisses = 0;
+        }
         sDayNightMinute = minute;
-        sDayNightCamera = camera;
         if (sDayNightLit) sBgPaletteStamp = sStats.frames + 1;
     }
+    sDayNightCamera = camera;
     if (color == sDayNightColor && lights0 == sDayNightLights[0] && lights1 == sDayNightLights[1]) return;
     if (lights0 != sDayNightLights[0] || lights1 != sDayNightLights[1])
     {
@@ -1006,7 +978,7 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
      * texture is tinted when it is drawn, not as it is filled. */
     bool night = sDayNightColor != 0xffffffu && sFieldLayers && !sInLayerTexture && layer >= 1 && layer <= 4;
     unsigned key = layer | (effects << 8) | (semiTransparent << 9)
-                 | ((brightness & 31) << 10) | ((unsigned)night << 15);
+                 | ((brightness & 31) << 10) | ((unsigned)night << 15) | (sObjWinPass << 16);
 
     if (key == sBlendKey) return;
     sBlendKey = key;
@@ -1019,6 +991,25 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
                   GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
     unsigned control = Reg(0x50), effect = (control >> 6) & 3;
     C2D_PlainImageTint(&sTint, C2D_Color32(255, 255, 255, 255), 0);
+    if (sObjWinPass != OBJWIN_NONE)
+    {
+        /* The OBJ window's surface keeps a coverage count in alpha: half from the window's sprites, written alone
+         * and the same however many overlap, then doubled where a layer draws. Only both together reach the
+         * threshold the surface is drawn with (ObjWindowDraw). Colours as they are. */
+        if (sObjWinPass == OBJWIN_MASK)
+        {
+            C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALPHA);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ZERO, GPU_ONE, GPU_CONSTANT_ALPHA, GPU_ZERO);
+            C3D_BlendingColor(C2D_Color32(0, 0, 0, 0x80));
+        }
+        else
+        {
+            C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_DST_ALPHA, GPU_ONE);
+        }
+        CtrPerf_End(PERF_BLEND,perfStart);
+        return;
+    }
     /* A semi-transparent OBJ is blended whatever the window it is in says about colour effects: the overworld's
      * windows never enable them, and its fog is translucent. */
     if (!effects && !semiTransparent) { CtrPerf_End(PERF_BLEND,perfStart); return; }
@@ -1043,16 +1034,6 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
     }
     CtrPerf_End(PERF_BLEND,perfStart);
 }
-
-__attribute__((weak)) unsigned CtrIntro_ReadActors(CtrIntroActor *actors, unsigned capacity)
-{ (void)actors; (void)capacity; return 0; }
-__attribute__((weak)) void CtrIntro_ReadScene1Pose(CtrIntroScene1Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) void CtrIntro_ReadScene2Pose(CtrIntroScene2Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) void CtrIntro_ReadScene3Pose(CtrIntroScene3Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) int CtrIntro_ReadTitleFooterX(void) { return 0; }
 
 #include "3ds_intro_fallback.h"
 
@@ -1093,6 +1074,10 @@ static void ViewAffine(C3D_Mtx *matrix)
     matrix->r[1].w += sOffY;
     C2D_ViewRestore(matrix);
 }
+
+/* A GBA menu window on BG0 whose rows the lower screen draws (CtrVideo_HideBg0Rect), in tiles, frame included: its
+ * tiles are left out of the upper screen, which shows the field and the message without it. w 0 for none. */
+static struct { int x, y, w, h; } sHideBg0;
 
 static void DrawTextSpanAt(unsigned bg, int left, int right, int top, int bottom,
                            int mirrorX2, int mirrorY2)
@@ -1136,6 +1121,11 @@ static void DrawTextSpanAt(unsigned bg, int left, int right, int top, int bottom
             /* Inside the GBA area the wrap-around is kept exactly as on
              * hardware; only the margins are denied to a narrow background. */
             if (px + 8 <= left || px >= right) continue;
+            /* The field's BG0 is drawn here, not through LayerRenderCells: a menu drawn below is left out. */
+            if (bg == 0 && sHideBg0.w && (int)column >= sHideBg0.x && (int)column < sHideBg0.x + sHideBg0.w
+                && (int)(row & ((size & 2) ? 63u : 31u)) >= sHideBg0.y
+                && (int)(row & ((size & 2) ? 63u : 31u)) < sHideBg0.y + sHideBg0.h)
+                continue;
             /* Columns past 31 live in the next screenblock, 1024 entries on. */
             entry = Read16(rowBase + (column & 31) * 2 + (column >> 5) * 2048);
             index = entry & 1023;
@@ -2307,34 +2297,85 @@ static unsigned GlassEdges(unsigned chars, unsigned entry)
     return edges;
 }
 
-static bool WindowLit(unsigned map, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+/* The field's tile on a layer at a place on the map, in tiles (the game bridge's, from the map's own metatiles), or
+ * 0xffff: NULL until the bridge sets it. */
+static uint16_t (*sDayNightMapTile)(unsigned bg, int x, int y);
+
+void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y))
+{
+    sDayNightMapTile = tile;
+}
+
+/*
+ * A window is the run of glass tiles that meet across their edges, keyed by its top-left tile's place on the map.
+ * The run is walked on the map's own metatiles (sDayNightMapTile), not on the tilemap: the tilemap holds only the
+ * part of the map around the camera, so a long facade (Silph Co.'s floors, Celadon's department store) ended
+ * wherever that part did, which moved with the camera, and its floors switched on and off or lit in parts as the
+ * player walked by. On the map the run is the same from any cell of it and wherever the camera is.
+ *
+ * A cell's place: its column from the camera's tile (unwrapped around the view's left edge, as the field draws it),
+ * its row from the screen's top row (the tilemap's rows barely outnumber the screen's, so the wrap is the two rows
+ * out of sight).
+ */
+static bool WindowCell(unsigned bg, unsigned size, unsigned column, unsigned row, int *x, int *y)
 {
     const DayNightCamera *camera = &sDayNightCamera;
-    unsigned columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    int columns = (size & 1) ? 64 : 32, rows = (size & 2) ? 64 : 32;
+    int dx = (int)((column - (unsigned)camera->tileX) & (unsigned)(columns - 1));
+    int top = (((int)(Reg(0x12 + bg * 4) & 511) + VIEW_TOP) >> 3) & (rows - 1);
+    int base = (top - camera->tileY) & (rows - 1);
+
+    if (dx >= camera->viewLeft + columns) dx -= columns;
+    if (base >= rows / 2) base -= rows;
+    *x = camera->mapX * 2 + dx;
+    *y = camera->mapY * 2 + base + (int)(((int)row - top) & (rows - 1));
+    return true;
+}
+
+/* The glass tile at a place on the map that meets a neighbour's glass across edge (1 left, 2 right, 4 top, 8 bottom),
+ * on any field layer: a window's panes and its top row may be on different layers (a metatile's bottom half on BG2,
+ * the one above it on BG1), and walking one layer split such a window in two. 0xffff for none. */
+static unsigned WindowNeighbour(unsigned chars, int x, int y, unsigned edge)
+{
+    for (unsigned bg = 1; bg <= 3; ++bg)
+    {
+        unsigned tile = sDayNightMapTile(bg, x, y);
+
+        if (tile != 0xffffu && WindowTile(chars, tile, false) && (GlassEdges(chars, tile) & edge)) return tile;
+    }
+    return 0xffffu;
+}
+
+static bool WindowLit(unsigned bg, unsigned size, unsigned chars, unsigned column, unsigned row, unsigned entry)
+{
+    const DayNightCamera *camera = &sDayNightCamera;
     unsigned address = chars + (entry & 1023) * 32;
+    int x, y;
 
     if ((sPublicBanks[address / 32] & (1u << (entry >> 12))) || !camera->valid) return true;
-    for (unsigned step = 0; step < 16; ++step)
+    WindowCell(bg, size, column, row, &x, &y);
+    ++sWindowWalks;
+    if (sDayNightMapTile && sDayNightMapTile(bg, x, y) != (entry & 0xffffu)) ++sWindowMisses;
+    else if (sDayNightMapTile)
     {
-        unsigned left = (column + columns - 1) & (columns - 1), next = MapEntry(map, size, left, row);
+        for (unsigned step = 0; step < 16; ++step)
+        {
+            unsigned next = (GlassEdges(chars, entry) & 1) ? WindowNeighbour(chars, x - 1, y, 2) : 0xffffu;
 
-        if (!(GlassEdges(chars, entry) & 1) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 2)) break;
-        column = left;
-        entry = next;
-    }
-    for (unsigned step = 0; step < 16; ++step)
-    {
-        unsigned up = (row + rows - 1) & (rows - 1), next = MapEntry(map, size, column, up);
+            if (next == 0xffffu) break;
+            --x;
+            entry = next;
+        }
+        for (unsigned step = 0; step < 16; ++step)
+        {
+            unsigned next = (GlassEdges(chars, entry) & 4) ? WindowNeighbour(chars, x, y - 1, 8) : 0xffffu;
 
-        if (!(GlassEdges(chars, entry) & 4) || !WindowTile(chars, next, false) || !(GlassEdges(chars, next) & 8)) break;
-        row = up;
-        entry = next;
+            if (next == 0xffffu) break;
+            --y;
+            entry = next;
+        }
     }
-    int dx = (int)((column - (unsigned)camera->tileX) & (columns - 1));
-    int dy = (int)((row - (unsigned)camera->tileY) & (rows - 1));
-    if (dx >= camera->viewLeft + (int)columns) dx -= (int)columns;
-    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(camera->mapX * 2 + dx, camera->mapY * 2 + dy, camera->map),
-                                sDayNightMinute * 60u);
+    return CtrDayNight_WindowOn(CtrDayNight_WindowHash(x, y, camera->map), sDayNightMinute * 60u);
 }
 
 static unsigned GlowSlot(unsigned address, unsigned entry);
@@ -2461,7 +2502,7 @@ static bool LayerRenderCells(unsigned bg)
 
             if (bg && sFieldLayers && WindowTile(chars, entry, color256))
             {
-                bool on = WindowLit(map, size, chars, column, row, entry);
+                bool on = WindowLit(bg, size, chars, column, row, entry);
 
                 slot = GetTileSlotFrom(chars + index * 32, entry >> 12, false, sLayerFadeTint[bg]);
                 light = on ? (uint8_t)GlowSlot(chars + index * 32, entry) : 0;
@@ -2477,6 +2518,9 @@ static bool LayerRenderCells(unsigned bg)
                 memoEntry[index] = (uint16_t)entry;
                 memoSlot[index] = (int16_t)slot;
             }
+            if (bg == 0 && sHideBg0.w && (int)column >= sHideBg0.x && (int)column < sHideBg0.x + sHideBg0.w
+                && (int)row >= sHideBg0.y && (int)row < sHideBg0.y + sHideBg0.h)
+                slot = -1;
             cellSlot[cell] = (int16_t)slot;
             cellEntry[cell] = (uint16_t)entry;
             sCellEnt[bg][cell] = (uint16_t)entry;
@@ -3247,16 +3291,13 @@ static void DrawObjects(unsigned priority, bool effects)
     for (int i = 127; i >= 0; --i)
     {
         CTR_PERF_COUNT(PERF_OAM_VISITS,1);
-#if CTR_VOXEL_ENABLED
-        if (sVoxelWeatherOnly && !(sVoxelWeatherOam[i >> 5] & (1u << (i & 31))))
-            continue;
-#endif
         const uint16_t *obj = sMemory.oam + i * 4;
         unsigned attr0 = obj[0], attr1 = obj[1], attr2 = obj[2];
         bool affine = (attr0 & 0x100) != 0, color256 = (attr0 & 0x2000) != 0;
         if ((!affine && (attr0 & 0x200)) || ((attr2 >> 10) & 3) != priority) continue;
         unsigned mode = (attr0 >> 10) & 3, shape = attr0 >> 14;
-        if (mode == 2) continue;
+        /* A window's sprites are its shape, drawn only into its mask (ObjWindowCompose). */
+        if ((mode == 2) != (sObjWinPass == OBJWIN_MASK)) continue;
         if (mode == 3 || shape == 3) continue;
         if (attr0 & 0x1000) Error(8, "OBJ mosaic not supported");
         unsigned width = dimensions[shape][attr1 >> 14][0], height = dimensions[shape][attr1 >> 14][1];
@@ -3284,13 +3325,6 @@ static void DrawObjects(unsigned priority, bool effects)
                 x = CtrObj_UnwrapX(x, VIEW_RIGHT);
                 y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
             }
-#if CTR_VOXEL_ENABLED
-            if (sVoxelWeatherOnly)
-            {
-                x += CTR_STAGE_X;
-                y += CTR_STAGE_Y;
-            }
-#endif
         }
         if (x >= sClipX1 || x + (int)boxW <= sClipX0
          || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
@@ -3788,7 +3822,9 @@ static void DrawDayNightGlass(unsigned bg)
             C2D_Flush();
             ViewBase();
             C3D_AlphaTest(true, GPU_GREATER, 0);
-            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_ONE, GPU_ZERO);
+            /* The glass keeps the layer's alpha: the scene's is one bit, and the lamplight's own (under half at
+             * dawn and dusk) wrote 0 there, so the glass went see-through to the black behind the scene. */
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_ZERO, GPU_ONE);
             begun = true;
         }
         u = (float)((slot - 1) % 8 * 8);
@@ -4448,12 +4484,20 @@ static void WindowDrawRect(int x0, int y0, int x1, int y1, unsigned mask)
  */
 #define WINDOW_RECTS 4096
 typedef struct { int x0, y0, x1, y1; unsigned mask; } WindowRect;
-static WindowRect sWindowRects[WINDOW_RECTS];
-static unsigned sWindowRectCount;
-/* Bumped whenever sWindowRects is rebuilt. A stencil buffer is only touched
- * by ComposeStencil, so one already marked with the current rectangles keeps
- * its marks and the mark pass is skipped (an OBJ window held still). */
-static uint32_t sWindowRectSerial = 1;
+/* The rectangles of one view's partition. Its serial is new (from sWindowSerials) whenever they are rebuilt. A
+ * stencil buffer is only touched by ComposeStencil, so one already marked with the current rectangles keeps its
+ * marks and the mark pass is skipped (an OBJ window held still). */
+typedef struct {
+    WindowRect rects[WINDOW_RECTS];
+    unsigned count;
+    uint32_t serial;
+} WindowRectSet;
+/* One set per view the OBJ window is composed in, each with its own stencil buffer: [0] the battle scene (zoomed,
+ * into sScene), [1] everything else (the logical surface). A battle composes both every frame, the scene and then
+ * its text box; with one set each pass rebuilt the other's rectangles and both stencils were marked again twice a
+ * frame, all through a stat change's animation. sWin is the set of the pass being composed. */
+static WindowRectSet sWindowSets[2], *sWin = &sWindowSets[1];
+static uint32_t sWindowSerials = 1;
 static void *sStencilBuf;
 static uint32_t sStencilMarked;
 static bool sStencilFailed;
@@ -4486,9 +4530,9 @@ static void *StencilBuffer(void)
 
 static void WindowCollectRect(int x0, int y0, int x1, int y1, unsigned mask)
 {
-    if (sWindowRectCount < WINDOW_RECTS)
-        sWindowRects[sWindowRectCount] = (WindowRect){x0, y0, x1, y1, mask};
-    ++sWindowRectCount;
+    if (sWin->count < WINDOW_RECTS)
+        sWin->rects[sWin->count] = (WindowRect){x0, y0, x1, y1, mask};
+    ++sWin->count;
 }
 
 static bool StencilReady(void)
@@ -4543,7 +4587,7 @@ static void StencilRect(int x0, int y0, int x1, int y1)
 }
 
 /*
- * The rectangles in sWindowRects tile the view, each tagged with a key below
+ * The rectangles in sWin->rects tile the view, each tagged with a key below
  * 256. Every key's rectangles write it into the stencil, then pass draws each
  * key once over its bounding box, stencil-tested to exactly its rectangles.
  */
@@ -4553,9 +4597,9 @@ static void ComposeStencil(StencilPass pass)
 {
     bool used[256] = {false};
     int box[256][4];
-    for (unsigned i = 0; i < sWindowRectCount; ++i)
+    for (unsigned i = 0; i < sWin->count; ++i)
     {
-        const WindowRect *r = &sWindowRects[i];
+        const WindowRect *r = &sWin->rects[i];
         int *b = box[r->mask];
         if (!used[r->mask])
         {
@@ -4587,18 +4631,18 @@ static void ComposeStencil(StencilPass pass)
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
     C3D_DepthTest(false, GPU_ALWAYS, 0);
     C3D_StencilOp(GPU_STENCIL_REPLACE, GPU_STENCIL_REPLACE, GPU_STENCIL_REPLACE);
-    for (unsigned mask = 0; mask < 256 && *marked != sWindowRectSerial; ++mask)
+    for (unsigned mask = 0; mask < 256 && *marked != sWin->serial; ++mask)
     {
         if (!used[mask]) continue;
         C3D_StencilTest(true, GPU_ALWAYS, (int)mask, 0xFF, 0xFF);
-        for (unsigned i = 0; i < sWindowRectCount; ++i)
-            if (sWindowRects[i].mask == mask)
-                StencilRect(sWindowRects[i].x0, sWindowRects[i].y0,
-                            sWindowRects[i].x1, sWindowRects[i].y1);
+        for (unsigned i = 0; i < sWin->count; ++i)
+            if (sWin->rects[i].mask == mask)
+                StencilRect(sWin->rects[i].x0, sWin->rects[i].y0,
+                            sWin->rects[i].x1, sWin->rects[i].y1);
         C2D_Flush();
     }
     C2D_ViewRestore(&view);
-    *marked = sWindowRectSerial;
+    *marked = sWin->serial;
 
     /* Draw: each mask once, only where the stencil holds it. */
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
@@ -4632,9 +4676,15 @@ typedef struct {
     int viewX, viewY, targetW, targetH;
     bool native, stage, battle;
 } WindowCacheKey;
-static WindowCacheKey sWindowCacheKey;
-static WindowSpans sWindowCacheSpans;
+/* Per set (sWindowSets): the key and spans its rectangles were made from, and the OBJ window mask's generation. */
+static WindowCacheKey sWindowCacheKey[2];
+static WindowSpans sWindowCacheSpans[2];
+static bool sWindowSetValid[2];
+static uint32_t sWindowSetMask[2];
+/* False when the flash window changed: every set is made again. */
 static bool sWindowCacheValid;
+/* Bumped whenever BuildObjWindow finds the mask changed: a set made from an older one is made again. */
+static uint32_t sObjMaskGeneration;
 
 void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count)
 {
@@ -4648,6 +4698,8 @@ void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count)
 }
 
 
+#include "3ds_obj_window_impl.h"
+
 static void ComposeObjWindow(unsigned display)
 {
     WindowCacheKey key;
@@ -4658,35 +4710,46 @@ static void ComposeObjWindow(unsigned display)
     key.viewX = sViewX; key.viewY = sViewY;
     key.targetW = sTargetW; key.targetH = sTargetH;
     key.native = sNative; key.stage = sStage; key.battle = sBattle;
-    bool cached = sWindowCacheValid && memcmp(&key, &sWindowCacheKey, sizeof(key)) == 0;
+    unsigned set = sDrawTarget && sDrawTarget == sScene ? 0 : 1;
+
+    sWin = &sWindowSets[set];
+    if (!sWindowCacheValid)
+    {
+        sWindowSetValid[0] = sWindowSetValid[1] = false;
+        sWindowCacheValid = true;
+    }
+    bool cached = sWindowSetValid[set] && memcmp(&key, &sWindowCacheKey[set], sizeof(key)) == 0;
     if (!cached)
     {
-        /* Same mask, registers and view as the last frame: same partition. */
-        bool maskChanged = BuildObjWindow();
+        /* Same mask, registers and view as this set's last frame: same partition. */
+        if (BuildObjWindow())
+            ++sObjMaskGeneration;
         WindowSpans spans;
         WindowSpansRead(display, &spans);
-        WindowCacheKey previous = sWindowCacheKey;
+        WindowCacheKey previous = sWindowCacheKey[set];
         previous.frame = key.frame;
-        if (!sWindowCacheValid || maskChanged || memcmp(&previous, &key, sizeof(key)) != 0
-            || memcmp(&spans, &sWindowCacheSpans, sizeof(spans)) != 0)
+        if (!sWindowSetValid[set] || sWindowSetMask[set] != sObjMaskGeneration
+            || memcmp(&previous, &key, sizeof(key)) != 0
+            || memcmp(&spans, &sWindowCacheSpans[set], sizeof(spans)) != 0)
         {
-            sWindowCacheSpans = spans;
-            sWindowRectCount = 0;
-            ++sWindowRectSerial;
-            WindowPartition(&sWindowCacheSpans, WindowCollectRect);
+            sWindowCacheSpans[set] = spans;
+            sWindowSetMask[set] = sObjMaskGeneration;
+            sWin->count = 0;
+            sWin->serial = ++sWindowSerials;
+            WindowPartition(&sWindowCacheSpans[set], WindowCollectRect);
         }
-        sWindowCacheKey = key;
-        sWindowCacheValid = true;
+        sWindowCacheKey[set] = key;
+        sWindowSetValid[set] = true;
     }
     /* Stencil rectangles share the frame's Citro2D geometry buffer. */
     bool stencil = StencilTarget()
-                && sWindowRectCount <= WINDOW_RECTS
-                && sStats.tiles + sWindowRectCount < MAX_DRAWS / 2
+                && sWin->count <= WINDOW_RECTS
+                && sStats.tiles + sWin->count < MAX_DRAWS / 2
                 && StencilReady();
     if (stencil)
         ComposeStencil(WindowDrawRect);
     else
-        WindowPartition(&sWindowCacheSpans, WindowDrawRect);
+        WindowPartition(&sWindowCacheSpans[set], WindowDrawRect);
     C2D_Flush();
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
     sScissored = false;
@@ -4698,9 +4761,12 @@ static void ComposeObjWindow(unsigned display)
 static void ComposeImpl(void)
 {
     unsigned display = Reg(0);
-    if ((display & 0x8000) || (sFieldLayers && sFlashWindowCount && (display & 0x2000)))
+    /* A battle's OBJ window from its surface (ObjWindowCompose): the windows' rectangles as without it, the
+     * surface over those outside windows 0 and 1. */
+    bool objSurface = sObjWin.ready && (display & 0x8000) && !(sFieldLayers && sFlashWindowCount);
+    if (((display & 0x8000) && !objSurface) || (sFieldLayers && sFlashWindowCount && (display & 0x2000)))
     { ComposeObjWindow(display); return; }
-    if (!(display & 0x6000))
+    if (!(display & 0x6000) && !objSurface)
     {
         if (sLineBrightnessCount && ((Reg(0x50) >> 6) & 3) >= 2)
         {
@@ -4759,17 +4825,24 @@ static void ComposeImpl(void)
     {
         if (xs[x] == xs[x+1] || ys[y] == ys[y+1]) continue;
         unsigned mask = Reg(0x4a) & 63;
+        bool outside = true;
         for (int w = 1; w >= 0; --w)
             if ((display & (0x2000u << w))
              && Inside(xs[x], Reg(0x40+2*w), false, WindowCurtain(w))
              && Inside(ys[y], Reg(0x44+2*w), true, WindowCurtain(w)))
+            {
                 mask = (Reg(0x48) >> (8*w)) & 63;
+                outside = false;
+            }
         C2D_Flush();
         Scissor(xs[x], ys[y], xs[x+1], ys[y+1]);
         sScissored = true;
         sClipX0 = xs[x]; sClipX1 = xs[x+1];
         sClipY0 = ys[y]; sClipY1 = ys[y+1];
         Layers(mask);
+        /* The OBJ window opens only where windows 0 and 1 are not. */
+        if (objSurface && outside)
+            ObjWindowDraw(xs[x], ys[y], xs[x+1], ys[y+1]);
     }
     C2D_Flush();
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
@@ -4850,12 +4923,6 @@ bool CtrVideo_Init(void)
     C2D_Prepare();
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
     CtrFastCells_Init();
-#if CTR_VOXEL_ENABLED
-    /* Citro3D and Citro2D are up; the voxel module only adds its own shader,
-     * textures and buffers on top of them. */
-    step = "voxel overworld renderer";
-    if (!CtrVoxel_Init()) goto fail;
-#endif
     sFpsStart = CtrPlatform_Milliseconds();
     CtrLog_Write(CTR_LOG_VIDEO, "VIDEO_PRESENT mode=native400 logical=400x240 compose=400x240 texture=512x256 scale=1.0 margins=0,0 filter=nearest VRAMfree=%lu",
                  (unsigned long)vramSpaceFree());
@@ -4927,11 +4994,7 @@ static void ScenePrepare(void)
         SceneRelease();
         /* The overworld's atlases of other maps are what a 2D screen gets
          * back first, as for the depth planes (BandsReady). */
-#if CTR_VOXEL_ENABLED
-        if (attempt == 0 && CtrVoxel_ReleaseIdleVram() == 0) break;
-#else
         break;
-#endif
     }
     if (!sScene)
     {
@@ -5085,94 +5148,6 @@ static void RenderEye(C3D_RenderTarget *target, uint32_t clear, float parallax)
     C3D_FrameSplit(0);
 }
 
-#if CTR_VOXEL_ENABLED
-/*
- * The game's own UI and weather over the voxel world. BG0 carries text; only
- * OAM entries tagged by the sprite sorter as weather are composed. Drawing all
- * OBJ here would duplicate the player and every NPC over their billboards.
- */
-/*
- * The text layer is a 32-column tilemap, so it only addresses the left 256px
- * of the 400px viewport, and widening it does not fit in background VRAM (see
- * the note on sStandardTextBox_WindowTemplates in src/menu.c). That is a
- * limit on where the *game* can put a window, not on where this compositor can
- * draw one: in voxel mode BG0 is drawn on its own, so the whole band can be
- * placed where it belongs. The standard text box spans x=16..232 within the
- * band, so its centre reaches the middle of the viewport at +76.
- */
-#define CTR_VOXEL_UI_SHIFT 76.0f
-
-/* Fixed north-facing camera: the upper 88 pixels are the distant background.
- * Four one-pixel taps, fading to zero towards the focus plane, reuse the world
- * surface. No extra target, depth readback or full-screen blur on Old 3DS. */
-static void VoxelBackgroundBlur(void)
-{
-    static const int offsets[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    C2D_ImageTint tint;
-    C2D_AlphaImageTint(&tint, 0.0f);
-    C2D_TopImageTint(&tint, C2D_Color32(255, 255, 255, 56), 0.0f);
-    for (unsigned i = 0; i < 4; ++i)
-    {
-        float x = 1.0f + offsets[i][0], y = 1.0f + offsets[i][1];
-        const Tex3DS_SubTexture region = {CTR_GAME_WIDTH - 2, 87,
-            x / 512.0f, 1.0f - y / 256.0f,
-            (x + CTR_GAME_WIDTH - 2) / 512.0f, 1.0f - (y + 87) / 256.0f};
-        C2D_DrawImageAt((C2D_Image){&sSurface, &region}, 1, 1, 0, &tint, 1, 1);
-    }
-}
-
-static void ComposeVoxelOverlay(void)
-{
-    sPriorityMask = 15;
-    sParallax = 0;
-    sLayerOrigin = 0.0f;
-    sLayerShift = 0.0f;
-    sClipX0 = sClipY0 = 0;
-    sClipX1 = CTR_GAME_WIDTH;
-    sClipY1 = CTR_GAME_HEIGHT;
-    sVoxelWeatherOnly = true;
-    Layers(1u << 4);
-    sVoxelWeatherOnly = false;
-    /* Text windows and prompts must stay above the precipitation. */
-    sLayerOrigin = CTR_VOXEL_UI_SHIFT;
-    Layers(1u << 0);
-    sLayerOrigin = 0.0f;
-}
-
-/*
- * The voxel path of the single Citro3D frame opened by CtrVideo_Present.
- * Same shape as RenderEye: compose the logical surface, split, blit it to the
- * screen. What changes is who composes it.
- */
-static void RenderVoxel(uint32_t clear)
-{
-    const Tex3DS_SubTexture logical = {CTR_GAME_WIDTH, CTR_GAME_HEIGHT, 0, 1,
-        CTR_GAME_WIDTH / 512.0f, 1 - CTR_GAME_HEIGHT / 256.0f};
-
-    /* C2D_TargetClear clears colour and depth, which the 3D pass needs. */
-    C2D_TargetClear(sLogical, clear);
-    CtrVoxel_Draw(sLogical, 0.0f);
-
-    /* Finish the world before sampling it. UI is drawn on top after blur. */
-    C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
-    C3D_FrameSplit(0);
-
-    /* Back to the 2D compositor, which assumes its own program and no depth. */
-    C2D_Prepare();
-    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
-    BlendForget();
-    C2D_TargetClear(sTop, C2D_Color32(0, 0, 0, 255));
-    C2D_SceneBegin(sTop);
-    C2D_ViewReset();
-    Blend(5, false, false);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &logical}, 0, 0, 0, NULL, 1, 1);
-    VoxelBackgroundBlur();
-    if (!(Reg(0) & 128)) ComposeVoxelOverlay();
-    C2D_Flush();
-    C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
-    C3D_FrameSplit(0);
-}
-#endif
 
 /*
  * How many depth planes this frame can be split into.
@@ -5333,15 +5308,8 @@ static bool BandsReady(void)
          * 2D screen - a menu, a battle - is where that VRAM is wanted back:
          * the atlases of maps not on screen go, the current map's stay.
          */
-#if CTR_VOXEL_ENABLED
-        else if (attempt == 0)
-            CtrVoxel_ReleaseIdleVram();
-        else if (attempt == 1 && sScene && !sBattle && !sBattleRequested && !sNativeRequested)
-            SceneRelease();
-#else
         else if (attempt == 0 && sScene && !sBattle && !sBattleRequested && !sNativeRequested)
             SceneRelease();
-#endif
         else
             break;
     }
@@ -5712,8 +5680,8 @@ bool CtrVideo_SetBottomViewport(bool on)
     on = on && sBottom && sChrome.data;
     if (on != sBottomGpu)
     {
-        /* The CPU path writes the shown buffer; the GPU path swaps two. */
-        gfxSetDoubleBuffering(GFX_BOTTOM, on);
+        /* Both paths swap two buffers: the GPU's at the frame's end, the CPU's in CtrBottom_BlitFrameEnd. */
+        gfxSetDoubleBuffering(GFX_BOTTOM, true);
         CtrLog_Write(CTR_LOG_VIDEO, "bottom screen %s at frame %lu", on ? "on the GPU" : "on the CPU",
                      (unsigned long)sStats.frames);
         sBottomGpu = on;
@@ -5747,7 +5715,7 @@ static void UploadChrome(void)
 
     if (!sChromeCanvas || sChromeDirty.count == 0) return;
     start = CtrPerf_PlatformClock();
-    CtrDirty_Upload(sChromeCanvas, &sChromeDirty, (uint16_t *)sChrome.data, CtrVideo_Texel);
+    CtrDirty_Upload(sChromeCanvas, &sChromeDirty, (uint16_t *)sChrome.data);
     sChromeStatPixels += (uint32_t)CtrDirty_Pixels(&sChromeDirty);
     sChromeStatTicks += CtrPerf_PlatformClock() - start;
     CtrDirty_Clear(&sChromeDirty);
@@ -5828,6 +5796,14 @@ static void ApplyPresentationView(void)
     }
 }
 
+/* When the last frame shown began, just after the screen's refresh it waited for (the turbo's time budget). */
+static uint64_t sFrameStartTick;
+
+uint64_t CtrVideo_FrameStartTick(void)
+{
+    return sFrameStartTick;
+}
+
 void CtrVideo_Present(void)
 {
     if (!sMemory.regs) CtrPlatform_Fatal("VIDEO has no logical memory bound");
@@ -5835,6 +5811,7 @@ void CtrVideo_Present(void)
     {
         uint64_t holdWait = CtrPerf_Begin();
         gspWaitForVBlank();
+        sFrameStartTick = svcGetSystemTick();
         CtrPerf_End(PERF_GPU_WAIT, holdWait);
         ++sStats.frames;
         return;
@@ -5868,6 +5845,7 @@ void CtrVideo_Present(void)
     sVramToken = sStats.frames + 1;
     LayersPrepare();
     ScenePrepare();
+    ObjWindowPrepare();
     CtrPerf_End(PERF_PREPARE,perfPrepare);
     uint64_t waitStart = svcGetSystemTick();
     if (!C3D_FrameBegin(C3D_FRAME_SYNCDRAW)) return;
@@ -5878,52 +5856,9 @@ void CtrVideo_Present(void)
     /* Before anything samples what the CPU wrote since the last frame. */
     TexCacheDrop();
     uint64_t start = svcGetSystemTick();
+    sFrameStartTick = start;
     sStats.waitMs = (start - waitStart) * 1000.0 / SYSCLOCK_ARM11;
     if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_GPU_WAIT]+=start-waitStart;
-#if CTR_VOXEL_ENABLED
-    /*
-     * FrameBegin returns on a VBlank, so the time between two returns is a
-     * whole number of display frames: two of them is a frame the screen
-     * showed twice. Logged with what the frame before it spent - the present
-     * (and the voxel builds in it), then the game and its VBlank handler - so
-     * that a slow renderer can be told from a slow game on hardware.
-     */
-    {
-        static uint64_t sLastBegin;
-        static unsigned sDropsLogged;
-        /* A screen that runs at 30 for a while is one finding, not a line per
-         * frame: a steady run is logged once a second with how many frames it
-         * dropped, and only a hitch of three frames or more is always logged. */
-        static uint32_t sLastDropLogged;
-        static unsigned sDropsQuiet;
-        float gap = sLastBegin ? (start - sLastBegin) * 1000.0f / SYSCLOCK_ARM11 : 0.0f;
-
-        if (gap > 24.0f && sStats.frames > 120 && sDropsLogged < 3000)
-        {
-            if (gap < 45.0f && sStats.frames - sLastDropLogged < 60)
-                ++sDropsQuiet;
-            else
-            {
-                const CtrTiming *timing = CtrPlatform_GetTiming();
-                const CtrVoxelStats *voxel = CtrVoxel_GetStats();
-
-                ++sDropsLogged;
-                sLastDropLogged = sStats.frames;
-                /* The voxel figures are the last voxel frame's: on a 2D frame they
-                 * are stale, and present= alone is the 2D compositor. */
-                CtrLog_Write(CTR_LOG_VIDEO, "DROP frame=%lu gap=%.1fms (+%u quiet): present=%.1f "
-                             "(voxel=%.1f: world=%.1f atlas=%.1f chunks=%.1f sprites=%.1f) "
-                             "game=%.1f audio+vblank=%.1f",
-                             (unsigned long)sStats.frames, gap, sDropsQuiet, sStats.cpuMs,
-                             voxel->updateMs, voxel->worldMs, voxel->atlasMs,
-                             voxel->meshMs - voxel->atlasMs, voxel->spritesMs,
-                             timing->gameMs, timing->vblankMs);
-                sDropsQuiet = 0;
-            }
-        }
-        sLastBegin = start;
-    }
-#endif
     sStats.tiles = sStats.uploads = sStats.sprites = 0;
     sBgTicks = sObjTicks = 0;
     sStats.display = Reg(0);
@@ -5945,24 +5880,7 @@ void CtrVideo_Present(void)
      * composed at all: with 3D off this is the same single pass as before.
      * Whole pixels only, so every layer stays on the pixel grid in both eyes.
      */
-#if CTR_VOXEL_ENABLED
-    /*
-     * Preparing the voxel frame is part of the decision. If the atlas or the
-     * mesh could not be built this frame, the 2D compositor draws it: leaving
-     * the previous map's geometry on screen would show the wrong place.
-     */
-    /* The overworld, drawn in 3D or - while its first atlas or mesh is still
-     * being made - by the 2D compositor. Either way it never takes the depth
-     * planes: holding them there is what kept the overworld's atlas out of
-     * VRAM for good, the 2D picture standing in for it frame after frame. */
-    bool overworld = !sStage && !sCentred && !sBattle && CtrVoxel_IsAvailable();
-    bool voxel = overworld && CtrVoxel_Update();
-    /* A new map still being made - a frame or two, behind the fade - is
-     * black rather than the 2D picture flashing up before the 3D one. */
-    bool blank = overworld && !voxel && CtrVoxel_IsWarmingUp();
-#else
     const bool voxel = false, overworld = false, blank = false;
-#endif
     float slider = osGet3DSliderState();
     /* Real stereoscopy for the voxel world is V8; the layer parallax of the
      * 2D path means nothing for a 3D scene, so it stays off there. */
@@ -5980,13 +5898,12 @@ void CtrVideo_Present(void)
     uint64_t perfLayers=CtrPerf_Begin();
     if (!voxel && !blank) LayersRender();
     CtrPerf_End(PERF_PREPARE,perfLayers);
+    /* Once a frame, before any eye or the battle's scene is composed. */
+    sObjWin.ready = false;
+    if (!voxel && !blank) ObjWindowCompose();
 
     if (voxel)
     {
-#if CTR_VOXEL_ENABLED
-        sPlanes = 0;
-        RenderVoxel(clear);
-#endif
     }
     else if (blank)
     {
@@ -6067,22 +5984,6 @@ void CtrVideo_Present(void)
                      (unsigned long)sStats.tiles, (unsigned long)sStats.sprites,
                      (unsigned long)sStats.errors, sUsed,
                      (unsigned long)linearSpaceFree(), (unsigned long)vramSpaceFree());
-#if CTR_VOXEL_ENABLED
-        if (voxel)
-        {
-            const CtrVoxelStats *stats = CtrVoxel_GetStats();
-            CtrLog_Write(CTR_LOG_VIDEO,
-                         "VOXEL chunks=%u/%u missing=%u pending=%u builds=%u atlas=%u verts=%u "
-                         "mesh=%.2fms peak=%.2fms update=%.2fms peak=%.2fms dropped=%u "
-                         "anim=%u/%u refl=%u",
-                         stats->visibleChunks, stats->chunks, stats->chunksMissing,
-                         stats->pendingBuilds, stats->meshRebuilds, stats->atlasRebuilds,
-                         stats->vertices, stats->meshMs, stats->meshPeakMs,
-                         stats->updateMs, stats->updatePeakMs, stats->dropped,
-                         stats->animationUploads, stats->animatedMetatiles,
-                         stats->reflections);
-        }
-#endif
     }
 }
 
@@ -6145,13 +6046,11 @@ void CtrVideo_Shutdown(void)
      * "closing". The process ends right after; the system reclaims it all. */
     if (aptShouldClose())
         return;
-#if CTR_VOXEL_ENABLED
-    CtrVoxel_Shutdown();
-#endif
     LayersRelease();
     C3D_FrameSync();
     NativeIntroRelease();
     SceneRelease();
+    ObjWindowRelease();
     /* Target deletion waits for queued GPU work before buffers are freed. */
     if (sLogical) C3D_RenderTargetDelete(sLogical);
     if (sTop) C3D_RenderTargetDelete(sTop);
@@ -6173,4 +6072,17 @@ void CtrVideo_Shutdown(void)
     sC2d = sC3d = false;
     memset(&sSurface, 0, sizeof(sSurface));
     memset(&sAtlas, 0, sizeof(sAtlas));
+}
+
+void CtrVideo_HideBg0Rect(int x, int y, int w, int h)
+{
+    if (w <= 0 || h <= 0)
+        x = y = w = h = 0;
+    if (x == sHideBg0.x && y == sHideBg0.y && w == sHideBg0.w && h == sHideBg0.h)
+        return;
+    sHideBg0.x = x;
+    sHideBg0.y = y;
+    sHideBg0.w = w;
+    sHideBg0.h = h;
+    sCellControl[0] = ~0u;   /* its cells are walked again, all of them, with or without the rectangle */
 }

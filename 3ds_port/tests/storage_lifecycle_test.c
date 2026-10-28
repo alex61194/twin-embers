@@ -3,11 +3,13 @@
 #include <stdio.h>
 #include "3ds_video.h"
 #include "3ds_poketouch.h"
-enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9 };
+enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9,MODE_CHOICE };
 static int sStorageSession, fading, pcMenu, pcReady, boxPresented, namePresented, summaryReady, bagState;
 static int CtrBottom_IsFading(void) { return fading; }
 static int CtrBottomStorage_PCMenu(void) { return pcMenu; }
 static int CtrBottomStorage_PCMenuReady(void) { return pcReady; }
+static int choiceOpen;
+static int CtrFieldChoice_IsOpen(void) { return choiceOpen; }
 static int CtrBottomStorage_BoxPresented(void) { return boxPresented; }
 static int CtrBottomStorage_NamingPresented(void) { return namePresented; }
 int CtrBottomSummary_Ready(void) { return summaryReady; }
@@ -41,7 +43,10 @@ int main(void)
 {
     pcMenu=pcReady=1;
     UpdateStorageOwner(MODE_FIELD);
-    assert(!sStorageSession && !StorageBridge(MODE_FIELD) && !StorageHoldTop());
+    assert(!sStorageSession && !StorageBridge(MODE_FIELD));
+    assert(StorageHoldTop());                       /* ready, but not a field choice yet: its first input is next frame */
+    choiceOpen=1; assert(!StorageHoldTop());        /* the choice holds TOP from here (MODE_CHOICE) */
+    choiceOpen=0; assert(!StorageHoldTop());        /* then a message ("party full") is TOP's own */
     pcReady=0; fading=1;
     assert(StorageHoldTop() && !sStorageSession); /* Entry fade: no lower PC viewport. */
     fading=0;
@@ -52,7 +57,10 @@ int main(void)
     boxPresented=1; assert(!StorageBridge(MODE_STORAGE_BOX));
     UpdateStorageOwner(MODE_SUMMARY); assert(sStorageSession);
     pcMenu=pcReady=1; UpdateStorageOwner(MODE_FIELD);
-    assert(!sStorageSession && !StorageHoldTop()); /* Choices return to TOP. */
+    assert(!sStorageSession && StorageHoldTop());   /* Back from the box, faded in: held until it is a field choice, */
+    choiceOpen=1; UpdateStorageOwner(MODE_CHOICE);
+    assert(!sStorageSession && !StorageHoldTop()); /* its rows below (MODE_CHOICE holds TOP). */
+    choiceOpen=0;
     pcMenu=pcReady=boxPresented=0;
     assert(!StorageBridge(MODE_FIELD)); sStorageSession=1;
     assert(StorageBridge(MODE_STORAGE_PC)); pcReady=1; assert(!StorageBridge(MODE_STORAGE_PC));
