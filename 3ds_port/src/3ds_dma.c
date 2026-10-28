@@ -1,5 +1,6 @@
 /* FireRed GBA DMA bridge: immediate and VBlank transfers in virtual RAM.
  * The title's repeated HBlank BLDY transfer is sampled by the compositor. */
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -66,16 +67,45 @@ static void Transfer(unsigned channel)
     CTR_PERF_COUNT(PERF_DMA_BYTES, dma->count * width);
     CTR_PERF_TRANSFER(dma->dest, dma->count * width);
 
-    for (uint32_t i = 0; i < dma->count; ++i)
+    size_t bytes = (size_t)dma->count * width;
+    bool destUp = destMode == 0 || destMode == 3;
+    if (destUp && sourceMode == 0
+     && !(dma->dest > dma->src && dma->dest < dma->src + bytes))
     {
-        uint32_t value = 0;
-        memcpy(&value, dma->src, width);
-        memcpy(dma->dest, &value, width);
-        if (sourceMode == 0) dma->src += width;
-        if (sourceMode == 1) dma->src -= width;
-        if (destMode == 0 || destMode == 3) dma->dest += width;
-        if (destMode == 1) dma->dest -= width;
+        /* Both incrementing and not a forward overlap, where each unit would read one the transfer already wrote:
+         * the same bytes as the unit loop, in one copy. A map load moves ~96 KiB this way; unit by unit (two
+         * library calls per halfword) it took 15-20 ms of an Old 3DS frame. */
+        memmove(dma->dest, dma->src, bytes);
+        dma->src += bytes;
+        dma->dest += bytes;
     }
+    else if (destUp && sourceMode == 2
+          && !(dma->src < dma->dest + bytes && dma->src + width > dma->dest))
+    {
+        /* A fill: the one source unit repeated. The first unit is written, then the filled prefix is copied after
+         * itself, doubling each time (never overlapping): a few copies instead of two library calls per unit. */
+        uint8_t *to = dma->dest;
+        size_t filled = width;
+        memmove(to, dma->src, width);
+        while (filled < bytes)
+        {
+            size_t chunk = bytes - filled < filled ? bytes - filled : filled;
+            memcpy(to + filled, to, chunk);
+            filled += chunk;
+        }
+        dma->dest += bytes;
+    }
+    else
+        for (uint32_t i = 0; i < dma->count; ++i)
+        {
+            uint32_t value = 0;
+            memcpy(&value, dma->src, width);
+            memcpy(dma->dest, &value, width);
+            if (sourceMode == 0) dma->src += width;
+            if (sourceMode == 1) dma->src -= width;
+            if (destUp) dma->dest += width;
+            if (destMode == 1) dma->dest -= width;
+        }
     if (destMode == 3)
         dma->dest = dma->reloadDest;
     if (!(dma->control & DMA_REPEAT) || (dma->control & DMA_START_MASK) == DMA_START_NOW)

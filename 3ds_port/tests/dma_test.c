@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "3ds_dma.h"
 #include "gba_shadow.h"
@@ -7,6 +8,42 @@
 enum { ENABLE = 0x8000, FIXED_SRC = 0x0100, WORD = 0x0400,
        REPEAT = 0x0200, DEST_RELOAD = 0x0060,
        VBLANK = 0x1000, HBLANK = 0x2000 };
+
+/* The unit-by-unit transfer the copy and fill fast paths must match byte for byte. */
+static void ReferenceTransfer(uint8_t *src, uint8_t *dst, unsigned count, unsigned width, unsigned sm, unsigned dm)
+{
+    for (unsigned i = 0; i < count; ++i)
+    {
+        uint32_t v = 0;
+        memcpy(&v, src, width);
+        memcpy(dst, &v, width);
+        if (sm == 0) src += width;
+        if (sm == 1) src -= width;
+        if (dm == 0 || dm == 3) dst += width;
+        if (dm == 1) dst -= width;
+    }
+}
+
+static void FastPathsMatchReference(void)
+{
+    static uint8_t expect[4096], got[4096];
+    srand(1234);
+    for (int it = 0; it < 50000; ++it)
+    {
+        unsigned width = rand() % 2 ? 4 : 2, count = 1 + rand() % 300;
+        unsigned sm = rand() % 3, dm = rand() % 4;
+        size_t span = (size_t)count * width;
+        size_t src = 1300 + rand() % 1400, dst = 1300 + rand() % 1400;
+        if (rand() % 3 == 0) dst = src + (rand() % 9) - 4;   /* overlaps, down to part of one unit */
+        if (src < span + 8 || dst < span + 8 || src + span + 8 > sizeof(got) || dst + span + 8 > sizeof(got))
+            continue;
+        for (size_t i = 0; i < sizeof(got); ++i)
+            expect[i] = got[i] = (uint8_t)rand();
+        ReferenceTransfer(expect + src, expect + dst, count, width, sm, dm);
+        CtrDma_Set(3, got + src, got + dst, ((ENABLE | (width == 4 ? WORD : 0) | (sm << 7) | (dm << 5)) << 16) | count);
+        assert(memcmp(expect, got, sizeof(got)) == 0);
+    }
+}
 
 int main(void)
 {
@@ -66,5 +103,6 @@ int main(void)
         CtrDma_Set(0, brightness + 1, &bldy, control | ((uint32_t)WORD << 16));
         assert(!CtrDma_ReadHBlank16(0, &bldy, lines, 4));
     }
+    FastPathsMatchReference();
     return 0;
 }
