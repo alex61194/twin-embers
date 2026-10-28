@@ -134,7 +134,7 @@ static int FXWallpaper(unsigned id)
         sFXWallOk = CtrPokeTouch_Wallpaper(id, raw);
         for (int i = 0; sFXWallOk && i < 160 * 144; ++i) {
             unsigned c = raw[i];
-            sFXWall[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+            sFXWall[i] = GbaColor(c);
         }
     }
     return sFXWallOk;

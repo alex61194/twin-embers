@@ -197,37 +197,6 @@ UI_FN void UiText(const char *s, int x, int top, uint16_t fg, uint16_t shadow, i
     }
 }
 
-/* The same in the game's small font: capitals 7 pixels high (rows 4-10 of the glyph, so a line drawn at `top` has its
- * capitals there), letters mostly 5 wide. For the attack names and descriptions. */
-UI_FN int UiTextWidthSmall(const char *s)
-{
-    int w = 0;
-
-    while (*s)
-        w += GlyphSmall(&s)->width;
-    return w;
-}
-
-UI_FN void UiTextSmall(const char *s, int x, int top, uint16_t fg, uint16_t shadow, int limit)
-{
-    int y = top - 4;
-
-    while (*s) {
-        const PtGlyph *g = GlyphSmall(&s);
-
-        if (x + g->width > limit)
-            break;
-        for (int row = 0; row < 16; ++row)
-            for (int col = 0; col < g->width; ++col) {
-                unsigned v = (g->rows[row] >> (2 * col)) & 3;
-
-                if (v)
-                    Px(x + col, y + row, v == 1 ? fg : shadow);
-            }
-        x += g->width;
-    }
-}
-
 /* Centred on `r` across, its capitals vertically centred when `top` < 0. */
 UI_FN void UiTextCentered(const char *s, const CtrPokeTouchRect *r, int top, uint16_t fg, uint16_t shadow, int scale)
 {
@@ -252,12 +221,6 @@ UI_FN void UiPanel(const CtrPokeTouchRect *r, uint16_t body, uint16_t border)
     UiRing(r, UI_RADIUS_PANEL, 1, border);
     UiRoundFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_RADIUS_PANEL - 1, body);
     Fill(r->x + 3, r->y + 1, r->w - 6, 1, UiMix(body, border, 4));
-}
-
-/* A thin rule across a panel. */
-UI_FN void UiSeparator(int x, int y, int w)
-{
-    Fill(x, y, w, 1, UIS_SEPARATOR);
 }
 
 /* A raised button: the outline, a lip in the shaded colour, the body with a gloss over its top half and a light first
@@ -310,40 +273,6 @@ UI_FN int UiButtonLabelTop(const CtrPokeTouchRect *r, int state, int scale)
 UI_FN uint16_t UiLabelColor(int state)
 {
     return (state & UI_DISABLED) ? UI_TEXT_OFF : UI_TEXT;
-}
-
-/* A button with its label centred. */
-UI_FN void UiLabelButton(const CtrPokeTouchRect *r, const UiButtonStyle *style, int state, const char *label, int scale)
-{
-    CtrPokeTouchRect face = *r;
-
-    UiButton(r, style, state);
-    face.y = (int16_t)UiButtonLabelTop(r, state, scale);
-    UiTextCentered(label, &face, face.y, UiLabelColor(state), UIS_TEXT_SH, scale);
-}
-
-/* A focus ring alone (an element whose body is drawn its own way). */
-UI_FN void UiFocus(const CtrPokeTouchRect *r)
-{
-    CtrPokeTouchRect ring = UiInset(r, 1);
-
-    UiRing(&ring, UI_RADIUS_BUTTON - 1, UI_FOCUS_W, UI_TEXT);
-}
-
-/* A tab: the active one raised in the primary blue with a bright underline, the others flat and dark. */
-UI_FN void UiTab(const CtrPokeTouchRect *r, const char *label, int state)
-{
-    const UiButtonStyle *sOn = &sUiS->primary, *sOff = &sUiS->neutral;
-    int on = (state & UI_SELECTED) != 0;
-
-    UiButton(r, on ? sOn : sOff, state & ~UI_SELECTED);
-    if (on)
-        Fill(r->x + 6, r->y + r->h - 3, r->w - 12, 2, UIS_FOCUS_LIT);
-    {
-        CtrPokeTouchRect face = *r;
-
-        UiTextCentered(label, &face, UiButtonLabelTop(r, state, 1), on ? UI_TEXT : UIS_TEXT_DIM, UIS_TEXT_SH, 1);
-    }
 }
 
 /* White text where it reads (about 3:1 or better), the dark shadow colour on the light colours (yellow, sand...). */
@@ -416,24 +345,6 @@ UI_FN void UiHpBar(const CtrPokeTouchRect *r, unsigned hp, unsigned max)
     UiProgressBar(r, hp, max, UiHpColor(hp, max));
 }
 
-/* A screen's header: a panel strip with a title on the left and an optional caption on the right. */
-UI_FN void UiHeader(const CtrPokeTouchRect *r, const char *title, const char *caption)
-{
-    UiPanel(r, UIS_PANEL, UIS_BORDER);
-    Fill(r->x + 1, r->y + r->h - 2, r->w - 2, 1, UIS_FOCUS);
-    UiText(title, r->x + 8, r->y + (r->h - UI_TEXT_H) / 2, UI_TEXT, UIS_TEXT_SH, 1, r->x + r->w - 4);
-    if (caption && caption[0])
-        UiTextRight(caption, r->x + r->w - 8, r->y + (r->h - UI_TEXT_H) / 2, UIS_TEXT_DIM, UIS_TEXT_SH, 1);
-}
-
-/* A footer: a dark strip with a hint centred in it. */
-UI_FN void UiFooter(const CtrPokeTouchRect *r, const char *hint)
-{
-    UiPanel(r, UIS_PANEL_LO, UIS_SEPARATOR);
-    if (hint && hint[0])
-        UiTextCentered(hint, r, -1, UIS_TEXT_DIM, UIS_TEXT_SH, 1);
-}
-
 /* An indexed image (palette entries, 0 clear) at `scale`, toned grey when off. */
 UI_FN void UiImage(const uint8_t *pixels, const uint16_t *pal, int stride, int w, int h, int x, int y, int scale, int on)
 {
@@ -477,16 +388,6 @@ UI_FN void UiDim(const CtrPokeTouchRect *r)
         for (int n = y1 - y0; n > 0; --n, ++p)
             *p = (uint16_t)((*p >> 1) & 0x7BEF);
     }
-}
-
-/* A modal: the dimmed screen, then a raised panel with a light border. */
-UI_FN void UiModal(const CtrPokeTouchRect *backdrop, const CtrPokeTouchRect *r)
-{
-    UiDim(backdrop);
-    UiRoundRect(r, UI_RADIUS_BUTTON, UIS_OUTLINE);
-    UiRoundFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, UI_RADIUS_BUTTON - 1, UIS_BORDER_LIT);
-    UiRoundFill(r->x + 2, r->y + 2, r->w - 4, r->h - 4, UI_RADIUS_PANEL - 1, UIS_PANEL);
-    Fill(r->x + 4, r->y + 2, r->w - 8, 1, UIS_PANEL_HI);
 }
 
 /* A small triangle: dir -1 left, 1 right, -2 up, 2 down; 5 deep. */

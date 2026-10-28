@@ -61,13 +61,11 @@ CtrDataBackend CtrData_GetBackend(void);
 const char *CtrData_BackendName(void);
 const char *CtrData_ErrorTitle(void);
 const char *CtrData_ErrorDetail(void);
-uint32_t CtrData_EngineAbi(void);
 
 /* A read-only stdio stream over one data file, or NULL if it does not exist.
  * fseek/ftell/fread/fclose work as on any file. Safe to call from several
  * threads; each stream must stay on the thread that opened it. */
 FILE *CtrData_Open(const char *path);
-bool CtrData_Exists(const char *path);
 bool CtrData_Size(const char *path, uint32_t *outSize);
 /* Exact-size load into caller-owned storage, with payload CRC validation.
  * Prefer this to Open: it reads and checks each payload only once. */

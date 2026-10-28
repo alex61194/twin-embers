@@ -32,6 +32,12 @@ extern int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned s
 #define W CTR_BOTTOM_WIDTH
 #define H CTR_BOTTOM_HEIGHT
 #define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
+/* A GBA colour (BGR555) as the canvas's RGB565, green's low bit clear: FireRed's palettes as its icons and pictures
+ * are drawn here. */
+static inline uint16_t GbaColor(uint16_t c)
+{
+    return RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+}
 
 
 /* Native menu icons: the six themed item graphics already reconstructed from
@@ -245,23 +251,6 @@ static const PtGlyph *Glyph(const char **s)
     return &sPtFont[code];
 }
 
-/* The game's small font (latin_small): 5 pixels wide for most letters, capitals on glyph rows 4-10. */
-static const PtGlyph *GlyphSmall(const char **s)
-{
-    unsigned code;
-
-    TwinIconsPrepare();
-    code = GlyphCode(s);
-    if (!sPtFontSmallReady[code]) {
-        const uint8_t *src = CtrTwinSmallFontData() + code * 32;
-        PtGlyph *g = &sPtFontSmall[code];
-        g->width = CtrTwinSmallFontWidth(code);
-        if (g->width > 8) g->width = 8;
-        TwinSmallGlyphDecode(src, g->width, g->rows);
-        sPtFontSmallReady[code] = true;
-    }
-    return &sPtFontSmall[code];
-}
 /* Images: palette indices, 0 clear; disabled art is a light grey. */
 static uint16_t Tone(uint16_t c, int on)
 {
@@ -333,7 +322,7 @@ static int ItemIcon(int slot, unsigned item)
     sIcons[slot].y0 = y0 < 0 ? 0 : y0 > 4 ? 4 : y0;
     for (int i = 0; i < 16; ++i) {
         unsigned c = pal[i];
-        sIcons[slot].pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        sIcons[slot].pal[i] = GbaColor(c);
     }
     return 1;
 }
@@ -945,7 +934,7 @@ static int FrameSample(int type, int x, int y)
             for (int i = 0; i < 16; ++i) {
                 unsigned c = (unsigned)colors[i * 2] | (unsigned)colors[i * 2 + 1] << 8;
 
-                pal[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+                pal[i] = GbaColor(c);
             }
             for (int ty = 0; ty < 24; ++ty)
                 for (int tx = 0; tx < 24; ++tx) {

@@ -101,15 +101,6 @@ static void PerfSceneBegin(C3D_RenderTarget *target)
 #define C2D_Flush PerfFlush
 #define C2D_SceneBegin PerfSceneBegin
 
-/* The voxel overworld replaces this compositor's output while the player is
- * walking around; every other game state keeps the 2D path below. */
-#ifndef CTR_VOXEL_ENABLED
-#define CTR_VOXEL_ENABLED 0
-#endif
-#if CTR_VOXEL_ENABLED
-#include "voxel/ctr_voxel.h"
-#endif
-
 /*
  * The game lays itself out over the whole 400x240 viewport, so screen and
  * logical coordinates are the same. A background only covers the part of the
@@ -220,53 +211,12 @@ typedef struct
     bool valid, visible;
 } Tile;
 
-#if CTR_VOXEL_ENABLED
-static uint32_t sVoxelWeatherOam[4];
-static bool sVoxelWeatherOnly;
-
-void CtrVideo_ClearVoxelWeatherOam(void)
-{
-    memset(sVoxelWeatherOam, 0, sizeof(sVoxelWeatherOam));
-}
-
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end)
-{
-    if (end > 128) end = 128;
-    for (unsigned i = first; i < end; ++i)
-        sVoxelWeatherOam[i >> 5] |= 1u << (i & 31);
-}
-#else
-void CtrVideo_ClearVoxelWeatherOam(void) {}
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end)
-{
-    (void)first;
-    (void)end;
-}
-#endif
-
 static CtrVideoMemory sMemory;
 /* OBJ Window is an OAM alpha mask, not visible sprite geometry. */
 static uint8_t sObjWindow[240][400];
 /* Rows of sObjWindow holding at least one OBJ window pixel. */
 static bool sObjWindowRow[240];
 
-const uint8_t *CtrVideo_GetBgVram(void) { return sMemory.vram; }
-
-void CtrVideo_NotifyTilesetAnimWrite(const void *dest, unsigned bytes)
-{
-#if CTR_VOXEL_ENABLED
-    uintptr_t base = (uintptr_t)sMemory.vram;
-    uintptr_t address = (uintptr_t)dest;
-    if (base == 0 || address < base || address - base >= 0x8000 || bytes == 0)
-        return;
-    unsigned offset = (unsigned)(address - base);
-    if (bytes > 0x8000 - offset) bytes = 0x8000 - offset;
-    CtrVoxel_NotifyTilesetAnimWrite(offset / 32, (offset % 32 + bytes + 31) / 32);
-#else
-    (void)dest;
-    (void)bytes;
-#endif
-}
 static CtrVideoStats sStats;
 /* Bumped when the tile cache is emptied: slots a walk saw are then stale. */
 static uint32_t sCacheGeneration;
@@ -1043,16 +993,6 @@ static void Blend(unsigned layer, bool effects, bool semiTransparent)
     }
     CtrPerf_End(PERF_BLEND,perfStart);
 }
-
-__attribute__((weak)) unsigned CtrIntro_ReadActors(CtrIntroActor *actors, unsigned capacity)
-{ (void)actors; (void)capacity; return 0; }
-__attribute__((weak)) void CtrIntro_ReadScene1Pose(CtrIntroScene1Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) void CtrIntro_ReadScene2Pose(CtrIntroScene2Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) void CtrIntro_ReadScene3Pose(CtrIntroScene3Pose *pose)
-{ memset(pose, 0, sizeof(*pose)); }
-__attribute__((weak)) int CtrIntro_ReadTitleFooterX(void) { return 0; }
 
 #include "3ds_intro_fallback.h"
 
@@ -3247,10 +3187,6 @@ static void DrawObjects(unsigned priority, bool effects)
     for (int i = 127; i >= 0; --i)
     {
         CTR_PERF_COUNT(PERF_OAM_VISITS,1);
-#if CTR_VOXEL_ENABLED
-        if (sVoxelWeatherOnly && !(sVoxelWeatherOam[i >> 5] & (1u << (i & 31))))
-            continue;
-#endif
         const uint16_t *obj = sMemory.oam + i * 4;
         unsigned attr0 = obj[0], attr1 = obj[1], attr2 = obj[2];
         bool affine = (attr0 & 0x100) != 0, color256 = (attr0 & 0x2000) != 0;
@@ -3284,13 +3220,6 @@ static void DrawObjects(unsigned priority, bool effects)
                 x = CtrObj_UnwrapX(x, VIEW_RIGHT);
                 y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
             }
-#if CTR_VOXEL_ENABLED
-            if (sVoxelWeatherOnly)
-            {
-                x += CTR_STAGE_X;
-                y += CTR_STAGE_Y;
-            }
-#endif
         }
         if (x >= sClipX1 || x + (int)boxW <= sClipX0
          || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
@@ -4850,12 +4779,6 @@ bool CtrVideo_Init(void)
     C2D_Prepare();
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
     CtrFastCells_Init();
-#if CTR_VOXEL_ENABLED
-    /* Citro3D and Citro2D are up; the voxel module only adds its own shader,
-     * textures and buffers on top of them. */
-    step = "voxel overworld renderer";
-    if (!CtrVoxel_Init()) goto fail;
-#endif
     sFpsStart = CtrPlatform_Milliseconds();
     CtrLog_Write(CTR_LOG_VIDEO, "VIDEO_PRESENT mode=native400 logical=400x240 compose=400x240 texture=512x256 scale=1.0 margins=0,0 filter=nearest VRAMfree=%lu",
                  (unsigned long)vramSpaceFree());
@@ -4927,11 +4850,7 @@ static void ScenePrepare(void)
         SceneRelease();
         /* The overworld's atlases of other maps are what a 2D screen gets
          * back first, as for the depth planes (BandsReady). */
-#if CTR_VOXEL_ENABLED
-        if (attempt == 0 && CtrVoxel_ReleaseIdleVram() == 0) break;
-#else
         break;
-#endif
     }
     if (!sScene)
     {
@@ -5085,94 +5004,6 @@ static void RenderEye(C3D_RenderTarget *target, uint32_t clear, float parallax)
     C3D_FrameSplit(0);
 }
 
-#if CTR_VOXEL_ENABLED
-/*
- * The game's own UI and weather over the voxel world. BG0 carries text; only
- * OAM entries tagged by the sprite sorter as weather are composed. Drawing all
- * OBJ here would duplicate the player and every NPC over their billboards.
- */
-/*
- * The text layer is a 32-column tilemap, so it only addresses the left 256px
- * of the 400px viewport, and widening it does not fit in background VRAM (see
- * the note on sStandardTextBox_WindowTemplates in src/menu.c). That is a
- * limit on where the *game* can put a window, not on where this compositor can
- * draw one: in voxel mode BG0 is drawn on its own, so the whole band can be
- * placed where it belongs. The standard text box spans x=16..232 within the
- * band, so its centre reaches the middle of the viewport at +76.
- */
-#define CTR_VOXEL_UI_SHIFT 76.0f
-
-/* Fixed north-facing camera: the upper 88 pixels are the distant background.
- * Four one-pixel taps, fading to zero towards the focus plane, reuse the world
- * surface. No extra target, depth readback or full-screen blur on Old 3DS. */
-static void VoxelBackgroundBlur(void)
-{
-    static const int offsets[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    C2D_ImageTint tint;
-    C2D_AlphaImageTint(&tint, 0.0f);
-    C2D_TopImageTint(&tint, C2D_Color32(255, 255, 255, 56), 0.0f);
-    for (unsigned i = 0; i < 4; ++i)
-    {
-        float x = 1.0f + offsets[i][0], y = 1.0f + offsets[i][1];
-        const Tex3DS_SubTexture region = {CTR_GAME_WIDTH - 2, 87,
-            x / 512.0f, 1.0f - y / 256.0f,
-            (x + CTR_GAME_WIDTH - 2) / 512.0f, 1.0f - (y + 87) / 256.0f};
-        C2D_DrawImageAt((C2D_Image){&sSurface, &region}, 1, 1, 0, &tint, 1, 1);
-    }
-}
-
-static void ComposeVoxelOverlay(void)
-{
-    sPriorityMask = 15;
-    sParallax = 0;
-    sLayerOrigin = 0.0f;
-    sLayerShift = 0.0f;
-    sClipX0 = sClipY0 = 0;
-    sClipX1 = CTR_GAME_WIDTH;
-    sClipY1 = CTR_GAME_HEIGHT;
-    sVoxelWeatherOnly = true;
-    Layers(1u << 4);
-    sVoxelWeatherOnly = false;
-    /* Text windows and prompts must stay above the precipitation. */
-    sLayerOrigin = CTR_VOXEL_UI_SHIFT;
-    Layers(1u << 0);
-    sLayerOrigin = 0.0f;
-}
-
-/*
- * The voxel path of the single Citro3D frame opened by CtrVideo_Present.
- * Same shape as RenderEye: compose the logical surface, split, blit it to the
- * screen. What changes is who composes it.
- */
-static void RenderVoxel(uint32_t clear)
-{
-    const Tex3DS_SubTexture logical = {CTR_GAME_WIDTH, CTR_GAME_HEIGHT, 0, 1,
-        CTR_GAME_WIDTH / 512.0f, 1 - CTR_GAME_HEIGHT / 256.0f};
-
-    /* C2D_TargetClear clears colour and depth, which the 3D pass needs. */
-    C2D_TargetClear(sLogical, clear);
-    CtrVoxel_Draw(sLogical, 0.0f);
-
-    /* Finish the world before sampling it. UI is drawn on top after blur. */
-    C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
-    C3D_FrameSplit(0);
-
-    /* Back to the 2D compositor, which assumes its own program and no depth. */
-    C2D_Prepare();
-    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
-    BlendForget();
-    C2D_TargetClear(sTop, C2D_Color32(0, 0, 0, 255));
-    C2D_SceneBegin(sTop);
-    C2D_ViewReset();
-    Blend(5, false, false);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &logical}, 0, 0, 0, NULL, 1, 1);
-    VoxelBackgroundBlur();
-    if (!(Reg(0) & 128)) ComposeVoxelOverlay();
-    C2D_Flush();
-    C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
-    C3D_FrameSplit(0);
-}
-#endif
 
 /*
  * How many depth planes this frame can be split into.
@@ -5333,15 +5164,8 @@ static bool BandsReady(void)
          * 2D screen - a menu, a battle - is where that VRAM is wanted back:
          * the atlases of maps not on screen go, the current map's stay.
          */
-#if CTR_VOXEL_ENABLED
-        else if (attempt == 0)
-            CtrVoxel_ReleaseIdleVram();
-        else if (attempt == 1 && sScene && !sBattle && !sBattleRequested && !sNativeRequested)
-            SceneRelease();
-#else
         else if (attempt == 0 && sScene && !sBattle && !sBattleRequested && !sNativeRequested)
             SceneRelease();
-#endif
         else
             break;
     }
@@ -5747,7 +5571,7 @@ static void UploadChrome(void)
 
     if (!sChromeCanvas || sChromeDirty.count == 0) return;
     start = CtrPerf_PlatformClock();
-    CtrDirty_Upload(sChromeCanvas, &sChromeDirty, (uint16_t *)sChrome.data, CtrVideo_Texel);
+    CtrDirty_Upload(sChromeCanvas, &sChromeDirty, (uint16_t *)sChrome.data);
     sChromeStatPixels += (uint32_t)CtrDirty_Pixels(&sChromeDirty);
     sChromeStatTicks += CtrPerf_PlatformClock() - start;
     CtrDirty_Clear(&sChromeDirty);
@@ -5880,50 +5704,6 @@ void CtrVideo_Present(void)
     uint64_t start = svcGetSystemTick();
     sStats.waitMs = (start - waitStart) * 1000.0 / SYSCLOCK_ARM11;
     if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_GPU_WAIT]+=start-waitStart;
-#if CTR_VOXEL_ENABLED
-    /*
-     * FrameBegin returns on a VBlank, so the time between two returns is a
-     * whole number of display frames: two of them is a frame the screen
-     * showed twice. Logged with what the frame before it spent - the present
-     * (and the voxel builds in it), then the game and its VBlank handler - so
-     * that a slow renderer can be told from a slow game on hardware.
-     */
-    {
-        static uint64_t sLastBegin;
-        static unsigned sDropsLogged;
-        /* A screen that runs at 30 for a while is one finding, not a line per
-         * frame: a steady run is logged once a second with how many frames it
-         * dropped, and only a hitch of three frames or more is always logged. */
-        static uint32_t sLastDropLogged;
-        static unsigned sDropsQuiet;
-        float gap = sLastBegin ? (start - sLastBegin) * 1000.0f / SYSCLOCK_ARM11 : 0.0f;
-
-        if (gap > 24.0f && sStats.frames > 120 && sDropsLogged < 3000)
-        {
-            if (gap < 45.0f && sStats.frames - sLastDropLogged < 60)
-                ++sDropsQuiet;
-            else
-            {
-                const CtrTiming *timing = CtrPlatform_GetTiming();
-                const CtrVoxelStats *voxel = CtrVoxel_GetStats();
-
-                ++sDropsLogged;
-                sLastDropLogged = sStats.frames;
-                /* The voxel figures are the last voxel frame's: on a 2D frame they
-                 * are stale, and present= alone is the 2D compositor. */
-                CtrLog_Write(CTR_LOG_VIDEO, "DROP frame=%lu gap=%.1fms (+%u quiet): present=%.1f "
-                             "(voxel=%.1f: world=%.1f atlas=%.1f chunks=%.1f sprites=%.1f) "
-                             "game=%.1f audio+vblank=%.1f",
-                             (unsigned long)sStats.frames, gap, sDropsQuiet, sStats.cpuMs,
-                             voxel->updateMs, voxel->worldMs, voxel->atlasMs,
-                             voxel->meshMs - voxel->atlasMs, voxel->spritesMs,
-                             timing->gameMs, timing->vblankMs);
-                sDropsQuiet = 0;
-            }
-        }
-        sLastBegin = start;
-    }
-#endif
     sStats.tiles = sStats.uploads = sStats.sprites = 0;
     sBgTicks = sObjTicks = 0;
     sStats.display = Reg(0);
@@ -5945,24 +5725,7 @@ void CtrVideo_Present(void)
      * composed at all: with 3D off this is the same single pass as before.
      * Whole pixels only, so every layer stays on the pixel grid in both eyes.
      */
-#if CTR_VOXEL_ENABLED
-    /*
-     * Preparing the voxel frame is part of the decision. If the atlas or the
-     * mesh could not be built this frame, the 2D compositor draws it: leaving
-     * the previous map's geometry on screen would show the wrong place.
-     */
-    /* The overworld, drawn in 3D or - while its first atlas or mesh is still
-     * being made - by the 2D compositor. Either way it never takes the depth
-     * planes: holding them there is what kept the overworld's atlas out of
-     * VRAM for good, the 2D picture standing in for it frame after frame. */
-    bool overworld = !sStage && !sCentred && !sBattle && CtrVoxel_IsAvailable();
-    bool voxel = overworld && CtrVoxel_Update();
-    /* A new map still being made - a frame or two, behind the fade - is
-     * black rather than the 2D picture flashing up before the 3D one. */
-    bool blank = overworld && !voxel && CtrVoxel_IsWarmingUp();
-#else
     const bool voxel = false, overworld = false, blank = false;
-#endif
     float slider = osGet3DSliderState();
     /* Real stereoscopy for the voxel world is V8; the layer parallax of the
      * 2D path means nothing for a 3D scene, so it stays off there. */
@@ -5983,10 +5746,6 @@ void CtrVideo_Present(void)
 
     if (voxel)
     {
-#if CTR_VOXEL_ENABLED
-        sPlanes = 0;
-        RenderVoxel(clear);
-#endif
     }
     else if (blank)
     {
@@ -6067,22 +5826,6 @@ void CtrVideo_Present(void)
                      (unsigned long)sStats.tiles, (unsigned long)sStats.sprites,
                      (unsigned long)sStats.errors, sUsed,
                      (unsigned long)linearSpaceFree(), (unsigned long)vramSpaceFree());
-#if CTR_VOXEL_ENABLED
-        if (voxel)
-        {
-            const CtrVoxelStats *stats = CtrVoxel_GetStats();
-            CtrLog_Write(CTR_LOG_VIDEO,
-                         "VOXEL chunks=%u/%u missing=%u pending=%u builds=%u atlas=%u verts=%u "
-                         "mesh=%.2fms peak=%.2fms update=%.2fms peak=%.2fms dropped=%u "
-                         "anim=%u/%u refl=%u",
-                         stats->visibleChunks, stats->chunks, stats->chunksMissing,
-                         stats->pendingBuilds, stats->meshRebuilds, stats->atlasRebuilds,
-                         stats->vertices, stats->meshMs, stats->meshPeakMs,
-                         stats->updateMs, stats->updatePeakMs, stats->dropped,
-                         stats->animationUploads, stats->animatedMetatiles,
-                         stats->reflections);
-        }
-#endif
     }
 }
 
@@ -6145,9 +5888,6 @@ void CtrVideo_Shutdown(void)
      * "closing". The process ends right after; the system reclaims it all. */
     if (aptShouldClose())
         return;
-#if CTR_VOXEL_ENABLED
-    CtrVoxel_Shutdown();
-#endif
     LayersRelease();
     C3D_FrameSync();
     NativeIntroRelease();

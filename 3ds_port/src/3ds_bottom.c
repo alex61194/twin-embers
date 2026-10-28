@@ -5289,11 +5289,6 @@ uint16_t CtrBottom_InjectedKeys(void)
     return sInjected;
 }
 
-bool CtrBottom_IsEnabled(void)
-{
-    return sEnabled != 0;
-}
-
 /* The turbo runs in two places, each only while FireRed says it is stable. The plain field (its own CB2, nothing fading,
  * no battle or battle transition) with PokeTouch having no screen of its own up: no hidden session, no native OPTIONS or
  * SAVE (SAVE also locks the field), no route in flight. And the battle itself (its own main callback, nothing fading, no

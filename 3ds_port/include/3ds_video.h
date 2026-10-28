@@ -77,11 +77,6 @@ void CtrVideo_BottomCanvasRect(const uint16_t *canvas, int x0, int y0, int x1, i
 /* The bottom canvas upload since the last call: texels written and the ticks
  * it took (both reset). Opt-in profiling of the bottom subsystem. */
 void CtrVideo_BottomUploadStats(uint32_t *pixels, uint64_t *ticks);
-/* OAM entries belonging to field weather, tagged while BuildOamBuffer sorts sprites. */
-void CtrVideo_ClearVoxelWeatherOam(void);
-void CtrVideo_MarkVoxelWeatherOam(unsigned first, unsigned end);
-void CtrVideo_NotifyTilesetAnimWrite(const void *dest, unsigned bytes);
-const uint8_t *CtrVideo_GetBgVram(void);
 /* Frees the 2D compositor's 3D depth planes before the next frame, for the
  * overworld when it cannot place an atlas. */
 void CtrVideo_RequestPlaneRelease(void);

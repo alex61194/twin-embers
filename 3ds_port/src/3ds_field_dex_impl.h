@@ -49,7 +49,7 @@ static void FDPal(const unsigned short *in, uint16_t *out)
 {
     for (int i = 0; i < 16; ++i) {
         unsigned c = in[i];
-        out[i] = RGB((c & 31) << 3, ((c >> 5) & 31) << 3, ((c >> 10) & 31) << 3);
+        out[i] = GbaColor(c);
     }
 }
 

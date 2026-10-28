@@ -29,8 +29,6 @@ void CtrBottom_Frame(void);
 uint16_t CtrBottom_InjectedKeys(void);
 /* Filter physical keys before combining them with the bottom UI's injected keys. */
 uint16_t CtrBottom_FilterGameKeys(uint16_t held);
-/* False when disabled or resources missing: TOP fallback stays visible. */
-bool CtrBottom_IsEnabled(void);
 /* The overworld turbo (3ds_fast_forward.h): Applies is true while the stable field is the screen's owner (no menu,
  * PokeTouch screen, route, battle, load or fade); CanCycle also needs nothing said or scripted. */
 bool CtrBottom_TurboApplies(void);

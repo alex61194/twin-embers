@@ -71,7 +71,6 @@ typedef struct {
     uint32_t rateMilliHz;/* NDSP playback rate after queue-depth trim */
 } CtrAudioStats;
 
-const CtrAudioStats *CtrAudio_Stats(void);
 
 const CtrCgbStats *CtrAudio_CgbStats(void);
 /* Peak absolute PSG sample of the last synthesized frame (PCM16 scale). */

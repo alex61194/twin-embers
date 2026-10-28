@@ -158,7 +158,7 @@ build/3ds_settings.o: include/3ds_settings.h
 GAME_PLATFORM_OBJS += build/3ds_night_wild.o
 build/3ds_night_wild.o: CFLAGS += -iquote ../include
 build/3ds_night_wild.o: include/3ds_night_wild.h build/game_sources.stamp
-GAME_PLATFORM_OBJS += build/3ds_bottom.o build/3ds_bottom_screen.o build/3ds_intro_bridge.o build/3ds_poketouch.o build/3ds_poketouch_options.o
+GAME_PLATFORM_OBJS += build/3ds_bottom.o build/3ds_bottom_screen.o build/3ds_poketouch.o build/3ds_poketouch_options.o
 GAME_NATIVE_OBJS := build/main_game_native.o $(GAME_PLATFORM_OBJS)
 GAME_NATIVE_OBJS += build/3ds_assets.o build/3ds_asset_memory.o build/3ds_data.o build/3ds_pak.o build/3ds_data_error.o
 verify-m4a-arm11: build/game/m4a_1.o ../tools/verify_m4a_arm11.py
@@ -590,10 +590,6 @@ clean:
 $(GAME_C_OBJS) $(GAME_DATA_OBJS): build/game_sources.stamp
 $(GAME_DATA_OBJS) $(GAME_M4A_OBJS) $(GAME_SOUND_OBJS): ../asm/macros/music_voice.inc
 
-# Native intro art is a separate 1:1 presentation of the original state.
-build/3ds_intro_bridge.o: src/3ds_intro_bridge.c include/3ds_intro_native.h
-	@mkdir -p build
-	$(CC) $(GAMEFLAGS) -DCTR_GBA_STAGE -c $< -o $@
 build/3ds_video.o: include/3ds_fast_cells.h include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h
 build/3ds_fast_cells.o: include/3ds_fast_cells.h
 build/3ds_poketouch.o: include/poketouch_assets.h include/3ds_poketouch.h
