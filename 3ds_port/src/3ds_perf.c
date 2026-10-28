@@ -257,11 +257,15 @@ static void Rolling(uint64_t wall, uint64_t cpu, float gpu, float commands,
             for (unsigned i=1; i<sizeof(costs)/sizeof(*costs); ++i)
                 if (costs[i] > costs[dominant]) dominant=i;
             CtrLog_Write(CTR_LOG_VIDEO,
-                "PERF_SPIKE%s f=%lu cb=%lx wall=%.2f cpu=%.2f wait=%.2f gpuCompleted=%.2f dominant=%s game=%.2f render=%.2f bg=%.2f obj=%.2f win=%.2f asset=%.2f read=%.2f crc=%.2f decomp=%.2f audio=%.2f ndsp=%.2f loads=%lu bytes=%lu maxAsset=%.2f miss=%lu/%lu quads=%lu uploads=%lu stereo=%u planes=%u cmd=%.3f q=%lu underruns=%lu drops=%lu pak=%lu/%lu",
+                "PERF_SPIKE%s f=%lu cb=%lx wall=%.2f cpu=%.2f wait=%.2f gpuCompleted=%.2f dominant=%s game=%.2f render=%.2f bg=%.2f obj=%.2f win=%.2f prep=%.2f pal=%.2f blend=%.2f submit=%.2f fin=%.2f asset=%.2f read=%.2f crc=%.2f decomp=%.2f audio=%.2f ndsp=%.2f loads=%lu bytes=%lu maxAsset=%.2f miss=%lu/%lu quads=%lu uploads=%lu stereo=%u planes=%u cmd=%.3f q=%lu underruns=%lu drops=%lu pak=%lu/%lu",
                 wallMs>20.0 ? "!" : "", (unsigned long)gCtrPerf.frame, (unsigned long)cb,
                 wallMs, Ms(cpu), Ms(wait), (double)gpu, names[dominant],
                 Ms(gCtrPerf.ticks[PERF_GAME]), Ms(gCtrPerf.ticks[PERF_RENDER]),
                 Ms(gCtrPerf.ticks[PERF_BG]), Ms(gCtrPerf.ticks[PERF_OBJ]), Ms(gCtrPerf.ticks[PERF_WINDOW]),
+                /* The rest of the render a slow frame spends: layer textures, palette and day/night, blend state,
+                 * the command buffer, the frame's end. */
+                Ms(gCtrPerf.ticks[PERF_PREPARE]), Ms(gCtrPerf.ticks[PERF_PALETTE]), Ms(gCtrPerf.ticks[PERF_BLEND]),
+                Ms(gCtrPerf.ticks[PERF_SUBMIT]), Ms(gCtrPerf.ticks[PERF_FINALIZE]),
                 Ms(gCtrPerf.ticks[PERF_ASSET_LOAD]), Ms(gCtrPerf.ticks[PERF_DATA_READ]),
                 Ms(gCtrPerf.ticks[PERF_DATA_CRC]), Ms(gCtrPerf.ticks[PERF_DECOMPRESS]),
                 Ms(gCtrPerf.ticks[PERF_AUDIO]), Ms(gCtrPerf.ticks[PERF_NDSP_SUBMIT]),
