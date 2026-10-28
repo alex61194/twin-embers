@@ -3154,6 +3154,12 @@ static int UpdateSession(int mode, int planRunning)
         sSession.away = 0;
         return 1;
     }
+    /* A Fame Checker or Teachy TV opened from the session's Bag: still the session, which keeps TOP's picture through
+     * its fades and the Bag's return (counted as away, it ran out and TOP froze a black frame). */
+    if (mode == MODE_GBAVIEW) {
+        sSession.away = 0;
+        return 1;
+    }
     if (mode == MODE_SUMMARY) {
         /* A Summary opened from the battle's Party belongs to the battle for as long as it exists, though FireRed's
          * callback is the Summary's own: TOP keeps the battle, nothing routes to the field's screens. */
