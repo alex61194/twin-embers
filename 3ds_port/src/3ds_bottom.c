@@ -5216,7 +5216,8 @@ void CtrBottom_Frame(void)
         int gpu = CtrVideo_SetBottomViewport((mode == MODE_STORAGE_PC
                                                || mode == MODE_STORAGE_BOX || mode == MODE_STORAGE_CHILD
                                                || mode == MODE_PARTY || mode == MODE_SUMMARY || mode == MODE_PARTY_CHILD || mode == MODE_BAG
-                                              || IS_CASE_MODE(mode) || mode == MODE_CARD || mode == MODE_DEX) && state.touch.viewport);
+                                              || IS_CASE_MODE(mode) || mode == MODE_CARD || mode == MODE_DEX || mode == MODE_GBAVIEW)
+                                              && state.touch.viewport);
         if (gpu != sGpu) {
             sGpu = gpu;
             sForceRedraw = 1;
