@@ -30,6 +30,7 @@
  * - Redraws only when the snapshot changes; HID is never polled here.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "3ds_bottom.h"
@@ -1584,6 +1585,37 @@ static int sBatTouchLast;           /* the last input was the touch screen: no c
 static unsigned sBatAnim;           /* counts the frames of a battle, for the lead's icon to bounce */
 static int sBatHold, sBatHoldFrames; /* BAG was picked: the upper screen keeps the battle until the Bag shows */
 
+/* The party slot of the Pokemon in the field. The party keeps its order in a battle (a switch changes only which
+ * slot the battle points at), so the slot is found by what the battle knows of its left battler: its level, its
+ * maximum HP and its name; the closest HP breaks a tie. Slot 0 when nothing matches. */
+static int BattleActiveSlot(void)
+{
+    char name[32], mine[32];
+    int level = 0, hp = 0, maxHp = 0, best = 0, bestScore = -1;
+
+    for (int b = 0; b < CtrBattle_TargetCount() && b < 4; ++b)
+        if (CtrBattle_TargetPosition(b) == 0)
+            if (CtrBattle_TargetInfo(b, name, (int)sizeof(name), &level, &hp, &maxHp))
+                break;
+    if (!maxHp)
+        return 0;
+    for (int i = 0; i < 6; ++i) {
+        int score, same = 0;
+
+        if (CtrBottomParty_SlotEmpty(i) || CtrBottomParty_IsEgg(i)
+            || (int)CtrBottomParty_Level(i) != level || (int)CtrBottomParty_MaxHP(i) != maxHp)
+            continue;
+        CtrBottomParty_Nickname(i, mine);
+        same = strcmp(mine, name) == 0;
+        score = 1000 + (same ? 500 : 0) - abs((int)CtrBottomParty_HP(i) - hp);
+        if (score > bestScore) {
+            bestScore = score;
+            best = i;
+        }
+    }
+    return best;
+}
+
 /* The six ball slots and the touch held under a finger: what every battle screen shares. */
 static void BattleCommon(CtrBattleView *v)
 {
@@ -1607,16 +1639,21 @@ static void BattleCommon(CtrBattleView *v)
             v->partyStatus[i] = (uint8_t)(st > 6 ? 0 : st);
         }
     }
-    if (v->party[0]) {                  /* the lead: the action screen's footer */
-        unsigned level = CtrBottomParty_Level(0);
+    {                                   /* the Pokemon in the field: the action screen's footer and icon */
+        int slot = BattleActiveSlot();
 
-        CtrBottomParty_Nickname(0, v->activeName);
-        v->activeName[sizeof(v->activeName) - 1] = 0;
-        v->activeLevel = (uint8_t)(level > 255 ? 255 : level);
-        v->activeIcon = (uint16_t)CtrBottomParty_IconSpecies(0);
-        v->activeFrame = (uint8_t)((sBatAnim++ / 15) & 1);
-        v->activeHp = (uint16_t)CtrBottomParty_HP(0);
-        v->activeMaxHp = (uint16_t)CtrBottomParty_MaxHP(0);
+        if (v->party[slot]) {
+            unsigned level = CtrBottomParty_Level(slot);
+
+            CtrBottomParty_Nickname(slot, v->activeName);
+            v->activeName[sizeof(v->activeName) - 1] = 0;
+            v->activeLevel = (uint8_t)(level > 255 ? 255 : level);
+            v->activeSlot = (uint8_t)slot;
+            v->activeIcon = (uint16_t)CtrBottomParty_IconSpecies(slot);
+            v->activeFrame = (uint8_t)((sBatAnim++ / 15) & 1);
+            v->activeHp = (uint16_t)CtrBottomParty_HP(slot);
+            v->activeMaxHp = (uint16_t)CtrBottomParty_MaxHP(slot);
+        }
     }
 }
 

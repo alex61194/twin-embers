@@ -827,16 +827,16 @@ static void BActCard(int i, const CtrBattleView *v)
         int left = r->x + 100, w = r->w - 108, tw = UiTextWidth(label[0], 2);
         char text[32];
 
-        if (v->activeIcon && BPartyIcon(0, v->activeIcon)) { /* the Pokemon's own party icon at twice its size, bouncing */
+        if (v->activeIcon && BPartyIcon(v->activeSlot, v->activeIcon)) { /* the Pokemon's own party icon at twice its size, bouncing */
             int cx = r->x + 52, cy = fy + fh / 2, x0 = cx - 32, y0 = cy - 30 - 2 * v->activeFrame;
 
             BDisc(cx, cy, 33, p);
             for (int y = 0; y < 32; ++y)
                 for (int x = 0; x < 32; ++x) {
-                    uint8_t index = sBPIcon[0].pixels[y * 32 + x];
+                    uint8_t index = sBPIcon[v->activeSlot].pixels[y * 32 + x];
 
                     if (index)
-                        Fill(x0 + 2 * x, y0 + 2 * y, 2, 2, sBPIcon[0].pal[index]);
+                        Fill(x0 + 2 * x, y0 + 2 * y, 2, 2, sBPIcon[v->activeSlot].pal[index]);
                 }
         } else
             BDiscIcon(icon[0], r->x + 52, fy + fh / 2, 33, p);
@@ -1255,7 +1255,8 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         || memcmp(a->partyStatus, b->partyStatus, sizeof(b->partyStatus)))
         return 1;
     if (b->state == BUI_ACTION)
-        return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon;
+        return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon
+            || a->activeSlot != b->activeSlot;
     if (b->state == BUI_MOVE)
         return memcmp(a->move, b->move, sizeof(b->move)) != 0;
     if (b->state == BUI_TARGET)
