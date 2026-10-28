@@ -53,7 +53,7 @@ ifneq ($(VOXEL),0)
 $(error Voxel is disabled for FireRed 3DS)
 endif
 
-$(TARGET).elf: build/main.o build/gba_shadow.o build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o build/3ds_perf.o build/3ds_gpu_flush.o
+$(TARGET).elf: build/main.o build/gba_shadow.o build/3ds_video.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o build/3ds_perf.o build/3ds_gpu_flush.o build/3ds_fast_cells.o
 	$(CC) $(LDFLAGS) $(VIDEO_LDFLAGS) $^ -lcitro2d -lcitro3d -lctru -lm -o $@
 
 $(TARGET).smdh: Makefile
@@ -141,7 +141,7 @@ GAME_PLATFORM_OBJS := build/gba_shadow.o build/3ds_bios.o build/3ds_bios_math.o 
 GAME_PLATFORM_OBJS += build/3ds_flash.o build/3ds_rng.o build/3ds_rng_platform.o
 GAME_PLATFORM_OBJS += build/3ds_link_peripherals.o
 GAME_PLATFORM_OBJS += build/3ds_cgb_audio.o build/3ds_audio_mix.o build/3ds_audio.o
-GAME_PLATFORM_OBJS += build/3ds_video.o build/3ds_gpu_flush.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o
+GAME_PLATFORM_OBJS += build/3ds_video.o build/3ds_gpu_flush.o build/3ds_fast_cells.o build/3ds_video_decode.o build/3ds_input.o build/3ds_input_decode.o build/3ds_platform_min.o
 GAME_PLATFORM_OBJS += build/3ds_perf.o
 # LeafGreen's version exclusives in the wild encounters (wild_encounter.c calls it).
 GAME_PLATFORM_OBJS += build/3ds_leafgreen.o
@@ -594,7 +594,7 @@ $(GAME_DATA_OBJS) $(GAME_M4A_OBJS) $(GAME_SOUND_OBJS): ../asm/macros/music_voice
 build/3ds_intro_bridge.o: src/3ds_intro_bridge.c include/3ds_intro_native.h
 	@mkdir -p build
 	$(CC) $(GAMEFLAGS) -DCTR_GBA_STAGE -c $< -o $@
-build/3ds_video.o: include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h
+build/3ds_video.o: include/3ds_fast_cells.h include/3ds_vram_track.h src/3ds_intro_fallback.h include/3ds_intro_native.h src/3ds_field_trail_impl.h src/3ds_line_brightness_impl.h
 build/3ds_poketouch.o: include/poketouch_assets.h include/3ds_poketouch.h
 build/3ds_bottom.o: include/3ds_storage_touch.h include/3ds_storage_bridge.h
 build/game/pokemon_storage_system_tasks.o build/game/pokemon_storage_system_menu.o build/game/pokemon_storage_system_data.o build/game/naming_screen.o: include/3ds_storage_bridge.h

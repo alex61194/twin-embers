@@ -11,6 +11,7 @@
 #include <string.h>
 #include "3ds_platform.h"
 #include "3ds_vram_track.h"
+#include "3ds_fast_cells.h"
 #include "3ds_video.h"
 #include "3ds_obj_window.h"
 #include "3ds_effect_oam.h"
@@ -2502,10 +2503,13 @@ static bool LayerRenderCells(unsigned bg)
     layer->valid = true;
     sCellControl[bg] = control;
 
+    /* Straight to a vertex buffer (3ds_fast_cells.h) when there is room: no clears, a tile or a transparent square
+     * per cell, the same texels. */
+    bool fast = CtrFastCells_Room(count);
     BlendForget();
     if (full)
     {
-        C2D_TargetClear(layer->target, 0);
+        if (!fast) C2D_TargetClear(layer->target, 0);   /* the fast path draws every cell */
         C2D_SceneBegin(layer->target);
         C2D_ViewReset();
         for (unsigned cell = 0; cell < cells; ++cell)
@@ -2513,10 +2517,13 @@ static bool LayerRenderCells(unsigned bg)
     }
     else
     {
-        /* Clear the changed cells to transparent first: a tile's transparent
-         * pixels must not keep what was drawn there before. */
         C2D_SceneBegin(layer->target);
         C2D_ViewReset();
+    }
+    if (!full && !fast)
+    {
+        /* Clear the changed cells to transparent first: a tile's transparent
+         * pixels must not keep what was drawn there before. */
         C2D_Flush();
         C3D_AlphaTest(false, GPU_ALWAYS, 0);
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
@@ -2533,14 +2540,25 @@ static bool LayerRenderCells(unsigned bg)
     }
     sInLayerTexture = true;
     Blend(bg, false, false);
-    for (unsigned i = 0; i < count; ++i)
+    if (fast)
     {
-        unsigned cell = dirty[i];
-
-        if (cellSlot[cell] >= 0)
-            DrawSlot(cellSlot[cell], (cell % columns) * 8, (cell / columns) * 8,
-                     cellEntry[cell] & 1024, cellEntry[cell] & 2048);
+        /* Citro2D binds the target's projection and the atlas with a quad of no size and sends it. */
+        static const Tex3DS_SubTexture none = {0, 0, 0.0f, 1.0f, 0.0f, 1.0f};
+        C2D_DrawImageAt((C2D_Image){&sAtlas, &none}, 0, 0, 0, &sTint, 1, 1);
+        C2D_Flush();
+        CtrFastCells_Draw(dirty, count, cellSlot, cellEntry, columns, ATLAS_SIZE);
+        sStats.tiles += count;
+        BlendForget();
     }
+    else
+        for (unsigned i = 0; i < count; ++i)
+        {
+            unsigned cell = dirty[i];
+
+            if (cellSlot[cell] >= 0)
+                DrawSlot(cellSlot[cell], (cell % columns) * 8, (cell / columns) * 8,
+                         cellEntry[cell] & 1024, cellEntry[cell] & 2048);
+        }
     C2D_Flush();
     sInLayerTexture = false;
     BlendForget();
@@ -4796,6 +4814,7 @@ bool CtrVideo_Init(void)
         sTexturePalette[i] = CtrVideo_RGBA5551(sPalette[i]);
     C2D_Prepare();
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+    CtrFastCells_Init();
 #if CTR_VOXEL_ENABLED
     /* Citro3D and Citro2D are up; the voxel module only adds its own shader,
      * textures and buffers on top of them. */
@@ -5820,6 +5839,7 @@ void CtrVideo_Present(void)
     /* The 2D compositor draws every vertex at z = 0, so Citro2D's GEQUAL test never rejected a fragment: with the test
      * and the depth writes off the picture is the same, without a depth read and write per fragment (as Emerald 3DS). */
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+    CtrFastCells_FrameBegin();
     /* Before anything samples what the CPU wrote since the last frame. */
     TexCacheDrop();
     uint64_t start = svcGetSystemTick();
