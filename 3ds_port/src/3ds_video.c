@@ -1840,6 +1840,22 @@ static void DrawPictureMargins(unsigned map, unsigned size, unsigned chars, bool
         DrawEdgeRun(map, size, chars, color256, scrollX, scrollY, 239, 159, false, 1, 240, 160, right, below);
 }
 
+static bool LayerDrawable(unsigned bg);
+static void DrawLayerRect(unsigned bg, int x0, int x1, int y0, int y1,
+                          float sx, float sy, float dx, float dy, bool fade, int top, int bottom);
+
+/*
+ * A battle layer from its texture (LayersPrepare), [x0, x1) x [y0, y1) of the screen in one quad, read as the GBA
+ * wraps the map: the tile walk was ~700 quads a layer, ~4 ms a frame of the Old 3DS 0.2.8 port.log, twice in 3D.
+ */
+static bool DrawBattleLayerTex(unsigned bg, int x0, int x1, int y0, int y1)
+{
+    if (!LayerDrawable(bg)) return false;
+    ViewBase();
+    DrawLayerRect(bg, x0, x1, y0, y1, (float)x0, (float)y0, 1, 1, false, 0, 0);
+    return true;
+}
+
 static void DrawBattleBg(unsigned bg)
 {
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -1863,7 +1879,7 @@ static void DrawBattleBg(unsigned bg)
     }
     if (!wraps)
     {
-        DrawBattleCut(bg, 0, 240, 0, 160, 0);
+        if (!DrawBattleLayerTex(bg, 0, 240, 0, 160)) DrawBattleCut(bg, 0, 240, 0, 160, 0);
         return;
     }
     if (picture)
@@ -1892,6 +1908,8 @@ static void DrawBattleBg(unsigned bg)
     {
         int row = (int)(((unsigned)(py + (int)scrollY) >> 3) & (rows - 1));
 
+        /* From the first row in the picture down every row is the map's own: the rest from the texture. */
+        if (py + 8 > 0 && DrawBattleLayerTex(bg, x0, x1, py > y0 ? py : y0, y1)) break;
         if (py + 8 <= 0 && !above) continue;
         /* A row wholly above the picture: where its art comes from. */
         if (py + 8 <= 0 && !BattleRowShown(map, size, chars, color256, row, firstColumn, count))
@@ -1918,10 +1936,6 @@ static void DrawBattleBg(unsigned bg)
         }
     }
 }
-
-static bool LayerDrawable(unsigned bg);
-static void DrawLayerRect(unsigned bg, int x0, int x1, int y0, int y1,
-                          float sx, float sy, float dx, float dy, bool fade, int top, int bottom);
 
 static void DrawTextBg(unsigned bg)
 {
@@ -2024,6 +2038,10 @@ static bool sLayerReady[4];
 /* When each background's texture last failed to be placed (0: not failing): only that layer waits. */
 static uint32_t sLayerFail[4];
 static bool sLayerFailLogged;
+/* A battle layer whose cells mostly change frame after frame (a fade over the scene, a move's background coming in)
+ * is walked tile by tile until sBattleHold, instead of recomposed whole every frame; sBattleRedrawn: its last such
+ * recompose. */
+static uint32_t sBattleHold[4], sBattleRedrawn[4];
 /* Native screens draw their text backgrounds from layer textures. */
 static bool sFieldLayers;
 static bool sFieldBarnDoorWipe;
@@ -2103,6 +2121,8 @@ static void LayersPrepare(void)
 {
     /* A centred screen is drawn from its textures too (DrawTextBg). */
     unsigned want = NativeIntroActive() ? 0 : LineBackgrounds() | (sIntro || sStage || sFieldLayers || sCentred ? TextBackgrounds() : 0);
+    /* The battle's scene layers too (DrawBattleLayerTex); its text box stays a walk (DrawBattleText). */
+    if (sBattle && !NativeIntroActive()) want |= TextBackgrounds() & ~1u;
     /* The field draws its BG0 (text boxes, menus) tile by tile (DrawFieldUi), never from the texture: none kept. */
     if (sFieldLayers) want &= ~1u | LineBackgrounds();
 
@@ -2161,7 +2181,7 @@ static void LayersPrepare(void)
             C3D_TexSetWrap(&layer->tex, GPU_REPEAT, GPU_REPEAT);
         }
         layer->usedFrame = sStats.frames;
-        sLayerReady[bg] = true;
+        sLayerReady[bg] = !(sBattle && sStats.frames < sBattleHold[bg]);
     }
 }
 
@@ -2490,6 +2510,17 @@ static bool LayerRenderCells(unsigned bg)
     {
         full = true;
         count = cells;
+    }
+    if (sBattle && count > cells / 2)
+    {
+        if (layer->valid && sStats.frames - sBattleRedrawn[bg] < 3)
+        {
+            sBattleHold[bg] = sStats.frames + 8;
+            sLayerReady[bg] = false;
+            layer->walkedPlain = layer->walkedWindow = false;
+            return false;
+        }
+        sBattleRedrawn[bg] = sStats.frames;
     }
     /* Past half the frame's geometry the layer is walked tile by tile this
      * frame instead, and composed on a later one. */
