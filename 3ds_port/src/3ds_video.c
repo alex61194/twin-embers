@@ -5652,6 +5652,14 @@ static void ApplyPresentationView(void)
     }
 }
 
+/* When the last frame shown began, just after the screen's refresh it waited for (the turbo's time budget). */
+static uint64_t sFrameStartTick;
+
+uint64_t CtrVideo_FrameStartTick(void)
+{
+    return sFrameStartTick;
+}
+
 void CtrVideo_Present(void)
 {
     if (!sMemory.regs) CtrPlatform_Fatal("VIDEO has no logical memory bound");
@@ -5659,6 +5667,7 @@ void CtrVideo_Present(void)
     {
         uint64_t holdWait = CtrPerf_Begin();
         gspWaitForVBlank();
+        sFrameStartTick = svcGetSystemTick();
         CtrPerf_End(PERF_GPU_WAIT, holdWait);
         ++sStats.frames;
         return;
@@ -5702,6 +5711,7 @@ void CtrVideo_Present(void)
     /* Before anything samples what the CPU wrote since the last frame. */
     TexCacheDrop();
     uint64_t start = svcGetSystemTick();
+    sFrameStartTick = start;
     sStats.waitMs = (start - waitStart) * 1000.0 / SYSCLOCK_ARM11;
     if (gCtrPerf.enabled) gCtrPerf.ticks[PERF_GPU_WAIT]+=start-waitStart;
     sStats.tiles = sStats.uploads = sStats.sprites = 0;

@@ -531,6 +531,10 @@ static unsigned sFlashFailures;   /* consecutive frames whose save flush failed 
 /* A VBlank span (input, lower screen, field state, keys) over 100 ms is logged part by part. */
 #define VBLANK_SLOW_TICKS (SYSCLOCK_ARM11 / 10)
 static unsigned long TicksMs(u64 ticks) { return (unsigned long)(ticks / (SYSCLOCK_ARM11 / 1000)); }
+/* The turbo's time budget: one refresh of the screen (59.83 Hz), less what a shown frame does before it waits for the
+ * refresh (the compositor's preparation) and some slack. */
+#define TURBO_REFRESH_TICKS ((u64)SYSCLOCK_ARM11 * 1671 / 100000)
+#define TURBO_SLACK_TICKS ((u64)SYSCLOCK_ARM11 / 500)
 
 static aptHookCookie sAptHook;
 static volatile bool sSuspended, sResumed;
@@ -733,7 +737,19 @@ void VBlankIntrWait(void)
         if (settingsMs >= 5)
             CtrLog_Write(CTR_LOG_FS, "settings: the turbo change held the game thread %lu ms", (unsigned long)settingsMs);
     }
-    bool shown = CtrFastForward_Show(&sFastForward);
+    /* A turbo frame is shown before its Nth when one more hidden frame (its cost measured as the game goes) would
+     * not fit before the screen's next refresh: missing it would halve the frames shown and leave the time idle. */
+    static u64 hiddenTicks = (u64)SYSCLOCK_ARM11 / 400, lastDecision;
+    static bool lastShown = true;
+    u64 decision = svcGetSystemTick();
+    if (!lastShown) {
+        u64 sample = decision - lastDecision;   /* a stall (a load) counts as one refresh, not as many */
+        hiddenTicks = (hiddenTicks * 3 + (sample < TURBO_REFRESH_TICKS ? sample : TURBO_REFRESH_TICKS)) / 4;
+    }
+    bool late = decision - CtrVideo_FrameStartTick() + hiddenTicks + TURBO_SLACK_TICKS > TURBO_REFRESH_TICKS;
+    bool shown = CtrFastForward_ShowBy(&sFastForward, late);
+    lastDecision = decision;
+    lastShown = shown;
     CtrVideo_SetFastForward(CtrFastForward_Speed(&sFastForward));
     UpdateStage();
     /* FrameBegin inside the compositor is the frame pacing boundary. */

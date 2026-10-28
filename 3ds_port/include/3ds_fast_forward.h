@@ -10,7 +10,10 @@
  * the game runs up to N times faster while music and sound effects keep their
  * pace. Every frame still runs the game, its VBlank handler, input, the bottom
  * screen and the save. How much faster it really gets depends on how many
- * frames the console can run in one screen refresh.
+ * frames the console can run in one screen refresh: the caller shows a frame
+ * before the Nth when one more hidden frame would miss the refresh
+ * (CtrFastForward_ShowBy), so the screen keeps its 60 frames a second and the
+ * game runs as many frames as fit, up to N.
  *
  * START (a new press, in the stable field or a battle's stable core) cycles OFF -> 2x -> 3x -> 4x -> OFF. The
  * choice is remembered; it is applied only while one of them is the screen's owner, and the game runs at
@@ -65,6 +68,15 @@ static inline bool CtrFastForward_Show(CtrFastForward *ff)
 
     ff->phase = speed > 1 ? (ff->phase + 1) % speed : 0;
     return show;
+}
+
+/* As CtrFastForward_Show, but a `late` frame (one more hidden frame would not fit before the screen's next refresh)
+ * is shown now and starts the count again: a refresh is never missed waiting for the Nth frame. */
+static inline bool CtrFastForward_ShowBy(CtrFastForward *ff, bool late)
+{
+    if (late)
+        ff->phase = 0;
+    return CtrFastForward_Show(ff);
 }
 
 #endif

@@ -61,6 +61,8 @@ void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count);
 void CtrVideo_HoldBottom(bool hold);
 /* Fast-forward speed (1 = off), shown as >>N in the top screen's corner. */
 void CtrVideo_SetFastForward(unsigned speed);
+/* The system tick at which the last shown frame began, just after the refresh it waited for. */
+uint64_t CtrVideo_FrameStartTick(void);
 /*
  * The bottom screen presented by the GPU: every frame draws the bottom canvas
  * and, over its viewport (3ds_poketouch.h), the GBA picture sampled straight
