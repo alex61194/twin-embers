@@ -481,6 +481,8 @@ typedef struct {
     uint8_t partyStatus[6];         /* 0 none, else 1..6 PSN PAR SLP FRZ BRN PKRS */
     char activeName[BUI_NAME_LEN];  /* the Pokemon in the lead (party slot 0): the action screen's footer */
     uint8_t activeLevel;
+    uint16_t activeIcon;            /* its party icon (a species number, as CtrBottomParty_IconSpecies gives it) */
+    uint8_t activeFrame;            /* 0 or 1, the icon's bounce: it flips about four times a second */
     uint16_t activeHp, activeMaxHp;
     CtrBattleMove move[4];
     CtrBattleBag bag;
