@@ -49,6 +49,22 @@ int main(void)
         assert(CtrVramTrack_Update(vram, copy, stamps, BLOCKS, 100 + i) == 1);
         assert(stamps[0x8000 / CTR_VRAM_TRACK_BLOCK] == 100 + i);
     }
+    /* Lazy: a block is compared at most once per token, only when asked, and a change found later is stamped with
+     * the later token. */
+    {
+        static uint32_t lazyCopy[0x18000 / 4], lazyStamps[BLOCKS], synced[BLOCKS];
+        memcpy(lazyCopy, vram, sizeof(vram));
+        vram[0x0c00] ^= 1;   /* block 3 */
+        assert(CtrVramTrack_SyncBlock(vram, lazyCopy, lazyStamps, synced, 2, 500) == 0);
+        assert(CtrVramTrack_SyncBlock(vram, lazyCopy, lazyStamps, synced, 3, 500) == 500);
+        vram[0x0c00] ^= 1;   /* changed back, but block 3 was already compared at 500 */
+        assert(CtrVramTrack_SyncBlock(vram, lazyCopy, lazyStamps, synced, 3, 500) == 500);
+        assert(memcmp(lazyCopy + 0x0c00 / 4, vram + 0x0c00, CTR_VRAM_TRACK_BLOCK) != 0);
+        /* Unread for frames 501-509: frame 510 sees the change back, stamped 510. */
+        assert(CtrVramTrack_SyncBlock(vram, lazyCopy, lazyStamps, synced, 3, 510) == 510);
+        assert(memcmp(lazyCopy, vram, sizeof(vram)) == 0);
+        assert(CtrVramTrack_SyncBlock(vram, lazyCopy, lazyStamps, synced, 3, 511) == 510);
+    }
     puts("PASS vram track: per-kilobyte stamps, first/last word, copy refresh, revert, all word positions");
     return 0;
 }

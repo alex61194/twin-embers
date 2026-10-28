@@ -278,6 +278,12 @@ static uint32_t sBgPaletteStamp;
 enum { VRAM_TRACK_BLOCKS = 0x18000 / CTR_VRAM_TRACK_BLOCK };
 static uint32_t sVramCopy[0x18000 / 4];
 static uint32_t sVramStamp[VRAM_TRACK_BLOCKS];
+static uint32_t sVramSynced[VRAM_TRACK_BLOCKS], sVramToken;
+/* Block b's stamp, its bytes compared first if this frame has not yet (CtrVramTrack_SyncBlock). */
+static inline uint32_t VramStamp(unsigned b)
+{
+    return CtrVramTrack_SyncBlock(sMemory.vram, sVramCopy, sVramStamp, sVramSynced, b, sVramToken);
+}
 static C3D_Tex sAtlas, sSurface;
 static C3D_RenderTarget *sLogical, *sTop, *sTopRight;
 /*
@@ -905,7 +911,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             ? TileVersionChanged(tile, sFadeVersion[fadeId], sFadeChanges[fadeId], fadeId < 32 ? 1u : 8u)
             : TilePaletteChanged(tile,paletteId));
         bool vramDirty=tile->valid && !paletteDirty
-            && CtrVramTrack_MayDiffer(sVramStamp,address,tile->checked)
+            && VramStamp(address / CTR_VRAM_TRACK_BLOCK) > tile->checked
             && memcmp(tile->bytes,sMemory.vram+address,bytes);
         if (!tile->valid || paletteDirty || vramDirty)
         {
@@ -2203,7 +2209,7 @@ static bool VramChangedAfter(unsigned address, unsigned bytes, uint32_t after)
     if (address >= 0x18000) return true;
     if (bytes > 0x18000 - address) bytes = 0x18000 - address;
     for (unsigned b = address / CTR_VRAM_TRACK_BLOCK; b <= (address + bytes - 1) / CTR_VRAM_TRACK_BLOCK; ++b)
-        if (sVramStamp[b] > after) return true;
+        if (VramStamp(b) > after) return true;
     return false;
 }
 
@@ -2366,7 +2372,7 @@ static bool LayerRenderCells(unsigned bg)
     CellSpans prevX = {0}, prevY = {0};
     if (sameInputs || scrolled)
         for (unsigned b = 0; b < charBlocks && b < 64; ++b)
-            if (sVramStamp[chars / CTR_VRAM_TRACK_BLOCK + b] > layer->walked) changedBlocks |= 1ull << b;
+            if (VramStamp(chars / CTR_VRAM_TRACK_BLOCK + b) > layer->walked) changedBlocks |= 1ull << b;
     if (scrolled)
     {
         mapChanged = VramChangedAfter(map, rows * columns * 2, layer->walked);
@@ -5934,8 +5940,9 @@ void CtrVideo_Present(void)
         BandsReady();
     }
     ApplyPresentationView();
-    /* Before anything reads the tile cache this frame (token frames + 1). */
-    CtrVramTrack_Update(sMemory.vram, sVramCopy, sVramStamp, VRAM_TRACK_BLOCKS, sStats.frames + 1);
+    /* Before anything reads the tile cache this frame (token frames + 1): each block is compared the first time
+     * this frame reads it (VramStamp), not all of them here. */
+    sVramToken = sStats.frames + 1;
     LayersPrepare();
     ScenePrepare();
     CtrPerf_End(PERF_PREPARE,perfPrepare);

@@ -56,6 +56,33 @@ static inline unsigned CtrVramTrack_Update(const uint8_t *vram, uint32_t *copy,
     return changed;
 }
 
+/* The same comparison for one block, made at most once per token: `synced[b]` holds the token block b was last
+ * compared at. The compositor asks only for the blocks a frame reads, instead of comparing all 96 KiB every frame
+ * (about 1.5 ms on an Old 3DS, measured by ZallaxDev's Emerald 3DS). A block left unread for some frames is compared
+ * against the copy from its last read; a change found then is stamped with the token of that later frame, which is
+ * still after anything verified against the older bytes. Returns the block's stamp. */
+static inline uint32_t CtrVramTrack_SyncBlock(const uint8_t *vram, uint32_t *copy, uint32_t *stamps,
+                                              uint32_t *synced, unsigned b, uint32_t token)
+{
+    if (synced[b] != token)
+    {
+        synced[b] = token;
+        const CtrVramWord *now = (const CtrVramWord *)(vram + b * CTR_VRAM_TRACK_BLOCK);
+        uint32_t *old = copy + b * CTR_VRAM_TRACK_WORDS;
+
+        for (unsigned i = 0; i < CTR_VRAM_TRACK_WORDS; i += 8)
+            if (((now[i] ^ old[i]) | (now[i + 1] ^ old[i + 1]) | (now[i + 2] ^ old[i + 2])
+                 | (now[i + 3] ^ old[i + 3]) | (now[i + 4] ^ old[i + 4]) | (now[i + 5] ^ old[i + 5])
+                 | (now[i + 6] ^ old[i + 6]) | (now[i + 7] ^ old[i + 7])) != 0)
+            {
+                memcpy(old, now, CTR_VRAM_TRACK_BLOCK);
+                stamps[b] = token;
+                break;
+            }
+    }
+    return stamps[b];
+}
+
 /* May the bytes at `address`, verified at token `checked`, have changed? */
 static inline bool CtrVramTrack_MayDiffer(const uint32_t *stamps, unsigned address, uint32_t checked)
 {
