@@ -4377,12 +4377,20 @@ static void WindowDrawRect(int x0, int y0, int x1, int y1, unsigned mask)
  */
 #define WINDOW_RECTS 4096
 typedef struct { int x0, y0, x1, y1; unsigned mask; } WindowRect;
-static WindowRect sWindowRects[WINDOW_RECTS];
-static unsigned sWindowRectCount;
-/* Bumped whenever sWindowRects is rebuilt. A stencil buffer is only touched
- * by ComposeStencil, so one already marked with the current rectangles keeps
- * its marks and the mark pass is skipped (an OBJ window held still). */
-static uint32_t sWindowRectSerial = 1;
+/* The rectangles of one view's partition. Its serial is new (from sWindowSerials) whenever they are rebuilt. A
+ * stencil buffer is only touched by ComposeStencil, so one already marked with the current rectangles keeps its
+ * marks and the mark pass is skipped (an OBJ window held still). */
+typedef struct {
+    WindowRect rects[WINDOW_RECTS];
+    unsigned count;
+    uint32_t serial;
+} WindowRectSet;
+/* One set per view the OBJ window is composed in, each with its own stencil buffer: [0] the battle scene (zoomed,
+ * into sScene), [1] everything else (the logical surface). A battle composes both every frame, the scene and then
+ * its text box; with one set each pass rebuilt the other's rectangles and both stencils were marked again twice a
+ * frame, all through a stat change's animation. sWin is the set of the pass being composed. */
+static WindowRectSet sWindowSets[2], *sWin = &sWindowSets[1];
+static uint32_t sWindowSerials = 1;
 static void *sStencilBuf;
 static uint32_t sStencilMarked;
 static bool sStencilFailed;
@@ -4415,9 +4423,9 @@ static void *StencilBuffer(void)
 
 static void WindowCollectRect(int x0, int y0, int x1, int y1, unsigned mask)
 {
-    if (sWindowRectCount < WINDOW_RECTS)
-        sWindowRects[sWindowRectCount] = (WindowRect){x0, y0, x1, y1, mask};
-    ++sWindowRectCount;
+    if (sWin->count < WINDOW_RECTS)
+        sWin->rects[sWin->count] = (WindowRect){x0, y0, x1, y1, mask};
+    ++sWin->count;
 }
 
 static bool StencilReady(void)
@@ -4472,7 +4480,7 @@ static void StencilRect(int x0, int y0, int x1, int y1)
 }
 
 /*
- * The rectangles in sWindowRects tile the view, each tagged with a key below
+ * The rectangles in sWin->rects tile the view, each tagged with a key below
  * 256. Every key's rectangles write it into the stencil, then pass draws each
  * key once over its bounding box, stencil-tested to exactly its rectangles.
  */
@@ -4482,9 +4490,9 @@ static void ComposeStencil(StencilPass pass)
 {
     bool used[256] = {false};
     int box[256][4];
-    for (unsigned i = 0; i < sWindowRectCount; ++i)
+    for (unsigned i = 0; i < sWin->count; ++i)
     {
-        const WindowRect *r = &sWindowRects[i];
+        const WindowRect *r = &sWin->rects[i];
         int *b = box[r->mask];
         if (!used[r->mask])
         {
@@ -4516,18 +4524,18 @@ static void ComposeStencil(StencilPass pass)
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
     C3D_DepthTest(false, GPU_ALWAYS, 0);
     C3D_StencilOp(GPU_STENCIL_REPLACE, GPU_STENCIL_REPLACE, GPU_STENCIL_REPLACE);
-    for (unsigned mask = 0; mask < 256 && *marked != sWindowRectSerial; ++mask)
+    for (unsigned mask = 0; mask < 256 && *marked != sWin->serial; ++mask)
     {
         if (!used[mask]) continue;
         C3D_StencilTest(true, GPU_ALWAYS, (int)mask, 0xFF, 0xFF);
-        for (unsigned i = 0; i < sWindowRectCount; ++i)
-            if (sWindowRects[i].mask == mask)
-                StencilRect(sWindowRects[i].x0, sWindowRects[i].y0,
-                            sWindowRects[i].x1, sWindowRects[i].y1);
+        for (unsigned i = 0; i < sWin->count; ++i)
+            if (sWin->rects[i].mask == mask)
+                StencilRect(sWin->rects[i].x0, sWin->rects[i].y0,
+                            sWin->rects[i].x1, sWin->rects[i].y1);
         C2D_Flush();
     }
     C2D_ViewRestore(&view);
-    *marked = sWindowRectSerial;
+    *marked = sWin->serial;
 
     /* Draw: each mask once, only where the stencil holds it. */
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
@@ -4561,9 +4569,15 @@ typedef struct {
     int viewX, viewY, targetW, targetH;
     bool native, stage, battle;
 } WindowCacheKey;
-static WindowCacheKey sWindowCacheKey;
-static WindowSpans sWindowCacheSpans;
+/* Per set (sWindowSets): the key and spans its rectangles were made from, and the OBJ window mask's generation. */
+static WindowCacheKey sWindowCacheKey[2];
+static WindowSpans sWindowCacheSpans[2];
+static bool sWindowSetValid[2];
+static uint32_t sWindowSetMask[2];
+/* False when the flash window changed: every set is made again. */
 static bool sWindowCacheValid;
+/* Bumped whenever BuildObjWindow finds the mask changed: a set made from an older one is made again. */
+static uint32_t sObjMaskGeneration;
 
 void CtrVideo_SetFlashWindow(const uint16_t *bounds, unsigned count)
 {
@@ -4587,35 +4601,46 @@ static void ComposeObjWindow(unsigned display)
     key.viewX = sViewX; key.viewY = sViewY;
     key.targetW = sTargetW; key.targetH = sTargetH;
     key.native = sNative; key.stage = sStage; key.battle = sBattle;
-    bool cached = sWindowCacheValid && memcmp(&key, &sWindowCacheKey, sizeof(key)) == 0;
+    unsigned set = sDrawTarget && sDrawTarget == sScene ? 0 : 1;
+
+    sWin = &sWindowSets[set];
+    if (!sWindowCacheValid)
+    {
+        sWindowSetValid[0] = sWindowSetValid[1] = false;
+        sWindowCacheValid = true;
+    }
+    bool cached = sWindowSetValid[set] && memcmp(&key, &sWindowCacheKey[set], sizeof(key)) == 0;
     if (!cached)
     {
-        /* Same mask, registers and view as the last frame: same partition. */
-        bool maskChanged = BuildObjWindow();
+        /* Same mask, registers and view as this set's last frame: same partition. */
+        if (BuildObjWindow())
+            ++sObjMaskGeneration;
         WindowSpans spans;
         WindowSpansRead(display, &spans);
-        WindowCacheKey previous = sWindowCacheKey;
+        WindowCacheKey previous = sWindowCacheKey[set];
         previous.frame = key.frame;
-        if (!sWindowCacheValid || maskChanged || memcmp(&previous, &key, sizeof(key)) != 0
-            || memcmp(&spans, &sWindowCacheSpans, sizeof(spans)) != 0)
+        if (!sWindowSetValid[set] || sWindowSetMask[set] != sObjMaskGeneration
+            || memcmp(&previous, &key, sizeof(key)) != 0
+            || memcmp(&spans, &sWindowCacheSpans[set], sizeof(spans)) != 0)
         {
-            sWindowCacheSpans = spans;
-            sWindowRectCount = 0;
-            ++sWindowRectSerial;
-            WindowPartition(&sWindowCacheSpans, WindowCollectRect);
+            sWindowCacheSpans[set] = spans;
+            sWindowSetMask[set] = sObjMaskGeneration;
+            sWin->count = 0;
+            sWin->serial = ++sWindowSerials;
+            WindowPartition(&sWindowCacheSpans[set], WindowCollectRect);
         }
-        sWindowCacheKey = key;
-        sWindowCacheValid = true;
+        sWindowCacheKey[set] = key;
+        sWindowSetValid[set] = true;
     }
     /* Stencil rectangles share the frame's Citro2D geometry buffer. */
     bool stencil = StencilTarget()
-                && sWindowRectCount <= WINDOW_RECTS
-                && sStats.tiles + sWindowRectCount < MAX_DRAWS / 2
+                && sWin->count <= WINDOW_RECTS
+                && sStats.tiles + sWin->count < MAX_DRAWS / 2
                 && StencilReady();
     if (stencil)
         ComposeStencil(WindowDrawRect);
     else
-        WindowPartition(&sWindowCacheSpans, WindowDrawRect);
+        WindowPartition(&sWindowCacheSpans[set], WindowDrawRect);
     C2D_Flush();
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
     sScissored = false;
