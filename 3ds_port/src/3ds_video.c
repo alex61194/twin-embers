@@ -2089,6 +2089,8 @@ static void LayersPrepare(void)
 {
     /* A centred screen is drawn from its textures too (DrawTextBg). */
     unsigned want = NativeIntroActive() ? 0 : LineBackgrounds() | (sIntro || sStage || sFieldLayers || sCentred ? TextBackgrounds() : 0);
+    /* The field draws its BG0 (text boxes, menus) tile by tile (DrawFieldUi), never from the texture: none kept. */
+    if (sFieldLayers) want &= ~1u | LineBackgrounds();
 
     for (unsigned bg = 0; bg < 4; ++bg)
     {
