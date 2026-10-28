@@ -912,29 +912,29 @@ static const ListScreen sBagScreen, sTMCaseScreen, sPouchScreen, sShopScreen, sI
 
 static const FieldList sFieldBagList = {
     MODE_BAG, PT_BAG_KIND_BAG, &sBagScreen, CtrBottomBag_Item, CtrBottomBag_Quantity, CtrBottomBag_ActionCount,
-    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message,
+    CtrBottomBag_ActionName, CtrBottomBag_TossCount, CtrBottomBag_TossMax, CtrBottomBag_Prompt, CtrBottomBag_Message, NULL,
 };
 static const FieldList sFieldTMCaseList = {
     MODE_TMCASE, PT_BAG_KIND_TMCASE, &sTMCaseScreen, CtrBottomTMCase_Item, CtrBottomTMCase_Quantity,
-    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message,
+    CtrBottomTMCase_ActionCount, CtrBottomTMCase_ActionName, NULL, NULL, NULL, CtrBottomTMCase_Message, NULL,
 };
 static const FieldList sFieldPouchList = {
     MODE_POUCH, PT_BAG_KIND_POUCH, &sPouchScreen, CtrBottomPouch_Item, CtrBottomPouch_Quantity,
     CtrBottomPouch_ActionCount, CtrBottomPouch_ActionName, CtrBottomPouch_TossCount, CtrBottomPouch_TossMax,
-    CtrBottomPouch_Prompt, CtrBottomPouch_Message,
+    CtrBottomPouch_Prompt, CtrBottomPouch_Message, NULL,
 };
 /* A mart's BUY list: its rows' "quantity" is their price; it has no menu of actions. */
 static int ShopNoActions(void) { return 0; }
 static void ShopNoActionName(int index, char *out, int size) { (void)index; if (size > 0) out[0] = 0; }
 static const FieldList sFieldShopList = {
     MODE_SHOP, PT_BAG_KIND_SHOP, &sShopScreen, CtrBottomShop_Item, CtrBottomShop_Price, ShopNoActions,
-    ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text,
+    ShopNoActionName, CtrBottomShop_Quantity, CtrBottomShop_QuantityMax, CtrBottomShop_Text, CtrBottomShop_Text, NULL,
 };
 /* The item PC's WITHDRAW ITEM list: its menu (WITHDRAW, GIVE, CANCEL), how many, and its messages; no YES/NO. */
 static const FieldList sFieldItemPcList = {
     MODE_ITEMPC, PT_BAG_KIND_ITEMPC, &sItemPcScreen, CtrBottomItemPc_Item, CtrBottomItemPc_Quantity,
     CtrBottomItemPc_ActionCount, CtrBottomItemPc_ActionName, CtrBottomItemPc_TossCount, CtrBottomItemPc_TossMax, NULL,
-    CtrBottomItemPc_Message,
+    CtrBottomItemPc_Message, NULL,
 };
 /* The PC's mailbox: a row per mail (its item, its writer, no count), a mail's menu (READ, MOVE TO BAG, GIVE, EXIT),
  * MOVE TO BAG's YES/NO and the messages. Drawn as the item PC's list. */
