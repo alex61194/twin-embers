@@ -115,6 +115,9 @@ static const uint16_t *TilesetLights(const struct Tileset *tileset, unsigned *co
 #define CAMERA_VIEW_LEFT (-4 - FIELD_VIEW_OFFSET_X / 8)
 static bool sCameraKnown;
 static int sCameraKX, sCameraKY;
+/* An offset was found on this map: while it is searched for again the windows keep it (it only changes with a map
+ * load or a connection) rather than all lighting up, which switched the windows of a whole building on and off. */
+static bool sCameraFound;
 static unsigned sCameraMap = ~0u;
 /* Frames to wait before searching again after a search found nothing. */
 static unsigned sCameraWait;
@@ -176,7 +179,7 @@ static bool UpdateCamera(void)
     unsigned samples, best = ~0u;
 
     if (!gMapHeader.mapLayout || !gBGTilemapBuffers1 || !gBGTilemapBuffers3) return false;
-    if (map != sCameraMap) sCameraKnown = false;
+    if (map != sCameraMap) sCameraKnown = sCameraFound = false;
     sCameraMap = map;
     /* A menu over the map (Party, Pokedex, Bag, Summary...) has replaced the tilemap buffers with its own: there is
      * nothing to check or to find in them, and looking cost a 47 ms frame every nine (port.log, 0.2.5 Old 3DS mode).
@@ -199,6 +202,8 @@ static bool UpdateCamera(void)
         if (++sCameraBad <= CAMERA_GRACE) return true;
     }
     sCameraBad = 0;
+    if (sCameraKnown)
+        CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera lost map=%04x pos=%d,%d", map, px, py);
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
     for (int ty = 0; ty < 32 && best; ty += 2)
@@ -223,6 +228,7 @@ static bool UpdateCamera(void)
     else
     {
         sCameraFails = 0;
+        sCameraFound = true;
         CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera map=%04x pos=%d,%d offset=%d,%d misses=%u", map, px, py,
                      (px * 2 - sCameraKX) & 63, (py * 2 - sCameraKY) & 31, best);
     }
@@ -236,7 +242,7 @@ static void UpdateDayNight(void)
     unsigned primaryCount = 0, secondaryCount = 0;
     const uint16_t *primary = outdoors && layout ? TilesetLights(layout->primaryTileset, &primaryCount) : NULL;
     const uint16_t *secondary = outdoors && layout ? TilesetLights(layout->secondaryTileset, &secondaryCount) : NULL;
-    bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && UpdateCamera();
+    bool camera = outdoors && (primary || secondary) && gSaveBlock1Ptr && (UpdateCamera() || sCameraFound);
 
     CtrVideo_SetDayNight(outdoors, CtrOptions_DayNightSecond(), primary, primaryCount, secondary, secondaryCount);
     if (camera)
