@@ -172,7 +172,8 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
 static int BLooksChanged(const CtrBattleView *a, const CtrBattleView *b, int i)
 {
     return (a->pressed == i) != (b->pressed == i)
-        || (a->showCursor && a->cursor == i) != (b->showCursor && b->cursor == i);
+        || (a->showCursor && a->cursor == i) != (b->showCursor && b->cursor == i)
+        || (b->state == BUI_ACTION && i == 0 && a->activeFrame != b->activeFrame);   /* the lead's icon bounces */
 }
 
 /* Appends `word` to `line` (a space first when it is not empty), within `size`. */
@@ -697,11 +698,17 @@ static void BFlat(const uint16_t *px, int w, int h, int x, int y)
                 Px(x + u, y + v, px[v * w + u]);
 }
 
-/* Icon `icon` (BX_*) centred at (cx, cy) on a light disc of the piece's colour, `r` its radius. */
-static void BDiscIcon(int icon, int cx, int cy, int r, const EmPal *p)
+/* A light disc of the piece's colour, `r` its radius, centred at (cx, cy). */
+static void BDisc(int cx, int cy, int r, const EmPal *p)
 {
     UiDisc(cx, cy, r + 1, UiMix(p->bottom, p->lip, 3));
     UiDisc(cx, cy, r, UiMix(p->top, EM_WHITE, 4));
+}
+
+/* Icon `icon` (BX_*) centred at (cx, cy) on a light disc of the piece's colour, `r` its radius. */
+static void BDiscIcon(int icon, int cx, int cy, int r, const EmPal *p)
+{
+    BDisc(cx, cy, r, p);
     if (icon == BX_FIGHT)
         BFlat(kFlatFight, FLATFIGHT_W, FLATFIGHT_H, cx - FLATFIGHT_W / 2, cy - FLATFIGHT_H / 2);
     else if (icon == BX_BALL)
@@ -820,7 +827,19 @@ static void BActCard(int i, const CtrBattleView *v)
         int left = r->x + 100, w = r->w - 108, tw = UiTextWidth(label[0], 2);
         char text[32];
 
-        BDiscIcon(icon[0], r->x + 52, fy + fh / 2, 33, p);
+        if (v->activeIcon && BPartyIcon(0, v->activeIcon)) { /* the Pokemon's own party icon at twice its size, bouncing */
+            int cx = r->x + 52, cy = fy + fh / 2, x0 = cx - 32, y0 = cy - 30 - 2 * v->activeFrame;
+
+            BDisc(cx, cy, 33, p);
+            for (int y = 0; y < 32; ++y)
+                for (int x = 0; x < 32; ++x) {
+                    uint8_t index = sBPIcon[0].pixels[y * 32 + x];
+
+                    if (index)
+                        Fill(x0 + 2 * x, y0 + 2 * y, 2, 2, sBPIcon[0].pal[index]);
+                }
+        } else
+            BDiscIcon(icon[0], r->x + 52, fy + fh / 2, 33, p);
         UiText(label[0], left + (w - tw) / 2, fy + 14, p->ink, p->inkSh, 2, r->x + r->w);
         if (v->activeName[0]) {
             snprintf(text, sizeof(text), "%s Lv%u", v->activeName, (unsigned)v->activeLevel);
@@ -1236,7 +1255,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         || memcmp(a->partyStatus, b->partyStatus, sizeof(b->partyStatus)))
         return 1;
     if (b->state == BUI_ACTION)
-        return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel;
+        return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon;
     if (b->state == BUI_MOVE)
         return memcmp(a->move, b->move, sizeof(b->move)) != 0;
     if (b->state == BUI_TARGET)

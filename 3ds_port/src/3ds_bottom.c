@@ -1581,6 +1581,7 @@ static struct {
     int down, inside, btn, state;
 } sBat;
 static int sBatTouchLast;           /* the last input was the touch screen: no cursor drawn */
+static unsigned sBatAnim;           /* counts the frames of a battle, for the lead's icon to bounce */
 static int sBatHold, sBatHoldFrames; /* BAG was picked: the upper screen keeps the battle until the Bag shows */
 
 /* The six ball slots and the touch held under a finger: what every battle screen shares. */
@@ -1612,6 +1613,8 @@ static void BattleCommon(CtrBattleView *v)
         CtrBottomParty_Nickname(0, v->activeName);
         v->activeName[sizeof(v->activeName) - 1] = 0;
         v->activeLevel = (uint8_t)(level > 255 ? 255 : level);
+        v->activeIcon = (uint16_t)CtrBottomParty_IconSpecies(0);
+        v->activeFrame = (uint8_t)((sBatAnim++ / 15) & 1);
         v->activeHp = (uint16_t)CtrBottomParty_HP(0);
         v->activeMaxHp = (uint16_t)CtrBottomParty_MaxHP(0);
     }
