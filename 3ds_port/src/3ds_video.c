@@ -682,7 +682,7 @@ static void DayNightUpdate(void)
     bool cameraMoved = camera.valid != sDayNightCamera.valid || camera.map != sDayNightCamera.map
         || camera.viewLeft != sDayNightCamera.viewLeft
         || ((camera.mapX * 2 - camera.tileX) & 63) != ((sDayNightCamera.mapX * 2 - sDayNightCamera.tileX) & 63)
-        || ((camera.mapY * 2 - camera.tileY) & 63) != ((sDayNightCamera.mapY * 2 - sDayNightCamera.tileY) & 63);
+        || ((camera.mapY * 2 - camera.tileY) & 31) != ((sDayNightCamera.mapY * 2 - sDayNightCamera.tileY) & 31);   /* tileY wraps at 32 */
 
     if (minute != sDayNightMinute || cameraMoved)
     {
