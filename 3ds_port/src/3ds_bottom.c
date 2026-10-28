@@ -579,6 +579,12 @@ static int sHeldTop;
  * and box naming temporarily leave its callbacks without ending its session. */
 static int sStorageSession;
 
+void CtrBottom_LogState(const char *tag)
+{
+    CtrLog_Write(CTR_LOG_VIDEO, "%s bottom screen=%d session=%d owner=%d battle=%d heldTop=%d storage=%d enabled=%d",
+                 tag, sScreen, sSession.active, sSession.owner, sSession.battle, sHeldTop, sStorageSession, sEnabled);
+}
+
 /* Touch + hits. */
 static struct {
     int active;
@@ -4652,7 +4658,8 @@ static void ProfFrameEnd(const CtrDirtyList *dirty)
     {
         uint64_t total = sProf.frameSnapshot + sProf.frameUi + sProf.framePresent + upTicks;
 
-        if (total / PROF_TICKS_PER_US > sProf.slowUs && sProf.sinceSlow >= 120) {
+        /* One over 100 ms is always logged: the 0.2.8 port.log lost a 3.9 s battle frame to the 120-frame gap. */
+        if (total / PROF_TICKS_PER_US > sProf.slowUs && (sProf.sinceSlow >= 120 || total / PROF_TICKS_PER_US > 100000u)) {
             sProf.sinceSlow = 0;
             CtrLog_Write(CTR_LOG_VIDEO, "BOTTOM_PERF slow frame: snapshot=%luus ui=%luus present=%luus upload=%luus",
                          (unsigned long)(sProf.frameSnapshot / PROF_TICKS_PER_US),

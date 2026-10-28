@@ -37,5 +37,7 @@ bool CtrBottom_TurboApplies(void);
 bool CtrBottom_TurboCanCycle(void);
 /* Both screens hold their last picture while a menu changes over: the frames in between are not shown. */
 bool CtrBottom_MenuChangingOver(void);
+/* One port.log line with the lower screen's state (screen, session, TOP hold), after a stall named by tag. */
+void CtrBottom_LogState(const char *tag);
 
 #endif

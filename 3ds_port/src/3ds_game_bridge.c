@@ -528,6 +528,10 @@ static LightEvent sWatchdogStop;
 static CtrFastForward sFastForward;
 static unsigned sFlashFailures;   /* consecutive frames whose save flush failed */
 
+/* A VBlank span (input, lower screen, field state, keys) over 100 ms is logged part by part. */
+#define VBLANK_SLOW_TICKS (SYSCLOCK_ARM11 / 10)
+static unsigned long TicksMs(u64 ticks) { return (unsigned long)(ticks / (SYSCLOCK_ARM11 / 1000)); }
+
 static aptHookCookie sAptHook;
 static volatile bool sSuspended, sResumed;
 static bool sAptHooked;
@@ -682,18 +686,33 @@ void VBlankIntrWait(void)
      * screen. Game-visible behavior is unchanged: FireRed samples KEYINPUT
      * from its main loop (ReadKeys), never from its VBlank handler, and
      * SetHeldKeys still lands once per VBlank before game code resumes.
-     * PERF_VBLANK now spans input/bottom/keys instead of DMA-to-keys. */
+     * PERF_VBLANK now spans input/bottom/keys instead of DMA-to-keys.
+     * Each part is also timed on its own: a 3.2 s field frame in the 0.2.8
+     * Old 3DS port.log was spent here with no data read, and the span alone
+     * could not say where (VBLANK_SLOW, with the lower screen's state). */
     uint64_t perfVblank = CtrPerf_Begin();
+    u64 phaseInput = svcGetSystemTick();
     CtrInput_Scan();
+    u64 phaseBottom = svcGetSystemTick();
     /* Bottom UI runs after the single HID poll and before the game reads
      * keys: touch drives the real Party state machine via injected D-pad/A.
      * Physical controls cancel any running Plan inside CtrBottom_Frame. */
     CtrBottom_Frame();
+    u64 phaseField = svcGetSystemTick();
     CtrVideo_SetMapNamePopup(IsMapNamePopupTaskActive() != 0);   /* the map-name popup's own lifetime, for the compositor */
     CtrVideo_SetForestPreview(ForestMapPreviewScreenIsRunning() == FALSE);
     UpdateDayNight();
+    u64 phaseKeys = svcGetSystemTick();
     GbaShadow_SetHeldKeys((uint16_t)(CtrBottom_FilterGameKeys(CtrInput_Get()->held) | CtrBottom_InjectedKeys()));
+    u64 phaseEnd = svcGetSystemTick();
     CtrPerf_End(PERF_VBLANK, perfVblank);
+    if (phaseEnd - phaseInput > VBLANK_SLOW_TICKS)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "VBLANK_SLOW f=%lu input=%lu bottom=%lu field=%lu keys=%lu ms",
+                     (unsigned long)gCtrPerf.frame, TicksMs(phaseBottom - phaseInput), TicksMs(phaseField - phaseBottom),
+                     TicksMs(phaseKeys - phaseField), TicksMs(phaseEnd - phaseKeys));
+        CtrBottom_LogState("VBLANK_SLOW");
+    }
     /* The overworld turbo (3ds_fast_forward.h): a frame that is not shown skips the
      * compositor, and with it the wait for the screen, and the sound engine;
      * the game, its VBlank handler, input, bottom screen and save still run.
