@@ -4607,8 +4607,8 @@ static void ComposeStencil(StencilPass pass)
     C2D_Flush();
     GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 1);
     C3D_StencilTest(false, GPU_ALWAYS, 0, 0xFF, 0x00);
-    /* Citro2D's own depth state (C2D_Prepare). */
-    C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+    /* The compositor's depth state: off (see CtrVideo_Present). */
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
     *C3D_GetFrameBuf() = saved;
 }
 
@@ -4920,6 +4920,7 @@ bool CtrVideo_Init(void)
     for (unsigned i = 0; i < 512; ++i)
         sTexturePalette[i] = CtrVideo_RGBA5551(sPalette[i]);
     C2D_Prepare();
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
 #if CTR_VOXEL_ENABLED
     /* Citro3D and Citro2D are up; the voxel module only adds its own shader,
      * textures and buffers on top of them. */
@@ -5940,6 +5941,9 @@ void CtrVideo_Present(void)
     CtrPerf_End(PERF_PREPARE,perfPrepare);
     uint64_t waitStart = svcGetSystemTick();
     if (!C3D_FrameBegin(C3D_FRAME_SYNCDRAW)) return;
+    /* The 2D compositor draws every vertex at z = 0, so Citro2D's GEQUAL test never rejected a fragment: with the test
+     * and the depth writes off the picture is the same, without a depth read and write per fragment (as Emerald 3DS). */
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
     /* Before anything samples what the CPU wrote since the last frame. */
     TexCacheDrop();
     uint64_t start = svcGetSystemTick();
