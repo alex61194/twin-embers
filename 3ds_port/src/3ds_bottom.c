@@ -1073,16 +1073,24 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         for (int i = 0; state == BAG_ACTIONS && i < b->menuCount; ++i)
             f->actionName(i, b->menuName[i], sizeof(b->menuName[i]));
     }
+    /* The count chosen last in this list's quantity box, for the YES/NO that confirms it: a message printed between
+     * them (a mart's "and you want 17. That will be...") left the frame shown just before without one, and the
+     * confirmation said x1. A new pick from the list or its menu forgets it. */
+    static int countMode = -1;
+    static uint16_t count;
+
+    if (state == BAG_LIST || state == BAG_ACTIONS || countMode != f->mode) {
+        countMode = f->mode;
+        count = 0;
+    }
     if (state == BAG_QUANTITY && f->tossCount != NULL) {
         b->tossCount = (uint16_t)f->tossCount();
         b->tossMax = (uint16_t)f->tossMax();
+        count = b->tossCount;
     }
     if (state == BAG_YESNO && f->prompt != NULL) {
         f->prompt(b->prompt, sizeof(b->prompt));
-        const CtrPokeTouchBag *was = &sShown.touch.bag;   /* the count asked for just before (one: none was asked) */
-
-        b->tossCount = (uint16_t)(sHaveShown && sShown.mode == f->mode && was->on && was->tossCount
-                                  && (was->state == BAG_QUANTITY || was->state == BAG_YESNO) ? was->tossCount : 1);
+        b->tossCount = count ? count : 1;   /* one when none was asked */
     }
     if (state == BAG_MESSAGE)
         f->message(b->prompt, sizeof(b->prompt));
