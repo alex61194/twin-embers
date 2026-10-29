@@ -202,6 +202,7 @@ build/firered_game_probe_3dsx.elf: build/firered_game_probe.elf ../tools/filter_
 # the recipe are NOBITS (tools/rex_objects.py) and arrive from the pack at start-up.
 GAME_FULL_OBJS := build/main_game_full.o build/3ds_rex.o build/3ds_rex_core.o build/3ds_data.o build/3ds_pak.o build/3ds_data_error.o $(GAME_PLATFORM_OBJS)
 GAME_FULL_OBJS += build/3ds_assets.o
+GAME_FULL_OBJS += build/3ds_battle_gen4.o
 # m4a on a worker core: the game's calls into the engine go through
 # src/3ds_sound.c, which holds the worker's lock (keep this list in sync).
 GAME_FULL_OBJS += build/3ds_sound.o
