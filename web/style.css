@@ -85,7 +85,7 @@ header.hero p {
 /* Steps: a number badge and its content, centred on the same line. */
 .step {
   display: grid;
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
   padding: 12px 0;
@@ -310,4 +310,8 @@ footer a, .card a:not(.btn) { color: inherit; }
   .card { padding: 14px 14px 16px; }
   .qr-grid { grid-template-columns: 1fr; }
   .btn.big, .result .btn { width: 100%; }
+  .btn { padding: 0 14px; font-size: 16px; }
+  .btn.big { font-size: 18px; }
+  .btn { white-space: normal; text-align: center; line-height: 1.15; padding-top: 6px; padding-bottom: 6px; }
+  .result { padding: 10px; }
 }

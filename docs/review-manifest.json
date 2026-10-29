@@ -5679,7 +5679,7 @@
   },
   {
    "path": "web/style.css",
-   "sha256": "3086b9636241add0fd32f4a1e05ba906b8f092b748b1d735402048e94e5a1741",
+   "sha256": "2cf0cc601894de65db29069b632f9217da7916adaa7f8b88f3063304760df21b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
