@@ -311,7 +311,7 @@ verify-clean-release:
 	@echo "Binary publication remains blocked by distribution policy"
 	$(MAKE) CLEAN_RELEASE=1 verify-game-3dsx
 	$(PYTHON) ../tools/audit_clean_release.py --tree .. --elf build/firered_game.elf --map build/firered_game.map \
-		--3dsx twinembers.3dsx --release --coverage $(if $(FIRERED_ROM_REFERENCE),--rom $(FIRERED_ROM_REFERENCE))
+		--3dsx twinembers.3dsx --release --coverage $(if $(FIRERED_ROM_REFERENCE),--rom "$(FIRERED_ROM_REFERENCE)")
 	$(PYTHON) ../tools/source_audit.py --release
 
 # Execute the real optimized intro consumers from cold asset storage.
