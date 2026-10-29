@@ -40,6 +40,14 @@ bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800]);
  * picture row drawn there. */
 void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);
 
+/* Outside battle (FireRed's picture loaders, recipe 0195): a species' HeartGold picture, front or back, as FireRed's
+ * 64x64 4bpp one (8x8 tiles, eight to a row), the whole 80x80 picture shrunk into it; its normal or shiny palette;
+ * and the 80x80 picture itself in rows of 40 bytes (the lower screen's Summary draws it whole). False without the
+ * species' pack entry. */
+bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out[0x800]);
+bool CtrGen4_Palette(unsigned nationalDex, bool shiny, uint16_t palette[16]);
+bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out[CTR_GEN4_PICTURE]);
+
 /* HeartGold's menu icons (graphics/gen4/icons.bin, read once and kept): key 0 the egg, 1-386 the national dex,
  * 387-413 Unown's letters B to ?. NULL / -1 without the entry or for another key. All or none: the Builder writes
  * the entry only with every icon, and its palettes then stand for FireRed's icon palettes 0-5. */

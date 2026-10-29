@@ -681,7 +681,7 @@
   },
   {
    "path": "3ds_port/include/3ds_summary.h",
-   "sha256": "a2bba439abecdff7b5c115bdecea12fd99c341bf9e113c6605d66147e42bbbd3",
+   "sha256": "328cf1446271a7180a9c01f32a8f6b4645e352a5e75dd19b8dd7527186888a0b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1355,7 +1355,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "05b3ea18a7e53afe6a3a04638f2853d842faa379ec3a78a49ecc440d162b91f7",
+   "sha256": "42125effd756bde8d0c9c02e202e939ef94db3e35582bdf077b2feacd6ae1386",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1549,7 +1549,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "b735d9fb3e25006502b6b8813b4a1f740bfe2333bbba300c5539587ea518dbd5",
+   "sha256": "15ab330513350d038a4d745e87f2ce7629ff199bd532a25276a059a50c08009c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1838,7 +1838,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "e2003b5ab26191e8ea07d214f71dcfcf5211e9ede67c0e4ed0d730b913aca04a"
+   "sha256": "458b306d4045c4cda3322f58a6a2dc01116ba5fa6ea58b0cdbec0152bca10fcc"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -5615,7 +5615,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "814ee6b6051036d782eb7b14179c1a9832511db0088b8d4d256cbd4fc277bf53",
+   "sha256": "16e7ea362ea6670f636cde649a91281e2b849d8a556f5a9cad78c39caabca10b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5623,7 +5623,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "d5c1b402035dc591dbbcaaab46d6d21921cd1569c38c67cde4c88882797589c2",
+   "sha256": "405e01b0f13af8939dbda726224e67efed3849c0f5caf0f863b9375a1be5b101",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5631,7 +5631,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "0b9ce534e6a7962ee1dda6505adc485b226072261184e82bf9f4bd8754a3f0b5",
+   "sha256": "0850f08fcec0c543ec83d79bc368ed339d18019d2cc86e33179c860ebdca6e1a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5656,6 +5656,14 @@
   {
    "path": "patches/pokefirered/0194-hgss-menu-icons.json",
    "sha256": "eb867426a62641767d1ded39ab6ac55a06cef025c01ee28187b9b10576373fd7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0195-hgss-pictures-outside-battle.json",
+   "sha256": "51dd6f35bbd05160d412e4923cd62b2dfc7f5f755f517b0ee0560b8685bc828f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

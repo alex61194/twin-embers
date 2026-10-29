@@ -187,6 +187,23 @@ int main(void)
     sOam[2] = 0x300 | (2 << 12);
     assert(sMatch(0x300 | (2 << 12), &obj) && obj.pivotY == 40.0f);
 
+    /* Outside battle: the 80x80 picture shrunk into FireRed's 64x64 (row 70 is its row 56), its palettes, and the
+     * whole picture; nothing without the entry or outside the dex. */
+    {
+        uint8_t pic[0x800], big[CTR_GEN4_PICTURE];
+        uint16_t pal[16];
+        MakeEntry(true, 70);
+        assert(CtrGen4_Picture64(10, false, false, pic));
+        assert(FireNibble(pic, 0, 0) == 1 && FireNibble(pic, 63, 56) == 1 && FireNibble(pic, 63, 57) == 0);
+        assert(CtrGen4_Picture64(10, true, true, pic) && FireNibble(pic, 5, 5) == 4);
+        assert(CtrGen4_Palette(10, false, pal) && pal[3] == 0x13);
+        assert(CtrGen4_Palette(10, true, pal) && pal[3] == 0x43);
+        assert(CtrGen4_Picture80(10, false, true, big) && big[0] == 0x33 && big[40 * 71] == 0);
+        assert(!CtrGen4_Picture64(0, false, false, pic) && !CtrGen4_Picture80(387, false, false, big));
+        sEntrySize = 0;
+        assert(!CtrGen4_Palette(11, false, pal));
+    }
+
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);
     sIconsEntry[4] = 3;

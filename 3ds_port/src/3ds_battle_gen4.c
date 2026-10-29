@@ -61,6 +61,81 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
     return false;
 }
 
+/* The species' pack entry, read once and kept while the same species is asked for again (a screen asks for its
+ * picture and its palette one after the other). */
+static uint8_t *sEntryData;
+static uint32_t sEntrySize;
+static unsigned sEntryDex;
+
+static const uint8_t *Entry(unsigned nationalDex)
+{
+    if (nationalDex < 1 || nationalDex > 386)
+        return NULL;
+    if (sEntryData && sEntryDex == nationalDex)
+        return sEntryData;
+    free(sEntryData);
+    sEntryData = NULL;
+    sEntryDex = 0;
+    char path[40];
+    snprintf(path, sizeof(path), "graphics/gen4/battle/%03u.bin", nationalDex);
+    uint8_t *entry = CtrData_Load(path, &sEntrySize);
+    if (!entry)
+        return NULL;
+    bool pair = sEntrySize >= 8 && (entry[4] & 1);
+    if (sEntrySize < 4 || memcmp(entry, "G4B1", 4) || sEntrySize != HEADER + (pair ? 4u : 2u) * CTR_GEN4_PICTURE)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    sEntryData = entry;
+    sEntryDex = nationalDex;
+    return entry;
+}
+
+static const uint8_t *Picture(const uint8_t *entry, bool back, bool female)
+{
+    bool pair = entry[4] & 1;
+    return entry + HEADER + ((female && pair) ? 2 : 0) * CTR_GEN4_PICTURE + (back ? CTR_GEN4_PICTURE : 0);
+}
+
+bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out[CTR_GEN4_PICTURE])
+{
+    const uint8_t *entry = Entry(nationalDex);
+    if (!entry)
+        return false;
+    memcpy(out, Picture(entry, back, female), CTR_GEN4_PICTURE);
+    return true;
+}
+
+bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out[0x800])
+{
+    const uint8_t *entry = Entry(nationalDex);
+    if (!entry)
+        return false;
+    const uint8_t *linear = Picture(entry, back, female);
+    memset(out, 0, 0x800);
+    /* Nearest pixel: 64 of the 80 rows and columns, every fifth one left out. */
+    for (unsigned y = 0; y < 64; ++y)
+        for (unsigned x = 0; x < 64; ++x)
+        {
+            unsigned sx = x * CTR_GEN4_SIZE / 64, sy = y * CTR_GEN4_SIZE / 64;
+            uint8_t pair = linear[sy * (CTR_GEN4_SIZE / 2) + sx / 2];
+            unsigned index = (sx & 1) ? pair >> 4 : pair & 15;
+            out[((y / 8) * 8 + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2] |= (uint8_t)(index << ((x & 1) * 4));
+        }
+    return true;
+}
+
+bool CtrGen4_Palette(unsigned nationalDex, bool shiny, uint16_t palette[16])
+{
+    const uint8_t *entry = Entry(nationalDex);
+    if (!entry)
+        return false;
+    memcpy(palette, entry + (shiny ? 40 : 8), 32);
+    return true;
+}
+
 bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female, bool shiny,
                   const void *firePic, uint16_t palette[16])
 {

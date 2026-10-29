@@ -91,6 +91,8 @@ int CtrBottomSummary_Icon(unsigned char *tiles, unsigned short *pal)
 { (void)tiles; (void)pal; return 0; }
 int CtrBottomSummary_Pic(unsigned char *tiles, unsigned short *pal, int *flip)
 { (void)tiles; (void)pal; (void)flip; return 0; }
+int CtrBottomSummary_Pic80(unsigned char *pixels, unsigned short *pal, int *flip)
+{ (void)pixels; (void)pal; (void)flip; return 0; }
 int CtrPokeTouch_Wallpaper(unsigned id, unsigned short *rgb555)
 { (void)id; (void)rgb555; return 0; }
 int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes)

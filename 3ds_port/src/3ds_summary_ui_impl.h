@@ -162,12 +162,13 @@ static void SIcon(const CtrSummaryUiView *v, int x, int y, int scale)
 }
 
 /* The Pokemon's picture, FireRed's Summary's own (the 64x64 front picture, flipped where FireRed flips it), decoded
- * once per Pokemon shown; 0 when there is none (the caller draws the icon). */
+ * once per Pokemon shown; 0 when there is none (the caller draws the icon). With HeartGold's pictures in the pack
+ * (CtrBottomSummary_Pic80) the 80x80 one, whole, centred on the same spot. */
 static int SPic(const CtrSummaryUiView *v, int x, int y)
 {
     static unsigned shownSerial, shownIcon;
-    static int shownMon = -1, ok;
-    static uint8_t pixels[64 * 64];
+    static int shownMon = -1, ok, size = 64;
+    static uint8_t pixels[80 * 80];
     static uint16_t pal[16];
 
     if (v->loading || !v->icon)
@@ -180,8 +181,17 @@ static int SPic(const CtrSummaryUiView *v, int x, int y)
         shownSerial = v->data.serial;
         shownMon = v->data.mon;
         shownIcon = v->icon;
-        ok = CtrBottomSummary_Pic(tiles, raw, &flip);
-        for (int py = 0; ok && py < 64; ++py)
+        static unsigned char big[80 * 80 / 2];
+        size = 80;
+        ok = CtrBottomSummary_Pic80(big, raw, &flip);
+        for (int py = 0; ok && py < 80; ++py)
+            for (int px = 0; px < 80; ++px)
+                pixels[py * 80 + (flip ? 79 - px : px)] = (uint8_t)((big[py * 40 + px / 2] >> (px & 1) * 4) & 15);
+        if (!ok) {
+            size = 64;
+            ok = CtrBottomSummary_Pic(tiles, raw, &flip);
+        }
+        for (int py = 0; ok && size == 64 && py < 64; ++py)
             for (int px = 0; px < 64; ++px) {
                 unsigned byte = tiles[(py / 8 * 8 + px / 8) * 32 + py % 8 * 4 + px % 8 / 2];
                 pixels[py * 64 + (flip ? 63 - px : px)] = (uint8_t)((byte >> (px & 1) * 4) & 15);
@@ -192,7 +202,7 @@ static int SPic(const CtrSummaryUiView *v, int x, int y)
         }
     }
     if (ok)
-        UiImage(pixels, pal, 64, 64, 64, x, y, 1, 1);
+        UiImage(pixels, pal, size, size, size, x - (size - 64) / 2, y - (size - 64) / 2, 1, 1);
     return ok;
 }
 
