@@ -72,6 +72,11 @@ static void FirePic(uint8_t pic[0x800], unsigned bottom)
     pic[((bottom / 8) * 8 + 3) * 32 + (bottom % 8) * 4 + 1] = 0x10;
 }
 
+static bool Near(float a, float b)
+{
+    return a - b < 0.001f && b - a < 0.001f;
+}
+
 static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
 {
     return obj->tiles[((y / 8) * CTR_GEN4_TILES + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
@@ -99,7 +104,8 @@ int main(void)
     sEntrySize -= 1;
     assert(!CtrGen4_Load(0, 1, false, false, false, fire, palette));
 
-    /* The front picture, normal palette, standing on FireRed's lowest row (60 against 70: 10 rows up). */
+    /* The front picture, normal palette, standing on FireRed's lowest row: its row 71 (just past 70) ends on box
+     * row 61, so the box centre (32) shows picture row 71 - 29 * 1.4 = 30.4. */
     MakeEntry(false, 70);
     assert(CtrGen4_Load(1, 6, false, false, false, fire, palette));
     assert(palette[0] == 0x10 && palette[15] == 0x1f);
@@ -108,7 +114,7 @@ int main(void)
     assert(!sMatch(0x200 | (2 << 12), &obj));       /* another palette */
     assert(!sMatch(0x240 | (1 << 12), &obj));       /* another tile */
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(obj.slot == 1 && obj.offsetX == -8 && obj.offsetY == -10);
+    assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 30.4f) && Near(obj.scale, 1.0f / 1.4f));
     assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 79, 70) == 0x11 && PixelByte(&obj, 79, 71) == 0);
 
     /* The back picture and the shiny palette. */
@@ -126,10 +132,10 @@ int main(void)
     assert(CtrGen4_Load(1, 3, false, true, false, fire, palette));
     assert(sMatch(0x200 | (1 << 12), &obj) && PixelByte(&obj, 5, 5) == 0x11);
 
-    /* Fainting: FireRed erases its box from row 48 down; with the picture 10 rows up that is its row 58. */
+    /* Fainting: FireRed erases its box from row 48 down, picture row 30.4 + 16 * 1.4 = 52.8, so from row 53. */
     CtrGen4_EraseFrom(1, 48);
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(PixelByte(&obj, 40, 57) == 0x11 && PixelByte(&obj, 40, 58) == 0 && PixelByte(&obj, 0, 70) == 0);
+    assert(PixelByte(&obj, 40, 52) == 0x11 && PixelByte(&obj, 40, 53) == 0 && PixelByte(&obj, 0, 70) == 0);
 
     /* Without its sprite, or dropped, a battler matches nothing. */
     sOam[1] = -1;
@@ -152,7 +158,7 @@ int main(void)
     memset(fire, 0, sizeof(fire));
     assert(CtrGen4_Load(2, 3, false, false, false, fire, palette));
     sOam[2] = 0x300 | (2 << 12);
-    assert(sMatch(0x300 | (2 << 12), &obj) && obj.offsetY == -8);
+    assert(sMatch(0x300 | (2 << 12), &obj) && obj.pivotY == 40.0f);
 
     puts("battle_gen4_test: ok");
     return 0;

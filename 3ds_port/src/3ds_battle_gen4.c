@@ -13,7 +13,7 @@
 
 typedef struct {
     bool active;
-    int offsetY;
+    float pivotY;
     uint8_t tiles[CTR_GEN4_PICTURE];
 } Battler;
 
@@ -53,8 +53,9 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
             continue;
         out->slot = b;
         out->tiles = sBattlers[b].tiles;
-        out->offsetX = (64 - CTR_GEN4_SIZE) / 2;
-        out->offsetY = sBattlers[b].offsetY;
+        out->pivotX = CTR_GEN4_SIZE / 2.0f;
+        out->pivotY = sBattlers[b].pivotY;
+        out->scale = CTR_GEN4_SCALE;
         return true;
     }
     return false;
@@ -91,9 +92,11 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
             for (unsigned r = 0; r < 8; ++r)
                 memcpy(tiles + ((ty * CTR_GEN4_TILES + tx) * 8 + r) * 4,
                        linear + (ty * 8 + r) * (CTR_GEN4_SIZE / 2) + tx * 4, 4);
-    /* Standing where FireRed's picture stood: the lowest pixels on the same row, centred across. */
+    /* Standing where FireRed's picture stood, centred across: the picture's lowest row ends on the box row where
+     * FireRed's ends. The box's centre (row 32) shows picture row pivotY; a picture row is SCALE box rows. */
     int fire = FireBottom(firePic), gen4 = Gen4Bottom(linear);
-    sBattlers[battler].offsetY = fire >= 0 && gen4 >= 0 ? fire - gen4 : (64 - CTR_GEN4_SIZE) / 2;
+    sBattlers[battler].pivotY = fire >= 0 && gen4 >= 0 ? (gen4 + 1) - (fire + 1 - 32) / CTR_GEN4_SCALE
+                                                       : CTR_GEN4_SIZE / 2.0f;
     sBattlers[battler].active = true;
     free(entry);
     CtrVideo_SetObjOverride(Match);
@@ -116,9 +119,8 @@ void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow)
 {
     if (battler >= BATTLERS || !sBattlers[battler].active)
         return;
-    int from = (int)boxRow - sBattlers[battler].offsetY;
-    if (from < 0)
-        from = 0;
+    float row = sBattlers[battler].pivotY + ((float)boxRow - 32) / CTR_GEN4_SCALE;
+    int from = row < 0 ? 0 : (int)(row + 0.5f);
     uint8_t *tiles = sBattlers[battler].tiles;
     for (int y = from; y < CTR_GEN4_SIZE; ++y)
         for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)

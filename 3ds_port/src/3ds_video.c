@@ -3357,27 +3357,31 @@ static void DrawObjects(unsigned priority, bool effects)
         CTR_PERF_COUNT(PERF_AFFINE_OBJECTS,affine);
         Blend(4, effects, mode == 1);
         ViewBase();
-        /* A battler's FireRed picture with a HeartGold one: that 80x80 picture instead, with the sprite's own
-         * matrix about the same point of the 64x64 box (cx, cy in the picture). */
+        /* A battler's FireRed picture with a HeartGold one: that 80x80 picture instead, its point (cx, cy) on the
+         * 64x64 box's centre, at its own scale k (GBA pixels per picture pixel), under the sprite's own matrix. */
         struct CtrGen4Obj gen4;
         bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
                && gen4.slot < GEN4_SLOTS;
-        float cx = hg ? 32.0f - gen4.offsetX : width / 2.0f, cy = hg ? 32.0f - gen4.offsetY : height / 2.0f;
+        float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
         if (hg)
             sGen4Tiles[gen4.slot] = gen4.tiles;
-        if (affine)
+        if (affine || hg)
         {
-            unsigned index = ((attr1 >> 9) & 31) * 16;
-            float a = (int16_t)sMemory.oam[index + 3] / 256.0f;
-            float b = (int16_t)sMemory.oam[index + 7] / 256.0f;
-            float c = (int16_t)sMemory.oam[index + 11] / 256.0f;
-            float d = (int16_t)sMemory.oam[index + 15] / 256.0f;
+            float a = 1.0f, b = 0.0f, c = 0.0f, d = 1.0f;
+            if (affine)
+            {
+                unsigned index = ((attr1 >> 9) & 31) * 16;
+                a = (int16_t)sMemory.oam[index + 3] / 256.0f;
+                b = (int16_t)sMemory.oam[index + 7] / 256.0f;
+                c = (int16_t)sMemory.oam[index + 11] / 256.0f;
+                d = (int16_t)sMemory.oam[index + 15] / 256.0f;
+            }
             float det = a * d - b * c;
             if (fabsf(det) < 0.00001f) { Error(9, "singular OBJ affine matrix"); CtrPerf_End(PERF_OBJ_AFFINE,perfAffine); continue; }
             C3D_Mtx matrix;
             Mtx_Identity(&matrix);
-            matrix.r[0] = FVec4_New(d / det, -b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - (d * cx - b * cy) / det);
-            matrix.r[1] = FVec4_New(-c / det, a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - (a * cy - c * cx) / det);
+            matrix.r[0] = FVec4_New(k * d / det, -k * b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - k * (d * cx - b * cy) / det);
+            matrix.r[1] = FVec4_New(-k * c / det, k * a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - k * (a * cy - c * cx) / det);
             ViewAffine(&matrix);
         }
         bool flipX = !affine && (attr1 & 0x1000), flipY = !affine && (attr1 & 0x2000);
@@ -3389,8 +3393,7 @@ static void DrawObjects(unsigned priority, bool effects)
                     unsigned sx = flipX ? CTR_GEN4_TILES - 1 - tx : tx;
                     unsigned sy = flipY ? CTR_GEN4_TILES - 1 - ty : ty;
                     DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * CTR_GEN4_TILES + sx) * 32, 16 + (attr2 >> 12), false,
-                             (affine ? 0 : x + CTR_VIEW_X + sLayerShift + gen4.offsetX) + (int)tx * 8,
-                             (affine ? 0 : y + CTR_VIEW_Y + gen4.offsetY) + (int)ty * 8, flipX, flipY);
+                             (int)tx * 8, (int)ty * 8, flipX, flipY);
                 }
             CtrPerf_End(PERF_OBJ_AFFINE,perfAffine);
             continue;

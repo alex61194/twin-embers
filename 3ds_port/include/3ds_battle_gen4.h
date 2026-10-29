@@ -19,6 +19,9 @@
 #define CTR_GEN4_SIZE 80
 #define CTR_GEN4_TILES (CTR_GEN4_SIZE / 8)
 #define CTR_GEN4_PICTURE (CTR_GEN4_SIZE * CTR_GEN4_SIZE / 2)
+/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
+ * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
+#define CTR_GEN4_SCALE (1.0f / 1.4f)
 
 /* Game side (battle_gfx_sfx_util.c). */
 /* After FireRed's picture of `battler` is in `firePic` (64x64, frame 0): load HeartGold's picture of
@@ -29,14 +32,16 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
 /* The battler shows FireRed's picture again (a substitute, a ghost, a species left out). */
 void CtrGen4_Drop(unsigned battler);
 void CtrGen4_DropAll(void);
-/* FireRed erases the picture from this row of its 64x64 box down (a foe fainting): so is HeartGold's. */
+/* FireRed erases the picture from this row of its 64x64 box down (a foe fainting): so is HeartGold's, from the
+ * picture row drawn there. */
 void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);
 
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
     unsigned slot;                  /* 0-3: which picture */
     const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
-    int offsetX, offsetY;           /* the 80x80 picture's corner in the 64x64 box */
+    float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
+    float scale;                    /* GBA pixels per picture pixel */
 } CtrGen4Obj;
 
 /* Implemented by the game's battle code: the battler sprite's OAM tile number and palette

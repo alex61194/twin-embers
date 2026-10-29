@@ -94,9 +94,10 @@ static bool ObjWindowBounds(int *x0, int *y0, int *x1, int *y1)
         if (sObjOverride && !twice && w == 64 && h == 64 && !(attr0 & 0x2000)
             && sObjOverride(sMemory.oam[i * 4 + 2], &gen4))
         {
-            x += gen4.offsetX;
-            y += gen4.offsetY;
-            w = h = CTR_GEN4_SIZE;
+            /* The picture's box on the GBA's pixels, a pixel wider each way for its scaled edges. */
+            x += (int)floorf(32.0f - gen4.scale * gen4.pivotX) - 1;
+            y += (int)floorf(32.0f - gen4.scale * gen4.pivotY) - 1;
+            w = h = (int)ceilf(CTR_GEN4_SIZE * gen4.scale) + 2;
         }
         if (!any || x < *x0) *x0 = x;
         if (!any || y < *y0) *y0 = y;
