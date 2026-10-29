@@ -1,0 +1,77 @@
+#ifndef CTR_BATTLE_GEN4_H
+#define CTR_BATTLE_GEN4_H
+
+/*
+ * HeartGold's battle sprites in place of FireRed's 64x64 pictures (3ds_battle_gen4.c).
+ *
+ * The Builder's optional download puts one graphics/gen4/battle/NNN.bin per species in the pack
+ * (builder/firered3ds_builder/gen4_sprites.py has the layout). FireRed still loads, animates and
+ * tints its own battler sprite; battle_gfx_sfx_util.c (recipe 0192) tells this module which
+ * species each battler shows, and the compositor draws the 80x80 HeartGold picture where it
+ * would draw that sprite, with the sprite's position, affine matrix, palette and blending. The
+ * picture's palette replaces FireRed's in the battler's OBJ palette slot, so the game's fades
+ * and tints apply to it as they did to FireRed's.
+ */
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#define CTR_GEN4_SIZE 80
+#define CTR_GEN4_TILES (CTR_GEN4_SIZE / 8)
+#define CTR_GEN4_PICTURE (CTR_GEN4_SIZE * CTR_GEN4_SIZE / 2)
+/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
+ * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
+#define CTR_GEN4_SCALE (1.0f / 1.4f)
+/* Which pictures: a species' national dex (1-386) and its form: Unown's letter 0-27 as FireRed numbers them (A to Z,
+ * !, ?), Castform's weather 0-3 (normal, sun, rain, ice). The functions below that take a "nationalDex" take this
+ * key. */
+#define CTR_GEN4_KEY(dex, form) ((dex) | ((form) << 9))
+
+/* Game side (battle_gfx_sfx_util.c). */
+/* After FireRed's picture of `battler` is in `firePic` (64x64, frame 0): load HeartGold's picture of
+ * that species. False (FireRed's picture stays) without its pack entry. `palette` gets the 16 colours
+ * to load in the battler's OBJ palette slot. */
+bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female, bool shiny,
+                  const void *firePic, uint16_t palette[16]);
+/* The battler shows FireRed's picture again (a substitute, a ghost, a species left out). */
+void CtrGen4_Drop(unsigned battler);
+void CtrGen4_DropAll(void);
+/* For a move animation that copies the battler onto a background (CopyBattlerSpriteToBg): HeartGold's picture as
+ * FireRed's 64x64 4bpp one (8x8 tiles, eight to a row), at the battle's scale and where the sprite shows it. False,
+ * `out` untouched, when the battler shows FireRed's. */
+bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800]);
+/* FireRed erases the picture from this row of its 64x64 box down (a foe fainting): so is HeartGold's, from the
+ * picture row drawn there. */
+void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);
+
+/* Outside battle (FireRed's picture loaders, recipe 0195): a species' HeartGold picture, front or back, as FireRed's
+ * 64x64 4bpp one (8x8 tiles, eight to a row), the whole 80x80 picture shrunk into it; its normal or shiny palette;
+ * and the 80x80 picture itself in rows of 40 bytes (the lower screen's Summary draws it whole). False without the
+ * species' pack entry. */
+bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out[0x800]);
+bool CtrGen4_Palette(unsigned nationalDex, bool shiny, uint16_t palette[16]);
+bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out[CTR_GEN4_PICTURE]);
+/* The personality whose spots a Spinda front picture asked for next gets (graphics/gen4/spinda.bin, HeartGold's
+ * way of placing them); the game sets it with each Spinda's key. */
+void CtrGen4_SpindaPersonality(uint32_t personality);
+
+/* HeartGold's menu icons (graphics/gen4/icons.bin, read once and kept): key 0 the egg, 1-386 the national dex,
+ * 387-413 Unown's letters B to ?. NULL / -1 without the entry or for another key. All or none: the Builder writes
+ * the entry only with every icon, and its palettes then stand for FireRed's icon palettes 0-5. */
+const uint8_t *CtrGen4_IconTiles(int key);           /* 1024 bytes: two 32x32 frames, as FireRed's */
+int CtrGen4_IconPalette(int key);                    /* which of the palettes below */
+const uint16_t *CtrGen4_IconPaletteData(unsigned index);
+
+/* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
+typedef struct CtrGen4Obj {
+    unsigned slot;                  /* 0-3: which picture */
+    const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
+    float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
+    float scale;                    /* GBA pixels per picture pixel */
+} CtrGen4Obj;
+
+/* Implemented by the game's battle code: the battler sprite's OAM tile number and palette
+ * (tile | palette << 12), or -1 without one. */
+int CtrGen4_SpriteOam(unsigned battler);
+
+#endif

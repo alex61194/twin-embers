@@ -18,13 +18,20 @@ def default_recipe(rom_sha1: str) -> Path:
     raise ValueError(f'No recipe for ROM SHA-1 {rom_sha1}')
 
 
-def build(rom_path: Path, recipe_path: Path | None, output: Path) -> dict:
+def build(rom_path: Path, recipe_path: Path | None, output: Path,
+          extra: list[tuple[str, bytes]] = ()) -> dict:
+    """`extra`: optional entries outside the engine ABI (gen4_sprites.py), added after the ROM's."""
     rom = load_rom(rom_path)
     recipe_path = Path(recipe_path) if recipe_path else default_recipe(rom.sha1)
     if output.resolve() in (rom_path.resolve(), recipe_path.resolve()):
         raise ValueError('Pack output must not overwrite ROM or recipe')
     recipe = load_recipe(recipe_path)
     files = reconstruct(recipe, rom.data)
+    if extra:
+        taken = {path for path, _ in files}
+        if any(path in taken for path, _ in extra):
+            raise ValueError('An optional pack entry would replace one made from the ROM')
+        files = list(files) + list(extra)
     staging = output.with_name(output.name + '.building')
     if staging.exists() or staging.with_name(staging.name + '.tmp').exists():
         raise ValueError('Pack staging path already exists; preserve and inspect it')

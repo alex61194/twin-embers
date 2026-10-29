@@ -12,7 +12,7 @@ static const CtrPokeTouchRect sFDGridUp = {230, 34, 14, 63}, sFDGridDown = {230,
 static const CtrPokeTouchRect sFDListHead = {4, 4, 150, 24};
 static const CtrPokeTouchRect sFDListUp = {135, 34, 20, 63}, sFDListDown = {135, 101, 20, 63};
 static const CtrPokeTouchRect sFDSide = {158, 4, 86, 160};
-static const CtrPokeTouchRect sFDPrev = {220, 4, 24, 78}, sFDNext = {220, 86, 24, 78};
+static const CtrPokeTouchRect sFDPrev = {220, 4, 24, 80}, sFDNext = {220, 86, 24, 80};
 static const CtrPokeTouchRect sFDArea = {4, 174, 80, 62}, sFDCry = {88, 174, 80, 62};
 #define FD_GRID_PAGE 6
 
@@ -23,6 +23,8 @@ static struct {
     uint8_t ok;
     uint8_t px[64 * 64];
     uint16_t pal[16];
+    uint8_t hasBig;                 /* HeartGold's picture whole (CtrPokeTouch_DexMonPic80) */
+    uint8_t big[80 * 80];
 } sFDPic[FD_PICS];
 static int sFDPicNext;
 static struct {
@@ -72,6 +74,14 @@ static int FDPicSlot(unsigned species)
         return -1;
     FDTiles(tiles, 64, 64, sFDPic[slot].px);
     FDPal(pal, sFDPic[slot].pal);
+    {
+        static unsigned char linear[80 * 80 / 2];
+        unsigned short big[16];
+
+        sFDPic[slot].hasBig = (uint8_t)(CtrPokeTouch_DexMonPic80(species, linear, big) != 0);
+        for (int i = 0; sFDPic[slot].hasBig && i < 80 * 80; ++i)
+            sFDPic[slot].big[i] = (uint8_t)((linear[i / 2] >> ((i & 1) * 4)) & 15);
+    }
     return slot;
 }
 
@@ -82,6 +92,17 @@ static void FDPicDraw(unsigned species, int x, int y, int cut)
 
     if (slot >= 0)
         UiImage(sFDPic[slot].px, sFDPic[slot].pal, 64, 64, 64 - cut, x, y, 1, 1);
+}
+
+/* The same, whole when HeartGold's 80x80 picture is there: on the 64x64 box's centre, 8 pixels past each side. */
+static void FDPicDrawBig(unsigned species, int x, int y)
+{
+    int slot = FDPicSlot(species);
+
+    if (slot >= 0 && sFDPic[slot].hasBig)
+        UiImage(sFDPic[slot].big, sFDPic[slot].pal, 80, 80, 80, x - 8, y - 8, 1, 1);
+    else if (slot >= 0)
+        UiImage(sFDPic[slot].px, sFDPic[slot].pal, 64, 64, 64, x, y, 1, 1);
 }
 
 static void FDIconDraw(int id, int x, int y, int on)
@@ -282,7 +303,7 @@ static CtrPokeTouchRect FDListRow(int i)
 
 static CtrPokeTouchRect FDSlot(int i)
 {
-    CtrPokeTouchRect r = {(int16_t)(4 + (i % 2) * 108), (int16_t)(4 + (i / 2) * 82), 104, 78};
+    CtrPokeTouchRect r = {(int16_t)(4 + (i % 2) * 108), (int16_t)(4 + (i / 2) * 82), 104, 80};
     return r;
 }
 
@@ -464,10 +485,10 @@ static void FDSidePanel(const CtrPokeTouchDex *d)
     int fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, FB_DEPTH, 0), cx = r->x + r->w / 2;
     char no[12];
 
-    UiDisc(cx, fy + 44, 37, UiMix(kEmCream.edge, EM_WHITE, 2));
-    UiDisc(cx, fy + 44, 36, UI_RGB(255, 236, 214));
+    UiDisc(cx, fy + 44, 41, UiMix(kEmCream.edge, EM_WHITE, 2));
+    UiDisc(cx, fy + 44, 40, UI_RGB(255, 236, 214));
     if (d->sel.flags & 1)
-        FDPicDraw(d->sel.species, cx - 32, fy + 12, 0);
+        FDPicDrawBig(d->sel.species, cx - 32, fy + 12);
     FDLabel(d->sel.flags & 1 ? d->sel.name : "-----", r->x, r->w, fy + 88, &kEmCream);
     FDNumber(d->sel.number, no, sizeof(no));
     FDLabel(no, r->x, r->w, fy + 102, &kEmCream);
@@ -534,11 +555,12 @@ static void FDCategory(const CtrPokeTouchDex *d, int pressed)
         int fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, pressed == PT_DEX_HIT_SLOT + i);
         char label[24];
 
-        UiDisc(r.x + r.w / 2, fy + 32, 29, i == d->slot ? UiMix(p->top, EM_WHITE, 2) : UI_RGB(255, 236, 214));
+        /* The picture whole (80x80) on a disc filling the card, its number and name on a pill over its foot. */
+        UiDisc(r.x + r.w / 2, fy + 38, 37, i == d->slot ? UiMix(p->top, EM_WHITE, 2) : UI_RGB(255, 236, 214));
         if (m->flags & 1)
-            FDPicDraw(m->species, r.x + (r.w - 64) / 2, fy, 0);
+            FDPicDrawBig(m->species, r.x + (r.w - 64) / 2, fy + 6);
         snprintf(label, sizeof(label), "%03u %s", m->number > 999 ? 999 : m->number, m->flags & 1 ? m->name : "-----");
-        FDLabel(label, r.x, r.w, fy + 64, p);
+        BPill(r.x + (r.w - BPillW(label)) / 2, fy + 62, label, p->lip, EM_WHITE, p->edge);
         if (m->flags & 2)
             FDCaughtDraw(r.x + 6, fy + 6);
     }
@@ -553,7 +575,7 @@ static void FDPage(const CtrPokeTouchDex *d)
 
     UiDisc(52, fy + 46, 40, UiMix(kEmCream.edge, EM_WHITE, 2));
     UiDisc(52, fy + 46, 39, UI_RGB(255, 236, 214));
-    FDPicDraw(d->sel.species, 20, fy + 14, 0);
+    FDPicDrawBig(d->sel.species, 20, fy + 14);
     FDNumber(d->sel.number, no, sizeof(no));
     BPill(52 - BPillW(no) / 2, fy + 90, no, kEmAmber.lip, EM_WHITE, kEmAmber.edge);
     fy = EmButton(104, 4, 140, 110, &kEmCream, FB_DEPTH, 0);

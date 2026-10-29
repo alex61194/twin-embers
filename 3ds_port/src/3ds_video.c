@@ -22,6 +22,7 @@
 #include "3ds_palette_fade.h"
 #include "3ds_day_night.h"
 #include "3ds_poketouch.h"
+#include "3ds_battle_gen4.h"
 #include "twin_font.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
@@ -234,6 +235,18 @@ static uint32_t sVramSynced[VRAM_TRACK_BLOCKS], sVramToken;
 static inline uint32_t VramStamp(unsigned b)
 {
     return CtrVramTrack_SyncBlock(sMemory.vram, sVramCopy, sVramStamp, sVramSynced, b, sVramToken);
+}
+/* HeartGold's battle pictures (3ds_battle_gen4.c) go through the tile cache like VRAM tiles, at addresses past the
+ * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes. */
+#define GEN4_VRAM 0x18000u
+#define GEN4_SLOT 0x1000u
+#define GEN4_SLOTS 4u
+static bool (*sObjOverride)(unsigned attr2, struct CtrGen4Obj *out);
+static const uint8_t *sGen4Tiles[GEN4_SLOTS];
+
+void CtrVideo_SetObjOverride(bool (*match)(unsigned attr2, struct CtrGen4Obj *out))
+{
+    sObjOverride = match;
 }
 static C3D_Tex sAtlas, sSurface;
 static C3D_RenderTarget *sLogical, *sTop, *sTopRight;
@@ -848,10 +861,18 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         CTR_PERF_COUNT(PERF_CACHE_SAMPLE_COUNT,1);
         perfCache=CtrPerf_Begin();
     }
-    if (address + (color256 ? 64 : 32) > 0x18000)
+    const uint8_t *source = NULL;
+    if (address >= GEN4_VRAM && address < GEN4_VRAM + GEN4_SLOTS * GEN4_SLOT && !color256
+        && sGen4Tiles[(address - GEN4_VRAM) / GEN4_SLOT])
+        source = sGen4Tiles[(address - GEN4_VRAM) / GEN4_SLOT] + (address - GEN4_VRAM) % GEN4_SLOT;
+    else
     {
-        Error(1, "tile outside logical VRAM");
-        address = 0;
+        if (address + (color256 ? 64 : 32) > 0x18000)
+        {
+            Error(1, "tile outside logical VRAM");
+            address = 0;
+        }
+        source = sMemory.vram + address;
     }
     unsigned paletteId = color256 ? 32 + (bank >= 16) : bank;
     uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
@@ -883,10 +904,12 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         bool paletteDirty=tile->valid && (fadeBase
             ? TileVersionChanged(tile, sFadeVersion[fadeId], sFadeChanges[fadeId], fadeId < 32 ? 1u : 8u)
             : TilePaletteChanged(tile,paletteId));
-        /* Compared now whatever follows: the tile is marked checked at this token below. */
-        uint32_t stamp = VramStamp(address / CTR_VRAM_TRACK_BLOCK);
-        bool vramDirty=tile->valid && !paletteDirty && stamp > tile->checked
-            && memcmp(tile->bytes,sMemory.vram+address,bytes);
+        /* Compared now whatever follows: the tile is marked checked at this token below. A HeartGold picture's tile
+         * has no stamp: its few bytes are compared each frame. */
+        bool vramTile = address < GEN4_VRAM;
+        uint32_t stamp = vramTile ? VramStamp(address / CTR_VRAM_TRACK_BLOCK) : 0;
+        bool vramDirty=tile->valid && !paletteDirty && (!vramTile || stamp > tile->checked)
+            && memcmp(tile->bytes,source,bytes);
         if (!tile->valid || paletteDirty || vramDirty)
         {
             uint64_t perfDecode=perfCache ? CtrPerf_Begin() : 0;
@@ -896,7 +919,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             CTR_PERF_COUNT(PERF_ATLAS_BYTES,128);
             CTR_PERF_COUNT(PERF_VRAM_READ_BYTES,bytes);
             if (perfDecode) CTR_PERF_COUNT(PERF_DECODE_SAMPLE_COUNT,1);
-            memcpy(tile->bytes, sMemory.vram + address, bytes);
+            memcpy(tile->bytes, source, bytes);
             unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
@@ -3334,22 +3357,47 @@ static void DrawObjects(unsigned priority, bool effects)
         CTR_PERF_COUNT(PERF_AFFINE_OBJECTS,affine);
         Blend(4, effects, mode == 1);
         ViewBase();
-        if (affine)
+        /* A battler's FireRed picture with a HeartGold one: that 80x80 picture instead, its point (cx, cy) on the
+         * 64x64 box's centre, at its own scale k (GBA pixels per picture pixel), under the sprite's own matrix. */
+        struct CtrGen4Obj gen4;
+        bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
+               && gen4.slot < GEN4_SLOTS;
+        float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
+        if (hg)
+            sGen4Tiles[gen4.slot] = gen4.tiles;
+        if (affine || hg)
         {
-            unsigned index = ((attr1 >> 9) & 31) * 16;
-            float a = (int16_t)sMemory.oam[index + 3] / 256.0f;
-            float b = (int16_t)sMemory.oam[index + 7] / 256.0f;
-            float c = (int16_t)sMemory.oam[index + 11] / 256.0f;
-            float d = (int16_t)sMemory.oam[index + 15] / 256.0f;
+            float a = 1.0f, b = 0.0f, c = 0.0f, d = 1.0f;
+            if (affine)
+            {
+                unsigned index = ((attr1 >> 9) & 31) * 16;
+                a = (int16_t)sMemory.oam[index + 3] / 256.0f;
+                b = (int16_t)sMemory.oam[index + 7] / 256.0f;
+                c = (int16_t)sMemory.oam[index + 11] / 256.0f;
+                d = (int16_t)sMemory.oam[index + 15] / 256.0f;
+            }
             float det = a * d - b * c;
             if (fabsf(det) < 0.00001f) { Error(9, "singular OBJ affine matrix"); CtrPerf_End(PERF_OBJ_AFFINE,perfAffine); continue; }
             C3D_Mtx matrix;
             Mtx_Identity(&matrix);
-            matrix.r[0] = FVec4_New(d / det, -b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - (d * width - b * height) / (2 * det));
-            matrix.r[1] = FVec4_New(-c / det, a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - (a * height - c * width) / (2 * det));
+            matrix.r[0] = FVec4_New(k * d / det, -k * b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - k * (d * cx - b * cy) / det);
+            matrix.r[1] = FVec4_New(-k * c / det, k * a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - k * (a * cy - c * cx) / det);
             ViewAffine(&matrix);
         }
         bool flipX = !affine && (attr1 & 0x1000), flipY = !affine && (attr1 & 0x2000);
+        if (hg)
+        {
+            for (unsigned ty = 0; ty < CTR_GEN4_TILES; ++ty)
+                for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
+                {
+                    unsigned sx = flipX ? CTR_GEN4_TILES - 1 - tx : tx;
+                    unsigned sy = flipY ? CTR_GEN4_TILES - 1 - ty : ty;
+                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * CTR_GEN4_TILES + sx) * 32, 16 + (attr2 >> 12), false,
+                             (int)tx * 8, (int)ty * 8, flipX, flipY);
+                }
+            CtrPerf_End(PERF_OBJ_AFFINE,perfAffine);
+            continue;
+        }
         for (unsigned ty = 0; ty < height / 8; ++ty)
             for (unsigned tx = 0; tx < width / 8; ++tx)
             {

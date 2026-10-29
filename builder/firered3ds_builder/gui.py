@@ -1,7 +1,8 @@
 """Twin Embers data-pack builder — offline graphical frontend (stdlib Tkinter).
 
-No game ROM, pack, icon, network access or SDK component is bundled. The only
-write action uses gui_service.build_private_pack and requires consent before
+No game ROM, pack, icon or SDK component is bundled. The network is used only
+when the player ticks the optional HeartGold battle sprites. The only write
+action uses gui_service.build_private_pack and requires consent before
 replacing a pre-existing output file.
 """
 from __future__ import annotations
@@ -33,6 +34,7 @@ class BuilderWindow(tk.Tk):
         self.status = tk.StringVar(value="Ready. All files stay on this computer.")
         self.details = tk.StringVar(value="Choose your own supported FireRed ROM to begin.")
         self.phase = tk.StringVar(value="READY")
+        self.gen4 = tk.BooleanVar(value=False)
 
         style = ttk.Style(self)
         # Clam honors the palette on Windows instead of reverting to grey
@@ -115,6 +117,11 @@ class BuilderWindow(tk.Tk):
         build_card = self._card(body, 2)
         ttk.Label(build_card, text="03   BUILD & VERIFY",
                   style="Step.TLabel").grid(row=0, column=0, sticky="w")
+        self.gen4_check = ttk.Checkbutton(
+            build_card, variable=self.gen4,
+            text="Also download HeartGold battle sprites and icons (optional, needs internet: "
+                 "about 1,300 small files from GitHub, checked one by one)")
+        self.gen4_check.grid(row=6, column=0, sticky="w", pady=(10, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -153,6 +160,16 @@ class BuilderWindow(tk.Tk):
         for key, button in (("<Alt-b>", self.build_button),
                             ("<Escape>", self.cancel_button)):
             self.bind(key, lambda event, action=button: action.invoke())
+
+    @staticmethod
+    def _gen4_summary(info: dict | None) -> str:
+        """The optional sprites' line in the final report."""
+        if not info:
+            return ""
+        text = "\n\nHeartGold battle sprites: {0} of 386 species.".format(info["species"])
+        if info["missing"]:
+            text += " The others keep FireRed's pictures (no network, or a file did not match)."
+        return text
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
         border = tk.Frame(parent, background="#dfc3a4", padx=1, pady=1)
@@ -201,7 +218,7 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button):
+                       self.build_button, self.gen4_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
         if busy:
@@ -223,6 +240,7 @@ class BuilderWindow(tk.Tk):
                 report = build_private_pack(
                     rom, target, overwrite=overwrite,
                     create_directories=self._create_dirs,
+                    gen4=self.gen4.get(),
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))
@@ -280,7 +298,7 @@ class BuilderWindow(tk.Tk):
                     if not self._cancel.is_set():
                         self.status.set(msg[2])
                         self.details.set("Stage: " + msg[1]
-                                         + "  |  No files are sent over a network.")
+                                         + "  |  Nothing is uploaded.")
                 else:
                     self._set_busy(False)
                     if kind == "ok_build":
@@ -294,6 +312,7 @@ class BuilderWindow(tk.Tk):
                                             + report["path"] + "\n\n"
                                             + "Entries: {0:,}\nSHA-256: {1}".format(
                                                 report["entries"], report["sha256"])
+                                            + self._gen4_summary(report.get("gen4"))
                                             + "\n\nNext: copy twinembers.3dsx into the same folder.",
                                             parent=self)
                     elif kind == "cancelled":

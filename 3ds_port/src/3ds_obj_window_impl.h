@@ -89,6 +89,16 @@ static bool ObjWindowBounds(int *x0, int *y0, int *x1, int *y1)
         y = (int)(attr0 & 255);
         if (x + w > 512) x -= 512;
         if (y + h > 256) y -= 256;
+        /* A battler's copy with a HeartGold picture (a stat change's arrows) masks with that 80x80 picture. */
+        struct CtrGen4Obj gen4;
+        if (sObjOverride && !twice && w == 64 && h == 64 && !(attr0 & 0x2000)
+            && sObjOverride(sMemory.oam[i * 4 + 2], &gen4))
+        {
+            /* The picture's box on the GBA's pixels, a pixel wider each way for its scaled edges. */
+            x += (int)floorf(32.0f - gen4.scale * gen4.pivotX) - 1;
+            y += (int)floorf(32.0f - gen4.scale * gen4.pivotY) - 1;
+            w = h = (int)ceilf(CTR_GEN4_SIZE * gen4.scale) + 2;
+        }
         if (!any || x < *x0) *x0 = x;
         if (!any || y < *y0) *y0 = y;
         if (!any || x + w > *x1) *x1 = x + w;
