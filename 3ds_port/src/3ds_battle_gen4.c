@@ -19,6 +19,20 @@ typedef struct {
 
 static Battler sBattlers[BATTLERS];
 
+/* A key's pack entry: graphics/gen4/battle/NNN.bin, or NNN_FF.bin for Unown's letters B to ? (form 1-27). */
+static bool KeyPath(unsigned key, char *path, size_t size)
+{
+    unsigned dex = key & 511, form = key >> 9;
+
+    if (dex < 1 || dex > 386 || form > 27 || (form && dex != 201))
+        return false;
+    if (form)
+        snprintf(path, size, "graphics/gen4/battle/%03u_%02u.bin", dex, form);
+    else
+        snprintf(path, size, "graphics/gen4/battle/%03u.bin", dex);
+    return true;
+}
+
 /* The lowest row of a 64x64 FireRed picture (8x8 tiles, eight to a row) with a pixel in it, or -1. */
 static int FireBottom(const uint8_t *pic)
 {
@@ -69,15 +83,14 @@ static unsigned sEntryDex;
 
 static const uint8_t *Entry(unsigned nationalDex)
 {
-    if (nationalDex < 1 || nationalDex > 386)
+    char path[40];
+    if (!KeyPath(nationalDex, path, sizeof(path)))
         return NULL;
     if (sEntryData && sEntryDex == nationalDex)
         return sEntryData;
     free(sEntryData);
     sEntryData = NULL;
     sEntryDex = 0;
-    char path[40];
-    snprintf(path, sizeof(path), "graphics/gen4/battle/%03u.bin", nationalDex);
     uint8_t *entry = CtrData_Load(path, &sEntrySize);
     if (!entry)
         return NULL;
@@ -142,10 +155,9 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
     if (battler >= BATTLERS)
         return false;
     sBattlers[battler].active = false;
-    if (nationalDex < 1 || nationalDex > 386)
-        return false;
     char path[40];
-    snprintf(path, sizeof(path), "graphics/gen4/battle/%03u.bin", nationalDex);
+    if (!KeyPath(nationalDex, path, sizeof(path)))
+        return false;
     uint32_t size = 0;
     uint8_t *entry = CtrData_Load(path, &size);
     if (!entry)

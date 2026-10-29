@@ -5583,7 +5583,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "3670fb2ed54648f8383d840f818c63b7583c421801501a689f37f61618124794",
+   "sha256": "7c2b8f129c771d114caac66e9219f4b067f204011c927108566f216498dbf0c8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5591,7 +5591,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sources.py",
-   "sha256": "82e70a014736ec27bef0b12ad46caa0071da7c836a659eef1ffd7264aa0368b0",
+   "sha256": "1feaa606f7930f78578795ec572e21c152545730fee9f3c83813421c5015e40e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5599,7 +5599,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "00436cc7ee79070923334fe7bea5ef5acc55fb83e41a25a46486d2d785cb2f46",
+   "sha256": "283d336b4e9ab36bdfca9c563ad59d416a69fbe5ee52c695612442cfdc9ac216",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5607,7 +5607,7 @@
   },
   {
    "path": "tools/make_gen4_sources.py",
-   "sha256": "83d51b52cddc8363242c850c97271b59c870401423adae272f0ba67162580349",
+   "sha256": "cea53e067d11f88cbde599efad86549ad84046bcdeb1ee7633b31179af6df366",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5615,7 +5615,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "16e7ea362ea6670f636cde649a91281e2b849d8a556f5a9cad78c39caabca10b",
+   "sha256": "faa1fa856f788c3107d11544739b08f0fbda90267133fdf16eb451cae7bf665b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5623,7 +5623,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "405e01b0f13af8939dbda726224e67efed3849c0f5caf0f863b9375a1be5b101",
+   "sha256": "42436bebfe8087f27ea433f7edda1f3544e37391fc57c280cf151a4eea49b312",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5631,7 +5631,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "0850f08fcec0c543ec83d79bc368ed339d18019d2cc86e33179c860ebdca6e1a",
+   "sha256": "fbb1a81c9e8f46a334d2be8b092ef53598dc5a7668dae6c6953f53f6458d90ed",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5672,6 +5672,14 @@
   {
    "path": "patches/pokefirered/0196-hgss-pokedex-pictures-80.json",
    "sha256": "08dc5a35d0ba84e4816c84db82f1718e87f31a73bed9925360de730b85f33087",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0197-hgss-unown-letters.json",
+   "sha256": "92f19b2275c6a0875afe70ba7d5cfd803892200acdc5475c00e62bccf661dcf2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

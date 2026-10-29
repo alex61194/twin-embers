@@ -22,6 +22,9 @@
 /* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
  * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
 #define CTR_GEN4_SCALE (1.0f / 1.4f)
+/* Which pictures: a species' national dex (1-386) and its form, Unown's letter 0-27 as FireRed numbers them (A to Z,
+ * !, ?). The functions below that take a "nationalDex" take this key. */
+#define CTR_GEN4_KEY(dex, form) ((dex) | ((form) << 9))
 
 /* Game side (battle_gfx_sfx_util.c). */
 /* After FireRed's picture of `battler` is in `firePic` (64x64, frame 0): load HeartGold's picture of

@@ -12,6 +12,9 @@ For national dex 1-386: male/front.png (its palette is the normal one),
 male/back.png (its palette is the shiny one), and the female pair where it
 differs from the male one. A female-only species has only its female pair.
 
+Unown's letters B to ? (otherpoke/unown, FireRed's order: 1-25 B to Z, 26 !,
+27 ?); its A is the species' own picture.
+
 And the menu icons, keyed as the port reads them: 0 the egg, 1-386 the
 national dex, 387-413 Unown's letters B to ? (HeartGold's own numbering,
 pokemon_icon_idx.c: dex + 7, the egg 501, Unown's forms 507 on).
@@ -25,6 +28,8 @@ from pathlib import Path
 REPO = 'pret/pokeheartgold'
 DIR = 'files/poketool/pokegra/pokegra/{:04d}/{}/{}.png'
 ICON = 'files/poketool/icongra/poke_icon/poke_icon_{:08d}.png'
+UNOWN = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
+UNOWN_NAMES = [chr(ord('a') + i) for i in range(26)] + ['exclamation_mark', 'question_mark']
 UNOWN_LETTERS = 27
 SPECIES = 386
 OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / 'gen4_sources.py'
@@ -52,6 +57,9 @@ def main() -> None:
         for body in bodies:
             for side, data in zip(('front', 'back'), pair[body]):
                 rows.append((dex, body, side, data))
+    for letter in range(1, 28):
+        for side in ('front', 'back'):
+            rows.append((letter, 'unown', side, (root / UNOWN.format(UNOWN_NAMES[letter], side)).read_bytes()))
     icons = [(0, 501)] + [(dex, dex + 7) for dex in range(1, SPECIES + 1)]
     icons += [(SPECIES + 1 + letter, 507 + letter) for letter in range(UNOWN_LETTERS)]
     for key, index in icons:
@@ -62,12 +70,15 @@ def main() -> None:
              'A battle sprite: (national dex, "male"/"female", "front"/"back", size, SHA-256), its path in the',
              'pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold\'s icon number, size,',
              'SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413',
-             'Unown\'s letters B to ?."""',
+             'Unown\'s letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path',
+             'UNOWN_PATH.format(UNOWN_NAMES[letter], side)."""',
              '',
              f'REPO = {REPO!r}',
              f'COMMIT = {commit!r}',
              f'PATH = {DIR!r}',
              f'ICON_PATH = {ICON!r}',
+             f'UNOWN_PATH = {UNOWN!r}',
+             f'UNOWN_NAMES = {tuple(UNOWN_NAMES)!r}',
              'FILES = (']
     lines += [f'    ({dex}, {body!r}, {side!r}, {len(data)}, {hashlib.sha256(data).hexdigest()!r}),'
               for dex, body, side, data in rows]

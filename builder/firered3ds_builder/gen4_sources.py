@@ -3,12 +3,15 @@
 A battle sprite: (national dex, "male"/"female", "front"/"back", size, SHA-256), its path in the
 pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold's icon number, size,
 SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413
-Unown's letters B to ?."""
+Unown's letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path
+UNOWN_PATH.format(UNOWN_NAMES[letter], side)."""
 
 REPO = 'pret/pokeheartgold'
 COMMIT = 'b1ce5fd204b3c5b11f023e31a94b23bdb3bbd228'
 PATH = 'files/poketool/pokegra/pokegra/{:04d}/{}/{}.png'
 ICON_PATH = 'files/poketool/icongra/poke_icon/poke_icon_{:08d}.png'
+UNOWN_PATH = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
+UNOWN_NAMES = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'exclamation_mark', 'question_mark')
 FILES = (
     (1, 'male', 'front', 765, 'bb1966d420c7877f7b86fe517cd80534382cbafcf9bf196802fc35ceb1ae556c'),
     (1, 'male', 'back', 995, '5659175711a3ddf714596647c10538ad002ed6fcd953ab4ed81ed898d8f8db92'),
@@ -908,6 +911,60 @@ FILES = (
     (385, 'male', 'back', 1231, '35602a05ae95c5591585c6d2b36b6a626490566608edf1a6da46a7a81896d93c'),
     (386, 'male', 'front', 1583, 'a595200e2a7242c3d88782225a4a8da89d9bd0c73192ad07312cc89ea342a164'),
     (386, 'male', 'back', 927, '632567e805276812184716224696c1a835d83087876af77d1d4e3883b98057cb'),
+    (1, 'unown', 'front', 374, '228935b0d354549d4bcb0f9acc8a22c67e7a3ba9c9ef98c2f6d1d3375b398f52'),
+    (1, 'unown', 'back', 412, '982f0011c6f03d7fc082315a55fa3a796e20c87984ae08383c56701d6772dd44'),
+    (2, 'unown', 'front', 415, 'dfd61c477ddd437bb684b6009a09a749c7210452cf2f62c832be44bff1d3d2a1'),
+    (2, 'unown', 'back', 533, '2785791258d65ffde37de635c7d4ccd34f1685020287273a89cf9e9b014202c3'),
+    (3, 'unown', 'front', 371, 'b04fa7259b560cc3923224b8052402cb6732d4bf7ba2d45b9ba65cd56156a646'),
+    (3, 'unown', 'back', 474, 'a19b13944015948802eddc66626a2af825b4436035b874d6d29fa957faa8fd44'),
+    (4, 'unown', 'front', 343, '1971e6519ea6a7a7418f1138207c11588bb709ab19ba536a699fa7d6fd3b8fe1'),
+    (4, 'unown', 'back', 416, 'cab0e2bea416b009cdc525be75b8f800ebd35fd4c5cc9741bccb443204e74bd6'),
+    (5, 'unown', 'front', 380, 'f7d2ad7851990e5dceb56240e1b3fb504b654ef03406b8212e07d8ab2fa83a26'),
+    (5, 'unown', 'back', 438, 'b1110735313f9164d12548a868fccee4b6ec07a3a7ec309150136680ed0b12b4'),
+    (6, 'unown', 'front', 375, '1e52f0198dd9bfb356f1940a2ab0e2c0a6df152afc46b126f492f99df8970002'),
+    (6, 'unown', 'back', 460, '2c4018844359edf30ccab7c06531cbabf20e0446d76c5089ba2264a6d931a9a6'),
+    (7, 'unown', 'front', 451, 'bb8e2270a831b5e4a23b318d571bb9e362eae50461d8547564603598b68c2d31'),
+    (7, 'unown', 'back', 574, '5a03315d3e341d0278d7034727e6d3b507f0696e9a7ed100a0df8994ee3bba6d'),
+    (8, 'unown', 'front', 321, '3a7d4acbfe33489aec4f418b425dd121c15dc1971e9602acda0b93286a6e29e2'),
+    (8, 'unown', 'back', 344, '35714fbf8e5ae7144ca4d2c39d2f19df866bc4f3ecd9da76aa60027e5b347489'),
+    (9, 'unown', 'front', 354, '7614e5057c6ee365a559d6215dae566321d6873fc1c6863cdd001a68098100a9'),
+    (9, 'unown', 'back', 385, 'b474bf70a17d18c9f87694c12de273109f9193a4d78cc0342211032db52d5b3e'),
+    (10, 'unown', 'front', 361, '14f04365eb6c741e8657f48994a977e702b28cae3dee49a35e58b6dca2843f53'),
+    (10, 'unown', 'back', 408, '66777b6f8b67097f5854416876e250ec21dbefd7fb9f27a53cabf60b5a5c3a11'),
+    (11, 'unown', 'front', 331, '0944e729d565947e269a8e18b7f36025e8ad33191d2ba8df7161580f878019e6'),
+    (11, 'unown', 'back', 374, 'c53df1550576269cf68751b0d1efc93f28b0a257371fa7707f36468b24a5cb2a'),
+    (12, 'unown', 'front', 439, '3e657920e67b06aac840f487b12a0535aa9e9eba031fceff9aeb2dcaf4855724'),
+    (12, 'unown', 'back', 536, '83176e99d55c64808d06a8115ac4e974031bd45640f73a685347934f29060a4a'),
+    (13, 'unown', 'front', 403, '608b228fd0e4104f6355d07ff3fdb9934f862694baab9c5557f37c01629f4e4e'),
+    (13, 'unown', 'back', 521, 'e9a882081fd0d76b1f52bc3ae0ac066b5795f993b77dfdb6295de8f340da8061'),
+    (14, 'unown', 'front', 442, '15566ab322c045b5e13d2097efb56b93de2bf52dd1284f6c0e5a1cc2340d6d44'),
+    (14, 'unown', 'back', 547, '9b619e290e84bdf9f389c737023188644005af1680f92969da7e3d7c5f50f56e'),
+    (15, 'unown', 'front', 326, '11116c8cd1ea1856ddadb6092b0c9b6396c37abca1d0acac1e38af6557cbba22'),
+    (15, 'unown', 'back', 352, 'afef715ae135d5c54fd42d8fda49d42d919b2b91b58d7600b1f1463523db400d'),
+    (16, 'unown', 'front', 334, '4d40d435b454278aa4034e1a2896a97fc2cffb550c4476f8419efcf72cd5665b'),
+    (16, 'unown', 'back', 354, 'f91a94121d86a5377c7d0c869feedb46ce70d64a5de6eb4ac51b5100ae13884c'),
+    (17, 'unown', 'front', 326, '8474959af6751c96c76d7882fc53a75ac0d51b6f7edd27463ce9288ecd7765c6'),
+    (17, 'unown', 'back', 352, '666236c39de96fa00e1506f82a789c8ea002a32125fed0d1d3c8b5aa1ce78361'),
+    (18, 'unown', 'front', 381, '64eff41d4b9dddd3c78b08aeabcc5d380f6dc428f55b14ad8391ff9f7be041e6'),
+    (18, 'unown', 'back', 462, '87676c2a14272886e5fce0bc65a7a445bbd85db0a18d7998b34ee787fbffdef8'),
+    (19, 'unown', 'front', 334, '06ed08575db0695e3438173efcde7ce817c840ac738f2755e52b22148dcde568'),
+    (19, 'unown', 'back', 340, 'eca8f03cc4ebb7f725c119cc686d0bc11f1315ad5e4ceb84c5d856c1f8c0b67d'),
+    (20, 'unown', 'front', 407, 'b3836b2013adaa39a14dfb691cc09d35b0fd88803e5d9697925e73aeca63c2af'),
+    (20, 'unown', 'back', 488, 'a19c414257c55b23ad77c49b39b57d159de6587623f5f65a829bd94f9c2b3fac'),
+    (21, 'unown', 'front', 367, '91c2aaeee652e98e7381deddfc844d8fc810aa7a2b50cee318f575fdd6ff389f'),
+    (21, 'unown', 'back', 433, '4d7c3749f920af6a67edd7cb1e35caab2d9bf5c39b0456abce95ed8c94e97a90'),
+    (22, 'unown', 'front', 367, '20a6a1b50db7f34de8316d74961ec0ee104734e3ef6d72468328d3b52ae8a88b'),
+    (22, 'unown', 'back', 400, 'ee611666f4e54c48cfe4c913ea58a5b217740b8cd0a4e200bdcee407eb3d54d4'),
+    (23, 'unown', 'front', 355, '7bee3f442418a841eb36fe18a0f494b4bd5748870e2e067df0dc146a706823fb'),
+    (23, 'unown', 'back', 405, 'e762ddb09a50a0b57f8e76f021611b5820c0bb64614fdb56e07815024db3902e'),
+    (24, 'unown', 'front', 365, '9d8a1a491db75569a4648556cb68ccdcdf5cf5ca085ab87bc91922c93864f0d5'),
+    (24, 'unown', 'back', 432, '93be206d435c5ace156ffd2dd00a0bc627c48ddfaa6e18fe30551925f012d2c2'),
+    (25, 'unown', 'front', 344, 'c108d8e953835abc194f337d799cfbb600ebd608481b4a3541ad0c3fdae978c8'),
+    (25, 'unown', 'back', 369, '50f6c005532a0254cade6e7318bad547a04e2ac8ce93db0f268ea4d3b4ee728d'),
+    (26, 'unown', 'front', 311, '4b951634635ebab5f57a8db7c8e7a1475e09d353cf9f9655741c80093bb7e2b7'),
+    (26, 'unown', 'back', 330, 'a9be18135aaf2eb9e610dba0c65cd918b2ce33855d2fc9f33a8f376849eff009'),
+    (27, 'unown', 'front', 350, '4143b76fc1eca3de0861ab9488693961ec33223c9ce5f66d7520454b18f55c1f'),
+    (27, 'unown', 'back', 404, '9316913e620060176ccdd08fda3a001af6404ec90b6251b5250ca275e7972ca0'),
     (0, 'icon', 501, 307, 'c772fb205fdd9daab5dac934f575cc3f1de19ab3dbf7a727a19092756d54f7ac'),
     (1, 'icon', 8, 313, '0e3bdf434330a31a63e3337924f97fcc83da3e6d8644e9f7007951e440936859'),
     (2, 'icon', 9, 320, '823d46e3f09fbbed6653d43d376ad226bd086e41d0d5d4a3a15a2c0efed75f1c'),

@@ -11,6 +11,7 @@ no network writes the same pack as before.
 Pack entries, one per species with a complete set, and the icons:
 
     graphics/gen4/battle/NNN.bin    NNN = national dex number, 001-386
+    graphics/gen4/battle/201_FF.bin Unown's letters, FF = 01-27 (B to Z, !, ?), as FireRed numbers them
     graphics/gen4/icons.bin         every menu icon, only when all of them could be had
                                     (their palettes replace FireRed's for every icon)
 
@@ -194,7 +195,11 @@ def http_get(url: str) -> bytes:
 
 
 def source_path(row: tuple) -> str:
-    return gen4_sources.ICON_PATH.format(row[2]) if row[1] == "icon" else gen4_sources.PATH.format(*row[:3])
+    if row[1] == "icon":
+        return gen4_sources.ICON_PATH.format(row[2])
+    if row[1] == "unown":
+        return gen4_sources.UNOWN_PATH.format(gen4_sources.UNOWN_NAMES[row[0]], row[2])
+    return gen4_sources.PATH.format(*row[:3])
 
 
 def matches(row: tuple, data: bytes | None) -> bool:
@@ -211,7 +216,11 @@ class Downloader:
         self.cache, self.folder, self.get, self.threads = cache, folder, get, threads
 
     def _name(self, row: tuple) -> str:
-        return "icon_{:08d}.png".format(row[2]) if row[1] == "icon" else "{:03d}_{}_{}.png".format(*row[:3])
+        if row[1] == "icon":
+            return "icon_{:08d}.png".format(row[2])
+        if row[1] == "unown":
+            return "unown_{:02d}_{}.png".format(row[0], row[2])
+        return "{:03d}_{}_{}.png".format(*row[:3])
 
     def fetch(self, row: tuple) -> tuple[bytes | None, bool]:
         """(the file or None, whether it came from the network)."""
@@ -276,7 +285,8 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
         worker.join()
     files, missing = [], []
     icon_rows = sorted((row for row in rows if row[1] == "icon"), key=lambda row: row[0])
-    rows = [row for row in rows if row[1] != "icon"]
+    unown_rows = [row for row in rows if row[1] == "unown"]
+    rows = [row for row in rows if row[1] not in ("icon", "unown")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
         bodies = [body for body in ("male", "female") if any(row[:2] == (dex, body) for row in rows)]
@@ -286,6 +296,10 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             continue
         files.append(("%s%03d.bin" % (PREFIX, dex), convert(*pairs[0], pairs[1] if len(pairs) > 1 else None)))
     species = len(files)
+    for letter in sorted({row[0] for row in unown_rows}):
+        pair = (got.get((letter, "unown", "front")), got.get((letter, "unown", "back")))
+        if None not in pair:
+            files.append(("%s201_%02d.bin" % (PREFIX, letter), convert(*pair)))
     icons = icon_rows and all(row[:3] in got for row in icon_rows)
     if icons:
         files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))

@@ -223,7 +223,8 @@ class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
         from firered3ds_builder import gen4_sources
         self.assertRegex(gen4_sources.COMMIT, "^[0-9a-f]{40}$")
-        battle = [row for row in gen4_sources.FILES if row[1] != "icon"]
+        battle = [row for row in gen4_sources.FILES if row[1] in ("male", "female")]
+        self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "unown"}), list(range(1, 28)))
         species = {row[0] for row in battle}
         self.assertEqual(species, set(range(1, 387)))
         for dex in species:

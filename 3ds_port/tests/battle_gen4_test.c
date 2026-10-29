@@ -204,6 +204,16 @@ int main(void)
         assert(!CtrGen4_Palette(11, false, pal));
     }
 
+    /* Unown's letters have their own entries; other forms do not exist. */
+    MakeEntry(false, 70);
+    assert(CtrGen4_Load(0, CTR_GEN4_KEY(201, 2), false, false, false, fire, palette));
+    assert(strcmp(sAsked, "graphics/gen4/battle/201_02.bin") == 0);
+    assert(CtrGen4_Load(0, CTR_GEN4_KEY(201, 0), false, false, false, fire, palette));
+    assert(strcmp(sAsked, "graphics/gen4/battle/201.bin") == 0);
+    assert(!CtrGen4_Load(0, CTR_GEN4_KEY(201, 28), false, false, false, fire, palette));
+    assert(!CtrGen4_Load(0, CTR_GEN4_KEY(25, 1), false, false, false, fire, palette));
+    CtrGen4_Drop(0);
+
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);
     sIconsEntry[4] = 3;
