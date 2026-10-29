@@ -5735,6 +5735,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0199-no-port-tables-in-game-objects.json",
+   "sha256": "7fbe100b08fbf173ef5cae79850e22cb8e1d7b33040ed4f573605abd01298770",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0191-credits-map-load-per-frame.json",
    "sha256": "b16efeac6389aff564297c935c74fcb0f6ce5050d09af5855f11a89a2c7232a3",
    "review_status": "reviewed",
