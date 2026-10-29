@@ -14,6 +14,9 @@ NAMES={'Makefile','.gitignore','.gitattributes'}
 MEDIA_DIR='docs/media'
 MEDIA_LIMIT=1024*1024
 MEDIA_EXTENSIONS={'.png','.jpg','.jpeg','.webp'}
+# The web Builder's static page (GitHub Pages): text only, directly in web/, checked as source.
+WEB_DIR='web'
+WEB_EXTENSIONS={'.html','.css','.js','.unistore'}
 FORBIDDEN={'assets','intro_native','graphics','sound','romfs','upstream','build','work','dist','.git','__pycache__','node_modules','.codex','.agents'}
 
 def git(root,*args):
@@ -23,6 +26,10 @@ def is_media(name):
     p=PurePosixPath(name)
     return str(p.parent)==MEDIA_DIR and p.suffix in MEDIA_EXTENSIONS
 
+def is_web(name):
+    p=PurePosixPath(name)
+    return str(p.parent)==WEB_DIR and p.suffix in WEB_EXTENSIONS
+
 def size_limit(name):
     return MANIFEST_LIMIT if name==MANIFEST else MEDIA_LIMIT if is_media(name) else LIMIT
 
@@ -30,7 +37,7 @@ def validate_name(name):
     p=PurePosixPath(name)
     if p.is_absolute() or '..' in p.parts or '\\' in name or ':' in name or any(x.lower() in FORBIDDEN for x in p.parts):
         raise ValueError(f'Forbidden source path: {name}')
-    if p.name not in NAMES and p.suffix not in EXTENSIONS and not is_media(name):
+    if p.name not in NAMES and p.suffix not in EXTENSIONS and not is_media(name) and not is_web(name):
         raise ValueError(f'Unapproved source file type: {name}')
 
 def check_media(name,raw):

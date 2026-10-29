@@ -231,6 +231,23 @@ def source_path(row: tuple) -> str:
     return gen4_sources.PATH.format(*row[:3])
 
 
+def file_name(row: tuple) -> str:
+    """The name a listed file has in the cache or in a folder given for offline use."""
+    if row[1] == "icon":
+        return "icon_{:08d}.png".format(row[2])
+    if row[1] == "unown":
+        return "unown_{:02d}_{}.png".format(row[0], row[2])
+    if row[1] == "castform":
+        return "castform_{:02d}_{}.png".format(row[0], row[2])
+    if row[1] == "spinda":
+        return "pokepic.c"
+    return "{:03d}_{}_{}.png".format(*row[:3])
+
+
+def file_url(row: tuple) -> str:
+    return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
+
+
 def matches(row: tuple, data: bytes | None) -> bool:
     return data is not None and len(data) == row[3] and hashlib.sha256(data).hexdigest() == row[4]
 
@@ -238,35 +255,25 @@ def matches(row: tuple, data: bytes | None) -> bool:
 class Downloader:
     """Gets each listed PNG once: a folder given for offline use, then the cache, then GitHub.
 
-    Anything that does not match its listed size and SHA-256 is thrown away."""
+    Anything that does not match its listed size and SHA-256 is thrown away. `threads` 0 fetches
+    on the calling thread (the web Builder: Pyodide cannot start threads)."""
 
     def __init__(self, cache: Path | None = None, folder: Path | None = None,
                  get: Callable[[str], bytes] | None = http_get, threads: int = 8):
         self.cache, self.folder, self.get, self.threads = cache, folder, get, threads
 
-    def _name(self, row: tuple) -> str:
-        if row[1] == "icon":
-            return "icon_{:08d}.png".format(row[2])
-        if row[1] == "unown":
-            return "unown_{:02d}_{}.png".format(row[0], row[2])
-        if row[1] == "castform":
-            return "castform_{:02d}_{}.png".format(row[0], row[2])
-        if row[1] == "spinda":
-            return "pokepic.c"
-        return "{:03d}_{}_{}.png".format(*row[:3])
-
     def fetch(self, row: tuple) -> tuple[bytes | None, bool]:
         """(the file or None, whether it came from the network)."""
         for place in (self.folder, self.cache):
             if place is not None:
-                path = place / self._name(row)
+                path = place / file_name(row)
                 data = path.read_bytes() if path.is_file() else None
                 if matches(row, data):
                     return data, False
         if self.get is None:
             return None, False
         try:
-            data = self.get(URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row)))
+            data = self.get(file_url(row))
         except Exception:  # noqa: BLE001 - any failure leaves the species on FireRed's pictures
             return None, False
         if not matches(row, data):
@@ -274,9 +281,9 @@ class Downloader:
         if self.cache is not None:
             try:
                 self.cache.mkdir(parents=True, exist_ok=True)
-                part = self.cache / (self._name(row) + ".part")
+                part = self.cache / (file_name(row) + ".part")
                 part.write_bytes(data)
-                part.replace(self.cache / self._name(row))
+                part.replace(self.cache / file_name(row))
             except OSError:
                 pass
         return data, True
@@ -303,9 +310,11 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
                 return
             results.put((row, downloader.fetch(row)))
 
-    workers = [threading.Thread(target=work, daemon=True) for _ in range(max(1, downloader.threads))]
+    workers = [threading.Thread(target=work, daemon=True) for _ in range(downloader.threads)]
     for worker in workers:
         worker.start()
+    if not workers:
+        work()
     for _ in rows:
         row, (data, fresh) = results.get()
         done += 1

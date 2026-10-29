@@ -98,6 +98,8 @@ Setup is a one-time job of about five minutes. You need three things on the SD c
 
 **2. Make the data pack.** Put the SD card in your PC and start the Builder. Choose your FireRed ROM, press **SD folder…** and pick the *root* of the card, then press **Build Data Pack**. The Builder checks the ROM, writes `3ds/twinembers/twinembers.pak` and verifies what it wrote. It needs no internet and no administrator rights.
 
+No Windows PC? The **[web Builder](https://alex61194.github.io/twin-embers/)** does the same in any recent browser, phones included: choose the ROM, press **Build twinembers.pak**, and copy the downloaded file to `3ds/twinembers/`. It runs the same Builder code on your device (Pyodide), writes the same pack byte for byte, and never uploads your ROM. Both Builders can add the optional HeartGold battle sprites, downloaded from GitHub and checked file by file.
+
 **3. Copy the game next to it.** Place `twinembers.3dsx` in `3ds/twinembers/`.
 
 Put the card back in the console and launch **Twin Embers** from Homebrew Launcher. The first run creates the save. When you are done the card looks like this:
@@ -114,6 +116,13 @@ SD:/3ds/
 ### HOME Menu shortcut (optional)
 
 `TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx`, so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
+
+### Install from the 3DS itself (optional)
+
+The game and the forwarder can be downloaded straight to the console; the pack still has to be built from your ROM (above). The QR codes are on the [web Builder page](https://alex61194.github.io/twin-embers/).
+
+- **Universal-Updater**: add the UniStore `https://alex61194.github.io/twin-embers/twinembers.unistore` (Settings → Select UniStore → add, by QR code or typed URL). It installs `twinembers.3dsx` into `SD:/3ds/twinembers/` and, if you pick it, the HOME Menu forwarder. Both always come from the latest release, so installing again updates the game.
+- **FBI**: Remote Install → Scan QR Code with the forwarder code, or type `https://github.com/alex61194/twin-embers/releases/latest/download/TwinEmbers-Forwarder.cia`. FBI installs only the CIA; the `.3dsx` still has to reach `SD:/3ds/twinembers/`.
 
 If Windows SmartScreen warns about the Builder, compare its SHA-256 with the one in the release notes before running it. A matching hash proves it is the published file, not that the file is safe; only run what you trust.
 
@@ -179,6 +188,7 @@ The pret/pokefirered decompilation is fetched at a pinned commit when you build 
 
 - [Build the 3DSX from source](docs/BUILDING.md)
 - [Windows Builder](builder/README.md)
+- [Web Builder and 3DS install codes](docs/WEB-BUILDER.md)
 - [Pack format, ABI and saves](docs/TECHNICAL-NOTES.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 

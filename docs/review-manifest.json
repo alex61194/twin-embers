@@ -46,7 +46,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "97add41cab00b0d4e2afd5ad99c13124671fa55a18460cc0172ee4d6088cea94",
+   "sha256": "48cc1c22a08edc161e6491edafd9b2ca0a53d3b3db64b6a269109e64dc172c0e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1963,7 +1963,7 @@
   },
   {
    "path": "CREDITS.md",
-   "sha256": "f482cc9dbf42c2f90e4857a04dec6a090e95f552ed6bf4b923b5d72c5958a9b3",
+   "sha256": "171f399a25cf6efed85a44da1c3224c59bfb10faa77e36287df2f79f25a2fed2",
    "review_status": "reviewed",
    "credit": "Original rightsholders/authors identified in the preserved legal notice",
    "license": "Exact component scope and original notice text; no expanded grant",
@@ -2006,7 +2006,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "ee25eaddf55a59ed3c4cb63a231e71d2460f5622211b777ab169e599ce35b553",
+   "sha256": "1f61508323fa7ab1232c0837a31d0a471da5dc3c5e2c5fcb8607232cf6b1779a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4835,7 +4835,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "b5657da6100cb0909a822542d4077e25990046d431a3336926f6b0c81f053394",
+   "sha256": "bc11e0f68d2f712065263840d9e5d2121d0c742149f266b7810c3e346f24e0aa",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5063,7 +5063,7 @@
   },
   {
    "path": "tools/test_source_audit.py",
-   "sha256": "4d0d58f54cd907030c3abdcc1ebc730860889a4c60e9122646a54937398796cb",
+   "sha256": "e3163fb7b5692fab2c949a05542e3cf9d965b39f8022bbea697fc8c3d46d9b6b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5583,7 +5583,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "2742887d7ddb30001599ce7d84ccdb30130c5eeeeb3af51f5a9bc0b9618c0aa6",
+   "sha256": "71d8be22033dd7f46d34ba030618c101fa5e6e17dda189315611d810ca201613",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5696,6 +5696,94 @@
   {
    "path": "patches/pokefirered/0191-credits-map-load-per-frame.json",
    "sha256": "b16efeac6389aff564297c935c74fcb0f6ce5050d09af5855f11a89a2c7232a3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "builder/firered3ds_builder/browser.py",
+   "sha256": "231c030c5e325f5be1f4a6f408c7548ee7035ecbe8c9b99356256a33696ae1fe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "builder/tests/test_browser.py",
+   "sha256": "350dbb62636394a30270565f37a86ba4d6123292c0cb535329b831638bc24d2f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/index.html",
+   "sha256": "13ad1d3b8f2d5b7bb831d054c715c3e3f87ee7d29766b60e5243d31495f4b7ad",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/style.css",
+   "sha256": "2cf0cc601894de65db29069b632f9217da7916adaa7f8b88f3063304760df21b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/app.js",
+   "sha256": "5d3f214c4fb0e5c4fe59ca2324c8fec09832b35dd4c444362af3f088c0612442",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/worker.js",
+   "sha256": "5230ffb58e67d4a241d21ebbfe7591c7a1f08d5dfbf65f1a0c2dc994fe0cf2a5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/twinembers.unistore",
+   "sha256": "f051322135a47b88a1c00068ee736da129272f116c40630de132eea81fcc14f1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/build_web.py",
+   "sha256": "b12242f940146cd91f1a46cf0a0339de0d0fd78f3dbbecf102cd21dd0f3e87a6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_web_builder.py",
+   "sha256": "e20bd44099e04520eaf83846eec31d13a3f5ec86ef6299c11f9903cba472378b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/WEB-BUILDER.md",
+   "sha256": "96d729c32e35b2e5badf75509d8af81132a6e496f4e8cec8eda54c71de86fbc3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": ".github/workflows/pages.yml",
+   "sha256": "769d08650edbe0e6dc828c4f102a72a31639780c0cad6d331ec26d71c7e616c6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

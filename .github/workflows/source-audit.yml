@@ -23,6 +23,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi
       - name: Builder, pack reader/writer and partition integrity
         run: python3 -m unittest discover -s builder/tests -v
+      - name: Web Builder site and UniStore
+        run: python3 -m unittest discover -s tools -p test_web_builder.py -v
       - name: Source and binary audit rejection tests
         run: |
           python3 -m unittest discover -s tools -p test_source_audit.py -v

@@ -155,6 +155,12 @@ class Rejections(unittest.TestCase):
         # Same image elsewhere, a nested folder, or another format: refused.
         for name in ('README.png','docs/a.png','docs/media/sub/a.png','docs/media/a.gif','docs/media/a.bin'):
             with self.assertRaises(ValueError): audit.check(reviewed({name:png}))
+    def test_web_page_text_only_in_web(self):
+        page={'web/index.html':b'<!doctype html>\n','web/style.css':b'body{}\n','web/app.js':b'1;\n','web/a.unistore':b'{}\n'}
+        self.assertEqual(audit.check(reviewed(page)),5)
+        for name in ('index.html','docs/app.js','web/sub/app.js','web/a.svg','web/a.wasm'):
+            with self.assertRaises(ValueError): audit.check(reviewed({name:b'1;\n'}))
+        with self.assertRaises(ValueError): audit.check(reviewed({'web/app.js':b'\0'}))
     def test_media_must_be_one_well_formed_image(self):
         png=synthetic_png()
         for name,raw in [('docs/media/a.png',png+b'trailing payload'),('docs/media/a.png',png[:-4]),

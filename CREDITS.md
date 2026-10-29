@@ -17,6 +17,9 @@
   citro2d and citro3d; **GNU GCC and newlib contributors** — external toolchain.
 - **Python, pyelftools and Unicorn contributors** — external local development
   and optional test dependencies; no runtime is bundled.
+- **Pyodide contributors** (MPL-2.0) and **Kazuhiko Arase**, qrcode-generator
+  (MIT) — external libraries the web Builder page loads from public CDNs at
+  pinned versions; neither is copied into this repository.
 - **Nintendo, Game Freak, Creatures and The Pokémon Company** — relevant game
   and trademark rightsholders; no affiliation or authorization is asserted.
 
