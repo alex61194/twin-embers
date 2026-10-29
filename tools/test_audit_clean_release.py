@@ -75,6 +75,14 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(a.classify_contribution(rows['/opt/devkitpro/libc.a(libc_a-x.o)'])[0], 'ENGINE')
         self.assertEqual(a.category_of('build/game_data/maps.o'), 'maps: layouts, blockdata, headers')
 
+    def test_port_variables_in_game_objects(self):
+        for name in ('sCtrMenuShown', 'sText_CtrClearY', 'sCtrTapArea'):
+            self.assertEqual(a.engine_symbol_reason(name), a.PORT_SYMBOL_REASON)
+        self.assertEqual(a.engine_symbol_reason('CSWTCH.12'), 'compiler-generated table')
+        # FireRed's own names that merely contain "Ctr" stay FireRed content.
+        for name in ('gItems', 'sCtrl', 'sText_Ctrl', 'BtlCtrl_DrawVoiceoverMessageFrame', 'healLocCtrlData'):
+            self.assertIsNone(a.engine_symbol_reason(name))
+
     def test_romfs_listing(self):
         image = romfs(['engine.bin', 'scripts.bin'])
         self.assertEqual(a.romfs_files(image), ['engine.bin', 'scripts.bin'])

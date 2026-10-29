@@ -10,7 +10,9 @@
 // starts the game in its place. It passes Luma's previous 3DSX title to the game
 // (3ds_forwarder.h), which puts it back as soon as it starts: the next start of
 // this title runs this code again, and the usual Homebrew Launcher entry keeps
-// working.
+// working. When Luma3DS, the game or its pack is missing it stays on the top
+// screen with a checklist and what to do, instead of starting a game that
+// cannot run.
 
 #include <3ds.h>
 #include <stdio.h>
@@ -21,6 +23,10 @@
 
 #define TARGET_SD_PATH "/3ds/twinembers/twinembers.3dsx"
 #define TARGET_ARGV0   "sdmc:" TARGET_SD_PATH
+#define PACK_PATH      "sdmc:/3ds/twinembers/twinembers.pak"
+#ifndef TWIN_EMBERS_VERSION
+#define TWIN_EMBERS_VERSION "?"
+#endif
 #define FORWARDER_TID  0x0004000001086500ULL   // forwarder-rsf.yml UniqueId 0x10865
 
 // Luma3DS shared config page (private layout, stable since v10).
@@ -70,27 +76,30 @@ static bool IsLuma(void)
     return R_SUCCEEDED(svcGetSystemInfo(&version, 0x10000, 0));
 }
 
-// Prepares hb:ldr and Luma's 3DSX title; on success main() returns and
-// libctru's chainloader restarts this title, which Luma loads as the game.
-static Result Forward(const char **why, u64 *chainTid)
+// What the shortcut needs before it can hand over: Luma3DS's hb:ldr, the game and its pack.
+typedef struct {
+    bool luma, game, pack;
+} Checks;
+
+static bool FileExists(const char *path)
 {
     struct stat st;
-    if (stat(TARGET_ARGV0, &st) != 0)
-    {
-        *why = "The game is not on the SD card.\n\n"
-               "Copy twinembers.3dsx to the SD card\n"
-               "so that this file exists:\n\n  " TARGET_ARGV0 "\n\n"
-               "Make twinembers.pak, next to it,\n"
-               "with the Twin Embers Builder.";
-        return -1;
-    }
-    if (!IsLuma() || !LUMA_SHARED_CONFIG->useHbldr)
-    {
-        *why = "This shortcut needs Luma3DS.\n\n"
-               "Start the game from the Homebrew Launcher.";
-        return -1;
-    }
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode) && st.st_size > 0;
+}
 
+static Checks Check(void)
+{
+    Checks c;
+    c.luma = IsLuma() && LUMA_SHARED_CONFIG->useHbldr;
+    c.game = FileExists(TARGET_ARGV0);
+    c.pack = FileExists(PACK_PATH);
+    return c;
+}
+
+// Prepares hb:ldr and Luma's 3DSX title; on success main() returns and
+// libctru's chainloader restarts this title, which Luma loads as the game.
+static Result Forward(u64 *chainTid)
+{
     u64 selfTid;
     if (R_FAILED(APT_GetProgramID(&selfTid)))
         selfTid = FORWARDER_TID;
@@ -111,12 +120,7 @@ static Result Forward(const char **why, u64 *chainTid)
         svcCloseHandle(hbldr);
     }
     if (R_FAILED(res))
-    {
-        *why = "Luma3DS refused to load the game (hb:ldr).\n\n"
-               "Update Luma3DS, or start the game from the\n"
-               "Homebrew Launcher.";
         return res;
-    }
 
     // Luma's PM makes the selected title current when this process exits;
     // the restart is then loaded as the 3DSX.
@@ -125,25 +129,69 @@ static Result Forward(const char **why, u64 *chainTid)
     return 0;
 }
 
+// The console's colours (libctru's ANSI subset).
+#define C_TITLE "\x1b[33;1m"
+#define C_OK    "\x1b[32;1m"
+#define C_MISS  "\x1b[31;1m"
+#define C_DIM   "\x1b[37m"
+#define C_TEXT  "\x1b[37;1m"
+#define C_RESET "\x1b[0m"
+
+static void Line(bool ok, const char *what)
+{
+    printf(" %s%s%s %s\n", ok ? C_OK : C_MISS, ok ? "[ OK ]" : "[MISS]", C_TEXT, what);
+}
+
+// The checklist on the top screen and, below it, what to do about the first thing missing.
+static void Explain(Checks c, Result res)
+{
+    printf("\n " C_TITLE "TWIN EMBERS  v" TWIN_EMBERS_VERSION "\n " C_DIM "HOME Menu shortcut\n\n");
+    Line(c.luma, "Luma3DS");
+    Line(c.game, "Game:  /3ds/twinembers/twinembers.3dsx");
+    Line(c.pack, "Pack:  /3ds/twinembers/twinembers.pak");
+    printf("\n" C_TEXT);
+    if (!c.luma)
+        printf(" This shortcut needs Luma3DS.\n\n"
+               " Update Luma3DS, or start the game from\n"
+               " the Homebrew Launcher.\n");
+    else if (!c.game)
+        printf(" The game is not on the SD card.\n\n"
+               " Copy twinembers.3dsx from the latest release\n"
+               " to the folder above:\n\n"
+               "   " C_TITLE "github.com/alex61194/twin-embers" C_TEXT "\n");
+    else if (!c.pack)
+        printf(" The pack is missing.\n\n"
+               " Make twinembers.pak from your own FireRed ROM\n"
+               " with the Twin Embers Builder (PC or web page):\n\n"
+               "   " C_TITLE "alex61194.github.io/twin-embers" C_TEXT "\n\n"
+               " and copy it next to twinembers.3dsx.\n");
+    else
+        printf(" Luma3DS refused to load the game (hb:ldr).\n\n"
+               " Update Luma3DS, or start the game from\n"
+               " the Homebrew Launcher.\n\n"
+               " " C_DIM "Error 0x%08lX\n", (unsigned long)res);
+    printf("\x1b[27;1H " C_DIM "Press START to go back to the HOME Menu." C_RESET);
+}
+
 int main(void)
 {
-    const char *why = NULL;
+    Checks c = Check();
+    Result res = -1;
     u64 chainTid = 0;
-    Result res = Forward(&why, &chainTid);
 
-    if (R_SUCCEEDED(res))
+    if (c.luma && c.game && c.pack)
     {
-        aptSetChainloader(chainTid, MEDIATYPE_SD);
-        return 0;
+        res = Forward(&chainTid);
+        if (R_SUCCEEDED(res))
+        {
+            aptSetChainloader(chainTid, MEDIATYPE_SD);
+            return 0;
+        }
     }
 
     gfxInitDefault();
     consoleInit(GFX_TOP, NULL);
-    printf("\n Twin Embers\n\n");
-    printf(" %s\n", why);
-    if (res != -1)
-        printf("\n Error 0x%08lX\n", (unsigned long)res);
-    printf("\n\n Press START to exit.\n");
+    Explain(c, res);
     while (aptMainLoop())
     {
         hidScanInput();

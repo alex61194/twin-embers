@@ -17,9 +17,11 @@ DEVKITARM ?= $(DEVKITPRO)/devkitARM
 CTRULIB := $(DEVKITPRO)/libctru
 CC := $(DEVKITARM)/bin/arm-none-eabi-gcc
 PYTHON ?= python3
+# The game's version (../Makefile), shown in the description and on the forwarder's own screen.
+GAME_VERSION ?= $(shell sed -n 's/^TWIN_EMBERS_VERSION := //p' ../Makefile)
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := $(ARCH) -O2 -std=gnu11 -Wall -Wextra -Werror -ffunction-sections -fdata-sections -D__3DS__ \
-	-I$(CTRULIB)/include -I../include
+	-I$(CTRULIB)/include -I../include -DTWIN_EMBERS_VERSION='"$(GAME_VERSION)"'
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
 LIBS := -lctru -lm
 
@@ -29,28 +31,30 @@ MAKEROM ?= $(firstword $(wildcard $(TOOLS_BIN)/makerom$(EXE)) makerom)
 BANNERTOOL ?= $(firstword $(wildcard $(TOOLS_BIN)/bannertool$(EXE)) bannertool)
 
 APP_TITLE := Twin Embers
-APP_DESCRIPTION := A FireRed port for the 3DS (shortcut)
+APP_DESCRIPTION := Twin Embers v$(GAME_VERSION), a FireRed port for the 3DS (shortcut)
 APP_AUTHOR := alex61194
-# Shown by FBI and the HOME Menu; bump with the forwarder, not with the game.
-APP_VERSION ?= 1.0.0
+# The CIA's own version, shown by FBI; bump with the forwarder, not with the game.
+APP_VERSION ?= 1.1.0
+# Fraction cut from each side of ICON_SRC (0 for a picture that already is the 48x48 icon).
+ICON_CROP ?= 0.09
 CIA := dist/TwinEmbers-Forwarder.cia
 ART := build/art
 
 all: $(CIA)
 
-build/forwarder.elf: source/main.c ../include/3ds_forwarder.h Makefile
+build/forwarder.elf: source/main.c ../include/3ds_forwarder.h Makefile ../Makefile
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 ifneq ($(and $(ICON_SRC),$(BANNER_SRC)),)
 $(ART)/icon.png $(ART)/banner.png $(ART)/banner.wav &: prepare_art.py make_art.py $(ICON_SRC) $(BANNER_SRC)
-	$(PYTHON) prepare_art.py --icon "$(ICON_SRC)" --banner "$(BANNER_SRC)" $(ART)
+	$(PYTHON) prepare_art.py --icon "$(ICON_SRC)" --icon-crop $(ICON_CROP) --banner "$(BANNER_SRC)" $(ART)
 else
 $(ART)/icon.png $(ART)/banner.png $(ART)/banner.wav &: make_art.py
 	$(PYTHON) make_art.py $(ART)
 endif
 
-build/icon.smdh: $(ART)/icon.png Makefile
+build/icon.smdh: $(ART)/icon.png Makefile ../Makefile
 	$(BANNERTOOL) makesmdh -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" -i $(ART)/icon.png -o $@
 
 build/banner.bnr: $(ART)/banner.png $(ART)/banner.wav

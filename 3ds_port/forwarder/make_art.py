@@ -128,9 +128,9 @@ def write_png(path, pixels):
 
 
 def write_chime(path, rate=22050):
-    """Two soft bell tones, a fifth apart, about 1.6 s: mono, 16-bit."""
-    notes = ((0.00, 523.25), (0.18, 783.99))
-    length = int(rate * 1.6)
+    """A rising arpeggio of soft bell tones (C, E, G, high C), about 2 s: mono, 16-bit."""
+    notes = ((0.00, 523.25), (0.11, 659.25), (0.22, 783.99), (0.36, 1046.50))
+    length = int(rate * 2.0)
     samples = []
     for i in range(length):
         t = i / rate
@@ -140,7 +140,7 @@ def write_chime(path, rate=22050):
                 s = t - start
                 env = math.exp(-3.2 * s) * min(1.0, s / 0.01)
                 v += env * (math.sin(2 * math.pi * freq * s) + 0.3 * math.sin(4 * math.pi * freq * s))
-        samples.append(int(max(-1.0, min(1.0, v * 0.35)) * 32767))
+        samples.append(int(max(-1.0, min(1.0, v * 0.22)) * 32767))
     data = struct.pack('<%dh' % length, *samples)
     header = b'RIFF' + struct.pack('<I', 36 + len(data)) + b'WAVE'
     header += b'fmt ' + struct.pack('<IHHIIHH', 16, 1, 1, rate, rate * 2, 2, 16)

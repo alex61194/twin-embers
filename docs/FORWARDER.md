@@ -5,12 +5,20 @@
 game still only replaces the 3DSX. It needs Luma3DS (it uses Luma's `hb:ldr`); without Luma it
 shows a message and the game is started from the Homebrew Launcher as before.
 
+Its description reads "Twin Embers v0.4.0, a FireRed port for the 3DS (shortcut)": the game's
+version comes from `TWIN_EMBERS_VERSION` in `3ds_port/Makefile`. The CIA's own version (shown by
+FBI) is `APP_VERSION`, 1.1.0, raised when the forwarder itself changes.
+
 Adapted from the forwarder of ZallaxDev's pokeemerald-3Ds-dualscreen (MIT, NOTICE.md), made for
 Twin Embers by kwak8709, received as a ZIP and reviewed before use.
 
 ## How it works
 
-1. The forwarder checks that `twinembers.3dsx` exists and that Luma's `hb:ldr` is on.
+1. The forwarder checks that Luma's `hb:ldr` is on and that `twinembers.3dsx` and
+   `twinembers.pak` are both in `sdmc:/3ds/twinembers/`. If any is missing it does not start
+   anything: the top screen shows a checklist (`[ OK ]` / `[MISS]` for Luma3DS, the game and the
+   pack), what to do about the first missing one (where to download the game, how to make the pack
+   with the Builder and the web page's address), and START goes back to the HOME Menu.
 2. It sets `hb:ldr`'s target to the 3DSX, with two arguments: the 3DSX path (`argv[0]`, for its
    RomFS) and `twinembers-forwarder:hbldr-tid=<previous Luma 3DSX title>`.
 3. It makes its own title Luma's selected 3DSX title and restarts itself; Luma loads the game in
@@ -43,8 +51,9 @@ The game runs in the forwarder's process, under its exheader (`forwarder-rsf.yml
 No artwork is stored in the repository: its source audit admits only text, the rule that keeps
 game data out. The pictures are made at build time:
 
-- `ICON_SRC=… BANNER_SRC=…`: the owner's icon and logo pictures, kept outside the
-  repository. The Twin Embers logo is by @xsh3d0r_ (Discord). `prepare_art.py` (Pillow) fits the icon into 48x48 and the logo into the 256x128
+- `ICON_SRC=… BANNER_SRC=…`: the owner's icon and logo pictures. The icon is kept outside the
+  repository; since v0.4.0 the banner is the logo published with the README,
+  `docs/media/twin-embers-banner.png` (a PNG with real transparency). The Twin Embers logo is by @xsh3d0r_ (Discord). `prepare_art.py` (Pillow) fits the icon into 48x48 and the logo into the 256x128
   banner, transparent around it (the HOME Menu theme shows through). The owner's CIA uses a
   WebP logo with real transparency, taken as it is. A JPEG logo with a painted grey
   checkerboard is cleaned instead (background, enclosed checkerboard and light fringe removed,
@@ -57,14 +66,18 @@ The game's 3DSX uses the same icon in the Homebrew Launcher, with the name "Twin
 (icon only, no banner), and without `ICON_SRC` it takes `make_art.py`'s two flames.
 
 The ZIP's icon (official box art) and banner (the Pokemon logo, plus 576 KB of audio of unknown
-origin) are not used. The banner sound is make_art.py's two-note chime in both cases.
+origin) are not used. The banner sound is make_art.py's chime in both cases: four synthesized bell
+tones rising C, E, G, high C, about two seconds.
 
 ## Build
 
 ```
 make -C 3ds_port/forwarder MAKEROM=/path/to/makerom BANNERTOOL=/path/to/bannertool \
-    ICON_SRC=/path/to/icon.jpg BANNER_SRC=/path/to/logo.jpg
+    ICON_SRC=/path/to/icon.jpg BANNER_SRC=docs/media/twin-embers-banner.png
 ```
+
+`ICON_CROP=0` takes an `ICON_SRC` that already is the 48x48 icon as it is (v0.4.0's was read back
+from the v0.3.0 CIA, so the icon did not change).
 
 Needs devkitARM with libctru, Python 3, makerom (3DSGuy/Project_CTR) and bannertool. Title ID
 `0004000001086500`, product code `CTR-H-TWEM`.

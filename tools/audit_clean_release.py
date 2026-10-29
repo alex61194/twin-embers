@@ -70,6 +70,20 @@ ENGINE_SYMBOL_RULES = [
     (r'^\.(?:LC|LANCHOR|L\d)', 'compiler-generated literal'),
     (r'^__func__\.\d+$', 'compiler function-name literal'),
 ]
+# The port's own state and labels that its patches add to game sources (patches/pokefirered) are
+# named sCtr... or sText_Ctr...; FireRed (pret/pokefirered @037335f) defines no such symbol. The
+# ROM leak scan (--rom) still checks the image's bytes against the cartridge.
+PORT_SYMBOL = re.compile(r'^s(?:Text_)?Ctr[A-Z]\w*$')
+PORT_SYMBOL_REASON = "port-authored variable (the port's patches)"
+
+
+def engine_symbol_reason(name: str) -> str | None:
+    """Why a symbol inside a game object is not FireRed content, or None."""
+    if PORT_SYMBOL.match(name):
+        return PORT_SYMBOL_REASON
+    if any(re.match(p, name) for p, _ in ENGINE_SYMBOL_RULES):
+        return 'compiler-generated table'
+    return None
 
 EXTERNAL_KINDS = {'ctr_asset': 'graphics (INCBIN files)', 'ctr_script': 'script bytecode', 'ctr_song': 'song data',
                   'ctr_rex': 'ROM-derived data (REX)'}
@@ -301,16 +315,25 @@ def audit(tree: Path, elf_path: Path | None = None, map_path: Path | None = None
         if c['output'] not in progbits or not c['input'].startswith(('.rodata', '.data')):
             continue
         klass, reason = classify_contribution(c, engine)
+        own = re.match(r'^\.(?:rodata|data)\.([A-Za-z_]\w*)$', c['input'])
+        if klass == 'EMBEDDED' and own and PORT_SYMBOL.match(own[1]):
+            # A port variable's own section (-fdata-sections), alignment padding included.
+            klass, reason = 'ENGINE', PORT_SYMBOL_REASON
         if klass == 'EMBEDDED':
             # Compiler-generated tables inside game objects are engine metadata.
-            safe = [s for s in symbols_in(c['addr'], c['size'])
-                    if any(re.match(p, s['name']) for p, _ in ENGINE_SYMBOL_RULES)]
-            safe_bytes = sum(s['size'] for s in safe)
-            if safe_bytes == c['size']:
-                klass, reason = 'ENGINE', 'compiler-generated table'
+            # So are the port's own variables that its patches add to them.
+            safe: dict[str, int] = defaultdict(int)
+            for s in symbols_in(c['addr'], c['size']):
+                why = engine_symbol_reason(s['name'])
+                if why:
+                    safe[why] += s['size']
+            safe_bytes = sum(safe.values())
+            if safe_bytes == c['size'] and len(safe) == 1:
+                klass, reason = 'ENGINE', next(iter(safe))
             elif safe_bytes:
                 classes['ENGINE'] += safe_bytes
-                engine_detail['compiler-generated table'] += safe_bytes
+                for why, size in safe.items():
+                    engine_detail[why] += size
                 c = dict(c, size=c['size'] - safe_bytes)
         classes[klass] += c['size']
         if klass == 'ENGINE':
