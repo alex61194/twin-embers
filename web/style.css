@@ -112,101 +112,95 @@ header.hero p {
 .step p { margin: 0 0 8px; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
-/* Glossy rounded buttons: a coloured body, a bright gloss on the upper half and a darker lip underneath.
-   Hover lifts and lights them, pressing sinks them into the lip, focus draws a gold ring. */
+/* Buttons in the look of FireRed's own menus: a window with a dark outline and a lighter inner line, the game's
+   grey text shadow, and its black ▶ cursor that blinks beside the choice under the pointer. The main action is
+   red like the cartridge, the rest are the white menu window. */
 .btn {
-  --btn-top: #ffa24e;
-  --btn-bottom: #e0471f;
-  --btn-lip: #8f2412;
+  --btn-top: #ff6a4a;
+  --btn-bottom: #d82a1c;
+  --btn-edge: #f88878;
+  --btn-lip: #6a1010;
+  --btn-ink: #fff;
+  --btn-shadow: #7a2018;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 48px;
-  padding: 0 26px;
+  padding: 0 28px;
   border: 3px solid var(--slate);
-  border-radius: 999px;
+  border-radius: 12px;
   background: linear-gradient(180deg, var(--btn-top) 0%, var(--btn-bottom) 100%);
-  color: #fff;
+  color: var(--btn-ink);
   font: inherit;
   font-size: 17px;
   font-weight: bold;
   line-height: 1;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
   text-decoration: none;
-  text-shadow: 0 2px 0 rgba(74, 11, 10, 0.55);
-  box-shadow: 0 5px 0 var(--btn-lip), 0 5px 0 3px var(--slate), 0 10px 14px rgba(0, 0, 0, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+  text-shadow: 2px 2px 0 var(--btn-shadow);
+  /* The window's inner line, then its lip. */
+  box-shadow: inset 0 0 0 2px var(--btn-edge), 0 4px 0 var(--btn-lip), 0 4px 0 3px var(--slate), 0 8px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  overflow: hidden;
   white-space: nowrap;
   user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
   -webkit-tap-highlight-color: transparent;
 }
+/* The ▶ cursor, hidden until the button is chosen. */
 .btn::before {
   content: "";
   position: absolute;
-  left: 7%;
-  right: 7%;
-  top: 3px;
-  height: 44%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
+  left: 11px;
+  top: 50%;
+  margin-top: -7px;
+  border-style: solid;
+  border-width: 7px 0 7px 10px;
+  border-color: transparent transparent transparent #383838;
+  opacity: 0;
   pointer-events: none;
 }
-/* A light sweep across the button on hover. */
-.btn::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -60%;
-  width: 40%;
-  transform: skewX(-20deg);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
-  pointer-events: none;
-}
-.btn:hover:not([disabled]):not([aria-disabled="true"]) {
+.btn:hover:not([disabled]):not([aria-disabled="true"]),
+.btn:focus-visible {
+  filter: brightness(1.07);
   transform: translateY(-2px);
-  filter: brightness(1.08) saturate(1.1);
-  box-shadow: 0 7px 0 var(--btn-lip), 0 7px 0 3px var(--slate), 0 14px 20px rgba(255, 138, 61, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 2px var(--btn-edge), 0 6px 0 var(--btn-lip), 0 6px 0 3px var(--slate), 0 12px 18px rgba(255, 138, 61, 0.4);
 }
-.btn:hover:not([disabled]):not([aria-disabled="true"])::after { left: 130%; transition: left 0.5s ease; }
+.btn:hover:not([disabled]):not([aria-disabled="true"])::before,
+.btn:focus-visible::before { opacity: 1; animation: cursor-blink 0.9s steps(1) infinite; }
+@keyframes cursor-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0; } }
 .btn:active:not([disabled]):not([aria-disabled="true"]) {
   transform: translateY(4px);
-  filter: brightness(0.96);
-  box-shadow: 0 1px 0 var(--btn-lip), 0 1px 0 3px var(--slate), inset 0 3px 6px rgba(0, 0, 0, 0.25);
+  filter: brightness(0.95);
+  box-shadow: inset 0 0 0 2px var(--btn-edge), 0 0 0 var(--btn-lip), 0 0 0 3px var(--slate);
 }
 .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 .btn.secondary {
   --btn-top: #ffffff;
-  --btn-bottom: #d3d7e6;
+  --btn-bottom: #e4e6ee;
+  --btn-edge: #a8b0c8;
   --btn-lip: #8a90ab;
-  color: var(--ink);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  --btn-ink: #383838;
+  --btn-shadow: #c0c4d4;
 }
-.btn.secondary::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15)); }
-.btn.secondary:hover:not([disabled]):not([aria-disabled="true"]) {
-  --btn-bottom: #ffe9c9;
-  box-shadow: 0 7px 0 var(--btn-lip), 0 7px 0 3px var(--slate), 0 14px 20px rgba(255, 209, 102, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
-}
-.btn.big { min-height: 56px; font-size: 19px; padding: 0 32px; }
+.btn.big { min-height: 56px; font-size: 19px; padding: 0 34px; }
 .btn[disabled], .btn[aria-disabled="true"] {
-  --btn-top: #c9cbd6;
+  --btn-top: #bfc1cc;
   --btn-bottom: #a3a6b8;
+  --btn-edge: #b6b9c8;
   --btn-lip: #6d7288;
-  color: #eef0f6;
-  text-shadow: 0 1px 0 rgba(64, 72, 104, 0.5);
+  --btn-ink: #eef0f6;
+  --btn-shadow: #7b8098;
   opacity: 0.75;
   cursor: not-allowed;
 }
-.btn[disabled]::before, .btn[aria-disabled="true"]::before { opacity: 0.5; }
 .btn.hidden, .hidden { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .btn::after { transition: none; }
-  .btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: none; }
+  .btn { transition: none; }
+  .btn:hover:not([disabled]):not([aria-disabled="true"]), .btn:focus-visible { transform: none; }
+  .btn:hover:not([disabled]):not([aria-disabled="true"])::before, .btn:focus-visible::before { animation: none; }
 }
 
 /* Status pills share the buttons' height so text lines up beside them. */
