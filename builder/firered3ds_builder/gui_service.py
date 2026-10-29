@@ -1,7 +1,9 @@
 """Local-only GUI workflow: verify, build, verify, and safely publish a data pack.
 
-The ROM is read locally by the existing builder. This module never talks to a
-network, never changes game data and never writes to the ROM. It deliberately
+The ROM is read locally by the existing builder. Only the optional HeartGold
+battle sprites (gen4_sprites.py) are downloaded, from the pinned commit and
+checked by SHA-256; nothing is ever uploaded. This module never changes game
+data and never writes to the ROM. It deliberately
 contains no Tk dependency so the security-critical workflow is host-testable.
 """
 from __future__ import annotations
@@ -15,6 +17,7 @@ import tempfile
 from typing import Callable
 
 from .build import build
+from . import gen4_sprites
 from .pak import PakReader
 from .rom import load_rom, SUPPORTED_SHA1
 
@@ -76,6 +79,8 @@ def build_private_pack(
     create_directories: bool = False,
     on_progress: Stage | None = None,
     cancel: object | None = None,
+    gen4: bool = False,
+    downloader: gen4_sprites.Downloader | None = None,
 ) -> dict:
     """Build with the original engine; publish only a fully verified pack.
 
@@ -105,8 +110,16 @@ def build_private_pack(
     with tempfile.TemporaryDirectory(prefix=".fire3ds-", dir=output_path.parent) as tmp:
         candidate = Path(tmp) / "twinembers.pak"
         _cancel(cancel)
+        sprites = None
+        if gen4:
+            _stage(on_progress, "sprites", "Downloading HeartGold battle sprites...")
+            extra, sprites = gen4_sprites.pack_files(
+                downloader or gen4_sprites.Downloader(gen4_sprites.cache_dir()),
+                lambda done, total: _stage(on_progress, "sprites",
+                                           f"Downloading HeartGold battle sprites... {done}/{total}"))
+            _cancel(cancel)
         _stage(on_progress, "build", "Reconstructing the pack from your ROM...")
-        result = build(rom_path, None, candidate)
+        result = build(rom_path, None, candidate, extra) if gen4 else build(rom_path, None, candidate)
         _cancel(cancel)
         _stage(on_progress, "verify", "Checking all pack records and checksums...")
         with PakReader(candidate, result["abi"], bytes.fromhex(rom.sha1)) as reader:
@@ -187,4 +200,5 @@ def build_private_pack(
             "entries": count,
             "bytes": output_path.stat().st_size,
             "rom_sha1": rom.sha1,
+            "gen4": sprites,
         }

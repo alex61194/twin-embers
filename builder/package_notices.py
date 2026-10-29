@@ -26,7 +26,7 @@ RULES = [
     (r'(launch_gui|firered3ds_builder[\\/].+)', 'twin-embers'),
     (r'(pyiboot\d+_\w+|pyimod\d+_\w+|pyi_rth_\w+)', 'pyinstaller'),
     (r'(python3\d+\.dll|base_library\.zip|PYZ\.pyz|struct|select\.pyd|unicodedata\.pyd'
-     r'|_(bz2|hashlib|queue|socket|tkinter|ctypes|overlapped|asyncio|multiprocessing|uuid|wmi)\.pyd)', 'python'),
+     r'|_(bz2|hashlib|queue|socket|ssl|tkinter|ctypes|overlapped|asyncio|multiprocessing|uuid|wmi)\.pyd)', 'python'),
     (r'lib(crypto|ssl)-3(-x64)?\.dll', 'openssl'),
     (r'(tcl86t\.dll|tk86t\.dll|(_tcl_data|_tk_data|tcl8)[\\/].+)', 'tcltk'),
     (r'(VCRUNTIME140(_1)?\.dll|MSVCP140\.dll|ucrtbase\.dll|api-ms-win-[\w-]+\.dll)', 'microsoft'),
@@ -36,7 +36,7 @@ COMPONENTS = {
     'twin-embers': 'Twin Embers Builder (alex61194, MIT; inherited ZallaxDev portions, MIT)',
     'pyinstaller': 'PyInstaller bootloader and runtime hooks (GPL-2.0-or-later with the bootloader exception)',
     'python': 'Python runtime and standard library (PSF License; bzip2 statically linked in _bz2.pyd; zlib in the Python DLL)',
-    'openssl': 'OpenSSL (Apache License 2.0), used by _hashlib.pyd',
+    'openssl': 'OpenSSL (Apache License 2.0), used by _hashlib.pyd and _ssl.pyd',
     'tcltk': 'Tcl/Tk (Tcl/Tk license)',
     'microsoft': 'Microsoft Visual C++ runtime and Universal CRT (Microsoft Distributable Code)',
 }

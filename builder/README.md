@@ -1,8 +1,25 @@
 # Twin Embers data Builder
 
-Offline, user-owned ROM reconstruction. Python 3.11+ is required. The GUI uses
-only Python's standard Tkinter, ttk, threading and pathlib modules: no SDK,
-online account, telemetry or game content is included.
+User-owned ROM reconstruction, offline unless you tick the optional HeartGold
+battle sprites (below). Python 3.11+ is required. The GUI uses only Python's
+standard library: no SDK, online account, telemetry or game content is included.
+
+## Optional HeartGold battle sprites
+
+Ticking "Also download HeartGold battle sprites" (or `build --gen4-sprites` on
+the command line) adds Generation 4 battle sprites to the pack for the 386
+species FireRed has. They are not in your FireRed ROM and never ship with Twin
+Embers: the Builder downloads the PNG files from
+[pret/pokeheartgold](https://github.com/pret/pokeheartgold) at the commit that
+`firered3ds_builder/gen4_sources.py` pins, keeps each file only if its size and
+SHA-256 match that list, converts it and adds it to the pack. Nothing is
+uploaded. Files already downloaded are kept in
+`%LOCALAPPDATA%\TwinEmbers\gen4` for the next build.
+
+The entries are optional: the engine ABI does not cover them, and a species
+whose files could not be had (no network, a file that did not match) keeps
+FireRed's pictures. The sprites remain Nintendo, Game Freak and Creatures'
+work; pret's repository has no licence of its own.
 
 ## Graphical interface (Windows)
 
@@ -83,6 +100,6 @@ exact-version license notices (Python, Tcl/Tk, PyInstaller and this project),
 failing on any unknown file; ship those notices with the EXE.
 `TwinEmbersBuilder.exe --self-test` checks the embedded recipe without a display.
 The EXE does not contain or download a game executable, ROM or `.pak`, and
-needs no administrator rights. No EXE is published yet.
+needs no administrator rights; its only download is the optional sprites above. No EXE is published yet.
 Game-binary publication remains deliberately BLOCKED by
 `tools/source_audit.py --release`; the Builder does not change that policy.

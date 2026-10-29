@@ -2,6 +2,7 @@ import argparse
 import hashlib
 from pathlib import Path
 from .build import build
+from . import gen4_sprites
 from .rom import load_rom, SUPPORTED_SHA1
 from .pak import PakReader, PakError
 
@@ -16,6 +17,8 @@ def main() -> None:
     make.add_argument('--rom', type=Path, required=True)
     make.add_argument('--output', type=Path, default=Path('twinembers.pak'))
     make.add_argument('--recipe', type=Path, help=argparse.SUPPRESS)
+    make.add_argument('--gen4-sprites', action='store_true',
+                      help='also download HeartGold battle sprites (optional, needs internet)')
     pack = sub.add_parser('verify-pak', help='check every payload of an existing pack')
     pack.add_argument('pak', type=Path)
     pack.add_argument('--abi', type=lambda s: int(s, 16), required=True)
@@ -26,7 +29,12 @@ def main() -> None:
         elif args.command == 'build':
             rom = load_rom(args.rom)
             print(f'ROM verified: {rom.sha1}')
-            result = build(args.rom, args.recipe, args.output)
+            extra = []
+            if args.gen4_sprites:
+                extra, info = gen4_sprites.pack_files(gen4_sprites.Downloader(gen4_sprites.cache_dir()))
+                print(f"HeartGold battle sprites: {info['species']} species "
+                      f"({info['downloaded']} files downloaded), {len(info['missing'])} missing")
+            result = build(args.rom, args.recipe, args.output, extra)
             digest = hashlib.sha256(args.output.read_bytes()).hexdigest()
             print(f"Wrote {args.output}: {result['entries']} entries, {args.output.stat().st_size} bytes, "
                   f"engine ABI {result['abi']:08x}, SHA-256 {digest}")

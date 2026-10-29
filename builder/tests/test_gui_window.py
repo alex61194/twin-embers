@@ -92,9 +92,9 @@ def simulated_window():
     tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
     tree.body = [node for node in tree.body if isinstance(node, ast.ClassDef)]
     tk = SimpleNamespace(Tk=Widget, Frame=Widget, Label=Widget,
-                         StringVar=Variable, Event=object)
+                         StringVar=Variable, BooleanVar=Variable, Event=object)
     ttk = SimpleNamespace(Style=Mock(), Frame=Widget, Label=Widget,
-                          Entry=Widget, Button=Widget, Progressbar=Widget)
+                          Entry=Widget, Button=Widget, Progressbar=Widget, Checkbutton=Widget)
     namespace = dict(tk=tk, ttk=ttk, queue=queue, threading=threading, Path=Path,
                      filedialog=Mock(), messagebox=Mock(),
                      BuildCancelled=gui_service.BuildCancelled,
