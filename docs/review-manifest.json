@@ -5583,7 +5583,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "6d3c0cac0641bb0cd89e6fc658b25515fb97803a30de2994cb70b2efdcc61dcc",
+   "sha256": "0114ced37f5ccd4e8f0f3b5e0d9d88b13a6cecf03db60463ff4597dceed284c9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5648,6 +5648,22 @@
   {
    "path": "patches/pokefirered/0193-hgss-sprite-on-anim-bg.json",
    "sha256": "89ceb5ef88c27267a4ce514606f097ac27fb6aa69532fa07409a75550c8709de",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "builder/firered3ds_builder/browser.py",
+   "sha256": "231c030c5e325f5be1f4a6f408c7548ee7035ecbe8c9b99356256a33696ae1fe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "builder/tests/test_browser.py",
+   "sha256": "1fd1c3847220af408d42f3e029498fc0792efdf71f0514c8d109ebdf652d7210",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
