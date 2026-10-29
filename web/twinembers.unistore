@@ -1,0 +1,55 @@
+{
+  "storeInfo": {
+    "title": "Twin Embers",
+    "author": "alex61194",
+    "description": "Twin Embers: Pokemon FireRed on both 3DS screens. Build twinembers.pak from your own ROM at https://alex61194.github.io/twin-embers/",
+    "url": "https://alex61194.github.io/twin-embers/twinembers.unistore",
+    "file": "twinembers.unistore",
+    "version": 4,
+    "revision": 1
+  },
+  "storeContent": [
+    {
+      "info": {
+        "title": "Twin Embers",
+        "author": "alex61194",
+        "version": "latest",
+        "category": ["game"],
+        "console": ["3DS"],
+        "description": "Unofficial native port of Pokemon FireRed to the 3DS with a touch screen. Needs twinembers.pak in sdmc:/3ds/twinembers/, built from your own FireRed (USA) ROM with the Builder.",
+        "license": "MIT (port code); game rights not included",
+        "wiki": "https://github.com/alex61194/twin-embers#readme",
+        "llm_generation": "yes",
+        "last_updated": "",
+        "releasenotes": "See https://github.com/alex61194/twin-embers/releases/latest",
+        "preinstall_message": "The game needs its data pack: build twinembers.pak from your own FireRed (USA) ROM at alex61194.github.io/twin-embers and copy it to sdmc:/3ds/twinembers/."
+      },
+      "twinembers.3dsx": [
+        {
+          "type": "mkdir",
+          "directory": "sdmc:/3ds/twinembers"
+        },
+        {
+          "type": "downloadFile",
+          "file": "https://github.com/alex61194/twin-embers/releases/latest/download/twinembers.3dsx",
+          "output": "sdmc:/3ds/twinembers/twinembers.3dsx"
+        }
+      ],
+      "HOME Menu forwarder (CIA)": [
+        {
+          "type": "downloadFile",
+          "file": "https://github.com/alex61194/twin-embers/releases/latest/download/TwinEmbers-Forwarder.cia",
+          "output": "sdmc:/TwinEmbers-Forwarder.cia"
+        },
+        {
+          "type": "installCia",
+          "file": "sdmc:/TwinEmbers-Forwarder.cia"
+        },
+        {
+          "type": "deleteFile",
+          "file": "sdmc:/TwinEmbers-Forwarder.cia"
+        }
+      ]
+    }
+  ]
+}

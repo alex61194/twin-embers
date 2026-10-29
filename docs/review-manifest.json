@@ -46,7 +46,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "97add41cab00b0d4e2afd5ad99c13124671fa55a18460cc0172ee4d6088cea94",
+   "sha256": "48cc1c22a08edc161e6491edafd9b2ca0a53d3b3db64b6a269109e64dc172c0e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5664,6 +5664,62 @@
   {
    "path": "builder/tests/test_browser.py",
    "sha256": "1fd1c3847220af408d42f3e029498fc0792efdf71f0514c8d109ebdf652d7210",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/index.html",
+   "sha256": "13ad1d3b8f2d5b7bb831d054c715c3e3f87ee7d29766b60e5243d31495f4b7ad",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/style.css",
+   "sha256": "3086b9636241add0fd32f4a1e05ba906b8f092b748b1d735402048e94e5a1741",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/app.js",
+   "sha256": "5d3f214c4fb0e5c4fe59ca2324c8fec09832b35dd4c444362af3f088c0612442",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/worker.js",
+   "sha256": "5230ffb58e67d4a241d21ebbfe7591c7a1f08d5dfbf65f1a0c2dc994fe0cf2a5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/twinembers.unistore",
+   "sha256": "f051322135a47b88a1c00068ee736da129272f116c40630de132eea81fcc14f1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/build_web.py",
+   "sha256": "b12242f940146cd91f1a46cf0a0339de0d0fd78f3dbbecf102cd21dd0f3e87a6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_web_builder.py",
+   "sha256": "e20bd44099e04520eaf83846eec31d13a3f5ec86ef6299c11f9903cba472378b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
