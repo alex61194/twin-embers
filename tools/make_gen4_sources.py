@@ -11,6 +11,10 @@ checkout is copied into this repository: only paths, sizes and hashes.
 For national dex 1-386: male/front.png (its palette is the normal one),
 male/back.png (its palette is the shiny one), and the female pair where it
 differs from the male one. A female-only species has only its female pair.
+
+And the menu icons, keyed as the port reads them: 0 the egg, 1-386 the
+national dex, 387-413 Unown's letters B to ? (HeartGold's own numbering,
+pokemon_icon_idx.c: dex + 7, the egg 501, Unown's forms 507 on).
 """
 
 import argparse
@@ -20,6 +24,8 @@ from pathlib import Path
 
 REPO = 'pret/pokeheartgold'
 DIR = 'files/poketool/pokegra/pokegra/{:04d}/{}/{}.png'
+ICON = 'files/poketool/icongra/poke_icon/poke_icon_{:08d}.png'
+UNOWN_LETTERS = 27
 SPECIES = 386
 OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / 'gen4_sources.py'
 
@@ -46,14 +52,22 @@ def main() -> None:
         for body in bodies:
             for side, data in zip(('front', 'back'), pair[body]):
                 rows.append((dex, body, side, data))
-    lines = ['"""HeartGold battle sprites the Builder may fetch (tools/make_gen4_sources.py; do not edit).',
+    icons = [(0, 501)] + [(dex, dex + 7) for dex in range(1, SPECIES + 1)]
+    icons += [(SPECIES + 1 + letter, 507 + letter) for letter in range(UNOWN_LETTERS)]
+    for key, index in icons:
+        data = (root / ICON.format(index)).read_bytes()
+        rows.append((key, 'icon', index, data))
+    lines = ['"""HeartGold battle sprites and menu icons the Builder may fetch (tools/make_gen4_sources.py; do not edit).',
              '',
-             'Each file: (national dex, "male"/"female", "front"/"back", size, SHA-256). Its path in the',
-             'pinned commit is PATH.format(dex, body, side)."""',
+             'A battle sprite: (national dex, "male"/"female", "front"/"back", size, SHA-256), its path in the',
+             'pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold\'s icon number, size,',
+             'SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413',
+             'Unown\'s letters B to ?."""',
              '',
              f'REPO = {REPO!r}',
              f'COMMIT = {commit!r}',
              f'PATH = {DIR!r}',
+             f'ICON_PATH = {ICON!r}',
              'FILES = (']
     lines += [f'    ({dex}, {body!r}, {side!r}, {len(data)}, {hashlib.sha256(data).hexdigest()!r}),'
               for dex, body, side, data in rows]

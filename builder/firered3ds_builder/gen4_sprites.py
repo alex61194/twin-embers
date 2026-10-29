@@ -8,9 +8,11 @@ The pack stays valid without them: the engine ABI does not cover these
 entries, a species without its file keeps FireRed's pictures, and a build with
 no network writes the same pack as before.
 
-Pack entries, one per species with a complete set:
+Pack entries, one per species with a complete set, and the icons:
 
     graphics/gen4/battle/NNN.bin    NNN = national dex number, 001-386
+    graphics/gen4/icons.bin         every menu icon, only when all of them could be had
+                                    (their palettes replace FireRed's for every icon)
 
 Layout (little endian):
 
@@ -24,6 +26,16 @@ Layout (little endian):
          the left pixel in the low nibble: front, back, then the female
          front and back when bit 0 is set (a female-only species has its
          one pair first, bit 0 clear)
+
+icons.bin (little endian):
+
+    0    b"G4I1"
+    4    u16  icons, 414: key 0 the egg, 1-386 the national dex, 387-413 Unown's letters B to ?
+    6    u16  palettes used (at most 6, FireRed's icon palette slots)
+    8    u16 x 16 x 6  the palettes, BGR555, unused ones zero
+    200  u8 x icons  each icon's palette, then zeros to a multiple of 4
+    then 1024 bytes an icon: two 32x32 frames, each 16 8x8 4bpp tiles row by row,
+         as FireRed's icons
 """
 from __future__ import annotations
 
@@ -43,6 +55,9 @@ SIZE = 80
 PICTURE = SIZE * SIZE // 2
 MAGIC = b"G4B1"
 PREFIX = "graphics/gen4/battle/"
+ICONS = "graphics/gen4/icons.bin"
+ICON_MAGIC = b"G4I1"
+ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
 TIMEOUT = 30
 
@@ -124,6 +139,38 @@ def first_frame(rows: list[list[int]]) -> bytes:
     return bytes(out)
 
 
+def icon_tiles(rows: list[list[int]]) -> bytes:
+    """A 32x64 icon (two frames one above the other) as FireRed's 1024 bytes of tiles."""
+    if len(rows) != 64 or len(rows[0]) != 32 or max(max(row) for row in rows) > 15:
+        raise Gen4Error("an icon is 32x64 in 16 colours")
+    out = bytearray()
+    for frame in range(2):
+        for ty in range(4):
+            for tx in range(4):
+                for r in range(8):
+                    row = rows[frame * 32 + ty * 8 + r]
+                    out += bytes(row[tx * 8 + x] | row[tx * 8 + x + 1] << 4 for x in range(0, 8, 2))
+    return bytes(out)
+
+
+def convert_icons(icons: list[bytes]) -> bytes:
+    """icons.bin from the icons' PNG files in key order. Each PNG carries its own palette, one of a few shared ones."""
+    palettes: list[bytes] = []
+    indices, tiles = bytearray(), bytearray()
+    for data in icons:
+        _, _, palette, rows = read_png(data)
+        colours = bgr555(palette)
+        if colours not in palettes:
+            palettes.append(colours)
+        indices.append(palettes.index(colours))
+        tiles += icon_tiles(rows)
+    if len(palettes) > ICON_PALETTES:
+        raise Gen4Error("more icon palettes than FireRed has slots")
+    indices += bytes(-len(indices) % 4)
+    return (ICON_MAGIC + struct.pack("<HH", len(icons), len(palettes))
+            + b"".join(palettes) + bytes(32 * (ICON_PALETTES - len(palettes))) + bytes(indices) + bytes(tiles))
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -146,6 +193,10 @@ def http_get(url: str) -> bytes:
         return response.read()
 
 
+def source_path(row: tuple) -> str:
+    return gen4_sources.ICON_PATH.format(row[2]) if row[1] == "icon" else gen4_sources.PATH.format(*row[:3])
+
+
 def matches(row: tuple, data: bytes | None) -> bool:
     return data is not None and len(data) == row[3] and hashlib.sha256(data).hexdigest() == row[4]
 
@@ -160,7 +211,7 @@ class Downloader:
         self.cache, self.folder, self.get, self.threads = cache, folder, get, threads
 
     def _name(self, row: tuple) -> str:
-        return "{:03d}_{}_{}.png".format(*row[:3])
+        return "icon_{:08d}.png".format(row[2]) if row[1] == "icon" else "{:03d}_{}_{}.png".format(*row[:3])
 
     def fetch(self, row: tuple) -> tuple[bytes | None, bool]:
         """(the file or None, whether it came from the network)."""
@@ -173,8 +224,7 @@ class Downloader:
         if self.get is None:
             return None, False
         try:
-            data = self.get(URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT,
-                                       path=gen4_sources.PATH.format(*row[:3])))
+            data = self.get(URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row)))
         except Exception:  # noqa: BLE001 - any failure leaves the species on FireRed's pictures
             return None, False
         if not matches(row, data):
@@ -192,8 +242,8 @@ class Downloader:
 
 def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | None = None
                ) -> tuple[list[tuple[str, bytes]], dict]:
-    """The pack entries for every species whose files could be had, and a summary."""
-    rows = gen4_sources.FILES
+    """The pack entries for every species whose files could be had, the icons if all could, and a summary."""
+    rows = list(gen4_sources.FILES)
     got: dict[tuple, bytes] = {}
     downloaded = done = 0
     # Plain threads taking rows from a queue: concurrent.futures would bring multiprocessing (and ctypes, libffi,
@@ -225,6 +275,8 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     for worker in workers:
         worker.join()
     files, missing = [], []
+    icon_rows = sorted((row for row in rows if row[1] == "icon"), key=lambda row: row[0])
+    rows = [row for row in rows if row[1] != "icon"]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
         bodies = [body for body in ("male", "female") if any(row[:2] == (dex, body) for row in rows)]
@@ -233,4 +285,8 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             missing.append(dex)
             continue
         files.append(("%s%03d.bin" % (PREFIX, dex), convert(*pairs[0], pairs[1] if len(pairs) > 1 else None)))
-    return files, {"species": len(files), "missing": missing, "downloaded": downloaded}
+    species = len(files)
+    icons = icon_rows and all(row[:3] in got for row in icon_rows)
+    if icons:
+        files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))
+    return files, {"species": species, "missing": missing, "icons": bool(icons), "downloaded": downloaded}

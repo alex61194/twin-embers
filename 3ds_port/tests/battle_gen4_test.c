@@ -15,8 +15,18 @@ static uint8_t sEntry[72 + 4 * CTR_GEN4_PICTURE];
 static uint32_t sEntrySize;
 static char sAsked[64];
 
+/* icons.bin: 3 icons, 2 palettes. */
+static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
+
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
+    if (strcmp(path, "graphics/gen4/icons.bin") == 0)
+    {
+        void *copy = malloc(sizeof(sIconsEntry));
+        memcpy(copy, sIconsEntry, sizeof(sIconsEntry));
+        *outSize = sizeof(sIconsEntry);
+        return copy;
+    }
     snprintf(sAsked, sizeof(sAsked), "%s", path);
     if (!sEntrySize)
         return NULL;
@@ -176,6 +186,25 @@ int main(void)
     assert(CtrGen4_Load(2, 3, false, false, false, fire, palette));
     sOam[2] = 0x300 | (2 << 12);
     assert(sMatch(0x300 | (2 << 12), &obj) && obj.pivotY == 40.0f);
+
+    /* Icons: read once, each with its palette; out of range or a bad index, none. */
+    memcpy(sIconsEntry, "G4I1", 4);
+    sIconsEntry[4] = 3;
+    sIconsEntry[6] = 2;
+    sIconsEntry[8] = 0x34;                 /* palette 0, colour 0 */
+    sIconsEntry[8 + 32 + 2] = 0x56;        /* palette 1, colour 1 */
+    sIconsEntry[200] = 0;
+    sIconsEntry[201] = 1;
+    sIconsEntry[202] = 1;
+    for (unsigned i = 0; i < 3; ++i)
+        memset(sIconsEntry + 204 + i * 1024, (int)(0x10 * (i + 1)), 1024);
+    assert(CtrGen4_IconTiles(0) && CtrGen4_IconTiles(0)[0] == 0x10 && CtrGen4_IconTiles(2)[1023] == 0x30);
+    assert(!CtrGen4_IconTiles(3) && !CtrGen4_IconTiles(-1));
+    assert(CtrGen4_IconPalette(1) == 1 && CtrGen4_IconPalette(3) == -1);
+    assert(CtrGen4_IconPaletteData(0)[0] == 0x34 && CtrGen4_IconPaletteData(1)[1] == 0x56);
+    assert(!CtrGen4_IconPaletteData(2));
+    sIconsEntry[0] = 'X';                  /* already read: still there */
+    assert(CtrGen4_IconTiles(1));
 
     puts("battle_gen4_test: ok");
     return 0;

@@ -130,6 +130,68 @@ bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800])
     return true;
 }
 
+/* icons.bin (builder/firered3ds_builder/gen4_sprites.py): header, six palettes, an index an icon, the tiles. */
+#define ICONS_HEADER 200
+#define ICON_BYTES 1024
+#define ICON_PALETTES 6
+static uint8_t *sIcons;
+static unsigned sIconCount, sIconPalettes, sIconTiles;
+static bool sIconsTried;
+
+static bool LoadIcons(void)
+{
+    if (sIconsTried)
+        return sIcons != NULL;
+    sIconsTried = true;
+    uint32_t size = 0;
+    uint8_t *entry = CtrData_Load("graphics/gen4/icons.bin", &size);
+    if (!entry)
+        return false;
+    unsigned count = size >= 8 ? (unsigned)(entry[4] | entry[5] << 8) : 0;
+    unsigned palettes = size >= 8 ? (unsigned)(entry[6] | entry[7] << 8) : 0;
+    unsigned tiles = ICONS_HEADER + ((count + 3) & ~3u);
+    if (size < 8 || memcmp(entry, "G4I1", 4) || !palettes || palettes > ICON_PALETTES
+        || size != tiles + count * ICON_BYTES)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 icons.bin: wrong size or kind");
+        free(entry);
+        return false;
+    }
+    for (unsigned i = 0; i < count; ++i)
+        if (entry[ICONS_HEADER + i] >= palettes)
+        {
+            CtrLog_Write(CTR_LOG_GAME, "GEN4 icons.bin: icon %u has no palette", i);
+            free(entry);
+            return false;
+        }
+    sIcons = entry;
+    sIconCount = count;
+    sIconPalettes = palettes;
+    sIconTiles = tiles;
+    return true;
+}
+
+const uint8_t *CtrGen4_IconTiles(int key)
+{
+    if (key < 0 || !LoadIcons() || (unsigned)key >= sIconCount)
+        return NULL;
+    return sIcons + sIconTiles + (unsigned)key * ICON_BYTES;
+}
+
+int CtrGen4_IconPalette(int key)
+{
+    if (key < 0 || !LoadIcons() || (unsigned)key >= sIconCount)
+        return -1;
+    return sIcons[ICONS_HEADER + key];
+}
+
+const uint16_t *CtrGen4_IconPaletteData(unsigned index)
+{
+    if (!LoadIcons() || index >= sIconPalettes)
+        return NULL;
+    return (const uint16_t *)(sIcons + 8 + index * 32);
+}
+
 void CtrGen4_Drop(unsigned battler)
 {
     if (battler < BATTLERS)

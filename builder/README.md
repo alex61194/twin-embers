@@ -6,10 +6,11 @@ standard library: no SDK, online account, telemetry or game content is included.
 
 ## Optional HeartGold battle sprites
 
-Ticking "Also download HeartGold battle sprites" (or `build --gen4-sprites` on
-the command line) adds Generation 4 battle sprites to the pack for the 386
-species FireRed has. They are not in your FireRed ROM and never ship with Twin
-Embers: the Builder downloads the PNG files from
+Ticking "Also download HeartGold battle sprites and icons" (or
+`build --gen4-sprites` on the command line) adds Generation 4 battle sprites
+and menu icons to the pack for the 386 species FireRed has (the icons only when
+every one of them could be had, since their palettes replace FireRed's). They
+are not in your FireRed ROM and never ship with Twin Embers: the Builder downloads the PNG files from
 [pret/pokeheartgold](https://github.com/pret/pokeheartgold) at the commit that
 `firered3ds_builder/gen4_sources.py` pins, keeps each file only if its size and
 SHA-256 match that list, converts it and adds it to the pack. Nothing is

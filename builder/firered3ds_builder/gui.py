@@ -119,8 +119,8 @@ class BuilderWindow(tk.Tk):
                   style="Step.TLabel").grid(row=0, column=0, sticky="w")
         self.gen4_check = ttk.Checkbutton(
             build_card, variable=self.gen4,
-            text="Also download HeartGold battle sprites (optional, needs internet: "
-                 "about 900 small files from GitHub, checked one by one)")
+            text="Also download HeartGold battle sprites and icons (optional, needs internet: "
+                 "about 1,300 small files from GitHub, checked one by one)")
         self.gen4_check.grid(row=6, column=0, sticky="w", pady=(10, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))

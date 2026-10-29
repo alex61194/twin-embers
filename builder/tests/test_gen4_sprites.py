@@ -137,7 +137,7 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -175,17 +175,64 @@ class DownloadTest(unittest.TestCase):
         self.assertEqual((info["species"], info["downloaded"]), (3, 0))
 
 
+class IconTest(unittest.TestCase):
+    def icon(self, seed, palette_colour):
+        rows = [[(x + y * 3 + seed) % 16 for x in range(32)] for y in range(64)]
+        return png(rows, [(palette_colour, i * 16, 0) for i in range(16)])
+
+    def test_icons_entry_layout(self):
+        icons = [self.icon(i, 10 if i % 2 else 20) for i in range(4)]
+        entry = gen4_sprites.convert_icons(icons)
+        self.assertEqual(entry[:4], b"G4I1")
+        self.assertEqual(struct.unpack_from("<HH", entry, 4), (4, 2))
+        self.assertEqual(list(entry[200:204]), [0, 1, 0, 1])
+        self.assertEqual(len(entry), 200 + 4 + 4 * 1024)
+        # Icon 1, frame 1, tile (1, 2), row 3: its pixels (8..15, 32 + 16 + 3) in the low nibble first.
+        tile = 204 + 1024 + 512 + (2 * 4 + 1) * 32 + 3 * 4
+        y = 32 + 16 + 3
+        self.assertEqual(entry[tile] & 15, (8 + y * 3 + 1) % 16)
+        self.assertEqual(entry[tile] >> 4, (9 + y * 3 + 1) % 16)
+
+    def test_too_many_palettes_or_a_wrong_size_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_icons([self.icon(0, c * 30) for c in range(7)])
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_icons([png([[0] * 32] * 32, [(0, 0, 0)] * 16)])
+
+    def test_icons_only_when_all_could_be_had(self):
+        icons = {key: self.icon(key, 40) for key in (0, 1, 2)}
+        rows = tuple((key, "icon", 600 + key, len(data), hashlib.sha256(data).hexdigest())
+                     for key, data in icons.items())
+
+        def get(url):
+            for key, data in icons.items():
+                if url.endswith("poke_icon_%08d.png" % (600 + key)):
+                    return data
+            raise OSError("not found")
+
+        with patch.object(gen4_sprites.gen4_sources, "FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+            self.assertEqual([path for path, _ in files], ["graphics/gen4/icons.bin"])
+            self.assertTrue(info["icons"])
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: (_ for _ in ()).throw(OSError()) if "00000601" in url else get(url)))
+            self.assertEqual((files, info["icons"]), ([], False))
+
+
 class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
         from firered3ds_builder import gen4_sources
         self.assertRegex(gen4_sources.COMMIT, "^[0-9a-f]{40}$")
-        species = {row[0] for row in gen4_sources.FILES}
+        battle = [row for row in gen4_sources.FILES if row[1] != "icon"]
+        species = {row[0] for row in battle}
         self.assertEqual(species, set(range(1, 387)))
         for dex in species:
-            bodies = [row[1:3] for row in gen4_sources.FILES if row[0] == dex]
+            bodies = [row[1:3] for row in battle if row[0] == dex]
             self.assertIn(bodies, ([("male", "front"), ("male", "back")],
                                    [("female", "front"), ("female", "back")],
                                    [("male", "front"), ("male", "back"), ("female", "front"), ("female", "back")]))
+        icons = sorted(row[0] for row in gen4_sources.FILES if row[1] == "icon")
+        self.assertEqual(icons, list(range(0, 414)))
         for row in gen4_sources.FILES:
             self.assertGreater(row[3], 0)
             self.assertRegex(row[4], "^[0-9a-f]{64}$")

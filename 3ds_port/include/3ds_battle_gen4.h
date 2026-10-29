@@ -40,6 +40,13 @@ bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800]);
  * picture row drawn there. */
 void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);
 
+/* HeartGold's menu icons (graphics/gen4/icons.bin, read once and kept): key 0 the egg, 1-386 the national dex,
+ * 387-413 Unown's letters B to ?. NULL / -1 without the entry or for another key. All or none: the Builder writes
+ * the entry only with every icon, and its palettes then stand for FireRed's icon palettes 0-5. */
+const uint8_t *CtrGen4_IconTiles(int key);           /* 1024 bytes: two 32x32 frames, as FireRed's */
+int CtrGen4_IconPalette(int key);                    /* which of the palettes below */
+const uint16_t *CtrGen4_IconPaletteData(unsigned index);
+
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
     unsigned slot;                  /* 0-3: which picture */
