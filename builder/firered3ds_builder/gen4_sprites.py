@@ -29,10 +29,11 @@ from __future__ import annotations
 
 import hashlib
 import os
+import queue
 import struct
+import threading
 import urllib.request
 import zlib
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
 
@@ -195,14 +196,34 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     rows = gen4_sources.FILES
     got: dict[tuple, bytes] = {}
     downloaded = done = 0
-    with ThreadPoolExecutor(max(1, downloader.threads)) as pool:
-        for row, (data, fresh) in zip(rows, pool.map(downloader.fetch, rows)):
-            done += 1
-            downloaded += fresh
-            if data is not None:
-                got[row[:3]] = data
-            if progress is not None:
-                progress(done, len(rows))
+    # Plain threads taking rows from a queue: concurrent.futures would bring multiprocessing (and ctypes, libffi,
+    # pyexpat) into the frozen Builder for nothing.
+    todo: queue.Queue = queue.Queue()
+    results: queue.Queue = queue.Queue()
+    for row in rows:
+        todo.put(row)
+
+    def work() -> None:
+        while True:
+            try:
+                row = todo.get_nowait()
+            except queue.Empty:
+                return
+            results.put((row, downloader.fetch(row)))
+
+    workers = [threading.Thread(target=work, daemon=True) for _ in range(max(1, downloader.threads))]
+    for worker in workers:
+        worker.start()
+    for _ in rows:
+        row, (data, fresh) = results.get()
+        done += 1
+        downloaded += fresh
+        if data is not None:
+            got[row[:3]] = data
+        if progress is not None:
+            progress(done, len(rows))
+    for worker in workers:
+        worker.join()
     files, missing = [], []
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.

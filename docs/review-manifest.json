@@ -5583,7 +5583,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "5da850147fce81fd82892ed98872230a8a41d99c7a84cbe469bc552075c27d0f",
+   "sha256": "6d3c0cac0641bb0cd89e6fc658b25515fb97803a30de2994cb70b2efdcc61dcc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
