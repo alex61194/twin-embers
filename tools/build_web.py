@@ -24,8 +24,8 @@ PACKAGE = ROOT / 'builder' / 'firered3ds_builder'
 PAGES = ('index.html', 'style.css', 'app.js', 'worker.js')
 # The README's images the page shows (docs/media, reviewed there): the banner and the gallery's captures.
 MEDIA = ROOT / 'docs' / 'media'
-MEDIA_FILES = ('twin-embers-banner.png', '02-night-cerulean.png', '06-battle-intro.png', '08-battle-moves.png',
-               '19-battle-summary.png', '12-party.png', '14-pokedex.png', '21-pc-box.png', '04-night-saffron.png')
+# The banner and every README capture (docs/media/NN-name.png); the page's gallery shows them all.
+MEDIA_FILES = ('twin-embers-banner.png',) + tuple(sorted(p.name for p in MEDIA.glob('[0-9][0-9]-*.png')))
 UNISTORE = 'twinembers.unistore'
 # What firered3ds_builder.browser imports, directly or not. The GUI, CLI and Windows parts stay out.
 MODULES = ('__init__.py', 'browser.py', 'build.py', 'rom.py', 'recipe.py', 'pak.py',

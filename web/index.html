@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Twin Embers Builder</title>
+<title>Twin Embers</title>
 <meta name="description" content="Build the Twin Embers data pack from your own Pokémon FireRed ROM, entirely in your browser, and install the game on a 3DS with a QR code.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<canvas id="embers" aria-hidden="true"></canvas>
 <div class="page">
   <header class="hero">
     <h1><img class="banner" src="media/twin-embers-banner.png" width="900" height="508" alt="Twin Embers"></h1>
@@ -38,15 +39,39 @@
         See it on a 3DS
       </h2>
       <p class="lead">Real captures, top and bottom screen as the console shows them. Tap one to see it larger.</p>
-      <div class="gallery" id="gallery">
-        <figure><button type="button" class="shot" data-full="media/02-night-cerulean.png"><img src="media/02-night-cerulean.png" width="400" height="480" loading="lazy" alt="Cerulean City at night with lit windows, the touch map of Kanto below"></button><figcaption>Cerulean at night, the town map below</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/06-battle-intro.png"><img src="media/06-battle-intro.png" width="400" height="480" loading="lazy" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"></button><figcaption>HeartGold sprites in battle</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/08-battle-moves.png"><img src="media/08-battle-moves.png" width="400" height="480" loading="lazy" alt="Move cards with type, power, accuracy and PP"></button><figcaption>Move cards with type, power and PP</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/19-battle-summary.png"><img src="media/19-battle-summary.png" width="400" height="480" loading="lazy" alt="A Pokémon's Summary during a battle"></button><figcaption>The Summary without leaving the fight</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/12-party.png"><img src="media/12-party.png" width="400" height="480" loading="lazy" alt="The party on the lower screen"></button><figcaption>Your party, one tap away</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/14-pokedex.png"><img src="media/14-pokedex.png" width="400" height="480" loading="lazy" alt="The Pokédex on the lower screen"></button><figcaption>The Pokédex on the touch screen</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/21-pc-box.png"><img src="media/21-pc-box.png" width="400" height="480" loading="lazy" alt="A PC box on the lower screen"></button><figcaption>PC boxes moved by touch</figcaption></figure>
-        <figure><button type="button" class="shot" data-full="media/04-night-saffron.png"><img src="media/04-night-saffron.png" width="400" height="480" loading="lazy" alt="Saffron City at night"></button><figcaption>Saffron City by night</figcaption></figure>
+      <div id="gallery">
+        <h3 class="gallery-group">Exploring Kanto</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/01-title.png"><img src="media/01-title.png" width="400" height="480" loading="lazy" alt="The title screen with the version, the lower screen ready"></button><figcaption>Title screen</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/02-night-cerulean.png"><img src="media/02-night-cerulean.png" width="400" height="480" loading="lazy" alt="Cerulean City at night with lit windows, the touch map of Kanto below"></button><figcaption>Cerulean at night, the town map below</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/04-night-saffron.png"><img src="media/04-night-saffron.png" width="400" height="480" loading="lazy" alt="Saffron City at night"></button><figcaption>Saffron City by night</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/03-day-night-off.png"><img src="media/03-day-night-off.png" width="400" height="480" loading="lazy" alt="Cerulean City with DAY/NIGHT off, next to the option that controls it"></button><figcaption>Day and night can be turned off</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/05-night-recap.png"><img src="media/05-night-recap.png" width="400" height="480" loading="lazy" alt="The Previously on your quest recap at night, with the Sevii Islands map"></button><figcaption>"Previously on your quest", Sevii map below</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/24-pallet-town.png"><img src="media/24-pallet-town.png" width="400" height="480" loading="lazy" alt="Entering Pallet Town: the area's name on top while the party stays open below"></button><figcaption>Area names on top, menus below</figcaption></figure>
+        </div>
+        <h3 class="gallery-group">Battles</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/06-battle-intro.png"><img src="media/06-battle-intro.png" width="400" height="480" loading="lazy" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"></button><figcaption>HeartGold sprites in battle</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/07-battle-action.png"><img src="media/07-battle-action.png" width="400" height="480" loading="lazy" alt="Pikachu against a Spearow, with the lead Pokémon's icon in the FIGHT disc"></button><figcaption>Battle commands on the touch screen</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/08-battle-moves.png"><img src="media/08-battle-moves.png" width="400" height="480" loading="lazy" alt="Move cards with type, power, accuracy and PP"></button><figcaption>Move cards with type, power and PP</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/11-battle-party.png"><img src="media/11-battle-party.png" width="400" height="480" loading="lazy" alt="Switching Pokémon in battle"></button><figcaption>Switching Pokémon</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/09-battle-bag.png"><img src="media/09-battle-bag.png" width="400" height="480" loading="lazy" alt="The battle Bag on its Poké Balls pocket, the selected ball shown large"></button><figcaption>The battle Bag</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/19-battle-summary.png"><img src="media/19-battle-summary.png" width="400" height="480" loading="lazy" alt="A Pokémon's Summary during a battle"></button><figcaption>The Summary without leaving the fight</figcaption></figure>
+        </div>
+        <h3 class="gallery-group">Menus and the PC</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/12-party.png"><img src="media/12-party.png" width="400" height="480" loading="lazy" alt="The party on the lower screen"></button><figcaption>Your party, one tap away</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/14-pokedex.png"><img src="media/14-pokedex.png" width="400" height="480" loading="lazy" alt="The Pokédex on the lower screen"></button><figcaption>The Pokédex on the touch screen</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/13-bag.png"><img src="media/13-bag.png" width="400" height="480" loading="lazy" alt="The Bag on its Items pocket"></button><figcaption>Bag: Items</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/22-bag-key-items.png"><img src="media/22-bag-key-items.png" width="400" height="480" loading="lazy" alt="The Bag on its Key Items pocket"></button><figcaption>Bag: Key Items</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/23-bag-balls.png"><img src="media/23-bag-balls.png" width="400" height="480" loading="lazy" alt="The Bag on its Poké Balls pocket"></button><figcaption>Bag: Poké Balls</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/15-trainer-card.png"><img src="media/15-trainer-card.png" width="400" height="480" loading="lazy" alt="The Trainer Card"></button><figcaption>Trainer Card</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/16-save.png"><img src="media/16-save.png" width="400" height="480" loading="lazy" alt="Saving the game, with the progress beside it"></button><figcaption>Saving</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/17-options-1.png"><img src="media/17-options-1.png" width="400" height="480" loading="lazy" alt="Options, page 1: FireRed's own settings"></button><figcaption>Options, page 1</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/18-options-2.png"><img src="media/18-options-2.png" width="400" height="480" loading="lazy" alt="Options, page 2: the port's own settings"></button><figcaption>Options, page 2</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/20-pc-menu.png"><img src="media/20-pc-menu.png" width="400" height="480" loading="lazy" alt="The PC's menu on the lower screen"></button><figcaption>The PC</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/21-pc-box.png"><img src="media/21-pc-box.png" width="400" height="480" loading="lazy" alt="A PC box on the lower screen"></button><figcaption>PC boxes moved by touch</figcaption></figure>
+        </div>
       </div>
       <dialog class="lightbox" id="lightbox" aria-label="Capture">
         <form method="dialog"><button class="close" aria-label="Close">×</button></form>

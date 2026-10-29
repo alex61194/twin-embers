@@ -29,18 +29,21 @@ body {
   color: var(--ink);
   font-size: 16px;
   line-height: 1.45;
-  /* Embers: a hot core low on the page and scattered sparks over a deep red. */
+  /* The lower screen's backdrop (tools/make_ember_skin.py): a dark red gradient with faint diagonal stripes and a
+     fire's glow at the foot. The embers rising over it are drawn by app.js on #embers. */
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 209, 102, 0.55) 0 2px, transparent 3px),
-    radial-gradient(circle at 83% 9%, rgba(255, 138, 61, 0.6) 0 2px, transparent 3px),
-    radial-gradient(circle at 68% 34%, rgba(255, 209, 102, 0.45) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 25% 62%, rgba(255, 138, 61, 0.5) 0 2px, transparent 3px),
-    radial-gradient(circle at 91% 71%, rgba(255, 209, 102, 0.5) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 7% 88%, rgba(255, 138, 61, 0.55) 0 2px, transparent 3px),
-    radial-gradient(ellipse 120% 60% at 50% 115%, var(--ember-hot) 0%, var(--ember) 45%, transparent 75%),
-    linear-gradient(180deg, var(--ember-deep) 0%, #6d1410 55%, var(--ember) 100%);
+    radial-gradient(ellipse 110% 22% at 50% 104%, rgba(255, 110, 30, 0.42) 0%, rgba(255, 110, 30, 0.16) 55%, transparent 100%),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 8px),
+    linear-gradient(180deg, rgb(132, 26, 22) 0%, rgb(34, 6, 8) 100%);
   background-attachment: fixed;
 }
+
+/* The embers' canvas: a third of the window's pixels, scaled up sharp like the 3DS's own. */
+#embers {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; image-rendering: pixelated; z-index: 0;
+}
+.page { position: relative; z-index: 1; }
 
 .page {
   max-width: 920px;
@@ -319,7 +322,7 @@ footer a, .card a:not(.btn) { color: inherit; }
 /* The hero: the banner over the embers, the way in, and what the game is. */
 header.hero h1 { margin: 0; line-height: 0; }
 header.hero .banner {
-  width: min(560px, 92%);
+  width: min(680px, 96%);
   height: auto;
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 22px rgba(255, 138, 61, 0.35));
 }
@@ -339,8 +342,15 @@ header.hero .tagline { max-width: 600px; margin: 10px auto 16px; font-size: 18px
   font-size: 14px;
 }
 
+.gallery-group {
+  margin: 18px 0 10px; padding: 4px 14px; display: inline-block;
+  border-radius: 999px; background: var(--ember); color: #fff; font-size: 16px; line-height: 22px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2), 0 2px 0 var(--slate);
+}
+.gallery-group:first-child { margin-top: 4px; }
+
 /* The gallery: each capture in a small 3DS-coloured frame, pixels kept sharp. */
-.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .gallery figure { margin: 0; text-align: center; }
 .gallery .shot {
   display: block; width: 100%; padding: 6px; cursor: zoom-in;

@@ -2750,7 +2750,7 @@
   },
   {
    "path": "docs/media/12-party.png",
-   "sha256": "219380146a50360889f42d9c2d56fe5eedd47f93e587b81618e25f5852f3c00e",
+   "sha256": "844fa03e6a772a250fe792e00d8748a1c56e84fdf8ba9cd1e790e1fca9eaf8c5",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -2831,6 +2831,22 @@
   {
    "path": "docs/media/22-bag-key-items.png",
    "sha256": "390f75636fa2dc11b9ff255d0d903f9d046590b30526dd88394ef3ef4e9b5fb4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers (main after v0.3.0, with the optional HeartGold sprites in the pack) running in AzaharPlus, made by alex61194 on 2026-10-29 for the README and the web page (emulator screenshot reduced from 9x to the native 400x480 two-screen layout). Reviewed 2026-10-29: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/23-bag-balls.png",
+   "sha256": "8baef22156f38d8b486b43a3ec8edcd2da62f040e743ccd450a716d4a3ac49fa",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers (main after v0.3.0, with the optional HeartGold sprites in the pack) running in AzaharPlus, made by alex61194 on 2026-10-29 for the README and the web page (emulator screenshot reduced from 9x to the native 400x480 two-screen layout). Reviewed 2026-10-29: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/24-pallet-town.png",
+   "sha256": "219380146a50360889f42d9c2d56fe5eedd47f93e587b81618e25f5852f3c00e",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",

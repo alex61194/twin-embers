@@ -73,6 +73,8 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 <img src="docs/media/13-bag.png" width="300" alt="Bag, Items pocket"> <img src="docs/media/22-bag-key-items.png" width="300" alt="Bag, Key Items pocket">
 
+<img src="docs/media/23-bag-balls.png" width="300" alt="Bag, Poké Balls pocket"> <img src="docs/media/24-pallet-town.png" width="300" alt="Entering Pallet Town: the area's name on top while the party stays open below">
+
 <img src="docs/media/20-pc-menu.png" width="300" alt="The PC's menu on the lower screen"> <img src="docs/media/21-pc-box.png" width="300" alt="A PC box, moved by touch">
 
 <img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/16-save.png" width="300" alt="Saving the game">

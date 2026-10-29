@@ -207,3 +207,72 @@ refresh();
   });
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
 })();
+
+// The embers of the lower screen (3ds_touch_skin_impl.h, EmbersStep): sparks rising slowly with a sway, a pale core
+// and a halo in one of three fire colours, brighter low down where the fire is. Drawn at a third of the window's
+// pixels so they look like the 3DS's.
+(function () {
+  const canvas = document.getElementById('embers');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  const SCALE = 3;
+  const HUES = [[255, 200, 80], [255, 150, 40], [255, 96, 32]];
+  const SWAY = [0, 9, 17, 22, 24, 22, 17, 9, 0, -9, -17, -22, -24, -22, -17, -9].map((k) => k / 8);
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w = 0, h = 0, sparks = [];
+
+  function spawn(s, anywhere) {
+    s.x = Math.random() * w;
+    s.y = anywhere ? Math.random() * h : h + 2 + Math.random() * 20;
+    s.vy = 0.19 + Math.random() * 0.43;
+    s.phase = Math.random() * 65536;
+    s.step = 200 + Math.random() * 500;
+    s.big = Math.random() < 0.25;
+    s.hue = HUES[Math.floor(Math.random() * 3)];
+    return s;
+  }
+
+  function resize() {
+    w = Math.ceil(window.innerWidth / SCALE);
+    h = Math.ceil(window.innerHeight / SCALE);
+    canvas.width = w;
+    canvas.height = h;
+    // As many sparks for the window as the 3DS has for its 320 x 240 (22).
+    const want = Math.max(12, Math.min(120, Math.round(22 * w * h / (320 * 240))));
+    while (sparks.length < want) sparks.push(spawn({}, true));
+    sparks.length = want;
+    sparks.forEach((s) => { if (s.x > w || s.y > h + 22) spawn(s, true); });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (const s of sparks) {
+      const x = Math.round(s.x + SWAY[(s.phase >> 12) & 15]);
+      const y = Math.round(s.y);
+      const a = (120 + Math.max(0, Math.min(135, y * 135 / h))) / 255;
+      const size = s.big ? 2 : 1;
+      ctx.fillStyle = `rgba(${s.hue[0]}, ${s.hue[1]}, ${s.hue[2]}, ${a * 0.5})`;
+      ctx.fillRect(x - 1, y, 1, size);
+      ctx.fillRect(x + size, y, 1, size);
+      ctx.fillRect(x, y - 1, size, 1);
+      ctx.fillRect(x, y + size, size, 1);
+      ctx.fillStyle = `rgba(255, 236, 170, ${a})`;
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+
+  function step() {
+    for (const s of sparks) {
+      s.y -= s.vy;
+      s.phase = (s.phase + s.step) % 65536;
+      if (s.y < -4) spawn(s, false);
+    }
+    draw();
+    requestAnimationFrame(step);
+  }
+
+  resize();
+  window.addEventListener('resize', () => { resize(); if (still) draw(); });
+  if (still) draw();
+  else requestAnimationFrame(step);
+})();
