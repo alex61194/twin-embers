@@ -18,16 +18,17 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.3.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.4.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
 
-**Since v0.3.0** (on `main`, coming in the next release):
+**In v0.4.0:**
 
 - **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from [pret/pokeheartgold](https://github.com/pret/pokeheartgold) and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. Without them the game keeps FireRed's art.
 - **The credits no longer freeze** after the Champion, when the scene reaches Charizard.
+- **The Pokédex list header** no longer runs KANTO or NATIONAL into the SEEN and OWNED counts once they reach three digits.
 - **A web Builder** that makes the pack in the browser, and a UniStore to install the game from Universal-Updater on the console.
 
 **In v0.3.0:**

@@ -42,7 +42,7 @@ build/%.o: src/%.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # The version this checkout builds, shown on the title screen as v$(TWIN_EMBERS_VERSION). Change it here when a release starts.
-TWIN_EMBERS_VERSION := 0.3.0
+TWIN_EMBERS_VERSION := 0.4.0
 .PHONY: force-git-version
 build/git_version.h: force-git-version ../tools/gen_git_version.py
 	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION)

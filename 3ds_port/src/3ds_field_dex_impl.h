@@ -125,7 +125,7 @@ static void FDIconDraw(int id, int x, int y, int on)
         UiImage(sFDIcon[k].px, sFDIcon[k].pal, 64, 64, 48, x, y, 1, on);
 }
 
-static void FDCaughtDraw(int x, int y)
+static int FDCaughtLoad(void)
 {
     if (!sFDCaught.ready) {
         unsigned char tiles[32];
@@ -138,7 +138,12 @@ static void FDCaughtDraw(int x, int y)
             FDPal(pal, sFDCaught.pal);
         }
     }
-    if (sFDCaught.ok)
+    return sFDCaught.ok;
+}
+
+static void FDCaughtDraw(int x, int y)
+{
+    if (FDCaughtLoad())
         UiImage(sFDCaught.px, sFDCaught.pal, 8, 8, 8, x, y, 1, 1);
 }
 
@@ -511,15 +516,28 @@ static void FDList(const CtrPokeTouchDex *d, int pressed)
     static const CtrUiString kOrder[6] = {UIS_DEX_KANTO, UIS_DEX_ATOZ, UIS_DEX_TYPE, UIS_DEX_LIGHTEST,
                                           UIS_DEX_SMALLEST, UIS_DEX_NATIONAL};
 
-    UiText(CtrUiText(kOrder[d->order < 6 ? d->order : 0]), sFDListHead.x + 8, fy + 6, EM_DARK, EM_DARK_SH, 1,
-           sFDListHead.x + 80);
-    if (d->order == 0 || d->order == 5) {
-        char counts[32];
-        int nat = d->order == 5;
+    const char *title = CtrUiText(kOrder[d->order < 6 ? d->order : 0]);
+    int titleEnd = sFDListHead.x + 8 + UiTextWidth(title, 1);
 
+    UiText(title, sFDListHead.x + 8, fy + 6, EM_DARK, EM_DARK_SH, 1, sFDListHead.x + sFDListHead.w - 6);
+    if (d->order == 0 || d->order == 5) {
+        char counts[32], owned[8];
+        int nat = d->order == 5, right = sFDListHead.x + sFDListHead.w - 6;
+
+        /* SEEN n  OWNED n when it fits beside the title; with three-digit counts OWNED becomes the caught ball of
+           the rows, so the counts never run into KANTO or NATIONAL. */
         snprintf(counts, sizeof(counts), "%s %u  %s %u", CtrUiText(UIS_DEX_SEEN), d->seen[nat], CtrUiText(UIS_DEX_OWNED),
                  d->owned[nat]);
-        UiTextRight(counts, sFDListHead.x + sFDListHead.w - 6, fy + 6, EM_DIM, EM_DARK_SH, 1);
+        if (right - UiTextWidth(counts, 1) >= titleEnd + 6 || !FDCaughtLoad()) {
+            UiTextRight(counts, right, fy + 6, EM_DIM, EM_DARK_SH, 1);
+        } else {
+            snprintf(owned, sizeof(owned), "%u", d->owned[nat]);
+            snprintf(counts, sizeof(counts), "%s %u", CtrUiText(UIS_DEX_SEEN), d->seen[nat]);
+            UiTextRight(owned, right, fy + 6, EM_DIM, EM_DARK_SH, 1);
+            right -= UiTextWidth(owned, 1) + 10;
+            FDCaughtDraw(right, fy + 7);
+            UiTextRight(counts, right - 5, fy + 6, EM_DIM, EM_DARK_SH, 1);
+        }
     }
     for (int i = 0; i < PT_DEX_ROWS; ++i) {
         CtrPokeTouchRect r = FDListRow(i);
