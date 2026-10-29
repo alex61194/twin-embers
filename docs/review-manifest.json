@@ -4835,7 +4835,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "b5657da6100cb0909a822542d4077e25990046d431a3336926f6b0c81f053394",
+   "sha256": "bc11e0f68d2f712065263840d9e5d2121d0c742149f266b7810c3e346f24e0aa",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5063,7 +5063,7 @@
   },
   {
    "path": "tools/test_source_audit.py",
-   "sha256": "4d0d58f54cd907030c3abdcc1ebc730860889a4c60e9122646a54937398796cb",
+   "sha256": "e3163fb7b5692fab2c949a05542e3cf9d965b39f8022bbea697fc8c3d46d9b6b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
