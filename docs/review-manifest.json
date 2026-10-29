@@ -1963,7 +1963,7 @@
   },
   {
    "path": "CREDITS.md",
-   "sha256": "171f399a25cf6efed85a44da1c3224c59bfb10faa77e36287df2f79f25a2fed2",
+   "sha256": "18284754e14f2381d938e72d5ddf8a99169d955c09cebd0129adeb4dadad8dfa",
    "review_status": "reviewed",
    "credit": "Original rightsholders/authors identified in the preserved legal notice",
    "license": "Exact component scope and original notice text; no expanded grant",
@@ -2006,7 +2006,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "1f61508323fa7ab1232c0837a31d0a471da5dc3c5e2c5fcb8607232cf6b1779a",
+   "sha256": "0ce06f05fe7525d5b117edbee00d9f28161656d7a2c90519a0c211c0da39e4be",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2021,7 +2021,8 @@
    "public_docs_review": "README: screenshot gallery restored, images hosted in the separate media release; documentation only",
    "rng_review": "Reviewed owned entropy adapter, tests and documentation; only shared initialization sampling changes; hash-pinned context-free recipe; original RNG, save/pack ABI, audio, PokeTouch and blocked binary policy unchanged; no game payload or copied upstream context.",
    "owner_release_decision": "Owner decision to attach the 3DSX and Builder to release v0.1.0-beta.1 recorded; rights stated as not independently verified; gate unchanged",
-   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
+   "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged.",
+   "credits_review": "Added pret/pokeheartgold credit and links for the optional HeartGold sprites; documentation only"
   },
   {
    "path": "SECURITY.md",
@@ -5759,7 +5760,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "13ad1d3b8f2d5b7bb831d054c715c3e3f87ee7d29766b60e5243d31495f4b7ad",
+   "sha256": "68154b66769805d8d03bb7768f7ad7c7f8ed558d5a5a83b2b5a790b86a4e9ac7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5775,7 +5776,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "5d3f214c4fb0e5c4fe59ca2324c8fec09832b35dd4c444362af3f088c0612442",
+   "sha256": "7687ad2b9b189354b8d62ff06a586e815bbb9b732af1d82c779c09e614d1dc31",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5799,7 +5800,7 @@
   },
   {
    "path": "tools/build_web.py",
-   "sha256": "b12242f940146cd91f1a46cf0a0339de0d0fd78f3dbbecf102cd21dd0f3e87a6",
+   "sha256": "2601c02109ffd47e2f66948d0ba4bbcd9adc9bcae45e21ebc36a4b92eb5248f4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5807,7 +5808,7 @@
   },
   {
    "path": "tools/test_web_builder.py",
-   "sha256": "e20bd44099e04520eaf83846eec31d13a3f5ec86ef6299c11f9903cba472378b",
+   "sha256": "c0dfec840e317569014973f1820cf1239fe4af6bdd21a9dcfc27695f124aceff",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

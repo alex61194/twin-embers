@@ -26,7 +26,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 **Since v0.3.0** (on `main`, coming in the next release):
 
-- **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from pret/pokeheartgold and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. Without them the game keeps FireRed's art.
+- **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from [pret/pokeheartgold](https://github.com/pret/pokeheartgold) and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. Without them the game keeps FireRed's art.
 - **The credits no longer freeze** after the Champion, when the scene reaches Charizard.
 - **A web Builder** that makes the pack in the browser, and a UniStore to install the game from Universal-Updater on the console.
 
@@ -206,6 +206,7 @@ Credit where the work is not ours:
 - **ZallaxDev and the Pokémon Emerald 3Ds Dual Screen contributors** wrote the MIT-licensed backend, compositor, input and pack components this port builds on. Their notices are preserved in [NOTICE.md](NOTICE.md), [CREDITS.md](CREDITS.md) and [licenses/](licenses/).
 - **@xsh3d0r_** (Discord) drew the Twin Embers logo used for this README and the HOME Menu banner.
 - **kwak8709** made the HOME Menu forwarder for Twin Embers.
+- **The [pret/pokeheartgold](https://github.com/pret/pokeheartgold) project and its contributors**, authors of the Pokémon HeartGold decompilation, whose files are where the optional HeartGold battle sprites and menu icons come from. The Builder downloads them from that repository at a pinned commit and nothing from it is stored in this repository or shipped in the release; the artwork itself remains Nintendo, Game Freak and Creatures' work, and pret's repository has no licence of its own.
 - **pret/pokefirered contributors** wrote the decompilation. No general redistribution licence for that code was identified, and this project's MIT licence does not cover it.
 - **devkitPro, libctru, citro2d, citro3d, GCC/newlib, Python, Tcl/Tk and PyInstaller** keep their own notices ([NOTICE.md](NOTICE.md), [PROVENANCE.md](PROVENANCE.md), [Builder notices](builder/Windows-GUI-THIRD-PARTY.txt)).
 - **Pokémon FireRed**, its characters, art, music and trademarks belong to Nintendo, Game Freak, Creatures and The Pokémon Company.
