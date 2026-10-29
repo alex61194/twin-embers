@@ -5,11 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Twin Embers</title>
 <meta name="description" content="Build the Twin Embers data pack from your own Pokémon FireRed ROM, entirely in your browser, and install the game on a 3DS with a QR code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <canvas id="embers" aria-hidden="true"></canvas>
-<div class="page">
+<nav class="topbar" aria-label="Sections">
+  <a class="brand" href="#top">
+    <svg class="ball" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M3 16 A13 13 0 0 1 29 16 Z" fill="#e3350d"/><path d="M3 16 A13 13 0 0 0 29 16 Z" fill="#fff"/>
+      <circle cx="16" cy="16" r="13" fill="none" stroke="#30344a" stroke-width="2.5"/>
+      <path d="M3 16 H29" stroke="#30344a" stroke-width="2.5"/>
+      <circle cx="16" cy="16" r="4.5" fill="#fff" stroke="#30344a" stroke-width="2.5"/>
+    </svg>
+    <span>Twin Embers</span>
+  </a>
+  <div class="links">
+    <a href="#gallery-title">Screens</a>
+    <a href="#build-title">Build</a>
+    <a href="#install-title">Install</a>
+    <a href="#follow-title">Follow</a>
+    <a class="x-link" href="https://x.com/Twin_Embers" rel="noopener" aria-label="Twin Embers on X">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18.2h1.7L6.3 3.7H4.5l13.3 16.5Z"/></svg>
+    </a>
+  </div>
+</nav>
+<div class="page" id="top">
   <header class="hero">
     <h1><img class="banner" src="media/twin-embers-banner.png" width="900" height="508" alt="Twin Embers"></h1>
     <p class="tagline">Pokémon FireRed rebuilt for both screens of the Nintendo 3DS: Kanto across the wide top screen, every menu under your thumb below.</p>
@@ -19,12 +42,12 @@
       <a class="btn secondary" href="https://github.com/alex61194/twin-embers/releases/latest">Latest release</a>
     </nav>
     <ul class="features">
-      <li>Native 3DS game, not an emulator</li>
-      <li>400 × 240 overworld</li>
-      <li>Touch menus, battles and PC</li>
-      <li>Day and night with the 3DS clock</li>
-      <li>Optional HeartGold sprites</li>
-      <li>Turbo up to 4×</li>
+      <li class="t-fire"><span class="type">Native</span><b>Not an emulator</b>A real 3DS game built from the FireRed decomp</li>
+      <li class="t-water"><span class="type">400 × 240</span><b>Wide overworld</b>Kanto across the whole top screen</li>
+      <li class="t-grass"><span class="type">Touch</span><b>Menus below</b>Battles, Bag, Pokédex and PC by touch</li>
+      <li class="t-psychic"><span class="type">Clock</span><b>Day and night</b>Towns light up with the 3DS clock</li>
+      <li class="t-electric"><span class="type">HGSS</span><b>HeartGold sprites</b>Optional, for all 386 species</li>
+      <li class="t-dragon"><span class="type">4×</span><b>Turbo</b>Speed up the slow parts with START</li>
     </ul>
   </header>
 
@@ -182,11 +205,35 @@
         </div>
       </div>
     </section>
+
+    <section class="card follow" aria-labelledby="follow-title">
+      <h2 id="follow-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <circle class="o" cx="16" cy="16" r="13" fill="#14171f"/>
+          <path fill="#fff" d="M20.3 9h2.1l-4.6 5.3 5.4 7.2h-4.2l-3.3-4.3-3.8 4.3H9.8l4.9-5.6L9.5 9h4.3l3 4 3.5-4Zm-.7 11.2h1.2L12.4 10.2h-1.3l8.5 10Z"/>
+        </svg>
+        Follow the journey
+      </h2>
+      <div class="follow-panel">
+        <div class="follow-text">
+          <p class="handle">@Twin_Embers</p>
+          <p>News, test builds and fresh captures from the 3DS as they happen.</p>
+        </div>
+        <div class="follow-actions">
+          <a class="btn x" href="https://x.com/Twin_Embers" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18.2h1.7L6.3 3.7H4.5l13.3 16.5Z"/></svg>
+            Follow on X
+          </a>
+          <a class="btn secondary" href="https://github.com/alex61194/twin-embers">Star on GitHub</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
     <p>Twin Embers is an unofficial fan project, not affiliated with or endorsed by Nintendo, Game Freak, Creatures or The Pokémon Company. You need your own legally obtained FireRed cartridge dump.
-    <a href="https://github.com/alex61194/twin-embers">Source and releases on GitHub</a>.</p>
+    <a href="https://github.com/alex61194/twin-embers">Source and releases on GitHub</a> ·
+    <a href="https://x.com/Twin_Embers" rel="noopener">@Twin_Embers on X</a></p>
   </footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
