@@ -405,6 +405,8 @@ int CtrPokeTouch_CardHit(const CtrPokeTouchView *view, int x, int y);
 int CtrPokeTouch_CardTrainerPic(unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_CardBadges(unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_DexMonPic(unsigned species, unsigned char *tiles, unsigned short *palette);
+/* The species' HeartGold picture whole: 80x80 4bpp in rows of 40 bytes, and its palette. 0 without it. */
+int CtrPokeTouch_DexMonPic80(unsigned species, unsigned char *pixels, unsigned short *palette);
 int CtrPokeTouch_DexMenuIcon(int id, unsigned char *tiles, unsigned short *palette);
 int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits);
 int CtrPokeTouch_DexCaughtMarker(unsigned char *tiles, unsigned short *palette);

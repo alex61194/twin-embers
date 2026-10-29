@@ -49,6 +49,8 @@ void *CtrData_Load(const char *path, uint32_t *len)
 }
 int CtrPokeTouch_DexMonPic(unsigned species, unsigned char *tiles, unsigned short *palette)
 { (void)species; (void)tiles; (void)palette; return 0; }
+int CtrPokeTouch_DexMonPic80(unsigned species, unsigned char *pixels, unsigned short *palette)
+{ (void)species; (void)pixels; (void)palette; return 0; }
 int CtrPokeTouch_DexMenuIcon(int id, unsigned char *tiles, unsigned short *palette)
 { (void)id; (void)tiles; (void)palette; return 0; }
 int CtrPokeTouch_DexFootprint(unsigned species, unsigned char *bits)

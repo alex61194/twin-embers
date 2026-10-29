@@ -602,7 +602,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "1affa7cefac851554656de0abd8ce19b39bf08a570f408f1f5b0f9f981263df9",
+   "sha256": "86e7f950c509df8de77e59611dca41d764c29e1cb04e5bd98a2fb8383b11f30e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1064,7 +1064,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_dex_impl.h",
-   "sha256": "4229bcd16eb3175bcd62fdb43746d2d44a39cde3d1539aae72c9f9acc944905f",
+   "sha256": "3366ab145f0b8858f4f7d6b2065b54204b76b632e369e4916f10af0141caa3e7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1549,7 +1549,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "15ab330513350d038a4d745e87f2ce7629ff199bd532a25276a059a50c08009c",
+   "sha256": "56b186b6e5a6bb95dd438d5b490809a52289faaba4c902bd4aba334a88ed1ba2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1838,7 +1838,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "458b306d4045c4cda3322f58a6a2dc01116ba5fa6ea58b0cdbec0152bca10fcc"
+   "sha256": "6ea1241dd7041d9c219188571259366b750e7967854a8d935c350d9130200039"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -5664,6 +5664,14 @@
   {
    "path": "patches/pokefirered/0195-hgss-pictures-outside-battle.json",
    "sha256": "51dd6f35bbd05160d412e4923cd62b2dfc7f5f755f517b0ee0560b8685bc828f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0196-hgss-pokedex-pictures-80.json",
+   "sha256": "08dc5a35d0ba84e4816c84db82f1718e87f31a73bed9925360de730b85f33087",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
