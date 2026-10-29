@@ -13,7 +13,10 @@ male/back.png (its palette is the shiny one), and the female pair where it
 differs from the male one. A female-only species has only its female pair.
 
 Unown's letters B to ? (otherpoke/unown, FireRed's order: 1-25 B to Z, 26 !,
-27 ?); its A is the species' own picture.
+27 ?); its A is the species' own picture. Castform's weather forms (otherpoke/
+castform, FireRed's order: 1 sun, 2 rain, 3 ice); its normal one is the
+species' own. And src/pokepic.c, for the coordinates of Spinda's spots (the
+Builder reads them from it; nothing of it is kept here).
 
 And the menu icons, keyed as the port reads them: 0 the egg, 1-386 the
 national dex, 387-413 Unown's letters B to ? (HeartGold's own numbering,
@@ -30,6 +33,9 @@ DIR = 'files/poketool/pokegra/pokegra/{:04d}/{}/{}.png'
 ICON = 'files/poketool/icongra/poke_icon/poke_icon_{:08d}.png'
 UNOWN = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
 UNOWN_NAMES = [chr(ord('a') + i) for i in range(26)] + ['exclamation_mark', 'question_mark']
+CASTFORM = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
+CASTFORM_NAMES = ['normal', 'sun', 'rain', 'ice']
+SPINDA = 'src/pokepic.c'
 UNOWN_LETTERS = 27
 SPECIES = 386
 OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / 'gen4_sources.py'
@@ -60,6 +66,10 @@ def main() -> None:
     for letter in range(1, 28):
         for side in ('front', 'back'):
             rows.append((letter, 'unown', side, (root / UNOWN.format(UNOWN_NAMES[letter], side)).read_bytes()))
+    for form in range(1, 4):
+        for side in ('front', 'back'):
+            rows.append((form, 'castform', side, (root / CASTFORM.format(CASTFORM_NAMES[form], side)).read_bytes()))
+    rows.append((0, 'spinda', 'spots', (root / SPINDA).read_bytes()))
     icons = [(0, 501)] + [(dex, dex + 7) for dex in range(1, SPECIES + 1)]
     icons += [(SPECIES + 1 + letter, 507 + letter) for letter in range(UNOWN_LETTERS)]
     for key, index in icons:
@@ -71,7 +81,9 @@ def main() -> None:
              'pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold\'s icon number, size,',
              'SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413',
              'Unown\'s letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path',
-             'UNOWN_PATH.format(UNOWN_NAMES[letter], side)."""',
+             'UNOWN_PATH.format(UNOWN_NAMES[letter], side). A Castform form: (1-3, "castform", side, size,',
+             'SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Spinda\'s spots: (0, "spinda",',
+             '"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them."""',
              '',
              f'REPO = {REPO!r}',
              f'COMMIT = {commit!r}',
@@ -79,6 +91,9 @@ def main() -> None:
              f'ICON_PATH = {ICON!r}',
              f'UNOWN_PATH = {UNOWN!r}',
              f'UNOWN_NAMES = {tuple(UNOWN_NAMES)!r}',
+             f'CASTFORM_PATH = {CASTFORM!r}',
+             f'CASTFORM_NAMES = {tuple(CASTFORM_NAMES)!r}',
+             f'SPINDA_PATH = {SPINDA!r}',
              'FILES = (']
     lines += [f'    ({dex}, {body!r}, {side!r}, {len(data)}, {hashlib.sha256(data).hexdigest()!r}),'
               for dex, body, side, data in rows]

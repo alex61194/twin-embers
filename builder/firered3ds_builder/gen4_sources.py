@@ -4,7 +4,9 @@ A battle sprite: (national dex, "male"/"female", "front"/"back", size, SHA-256),
 pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold's icon number, size,
 SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413
 Unown's letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path
-UNOWN_PATH.format(UNOWN_NAMES[letter], side)."""
+UNOWN_PATH.format(UNOWN_NAMES[letter], side). A Castform form: (1-3, "castform", side, size,
+SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Spinda's spots: (0, "spinda",
+"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them."""
 
 REPO = 'pret/pokeheartgold'
 COMMIT = 'b1ce5fd204b3c5b11f023e31a94b23bdb3bbd228'
@@ -12,6 +14,9 @@ PATH = 'files/poketool/pokegra/pokegra/{:04d}/{}/{}.png'
 ICON_PATH = 'files/poketool/icongra/poke_icon/poke_icon_{:08d}.png'
 UNOWN_PATH = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
 UNOWN_NAMES = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'exclamation_mark', 'question_mark')
+CASTFORM_PATH = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
+CASTFORM_NAMES = ('normal', 'sun', 'rain', 'ice')
+SPINDA_PATH = 'src/pokepic.c'
 FILES = (
     (1, 'male', 'front', 765, 'bb1966d420c7877f7b86fe517cd80534382cbafcf9bf196802fc35ceb1ae556c'),
     (1, 'male', 'back', 995, '5659175711a3ddf714596647c10538ad002ed6fcd953ab4ed81ed898d8f8db92'),
@@ -965,6 +970,13 @@ FILES = (
     (26, 'unown', 'back', 330, 'a9be18135aaf2eb9e610dba0c65cd918b2ce33855d2fc9f33a8f376849eff009'),
     (27, 'unown', 'front', 350, '4143b76fc1eca3de0861ab9488693961ec33223c9ce5f66d7520454b18f55c1f'),
     (27, 'unown', 'back', 404, '9316913e620060176ccdd08fda3a001af6404ec90b6251b5250ca275e7972ca0'),
+    (1, 'castform', 'front', 743, '08f37e8689cf6179fb9236bde270de66f261de219cabecfe6f0802c388791a49'),
+    (1, 'castform', 'back', 759, '08edd5f9f2bb29627079bdb69916e2902498b4aac48ca19d0f6c85c97cd426d7'),
+    (2, 'castform', 'front', 649, '8ca67a06c41d382b380290d2093f3e0eeac9f02b1450731c993353cbb1d56207'),
+    (2, 'castform', 'back', 637, '057dd025004eec0da1b911aef5f13795fd7e4202423fdcc9d1248b1093a9bd58'),
+    (3, 'castform', 'front', 787, '605b03795cc9d40d6bed889867e56073ac18179fadf1929e2562d69ab2a2da5c'),
+    (3, 'castform', 'back', 712, 'a41d681f9deec18547e0c31545482664fa8cfc003859eca087b45e9cb465ba0e'),
+    (0, 'spinda', 'spots', 51363, 'c764681d5c640be1ae55c33570a37168d5b2b2b00898456981579bc40b0426e1'),
     (0, 'icon', 501, 307, 'c772fb205fdd9daab5dac934f575cc3f1de19ab3dbf7a727a19092756d54f7ac'),
     (1, 'icon', 8, 313, '0e3bdf434330a31a63e3337924f97fcc83da3e6d8644e9f7007951e440936859'),
     (2, 'icon', 9, 320, '823d46e3f09fbbed6653d43d376ad226bd086e41d0d5d4a3a15a2c0efed75f1c'),

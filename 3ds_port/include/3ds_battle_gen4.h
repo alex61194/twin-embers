@@ -22,8 +22,9 @@
 /* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
  * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
 #define CTR_GEN4_SCALE (1.0f / 1.4f)
-/* Which pictures: a species' national dex (1-386) and its form, Unown's letter 0-27 as FireRed numbers them (A to Z,
- * !, ?). The functions below that take a "nationalDex" take this key. */
+/* Which pictures: a species' national dex (1-386) and its form: Unown's letter 0-27 as FireRed numbers them (A to Z,
+ * !, ?), Castform's weather 0-3 (normal, sun, rain, ice). The functions below that take a "nationalDex" take this
+ * key. */
 #define CTR_GEN4_KEY(dex, form) ((dex) | ((form) << 9))
 
 /* Game side (battle_gfx_sfx_util.c). */
@@ -50,6 +51,9 @@ void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);
 bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out[0x800]);
 bool CtrGen4_Palette(unsigned nationalDex, bool shiny, uint16_t palette[16]);
 bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out[CTR_GEN4_PICTURE]);
+/* The personality whose spots a Spinda front picture asked for next gets (graphics/gen4/spinda.bin, HeartGold's
+ * way of placing them); the game sets it with each Spinda's key. */
+void CtrGen4_SpindaPersonality(uint32_t personality);
 
 /* HeartGold's menu icons (graphics/gen4/icons.bin, read once and kept): key 0 the egg, 1-386 the national dex,
  * 387-413 Unown's letters B to ?. NULL / -1 without the entry or for another key. All or none: the Builder writes

@@ -12,6 +12,8 @@ Pack entries, one per species with a complete set, and the icons:
 
     graphics/gen4/battle/NNN.bin    NNN = national dex number, 001-386
     graphics/gen4/battle/201_FF.bin Unown's letters, FF = 01-27 (B to Z, !, ?), as FireRed numbers them
+    graphics/gen4/battle/351_FF.bin Castform's weather forms, FF = 01-03 (sun, rain, ice), FireRed's order
+    graphics/gen4/spinda.bin        where HeartGold draws Spinda's spots (from pret's pokepic.c)
     graphics/gen4/icons.bin         every menu icon, only when all of them could be had
                                     (their palettes replace FireRed's for every icon)
 
@@ -37,12 +39,17 @@ icons.bin (little endian):
     200  u8 x icons  each icon's palette, then zeros to a multiple of 4
     then 1024 bytes an icon: two 32x32 frames, each 16 8x8 4bpp tiles row by row,
          as FireRed's icons
+
+spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
+(x, y) u8 pairs: the pixels of the spot on the front picture before the
+personality moves it (HeartGold's RawChardata_PlaceSpindaSpots).
 """
 from __future__ import annotations
 
 import hashlib
 import os
 import queue
+import re
 import struct
 import threading
 import urllib.request
@@ -57,6 +64,7 @@ PICTURE = SIZE * SIZE // 2
 MAGIC = b"G4B1"
 PREFIX = "graphics/gen4/battle/"
 ICONS = "graphics/gen4/icons.bin"
+SPINDA = "graphics/gen4/spinda.bin"
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
@@ -172,6 +180,23 @@ def convert_icons(icons: list[bytes]) -> bytes:
             + b"".join(palettes) + bytes(32 * (ICON_PALETTES - len(palettes))) + bytes(indices) + bytes(tiles))
 
 
+def convert_spinda(source: bytes) -> bytes:
+    """spinda.bin from pret's pokepic.c: its four sSpindaSpotNCoords tables, up to their 0xFF end."""
+    text = source.decode("utf-8")
+    out = bytearray(b"G4P1")
+    for spot in range(1, 5):
+        match = re.search(r"sSpindaSpot%dCoords\[\]\[2\] = \{(.*?)\};" % spot, text, re.S)
+        if not match:
+            raise Gen4Error("no Spinda spot table %d" % spot)
+        pairs = [(int(x, 0), int(y, 0)) for x, y in re.findall(r"\{\s*(\w+)\s*,\s*(\w+)\s*\}", match.group(1))]
+        if pairs[-1:] != [(0xFF, 0xFF)] or len(pairs) > 256 or any(x > 0xFF or y > 0xFF for x, y in pairs):
+            raise Gen4Error("Spinda spot table %d is not as expected" % spot)
+        out.append(len(pairs) - 1)
+        for x, y in pairs[:-1]:
+            out += bytes((x, y))
+    return bytes(out)
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -199,6 +224,10 @@ def source_path(row: tuple) -> str:
         return gen4_sources.ICON_PATH.format(row[2])
     if row[1] == "unown":
         return gen4_sources.UNOWN_PATH.format(gen4_sources.UNOWN_NAMES[row[0]], row[2])
+    if row[1] == "castform":
+        return gen4_sources.CASTFORM_PATH.format(gen4_sources.CASTFORM_NAMES[row[0]], row[2])
+    if row[1] == "spinda":
+        return gen4_sources.SPINDA_PATH
     return gen4_sources.PATH.format(*row[:3])
 
 
@@ -220,6 +249,10 @@ class Downloader:
             return "icon_{:08d}.png".format(row[2])
         if row[1] == "unown":
             return "unown_{:02d}_{}.png".format(row[0], row[2])
+        if row[1] == "castform":
+            return "castform_{:02d}_{}.png".format(row[0], row[2])
+        if row[1] == "spinda":
+            return "pokepic.c"
         return "{:03d}_{}_{}.png".format(*row[:3])
 
     def fetch(self, row: tuple) -> tuple[bytes | None, bool]:
@@ -285,8 +318,9 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
         worker.join()
     files, missing = [], []
     icon_rows = sorted((row for row in rows if row[1] == "icon"), key=lambda row: row[0])
-    unown_rows = [row for row in rows if row[1] == "unown"]
-    rows = [row for row in rows if row[1] not in ("icon", "unown")]
+    form_rows = {kind: [row for row in rows if row[1] == kind] for kind in ("unown", "castform")}
+    spinda = [row for row in rows if row[1] == "spinda"]
+    rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
         bodies = [body for body in ("male", "female") if any(row[:2] == (dex, body) for row in rows)]
@@ -296,10 +330,13 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             continue
         files.append(("%s%03d.bin" % (PREFIX, dex), convert(*pairs[0], pairs[1] if len(pairs) > 1 else None)))
     species = len(files)
-    for letter in sorted({row[0] for row in unown_rows}):
-        pair = (got.get((letter, "unown", "front")), got.get((letter, "unown", "back")))
-        if None not in pair:
-            files.append(("%s201_%02d.bin" % (PREFIX, letter), convert(*pair)))
+    for kind, dex in (("unown", 201), ("castform", 351)):
+        for form in sorted({row[0] for row in form_rows[kind]}):
+            pair = (got.get((form, kind, "front")), got.get((form, kind, "back")))
+            if None not in pair:
+                files.append(("%s%03d_%02d.bin" % (PREFIX, dex, form), convert(*pair)))
+    if spinda and spinda[0][:3] in got:
+        files.append((SPINDA, convert_spinda(got[spinda[0][:3]])))
     icons = icon_rows and all(row[:3] in got for row in icon_rows)
     if icons:
         files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))

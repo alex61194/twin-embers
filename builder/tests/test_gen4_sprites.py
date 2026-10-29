@@ -219,12 +219,34 @@ class IconTest(unittest.TestCase):
             self.assertEqual((files, info["icons"]), ([], False))
 
 
+class SpindaTest(unittest.TestCase):
+    def test_spot_tables_from_a_c_file(self):
+        source = b"""static const u8 sSpindaSpot1Coords[][2] = {
+    { 0x1B, 0x0F },
+    { 3, 4 },
+    { 0xFF, 0xFF },
+};
+""" + b"".join(b"static const u8 sSpindaSpot%dCoords[][2] = {\n    { 1, 2 },\n    { 0xFF, 0xFF },\n};\n" % i
+                for i in (2, 3, 4))
+        self.assertEqual(gen4_sprites.convert_spinda(source),
+                         b"G4P1" + bytes([2, 0x1B, 0x0F, 3, 4]) + bytes([1, 1, 2]) * 3)
+
+    def test_a_missing_or_open_table_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_spinda(b"nothing here")
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_spinda(b"".join(b"static const u8 sSpindaSpot%dCoords[][2] = {\n    { 1, 2 },\n};\n" % i
+                                                 for i in (1, 2, 3, 4)))
+
+
 class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
         from firered3ds_builder import gen4_sources
         self.assertRegex(gen4_sources.COMMIT, "^[0-9a-f]{40}$")
         battle = [row for row in gen4_sources.FILES if row[1] in ("male", "female")]
         self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "unown"}), list(range(1, 28)))
+        self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "castform"}), [1, 2, 3])
+        self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "spinda"], [("spinda", "spots")])
         species = {row[0] for row in battle}
         self.assertEqual(species, set(range(1, 387)))
         for dex in species:

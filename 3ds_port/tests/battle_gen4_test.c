@@ -20,6 +20,15 @@ static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
 
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
+    if (strcmp(path, "graphics/gen4/spinda.bin") == 0)
+    {
+        /* One spot of two pixels, (10, 10) and (11, 10); the other three empty. */
+        static const uint8_t spinda[] = {'G', '4', 'P', '1', 2, 10, 10, 11, 10, 0, 0, 0};
+        void *copy = malloc(sizeof(spinda));
+        memcpy(copy, spinda, sizeof(spinda));
+        *outSize = sizeof(spinda);
+        return copy;
+    }
     if (strcmp(path, "graphics/gen4/icons.bin") == 0)
     {
         void *copy = malloc(sizeof(sIconsEntry));
@@ -213,6 +222,28 @@ int main(void)
     assert(!CtrGen4_Load(0, CTR_GEN4_KEY(201, 28), false, false, false, fire, palette));
     assert(!CtrGen4_Load(0, CTR_GEN4_KEY(25, 1), false, false, false, fire, palette));
     CtrGen4_Drop(0);
+
+    /* Castform's weather forms have their own entries. */
+    MakeEntry(false, 70);
+    assert(CtrGen4_Load(0, CTR_GEN4_KEY(351, 3), false, false, false, fire, palette));
+    assert(strcmp(sAsked, "graphics/gen4/battle/351_03.bin") == 0);
+    assert(!CtrGen4_Load(0, CTR_GEN4_KEY(351, 4), false, false, false, fire, palette));
+    CtrGen4_Drop(0);
+
+    /* Spinda's spots: personality 0x88 leaves the spot where the table puts it, colour 1 becomes 6; colour 0 stays,
+     * the back picture has none, another species neither. */
+    {
+        uint8_t big[CTR_GEN4_PICTURE];
+        MakeEntry(false, 70);
+        CtrGen4_SpindaPersonality(0x88);
+        assert(CtrGen4_Picture80(327, false, false, big));
+        assert(big[10 * 40 + 5] == 0x66 && big[10 * 40 + 6] == 0x11 && big[11 * 40 + 5] == 0x11);
+        CtrGen4_SpindaPersonality(0x99);     /* one right and one down: (11, 11) and (12, 11) */
+        assert(CtrGen4_Picture80(327, false, false, big));
+        assert(big[11 * 40 + 5] == 0x61 && big[11 * 40 + 6] == 0x16 && big[10 * 40 + 5] == 0x11);
+        assert(CtrGen4_Picture80(327, true, false, big) && big[11 * 40 + 5] == 0x22);
+        assert(CtrGen4_Picture80(328, false, false, big) && big[11 * 40 + 5] == 0x11);
+    }
 
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);

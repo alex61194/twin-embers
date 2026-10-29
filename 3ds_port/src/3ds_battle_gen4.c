@@ -24,13 +24,67 @@ static bool KeyPath(unsigned key, char *path, size_t size)
 {
     unsigned dex = key & 511, form = key >> 9;
 
-    if (dex < 1 || dex > 386 || form > 27 || (form && dex != 201))
+    if (dex < 1 || dex > 386 || (form && !(dex == 201 && form <= 27) && !(dex == 351 && form <= 3)))
         return false;
     if (form)
         snprintf(path, size, "graphics/gen4/battle/%03u_%02u.bin", dex, form);
     else
         snprintf(path, size, "graphics/gen4/battle/%03u.bin", dex);
     return true;
+}
+
+/* Spinda's spots (spinda.bin, gen4_sprites.py): read once and kept. */
+#define SPINDA_DEX 327
+static uint8_t *sSpinda;
+static uint32_t sSpindaSize, sSpindaPersonality;
+static bool sSpindaTried;
+
+void CtrGen4_SpindaPersonality(uint32_t personality)
+{
+    sSpindaPersonality = personality;
+}
+
+/* A picture as shown: Spinda's front one with this personality's spots (HeartGold's RawChardata_PlaceSpindaSpots
+ * on its first frame: each spot moved by one byte of the personality, a spot pixel of colour 1-3 made 6-8), any
+ * other the entry's own. */
+static const uint8_t *Shown(const uint8_t *linear, unsigned key, bool back)
+{
+    static uint8_t spotted[CTR_GEN4_PICTURE];
+
+    if (back || key != SPINDA_DEX)
+        return linear;
+    if (!sSpindaTried)
+    {
+        sSpindaTried = true;
+        sSpinda = CtrData_Load("graphics/gen4/spinda.bin", &sSpindaSize);
+        if (sSpinda && (sSpindaSize < 4 || memcmp(sSpinda, "G4P1", 4)))
+        {
+            CtrLog_Write(CTR_LOG_GAME, "GEN4 spinda.bin: wrong kind");
+            free(sSpinda);
+            sSpinda = NULL;
+        }
+    }
+    if (!sSpinda)
+        return linear;
+    memcpy(spotted, linear, sizeof(spotted));
+    uint32_t pid = sSpindaPersonality, at = 4;
+    for (int spot = 0; spot < 4; ++spot, pid >>= 8)
+    {
+        if (at >= sSpindaSize)
+            break;
+        unsigned count = sSpinda[at++];
+        for (unsigned j = 0; j < count && at + 1 < sSpindaSize; ++j, at += 2)
+        {
+            int x = sSpinda[at] + (int)(pid & 0x0F) - 8, y = sSpinda[at + 1] + (int)((pid & 0xF0) >> 4) - 8;
+            if (x < 0 || x >= CTR_GEN4_SIZE || y < 0 || y >= CTR_GEN4_SIZE)
+                continue;
+            uint8_t *byte = &spotted[y * (CTR_GEN4_SIZE / 2) + x / 2];
+            unsigned shift = (x & 1) * 4, index = (*byte >> shift) & 15;
+            if (index >= 1 && index <= 3)
+                *byte = (uint8_t)(*byte + (5 << shift));
+        }
+    }
+    return spotted;
 }
 
 /* The lowest row of a 64x64 FireRed picture (8x8 tiles, eight to a row) with a pixel in it, or -1. */
@@ -117,7 +171,7 @@ bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out
     const uint8_t *entry = Entry(nationalDex);
     if (!entry)
         return false;
-    memcpy(out, Picture(entry, back, female), CTR_GEN4_PICTURE);
+    memcpy(out, Shown(Picture(entry, back, female), nationalDex, back), CTR_GEN4_PICTURE);
     return true;
 }
 
@@ -126,7 +180,7 @@ bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out
     const uint8_t *entry = Entry(nationalDex);
     if (!entry)
         return false;
-    const uint8_t *linear = Picture(entry, back, female);
+    const uint8_t *linear = Shown(Picture(entry, back, female), nationalDex, back);
     memset(out, 0, 0x800);
     /* Nearest pixel: 64 of the 80 rows and columns, every fifth one left out. */
     for (unsigned y = 0; y < 64; ++y)
@@ -169,8 +223,8 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
         free(entry);
         return false;
     }
-    const uint8_t *linear = entry + HEADER + ((female && pair) ? 2 : 0) * CTR_GEN4_PICTURE
-                          + (back ? CTR_GEN4_PICTURE : 0);
+    const uint8_t *linear = Shown(entry + HEADER + ((female && pair) ? 2 : 0) * CTR_GEN4_PICTURE
+                                  + (back ? CTR_GEN4_PICTURE : 0), nationalDex, back);
     memcpy(palette, entry + (shiny ? 40 : 8), 32);
     /* Rows of 40 bytes to the GBA's 8x8 tiles, ten to a row. */
     uint8_t *tiles = sBattlers[battler].tiles;
