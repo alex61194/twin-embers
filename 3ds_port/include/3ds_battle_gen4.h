@@ -32,6 +32,10 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
 /* The battler shows FireRed's picture again (a substitute, a ghost, a species left out). */
 void CtrGen4_Drop(unsigned battler);
 void CtrGen4_DropAll(void);
+/* For a move animation that copies the battler onto a background (CopyBattlerSpriteToBg): HeartGold's picture as
+ * FireRed's 64x64 4bpp one (8x8 tiles, eight to a row), at the battle's scale and where the sprite shows it. False,
+ * `out` untouched, when the battler shows FireRed's. */
+bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800]);
 /* FireRed erases the picture from this row of its 64x64 box down (a foe fainting): so is HeartGold's, from the
  * picture row drawn there. */
 void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow);

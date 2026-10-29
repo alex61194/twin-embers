@@ -77,6 +77,12 @@ static bool Near(float a, float b)
     return a - b < 0.001f && b - a < 0.001f;
 }
 
+static unsigned FireNibble(const uint8_t *pic, unsigned x, unsigned y)
+{
+    uint8_t pair = pic[((y / 8) * 8 + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
+    return (x & 1) ? pair >> 4 : pair & 15;
+}
+
 static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
 {
     return obj->tiles[((y / 8) * CTR_GEN4_TILES + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
@@ -116,6 +122,17 @@ int main(void)
     assert(sMatch(0x200 | (1 << 12), &obj));
     assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 30.4f) && Near(obj.scale, 1.0f / 1.4f));
     assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 79, 70) == 0x11 && PixelByte(&obj, 79, 71) == 0);
+
+    /* The picture on a background, as FireRed's 64x64 one: the box centre is coloured, the corner is not, and its
+     * lowest row is FireRed's (60), as the sprite stands. */
+    {
+        uint8_t bg[0x800];
+        memset(bg, 0xEE, sizeof(bg));
+        assert(CtrGen4_GbaPicture(1, bg));
+        assert(FireNibble(bg, 32, 32) == 1 && FireNibble(bg, 0, 0) == 0);
+        assert(FireNibble(bg, 32, 60) == 1 && FireNibble(bg, 32, 61) == 0);
+        assert(!CtrGen4_GbaPicture(3, bg));
+    }
 
     /* The back picture and the shiny palette. */
     assert(CtrGen4_Load(1, 6, true, false, true, fire, palette));

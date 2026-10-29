@@ -103,6 +103,33 @@ bool CtrGen4_Load(unsigned battler, unsigned nationalDex, bool back, bool female
     return true;
 }
 
+bool CtrGen4_GbaPicture(unsigned battler, uint8_t out[0x800])
+{
+    if (battler >= BATTLERS || !sBattlers[battler].active)
+        return false;
+    const uint8_t *tiles = sBattlers[battler].tiles;
+    memset(out, 0, 0x800);
+    /* Each box pixel takes the picture pixel under its centre, as the sprite draws it (Match: the box centre on
+     * the picture's pivot, a picture pixel SCALE box pixels). */
+    for (int by = 0; by < 64; ++by)
+    {
+        float py = sBattlers[battler].pivotY + (by + 0.5f - 32) / CTR_GEN4_SCALE;
+        if (py < 0 || py >= CTR_GEN4_SIZE)
+            continue;
+        for (int bx = 0; bx < 64; ++bx)
+        {
+            float px = CTR_GEN4_SIZE / 2.0f + (bx + 0.5f - 32) / CTR_GEN4_SCALE;
+            if (px < 0 || px >= CTR_GEN4_SIZE)
+                continue;
+            unsigned x = (unsigned)px, y = (unsigned)py;
+            uint8_t pair = tiles[((y / 8) * CTR_GEN4_TILES + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
+            unsigned index = (x & 1) ? pair >> 4 : pair & 15;
+            out[((by / 8) * 8 + bx / 8) * 32 + (by % 8) * 4 + (bx % 8) / 2] |= (uint8_t)(index << ((bx & 1) * 4));
+        }
+    }
+    return true;
+}
+
 void CtrGen4_Drop(unsigned battler)
 {
     if (battler < BATTLERS)
