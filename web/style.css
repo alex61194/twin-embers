@@ -112,54 +112,102 @@ header.hero p {
 .step p { margin: 0 0 8px; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
-/* Glossy rounded buttons. */
+/* Glossy rounded buttons: a coloured body, a bright gloss on the upper half and a darker lip underneath.
+   Hover lifts and lights them, pressing sinks them into the lip, focus draws a gold ring. */
 .btn {
+  --btn-top: #ffa24e;
+  --btn-bottom: #e0471f;
+  --btn-lip: #8f2412;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 22px;
+  min-height: 48px;
+  padding: 0 26px;
   border: 3px solid var(--slate);
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--flame) 0%, var(--ember-hot) 100%);
+  background: linear-gradient(180deg, var(--btn-top) 0%, var(--btn-bottom) 100%);
   color: #fff;
   font: inherit;
   font-size: 17px;
   font-weight: bold;
   line-height: 1;
+  letter-spacing: 0.2px;
   text-decoration: none;
-  text-shadow: 0 1px 0 rgba(64, 72, 104, 0.6);
-  box-shadow: 0 4px 0 var(--slate);
+  text-shadow: 0 2px 0 rgba(74, 11, 10, 0.55);
+  box-shadow: 0 5px 0 var(--btn-lip), 0 5px 0 3px var(--slate), 0 10px 14px rgba(0, 0, 0, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.12);
   cursor: pointer;
   overflow: hidden;
   white-space: nowrap;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .btn::before {
   content: "";
   position: absolute;
-  left: 8%;
-  right: 8%;
+  left: 7%;
+  right: 7%;
   top: 3px;
-  height: 42%;
+  height: 44%;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.05));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
   pointer-events: none;
 }
-.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--slate); }
-.btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.btn.secondary { background: linear-gradient(180deg, #fdfdfd 0%, #d9dbe6 100%); color: var(--ink); text-shadow: none; }
-.btn.big { min-height: 54px; font-size: 19px; padding: 0 28px; }
-.btn[disabled], .btn[aria-disabled="true"] {
-  filter: grayscale(0.85) brightness(0.95);
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 4px 0 var(--slate);
+/* A light sweep across the button on hover. */
+.btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  pointer-events: none;
 }
+.btn:hover:not([disabled]):not([aria-disabled="true"]) {
+  transform: translateY(-2px);
+  filter: brightness(1.08) saturate(1.1);
+  box-shadow: 0 7px 0 var(--btn-lip), 0 7px 0 3px var(--slate), 0 14px 20px rgba(255, 138, 61, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+}
+.btn:hover:not([disabled]):not([aria-disabled="true"])::after { left: 130%; transition: left 0.5s ease; }
+.btn:active:not([disabled]):not([aria-disabled="true"]) {
+  transform: translateY(4px);
+  filter: brightness(0.96);
+  box-shadow: 0 1px 0 var(--btn-lip), 0 1px 0 3px var(--slate), inset 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+.btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+.btn.secondary {
+  --btn-top: #ffffff;
+  --btn-bottom: #d3d7e6;
+  --btn-lip: #8a90ab;
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.btn.secondary::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15)); }
+.btn.secondary:hover:not([disabled]):not([aria-disabled="true"]) {
+  --btn-bottom: #ffe9c9;
+  box-shadow: 0 7px 0 var(--btn-lip), 0 7px 0 3px var(--slate), 0 14px 20px rgba(255, 209, 102, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+}
+.btn.big { min-height: 56px; font-size: 19px; padding: 0 32px; }
+.btn[disabled], .btn[aria-disabled="true"] {
+  --btn-top: #c9cbd6;
+  --btn-bottom: #a3a6b8;
+  --btn-lip: #6d7288;
+  color: #eef0f6;
+  text-shadow: 0 1px 0 rgba(64, 72, 104, 0.5);
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+.btn[disabled]::before, .btn[aria-disabled="true"]::before { opacity: 0.5; }
 .btn.hidden, .hidden { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn::after { transition: none; }
+  .btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: none; }
+}
 
 /* Status pills share the buttons' height so text lines up beside them. */
 .pill {
@@ -359,7 +407,8 @@ header.hero .tagline { max-width: 600px; margin: 10px auto 16px; font-size: 18px
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
   transition: transform 0.12s ease;
 }
-.gallery .shot:hover { transform: translateY(-3px); }
+.gallery .shot:hover { transform: translateY(-4px); box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3), 0 0 0 3px var(--flame), 0 10px 22px rgba(255, 138, 61, 0.45); }
+.gallery .shot:active { transform: translateY(1px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
 .gallery .shot:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .gallery img, .lightbox img {
   display: block; width: 100%; height: auto; border-radius: 6px;
@@ -376,7 +425,11 @@ header.hero .tagline { max-width: 600px; margin: 10px auto 16px; font-size: 18px
 .lightbox .close {
   border: 0; background: var(--slate); color: #fff; font-size: 22px; line-height: 1;
   width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
 }
+.lightbox .close:hover { background: var(--ember-hot); transform: scale(1.1); }
+.lightbox .close:active { transform: scale(0.95); }
+.lightbox .close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 @media (max-width: 760px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
 .lightbox img { width: auto; max-width: 100%; max-height: 76vh; margin: 0 auto; }
