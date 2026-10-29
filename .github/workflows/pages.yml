@@ -1,0 +1,45 @@
+name: Web Builder (GitHub Pages)
+# Publishes web/ and the Builder it runs (tools/build_web.py) when a release is published, so the
+# page always builds the pack for the latest release's twinembers.3dsx. Run it by hand to publish
+# from a chosen branch or tag.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    # releases/latest skips pre-releases, so the page must not follow them either.
+    if: github.event_name != 'release' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Web Builder and UniStore tests
+        run: |
+          python3 -m unittest discover -s builder/tests -p test_browser.py -v
+          python3 -m unittest discover -s tools -p test_web_builder.py -v
+      - name: Assemble the site
+        env:
+          TWIN_EMBERS_VERSION: ${{ github.event.release.tag_name || github.ref_name }}
+        run: python3 tools/build_web.py --out _site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
