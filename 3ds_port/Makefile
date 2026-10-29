@@ -66,7 +66,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -83,6 +83,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/forwarder_test.exe
 	./build/type_chart_test.exe
 	./build/leafgreen_test.exe
+	./build/battle_gen4_test.exe
 	./build/night_wild_test.exe
 	./build/audio_cadence_test.exe
 	./build/audio_catchup_test.exe
@@ -161,6 +162,9 @@ build/3ds_night_wild.o: include/3ds_night_wild.h build/game_sources.stamp
 GAME_PLATFORM_OBJS += build/3ds_bottom.o build/3ds_bottom_screen.o build/3ds_poketouch.o build/3ds_poketouch_options.o
 GAME_NATIVE_OBJS := build/main_game_native.o $(GAME_PLATFORM_OBJS)
 GAME_NATIVE_OBJS += build/3ds_assets.o build/3ds_asset_memory.o build/3ds_data.o build/3ds_pak.o build/3ds_data_error.o
+# HeartGold's battle sprites from the pack's optional entries, drawn by the compositor (battle_gfx_sfx_util.c).
+GAME_NATIVE_OBJS += build/3ds_battle_gen4.o
+build/3ds_battle_gen4.o: include/3ds_battle_gen4.h include/3ds_data.h
 verify-m4a-arm11: build/game/m4a_1.o ../tools/verify_m4a_arm11.py
 	$(PYTHON) ../tools/verify_m4a_arm11.py --object build/game/m4a_1.o --objcopy $(DEVKITARM)/bin/arm-none-eabi-objcopy --readelf $(DEVKITARM)/bin/arm-none-eabi-readelf
 
@@ -422,6 +426,10 @@ build/type_chart_test.exe: tests/type_chart_test.c include/3ds_type_chart.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/type_chart_test.c -o $@
 
+build/battle_gen4_test.exe: tests/battle_gen4_test.c src/3ds_battle_gen4.c include/3ds_battle_gen4.h include/3ds_data.h include/3ds_log.h include/3ds_video.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/battle_gen4_test.c src/3ds_battle_gen4.c -o $@
+
 build/leafgreen_test.exe: tests/leafgreen_test.c src/3ds_leafgreen.c include/3ds_leafgreen.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -iquote ../include tests/leafgreen_test.c src/3ds_leafgreen.c -o $@
@@ -598,7 +606,7 @@ build/game/pokemon_storage_system_tasks.o build/game/pokemon_storage_system_menu
 
 # The game pipeline preprocesses through stdin, so it cannot infer this header dependency.
 build/game/sprite.o: include/3ds_effect_oam.h include/3ds_video.h
-build/3ds_video.o: include/3ds_effect_oam.h
+build/3ds_video.o: include/3ds_effect_oam.h include/3ds_battle_gen4.h
 
 build/game/field_effect.o: include/3ds_fly_phase.h
 

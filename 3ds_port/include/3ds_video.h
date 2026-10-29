@@ -136,6 +136,9 @@ void CtrVideo_SetDayNight(bool outdoors, int second, const uint16_t *primary, un
 void CtrVideo_SetDayNightCamera(bool valid, int tileX, int tileY, int viewLeft, int mapX, int mapY, unsigned map);
 /* The field's tile on BG1-3 at a place on the map, in tiles, or 0xffff (the night windows walk their glass on it). */
 void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y));
+/* In battle, the HeartGold picture an OAM entry stands for (3ds_battle_gen4.c), drawn in its place. NULL: none. */
+struct CtrGen4Obj;
+void CtrVideo_SetObjOverride(bool (*match)(unsigned attr2, struct CtrGen4Obj *out));
 /* Leaves a BG0 rectangle (tiles) out of the upper screen: a field menu the lower screen draws. w 0 for none. */
 void CtrVideo_HideBg0Rect(int x, int y, int w, int h);
 /*
