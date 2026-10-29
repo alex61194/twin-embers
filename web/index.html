@@ -10,11 +10,51 @@
 <body>
 <div class="page">
   <header class="hero">
-    <h1>Twin Embers</h1>
-    <p>FireRed on both screens of your 3DS. Build your data pack here, in your browser.</p>
+    <h1><img class="banner" src="media/twin-embers-banner.png" width="900" height="508" alt="Twin Embers"></h1>
+    <p class="tagline">Pokémon FireRed rebuilt for both screens of the Nintendo 3DS: Kanto across the wide top screen, every menu under your thumb below.</p>
+    <nav class="hero-actions" aria-label="Start">
+      <a class="btn big" href="#build-title">Build your pack</a>
+      <a class="btn secondary" href="#install-title">Install on 3DS</a>
+      <a class="btn secondary" href="https://github.com/alex61194/twin-embers/releases/latest">Latest release</a>
+    </nav>
+    <ul class="features">
+      <li>Native 3DS game, not an emulator</li>
+      <li>400 × 240 overworld</li>
+      <li>Touch menus, battles and PC</li>
+      <li>Day and night with the 3DS clock</li>
+      <li>Optional HeartGold sprites</li>
+      <li>Turbo up to 4×</li>
+    </ul>
   </header>
 
   <main>
+    <section class="card" aria-labelledby="gallery-title">
+      <h2 id="gallery-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="o" x="3" y="6" width="26" height="20" rx="3" fill="#ffd166"/>
+          <circle class="o" cx="12" cy="13" r="3" fill="#fff8ec"/>
+          <path class="o" d="M5 24 L13 17 L18 21 L22 18 L27 23 V24 Z" fill="#2f9e5b"/>
+        </svg>
+        See it on a 3DS
+      </h2>
+      <p class="lead">Real captures, top and bottom screen as the console shows them. Tap one to see it larger.</p>
+      <div class="gallery" id="gallery">
+        <figure><button type="button" class="shot" data-full="media/02-night-cerulean.png"><img src="media/02-night-cerulean.png" width="400" height="480" loading="lazy" alt="Cerulean City at night with lit windows, the touch map of Kanto below"></button><figcaption>Cerulean at night, the town map below</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/06-battle-intro.png"><img src="media/06-battle-intro.png" width="400" height="480" loading="lazy" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"></button><figcaption>HeartGold sprites in battle</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/08-battle-moves.png"><img src="media/08-battle-moves.png" width="400" height="480" loading="lazy" alt="Move cards with type, power, accuracy and PP"></button><figcaption>Move cards with type, power and PP</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/19-battle-summary.png"><img src="media/19-battle-summary.png" width="400" height="480" loading="lazy" alt="A Pokémon's Summary during a battle"></button><figcaption>The Summary without leaving the fight</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/12-party.png"><img src="media/12-party.png" width="400" height="480" loading="lazy" alt="The party on the lower screen"></button><figcaption>Your party, one tap away</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/14-pokedex.png"><img src="media/14-pokedex.png" width="400" height="480" loading="lazy" alt="The Pokédex on the lower screen"></button><figcaption>The Pokédex on the touch screen</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/21-pc-box.png"><img src="media/21-pc-box.png" width="400" height="480" loading="lazy" alt="A PC box on the lower screen"></button><figcaption>PC boxes moved by touch</figcaption></figure>
+        <figure><button type="button" class="shot" data-full="media/04-night-saffron.png"><img src="media/04-night-saffron.png" width="400" height="480" loading="lazy" alt="Saffron City at night"></button><figcaption>Saffron City by night</figcaption></figure>
+      </div>
+      <dialog class="lightbox" id="lightbox" aria-label="Capture">
+        <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+        <img id="lightbox-img" src="" alt="">
+        <p id="lightbox-caption"></p>
+      </dialog>
+    </section>
+
     <section class="card" aria-labelledby="build-title">
       <h2 id="build-title">
         <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
@@ -47,8 +87,8 @@
           <label class="switch">
             <input type="checkbox" id="gen4-toggle">
             <span class="track"></span>
-            <span class="label">HeartGold battle sprites
-              <small>Optional. Downloads about 1.1 MB of pictures from pret/pokeheartgold on GitHub, each one checked by SHA-256.</small>
+            <span class="label">HeartGold sprites and icons
+              <small>Optional. Downloads about 1.4 MB of pictures from pret/pokeheartgold on GitHub, each one checked by SHA-256: battle sprites, menu icons, Unown's letters, Castform's forms and Spinda's spots.</small>
             </span>
           </label>
         </div>

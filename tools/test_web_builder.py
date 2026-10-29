@@ -35,8 +35,18 @@ class SiteTest(unittest.TestCase):
         self.assertEqual(on_disk, self.paths)
         for path in on_disk:
             self.assertRegex(path, r'^(?:[a-z]+\.(?:html|css|js|unistore)|\.nojekyll|builder/files\.json|'
+                                   r'media/[-a-z0-9]+\.png|'
                                    r'builder/firered3ds_builder/(?:[a-z0-9_]+\.py|recipes/[-a-z0-9_/]+\.json))$')
         self.assertFalse(any(re.search(r'gui|cli|__main__', p) for p in on_disk))
+
+    def test_media_are_the_readme_images_the_page_shows(self):
+        page = (self.site / 'index.html').read_text(encoding='utf-8')
+        shown = set(re.findall(r'(?:src|data-full)="media/([^"]+)"', page))
+        on_disk = {p.name for p in (self.site / 'media').iterdir()}
+        self.assertEqual(shown, on_disk)
+        self.assertEqual(on_disk, set(build_web.MEDIA_FILES))
+        for name in on_disk:
+            self.assertEqual((self.site / 'media' / name).read_bytes(), (build_web.MEDIA / name).read_bytes())
 
     def test_builder_listing_matches_the_files(self):
         listing = json.loads((self.site / 'builder' / 'files.json').read_text())

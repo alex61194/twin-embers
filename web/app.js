@@ -189,3 +189,21 @@ ui.build.addEventListener('click', startBuild);
 drawQr('qr-unistore', 'url-unistore', UNISTORE_URL);
 drawQr('qr-fbi', 'url-fbi', FORWARDER_URL);
 refresh();
+
+// The gallery: a capture opens larger in a dialog.
+(function () {
+  const dialog = document.getElementById('lightbox');
+  if (!dialog || typeof dialog.showModal !== 'function') return;
+  const img = document.getElementById('lightbox-img');
+  const caption = document.getElementById('lightbox-caption');
+  document.querySelectorAll('#gallery .shot').forEach((button) => {
+    button.addEventListener('click', () => {
+      const thumb = button.querySelector('img');
+      img.src = button.dataset.full;
+      img.alt = thumb.alt;
+      caption.textContent = button.parentElement.querySelector('figcaption').textContent;
+      dialog.showModal();
+    });
+  });
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+})();

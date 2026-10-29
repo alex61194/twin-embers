@@ -2,7 +2,7 @@
 
     python tools/build_web.py --out build/web [--version v0.3.0] [--date 2026-10-29]
 
-The site is static: web/ as it is, the UniStore with this release's version and date filled in,
+The site is static: web/ as it is, the README's banner and captures (docs/media) in media/, the UniStore with this release's version and date filled in,
 and the Builder modules and recipe the page runs with Pyodide, listed with their SHA-256 in
 builder/files.json. No ROM, pack or game data is ever part of it. Serve the folder locally with
 `python -m http.server -d build/web` to try it (crypto.subtle needs localhost or HTTPS).
@@ -22,6 +22,10 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / 'web'
 PACKAGE = ROOT / 'builder' / 'firered3ds_builder'
 PAGES = ('index.html', 'style.css', 'app.js', 'worker.js')
+# The README's images the page shows (docs/media, reviewed there): the banner and the gallery's captures.
+MEDIA = ROOT / 'docs' / 'media'
+MEDIA_FILES = ('twin-embers-banner.png', '02-night-cerulean.png', '06-battle-intro.png', '08-battle-moves.png',
+               '19-battle-summary.png', '12-party.png', '14-pokedex.png', '21-pc-box.png', '04-night-saffron.png')
 UNISTORE = 'twinembers.unistore'
 # What firered3ds_builder.browser imports, directly or not. The GUI, CLI and Windows parts stay out.
 MODULES = ('__init__.py', 'browser.py', 'build.py', 'rom.py', 'recipe.py', 'pak.py',
@@ -122,6 +126,8 @@ def assemble(out: Path, version: str, date: str) -> list[str]:
     written: dict[str, bytes] = {}
     for name in PAGES:
         written[name] = (WEB / name).read_bytes()
+    for name in MEDIA_FILES:
+        written[f'media/{name}'] = (MEDIA / name).read_bytes()
     written[UNISTORE] = unistore(version, date)
     written['.nojekyll'] = b''
     files = builder_files()

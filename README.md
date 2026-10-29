@@ -17,26 +17,25 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
-- **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.2.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
+- **Status:** alpha (v0.3.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
-## New in v0.2.1
+## What's new
 
-- **Mart and item PC on the lower screen.** Buying keeps the field on the top screen, and selling or depositing in the item PC now really opens the drawn Bag instead of the GBA one.
-- **Window glow that follows the glass at night:** lit windows bloom softly around their panes instead of throwing a blob over the wall, and Vermilion houses no longer light a stripe along the wall.
-- **The PC box note** shows the level and the gender sign properly instead of garbled letters.
-- **The version on the title screen** (v0.2.1), and the Twin Embers name and icon in the Homebrew Launcher.
+**Since v0.3.0** (on `main`, coming in the next release):
 
-## New in v0.2.0
+- **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from pret/pokeheartgold and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. Without them the game keeps FireRed's art.
+- **The credits no longer freeze** after the Champion, when the scene reaches Charizard.
+- **A web Builder** that makes the pack in the browser, and a UniStore to install the game from Universal-Updater on the console.
 
-- **The whole lower screen in the ember look.** The field Bag, the Pokédex, the TM Case and Berry Pouch, the Trainer Card, the move to forget, the naming keyboard, the Mart's BUY list, selling and PC deposits, the PC boxes and picking several Pokémon for an event are now drawn by the touch screen itself, with the game's font and icons. An idle lower screen shows the ember backdrop with the logo.
-- **Soft reset back to the title.** A+B+START+SELECT no longer freezes the console and no longer quits: the game starts again in place, as on the GBA.
-- **Full-screen area banners.** The picture shown on entering Viridian Forest, the Safari Zone, Mt. Moon, the Pokémon Tower, Victory Road and the other 23 areas that have one now fills the whole top screen.
-- **Smoother field.** Sprites leaving the view no longer flash on the opposite edge, people walking off the top stay visible until they are gone, and menus switch without the 1-2 s pause.
-- **Turbo and auto-run are remembered** between sessions, and you can run indoors.
-- **Brighter nights.** Windows light up whole, and Lavender Town's houses, the Pokémon Tower, Silph Co., Cinnabar's lab, the Celadon and Fuchsia flats and the Sevii houses light up too.
+**In v0.3.0:**
+
+- **Most menus on the lower screen.** The PC boxes and its menus, the item PC, the mailbox, the Hall of Fame, the Fame Checker, Teachy TV, mail and field choices all show below while the top screen keeps the field.
+- **Touch everywhere.** Party in two columns with ABLE / NOT ABLE pills when teaching a move, direct taps on Pokédex rows and PC cells, lists that scroll by dragging.
+- **Day and night on the GPU,** with a time-of-day option (CLOCK / FIXED / OFF and any half hour) and windows that bloom at night.
+- **Faster on the Old 3DS,** with a lower screen that only redraws what changed.
 
 The [release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
 
@@ -58,31 +57,33 @@ The lower screen is **PokéTouch**, a home screen with a touch Town Map and a co
 
 Battle commands move to the touch screen: a large FIGHT button with BAG, POKéMON and RUN below it, and the party's Poké Balls along the top. Picking FIGHT shows the moves as a 2 × 2 grid of cards with their type, power, accuracy and remaining PP, and a note describing the selected move, so you can choose without remembering the numbers. In a single battle each damaging move also shows how it hits the foe's types (NOT VERY, SUPER and so on). A tap also continues a battle message that waits for A.
 
-<img src="docs/media/06-battle-intro.png" width="300" alt="A wild Ekans appears"> <img src="docs/media/07-battle-action.png" width="300" alt="FIGHT, BAG, POKéMON and RUN on the touch screen">
+<img src="docs/media/06-battle-intro.png" width="300" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"> <img src="docs/media/07-battle-action.png" width="300" alt="Pikachu against a Spearow, with the lead Pokémon's icon in the FIGHT disc">
 
 <img src="docs/media/08-battle-moves.png" width="300" alt="Move cards with type, power, accuracy and PP"> <img src="docs/media/11-battle-party.png" width="300" alt="Switching Pokémon in battle">
 
-The battle Bag keeps its pockets as tabs and shows the selected item large with a USE button.
+The battle Bag keeps its pockets as tabs and shows the selected item large with a USE button, and the Summary opens on the lower screen without leaving the fight.
 
-<img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag, Items pocket"> <img src="docs/media/10-battle-key-items.png" width="300" alt="Battle Bag, Key Items pocket">
+<img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag, Poké Balls pocket"> <img src="docs/media/19-battle-summary.png" width="300" alt="A Pokémon's Summary during a battle">
 
 ### Looking after your team
 
-The party list, Pokémon Summary and Trainer Card each get a full lower-screen page, and the Bag and Pokédex open beside the button column. PC storage is touch-driven as well: move, withdraw and deposit by tapping. Saving asks once, with your progress shown next to it.
+The party list, Pokémon Summary and Trainer Card each get a full lower-screen page, and the Bag and Pokédex open beside the button column. PC storage is touch-driven as well, menus included: move, withdraw and deposit by tapping. Saving asks once, with your progress shown next to it.
 
-<img src="docs/media/12-party.png" width="300" alt="Party"> <img src="docs/media/13-bag.png" width="300" alt="Bag">
+<img src="docs/media/12-party.png" width="300" alt="Party"> <img src="docs/media/14-pokedex.png" width="300" alt="Pokédex">
 
-<img src="docs/media/14-pokedex.png" width="300" alt="Pokédex"> <img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card">
+<img src="docs/media/13-bag.png" width="300" alt="Bag, Items pocket"> <img src="docs/media/22-bag-key-items.png" width="300" alt="Bag, Key Items pocket">
 
-<img src="docs/media/16-save.png" width="300" alt="Saving the game">
+<img src="docs/media/20-pc-menu.png" width="300" alt="The PC's menu on the lower screen"> <img src="docs/media/21-pc-box.png" width="300" alt="A PC box, moved by touch">
+
+<img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/16-save.png" width="300" alt="Saving the game">
 
 ### Settings
 
-OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, DAY/NIGHT and the rising EMBERS.
+OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, the time of day and the rising EMBERS.
 
 <img src="docs/media/17-options-1.png" width="300" alt="Options, page 1"> <img src="docs/media/18-options-2.png" width="300" alt="Options, page 2">
 
-<sub>All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the v0.1.4 screens come from AzaharPlus. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
+<sub>All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the battle, menu and PC screens come from AzaharPlus with the HeartGold sprites in the pack. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
 
 ---
 
