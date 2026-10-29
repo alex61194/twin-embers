@@ -5447,7 +5447,7 @@
   },
   {
    "path": "3ds_port/src/3ds_obj_window_impl.h",
-   "sha256": "8c1fa1cbd517b71ee18ef70f1c2f4201d64ebf31002f136340eceea85b626f31",
+   "sha256": "d12e4b707336af2fbd0c52da7e81dfc4e2fcc614903c05cfbc8795be9e79aeae",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
