@@ -10,6 +10,12 @@
   claim that all port code is original. See NOTICE.md for exact revisions.
 - **pret/pokefirered contributors** — external decompilation and reconstruction
   tools. Credit is not a license grant for the game source.
+- **pret/pokeheartgold contributors** — external Pokémon HeartGold decompilation
+  (https://github.com/pret/pokeheartgold). The optional Generation 4 battle sprites
+  and menu icons are downloaded by the user's Builder from it at the commit pinned
+  in `gen4_sources.py`, verified by size and SHA-256, and are not stored in this
+  repository. The artwork belongs to Nintendo, Game Freak and Creatures; credit is
+  not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.
