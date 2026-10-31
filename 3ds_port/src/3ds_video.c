@@ -3044,78 +3044,7 @@ static bool DrawIntroBgTex(unsigned bg)
     return true;
 }
 
-/*
- * The title composed for the taller screen, every tile of it 1:1. FireRed's title is a 240x160 picture whose bands run
- * straight across: BG2 holds the orange line and the black band above the teal (rows 0-29) and the black band with PRESS
- * START and the red footer under it (rows 112-159); BG3 holds the teal between them. Floating in the middle of a 400x240
- * canvas those bands left 40 rows of black above and below the picture. Here the top block goes to the canvas's top and
- * the bottom block to its bottom, the teal's own tile row fills what is between, and each band continues to the canvas's
- * sides with its own edge tile column; the logo, Charizard, the flames and the slash stay exactly where FireRed puts
- * them (their effects belong to those places), now over teal.
- */
-#define TITLE_TOP_ROWS 30
-#define TITLE_BOTTOM_ROW 112
-#define TITLE_TEAL_ROW 32
-static bool TitleComposed(unsigned bg)
-{
-    return sIntro && !NativeIntroActive() && sNativeIntroScene == CTR_INTRO_TITLE && (bg == 2 || bg == 3);
-}
-
-/* Source rect of the layer's map (x, y of its picture, scroll added) onto the stage at (x0, y0)..(x1, y1). */
-static void IntroBlit(unsigned bg, int x0, int x1, int y0, int y1, int sx, int sy)
-{
-    int cx0 = x0 > sClipX0 ? x0 : sClipX0, cx1 = x1 < sClipX1 ? x1 : sClipX1;
-    int cy0 = y0 > sClipY0 ? y0 : sClipY0, cy1 = y1 < sClipY1 ? y1 : sClipY1;
-
-    if (cx0 >= cx1 || cy0 >= cy1) return;
-    if (LayerDrawable(bg))
-    {
-        DrawLayerRect(bg, x0, x1, y0, y1, sx, sy, 1, 1, false, 0, 160);
-        return;
-    }
-    {
-        int fx = sx + (cx0 - x0), fy = sy + (cy0 - y0), viewX = sViewX, viewY = sViewY;
-
-        C2D_Flush();
-        Scissor(cx0, cy0, cx1, cy1);
-        sViewX = viewX + cx0 - fx;
-        sViewY = viewY + cy0 - fy;
-        DrawTextSpan(bg, fx, fx + (cx1 - cx0), fy, fy + (cy1 - cy0));
-        C2D_Flush();
-        sViewX = viewX;
-        sViewY = viewY;
-        RestoreScissor();
-    }
-}
-
-static bool DrawTitleBand(unsigned bg)
-{
-    static const int blocks[2][2] = {{0, TITLE_TOP_ROWS}, {TITLE_BOTTOM_ROW, 160}};
-    static const int shift[2] = {-40, 40};      /* the top block up to the canvas's top, the bottom block down to its bottom */
-
-    if (!TitleComposed(bg)) return false;
-    ViewBase();
-    for (int b = 0; b < 2; ++b)
-    {
-        int top = blocks[b][0], bottom = blocks[b][1], y0 = top + shift[b], y1 = bottom + shift[b];
-
-        IntroBlit(bg, 0, 256, y0, y1, 0, top);                  /* the map's own columns, 240..255 included */
-        for (int x = 256; x < VIEW_RIGHT; x += 8)
-            IntroBlit(bg, x, x + 8, y0, y1, 248, top);          /* the last tile column, onward */
-        for (int x = 0; x > VIEW_LEFT; x -= 8)
-            IntroBlit(bg, x - 8, x, y0, y1, 0, top);            /* the first one, backward */
-    }
-    if (bg == 3)
-        for (int y = TITLE_TOP_ROWS + shift[0]; y < TITLE_BOTTOM_ROW + shift[1]; y += 8)
-        {
-            int y1 = y + 8 < TITLE_BOTTOM_ROW + shift[1] ? y + 8 : TITLE_BOTTOM_ROW + shift[1];
-
-            IntroBlit(bg, 0, 256, y, y1, 0, TITLE_TEAL_ROW);     /* the teal tile row, as it is, between the blocks */
-            IntroBlit(bg, VIEW_LEFT, 0, y, y1, 0, TITLE_TEAL_ROW);
-            IntroBlit(bg, 256, VIEW_RIGHT, y, y1, 0, TITLE_TEAL_ROW);
-        }
-    return true;
-}
+#include "3ds_intro_title_impl.h"
 
 static bool DrawLineBg(unsigned bg)
 {
@@ -3349,6 +3278,8 @@ static void DrawObjects(unsigned priority, bool effects)
                 y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
             }
         }
+        if (priority == 3)
+            DrawTitleFlameCopies(attr0, attr1, attr2, x, y, effects);
         if (x >= sClipX1 || x + (int)boxW <= sClipX0
          || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
         ++sStats.sprites;
@@ -3634,11 +3565,12 @@ static void DrawMosaicBg(unsigned bg, bool affine)
 /*
  * Objects keep the GBA's screen, because the intro parks and recycles its sprites just past its edges. The Game Freak
  * scene is the exception: its star starts past the right edge and its sparkles fly off it, and on the wider canvas
- * that is part of the picture, so they are drawn wherever they are, at their own size and speed.
+ * that is part of the picture, so they are drawn wherever they are, at their own size and speed. So is the title: its
+ * flames rise across the whole canvas (DrawTitleFlameCopies) and its slash only marks the logo.
  */
 static void IntroObjectSpan(int *left, int *right)
 {
-    bool wide = sNativeIntroScene == CTR_INTRO_GF;
+    bool wide = sNativeIntroScene == CTR_INTRO_GF || sNativeIntroScene == CTR_INTRO_TITLE;
 
     *left = wide ? VIEW_LEFT : 0;
     *right = wide ? VIEW_RIGHT : 240;
@@ -5151,6 +5083,25 @@ static void NativeBackdrop(uint32_t color)
     C2D_DrawRectSolid(CTR_VIEW_X, CTR_VIEW_Y, 0, 240, 160, color);
 }
 
+/*
+ * The intro's cinematic scenes show only GBA rows sIntroTop..sIntroBottom (32-128): above and below them the GBA's
+ * own black bands hide what the scenes' maps hold there, which was never meant to be seen. The scenery is widened to
+ * the canvas's sides (DrawIntroBgTex), but above and below the band the canvas is black, over every layer and sprite,
+ * as the GBA's bands are. The title and the copyright screen use the whole height (0-160) and get nothing here.
+ */
+static void IntroLetterbox(void)
+{
+    u32 black = C2D_Color32(0, 0, 0, 255);
+
+    if (!sIntro || NativeIntroActive() || (sIntroTop <= 0 && sIntroBottom >= 160)) return;
+    C2D_Flush();
+    C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
+    Blend(5, false, false);
+    ViewBase();
+    C2D_DrawRectSolid(0, 0, 0, CTR_GAME_WIDTH, CTR_VIEW_Y + sIntroTop, black);
+    C2D_DrawRectSolid(0, CTR_VIEW_Y + sIntroBottom, 0, CTR_GAME_WIDTH, CTR_GAME_HEIGHT - (CTR_VIEW_Y + sIntroBottom), black);
+}
+
 /* Compose the frame into the logical surface. */
 static void ComposeLogical(uint32_t clear, float parallax)
 {
@@ -5173,6 +5124,7 @@ static void ComposeLogical(uint32_t clear, float parallax)
     /* After a scene composed on its own, only the text box is left. */
     if (scene) sLayerExclude = 63 & ~(1u | 32u | BattleBoxLayers());
     if (!(Reg(0) & 128)) Compose();
+    IntroLetterbox();
     sLayerExclude = 0;
     C2D_Flush();
     C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
@@ -5470,6 +5422,8 @@ static void RenderBands(unsigned count, uint32_t backdrop)
             StageUnderlay();
         }
         if (!(Reg(0) & 128)) Compose();
+        if (band == 0)
+            IntroLetterbox();               /* the nearest plane: over every layer and sprite */
         C2D_Flush();
         C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
         /* The furthest plane carries the backdrop, so it is never empty. */
