@@ -946,7 +946,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "d75e6766d3f28a7b4ff4a4c8ddbe8a9ece4795f94e921b2dc5cc6975791a9590",
+   "sha256": "84cda7336f2efa9e6b6eb1fdebbd2bea33a4692f11057ff2dab6b16b32dd0e9a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5761,6 +5761,14 @@
   {
    "path": "patches/pokefirered/0201-hgss-sprites-only-for-pokemon.json",
    "sha256": "93dee07a35032fd53a16aca0d7e4da66bc6ffab41038288e2d6f6529d36eeecc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0202-town-map-is-the-touch-map.json",
+   "sha256": "2e697b96236c199c42caad785b6ca3433bfbeefd06d6b76c96b395ca57d3d261",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
