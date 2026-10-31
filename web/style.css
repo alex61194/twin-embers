@@ -334,6 +334,7 @@ header.hero p {
 .qr-box svg { width: 100%; height: 100%; display: block; }
 .qr-panel ol { text-align: left; margin: 8px 0 0; padding-left: 22px; font-size: 14px; }
 .qr-panel > .mono { display: block; margin-top: 6px; color: var(--ink-soft); }
+.qr-actions { justify-content: center; margin-top: 12px; }
 
 footer {
   color: #ffd9bf;

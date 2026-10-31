@@ -734,6 +734,7 @@ static struct {
 static void *sPartyMenuCallback;
 
 extern int CtrBottomParty_UsesTopPresentation(void);
+extern int CtrBottomParty_LevelUp(int *slot, int *level, int stats[6], int gains[6]);
 extern int CtrBottomPartyChild_IsOpen(void);
 extern int CtrBottomPartyChild_IsMovePanel(void);
 extern int CtrBottomSummary_IsMoveSelection(void);
@@ -1785,6 +1786,24 @@ static void BattlePartyFill(Snapshot *s)
         else
             p->tag[i] = PartyTag(s->description[i]);
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
+    }
+    {
+        int slot, level, stats[6], gains[6];
+
+        /* A Rare Candy's level up: the card, not the message over the dimmed Party. */
+        if (s->panel == PANEL_MESSAGE && CtrBottomParty_LevelUp(&slot, &level, stats, gains) && slot >= 0 && slot < PARTY_SIZE) {
+            p->panel = BUI_PTY_LEVELUP;
+            p->lvSlot = (uint8_t)slot;
+            p->lvLevel = (uint8_t)level;
+            for (int i = 0; i < 6; ++i) {
+                p->lvStat[i] = (uint16_t)stats[i];
+                p->lvGain[i] = (int16_t)gains[i];
+            }
+            BatCopy(p->message, sizeof(p->message), s->message);
+            s->battleUi = 1;
+            s->touch.viewport = 0;
+            return;
+        }
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {
         int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 8 ? 8 : s->actionCount;
@@ -5317,7 +5336,10 @@ void CtrBottom_Frame(void)
     else if (sChoiceGrace)
         --sChoiceGrace;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
+        /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
+         * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
+        || mode == MODE_NAMING;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;

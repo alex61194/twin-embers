@@ -18,11 +18,18 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.4.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.4.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
+
+**In v0.4.1:**
+
+- **Rare Candy level ups on the lower screen:** a card with the new stats and what each one gained, instead of FireRed's two stat windows on the upper screen.
+- **HeartGold sprites stay where they belong:** the trainer in the Pokédex size comparison, the rival trainer at the end of a battle and the caught Pokémon's Pokédex page no longer show the wrong picture or colours.
+- **The intro at native resolution, as the GBA shows it:** no repeated stripes above and below the scenes, PRESS START back at Charizard's middle, and the title's flames across the whole screen.
+- **Naming a Pokémon** uses only the lower screen's keyboard, and **the Town Map** opens the lower screen's map, as Fly does.
 
 **In v0.4.0:**
 

@@ -490,7 +490,9 @@ enum { BUI_PTY_SWITCH = 0, BUI_PTY_TARGET, BUI_PTY_FORCED, BUI_PTY_MULTI };
 enum { BUI_PTY_NOT_ABLE = 0, BUI_PTY_ABLE, BUI_PTY_FIRST };
 /* What a card says about teaching or using the item picked (FireRed's own box text): the pill on the card. */
 enum { BUI_PTY_TAG_NONE = 0, BUI_PTY_TAG_ABLE, BUI_PTY_TAG_NOT_ABLE, BUI_PTY_TAG_LEARNED, BUI_PTY_TAG_NO_USE };
-enum { BUI_PTY_NONE = 0, BUI_PTY_ACTIONS, BUI_PTY_TEXT, BUI_PTY_YESNO };
+/* BUI_PTY_LEVELUP: a Rare Candy's level up, a card over the slots with the new stats and their gains, its message
+ * below and OK in CANCEL's place. */
+enum { BUI_PTY_NONE = 0, BUI_PTY_ACTIONS, BUI_PTY_TEXT, BUI_PTY_YESNO, BUI_PTY_LEVELUP };
 typedef struct {
     uint8_t present[6];             /* a Pokemon in the slot */
     uint8_t egg[6];
@@ -512,6 +514,9 @@ typedef struct {
     uint8_t entry[6];               /* BUI_PTY_MULTI: BUI_PTY_NOT_ABLE, BUI_PTY_ABLE, or BUI_PTY_FIRST + its place in the order */
     int8_t button;                  /* BUI_PTY_MULTI: the Party's cursor on CONFIRM (0) or CANCEL (1), else -1 */
     uint8_t tag[6];                 /* BUI_PTY_TAG_*: ABLE / NOT ABLE / LEARNED (a TM, HM or tutor move), NO USE (a stone) */
+    uint8_t lvSlot, lvLevel;        /* BUI_PTY_LEVELUP: the Pokemon's slot and its new level */
+    uint16_t lvStat[6];             /* its new stats, in the Summary's order (HP, ATTACK, DEFENSE, SP. ATK, SP. DEF, SPEED) */
+    int16_t lvGain[6];              /* what each one gained */
 } CtrBattleParty;
 /* BUI_TARGET: a double battle's move being aimed. The four cards are the opposing battlers on top and the player's
  * below (left, right); only the ones FireRed lets the move be aimed at are `present`. The hit codes are the card
