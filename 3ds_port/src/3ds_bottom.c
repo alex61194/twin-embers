@@ -734,6 +734,7 @@ static struct {
 static void *sPartyMenuCallback;
 
 extern int CtrBottomParty_UsesTopPresentation(void);
+extern int CtrBottomParty_LevelUp(int *slot, int *level, int stats[6], int gains[6]);
 extern int CtrBottomPartyChild_IsOpen(void);
 extern int CtrBottomPartyChild_IsMovePanel(void);
 extern int CtrBottomSummary_IsMoveSelection(void);
@@ -1785,6 +1786,24 @@ static void BattlePartyFill(Snapshot *s)
         else
             p->tag[i] = PartyTag(s->description[i]);
         snprintf(p->name[i], sizeof(p->name[i]), "%s", s->nick[i]);
+    }
+    {
+        int slot, level, stats[6], gains[6];
+
+        /* A Rare Candy's level up: the card, not the message over the dimmed Party. */
+        if (s->panel == PANEL_MESSAGE && CtrBottomParty_LevelUp(&slot, &level, stats, gains) && slot >= 0 && slot < PARTY_SIZE) {
+            p->panel = BUI_PTY_LEVELUP;
+            p->lvSlot = (uint8_t)slot;
+            p->lvLevel = (uint8_t)level;
+            for (int i = 0; i < 6; ++i) {
+                p->lvStat[i] = (uint16_t)stats[i];
+                p->lvGain[i] = (int16_t)gains[i];
+            }
+            BatCopy(p->message, sizeof(p->message), s->message);
+            s->battleUi = 1;
+            s->touch.viewport = 0;
+            return;
+        }
     }
     if (s->panel == PANEL_ACTIONS || s->panel == PANEL_YESNO) {
         int n = s->panel == PANEL_YESNO ? 2 : s->actionCount > 8 ? 8 : s->actionCount;

@@ -112,7 +112,7 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
     if (v->state == BUI_PARTY) {
         const CtrBattleParty *p = &v->pty;
 
-        if (p->panel == BUI_PTY_TEXT)
+        if (p->panel == BUI_PTY_TEXT || p->panel == BUI_PTY_LEVELUP)
             return BUI_PTY_MESSAGE;                         /* anywhere: the message waits for A */
         if (p->panel == BUI_PTY_ACTIONS || p->panel == BUI_PTY_YESNO) {
             int n = p->menuCount > 8 ? 8 : p->menuCount;
@@ -500,9 +500,61 @@ static void BPartyOverlay(const CtrBattleView *v)
     }
 }
 
+/* A Rare Candy's level up (BUI_PTY_LEVELUP): over the slots a cream card, its amber header with the Pokemon's icon,
+ * name and "LvN > LvN+1", and the six stats as small cards, the new value and its gain in green; the message in the
+ * note card and OK, amber, in CANCEL's place. Anywhere on the screen goes on (A). */
+static void BPLevelUp(const CtrBattleView *v)
+{
+    static const char *const sLabels[6] = {"MAX HP", "ATTACK", "DEFENSE", "SP. ATK", "SP. DEF", "SPEED"};
+    const CtrBattleParty *p = &v->pty;
+    const EmPal *amber = &kEmAmber;
+    const CtrPokeTouchRect *n = &sBPNote, *ok = &sBPCancel;
+    int slot = p->lvSlot < 6 ? p->lvSlot : 0, fy, x;
+    char now[8], before[8];
+
+    UiRoundFill(6, 6, 308, 160, 8, UI_RGB(64, 72, 104));
+    EmGradFill(8, 8, 304, 156, 7, kEmCream.top, kEmCream.bottom);
+    fy = EmButton(10, 10, 300, 36, amber, BP_DEPTH, 0);
+    if (BPartyIcon(slot, p->icon[slot]))
+        for (int y = 2; y < 31; ++y)
+            for (int ix = 0; ix < 32; ++ix) {
+                uint8_t index = sBPIcon[slot].pixels[y * 32 + ix];
+                if (index)
+                    Px(16 + ix, fy - 1 + y, sBPIcon[slot].pal[index]);
+            }
+    UiText(p->name[slot], 54, fy + (33 - UI_TEXT_H) / 2, amber->ink, amber->inkSh, 1, 170);
+    snprintf(now, sizeof(now), "Lv%u", p->lvLevel);
+    snprintf(before, sizeof(before), "Lv%u", p->lvLevel > 1 ? p->lvLevel - 1 : 1);
+    x = 300 - UiTextWidth(now, 1);
+    UiText(now, x, fy + (33 - UI_TEXT_H) / 2, amber->ink, amber->inkSh, 1, 304);
+    UiArrow(x - 12, fy + 12, 1, amber->ink);
+    x -= 20 + UiTextWidth(before, 1);
+    UiText(before, x, fy + (33 - UI_TEXT_H) / 2, UiMix(amber->ink, amber->bottom, 5), amber->inkSh, 1, x + 40);
+    for (int i = 0; i < 6; ++i) {
+        int cx = 14 + (i & 1) * 150, cy = 54 + (i >> 1) * 36;
+        char value[8], gain[8];
+
+        UiRoundFill(cx, cy, 142, 30, 5, UI_RGB(196, 188, 178));
+        UiRoundFill(cx + 1, cy + 1, 140, 28, 4, EM_WHITE);
+        UiText(sLabels[i], cx + 8, cy + (30 - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, cx + 80);
+        snprintf(value, sizeof(value), "%u", p->lvStat[i]);
+        UiTextRight(value, cx + 102, cy + (30 - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1);
+        snprintf(gain, sizeof(gain), "%+d", p->lvGain[i]);
+        UiTextRight(gain, cx + 134, cy + (30 - UI_TEXT_H) / 2, UI_RGB(32, 144, 72), UI_RGB(196, 236, 204), 1);
+    }
+    EmNote(n->x, n->y, n->w, n->h);
+    BPWrap(p->message, n->x + 12, n->y + 14, n->w - 18, 2, EM_DARK, EM_DARK_SH);
+    fy = EmButton(ok->x, ok->y, ok->w, ok->h, amber, BP_DEPTH, v->pressed == BUI_PTY_MESSAGE);
+    EmLabel("OK", ok->x, ok->w, fy, ok->h - BP_DEPTH, amber);
+}
+
 static void BParty(const CtrBattleView *v)
 {
     TsBackdrop();
+    if (v->pty.panel == BUI_PTY_LEVELUP) {
+        BPLevelUp(v);
+        return;
+    }
     for (int i = 0; i < 6; ++i) {
         BPartyPanel(i, v);
         BPartyEntry(i, v);
