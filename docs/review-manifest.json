@@ -5743,6 +5743,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0201-hgss-sprites-only-for-pokemon.json",
+   "sha256": "93dee07a35032fd53a16aca0d7e4da66bc6ffab41038288e2d6f6529d36eeecc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0191-credits-map-load-per-frame.json",
    "sha256": "b16efeac6389aff564297c935c74fcb0f6ce5050d09af5855f11a89a2c7232a3",
    "review_status": "reviewed",
