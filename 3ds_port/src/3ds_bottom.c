@@ -5317,7 +5317,10 @@ void CtrBottom_Frame(void)
     else if (sChoiceGrace)
         --sChoiceGrace;
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX;   /* SAVE keeps TOP on the frozen frame */
+        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
+        /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
+         * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
+        || mode == MODE_NAMING;   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
