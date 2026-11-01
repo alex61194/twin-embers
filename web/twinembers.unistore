@@ -5,6 +5,8 @@
     "description": "Twin Embers: Pokemon FireRed on both 3DS screens. Build twinembers.pak from your own ROM at https://alex61194.github.io/twin-embers/",
     "url": "https://alex61194.github.io/twin-embers/twinembers.unistore",
     "file": "twinembers.unistore",
+    "sheetURL": "https://alex61194.github.io/twin-embers/twinembers.t3x",
+    "sheet": "twinembers.t3x",
     "version": 4,
     "revision": 1
   },
@@ -22,6 +24,8 @@
         "llm_generation": "yes",
         "last_updated": "",
         "releasenotes": "See https://github.com/alex61194/twin-embers/releases/latest",
+        "icon_index": 0,
+        "sheet_index": 0,
         "preinstall_message": "The game needs its data pack: build twinembers.pak from your own FireRed (USA) ROM at alex61194.github.io/twin-embers and copy it to sdmc:/3ds/twinembers/."
       },
       "twinembers.3dsx": [

@@ -181,26 +181,45 @@
           <rect x="11" y="20" width="10" height="7" rx="1" fill="#ffd166"/>
           <circle cx="8" cy="23.5" r="1.8" fill="#404868"/><circle cx="24.5" cy="23.5" r="1.4" fill="#404868"/>
         </svg>
-        Install on your 3DS, no PC needed
+        Install on your 3DS
       </h2>
-      <p class="lead">Both codes always point at the latest release on GitHub. You still need the pack above in <span class="mono">SD:/3ds/twinembers/</span>.</p>
+      <p class="lead">Three ways to get it. All of them always give you the latest release. You also need your pack, <span class="mono">twinembers.pak</span>, in <span class="mono">SD:/3ds/twinembers/</span> (make it above).</p>
       <div class="qr-grid">
         <div class="qr-panel">
-          <h3>The game (twinembers.3dsx)</h3>
+          <span class="qr-tag">Easiest on the 3DS</span>
+          <h3>Universal-Updater</h3>
+          <div class="qr-box" id="qr-unistore" role="img" aria-label="QR code of the Twin Embers store for Universal-Updater"></div>
+          <ol>
+            <li>Open <b>Universal-Updater</b>.</li>
+            <li>Tap <b>Settings</b> (the gear) &rarr; <b>Select UniStore</b>.</li>
+            <li>Tap <b>+</b> and scan this code.</li>
+            <li>The store is added to the list without opening: tap <b>Twin Embers</b> in the list.</li>
+            <li>Install <b>twinembers.3dsx</b>. Install the <b>HOME Menu forwarder</b> too if you want an icon on the HOME Menu.</li>
+          </ol>
+          <span class="mono" id="url-unistore"></span>
+        </div>
+        <div class="qr-panel">
+          <span class="qr-tag">With a phone or PC</span>
+          <h3>Download the game</h3>
           <div class="qr-box" id="qr-game" role="img" aria-label="QR code that downloads the latest twinembers.3dsx"></div>
           <ol>
-            <li>Scan it with your phone, or use the button, to download <b>twinembers.3dsx</b> from the latest release.</li>
-            <li>Copy it to <span class="mono">SD:/3ds/twinembers/</span>, next to your pack. Downloading it again always gets the newest version.</li>
+            <li>Scan this code with your phone, or press the button.</li>
+            <li>It downloads <b>twinembers.3dsx</b>.</li>
+            <li>Copy it to the SD card, in <span class="mono">SD:/3ds/twinembers/</span>.</li>
+            <li>Start it from the <b>Homebrew Launcher</b>.</li>
           </ol>
           <div class="row qr-actions"><a class="btn secondary" id="game-download" href="#">Download twinembers.3dsx</a></div>
           <span class="mono" id="url-game"></span>
         </div>
         <div class="qr-panel">
-          <h3>FBI (forwarder CIA)</h3>
+          <span class="qr-tag">HOME Menu icon</span>
+          <h3>FBI</h3>
           <div class="qr-box" id="qr-fbi" role="img" aria-label="QR code of the forwarder CIA"></div>
           <ol>
-            <li>Open FBI, then <b>Remote Install → Scan QR Code</b>.</li>
-            <li>Installs <b>TwinEmbers-Forwarder.cia</b>, the HOME Menu icon. The game itself, <span class="mono">twinembers.3dsx</span>, still goes in <span class="mono">SD:/3ds/twinembers/</span>.</li>
+            <li>Open <b>FBI</b>.</li>
+            <li>Choose <b>Remote Install</b> &rarr; <b>Scan QR Code</b> and scan this code.</li>
+            <li>It installs the <b>Twin Embers</b> icon on the HOME Menu.</li>
+            <li>The icon starts <span class="mono">SD:/3ds/twinembers/twinembers.3dsx</span>: get the game with one of the other two codes first.</li>
           </ol>
           <span class="mono" id="url-fbi"></span>
         </div>
