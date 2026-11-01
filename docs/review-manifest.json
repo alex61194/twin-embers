@@ -2862,6 +2862,14 @@
    "basis": "Owner-supplied logo, transparent PNG (900x508), identical to the media release asset; image only, no appended data. Reviewed 2026-10-18: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
   },
   {
+   "path": "docs/media/twin-embers-icon.png",
+   "sha256": "457369b7c8ccb4d94cfb169018ae14f5b003ec7fe5b0c9ed4ee2b45b47955dd7",
+   "review_status": "reviewed",
+   "credit": "Twin Embers icon, supplied by the owner: the 48x48 icon of the released twinembers.3dsx and TwinEmbers-Forwarder.cia",
+   "license": "Used with the owner's permission for Twin Embers; not covered by the port MIT licence; the Poke Ball and Charizard-like design elements remain the rightsholders'",
+   "basis": "Reviewed 2026-11-01: the icon read back from the v0.3.0 forwarder CIA (48x48 RGBA PNG, 4993 bytes), already shipped in every release; tools/build_web.py turns it into the UniStore's icon sheet. Image only, no appended data; no ROM, pack or game binary."
+  },
+  {
    "path": "docs/release-decision.json",
    "sha256": "cca372bc90fc3f3369db6eece04dcac5b92c1e0348c81b36e78044623f7c84dc",
    "review_status": "reviewed",
@@ -5800,7 +5808,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "76e4dc5931a1ebb9a2c76060c016be28cbe17b977b73a58ce62329b723ac2477",
+   "sha256": "f319fd75f42385946b0dbd702df229204eaa6aee555614efb7bd23e5358a4e9f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5808,7 +5816,7 @@
   },
   {
    "path": "web/style.css",
-   "sha256": "4567910d05aacf25da7ca7304813d39ba08f102f8d7d7df225e124170df56527",
+   "sha256": "631bd4664932dd8fd2fde1e4c9afce9c1be720fb8e30d658fe93220046450f87",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5816,7 +5824,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "245c4275a835deb7d44d302a91bd19322cdacc4dd0516ac5c7060e2275581bce",
+   "sha256": "c1abbcb6e1c9a4f5f3bdb10eb8098e1db6531a9218b03c81e44be63ee8dfec71",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5832,7 +5840,7 @@
   },
   {
    "path": "web/twinembers.unistore",
-   "sha256": "f051322135a47b88a1c00068ee736da129272f116c40630de132eea81fcc14f1",
+   "sha256": "4b005304c14713acc76b43c10fe42840efe4cd0441a0dd9ef965c7c061a697d5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5840,7 +5848,7 @@
   },
   {
    "path": "tools/build_web.py",
-   "sha256": "2601c02109ffd47e2f66948d0ba4bbcd9adc9bcae45e21ebc36a4b92eb5248f4",
+   "sha256": "9995f54abd54d367a1303280e78ad8c9c90719c7c95bc766aa6ab9eb21bedd42",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5848,7 +5856,7 @@
   },
   {
    "path": "tools/test_web_builder.py",
-   "sha256": "c0dfec840e317569014973f1820cf1239fe4af6bdd21a9dcfc27695f124aceff",
+   "sha256": "96e26ddfd281ca08037cd8cb3eb9a6604174dcfbd1d7b03678ad5af7ad7a9ee9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5856,7 +5864,7 @@
   },
   {
    "path": "docs/WEB-BUILDER.md",
-   "sha256": "96d729c32e35b2e5badf75509d8af81132a6e496f4e8cec8eda54c71de86fbc3",
+   "sha256": "902e306b2d66a11a5f74fd8d82870dee468e98f019b1400c6ce3d3561a754d45",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

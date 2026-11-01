@@ -7,6 +7,7 @@ const ROM_SHA1 = '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc';
 const RELEASES = 'https://github.com/alex61194/twin-embers/releases/latest/download/';
 const FORWARDER_URL = RELEASES + 'TwinEmbers-Forwarder.cia';
 const GAME_URL = RELEASES + 'twinembers.3dsx';
+const UNISTORE_URL = new URL('twinembers.unistore', location.href).href;
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -186,6 +187,7 @@ ui.romButton.addEventListener('keydown', (event) => {
   }
 });
 ui.build.addEventListener('click', startBuild);
+drawQr('qr-unistore', 'url-unistore', UNISTORE_URL);
 drawQr('qr-game', 'url-game', GAME_URL);
 $('game-download').href = GAME_URL;
 drawQr('qr-fbi', 'url-fbi', FORWARDER_URL);

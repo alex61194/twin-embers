@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import subprocess
+import struct
 import sys
 import tempfile
 import unittest
@@ -34,7 +35,7 @@ class SiteTest(unittest.TestCase):
         on_disk = sorted(p.relative_to(self.site).as_posix() for p in self.site.rglob('*') if p.is_file())
         self.assertEqual(on_disk, self.paths)
         for path in on_disk:
-            self.assertRegex(path, r'^(?:[a-z]+\.(?:html|css|js|unistore)|\.nojekyll|builder/files\.json|'
+            self.assertRegex(path, r'^(?:[a-z]+\.(?:html|css|js|unistore|t3x)|\.nojekyll|builder/files\.json|'
                                    r'media/[-a-z0-9]+\.png|'
                                    r'builder/firered3ds_builder/(?:[a-z0-9_]+\.py|recipes/[-a-z0-9_/]+\.json))$')
         self.assertFalse(any(re.search(r'gui|cli|__main__', p) for p in on_disk))
@@ -74,9 +75,28 @@ class SiteTest(unittest.TestCase):
     def test_store_has_the_release_filled_in(self):
         doc = json.loads((self.site / 'twinembers.unistore').read_text())
         build_web.validate_unistore(doc)
-        self.assertEqual(doc['storeInfo']['revision'], 20261029)
+        self.assertEqual(doc['storeInfo']['revision'], 2026102900)
         info = doc['storeContent'][0]['info']
         self.assertEqual((info['version'], info['last_updated']), ('v9.9.9', '2026-10-29'))
+
+    def test_store_icon_is_the_sheet_the_store_names(self):
+        doc = json.loads((self.site / 'twinembers.unistore').read_text())
+        self.assertEqual(doc['storeInfo']['sheet'], build_web.SHEET)
+        self.assertEqual(doc['storeInfo']['sheetURL'], 'https://alex61194.github.io/twin-embers/' + build_web.SHEET)
+        for entry in doc['storeContent']:
+            self.assertEqual((entry['info']['icon_index'], entry['info']['sheet_index']), (0, 0))
+        sheet = (self.site / build_web.SHEET).read_bytes()
+        width, height, pixels = build_web.png_rgba(build_web.ICON.read_bytes())
+        # tex3ds's layout: one 48x48 image in a 64x64 RGBA8 texture, uncompressed (compression byte 0).
+        self.assertEqual(sheet[:21], bytes.fromhex('01001b0000') + struct.pack('<6H', 48, 48, 0, 1024, 768, 256)
+                         + struct.pack('<I', 64 * 64 * 4 << 8))
+        self.assertEqual((width, height, len(sheet)), (48, 48, 21 + 64 * 64 * 4))
+        # The pixel at (x, y) is in tile (x // 8, y // 8), at its Morton index, as A, B, G, R.
+        for x, y in ((0, 0), (5, 3), (47, 47), (20, 33)):
+            tile = (y // 8) * 8 + x // 8
+            morton = sum((((x % 8) >> b) & 1) << (2 * b) | (((y % 8) >> b) & 1) << (2 * b + 1) for b in range(3))
+            r, g, b, a = pixels[y * width + x]
+            self.assertEqual(sheet[21 + (tile * 64 + morton) * 4:][:4], bytes((a, b, g, r)))
 
     def test_a_non_empty_folder_is_not_overwritten(self):
         with self.assertRaises(ValueError):
@@ -117,7 +137,9 @@ class UniStoreTest(unittest.TestCase):
             lambda d: d['storeInfo'].update(version='4'),
             lambda d: d['storeInfo'].pop('revision'),
             lambda d: d['storeInfo'].update(file='stores/twinembers.unistore'),
-            lambda d: d['storeInfo'].update(sheet='twinembers.t3x'),
+            lambda d: d['storeInfo'].pop('sheetURL'),
+            lambda d: d['storeInfo'].update(sheet='icons/twinembers.t3x'),
+            lambda d: d['storeContent'][0]['info'].update(icon_index='0'),
             lambda d: d.pop('storeContent'),
             lambda d: d['storeContent'][0]['info'].pop('title'),
             lambda d: d['storeContent'][0]['twinembers.3dsx'][1].pop('output'),
