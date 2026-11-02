@@ -17,11 +17,14 @@
 #define CTR_BATTLE_X CTR_STAGE_X
 #define CTR_BATTLE_Y (CTR_GAME_HEIGHT - 160)
 /*
- * The battle scene itself is magnified: the middle of its bottom edge (GBA
- * 120,112) sits on screen (200,192), on top of the 1:1 text box. At 1.5 the
- * tile grid still lands on whole screen pixels.
+ * The battle scene is zoomed 1.5 and composed straight onto the 400x240
+ * surface with nearest sampling: the middle of its bottom edge (GBA 120,112)
+ * sits on screen (200,192), on top of the 1:1 text box, at whole-pixel
+ * offsets (20, 24). Every GBA pixel is one or two screen pixels, never a blend
+ * of two (the old 1.4 went through a bilinear resample and read as blurry).
+ * HeartGold's pictures are drawn 1:1 on the screen over it (CTR_GEN4_SCALE).
  */
-#define CTR_BATTLE_ZOOM 1.4f
+#define CTR_BATTLE_ZOOM 1.5f
 
 typedef struct
 {

@@ -130,7 +130,7 @@ int main(void)
     assert(!CtrGen4_Load(0, 1, false, false, false, fire, palette));
 
     /* The front picture, normal palette, standing on FireRed's lowest row: its row 71 (just past 70) ends on box
-     * row 61, so the box centre (32) shows picture row 71 - 29 * 1.4 = 30.4. */
+     * row 61, so the box centre (32) shows picture row 71 - 29 * 1.5 = 27.5. */
     MakeEntry(false, 70);
     assert(CtrGen4_Load(1, 6, false, false, false, fire, palette));
     assert(palette[0] == 0x10 && palette[15] == 0x1f);
@@ -139,7 +139,7 @@ int main(void)
     assert(!sMatch(0x200 | (2 << 12), &obj));       /* another palette */
     assert(!sMatch(0x240 | (1 << 12), &obj));       /* another tile */
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 30.4f) && Near(obj.scale, 1.0f / 1.4f));
+    assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 27.5f) && Near(obj.scale, 1.0f / 1.5f));
     assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 79, 70) == 0x11 && PixelByte(&obj, 79, 71) == 0);
 
     /* The picture on a background, as FireRed's 64x64 one: the box centre is coloured, the corner is not, and its
@@ -168,10 +168,10 @@ int main(void)
     assert(CtrGen4_Load(1, 3, false, true, false, fire, palette));
     assert(sMatch(0x200 | (1 << 12), &obj) && PixelByte(&obj, 5, 5) == 0x11);
 
-    /* Fainting: FireRed erases its box from row 48 down, picture row 30.4 + 16 * 1.4 = 52.8, so from row 53. */
+    /* Fainting: FireRed erases its box from row 48 down, picture row 27.5 + 16 * 1.5 = 51.5, so from row 52. */
     CtrGen4_EraseFrom(1, 48);
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(PixelByte(&obj, 40, 52) == 0x11 && PixelByte(&obj, 40, 53) == 0 && PixelByte(&obj, 0, 70) == 0);
+    assert(PixelByte(&obj, 40, 51) == 0x11 && PixelByte(&obj, 40, 52) == 0 && PixelByte(&obj, 0, 70) == 0);
 
     /* Without its sprite, or dropped, a battler matches nothing. */
     sOam[1] = -1;
