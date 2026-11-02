@@ -30,6 +30,13 @@ CFLAGS += -DCTR_AUDIO_PSG_BLEP=$(CTR_AUDIO_PSG_BLEP)
 # speed. The file sdmc:/3ds/twinembers/force_old3ds does the same at run time.
 CTR_FORCE_OLD3DS ?= 0
 CFLAGS += -DCTR_FORCE_OLD3DS=$(CTR_FORCE_OLD3DS)
+# The lower screen's own words (include/3ds_lang.h): en, or es for the build made from the Spanish FireRed.
+TWIN_LANG ?= en
+ifeq ($(TWIN_LANG),es)
+CFLAGS += -DCTR_LANG_ES=1
+else ifneq ($(TWIN_LANG),en)
+$(error TWIN_LANG must be en or es)
+endif
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
 # Every link that has src/3ds_video.c and src/3ds_gpu_flush.c, which routes the GPU data cache flushes past the GSP service.
 VIDEO_LDFLAGS := -Wl,--wrap=GSPGPU_FlushDataCache

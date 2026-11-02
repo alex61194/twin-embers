@@ -107,6 +107,7 @@ int main(void) {
 #include <stdio.h>
 #include <string.h>
 #include "3ds_poketouch.h"
+#include "3ds_lang.h"
 #define BRIDGE_MAX 150
 #define CTR_SUMMARY_BATTLE_PARTY 2
 #define CtrLog_Write(...) ((void)0)
