@@ -20,7 +20,7 @@ jobs:
       - name: Reviewed source and every reachable commit
         run: python3 tools/source_audit.py --history
       - name: Synthetic ARM object toolchain
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev zlib1g-dev pkg-config
       - name: Builder, pack reader/writer and partition integrity
         run: python3 -m unittest discover -s builder/tests -v
       - name: Web Builder site and UniStore
