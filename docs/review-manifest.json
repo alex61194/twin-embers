@@ -5760,7 +5760,7 @@
   },
   {
    "path": "patches/pokefirered/0200-rare-candy-level-up-card.json",
-   "sha256": "c18a3881b2dad46a974a0e39b8c5f9bff0cfdb6905629ee3a8dc96d7a7739610",
+   "sha256": "9af58377b06b072c759406340e1a4edeb83f4b2a52b258c6828adfe0d8763c10",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
