@@ -5783,7 +5783,15 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0204-evolution-native-view.json",
+   "path": "patches/pokefirered/0204-trade-vblank-after-free.json",
+   "sha256": "5ad5a3941e235264c8cdad687f7629e3c146e9843566c8d8b751230b3f594bad",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0205-evolution-native-view.json",
    "sha256": "13f0484146cef4d6ae3623b990cc8bc8930b85f535bb7194ab322f97d21e0c27",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
