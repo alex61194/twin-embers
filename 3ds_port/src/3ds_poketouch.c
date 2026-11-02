@@ -220,6 +220,33 @@ static void Fill(int x, int y, int w, int h, uint16_t c)
     }
 }
 
+/* FireRed's charmap for the two-byte UTF-8 Latin letters its European
+ * releases use (U+00A1..U+00FF and Œ/œ): accents, Ñ/ñ, ¿, ¡, º, ª, ¥. */
+static unsigned LatinCode(unsigned char lead, unsigned char next)
+{
+    static const uint8_t sC3[64] = {
+        /* U+00C0 À Á Â Ã Ä Å Æ Ç */ 0x01, 0x02, 0x03, 0, 0xf1, 0, 0, 0x04,
+        /* U+00C8 È É Ê Ë Ì Í Î Ï */ 0x05, 0x06, 0x07, 0x08, 0x09, 0x5a, 0x0b, 0x0c,
+        /* U+00D0 Ð Ñ Ò Ó Ô Õ Ö × */ 0, 0x14, 0x0d, 0x0e, 0x0f, 0, 0xf2, 0,
+        /* U+00D8 Ø Ù Ú Û Ü Ý Þ ß */ 0, 0x11, 0x12, 0x13, 0xf3, 0, 0, 0x15,
+        /* U+00E0 à á â ã ä å æ ç */ 0x16, 0x17, 0, 0, 0xf4, 0, 0, 0x19,
+        /* U+00E8 è é ê ë ì í î ï */ 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x6f, 0x20, 0x21,
+        /* U+00F0 ð ñ ò ó ô õ ö ÷ */ 0, 0x29, 0x22, 0x23, 0x24, 0, 0xf5, 0,
+        /* U+00F8 ø ù ú û ü ý þ ÿ */ 0, 0x26, 0x27, 0x28, 0xf6, 0, 0, 0,
+    };
+
+    if (lead == 0xc3) return next >= 0x80 ? sC3[next - 0x80] : 0;
+    if (lead == 0xc5) return next == 0x92 ? 0x10 : next == 0x93 ? 0x25 : 0;   /* Œ œ */
+    switch (next) {   /* lead 0xc2 */
+        case 0xa1: return 0x52;   /* ¡ */
+        case 0xa5: return 0xb7;   /* ¥ */
+        case 0xaa: return 0x2b;   /* ª */
+        case 0xba: return 0x2a;   /* º */
+        case 0xbf: return 0x51;   /* ¿ */
+        default: return 0;
+    }
+}
+
 /* The character code of the next UTF-8 character of `*s` in FireRed's charmap (0 for what the font does not draw). */
 static unsigned GlyphCode(const char **s)
 {
@@ -230,8 +257,8 @@ static unsigned GlyphCode(const char **s)
     if (c >= 'A' && c <= 'Z') code = 0xbb + c - 'A';
     else if (c >= 'a' && c <= 'z') code = 0xd5 + c - 'a';
     else if (c >= '0' && c <= '9') code = 0xa1 + c - '0';
-    else if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0x1b; }
-    else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xb7; }
+    else if ((c == 0xc2 || c == 0xc3 || c == 0xc5) && (**s & 0xc0) == 0x80)
+        code = LatinCode(c, (unsigned char)*(*s)++);
     else if (c == 0x01 && **s) code = (unsigned char)*(*s)++;   /* a FireRed code as it is (CtrPokeTouch name text) */
     else if (c == 0x02 && **s) code = 0x100u | (unsigned char)*(*s)++;   /* a Japanese one (a Japanese Pokemon's name) */
     else switch (c) {
