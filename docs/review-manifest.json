@@ -7,6 +7,22 @@
  "self_policy": "Manifest is reviewed governance and not self-hashed; review changes manually",
  "files": [
   {
+   "path": "3ds_port/src/3ds_battle_hud.c",
+   "sha256": "2f23575d6b4b57dd420120f01a6ec83198ba458f2162a04cb3b1d9490d71ad28",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_battle_hud.h",
+   "sha256": "dac249db83f40f7d8facc51a5db355139e42e677ed4eb8e9548d50a0427db45e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": ".gitattributes",
    "sha256": "91e273b601651bae1e8dffd375b4326c56b4de534c433290d6a3ef8d86a39394",
    "review_status": "reviewed",
@@ -731,7 +747,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "3302f63f4e3127ca9a2d203efc40c56a160b99fef2d761529b48a536eb27624e",
+   "sha256": "836db8eeeb826d6c71f0f43fcd669a80d2f49a636b197478aa52f1394f66a3be",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
