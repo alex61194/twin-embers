@@ -132,6 +132,7 @@ function finish(pak, info) {
     lines.push(`HeartGold battle sprites: ${info.gen4.species} species` +
       (info.gen4.missing.length ? `, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)` : ''));
     if (info.gen4.trainers) lines.push(`HeartGold trainer pictures: ${info.gen4.trainers}`);
+    if (info.gen4.backs) lines.push(`HeartGold-style player backs: ${info.gen4.backs}`);
   }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';

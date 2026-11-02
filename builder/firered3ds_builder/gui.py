@@ -171,6 +171,8 @@ class BuilderWindow(tk.Tk):
             text += " The others keep FireRed's pictures (no network, or a file did not match)."
         if info.get("trainers"):
             text += "\nHeartGold trainer pictures: {0}.".format(info["trainers"])
+        if info.get("backs"):
+            text += "\nHeartGold-style player backs: {0}.".format(info["backs"])
         return text
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:

@@ -16,6 +16,13 @@
   in `gen4_sources.py`, verified by size and SHA-256, and are not stored in this
   repository. The artwork belongs to Nintendo, Game Freak and Creatures; credit is
   not a license grant.
+- **Fan-made HeartGold-style player backs** — Leaf's by `setogabes` (Discord),
+  Red's from the Battle Art Voxel Fork collection
+  (https://github.com/absol89/DramaticShapeVoxelMod), both as bundled in
+  https://github.com/LucianoNeo/gen1recomp-mods. Downloaded by the user's Builder
+  at the commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not
+  stored in this repository. They depict Nintendo, Game Freak and Creatures'
+  characters; credit is not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

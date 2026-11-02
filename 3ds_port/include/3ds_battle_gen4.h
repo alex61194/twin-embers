@@ -73,14 +73,24 @@ bool CtrGen4_LoadTrainer(unsigned battler, unsigned trainerPic, const void *fire
 /* FireRed frees the picture's tiles and palette (FreeTrainerFrontPicPaletteAndTile). */
 void CtrGen4_DropTrainer(unsigned trainerPic);
 
-/* Pictures the compositor can draw at once: the four battlers' Pokemon (slots 0-3), then a trainer for each
- * battler (slots 4-7). */
-#define CTR_GEN4_SLOTS 8
+/* The player's back (Red's or Leaf's, TRAINER_BACK_PIC_*): graphics/gen4/back/NNN.bin, fan art in HeartGold's
+ * style with FireRed's five frames, read once and kept. `palette` gets its 16 colours for the game to load where
+ * it loads FireRed's back palette. False without the entry. */
+bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16]);
+/* Implemented by the game's battle code: whether `battler`'s sprite is a trainer back the pack may replace, and
+ * then its OAM tile and palette (tile | palette << 12), its back picture, the frame its animation shows and
+ * FireRed's first frame (64x64, for where the picture stands); -1 otherwise. */
+int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, const void **firePic);
+
+/* Pictures the compositor can draw at once: the four battlers' Pokemon (slots 0-3), a trainer for each battler
+ * (slots 4-7), then a back for each (slots 8-11). */
+#define CTR_GEN4_SLOTS 12
 #define CTR_GEN4_TRAINER_SLOT(battler) (4 + (battler))
+#define CTR_GEN4_BACK_SLOT(battler) (8 + (battler))
 
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
-    unsigned slot;                  /* 0-7: which picture (CTR_GEN4_SLOTS) */
+    unsigned slot;                  /* 0-11: which picture (CTR_GEN4_SLOTS) */
     const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */

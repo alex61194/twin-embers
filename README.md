@@ -33,7 +33,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 **In v0.4.0:**
 
-- **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from [pret/pokeheartgold](https://github.com/pret/pokeheartgold) and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. The trainers you battle get HeartGold's pictures too, gym leaders and Red included; your own back stays FireRed's. Without them the game keeps FireRed's art.
+- **HeartGold sprites, if you want them.** Both Builders can add Pokémon HeartGold's battle sprites and menu icons to the pack, downloaded from [pret/pokeheartgold](https://github.com/pret/pokeheartgold) and checked file by file. They show 1:1 in battle, in the Summary, the Pokédex, the party, the PC, the Hall of Fame and the credits, with Unown's letters, Castform's weather forms and Spinda's own spots. The trainers you battle get HeartGold's pictures too, gym leaders, your rival and Red included, and your own back in battle is a fan-made HeartGold-style Red or Leaf with FireRed's throwing animation. Without them the game keeps FireRed's art.
 - **The credits no longer freeze** after the Champion, when the scene reaches Charizard.
 - **The Pokédex list header** no longer runs KANTO or NATIONAL into the SEEN and OWNED counts once they reach three digits.
 - **A web Builder** that makes the pack in the browser, and a UniStore to install the game from Universal-Updater on the console.

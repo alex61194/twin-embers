@@ -121,9 +121,10 @@ class DownloadTest(unittest.TestCase):
                     data = png(*sprite(dex * 7 + len(body) + len(side), dex * 30))
                     self.data[(dex, body, side)] = data
                     rows.append(row_for(dex, body, side, data))
-        patcher = patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows))
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
+                        patch.object(gen4_sprites, "BACK_FILES", ())):
+            patcher.start()
+            self.addCleanup(patcher.stop)
         self.urls = []
 
     def get(self, url):
@@ -137,7 +138,7 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -332,6 +333,106 @@ class TrainerTest(unittest.TestCase):
             self.assertEqual(len(files), len(gen4_sprites.TRAINER_CLASSES))
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: archive + b"x"))
             self.assertEqual((files, info["trainers"]), ([], 0))
+
+
+def rgba_png(rows):
+    """An RGBA PNG of rows of (r, g, b, a), every row with filter 1 (left), as image editors often write."""
+    width, height = len(rows[0]), len(rows)
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    lines = b""
+    for row in rows:
+        raw = bytes(v for pixel in row for v in pixel)
+        lines += b"\x01" + bytes((raw[x] - (raw[x - 4] if x >= 4 else 0)) & 0xFF for x in range(len(raw)))
+    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(lines))
+            + chunk(b"IEND", b""))
+
+
+class BackTest(unittest.TestCase):
+    def strip(self, colours):
+        """Five 80x80 frames of `colours` opaque colours in stripes, a transparent corner and a half-transparent
+        pixel; frame f's top-left pixel is colour f."""
+        rows = []
+        for y in range(80):
+            row = []
+            for x in range(400):
+                frame, fx = divmod(x, 80)
+                if fx < 4 and y < 4:
+                    row.append((0, 0, 0, 0))
+                elif (fx, y) == (10, 10):
+                    row.append((255, 255, 255, 60))
+                elif (fx, y) == (5, 5):
+                    row.append((frame * 40, 8, 8, 255))
+                else:
+                    c = (fx + y) % colours
+                    row.append((c * 8, 255 - c * 8, 128, 255))
+            rows.append(row)
+        return rows
+
+    def test_rgba_png_reads_back(self):
+        rows = self.strip(4)
+        width, height, palette, got = gen4_sprites.read_png(rgba_png(rows))
+        self.assertEqual((width, height, palette), (400, 80, []))
+        self.assertEqual(got, rows)
+
+    def test_entry_layout_transparency_and_frames(self):
+        entry = gen4_sprites.convert_back(rgba_png(self.strip(6)))
+        self.assertEqual(entry[:8], b"G4K1" + bytes([5, 0, 0, 0]))
+        self.assertEqual(len(entry), 40 + 5 * gen4_sprites.PICTURE)
+        palette = struct.unpack_from("<16H", entry, 8)
+
+        def pixel(frame, x, y):
+            return (entry[40 + frame * gen4_sprites.PICTURE + y * 40 + x // 2] >> (4 * (x & 1))) & 15
+
+        self.assertEqual(pixel(0, 0, 0), 0)            # transparent
+        self.assertEqual(pixel(2, 10, 10), 0)          # alpha under 128
+        for frame in range(5):
+            r = frame * 40
+            self.assertEqual(palette[pixel(frame, 5, 5)], (r >> 3) | (8 >> 3) << 5 | (8 >> 3) << 10)
+
+    def test_too_many_colours_fold_into_fifteen(self):
+        palette, indices = gen4_sprites.quantize([(c * 8, 0, 0, 255) for c in range(20) for _ in range(c + 1)]
+                                                 + [(0, 0, 0, 0)])
+        self.assertEqual(len(palette), 16)
+        self.assertEqual(palette[0], 0)
+        self.assertEqual(indices[-1], 0)
+        self.assertTrue(all(1 <= i <= 15 for i in indices[:-1]))
+        # The commonest colour keeps its own entry, first after transparency.
+        self.assertEqual(palette[1], 19)
+        # Black is a colour like any other, never transparency.
+        palette, indices = gen4_sprites.quantize([(0, 0, 0, 255), (8, 8, 8, 255)])
+        self.assertEqual(indices, [1, 2] if palette[1] == 0 else [2, 1])
+
+    def test_a_wrong_size_or_indexed_strip_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_back(rgba_png([[(0, 0, 0, 255)] * 80] * 80))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_back(png([[0] * 400] * 80, [(0, 0, 0)] * 16))
+
+    def test_backs_come_with_the_download_from_their_own_repository(self):
+        strip = rgba_png(self.strip(3))
+        rows = ((0, "back", "a/red.png", len(strip), hashlib.sha256(strip).hexdigest()),)
+        urls = []
+
+        def get(url):
+            urls.append(url)
+            return strip
+
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+        self.assertEqual([path for path, _ in files], ["graphics/gen4/back/000.bin"])
+        self.assertEqual(info["backs"], 1)
+        self.assertEqual(urls, ["https://raw.githubusercontent.com/%s/%s/a/red.png"
+                                % (gen4_sprites.BACK_REPO, gen4_sprites.BACK_COMMIT)])
+
+    def test_pinned_backs_are_red_and_leaf(self):
+        self.assertEqual([row[:2] for row in gen4_sprites.BACK_FILES], [(0, "back"), (1, "back")])
+        self.assertRegex(gen4_sprites.BACK_COMMIT, "^[0-9a-f]{40}$")
+        for row in gen4_sprites.BACK_FILES:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
 
 
 class SourcesTest(unittest.TestCase):

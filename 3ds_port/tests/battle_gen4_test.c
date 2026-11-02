@@ -11,7 +11,7 @@
 #include "3ds_video.h"
 
 /* The pack: one entry, built by each test. */
-static uint8_t sEntry[72 + 4 * CTR_GEN4_PICTURE];
+static uint8_t sEntry[40 + 5 * CTR_GEN4_PICTURE];
 static uint32_t sEntrySize;
 static char sAsked[64];
 
@@ -64,6 +64,19 @@ static int sOam[4] = {-1, -1, -1, -1};
 int CtrGen4_SpriteOam(unsigned battler)
 {
     return sOam[battler];
+}
+
+/* The player's back sprite: tile | palette << 12 or -1, its picture, its frame and FireRed's frame. */
+static int sBackOam[4] = {-1, -1, -1, -1};
+static unsigned sBackPic, sBackFrame;
+static const void *sBackFire;
+
+int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, const void **firePic)
+{
+    *backPic = sBackPic;
+    *frame = sBackFrame;
+    *firePic = sBackFire;
+    return sBackOam[battler];
 }
 
 /* An entry whose pictures are filled with `fill` (each picture its own) down to row `bottom`. */
@@ -287,6 +300,47 @@ int main(void)
     assert(!sMatch(0x300 | (5 << 12), &obj) && sMatch(0x200 | (1 << 12), &obj));
     CtrGen4_DropAll();
     sOam[1] = -1;
+
+
+    /* The player's back: graphics/gen4/back/NNN.bin, read once; each frame shown on the back sprite's tiles. */
+    sEntrySize = 0;
+    assert(!CtrGen4_BackPalette(1, palette));      /* Leaf's missing: never asked again */
+    assert(strcmp(sAsked, "graphics/gen4/back/001.bin") == 0);
+    assert(!CtrGen4_BackPalette(2, palette));
+    memset(sEntry, 0, sizeof(sEntry));
+    memcpy(sEntry, "G4K1", 4);
+    sEntry[4] = 5;
+    for (unsigned i = 0; i < 16; ++i)
+        sEntry[8 + i * 2] = (uint8_t)(0x40 + i);
+    for (unsigned f = 0; f < 5; ++f)
+        for (unsigned y = 0; y <= 75; ++y)
+            memset(sEntry + 40 + f * CTR_GEN4_PICTURE + y * 40, 0x11 * (f + 1), 40);
+    sEntrySize = 40 + 5 * CTR_GEN4_PICTURE;
+    assert(!CtrGen4_BackPalette(1, palette));
+    assert(CtrGen4_BackPalette(0, palette) && palette[0] == 0x40 && palette[15] == 0x4f);
+    sEntry[0] = 'X';                                /* already read */
+    assert(CtrGen4_BackPalette(0, palette));
+    sEntry[0] = 'G';
+    FirePic(fire, 63);
+    sBackPic = 0;
+    sBackFrame = 0;
+    sBackFire = fire;
+    sBackOam[0] = 0x100 | (8 << 12);
+    assert(sMatch(0x100 | (8 << 12), &obj));
+    assert(obj.slot == CTR_GEN4_BACK_SLOT(0) && obj.slot < CTR_GEN4_SLOTS);
+    assert(Near(obj.pivotX, 40) && Near(obj.pivotY, 76 - 32 / CTR_GEN4_SCALE));
+    assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 0, 76) == 0);
+    sBackFrame = 3;
+    assert(sMatch(0x100 | (8 << 12), &obj) && PixelByte(&obj, 79, 75) == 0x44);
+    sBackFrame = 5;                                 /* no such frame: FireRed's */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
+    sBackFrame = 0;
+    assert(!sMatch(0x100 | (7 << 12), &obj) && !sMatch(0x101 | (8 << 12), &obj));
+    sBackPic = 1;                                   /* Leaf's never read: FireRed's */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
+    sBackPic = 0;
+    sBackOam[0] = -1;                               /* gone */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
 
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);
