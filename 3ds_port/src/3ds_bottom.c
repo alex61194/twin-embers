@@ -122,6 +122,8 @@ extern int CtrBottomView_TeachyTv(void);
 extern int CtrBottomView_Mail(void);
 extern int CtrBottomView_EasyChat(void);
 extern int CtrBottomView_HallOfFame(void);
+/* The evolution scene of its own (evolution_scene.c, recipe 0203): not a trade's, which stays in the trade above. */
+extern int CtrBottomView_Evolution(void);
 /* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
 extern int CtrBottomHof_HoldsTop(void);
 /* The item PC back from DEPOSIT ITEM's Bag or WITHDRAW ITEM's list to its menu (player_pc.c, recipe 0186). */
@@ -752,6 +754,8 @@ static const char *GbaViewTitle(void)
         return "EASY CHAT";
     if (CtrBottomView_HallOfFame())
         return "HALL OF FAME";
+    if (CtrBottomView_Evolution())
+        return "EVOLUTION";
     return NULL;
 }
 
@@ -803,9 +807,10 @@ static int CurrentMode(void)
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen())
         return MODE_CHOICE;
-    /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
+    /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame, an evolution: FireRed's own screen in
+     * the viewport. */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
-        || CtrBottomView_HallOfFame())
+        || CtrBottomView_HallOfFame() || CtrBottomView_Evolution())
         return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
