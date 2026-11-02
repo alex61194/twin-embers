@@ -46,7 +46,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "8e43e0a0887ab42c1bea44a31478ca9264b625a1360e02af04eedef90723c5cd",
+   "sha256": "02365d530119acdaf9e411d2ef016add8749ce63c17f416a23675e05fa7785e9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2487,7 +2487,7 @@
   },
   {
    "path": "docs/DISTRIBUTION.md",
-   "sha256": "0716c1ff258ffe48fbfc1333c977c39ce8486b9c2a9a8a289cec98bf9e096642",
+   "sha256": "8a90561f5d66f2aa27b24a3151bb757449fefc03e1f844f49a4c8d02aadf0489",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4884,7 +4884,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "3576b32be0ee6e8d21ee1519d58cd8eb386251cfa696b5d2662e263cc68cb8fd",
+   "sha256": "8a84715c06304e45219e3a8f7c2b8294c206d1f23b0dc23a0d4b7a2255cd08be",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5002,7 +5002,7 @@
   },
   {
    "path": "tools/test_fly_presentation.py",
-   "sha256": "71a8c9ec0163c7c746eebc05eb6ec166aae05fda456851cb82a1165e4a3244de",
+   "sha256": "09465e9eb98014671d7d705c2e2bdde2317ce040ea5ddbd732c49974304e60df",
    "review_status": "reviewed",
    "credit": "alex61194; Twin Embers Port contributors; inherited/adapted upstream portions as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; external game/dependency rights excluded",
@@ -5112,7 +5112,7 @@
   },
   {
    "path": "tools/test_source_audit.py",
-   "sha256": "9a6fe2c29fcadbb4a25e8b2639191f8429b26c3565df8fba8b43700a43ec67da",
+   "sha256": "47028f17a4d458fc151ae6aa91893a6fe8a9d70bc1ca837f84bb8cf4327246e4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6497,31 +6497,13 @@
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
-   "path": "patches/pokefirered/0200-rare-candy-level-up-card.json",
-   "sha256": "5be2f0cd32d43cbec9cd1d3eac1f5d5277650a1e80e9c714614795477bb42c25",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02 of this snapshot of recipe 0200 (Rare Candy level up card), before 6b91f94 renamed its port-only table: the manifest did not list it in these commits; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
-  },
-  {
-   "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
-   "path": "patches/pokefirered/0200-rare-candy-level-up-card.json",
-   "sha256": "5be2f0cd32d43cbec9cd1d3eac1f5d5277650a1e80e9c714614795477bb42c25",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02 of this snapshot of recipe 0200 (Rare Candy level up card), before 6b91f94 renamed its port-only table: the manifest did not list it in these commits; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
-  },
-  {
-   "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
    "path": "docs/media/01-title.png",
    "sha256": "1be55579ef2ddb72e5eac81149faa69505a6f20de76250b7da57a6604a4dd200",
    "supersedes": "da4b1427b98d5a02e1d0fd9dec5cf974f38b1d3d1de832badc3c2c1af0a806a7",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6531,7 +6513,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6541,7 +6523,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6551,7 +6533,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6561,7 +6543,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6571,7 +6553,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6581,7 +6563,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6591,7 +6573,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6601,7 +6583,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6611,7 +6593,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6621,7 +6603,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6631,7 +6613,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6641,7 +6623,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6651,7 +6633,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6661,7 +6643,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6671,7 +6653,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6681,7 +6663,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6691,7 +6673,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6701,7 +6683,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6711,7 +6693,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6721,7 +6703,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6731,7 +6713,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6741,7 +6723,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
@@ -6751,7 +6733,16 @@
    "review_status": "reviewed",
    "credit": "Twin Embers logo by @xsh3d0r_ (Discord), made for the project and supplied by the owner",
    "license": "Used with the artist's permission for Twin Embers; not covered by the port MIT licence; the Poke Ball and Charizard-like design elements remain the rightsholders'",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
+  },
+  {
+   "commit": "1e6fec22404947abdafaf8a06262cdf74f539b61",
+   "path": "patches/pokefirered/0200-rare-candy-level-up-card.json",
+   "sha256": "5be2f0cd32d43cbec9cd1d3eac1f5d5277650a1e80e9c714614795477bb42c25",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-11-02 of this snapshot (1e6fec2): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6761,7 +6752,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6771,7 +6762,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6781,7 +6772,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6791,7 +6782,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6801,7 +6792,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6811,7 +6802,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6821,7 +6812,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6831,7 +6822,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6841,7 +6832,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6851,7 +6842,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6861,7 +6852,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6871,7 +6862,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6881,7 +6872,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6891,7 +6882,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6901,7 +6892,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6911,7 +6902,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6921,7 +6912,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6931,7 +6922,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6941,7 +6932,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6951,7 +6942,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6961,7 +6952,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6971,7 +6962,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6981,7 +6972,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
@@ -6991,7 +6982,16 @@
    "review_status": "reviewed",
    "credit": "Twin Embers logo by @xsh3d0r_ (Discord), made for the project and supplied by the owner",
    "license": "Used with the artist's permission for Twin Embers; not covered by the port MIT licence; the Poke Ball and Charizard-like design elements remain the rightsholders'",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
+  },
+  {
+   "commit": "4fc59757bd582f00ed92a963cb7d6ac16f9887d5",
+   "path": "patches/pokefirered/0200-rare-candy-level-up-card.json",
+   "sha256": "5be2f0cd32d43cbec9cd1d3eac1f5d5277650a1e80e9c714614795477bb42c25",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4fc5975): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "558a50daeaca3759480e1bcdffbf36b473623c09",
@@ -7001,7 +7001,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (558a50d): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "558a50daeaca3759480e1bcdffbf36b473623c09",
@@ -7011,7 +7011,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (558a50d): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "558a50daeaca3759480e1bcdffbf36b473623c09",
@@ -7021,7 +7021,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (558a50d): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "558a50daeaca3759480e1bcdffbf36b473623c09",
@@ -7031,7 +7031,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (558a50d): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "558a50daeaca3759480e1bcdffbf36b473623c09",
@@ -7041,7 +7041,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (558a50d): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7051,7 +7051,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7061,7 +7061,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7071,7 +7071,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7081,7 +7081,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7091,7 +7091,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b87b5608a84fa687c0c82a70effc7307126d1704",
@@ -7101,7 +7101,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b87b560): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7111,7 +7111,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7121,7 +7121,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7131,7 +7131,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7141,7 +7141,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7151,7 +7151,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "d4fde8787bf9ab3d41b8b2d919fbb828e01f0d86",
@@ -7161,7 +7161,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (d4fde87): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "91c0a2a02f17e556f9f6117cf2c81547769d8d35",
@@ -7171,7 +7171,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (91c0a2a): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "91c0a2a02f17e556f9f6117cf2c81547769d8d35",
@@ -7181,7 +7181,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (91c0a2a): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "91c0a2a02f17e556f9f6117cf2c81547769d8d35",
@@ -7191,7 +7191,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (91c0a2a): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
@@ -7201,7 +7201,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (6266267): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
@@ -7211,7 +7211,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (6266267): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
@@ -7221,7 +7221,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (6266267): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
@@ -7231,7 +7231,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (6266267): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
@@ -7241,7 +7241,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (6266267): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
@@ -7251,7 +7251,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4e822c3): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
@@ -7261,7 +7261,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4e822c3): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
@@ -7271,7 +7271,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4e822c3): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
@@ -7281,7 +7281,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4e822c3): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
@@ -7291,7 +7291,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4e822c3): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "44cc5fec283fc4f6142bc690894406c370712362",
@@ -7301,7 +7301,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (44cc5fe): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "44cc5fec283fc4f6142bc690894406c370712362",
@@ -7311,7 +7311,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (44cc5fe): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "e63ff6214a3e99c48c7878fb69e189a0ba55e174",
@@ -7321,7 +7321,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (e63ff62): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "e63ff6214a3e99c48c7878fb69e189a0ba55e174",
@@ -7331,7 +7331,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (e63ff62): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "e2c11981c007f954eb8252d8b2d42f8589f68978",
@@ -7341,7 +7341,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (e2c1198): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "e2c11981c007f954eb8252d8b2d42f8589f68978",
@@ -7351,7 +7351,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (e2c1198): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7361,7 +7361,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7371,7 +7371,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7381,7 +7381,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7391,7 +7391,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7401,7 +7401,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7411,7 +7411,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7421,7 +7421,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "9556cc5d9c3d770c61419eaa3c13f7e0e60ca1ef",
@@ -7431,7 +7431,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (9556cc5): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7441,7 +7441,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7451,7 +7451,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7461,7 +7461,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7471,7 +7471,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7481,7 +7481,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7491,7 +7491,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7501,7 +7501,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "436668782c105a627794222f3f24f8cdc634e779",
@@ -7511,7 +7511,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (4366687): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "f4236cb9b6e1ad91ddff8557ca459f5287daa460",
@@ -7521,7 +7521,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (f4236cb): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "f4236cb9b6e1ad91ddff8557ca459f5287daa460",
@@ -7531,7 +7531,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (f4236cb): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "f4236cb9b6e1ad91ddff8557ca459f5287daa460",
@@ -7541,7 +7541,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (f4236cb): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "f4236cb9b6e1ad91ddff8557ca459f5287daa460",
@@ -7551,7 +7551,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (f4236cb): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7561,7 +7561,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7571,7 +7571,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7581,7 +7581,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7591,7 +7591,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7601,7 +7601,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "ccd3a3b6933939170a9e683a85d1d6dd3a855ba0",
@@ -7611,7 +7611,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (ccd3a3b): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b02f36875bfb02eb4ad91b078e2a995c18a557d8",
@@ -7621,7 +7621,7 @@
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b02f368): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b02f36875bfb02eb4ad91b078e2a995c18a557d8",
@@ -7631,7 +7631,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b02f368): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   },
   {
    "commit": "b02f36875bfb02eb4ad91b078e2a995c18a557d8",
@@ -7641,7 +7641,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Retrospective review 2026-11-02: changed in this commit without its manifest record; same scope as its other records."
+   "basis": "Retrospective review 2026-11-02 of this snapshot (b02f368): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
   }
  ],
  "historical_exclusions": [

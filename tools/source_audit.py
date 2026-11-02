@@ -82,8 +82,10 @@ def check(files,modes=None,windows=None,supplements=()):
             raise ValueError('Historical review must supply an absent record')
         if 'supersedes' in row:
             raw=files[name]; canonical=raw.replace(b'\r\n',b'\n')
-            proven={hashlib.sha256(x).hexdigest() for x in (raw,canonical,canonical.replace(b'\n',b'\r\n'))}
-            if is_media(name): proven={hashlib.sha256(raw).hexdigest()}    # images are checked byte for byte
+            # A README image is proven only by its exact bytes: a record of its
+            # line-ending-normalized bytes is stale, as the image check says.
+            proven={hashlib.sha256(raw).hexdigest()} if is_media(name) else \
+                {hashlib.sha256(x).hexdigest() for x in (raw,canonical,canonical.replace(b'\n',b'\r\n'))}
             if name not in entries or entries[name]['sha256']!=row['supersedes'] or row['supersedes'] in proven:
                 raise ValueError('Superseding review must name a stale record')
         elif name in entries:

@@ -158,7 +158,7 @@ int main(void) {
         video = (ROOT / '3ds_port/src/3ds_video.c').read_text()
         draw = function(video, 'DrawObjects')
         start = draw.index('        int x = attr1 & 511, y = attr0 & 255;')
-        end = min(i for i in (draw.find('        if (priority == 3)', start), draw.index('        if (x >= sClipX1', start)) if i >= 0)
+        end = draw.index('        if (x >= sClipX1', start)
         self.run_c('''
 #include <assert.h>
 #include "3ds_effect_oam.h"
@@ -169,7 +169,11 @@ int main(void) {
 static bool sFieldLayers=true,sIntro,sStage,sCentred,sBattle;
 static CtrEffectOam sEffectOamShown[128],sMapOamShown[128];
 static int px,py;
+static void DrawTitleFlameCopies(unsigned a0,unsigned a1,unsigned a2,int x,int y,unsigned fx) {
+    (void)a0; (void)a1; (void)a2; (void)x; (void)y; (void)fx;
+}
 static void decode(int i,unsigned attr0,unsigned attr1,unsigned boxW,unsigned boxH) {
+    unsigned priority=0,attr2=0,effects=0;
 ''' + draw[start:end] + '''
     px=x; py=y;
 }
@@ -201,8 +205,8 @@ int main(void) {
 #define MAP_NAME_POPUP_HEIGHT 32
 static int sClipX0,sClipX1=400,sClipY0,sClipY1=240,sViewX,sViewY;
 static bool sFieldMoveShowMon,sQuestLogLayout,sMapNamePopup,sBattleTransition;
-static unsigned sCanvasBg0;
 static bool sForestPreview;
+static unsigned sCanvasBg0;
 static float sZoom=1.0f;
 static int calls,vx,vy,right;
 static unsigned Reg(unsigned n) { (void)n; return 0; }

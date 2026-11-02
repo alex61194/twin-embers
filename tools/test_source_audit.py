@@ -23,7 +23,7 @@ class Rejections(unittest.TestCase):
         self.assertGreater(len(files[audit.MANIFEST]),audit.LIMIT)
         self.assertLess(len(files[audit.MANIFEST]),audit.MANIFEST_LIMIT)
         self.assertEqual(audit.check(files),2)
-        doc['review_note']='Reviewed inventory metadata. ' * (audit.MANIFEST_LIMIT//len('Reviewed inventory metadata. ')+1)
+        doc['review_note']='Reviewed inventory metadata. ' * 40000
         files[audit.MANIFEST]=json.dumps(doc).encode()
         with self.assertRaisesRegex(ValueError,'oversized'):
             audit.check(files)

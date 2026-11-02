@@ -19,8 +19,8 @@ jobs:
           persist-credentials: false
       - name: Reviewed source and every reachable commit
         run: python3 tools/source_audit.py --history
-      - name: Synthetic ARM object toolchain
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev zlib1g-dev pkg-config
+      - name: Synthetic ARM object toolchain, and libpng for pret's gbagfx
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
       - name: Builder, pack reader/writer and partition integrity
         run: python3 -m unittest discover -s builder/tests -v
       - name: Web Builder site and UniStore
