@@ -169,7 +169,11 @@ int main(void) {
 static bool sFieldLayers=true,sIntro,sStage,sCentred,sBattle;
 static CtrEffectOam sEffectOamShown[128],sMapOamShown[128];
 static int px,py;
+static void DrawTitleFlameCopies(unsigned a0,unsigned a1,unsigned a2,int x,int y,unsigned fx) {
+    (void)a0; (void)a1; (void)a2; (void)x; (void)y; (void)fx;
+}
 static void decode(int i,unsigned attr0,unsigned attr1,unsigned boxW,unsigned boxH) {
+    unsigned priority=0,attr2=0,effects=0;
 ''' + draw[start:end] + '''
     px=x; py=y;
 }
@@ -202,6 +206,7 @@ int main(void) {
 static int sClipX0,sClipX1=400,sClipY0,sClipY1=240,sViewX,sViewY;
 static bool sFieldMoveShowMon,sQuestLogLayout,sMapNamePopup,sBattleTransition;
 static bool sForestPreview;
+static unsigned sCanvasBg0;
 static float sZoom=1.0f;
 static int calls,vx,vy,right;
 static unsigned Reg(unsigned n) { (void)n; return 0; }
