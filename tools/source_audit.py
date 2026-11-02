@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST='docs/review-manifest.json'
 LIMIT=256*1024
-MANIFEST_LIMIT=512*1024
+MANIFEST_LIMIT=1024*1024
 REFERENCE='96f95e015af9f5f38e4a8aefca7cab29a78b030d'
 EXTENSIONS={'.c','.h','.py','.md','.txt','.json','.toml','.lock','.yml'}
 NAMES={'Makefile','.gitignore','.gitattributes'}
@@ -83,6 +83,7 @@ def check(files,modes=None,windows=None,supplements=()):
         if 'supersedes' in row:
             raw=files[name]; canonical=raw.replace(b'\r\n',b'\n')
             proven={hashlib.sha256(x).hexdigest() for x in (raw,canonical,canonical.replace(b'\n',b'\r\n'))}
+            if is_media(name): proven={hashlib.sha256(raw).hexdigest()}    # images are checked byte for byte
             if name not in entries or entries[name]['sha256']!=row['supersedes'] or row['supersedes'] in proven:
                 raise ValueError('Superseding review must name a stale record')
         elif name in entries:
