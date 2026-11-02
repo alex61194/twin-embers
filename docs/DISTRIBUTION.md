@@ -17,7 +17,7 @@ or a guarantee that every derivative use is authorized.
 ## Gates
 
 Ordinary source files retain a 256 KiB size cap. The single
-`docs/review-manifest.json` governance inventory has a separate 512 KiB cap
+`docs/review-manifest.json` governance inventory has a separate 1 MiB cap
 as its reviewed file records grow. Its schema, provenance entries, exact
 source hashes, text/payload checks and every historical snapshot are still
 validated; this allowance does not apply to other files or binary content.
