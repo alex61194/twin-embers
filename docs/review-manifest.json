@@ -5905,6 +5905,26 @@
  ],
  "historical_reviews": [
   {
+   "commit": "a12f4d811cb8e2d86a7d6f11051fdc128741edb8",
+   "path": "3ds_port/include/3ds_battle_gen4.h",
+   "sha256": "a355b0044f50dbbb9adcb5720e41822cb8c6a8484ac4c275c0b18877aff38989",
+   "supersedes": "9ef40c7e151e6c7df2925879c9d10756d0ad2638e70a47d588397144742279e4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Retrospective review 2026-11-02 of this header at commit a12f4d8 (battle zoom 1.4 -> 1.5 on the PR #38 branch, committed without refreshing the manifest): port-only C constants, no ROM bytes, payload or media."
+  },
+  {
+   "commit": "a12f4d811cb8e2d86a7d6f11051fdc128741edb8",
+   "path": "3ds_port/include/3ds_video.h",
+   "sha256": "a69ca1432fbc1939b59f9725be195221971f5b2de6d51f732c2a1c6f81e3222e",
+   "supersedes": "18fcf34d4b36b00cefb03ba580021cb8986cade7827106249e9dd56b711b9511",
+   "review_status": "reviewed",
+   "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
+   "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
+   "basis": "Retrospective review 2026-11-02 of this header at commit a12f4d8 (battle zoom 1.4 -> 1.5 on the PR #38 branch, committed without refreshing the manifest): port-only C constants, no ROM bytes, payload or media."
+  },
+  {
    "commit": "801c92da0baa77ce79b0b208b34525b60f9966f1",
    "path": "README.md",
    "sha256": "02760d1619eee49d812675be4d24c16ad603b6fc6f4ebf60f9ef07fb19876ef7",
