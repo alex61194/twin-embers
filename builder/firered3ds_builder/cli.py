@@ -33,7 +33,8 @@ def main() -> None:
             if args.gen4_sprites:
                 extra, info = gen4_sprites.pack_files(gen4_sprites.Downloader(gen4_sprites.cache_dir()))
                 print(f"HeartGold battle sprites: {info['species']} species "
-                      f"({info['downloaded']} files downloaded), {len(info['missing'])} missing")
+                      f"({info['downloaded']} files downloaded), {len(info['missing'])} missing, "
+                      f"{info['trainers']} trainer pictures")
             result = build(args.rom, args.recipe, args.output, extra)
             digest = hashlib.sha256(args.output.read_bytes()).hexdigest()
             print(f"Wrote {args.output}: {result['entries']} entries, {args.output.stat().st_size} bytes, "

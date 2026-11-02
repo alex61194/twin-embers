@@ -240,7 +240,7 @@ static inline uint32_t VramStamp(unsigned b)
  * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes. */
 #define GEN4_VRAM 0x18000u
 #define GEN4_SLOT 0x1000u
-#define GEN4_SLOTS 4u
+#define GEN4_SLOTS ((unsigned)CTR_GEN4_SLOTS)
 static bool (*sObjOverride)(unsigned attr2, struct CtrGen4Obj *out);
 static const uint8_t *sGen4Tiles[GEN4_SLOTS];
 

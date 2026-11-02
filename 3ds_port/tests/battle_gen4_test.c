@@ -245,6 +245,49 @@ int main(void)
         assert(CtrGen4_Picture80(328, false, false, big) && big[11 * 40 + 5] == 0x11);
     }
 
+    /* Trainers: graphics/gen4/trainer/NNN.bin, matched by the picture's own tiles and palette, whatever the battler's
+     * Pokemon shows; freeing FireRed's picture drops it. */
+    CtrGen4_DropAll();
+    sEntrySize = 0;
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    assert(strcmp(sAsked, "graphics/gen4/trainer/116.bin") == 0);
+    memset(sEntry, 0, sizeof(sEntry));
+    memcpy(sEntry, "G4T1", 4);
+    for (unsigned i = 0; i < 16; ++i)
+        sEntry[8 + i * 2] = (uint8_t)(0x20 + i);
+    for (unsigned y = 0; y <= 70; ++y)
+        memset(sEntry + 40 + y * 40, 0x33, 40);
+    sEntrySize = 40 + CTR_GEN4_PICTURE;
+    sEntry[0] = 'X';
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    sEntry[0] = 'G';
+    sEntrySize -= 1;
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    sEntrySize += 1;
+    assert(!CtrGen4_LoadTrainer(4, 116, fire, 0x300, 5, palette));
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 16, palette));
+    FirePic(fire, 60);
+    assert(CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    assert(palette[0] == 0x20 && palette[15] == 0x2f);
+    sOam[1] = -1;                                   /* the trainer's sprite is no Pokemon's */
+    assert(sMatch(0x300 | (5 << 12), &obj));
+    assert(obj.slot == CTR_GEN4_TRAINER_SLOT(1) && obj.slot < CTR_GEN4_SLOTS);
+    assert(Near(obj.pivotY, 71 - 29 / CTR_GEN4_SCALE) && Near(obj.pivotX, 40));
+    assert(PixelByte(&obj, 0, 0) == 0x33 && PixelByte(&obj, 0, 71) == 0);
+    assert(!sMatch(0x300 | (4 << 12), &obj) && !sMatch(0x301 | (5 << 12), &obj));
+    /* Its Pokemon coming out of the ball takes the battler's slot; the trainer stays matched by its own tiles. */
+    MakeEntry(false, 70);
+    assert(CtrGen4_Load(1, 6, false, false, false, fire, palette));
+    sOam[1] = 0x200 | (1 << 12);
+    assert(sMatch(0x200 | (1 << 12), &obj) && obj.slot == 1);
+    assert(sMatch(0x300 | (5 << 12), &obj) && obj.slot == CTR_GEN4_TRAINER_SLOT(1));
+    CtrGen4_DropTrainer(115);                       /* another picture: kept */
+    assert(sMatch(0x300 | (5 << 12), &obj));
+    CtrGen4_DropTrainer(116);
+    assert(!sMatch(0x300 | (5 << 12), &obj) && sMatch(0x200 | (1 << 12), &obj));
+    CtrGen4_DropAll();
+    sOam[1] = -1;
+
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);
     sIconsEntry[4] = 3;

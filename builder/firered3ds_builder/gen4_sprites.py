@@ -16,6 +16,9 @@ Pack entries, one per species with a complete set, and the icons:
     graphics/gen4/spinda.bin        where HeartGold draws Spinda's spots (from pret's pokepic.c)
     graphics/gen4/icons.bin         every menu icon, only when all of them could be had
                                     (their palettes replace FireRed's for every icon)
+    graphics/gen4/trainer/NNN.bin   NNN = FireRed's trainer picture (TRAINER_PIC_*), the
+                                    HeartGold class TRAINER_CLASSES pairs with it; a picture
+                                    left out (Lorelei, Agatha, Oak, Leaf...) keeps FireRed's
 
 Layout (little endian):
 
@@ -39,6 +42,12 @@ icons.bin (little endian):
     200  u8 x icons  each icon's palette, then zeros to a multiple of 4
     then 1024 bytes an icon: two 32x32 frames, each 16 8x8 4bpp tiles row by row,
          as FireRed's icons
+
+trainer/NNN.bin (little endian): b"G4T1", u32 0, u16 x 16 the palette (BGR555, colour 0
+transparent), then the picture's first frame, 80 x 80 pixels, 4 bits a pixel as above. HeartGold
+keeps the trainer pictures in one NARC (files/a/0/5/8), five files a class: the fifth is the picture (an NCGR
+of two 80x80 frames side by side, its pixels scrambled as Diamond and Pearl's are), its palette
+(the second, an NCLR); the Builder does not need the other three.
 
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
@@ -65,6 +74,8 @@ MAGIC = b"G4B1"
 PREFIX = "graphics/gen4/battle/"
 ICONS = "graphics/gen4/icons.bin"
 SPINDA = "graphics/gen4/spinda.bin"
+TRAINER_PREFIX = "graphics/gen4/trainer/"
+TRAINER_MAGIC = b"G4T1"
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
@@ -197,6 +208,157 @@ def convert_spinda(source: bytes) -> bytes:
     return bytes(out)
 
 
+# FireRed's trainer pictures (include/constants/trainers.h, TRAINER_PIC_*) and the HeartGold trainer class
+# (pret/pokeheartgold include/constants/trainer_class.h, TRAINERCLASS_*) whose front picture stands for each one.
+# FireRed's player pictures (backs, the Oak intro) are not trainer front pictures and are never replaced.
+TRAINER_CLASSES = {
+    7: 44,     # RS_TUBER_M -> TUBER_M
+    13: 32,    # RICH_BOY -> RICH_BOY
+    18: 64,    # KINDLER -> FIREBREATHER
+    29: 60,    # SCHOOL_KID_M -> SCHOOL_KID_M
+    30: 61,    # SCHOOL_KID_F -> SCHOOL_KID_F
+    32: 20,    # POKEFAN_M -> POKEFAN_M
+    33: 21,    # POKEFAN_F -> POKEFAN
+    39: 12,    # CYCLING_TRIATHLETE_M -> CYCLIST_M
+    40: 13,    # CYCLING_TRIATHLETE_F -> CYCLIST_F
+    41: 19,    # RUNNING_TRIATHLETE_M -> JOGGER
+    45: 29,    # DRAGON_TAMER -> DRAGON_TAMER
+    47: 28,    # NINJA_BOY -> NINJA_BOY
+    48: 10,    # BATTLE_GIRL -> BATTLE_GIRL
+    49: 80,    # PARASOL_LADY -> PARASOL_LADY
+    54: 37,    # COLLECTOR -> COLLECTOR
+    82: 2,     # YOUNGSTER -> YOUNGSTER
+    83: 6,     # BUG_CATCHER -> BUG_CATCHER
+    84: 3,     # LASS -> LASS
+    85: 46,    # SAILOR -> SAILOR
+    86: 4,     # CAMPER -> CAMPER
+    87: 5,     # PICNICKER -> PICNICKER
+    88: 68,    # POKEMANIAC -> POKE_MANIAC
+    89: 78,    # SUPER_NERD -> SUPER_NERD
+    90: 9,     # HIKER -> HIKER
+    91: 65,    # BIKER -> BIKER
+    92: 63,    # BURGLAR -> BURGLAR
+    93: 59,    # ENGINEER -> WORKER
+    94: 11,    # FISHERMAN -> FISHERMAN
+    95: 42,    # SWIMMER_M -> SWIMMER_M
+    96: 57,    # CUE_BALL -> ROUGHNECK
+    98: 36,    # BEAUTY -> BEAUTY
+    99: 43,    # SWIMMER_F -> SWIMMER_F
+    100: 49,   # PSYCHIC_M -> PSYCHIC_M
+    101: 52,   # ROCKER -> GUITARIST
+    102: 31,   # JUGGLER -> JUGGLER
+    104: 69,   # BIRD_KEEPER -> BIRD_KEEPER_GS
+    105: 14,   # BLACK_BELT -> BLACK_BELT
+    107: 113,  # SCIENTIST -> SCIENTIST_GS
+    108: 124,  # LEADER_GIOVANNI -> ROCKET_BOSS
+    109: 55,   # ROCKET_GRUNT_M -> TEAM_ROCKET
+    110: 53,   # COOLTRAINER_M -> ACE_TRAINER_M_GS
+    111: 54,   # COOLTRAINER_F -> ACE_TRAINER_F_GS
+    113: 112,  # ELITE_FOUR_BRUNO -> ELITE_FOUR_BRUNO
+    115: 86,   # ELITE_FOUR_LANCE -> CHAMPION (Lance)
+    116: 98,   # LEADER_BROCK -> LEADER_BROCK
+    117: 103,  # LEADER_MISTY -> LEADER_MISTY
+    118: 104,  # LEADER_LT_SURGE -> LEADER_LT_SURGE
+    119: 105,  # LEADER_ERIKA -> LEADER_ERIKA
+    120: 89,   # LEADER_KOGA -> ELITE_FOUR_KOGA
+    121: 108,  # LEADER_BLAINE -> LEADER_BLAINE
+    122: 107,  # LEADER_SABRINA -> LEADER_SABRINA
+    123: 34,   # GENTLEMAN -> GENTLEMAN
+    124: 110,  # RIVAL_LATE -> LEADER_BLUE
+    125: 110,  # CHAMPION_RIVAL -> LEADER_BLUE
+    126: 82,   # CHANNELER -> MEDIUM
+    127: 8,    # TWINS -> TWINS
+    128: 121,  # COOL_COUPLE -> DOUBLE_TEAM
+    129: 122,  # YOUNG_COUPLE -> YOUNG_COUPLE
+    135: 109,  # RED -> PKMN_TRAINER_RED
+    137: 62,   # ROCKET_GRUNT_F -> TEAM_ROCKET_F
+    138: 50,   # PSYCHIC_F -> PSYCHIC_F
+    139: 10,   # CRUSH_GIRL -> BATTLE_GIRL
+    140: 45,   # TUBER_F -> TUBER_F
+    141: 17,   # POKEMON_BREEDER -> PKMN_BREEDER_F
+    142: 39,   # POKEMON_RANGER_M -> PKMN_RANGER_M
+    143: 40,   # POKEMON_RANGER_F -> PKMN_RANGER_F
+    144: 7,    # AROMA_LADY -> AROMA_LADY
+    145: 48,   # RUIN_MANIAC -> RUIN_MANIAC
+    146: 33,   # LADY -> LADY
+    147: 15,   # PAINTER -> ARTIST
+}
+TRAINER_FILES = 5  # a class's files in the NARC: a cut picture, the palette, cells, animation, the whole picture
+TRAINER_PICTURE, TRAINER_PALETTE = 4, 1
+
+
+def narc_files(data: bytes) -> list[bytes]:
+    """The members of a Nitro archive (NARC: BTAF offsets, BTNF names, GMIF data)."""
+    if data[:4] != b"NARC" or len(data) < 28:
+        raise Gen4Error("not a NARC archive")
+    pos = struct.unpack_from("<H", data, 12)[0]
+    if data[pos:pos + 4] != b"BTAF":
+        raise Gen4Error("NARC without its file table")
+    size, count = struct.unpack_from("<IH", data, pos + 4)
+    if pos + 12 + 8 * count > len(data):
+        raise Gen4Error("NARC file table is cut short")
+    spans = [struct.unpack_from("<II", data, pos + 12 + 8 * i) for i in range(count)]
+    pos += size
+    if data[pos:pos + 4] != b"BTNF":
+        raise Gen4Error("NARC without its name table")
+    pos += struct.unpack_from("<I", data, pos + 4)[0]
+    if data[pos:pos + 4] != b"GMIF":
+        raise Gen4Error("NARC without its data")
+    base = pos + 8
+    if any(start > end or base + end > len(data) for start, end in spans):
+        raise Gen4Error("NARC member outside the archive")
+    return [data[base + start:base + end] for start, end in spans]
+
+
+def nitro_block(data: bytes, magic: bytes, kind: bytes) -> bytes:
+    """The first block of a Nitro graphics file (NCGR, NCLR...) after its block header."""
+    if data[:4] != magic:
+        raise Gen4Error("not a %s file" % magic[::-1].decode())
+    pos = struct.unpack_from("<H", data, 12)[0]
+    if data[pos:pos + 4] != kind:
+        raise Gen4Error("%s without its %s block" % (magic[::-1].decode(), kind[::-1].decode()))
+    return data[pos:pos + struct.unpack_from("<I", data, pos + 4)[0]]
+
+
+def unscramble_dp(pixels: bytes) -> bytes:
+    """Diamond and Pearl's scrambled pictures (HeartGold's UnscanPokepic_DP, used for its trainer pictures): each
+    16-bit word from the last back is XORed with an LCG seeded by the last word."""
+    words = list(struct.unpack("<%dH" % (len(pixels) // 2), pixels))
+    seed = words[-1]
+    for i in range(len(words) - 1, -1, -1):
+        words[i] ^= seed & 0xFFFF
+        seed = (seed * 1103515245 + 24691) & 0xFFFFFFFF
+    return struct.pack("<%dH" % len(words), *words)
+
+
+def trainer_entry(picture: bytes, palette: bytes) -> bytes:
+    """One trainer picture's pack entry from HeartGold's NCGR (two 80x80 frames side by side) and NCLR."""
+    block = nitro_block(picture, b"RGCN", b"RAHC")
+    height, width, depth = struct.unpack_from("<HHI", block, 8)
+    pixels = block[0x20:]
+    if (height, width, depth) != (SIZE // 8, 2 * SIZE // 8, 3) or len(pixels) != 2 * PICTURE:
+        raise Gen4Error("a trainer picture is two 80x80 frames in 16 colours")
+    pixels = unscramble_dp(pixels)
+    frame = b"".join(pixels[y * SIZE:y * SIZE + SIZE // 2] for y in range(SIZE))
+    colours = nitro_block(palette, b"RLCN", b"TTLP")[0x18:0x18 + 32]
+    if len(colours) != 32:
+        raise Gen4Error("a trainer palette has 16 colours")
+    return TRAINER_MAGIC + bytes(4) + colours + frame
+
+
+def convert_trainers(archive: bytes) -> list[tuple[str, bytes]]:
+    """The pack entries for FireRed's trainer pictures from HeartGold's archive (TRAINER_CLASSES)."""
+    files = narc_files(archive)
+    out = []
+    for pic, cls in sorted(TRAINER_CLASSES.items()):
+        if (cls + 1) * TRAINER_FILES > len(files):
+            raise Gen4Error("the trainer archive has no class %d" % cls)
+        first = cls * TRAINER_FILES
+        out.append(("%s%03d.bin" % (TRAINER_PREFIX, pic),
+                    trainer_entry(files[first + TRAINER_PICTURE], files[first + TRAINER_PALETTE])))
+    return out
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -228,6 +390,8 @@ def source_path(row: tuple) -> str:
         return gen4_sources.CASTFORM_PATH.format(gen4_sources.CASTFORM_NAMES[row[0]], row[2])
     if row[1] == "spinda":
         return gen4_sources.SPINDA_PATH
+    if row[1] == "trainers":
+        return gen4_sources.TRAINERS_PATH
     return gen4_sources.PATH.format(*row[:3])
 
 
@@ -241,6 +405,8 @@ def file_name(row: tuple) -> str:
         return "castform_{:02d}_{}.png".format(row[0], row[2])
     if row[1] == "spinda":
         return "pokepic.c"
+    if row[1] == "trainers":
+        return "trainers_a058.narc"
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -329,6 +495,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     icon_rows = sorted((row for row in rows if row[1] == "icon"), key=lambda row: row[0])
     form_rows = {kind: [row for row in rows if row[1] == kind] for kind in ("unown", "castform")}
     spinda = [row for row in rows if row[1] == "spinda"]
+    trainers = [row for row in rows if row[1] == "trainers"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -349,4 +516,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     icons = icon_rows and all(row[:3] in got for row in icon_rows)
     if icons:
         files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))
-    return files, {"species": species, "missing": missing, "icons": bool(icons), "downloaded": downloaded}
+    trainer_files = convert_trainers(got[trainers[0][:3]]) if trainers and trainers[0][:3] in got else []
+    files += trainer_files
+    return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
+                   "downloaded": downloaded}

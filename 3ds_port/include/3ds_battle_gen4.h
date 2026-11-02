@@ -62,9 +62,25 @@ const uint8_t *CtrGen4_IconTiles(int key);           /* 1024 bytes: two 32x32 fr
 int CtrGen4_IconPalette(int key);                    /* which of the palettes below */
 const uint16_t *CtrGen4_IconPaletteData(unsigned index);
 
+/* Trainers (battle_gfx_sfx_util.c's DecompressTrainerFrontPic, recipe 0206): after FireRed's front picture
+ * `trainerPic` (TRAINER_PIC_*) of the trainer standing for `battler` is in `firePic` (64x64, frame 0) and its
+ * sprite sheet starts at OBJ tile `tileNum` with OBJ palette `paletteNum`: load HeartGold's picture from
+ * graphics/gen4/trainer/NNN.bin. False (FireRed's picture stays) without that entry. `palette` gets its 16
+ * colours, to load in that palette. A trainer's sprite is matched by its tiles and palette, not its battler,
+ * so it keeps its picture while the battler's Pokemon comes out. */
+bool CtrGen4_LoadTrainer(unsigned battler, unsigned trainerPic, const void *firePic, unsigned tileNum,
+                         unsigned paletteNum, uint16_t palette[16]);
+/* FireRed frees the picture's tiles and palette (FreeTrainerFrontPicPaletteAndTile). */
+void CtrGen4_DropTrainer(unsigned trainerPic);
+
+/* Pictures the compositor can draw at once: the four battlers' Pokemon (slots 0-3), then a trainer for each
+ * battler (slots 4-7). */
+#define CTR_GEN4_SLOTS 8
+#define CTR_GEN4_TRAINER_SLOT(battler) (4 + (battler))
+
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
-    unsigned slot;                  /* 0-3: which picture */
+    unsigned slot;                  /* 0-7: which picture (CTR_GEN4_SLOTS) */
     const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */

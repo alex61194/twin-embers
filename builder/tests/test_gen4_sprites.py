@@ -137,7 +137,7 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -239,6 +239,101 @@ class SpindaTest(unittest.TestCase):
                                                  for i in (1, 2, 3, 4)))
 
 
+def nitro(magic, kind, body):
+    """A Nitro graphics file with one block."""
+    block = kind + struct.pack("<I", 8 + len(body)) + body
+    return magic + struct.pack("<HHIHH", 0xFEFF, 0x0100, 16 + len(block), 16, 1) + block
+
+
+def narc(members):
+    """A NARC archive of `members`, without names."""
+    data, spans = b"", []
+    for member in members:
+        spans.append((len(data), len(data) + len(member)))
+        data += member + bytes(-len(member) % 4)
+    fat = b"BTAF" + struct.pack("<IHH", 12 + 8 * len(spans), len(spans), 0) + b"".join(
+        struct.pack("<II", *span) for span in spans)
+    fnt = b"BTNF" + struct.pack("<I", 16) + struct.pack("<IHH", 4, 0, 1)
+    img = b"GMIF" + struct.pack("<I", 8 + len(data)) + data
+    return b"NARC" + struct.pack("<HHIHH", 0xFFFE, 0x0100, 16 + len(fat) + len(fnt) + len(img), 16, 3) + fat + fnt + img
+
+
+def scramble_dp(plain, seed):
+    """The inverse of HeartGold's UnscanPokepic_DP: the last word is the seed (and its pixels read back as 0)."""
+    words = list(struct.unpack("<%dH" % (len(plain) // 2), plain))
+    words[-1] = 0
+    out, value = [0] * len(words), seed
+    for i in range(len(words) - 1, -1, -1):
+        out[i] = words[i] ^ (value & 0xFFFF)
+        value = (value * 1103515245 + 24691) & 0xFFFFFFFF
+    return struct.pack("<%dH" % len(out), *out)
+
+
+class TrainerTest(unittest.TestCase):
+    def picture(self, seed):
+        """Two 80x80 frames side by side, rows of 80 bytes, as HeartGold keeps them before scrambling."""
+        return bytes((x * 7 + y * 3 + seed) % 256 for y in range(80) for x in range(80))
+
+    def files(self, cls, seed):
+        plain = self.picture(seed)
+        picture = nitro(b"RGCN", b"RAHC", struct.pack("<HHIIIII", 10, 20, 3, 0, 0, 6400, 0x18)
+                        + scramble_dp(plain, 0xBEEF + seed))
+        palette = nitro(b"RLCN", b"TTLP", struct.pack("<IIII", 3, 0, 32, 0x10)
+                        + struct.pack("<16H", *[(cls * 16 + i) & 0x7FFF for i in range(16)]))
+        return [b"cut", palette, b"cells", b"anim", picture], plain
+
+    def archive(self, classes):
+        members, plains = [], {}
+        for cls in range(classes):
+            files, plains[cls] = self.files(cls, cls)
+            members += files
+        return narc(members), plains
+
+    def test_entry_layout_palette_and_first_frame(self):
+        files, plain = self.files(3, 5)
+        entry = gen4_sprites.trainer_entry(files[4], files[1])
+        self.assertEqual(entry[:8], b"G4T1" + bytes(4))
+        self.assertEqual(struct.unpack_from("<16H", entry, 8), tuple(3 * 16 + i for i in range(16)))
+        self.assertEqual(len(entry), 40 + gen4_sprites.PICTURE)
+        # Row 7 of the first frame is bytes 7*80 .. 7*80+39 of the unscrambled picture.
+        self.assertEqual(entry[40 + 7 * 40:40 + 8 * 40], plain[7 * 80:7 * 80 + 40])
+
+    def test_every_firered_picture_gets_its_class(self):
+        classes = max(gen4_sprites.TRAINER_CLASSES.values()) + 1
+        archive, plains = self.archive(classes)
+        out = dict(gen4_sprites.convert_trainers(archive))
+        self.assertEqual(sorted(out), ["graphics/gen4/trainer/%03d.bin" % pic
+                                       for pic in sorted(gen4_sprites.TRAINER_CLASSES)])
+        brock = out["graphics/gen4/trainer/116.bin"]
+        self.assertEqual(brock[40:80], plains[gen4_sprites.TRAINER_CLASSES[116]][:40])
+
+    def test_player_pictures_are_never_replaced(self):
+        # FireRed's Leaf, Oak and the elite four without a HeartGold picture keep their own.
+        for pic in (112, 114, 132, 136):
+            self.assertNotIn(pic, gen4_sprites.TRAINER_CLASSES)
+
+    def test_a_short_or_wrong_archive_is_refused(self):
+        archive, _ = self.archive(3)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_trainers(archive)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_trainers(b"NOPE" + bytes(40))
+        files, _ = self.files(0, 0)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.trainer_entry(nitro(b"RGCN", b"RAHC", bytes(64)), files[1])
+
+    def test_trainers_come_with_the_download(self):
+        classes = max(gen4_sprites.TRAINER_CLASSES.values()) + 1
+        archive, _ = self.archive(classes)
+        rows = ((0, "trainers", "front", len(archive), hashlib.sha256(archive).hexdigest()),)
+        with patch.object(gen4_sprites.gen4_sources, "FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: archive))
+            self.assertEqual(info["trainers"], len(gen4_sprites.TRAINER_CLASSES))
+            self.assertEqual(len(files), len(gen4_sprites.TRAINER_CLASSES))
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: archive + b"x"))
+            self.assertEqual((files, info["trainers"]), ([], 0))
+
+
 class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
         from firered3ds_builder import gen4_sources
@@ -247,6 +342,7 @@ class SourcesTest(unittest.TestCase):
         self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "unown"}), list(range(1, 28)))
         self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "castform"}), [1, 2, 3])
         self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "spinda"], [("spinda", "spots")])
+        self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "trainers"], [("trainers", "front")])
         species = {row[0] for row in battle}
         self.assertEqual(species, set(range(1, 387)))
         for dex in species:

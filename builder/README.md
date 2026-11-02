@@ -17,6 +17,13 @@ SHA-256 match that list, converts it and adds it to the pack. Nothing is
 uploaded. Files already downloaded are kept in
 `%LOCALAPPDATA%\TwinEmbers\gen4` for the next build.
 
+The same download brings HeartGold's trainer front pictures (one archive,
+`files/a/0/5/8`, also pinned by size and SHA-256): the trainers you battle show
+HeartGold's picture of their class, 70 of FireRed's trainer pictures in all
+(`TRAINER_CLASSES` in `gen4_sprites.py`). Trainers HeartGold has no picture of
+(Lorelei, Agatha, Professor Oak, Leaf and a few classes) keep FireRed's, and so
+does your own back in battle.
+
 The entries are optional: the engine ABI does not cover them, and a species
 whose files could not be had (no network, a file that did not match) keeps
 FireRed's pictures. The sprites remain Nintendo, Game Freak and Creatures'

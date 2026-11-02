@@ -169,6 +169,8 @@ class BuilderWindow(tk.Tk):
         text = "\n\nHeartGold battle sprites: {0} of 386 species.".format(info["species"])
         if info["missing"]:
             text += " The others keep FireRed's pictures (no network, or a file did not match)."
+        if info.get("trainers"):
+            text += "\nHeartGold trainer pictures: {0}.".format(info["trainers"])
         return text
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:

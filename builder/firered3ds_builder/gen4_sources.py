@@ -6,7 +6,8 @@ SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the nationa
 Unown's letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path
 UNOWN_PATH.format(UNOWN_NAMES[letter], side). A Castform form: (1-3, "castform", side, size,
 SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Spinda's spots: (0, "spinda",
-"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them."""
+"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them. The trainer pictures: (0,
+"trainers", "front", size, SHA-256), the archive TRAINERS_PATH."""
 
 REPO = 'pret/pokeheartgold'
 COMMIT = 'b1ce5fd204b3c5b11f023e31a94b23bdb3bbd228'
@@ -17,6 +18,7 @@ UNOWN_NAMES = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
 CASTFORM_PATH = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
 CASTFORM_NAMES = ('normal', 'sun', 'rain', 'ice')
 SPINDA_PATH = 'src/pokepic.c'
+TRAINERS_PATH = 'files/a/0/5/8'
 FILES = (
     (1, 'male', 'front', 765, 'bb1966d420c7877f7b86fe517cd80534382cbafcf9bf196802fc35ceb1ae556c'),
     (1, 'male', 'back', 995, '5659175711a3ddf714596647c10538ad002ed6fcd953ab4ed81ed898d8f8db92'),
@@ -977,6 +979,7 @@ FILES = (
     (3, 'castform', 'front', 787, '605b03795cc9d40d6bed889867e56073ac18179fadf1929e2562d69ab2a2da5c'),
     (3, 'castform', 'back', 712, 'a41d681f9deec18547e0c31545482664fa8cfc003859eca087b45e9cb465ba0e'),
     (0, 'spinda', 'spots', 51363, 'c764681d5c640be1ae55c33570a37168d5b2b2b00898456981579bc40b0426e1'),
+    (0, 'trainers', 'front', 1663908, 'f3d726e4c131e2aa3fbd9a8a236755370768db8edf0970aaeaaaff5b5be37e50'),
     (0, 'icon', 501, 307, 'c772fb205fdd9daab5dac934f575cc3f1de19ab3dbf7a727a19092756d54f7ac'),
     (1, 'icon', 8, 313, '0e3bdf434330a31a63e3337924f97fcc83da3e6d8644e9f7007951e440936859'),
     (2, 'icon', 9, 320, '823d46e3f09fbbed6653d43d376ad226bd086e41d0d5d4a3a15a2c0efed75f1c'),

@@ -21,6 +21,10 @@ Builder reads them from it; nothing of it is kept here).
 And the menu icons, keyed as the port reads them: 0 the egg, 1-386 the
 national dex, 387-413 Unown's letters B to ? (HeartGold's own numbering,
 pokemon_icon_idx.c: dex + 7, the egg 501, Unown's forms 507 on).
+
+And files/a/0/5/8, HeartGold's archive of trainer front pictures (one NARC, five
+files a trainer class), from which the Builder takes the classes it pairs with
+FireRed's trainer pictures (gen4_sprites.TRAINER_CLASSES).
 """
 
 import argparse
@@ -36,6 +40,7 @@ UNOWN_NAMES = [chr(ord('a') + i) for i in range(26)] + ['exclamation_mark', 'que
 CASTFORM = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
 CASTFORM_NAMES = ['normal', 'sun', 'rain', 'ice']
 SPINDA = 'src/pokepic.c'
+TRAINERS = 'files/a/0/5/8'
 UNOWN_LETTERS = 27
 SPECIES = 386
 OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / 'gen4_sources.py'
@@ -70,6 +75,7 @@ def main() -> None:
         for side in ('front', 'back'):
             rows.append((form, 'castform', side, (root / CASTFORM.format(CASTFORM_NAMES[form], side)).read_bytes()))
     rows.append((0, 'spinda', 'spots', (root / SPINDA).read_bytes()))
+    rows.append((0, 'trainers', 'front', (root / TRAINERS).read_bytes()))
     icons = [(0, 501)] + [(dex, dex + 7) for dex in range(1, SPECIES + 1)]
     icons += [(SPECIES + 1 + letter, 507 + letter) for letter in range(UNOWN_LETTERS)]
     for key, index in icons:
@@ -83,7 +89,8 @@ def main() -> None:
              'Unown\'s letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path',
              'UNOWN_PATH.format(UNOWN_NAMES[letter], side). A Castform form: (1-3, "castform", side, size,',
              'SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Spinda\'s spots: (0, "spinda",',
-             '"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them."""',
+             '"spots", size, SHA-256), the C file SPINDA_PATH whose tables give them. The trainer pictures: (0,',
+             '"trainers", "front", size, SHA-256), the archive TRAINERS_PATH."""',
              '',
              f'REPO = {REPO!r}',
              f'COMMIT = {commit!r}',
@@ -94,6 +101,7 @@ def main() -> None:
              f'CASTFORM_PATH = {CASTFORM!r}',
              f'CASTFORM_NAMES = {tuple(CASTFORM_NAMES)!r}',
              f'SPINDA_PATH = {SPINDA!r}',
+             f'TRAINERS_PATH = {TRAINERS!r}',
              'FILES = (']
     lines += [f'    ({dex}, {body!r}, {side!r}, {len(data)}, {hashlib.sha256(data).hexdigest()!r}),'
               for dex, body, side, data in rows]
