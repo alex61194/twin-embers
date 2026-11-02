@@ -158,7 +158,7 @@ int main(void) {
         video = (ROOT / '3ds_port/src/3ds_video.c').read_text()
         draw = function(video, 'DrawObjects')
         start = draw.index('        int x = attr1 & 511, y = attr0 & 255;')
-        end = draw.index('        if (x >= sClipX1', start)
+        end = min(i for i in (draw.find('        if (priority == 3)', start), draw.index('        if (x >= sClipX1', start)) if i >= 0)
         self.run_c('''
 #include <assert.h>
 #include "3ds_effect_oam.h"
@@ -201,6 +201,7 @@ int main(void) {
 #define MAP_NAME_POPUP_HEIGHT 32
 static int sClipX0,sClipX1=400,sClipY0,sClipY1=240,sViewX,sViewY;
 static bool sFieldMoveShowMon,sQuestLogLayout,sMapNamePopup,sBattleTransition;
+static unsigned sCanvasBg0;
 static bool sForestPreview;
 static float sZoom=1.0f;
 static int calls,vx,vy,right;
