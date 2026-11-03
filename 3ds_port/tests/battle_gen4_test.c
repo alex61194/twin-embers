@@ -24,9 +24,11 @@ static const uint16_t sNpcUnfaded[512];
 static uint16_t sNpcPalette[12][16];
 static unsigned sNpcPaletteSets;
 
-int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned *graphicsId, unsigned *frame, const uint16_t **unfaded)
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
+                  unsigned *frame, const uint16_t **unfaded)
 {
-    if (tileNum != sNpcTile || paletteNum != 3)
+    /* The game checks the position; here the person stands at (40, 60). */
+    if (tileNum != sNpcTile || paletteNum != 3 || oamX != 40 || oamY != 60)
         return 0;
     *graphicsId = sNpcGfx;
     *frame = sNpcFrame;
@@ -483,7 +485,7 @@ int main(void)
         sNpcTile = 100;
         sNpcGfx = 21;
         sNpcFrame = 4;
-        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         assert(strcmp(sAsked, "graphics/gen4/npc/021.bin") == 0);
         assert(person.side == 4 && person.tiles[0] == 0x34 && person.tiles[511] == 0x34);
         assert(person.pivotX == 16.0f && person.pivotY == 16.0f && person.scale == 1.0f);
@@ -494,43 +496,44 @@ int main(void)
         {
             CtrGen4Obj again;
 
-            assert(CtrNpc_Match(100 | 3 << 12, 16, 16, &again));
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 16, &again));
             assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
             assert(sNpcPaletteSets == 1);
         }
         /* A person's tenth image is drawn as the first. */
         sNpcFrame = 9;
-        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
         /* Another person takes another slot. */
         sNpcGfx = 22;
         {
             CtrGen4Obj other;
 
-            assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &other) && other.slot != person.slot && sNpcPaletteSets == 2);
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &other) && other.slot != person.slot && sNpcPaletteSets == 2);
         }
-        /* Not a person's tiles or palette: nothing. */
-        assert(!CtrNpc_Match(101 | 3 << 12, 16, 32, &person));
-        assert(!CtrNpc_Match(100 | 4 << 12, 16, 32, &person));
+        /* Not a person's tiles, palette or place: nothing. */
+        assert(!CtrNpc_Match(61, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 101 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 4 << 12, 16, 32, &person));
         /* Entry missing, wrong or too large an id: FireRed's own, and the read is not repeated. */
         sEntrySize = 0;
         sNpcGfx = 30;
-        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         sEntrySize = 40 + 9 * 512;
-        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         sNpcGfx = 31;
         sEntry[4] = 8;
-        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         sNpcGfx = 300;
-        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
         sEntry[4] = 9;
         for (unsigned g = 40; g < 40 + 12; ++g)
         {
             sNpcGfx = g;
-            assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         }
         sNpcGfx = 21;
-        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         /* The player's sheets have as many frames as FireRed's pic table: walking and running, 20; past the last, the
          * first. No frames at all is not an entry. */
         sEntry[4] = 20;
@@ -539,14 +542,14 @@ int main(void)
         sEntrySize = 40 + 20 * 512;
         sNpcGfx = 0;
         sNpcFrame = 15;
-        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x3F);
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x3F);
         assert(strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
         sNpcFrame = 20;
-        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
         sEntry[4] = 0;
         sEntrySize = 40;
         sNpcGfx = 7;
-        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
     }
 
     /* The player's whole pictures: nothing before the pack is open (and asked again once it is); then Ash's in place

@@ -1398,7 +1398,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "0a7262b5b50787cbc524d43006aaf5a6356fdd3b7a1db7648e717160bb7792ad",
+   "sha256": "31332e5fa14652c89b85e85dc07bffd2cae45c7327a4c397b9bf00ba794d2951",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5672,7 +5672,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "9670a505ed819a033f277746cbbd51577d98903266819867c1b5f248ccecef0f",
+   "sha256": "0b4c00c6e136fd3e2abdb36f0d62a856241888d5bf404249bef31f3a70298311",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5680,7 +5680,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "e1a5344253bea288dbaf88b448b18b0d08838120513a576809fd1a04fc469fb7",
+   "sha256": "83e36e714a71500544c444349233096fbf360501a40e2ed2ef27c8e637d407c0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5688,7 +5688,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "8da36b4c2e92943f48aa711914ab383b74c76a3734ddc7e8b15454a9758dddbe",
+   "sha256": "75a04c7ddacd409c798489b1fa5654435137977e3d035db43796a0536f832235",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5969,6 +5969,14 @@
   {
    "path": "patches/pokefirered/0212-player-pictures-from-the-pack.json",
    "sha256": "4029f75bad24a4af4fe1111c24af22dc06f6705e9322c280e286e63ac7adf2f5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0213-field-npc-sprite-position.json",
+   "sha256": "53097ef41af0a0ddab7a4ce5c0404f87c220eb1ec37a0b66f7907fa46038bf92",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

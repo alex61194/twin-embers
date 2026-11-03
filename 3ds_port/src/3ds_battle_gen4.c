@@ -649,13 +649,13 @@ static Npc *NpcLoad(unsigned gfx)
     return &sNpcs[slot];
 }
 
-bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out)
+bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out)
 {
     unsigned gfx = 0, frame = 0;
     const uint16_t *unfaded = NULL;
     Npc *npc;
 
-    if (!CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, &gfx, &frame, &unfaded))
+    if (!CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, attr1 & 511, attr0 & 255, &gfx, &frame, &unfaded))
         return false;
     npc = NpcLoad(gfx);
     if (!npc)

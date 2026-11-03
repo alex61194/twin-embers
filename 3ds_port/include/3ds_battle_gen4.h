@@ -118,10 +118,12 @@ int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
  * OBJ_EVENT_GFX_* of a person, nine 32x32 frames in FireRed's order (down, up, left, then the walking ones) and their
  * 16 colours (the Builder's convert_npc). Match gives the picture an OBJ with this attr2 and size stands for: drawn
  * 1:1, centred across the OBJ, its lowest row on the OBJ's. False: FireRed's own picture is drawn. */
-bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out);
+bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out);
 /* Implemented by the game's object events (event_object_movement.c): the one whose sprite shows these OBJ tiles and
- * palette; its graphics id, the image its animation shows and the game's unfaded palette buffer. 0 for none. */
-int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned *graphicsId, unsigned *frame, const uint16_t **unfaded);
+ * palette at about this OAM position (x 0-511, y 0-255; another sprite may share the tiles and palette); its graphics
+ * id, the image its animation shows and the game's unfaded palette buffer. 0 for none. */
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
+                  unsigned *frame, const uint16_t **unfaded);
 
 /* The player's pictures that FireRed copies out whole (the front picture of the trainer card, the Hall of Fame and a
  * link battle, the Oak intro's picture, the Region Map icon): when the pack has the Builder's own of one

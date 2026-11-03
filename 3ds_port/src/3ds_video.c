@@ -301,9 +301,10 @@ static bool sLayerFadeTint[4];
 static uint32_t sPaletteChanges[PAL_IDS][8];
 static unsigned sUsed;
 
-__attribute__((weak)) bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, struct CtrGen4Obj *out)
+__attribute__((weak)) bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height,
+                                        struct CtrGen4Obj *out)
 {
-    (void)attr2; (void)width; (void)height; (void)out;
+    (void)attr0; (void)attr1; (void)attr2; (void)width; (void)height; (void)out;
     return false;
 }
 
@@ -3349,7 +3350,7 @@ static void DrawObjects(unsigned priority, bool effects)
                && gen4.slot < GEN4_SLOTS && gen4.side * gen4.side * 32 <= GEN4_SLOT;
         /* A person of the field with a picture in the pack (3ds_battle_gen4.h): drawn the same way, on a palette of its own. */
         bool npc = !hg && !sBattle && sFieldLayers && !affine && !color256 && width <= 32 && height <= 32
-                && CtrNpc_Match(attr2, width, height, &gen4) && gen4.slot < GEN4_SLOTS && gen4.slot < NPC_BANKS;
+                && CtrNpc_Match(attr0, attr1, attr2, width, height, &gen4) && gen4.slot < GEN4_SLOTS && gen4.slot < NPC_BANKS;
         C2D_ImageTint npcTint, savedTint = sTint;
         hg = hg || npc;
         float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
