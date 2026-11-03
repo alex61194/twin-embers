@@ -1385,7 +1385,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_text.c",
-   "sha256": "1b9ab4ab9029dca00ab99d230f459057471aa4b4f45656c63ac0b0db09fab4fe",
+   "sha256": "83831344a8c95f45def6f7c6299cbb607def33de292b7d2d0960f2c081628c8b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6008,7 +6008,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe.json",
-   "sha256": "434e41011d8ca253399bbd32b60363eb21c0abcc6d49397fa69b85c0810d9a6c",
+   "sha256": "0f2a68859f04f419039ccf92d69b1de7d02df7a15685b49afa4523fd8e8d0325",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6024,7 +6024,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-00.json",
-   "sha256": "5903753ddc0de6da18fd41270eb9981007dbeca7ad9fc82bc79af2e6b4fdc48a",
+   "sha256": "9eccb5f0c5230ae685f7dccbc8bda3f4bd47a6fa38069829557f5195e8f70578",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6112,7 +6112,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-00.json",
-   "sha256": "ad5cc27158a47a8361dfb5603e6dadc95917816e7a5f2790a0acb83be41fb7cd",
+   "sha256": "98618e37c422035abcf981b7b0191a4e446bf6696083347102b92a7c65afc624",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6297,6 +6297,14 @@
   {
    "path": "patches/pokefirered/0215-player-reflection-and-fly-bird.json",
    "sha256": "a18058168275cc62d3448e7fa38e5692cbe5ebd1210014fa9aad565ad6443842",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0216-lower-screen-european-letters.json",
+   "sha256": "5f4fba0beeb93eeed0fda206daa717886a8dec5317fa0d85390afff241bb1fd3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
