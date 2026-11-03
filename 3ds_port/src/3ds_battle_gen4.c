@@ -587,8 +587,9 @@ int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
 }
 
 /* The field's people (CtrNpc_Match): each person's entry read once and kept while it is on screen, in one of as many
- * slots as the compositor has pictures; the least recently shown goes when a new one comes. */
-#define NPC_FRAMES 9
+ * slots as the compositor has pictures; the least recently shown goes when a new one comes. A person has nine frames,
+ * the player as many as FireRed's pic table (up to 20). */
+#define NPC_FRAMES_MAX 32
 #define NPC_HEADER 40
 #define NPC_FRAME_BYTES 512
 
@@ -620,8 +621,8 @@ static Npc *NpcLoad(unsigned gfx)
     entry = CtrData_Load(path, &size);
     if (!entry)
         return NULL;
-    if (size != NPC_HEADER + NPC_FRAMES * NPC_FRAME_BYTES || memcmp(entry, "G4N1", 4) || entry[4] != NPC_FRAMES
-        || entry[5] != 32)
+    if (size < NPC_HEADER || memcmp(entry, "G4N1", 4) || !entry[4] || entry[4] > NPC_FRAMES_MAX || entry[5] != 32
+        || size != NPC_HEADER + entry[4] * (uint32_t)NPC_FRAME_BYTES)
     {
         CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
         free(entry);
@@ -660,8 +661,8 @@ bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *o
     if (!npc)
         return false;
     npc->stamp = ++sNpcTick;
-    if (frame >= NPC_FRAMES)
-        frame = 0;                  /* FireRed's tenth image (a bow) is not drawn */
+    if (frame >= npc->entry[4])
+        frame = 0;                  /* a person's tenth image (a bow) is not drawn */
     (void)width;
     out->slot = (unsigned)(npc - sNpcs);
     out->tiles = npc->entry + NPC_HEADER + frame * NPC_FRAME_BYTES;

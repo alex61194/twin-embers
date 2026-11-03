@@ -31,6 +31,13 @@
   Backgrounds: **LibertyTwins**, **princess-phoenix**, **carchagui**, **aveontrainer**, **WesleyFG**,
   **kWharever**, **worldslayer608** and **knizz** (Battle Backgrounds Patch FR). The characters belong to
   Nintendo, Game Freak and Creatures; credit is not a license grant.
+- **Emerald Lens, by ElvieBlooms** (https://github.com/ElvieBlooms/emerald_lens, MIT for its code; its looks are
+  shared with credit) — the optional player looks, downloaded by the user's Builder at the commit pinned in
+  `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. Ash (HGSS style) by
+  **PKMNTrainerRick**; Green (HGSS style) compiled by **ChromeValiant**, art by **Poltergeist/Coffee Cup**,
+  **Mid117**, **Wolfang62** and **aethestode**; Green's back and front picture from her Gen 3 look there, compiled
+  from **virdiangrass** and Team Aqua's asset repo, with edits by **Elvie**. The characters belong to Nintendo,
+  Game Freak and Creatures; credit is not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

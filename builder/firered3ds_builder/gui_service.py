@@ -82,6 +82,7 @@ def build_private_pack(
     gen4: bool = False,
     npcs: bool = False,
     backgrounds: bool = False,
+    player: bool = False,
     downloader: gen4_sprites.Downloader | None = None,
 ) -> dict:
     """Build with the original engine; publish only a fully verified pack.
@@ -114,7 +115,8 @@ def build_private_pack(
         _cancel(cancel)
         sprites = None
         groups = tuple(group for flag, group in ((gen4, gen4_sprites.GROUP_POKEMON), (npcs, gen4_sprites.GROUP_NPC),
-                                                 (backgrounds, gen4_sprites.GROUP_BG)) if flag)
+                                                 (backgrounds, gen4_sprites.GROUP_BG),
+                                                 (player, gen4_sprites.GROUP_PLAYER)) if flag)
         if groups:
             _stage(on_progress, "sprites", "Downloading the optional pictures...")
             extra, sprites = gen4_sprites.pack_files(
@@ -206,5 +208,5 @@ def build_private_pack(
             "bytes": output_path.stat().st_size,
             "rom_sha1": rom.sha1,
             "gen4": sprites,
-            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds},
+            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds, "player": player},
         }

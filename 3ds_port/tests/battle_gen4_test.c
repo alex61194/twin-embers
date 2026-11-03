@@ -468,7 +468,7 @@ int main(void)
             assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
             assert(sNpcPaletteSets == 1);
         }
-        /* FireRed's tenth image is drawn as the first. */
+        /* A person's tenth image is drawn as the first. */
         sNpcFrame = 9;
         assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
         /* Another person takes another slot. */
@@ -501,6 +501,22 @@ int main(void)
         }
         sNpcGfx = 21;
         assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        /* The player's sheets have as many frames as FireRed's pic table: walking and running, 20; past the last, the
+         * first. No frames at all is not an entry. */
+        sEntry[4] = 20;
+        for (unsigned f = 0; f < 20; ++f)
+            memset(sEntry + 40 + f * 512, (int)(0x30 + f), 512);
+        sEntrySize = 40 + 20 * 512;
+        sNpcGfx = 0;
+        sNpcFrame = 15;
+        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x3F);
+        assert(strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
+        sNpcFrame = 20;
+        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        sEntry[4] = 0;
+        sEntrySize = 40;
+        sNpcGfx = 7;
+        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
     }
 
     puts("battle_gen4_test: ok");

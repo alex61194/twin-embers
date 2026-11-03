@@ -37,6 +37,7 @@ class BuilderWindow(tk.Tk):
         self.gen4 = tk.BooleanVar(value=False)
         self.npcs = tk.BooleanVar(value=False)
         self.backgrounds = tk.BooleanVar(value=False)
+        self.player = tk.BooleanVar(value=False)
 
         style = ttk.Style(self)
         # Clam honors the palette on Windows instead of reverting to grey
@@ -133,6 +134,11 @@ class BuilderWindow(tk.Tk):
             build_card, variable=self.backgrounds,
             text="New battle backgrounds: 14 scenes by LibertyTwins and others (optional, needs internet)")
         self.backgrounds_check.grid(row=8, column=0, sticky="w", pady=(4, 0))
+        self.player_check = ttk.Checkbutton(
+            build_card, variable=self.player,
+            text="You as Ash and Green: HGSS-style looks on the map and in battle, from Emerald Lens "
+                 "(optional, needs internet)")
+        self.player_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -191,6 +197,8 @@ class BuilderWindow(tk.Tk):
             lines.append("New people on the map: {0} of 74.".format(info["npcs"]))
         if info.get("backgrounds"):
             lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
+        if info.get("player"):
+            lines.append("You as Ash and Green: {0} pictures.".format(info["player"]))
         return "\n\n" + "\n".join(lines) if lines else ""
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
@@ -240,7 +248,8 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check):
+                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check,
+                       self.player_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
         if busy:
@@ -265,6 +274,7 @@ class BuilderWindow(tk.Tk):
                     gen4=self.gen4.get(),
                     npcs=self.npcs.get(),
                     backgrounds=self.backgrounds.get(),
+                    player=self.player.get(),
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))

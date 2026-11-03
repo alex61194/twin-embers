@@ -60,11 +60,14 @@ each into at most 15 colours (BGR555) and transparency.
 bg/NNN.bin (NNN = FireRed's BATTLE_TERRAIN_*): b"G4G1", u16 tiles, u16 0, u16 x 16 the palette (BGR555, colour 0
 unused), then the tiles (4 bits a pixel, FireRed's own layout, 32 bytes each) and the 64x32 tile map (two 32x32
 screen blocks, entries as FireRed's BG3 reads them, palette 2), ready for the VRAM the battle scene is drawn from.
-A scene is 240x112 pixels; the map repeats its first row above it and its last columns on either side.
+A scene is 240x112 pixels; around it the map mirrors it with flipped tiles.
 
-npc/NNN.bin (NNN = FireRed's OBJ_EVENT_GFX_*): b"G4N1", u8 9 frames, u8 32 (their size), u16 0, u16 x 16 the palette
-(BGR555, colour 0 unused), then nine 32x32 frames in FireRed's order (down, up, left, then the walking ones), each as
-16 tiles of 4 bits a pixel, row by row of tiles: what the field draws a person from.
+npc/NNN.bin (NNN = FireRed's OBJ_EVENT_GFX_*): b"G4N1", u8 frames (9 for a person; the player's as many as FireRed's pic
+table: 20 walking and running, 12 surfing or fishing, 6 for the VS Seeker on the bike), u8 32 (their size), u16 0,
+u16 x 16 the palette (BGR555, colour 0 unused), then the 32x32 frames in FireRed's order (down, up, left, then the
+walking ones), each as 16 tiles of 4 bits a pixel, row by row of tiles: what the field draws a person from.
+The player's back and front picture (Ash's and Green's, from Emerald Lens) are back/000-001.bin and
+trainer/135-136.bin: their 64x64 frames enlarged as pixel art, 1.5 times for the back and 1.25 for the front.
 
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
@@ -306,8 +309,55 @@ NPC_FILES = (
     (91, "npc", "assets/npcs/community/gen3/frlg/GYM_GUY.png", 2570,
      "be50e7bb159d3b15975de2fc5885bb93e2847fbf1587aaf1c949e000c7651a92"),
 )
-GROUP_POKEMON, GROUP_NPC, GROUP_BG = "pokemon", "npc", "bg"
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG)
+# The player, as Ash (for Red) and Green (for Leaf): Emerald Lens' HGSS-style looks, by PKMNTrainerRick (Ash) and
+# compiled by ChromeValiant (Green), with Green's Gen 3 look ("Big Puff") for her back and front, which her HGSS look
+# does not draw. Pinned like the rest: ("boy" or "girl", "player", path, size, SHA-256). Each sheet's frames are in
+# FireRed's pic table order; PLAYER_SHEETS gives each the OBJ_EVENT_GFX_* it draws (Leaf's are Red's plus 7).
+PLAYER_REPO = "ElvieBlooms/emerald_lens"
+PLAYER_COMMIT = "36a945a5ed4d1efef24449aab71cc04f067ba4fe"
+PLAYER_FILES = (
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/walk.png", 5415,
+     "2dc1442d2d082fbdd6450f147bed0222b2a770f5080a9ef9785cd917e804bc6f"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/bike.png", 2650,
+     "b0682b395a7cf91f2a9a4ecbebef3b39e2de7988894f5976036101ce8fbb0dea"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/surf.png", 1970,
+     "4e1a4cb313db08400831181ebc69178c01e411a1731fde1d500495f967039dc2"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/fishing.png", 4426,
+     "cea7677de4382786f0dbfeea029a423c208fae6f16077b13072339a69a2d90a1"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/fieldMove.png", 1273,
+     "7b545868d459ae62f60c9abc38c310f2dbe7981d69ccb278d6036c1a357b1aac"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/vsSeekerBike.png", 862,
+     "52f2568567cc072b8405df9235b0cf68105199a9c5fabe14c04f8de3b328baf8"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/back.png", 6181,
+     "1ce1e780a245fd9aa3cb3d6a797890a2143bab5d781ad3046c952cff7874a7d8"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/front.png", 1975,
+     "975beeb274d2d07df74af63fc6b6348909d6c5d4a4ef18fbfa65309b9a9086dc"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/walk.png", 3784,
+     "5151530a52e432d7d465671272d1a3ff3468ebf615b4f437cf2a566da7f49a20"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/bike.png", 1986,
+     "39539a15291cf8e557fad2e2217bad20bcc026d07db743aeebbc0c78d5b213b9"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/surf.png", 1439,
+     "d0f4656dcdf48ad48a6656df43d9c6bf88bff3ba286e1b7ff579ae109e048a54"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/fishing.png", 3329,
+     "328ea9352d000a22b72f11798aa11108ce71510a97a66cf46185a1113b361a19"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/fieldMove.png", 867,
+     "dbc6c87a2b817d4097e9de52ea4186408656865eaf0e1fcfbc3882485ce2b6dc"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/vsSeekerBike.png", 722,
+     "d6129f754332c8c688f97cacd4a594328d62add941f94d0f309b6e9ab59343d8"),
+    ("girl", "player", "assets/sprites/green/gen3/frlg/back.png", 5182,
+     "7515b4f3ba55b979f21fa80c638490c38dd72b92b7921317cadbaa2e956a6f37"),
+    ("girl", "player", "assets/sprites/green/gen3/frlg/front.png", 1840,
+     "07e5418d6212cc10d4442c7baaa540ef065c208c2431c25d600c64508661b803"),
+)
+# Sheet name: (the OBJ_EVENT_GFX_* of Red it draws, its frames). The field move sheet is also the VS Seeker's (both
+# take FireRed's "item" pictures).
+PLAYER_SHEETS = {"walk": ((0,), 20), "bike": ((1,), 9), "surf": ((2,), 12), "fieldMove": ((3, 5), 9),
+                 "fishing": ((4,), 12), "vsSeekerBike": ((6,), 6)}
+PLAYER_GFX = {"boy": 0, "girl": 7}
+PLAYER_BACK = {"boy": 0, "girl": 1}           # TRAINER_BACK_PIC_RED, _LEAF
+PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
+GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER = "pokemon", "npc", "bg", "player"
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER)
 BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
@@ -659,50 +709,78 @@ def scale3x(rows: list[list[int]]) -> list[list[int]]:
     return out
 
 
-def enlarge_back(frame: list[list[int]]) -> list[list[int]]:
-    """An 80x80 frame of indices as the 104x104 picture the port shows (BACK_SHOWN pixels, centred)."""
+def enlarge(frame: list[list[int]], shown: int, size: int) -> list[list[int]]:
+    """A square frame of indices enlarged as pixel art (Scale3x, then every so many pixels) to `shown` pixels, centred
+    on a `size` x `size` picture."""
     big = scale3x(frame)
-    step = len(big) / BACK_SHOWN
-    picture = [[0] * BACK_SIZE for _ in range(BACK_SIZE)]
-    edge = (BACK_SIZE - BACK_SHOWN) // 2
-    for y in range(BACK_SHOWN):
+    step = len(big) / shown
+    picture = [[0] * size for _ in range(size)]
+    edge = (size - shown) // 2
+    for y in range(shown):
         source = big[int((y + 0.5) * step)]
-        for x in range(BACK_SHOWN):
+        for x in range(shown):
             picture[edge + y][edge + x] = source[int((x + 0.5) * step)]
     return picture
 
 
+def enlarge_back(frame: list[list[int]]) -> list[list[int]]:
+    """An 80x80 frame of indices as the 104x104 picture the port shows (BACK_SHOWN pixels, centred); a 64x64 one, drawn
+    for the GBA, 1.5 times as large (as the battle shows FireRed's)."""
+    return enlarge(frame, BACK_SHOWN if len(frame) == SIZE else len(frame) * 3 // 2, BACK_SIZE)
+
+
 def convert_back(strip: bytes) -> bytes:
-    """A fan-made back's pack entry from its 400x80 RGBA strip of five 80x80 frames, each enlarged to 104x104."""
+    """A back's pack entry from its five frames, each enlarged to 104x104: a fan-made HGSS-style back is a 400x80 RGBA
+    strip of five 80x80 frames, an Emerald Lens one a 64x320 column of five 64x64 frames (FireRed's own size)."""
     width, height, _, rows = read_png(strip)
-    if (width, height) != (BACK_FRAMES * SIZE, SIZE) or not isinstance(rows[0][0], tuple):
-        raise Gen4Error("a back is an RGBA strip of five 80x80 frames")
+    if (width, height) == (BACK_FRAMES * SIZE, SIZE):
+        side, across = SIZE, True
+    elif (width, height) == (64, BACK_FRAMES * 64):
+        side, across = 64, False
+    else:
+        raise Gen4Error("a back is an RGBA strip of five 80x80 frames or a column of five 64x64 ones")
+    if not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a back is an RGBA PNG")
     palette, indices = quantize([pixel for row in rows for pixel in row])
     frames = b""
     for frame in range(BACK_FRAMES):
-        grid = [indices[y * width + frame * SIZE:y * width + frame * SIZE + SIZE] for y in range(SIZE)]
+        left, top = (frame * side, 0) if across else (0, frame * side)
+        grid = [indices[(top + y) * width + left:(top + y) * width + left + side] for y in range(side)]
         for line in enlarge_back(grid):
             frames += bytes(line[x] | line[x + 1] << 4 for x in range(0, BACK_SIZE, 2))
     colours = (palette + [0] * 16)[:16]
     return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
-def convert_npc(sheet: bytes) -> bytes:
-    """A person's pack entry from its 32x288 RGBA sheet of nine 32x32 frames: one palette of 15 colours (the rarest
-    folded into their nearest, as for the backs) and each frame as 4x4 tiles."""
+def convert_front(picture: bytes) -> bytes:
+    """A trainer picture's pack entry (as HeartGold's, 80x80) from a 64x64 RGBA one drawn for the GBA, enlarged 1.25
+    as pixel art to fill it."""
+    width, height, _, rows = read_png(picture)
+    if (width, height) != (64, 64) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a front picture is a 64x64 RGBA PNG")
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    grid = [indices[y * 64:y * 64 + 64] for y in range(64)]
+    frame = b"".join(bytes(line[x] | line[x + 1] << 4 for x in range(0, SIZE, 2)) for line in enlarge(grid, SIZE, SIZE))
+    return TRAINER_MAGIC + bytes(4) + struct.pack("<16H", *(palette + [0] * 16)[:16]) + frame
+
+
+def convert_npc(sheet: bytes, count: int = NPC_FRAMES) -> bytes:
+    """A person's pack entry from its 32x288 RGBA sheet of nine 32x32 frames (the player's sheets have `count` of
+    them): one palette of 15 colours (the rarest folded into their nearest, as for the backs) and each frame as 4x4
+    tiles."""
     width, height, _, rows = read_png(sheet)
-    if (width, height) != (32, 32 * NPC_FRAMES) or not isinstance(rows[0][0], tuple):
-        raise Gen4Error("a person is a 32x288 RGBA sheet of nine 32x32 frames")
+    if (width, height) != (32, 32 * count) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a person is a 32-wide RGBA sheet of %d 32x32 frames" % count)
     palette, indices = quantize([pixel for row in rows for pixel in row])
     frames = b""
-    for frame in range(NPC_FRAMES):
+    for frame in range(count):
         for ty in range(4):
             for tx in range(4):
                 for y in range(8):
                     base = (frame * 32 + ty * 8 + y) * 32 + tx * 8
                     frames += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
     colours = (palette + [0] * 16)[:16]
-    return NPC_MAGIC + bytes([NPC_FRAMES, 32, 0, 0]) + struct.pack("<16H", *colours) + frames
+    return NPC_MAGIC + bytes([count, 32, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
 def convert_bg(scene: bytes) -> bytes:
@@ -784,7 +862,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg", "npc"):
+    if row[1] in ("back", "bg", "npc", "player"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -807,6 +885,8 @@ def file_name(row: tuple) -> str:
         return "bg_{:02d}.png".format(row[0])
     if row[1] == "npc":
         return "npc_{:03d}.png".format(row[0])
+    if row[1] == "player":
+        return "player_{}_{}".format(row[0], row[2].rsplit("/", 1)[1])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -815,19 +895,23 @@ def file_url(row: tuple) -> str:
         return URL.format(repo=BACK_REPO, commit=BACK_COMMIT, path=source_path(row))
     if row[1] in ("bg", "npc"):
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
+    if row[1] == "player":
+        return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
 
 
 def all_files(groups: tuple = GROUPS) -> tuple:
     """Every file the download may fetch for the groups asked: HeartGold's (pret's gen4_sources.FILES and the fan-made
-    backs), the field's people, the battle scenes."""
+    backs), the field's people, the battle scenes, the player (whose backs then take the fan-made ones' place)."""
     rows: tuple = ()
     if GROUP_POKEMON in groups:
-        rows += tuple(gen4_sources.FILES) + BACK_FILES
+        rows += tuple(gen4_sources.FILES) + (BACK_FILES if GROUP_PLAYER not in groups else ())
     if GROUP_NPC in groups:
         rows += NPC_FILES
     if GROUP_BG in groups:
         rows += BG_FILES
+    if GROUP_PLAYER in groups:
+        rows += PLAYER_FILES
     return rows
 
 
@@ -917,6 +1001,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     backs = [row for row in rows if row[1] == "back"]
     scenes = [row for row in rows if row[1] == "bg"]
     people = [row for row in rows if row[1] == "npc"]
+    player = [row for row in rows if row[1] == "player"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -951,6 +1036,20 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     # A person whose sheet could not be had keeps FireRed's picture; the others are drawn.
     npc_files = [("%s%03d.bin" % (NPC_PREFIX, row[0]), convert_npc(got[row[:3]])) for row in people if row[:3] in got]
     files += npc_files
+    # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
+    player_files = []
+    for row in (row for row in player if row[:3] in got):
+        sheet = row[2].rsplit("/", 1)[1][:-4]
+        data = got[row[:3]]
+        if sheet in PLAYER_SHEETS:
+            gfx, count = PLAYER_SHEETS[sheet]
+            entry = convert_npc(data, count)
+            player_files += [("%s%03d.bin" % (NPC_PREFIX, PLAYER_GFX[row[0]] + red), entry) for red in gfx]
+        elif sheet == "back":
+            player_files.append(("%s%03d.bin" % (BACK_PREFIX, PLAYER_BACK[row[0]]), convert_back(data)))
+        elif sheet == "front":
+            player_files.append(("%s%03d.bin" % (TRAINER_PREFIX, PLAYER_FRONT[row[0]]), convert_front(data)))
+    files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
-                   "downloaded": downloaded}
+                   "player": len(player_files), "downloaded": downloaded}

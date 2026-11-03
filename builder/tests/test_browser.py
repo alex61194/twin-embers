@@ -28,14 +28,17 @@ class Gen4DownloadsTest(unittest.TestCase):
     def test_every_listed_file_once_from_the_pinned_commit(self):
         rows = browser.gen4_downloads()
         listed = gen4_sprites.all_files()
-        self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.BACK_FILES) + len(gen4_sprites.NPC_FILES)
-                         + len(gen4_sprites.BG_FILES))
+        # Everything at once: the player's backs take the place of the fan-made ones.
+        self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.NPC_FILES) + len(gen4_sprites.BG_FILES)
+                         + len(gen4_sprites.PLAYER_FILES))
         self.assertEqual(len({name for _, name in rows}), len(rows))
         prefix = f"https://raw.githubusercontent.com/{gen4_sources.REPO}/{gen4_sources.COMMIT}/"
         backs = f"https://raw.githubusercontent.com/{gen4_sprites.BACK_REPO}/{gen4_sprites.BACK_COMMIT}/"
         scenes = f"https://raw.githubusercontent.com/{gen4_sprites.BG_REPO}/{gen4_sprites.BG_COMMIT}/"
+        looks = f"https://raw.githubusercontent.com/{gen4_sprites.PLAYER_REPO}/{gen4_sprites.PLAYER_COMMIT}/"
         for (url, name), row in zip(rows, listed):
-            self.assertTrue(url.startswith({"back": backs, "bg": scenes, "npc": scenes}.get(row[1], prefix)))
+            self.assertTrue(url.startswith({"back": backs, "bg": scenes, "npc": scenes, "player": looks}.get(row[1],
+                                                                                                           prefix)))
             self.assertTrue(url.endswith(gen4_sprites.source_path(row)))
             self.assertEqual(name, gen4_sprites.file_name(row))
         json.dumps(rows)  # plain lists of strings: they cross into JavaScript as they are
@@ -101,7 +104,7 @@ class SyntheticBuildTest(unittest.TestCase):
             info = browser.build(str(self.root / "rom.gba"), str(out), str(self.folder))
         self.assertEqual(out.read_bytes(), self.desktop(True))
         self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "trainers": 0, "backs": 0, "backgrounds": 0,
-                                       "npcs": 0, "downloaded": 0})
+                                       "npcs": 0, "player": 0, "downloaded": 0})
         with PakReader(out, self.abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
             self.assertEqual(reader.verify(), 4)
 
@@ -110,7 +113,7 @@ class SyntheticBuildTest(unittest.TestCase):
         (self.folder / "001_male_front.png").unlink()
         info = browser.build(str(self.root / "rom.gba"), str(self.root / "web.pak"), str(self.folder))
         self.assertEqual(info["gen4"], {"species": 0, "missing": [1, 2], "icons": False, "trainers": 0, "backs": 0,
-                                       "backgrounds": 0, "npcs": 0, "downloaded": 0})
+                                       "backgrounds": 0, "npcs": 0, "player": 0, "downloaded": 0})
         self.assertEqual(info["entries"], 2)
 
     def test_never_uses_the_network(self):
