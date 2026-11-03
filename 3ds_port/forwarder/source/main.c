@@ -3,7 +3,8 @@
 // Adapted from the forwarder of ZallaxDev's pokeemerald-3Ds-dualscreen
 // (3ds_port/forwarder, MIT; see licenses/ZallaxDev-MIT.txt and NOTICE.md).
 //
-// Installed once as a CIA, it starts sdmc:/3ds/twinembers/twinembers.3dsx, so
+// Installed once as a CIA, it starts sdmc:/3ds/twinembers/twinembers.3dsx (or, when that is missing,
+// twinembers-es.3dsx, the Spanish game as the release names it), so
 // updating the game only ever replaces the 3DSX. It asks Luma3DS's hb:ldr to
 // load that file, makes its own title the one Luma loads 3DSX files through
 // (no Homebrew Launcher title has to be installed) and restarts itself, so Luma
@@ -21,8 +22,8 @@
 
 #include "3ds_forwarder.h"
 
-#define TARGET_SD_PATH "/3ds/twinembers/twinembers.3dsx"
-#define TARGET_ARGV0   "sdmc:" TARGET_SD_PATH
+// The games it starts, the first one found: the usual name, then the Spanish game's release name.
+static const char *const kTargets[] = {"/3ds/twinembers/twinembers.3dsx", "/3ds/twinembers/twinembers-es.3dsx"};
 #define PACK_PATH      "sdmc:/3ds/twinembers/twinembers.pak"
 #ifndef TWIN_EMBERS_VERSION
 #define TWIN_EMBERS_VERSION "?"
@@ -79,6 +80,7 @@ static bool IsLuma(void)
 // What the shortcut needs before it can hand over: Luma3DS's hb:ldr, the game and its pack.
 typedef struct {
     bool luma, game, pack;
+    const char *target;     // the game found (its SD path), or the usual name when none is
 } Checks;
 
 static bool FileExists(const char *path)
@@ -91,15 +93,28 @@ static Checks Check(void)
 {
     Checks c;
     c.luma = IsLuma() && LUMA_SHARED_CONFIG->useHbldr;
-    c.game = FileExists(TARGET_ARGV0);
+    c.game = false;
+    c.target = kTargets[0];
+    for (unsigned i = 0; i < sizeof(kTargets) / sizeof(kTargets[0]) && !c.game; ++i)
+    {
+        char path[64];
+        snprintf(path, sizeof(path), "sdmc:%s", kTargets[i]);
+        if (FileExists(path))
+        {
+            c.game = true;
+            c.target = kTargets[i];
+        }
+    }
     c.pack = FileExists(PACK_PATH);
     return c;
 }
 
 // Prepares hb:ldr and Luma's 3DSX title; on success main() returns and
 // libctru's chainloader restarts this title, which Luma loads as the game.
-static Result Forward(u64 *chainTid)
+static Result Forward(const char *target, u64 *chainTid)
 {
+    char argv0[64];
+    snprintf(argv0, sizeof(argv0), "sdmc:%s", target);
     u64 selfTid;
     if (R_FAILED(APT_GetProgramID(&selfTid)))
         selfTid = FORWARDER_TID;
@@ -114,9 +129,9 @@ static Result Forward(u64 *chainTid)
     Result res = svcConnectToPort(&hbldr, "hb:ldr");
     if (R_SUCCEEDED(res))
     {
-        res = HbldrSetTarget(hbldr, TARGET_SD_PATH);
+        res = HbldrSetTarget(hbldr, target);
         if (R_SUCCEEDED(res))
-            res = HbldrSetArgv(hbldr, TARGET_ARGV0, previousTid);
+            res = HbldrSetArgv(hbldr, argv0, previousTid);
         svcCloseHandle(hbldr);
     }
     if (R_FAILED(res))
@@ -147,7 +162,9 @@ static void Explain(Checks c, Result res)
 {
     printf("\n " C_TITLE "TWIN EMBERS  v" TWIN_EMBERS_VERSION "\n " C_DIM "HOME Menu shortcut\n\n");
     Line(c.luma, "Luma3DS");
-    Line(c.game, "Game:  /3ds/twinembers/twinembers.3dsx");
+    char game[64];
+    snprintf(game, sizeof(game), "Game:  %s", c.target);
+    Line(c.game, game);
     Line(c.pack, "Pack:  /3ds/twinembers/twinembers.pak");
     printf("\n" C_TEXT);
     if (!c.luma)
@@ -156,7 +173,8 @@ static void Explain(Checks c, Result res)
                " the Homebrew Launcher.\n");
     else if (!c.game)
         printf(" The game is not on the SD card.\n\n"
-               " Copy twinembers.3dsx from the latest release\n"
+               " Copy twinembers.3dsx (or the Spanish game,\n"
+               " twinembers-es.3dsx) from the latest release\n"
                " to the folder above:\n\n"
                "   " C_TITLE "github.com/alex61194/twin-embers" C_TEXT "\n");
     else if (!c.pack)
@@ -181,7 +199,7 @@ int main(void)
 
     if (c.luma && c.game && c.pack)
     {
-        res = Forward(&chainTid);
+        res = Forward(c.target, &chainTid);
         if (R_SUCCEEDED(res))
         {
             aptSetChainloader(chainTid, MEDIATYPE_SD);
