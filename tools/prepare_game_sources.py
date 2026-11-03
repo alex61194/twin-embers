@@ -12,6 +12,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import es_assets
+
 ROOT = Path(__file__).resolve().parents[1]
 ASSET = re.compile(
     r'"((?:graphics|data)/[^"\n]+\.(?:1bpp|4bpp|8bpp|gbapal|lz|fwlatfont|hwlatfont|fwjpnfont|bin))"'
@@ -54,6 +56,15 @@ def main() -> None:
     missing = [name for name in assets + map_headers if not (ROOT / name).is_file()]
     if missing:
         raise FileNotFoundError(f"{len(missing)} generated assets missing; first: {missing[:5]}")
+    if es_assets.spanish():
+        # The Spanish game's pictures have their own sizes; the compiler needs the Spanish one (the bytes come from the pack).
+        spanish = es_assets.files()
+        resized = 0
+        for name in assets:
+            if name in spanish and spanish[name][0] != (ROOT / name).stat().st_size:
+                (ROOT / name).write_bytes(bytes(spanish[name][0]))
+                resized += 1
+        print(f"sized {resized} assets like the Spanish game's")
     print(f"prepared {len(assets)} FireRed C assets and {len(map_headers)} map includes")
 
 
