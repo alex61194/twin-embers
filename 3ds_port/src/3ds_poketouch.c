@@ -25,6 +25,7 @@
 #include "twin_font.h"
 #include "3ds_ui_theme.h"
 #include "3ds_lang.h"
+#include "battle_flat_icons.h"
 
 /* Game bridge (src/ctr_poketouch.c): an item's 24x24 icon decompressed from
  * FireRed's own icon table. */
@@ -1090,13 +1091,17 @@ static void Button(int id, const CtrPokeTouchView *v)
         ItemArt(ICON_BIKE, v->bikeItem, r->x + (r->w - 20) / 2, fy + 15 + (fh - 18 - 20) / 2, on);
         break;
     case PT_RUN:
-        UiText(CTR_TR("RUN", "CORRE"), r->x + 7, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + 34);
+        /* The battle menu's RUN shoe, small, beside the switch. */
+        for (int v2 = 0; v2 < FLATSHOESMALL_H; ++v2)
+            for (int u = 0; u < FLATSHOESMALL_W; ++u)
+                if (kFlatShoeSmall[v2 * FLATSHOESMALL_W + u])
+                    Px(r->x + 5 + u, fy + (fh - FLATSHOESMALL_H) / 2 + v2, kFlatShoeSmall[v2 * FLATSHOESMALL_W + u]);
         EmSwitch(r->x + r->w - 33, fy + (fh - 12) / 2, selected);
         break;
     default: {
         char name[16] = {0};
         const char *label = id == PT_POKEDEX ? "POK\xc3\xa9" "DEX" : id == PT_POKEMON ? "POK\xc3\xa9" "MON" : id == PT_BAG ? CTR_TR("BAG", "MOCHILA")
-                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR") : id == PT_OPTIONS ? CTR_TR("OPTION", "OPCIONES") : name;
+                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR") : id == PT_OPTIONS ? CTR_TR("OPTION", "AJUSTES") : name;
 
         if (id == PT_CARD) {
             /* The player's name (uppercase), as the game's other labels. */
