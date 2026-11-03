@@ -119,6 +119,11 @@ class UniStoreTest(unittest.TestCase):
         self.assertEqual(game[0], {'type': 'mkdir', 'directory': 'sdmc:/3ds/twinembers'})
         self.assertEqual(game[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers.3dsx',
                                    'output': 'sdmc:/3ds/twinembers/twinembers.3dsx'})
+        # The Spanish game, for a pack from the Spanish ROM: the same place, so the forwarder starts it too.
+        spanish = entry['twinembers.3dsx (Spanish)']
+        self.assertEqual(spanish[0], game[0])
+        self.assertEqual(spanish[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers-es.3dsx',
+                                      'output': 'sdmc:/3ds/twinembers/twinembers.3dsx'})
         cia = entry['HOME Menu forwarder (CIA)']
         self.assertEqual([a['type'] for a in cia], ['downloadFile', 'installCia', 'deleteFile'])
         self.assertEqual(cia[0]['file'], RELEASES + 'TwinEmbers-Forwarder.cia')
@@ -176,9 +181,12 @@ class PageTest(unittest.TestCase):
 
     def test_page_and_release_agree_on_the_supported_rom(self):
         sys.path.insert(0, str(ROOT / 'builder'))
-        from firered3ds_builder.rom import SUPPORTED_SHA1, ROM_SIZE
+        from firered3ds_builder.rom import SUPPORTED_ROMS, ROM_SIZE
         app = self.read('app.js')
-        self.assertIn(f"const ROM_SHA1 = '{SUPPORTED_SHA1}';", app)
+        # Every ROM the Builder takes, each with the game its pack is for.
+        games = {'en': 'twinembers.3dsx', 'es': 'twinembers-es.3dsx'}
+        for sha1, language in SUPPORTED_ROMS.items():
+            self.assertRegex(app, rf"'{sha1}': {{ name: '[^']+', game: '{games[language]}' }}")
         self.assertIn('const ROM_SIZE = 16 * 1024 * 1024;', app)
         self.assertEqual(ROM_SIZE, 16 * 1024 * 1024)
         self.assertIn(f"const RELEASES = '{RELEASES}';", app)

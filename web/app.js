@@ -3,10 +3,13 @@
 'use strict';
 
 const ROM_SIZE = 16 * 1024 * 1024;
-const ROM_SHA1 = '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc';
+// The ROMs the Builder takes: each makes the pack for its own .3dsx (the Spanish one, twinembers-es.3dsx).
+const ROMS = {
+  '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc': { name: 'FireRed (USA)', game: 'twinembers.3dsx' },
+  'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: 'Rojo Fuego (Spain)', game: 'twinembers-es.3dsx' },
+};
 const RELEASES = 'https://github.com/alex61194/twin-embers/releases/latest/download/';
 const FORWARDER_URL = RELEASES + 'TwinEmbers-Forwarder.cia';
-const GAME_URL = RELEASES + 'twinembers.3dsx';
 const UNISTORE_URL = new URL('twinembers.unistore', location.href).href;
 
 const $ = (id) => document.getElementById(id);
@@ -64,19 +67,21 @@ async function chooseRom(file) {
   }
   if (file.size !== ROM_SIZE) {
     setPill('Not a 16 MiB FireRed ROM', 'bad');
-    showError(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA), revision 0; trimmed files are not supported.`);
+    showError(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA) or Edición Rojo Fuego (Spain), revision 0; trimmed files are not supported.`);
     return;
   }
   setPill('Checking…', 'busy');
   const data = await file.arrayBuffer();
   if (crypto.subtle) {
     const sha1 = hex(await crypto.subtle.digest('SHA-1', data));
-    if (sha1 !== ROM_SHA1) {
+    const rom = ROMS[sha1];
+    if (!rom) {
       setPill('Unsupported ROM', 'bad');
-      showError(`SHA-1 ${sha1} is not FireRed (USA) revision 0 (${ROM_SHA1}). Revision 1, LeafGreen and other languages are not supported.`);
+      showError(`SHA-1 ${sha1} is not FireRed (USA) or Rojo Fuego (Spain), revision 0. Revision 1, LeafGreen and other languages are not supported.`);
       return;
     }
-    setPill('FireRed (USA) verified', 'ok');
+    setPill(`${rom.name} verified`, 'ok');
+    showGame(rom.game);
   } else {
     setPill('Will be checked when building', 'busy');
   }
@@ -166,6 +171,16 @@ async function startBuild() {
   }
 }
 
+// The game the download code and button offer: the English one, or the Spanish one once a Spanish ROM is chosen.
+function showGame(name) {
+  const url = RELEASES + name;
+  drawQr('qr-game', 'url-game', url);
+  $('game-download').href = url;
+  $('game-download').textContent = `Download ${name}`;
+  $('game-name').textContent = name;
+  $('game-rename').hidden = name === 'twinembers.3dsx';
+}
+
 // QR codes as SVG, drawn from qrcode-generator's module matrix with the standard 4-module margin.
 function drawQr(boxId, urlId, text) {
   $(urlId).textContent = text;
@@ -197,8 +212,7 @@ ui.romButton.addEventListener('keydown', (event) => {
 });
 ui.build.addEventListener('click', startBuild);
 drawQr('qr-unistore', 'url-unistore', UNISTORE_URL);
-drawQr('qr-game', 'url-game', GAME_URL);
-$('game-download').href = GAME_URL;
+showGame('twinembers.3dsx');
 drawQr('qr-fbi', 'url-fbi', FORWARDER_URL);
 refresh();
 

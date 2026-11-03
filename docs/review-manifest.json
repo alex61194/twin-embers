@@ -5936,7 +5936,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "d1f2e154790106f6c8c6b76279880b86b858a453fb63d28cb7dc819ab7b2191e",
+   "sha256": "f69f8fcff562cac4de07044abf2fdedd36d753508662cbafe56ad40b9e68210e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5952,7 +5952,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "dd89c47bc43206a0a89e830cc77ad630e4ee4645c833588a66c2bbfde892a23f",
+   "sha256": "5183ef2a7761441d26643a74b2503764a478b0b5ff4de97dde77d2ee29dbd6eb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5968,7 +5968,7 @@
   },
   {
    "path": "web/twinembers.unistore",
-   "sha256": "4b005304c14713acc76b43c10fe42840efe4cd0441a0dd9ef965c7c061a697d5",
+   "sha256": "deb9901b4dd5d42bc6aaa8098de071464d75e618214fd0832d6476e2828e4ef5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5984,7 +5984,7 @@
   },
   {
    "path": "tools/test_web_builder.py",
-   "sha256": "96e26ddfd281ca08037cd8cb3eb9a6604174dcfbd1d7b03678ad5af7ad7a9ee9",
+   "sha256": "e7cf1756825c4b65b14541dce3e1880b861be8cb67172d22700c41dbd5d8dd2d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
