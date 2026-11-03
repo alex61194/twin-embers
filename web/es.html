@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twin Embers</title>
+<meta name="description" content="Crea el pack de datos de Twin Embers a partir de tu propia ROM de Pokémon Rojo Fuego, en tu navegador, e instala el juego en una 3DS con un código QR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="embers" aria-hidden="true"></canvas>
+<nav class="topbar" aria-label="Secciones">
+  <a class="brand" href="#top">
+    <svg class="ball" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M3 16 A13 13 0 0 1 29 16 Z" fill="#e3350d"/><path d="M3 16 A13 13 0 0 0 29 16 Z" fill="#fff"/>
+      <circle cx="16" cy="16" r="13" fill="none" stroke="#30344a" stroke-width="2.5"/>
+      <path d="M3 16 H29" stroke="#30344a" stroke-width="2.5"/>
+      <circle cx="16" cy="16" r="4.5" fill="#fff" stroke="#30344a" stroke-width="2.5"/>
+    </svg>
+    <span>Twin Embers</span>
+  </a>
+  <div class="links">
+    <span class="lang-switch" role="group" aria-label="Idioma"><a href="index.html" hreflang="en" lang="en">EN</a><a href="es.html" hreflang="es" lang="es" aria-current="page">ES</a></span>
+    <a href="#gallery-title">Pantallas</a>
+    <a href="#build-title">Crear</a>
+    <a href="#install-title">Instalar</a>
+    <a href="#follow-title">Seguir</a>
+    <a class="x-link" href="https://x.com/Twin_Embers" rel="noopener" aria-label="Twin Embers en X">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18.2h1.7L6.3 3.7H4.5l13.3 16.5Z"/></svg>
+    </a>
+  </div>
+</nav>
+<div class="page" id="top">
+  <header class="hero">
+    <h1><img class="banner" src="media/twin-embers-banner.png" width="900" height="508" alt="Twin Embers"></h1>
+    <p class="tagline">Pokémon Rojo Fuego rehecho para las dos pantallas de Nintendo 3DS: Kanto en toda la pantalla superior panorámica y todos los menús al alcance de tu dedo abajo.</p>
+    <nav class="hero-actions" aria-label="Empezar">
+      <a class="btn big" href="#build-title">Crea tu pack</a>
+      <a class="btn secondary" href="#install-title">Instalar en 3DS</a>
+      <a class="btn secondary" href="https://github.com/alex61194/twin-embers/releases/latest">Última versión</a>
+    </nav>
+    <ul class="features">
+      <li class="t-fire"><span class="type">Nativo</span><b>No es un emulador</b>Un juego de 3DS de verdad, compilado desde la decompilación de Rojo Fuego</li>
+      <li class="t-water"><span class="type">400 × 240</span><b>Mapa panorámico</b>Kanto en toda la pantalla superior</li>
+      <li class="t-grass"><span class="type">Táctil</span><b>Menús abajo</b>Combates, Mochila, Pokédex y PC con el dedo</li>
+      <li class="t-psychic"><span class="type">Reloj</span><b>Día y noche</b>Las ciudades se iluminan con el reloj de la 3DS</li>
+      <li class="t-electric"><span class="type">HGSS</span><b>Sprites de HeartGold</b>Opcionales, para las 386 especies</li>
+      <li class="t-dragon"><span class="type">4×</span><b>Turbo</b>Acelera las partes lentas con START</li>
+    </ul>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="gallery-title">
+      <h2 id="gallery-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="o" x="3" y="6" width="26" height="20" rx="3" fill="#ffd166"/>
+          <circle class="o" cx="12" cy="13" r="3" fill="#fff8ec"/>
+          <path class="o" d="M5 24 L13 17 L18 21 L22 18 L27 23 V24 Z" fill="#2f9e5b"/>
+        </svg>
+        Míralo en una 3DS
+      </h2>
+      <p class="lead">Capturas reales, pantalla superior e inferior tal como las muestra la consola. Toca una para verla más grande.</p>
+      <div id="gallery">
+        <h3 class="gallery-group">Explorando Kanto</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/01-title.png"><img src="media/01-title.png" width="400" height="480" loading="lazy" alt="La pantalla de título con la versión, la pantalla inferior lista"></button><figcaption>Pantalla de título</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/02-night-cerulean.png"><img src="media/02-night-cerulean.png" width="400" height="480" loading="lazy" alt="Ciudad Celeste de noche con las ventanas encendidas y el mapa táctil de Kanto abajo"></button><figcaption>Celeste de noche, con el mapa abajo</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/04-night-saffron.png"><img src="media/04-night-saffron.png" width="400" height="480" loading="lazy" alt="Ciudad Azafrán de noche"></button><figcaption>Ciudad Azafrán de noche</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/03-day-night-off.png"><img src="media/03-day-night-off.png" width="400" height="480" loading="lazy" alt="Ciudad Celeste con DÍA/NOCHE apagado, junto a la opción que lo controla"></button><figcaption>El día y la noche se pueden apagar</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/05-night-recap.png"><img src="media/05-night-recap.png" width="400" height="480" loading="lazy" alt="El resumen de la aventura de noche, con el mapa de las Islas Sete"></button><figcaption>El resumen de la aventura, con el mapa de Sete abajo</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/24-pallet-town.png"><img src="media/24-pallet-town.png" width="400" height="480" loading="lazy" alt="Entrando en Pueblo Paleta: el nombre de la zona arriba mientras el equipo sigue abierto abajo"></button><figcaption>Nombres de zona arriba, menús abajo</figcaption></figure>
+        </div>
+        <h3 class="gallery-group">Combates</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/06-battle-intro.png"><img src="media/06-battle-intro.png" width="400" height="480" loading="lazy" alt="Un Charizard variocolor con su sprite de HeartGold, con LUCHAR, MOCHILA, POKéMON y HUIR abajo"></button><figcaption>Sprites de HeartGold en combate</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/07-battle-action.png"><img src="media/07-battle-action.png" width="400" height="480" loading="lazy" alt="Pikachu contra un Spearow, con el icono del Pokémon en el disco de LUCHAR"></button><figcaption>Órdenes de combate en la pantalla táctil</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/08-battle-moves.png"><img src="media/08-battle-moves.png" width="400" height="480" loading="lazy" alt="Tarjetas de movimientos con tipo, potencia, precisión y PP"></button><figcaption>Movimientos con tipo, potencia y PP</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/11-battle-party.png"><img src="media/11-battle-party.png" width="400" height="480" loading="lazy" alt="Cambiando de Pokémon en combate"></button><figcaption>Cambiar de Pokémon</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/09-battle-bag.png"><img src="media/09-battle-bag.png" width="400" height="480" loading="lazy" alt="La Mochila de combate en el bolsillo de Poké Balls, con la Ball elegida en grande"></button><figcaption>La Mochila en combate</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/19-battle-summary.png"><img src="media/19-battle-summary.png" width="400" height="480" loading="lazy" alt="Los datos de un Pokémon durante un combate"></button><figcaption>Los datos sin salir del combate</figcaption></figure>
+        </div>
+        <h3 class="gallery-group">Menús y el PC</h3>
+        <div class="gallery">
+          <figure><button type="button" class="shot" data-full="media/12-party.png"><img src="media/12-party.png" width="400" height="480" loading="lazy" alt="El equipo en la pantalla inferior"></button><figcaption>Tu equipo, a un toque</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/14-pokedex.png"><img src="media/14-pokedex.png" width="400" height="480" loading="lazy" alt="La Pokédex en la pantalla inferior"></button><figcaption>La Pokédex en la pantalla táctil</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/13-bag.png"><img src="media/13-bag.png" width="400" height="480" loading="lazy" alt="La Mochila en el bolsillo de Objetos"></button><figcaption>Mochila: Objetos</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/22-bag-key-items.png"><img src="media/22-bag-key-items.png" width="400" height="480" loading="lazy" alt="La Mochila en el bolsillo de Objetos clave"></button><figcaption>Mochila: Objetos clave</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/23-bag-balls.png"><img src="media/23-bag-balls.png" width="400" height="480" loading="lazy" alt="La Mochila en el bolsillo de Poké Balls"></button><figcaption>Mochila: Poké Balls</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/15-trainer-card.png"><img src="media/15-trainer-card.png" width="400" height="480" loading="lazy" alt="La Ficha de Entrenador"></button><figcaption>Ficha de Entrenador</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/16-save.png"><img src="media/16-save.png" width="400" height="480" loading="lazy" alt="Guardando la partida, con el progreso al lado"></button><figcaption>Guardar</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/17-options-1.png"><img src="media/17-options-1.png" width="400" height="480" loading="lazy" alt="Opciones, página 1: los ajustes de Rojo Fuego"></button><figcaption>Opciones, página 1</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/18-options-2.png"><img src="media/18-options-2.png" width="400" height="480" loading="lazy" alt="Opciones, página 2: los ajustes propios del port"></button><figcaption>Opciones, página 2</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/20-pc-menu.png"><img src="media/20-pc-menu.png" width="400" height="480" loading="lazy" alt="El menú del PC en la pantalla inferior"></button><figcaption>El PC</figcaption></figure>
+          <figure><button type="button" class="shot" data-full="media/21-pc-box.png"><img src="media/21-pc-box.png" width="400" height="480" loading="lazy" alt="Una caja del PC en la pantalla inferior"></button><figcaption>Cajas del PC movidas con el dedo</figcaption></figure>
+        </div>
+      </div>
+      <dialog class="lightbox" id="lightbox" aria-label="Captura">
+        <form method="dialog"><button class="close" aria-label="Cerrar">×</button></form>
+        <img id="lightbox-img" src="" alt="">
+        <p id="lightbox-caption"></p>
+      </dialog>
+    </section>
+
+    <section class="card" aria-labelledby="build-title">
+      <h2 id="build-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="o" x="5" y="3" width="22" height="26" rx="3" fill="#e0431b"/>
+          <rect class="o" x="9" y="7" width="14" height="10" rx="1.5" fill="#ffd166"/>
+          <rect x="8" y="23" width="2" height="5" fill="#404868"/><rect x="12" y="23" width="2" height="5" fill="#404868"/>
+          <rect x="16" y="23" width="2" height="5" fill="#404868"/><rect x="20" y="23" width="2" height="5" fill="#404868"/>
+        </svg>
+        Crea twinembers.pak
+      </h2>
+      <p class="lead">El juego lee sus imágenes, mapas y música de un pack hecho a partir del volcado de tu propio cartucho. Esta página lo crea con el mismo Builder que la aplicación de escritorio.</p>
+
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h3>Elige tu ROM de Rojo Fuego</h3>
+          <p>Pokémon Edición Rojo Fuego (España) o Pokémon FireRed Version (USA), revisión 0: un archivo <span class="mono">.gba</span> de 16 MiB. La ROM española crea el pack del juego en español.</p>
+          <div class="row">
+            <label class="btn secondary" for="rom-input" id="rom-button" tabindex="0" role="button">Elegir ROM…</label>
+            <input id="rom-input" type="file" accept=".gba,.bin,application/octet-stream" class="hidden">
+            <span class="pill" id="rom-pill">Ninguna ROM elegida</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div>
+          <h3>Opciones</h3>
+          <label class="switch">
+            <input type="checkbox" id="gen4-toggle">
+            <span class="track"></span>
+            <span class="label">Sprites e iconos de HeartGold
+              <small>Opcional. Descarga unos 3 MB de imágenes de pret/pokeheartgold en GitHub, más dos espaldas del jugador hechas por fans, cada una comprobada con SHA-256: sprites de combate, imágenes de entrenadores, iconos de menú, las letras de Unown, las formas de Castform, las manchas de Spinda y tu propia espalda.</small>
+            </span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="npcs-toggle">
+            <span class="track"></span>
+            <span class="label">Gente nueva en el mapa
+              <small>Opcional. 74 personajes redibujados al estilo DS (32x32) por Facets y sus artistas KyleDove, Jext, Hyo, DiegoWT, Taiga y PurpleZaffre. El rival conserva el de Rojo Fuego. Unos 150 KB de GitHub, cada archivo comprobado con SHA-256.</small>
+            </span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="backgrounds-toggle">
+            <span class="track"></span>
+            <span class="label">Fondos de combate nuevos
+              <small>Opcional. 14 escenas dibujadas a mano para los 20 escenarios de combate de Rojo Fuego, de LibertyTwins, princess-phoenix, carchagui, aveontrainer, WesleyFG, kWharever, worldslayer608 y knizz (Battle Backgrounds Patch FR, a través de Facets). Unos 80 KB de GitHub, cada archivo comprobado con SHA-256.</small>
+            </span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="player-toggle">
+            <span class="track"></span>
+            <span class="label">Juega como Ash y Green
+              <small>Opcional. Rojo pasa a ser Ash y Hoja pasa a ser Green, al estilo HGSS: andando, corriendo, en bici, haciendo surf, pescando, usando un movimiento en el mapa, tu espalda en combate, tu imagen (Ficha de Entrenador, Hall de la Fama), la introducción de la partida nueva, el icono del mapa, Vuelo y tu reflejo. De Emerald Lens: Ash por PKMNTrainerRick, Green recopilada por ChromeValiant (arte de Poltergeist/Coffee Cup, Mid117, Wolfang62 y aethestode). Unos 57 KB de GitHub, cada archivo comprobado con SHA-256.</small>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div>
+          <h3>Crear</h3>
+          <div class="row">
+            <button class="btn big" id="build-button" disabled>Crear twinembers.pak</button>
+          </div>
+          <div class="progress hidden" id="progress"><div class="fill" id="progress-fill"></div></div>
+          <p class="status" id="status" aria-live="polite">El Builder empieza a cargarse en cuanto se abre la página.</p>
+          <div class="result hidden" id="result">
+            <div class="row">
+              <a class="btn" id="download" download="twinembers.pak" href="#">Descargar twinembers.pak</a>
+              <span class="pill ok" id="result-pill">Verificado</span>
+            </div>
+            <p>Cópialo en <span class="mono">SD:/3ds/twinembers/twinembers.pak</span>.</p>
+            <p class="mono" id="result-details"></p>
+          </div>
+          <div class="error hidden" id="error" role="alert"></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <path class="o" d="M16 3 L27 7 V15 C27 22 22 27 16 29 C10 27 5 22 5 15 V7 Z" fill="#2f9e5b"/>
+          <path d="M11 16 L15 20 L22 12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span><b>Tu ROM nunca sale de este navegador.</b> El Builder funciona en tu dispositivo con Pyodide (Python compilado a WebAssembly); no se sube nada. Solo se descargan las imágenes opcionales que elijas (sprites de HeartGold, gente, fondos de combate, Ash y Green).</span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="install-title">
+      <h2 id="install-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="o" x="4" y="2" width="24" height="13" rx="2.5" fill="#d9dbe6"/>
+          <rect x="7" y="5" width="18" height="7" rx="1" fill="#404868"/>
+          <rect class="o" x="4" y="17" width="24" height="13" rx="2.5" fill="#e0431b"/>
+          <rect x="11" y="20" width="10" height="7" rx="1" fill="#ffd166"/>
+          <circle cx="8" cy="23.5" r="1.8" fill="#404868"/><circle cx="24.5" cy="23.5" r="1.4" fill="#404868"/>
+        </svg>
+        Instálalo en tu 3DS
+      </h2>
+      <p class="lead">Tres formas de conseguirlo. Todas te dan siempre la última versión. También necesitas tu pack, <span class="mono">twinembers.pak</span>, en <span class="mono">SD:/3ds/twinembers/</span> (créalo arriba).</p>
+      <div class="qr-grid">
+        <div class="qr-panel">
+          <span class="qr-tag">Lo más fácil en la 3DS</span>
+          <h3>Universal-Updater</h3>
+          <div class="qr-box" id="qr-unistore" role="img" aria-label="Código QR de la tienda de Twin Embers para Universal-Updater"></div>
+          <ol>
+            <li>Abre <b>Universal-Updater</b>.</li>
+            <li>Toca <b>Settings</b> (el engranaje) &rarr; <b>Select UniStore</b>.</li>
+            <li>Toca <b>+</b> y escanea este código.</li>
+            <li>La tienda se añade a la lista sin abrirse: toca <b>Twin Embers</b> en la lista.</li>
+            <li>Instala <b>twinembers.3dsx (Spanish)</b> si tu pack es de la ROM española, o <b>twinembers.3dsx</b> si es de la inglesa. Instala también el <b>HOME Menu forwarder</b> si quieres un icono en el menú HOME.</li>
+          </ol>
+          <span class="mono" id="url-unistore"></span>
+        </div>
+        <div class="qr-panel">
+          <span class="qr-tag">Con el móvil o el PC</span>
+          <h3>Descarga el juego</h3>
+          <div class="qr-box" id="qr-game" role="img" aria-label="Código QR que descarga la última versión del juego"></div>
+          <ol>
+            <li>Escanea este código con el móvil, o pulsa el botón.</li>
+            <li>Descarga <b id="game-name">twinembers.3dsx</b>, el juego para la ROM que hayas elegido arriba (en inglés hasta que elijas una).</li>
+            <li>Cópialo en la SD, en <span class="mono">SD:/3ds/twinembers/</span><span id="game-rename" hidden>, con el nombre <span class="mono">twinembers.3dsx</span> para que el icono del menú HOME lo encuentre</span>.</li>
+            <li>Ábrelo desde el <b>Homebrew Launcher</b>.</li>
+          </ol>
+          <div class="row qr-actions"><a class="btn secondary" id="game-download" href="#">Descargar twinembers.3dsx</a></div>
+          <span class="mono" id="url-game"></span>
+        </div>
+        <div class="qr-panel">
+          <span class="qr-tag">Icono en el menú HOME</span>
+          <h3>FBI</h3>
+          <div class="qr-box" id="qr-fbi" role="img" aria-label="Código QR del CIA del forwarder"></div>
+          <ol>
+            <li>Abre <b>FBI</b>.</li>
+            <li>Elige <b>Remote Install</b> &rarr; <b>Scan QR Code</b> y escanea este código.</li>
+            <li>Instala el icono de <b>Twin Embers</b> en el menú HOME.</li>
+            <li>El icono abre <span class="mono">SD:/3ds/twinembers/twinembers.3dsx</span>: consigue antes el juego con uno de los otros dos códigos.</li>
+          </ol>
+          <span class="mono" id="url-fbi"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card follow" aria-labelledby="follow-title">
+      <h2 id="follow-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <circle class="o" cx="16" cy="16" r="13" fill="#14171f"/>
+          <path fill="#fff" d="M20.3 9h2.1l-4.6 5.3 5.4 7.2h-4.2l-3.3-4.3-3.8 4.3H9.8l4.9-5.6L9.5 9h4.3l3 4 3.5-4Zm-.7 11.2h1.2L12.4 10.2h-1.3l8.5 10Z"/>
+        </svg>
+        Sigue el proyecto
+      </h2>
+      <div class="follow-panel">
+        <div class="follow-text">
+          <p class="handle">@Twin_Embers</p>
+          <p>Novedades, versiones de prueba y capturas recién sacadas de la 3DS.</p>
+        </div>
+        <div class="follow-actions">
+          <a class="btn x" href="https://x.com/Twin_Embers" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18.2h1.7L6.3 3.7H4.5l13.3 16.5Z"/></svg>
+            Seguir en X
+          </a>
+          <a class="btn secondary" href="https://github.com/alex61194/twin-embers">Estrella en GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Twin Embers es un proyecto de fans no oficial, sin relación ni respaldo de Nintendo, Game Freak, Creatures ni The Pokémon Company. Necesitas tu propio volcado, obtenido legalmente, de un cartucho de Rojo Fuego.
+    <a href="https://github.com/alex61194/twin-embers">Código y versiones en GitHub</a> ·
+    <a href="https://x.com/Twin_Embers" rel="noopener">@Twin_Embers en X</a></p>
+  </footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
+        integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1"
+        crossorigin="anonymous"></script>
+<script src="app.js"></script>
+</body>
+</html>

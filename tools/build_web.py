@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / 'web'
 PACKAGE = ROOT / 'builder' / 'firered3ds_builder'
-PAGES = ('index.html', 'style.css', 'app.js', 'worker.js')
+PAGES = ('index.html', 'es.html', 'style.css', 'app.js', 'worker.js')
 # The README's images the page shows (docs/media, reviewed there): the banner and the gallery's captures.
 MEDIA = ROOT / 'docs' / 'media'
 # The banner and every README capture (docs/media/NN-name.png); the page's gallery shows them all.

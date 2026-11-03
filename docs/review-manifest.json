@@ -1064,7 +1064,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
-   "sha256": "1046b20177c8a4b0272655151785a6cff1b980361a111a259a477a53bee6d66d",
+   "sha256": "06f4f648834cf3f65121ed07e7211e9f555feafd5a1cf4c3ff32e931d7e895b0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5936,7 +5936,15 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "f69f8fcff562cac4de07044abf2fdedd36d753508662cbafe56ad40b9e68210e",
+   "sha256": "8860c2e74ba00c2a549224f53097f7ed5445b82d99af73f0b25bfdac56877386",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "web/es.html",
+   "sha256": "59207986f325ec6631cc2b53725bded257c950fa616fd982226a367fbcd5fa23",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5944,7 +5952,7 @@
   },
   {
    "path": "web/style.css",
-   "sha256": "631bd4664932dd8fd2fde1e4c9afce9c1be720fb8e30d658fe93220046450f87",
+   "sha256": "fe1adae27b2c1aede2a16a27413278755e3f36a04027aaf9db7c8d4acc7189ee",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5952,7 +5960,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "5183ef2a7761441d26643a74b2503764a478b0b5ff4de97dde77d2ee29dbd6eb",
+   "sha256": "c97dc02f8f9d5c346b2a3a162a0ff1ca87f26baa9ae95f21785cdd4943e79914",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5976,7 +5984,7 @@
   },
   {
    "path": "tools/build_web.py",
-   "sha256": "9995f54abd54d367a1303280e78ad8c9c90719c7c95bc766aa6ab9eb21bedd42",
+   "sha256": "7335c1c682f8421d758e562cfa96b6e68b12cf93e312e096b231646da65086a0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5984,7 +5992,7 @@
   },
   {
    "path": "tools/test_web_builder.py",
-   "sha256": "e7cf1756825c4b65b14541dce3e1880b861be8cb67172d22700c41dbd5d8dd2d",
+   "sha256": "1ef0291764c826232d78674834ca2810f878ac6bb5541d59cd2b0278c0162c8d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6008,7 +6016,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe.json",
-   "sha256": "0f2a68859f04f419039ccf92d69b1de7d02df7a15685b49afa4523fd8e8d0325",
+   "sha256": "69530e2bbf226414b57fea16b0626ad4e4a9a22b822fcbb59b0cfe707f5a61de",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6024,7 +6032,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-00.json",
-   "sha256": "9eccb5f0c5230ae685f7dccbc8bda3f4bd47a6fa38069829557f5195e8f70578",
+   "sha256": "c470c74af84b0b3504e5f9506d52ca30193b43d978c78d749b8640bb112ff01f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6032,7 +6040,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-01.json",
-   "sha256": "aed1dc1da02f508d1854e90b6bdad24e1dd614b050f13d5b0cb4e836a1ca7cb1",
+   "sha256": "002528bade38d44d08d9e76af5e0281729abed6224b48b6eb31404e1fd5f7d00",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6128,7 +6136,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-02.json",
-   "sha256": "64085569ac5485f9019c9ccd0e3563caa9ca702927f7cf6aaa3b071120ab0929",
+   "sha256": "3f5c53820caf0f812acae77428ce3255c5a34ef2051a169875c84b3bad4480be",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6136,7 +6144,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-03.json",
-   "sha256": "b2f6697cfe50a6a7016ca5724fa92a337a797a1a4eea812b576c812e45a8a20a",
+   "sha256": "2a68db55311de279037b7ff4f6eb1004b5f4587bcb355b10d38b81e9123b8278",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

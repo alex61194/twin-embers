@@ -2,11 +2,16 @@
 // player picks, shows progress, offers the finished pack for download and draws the install QR codes.
 'use strict';
 
+// The page's language (index.html English, es.html Spanish): L(english, spanish) picks the words, as CTR_TR does in
+// the game.
+const SPANISH = document.documentElement.lang === 'es';
+const L = (en, es) => (SPANISH ? es : en);
+
 const ROM_SIZE = 16 * 1024 * 1024;
 // The ROMs the Builder takes: each makes the pack for its own .3dsx (the Spanish one, twinembers-es.3dsx).
 const ROMS = {
   '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc': { name: 'FireRed (USA)', game: 'twinembers.3dsx' },
-  'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: 'Rojo Fuego (Spain)', game: 'twinembers-es.3dsx' },
+  'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: L('Rojo Fuego (Spain)', 'Rojo Fuego (España)'), game: 'twinembers-es.3dsx' },
 };
 const RELEASES = 'https://github.com/alex61194/twin-embers/releases/latest/download/';
 const FORWARDER_URL = RELEASES + 'TwinEmbers-Forwarder.cia';
@@ -62,63 +67,74 @@ async function chooseRom(file) {
   ui.result.classList.add('hidden');
   refresh();
   if (!file) {
-    setPill('No ROM chosen');
+    setPill(L('No ROM chosen', 'Ninguna ROM elegida'));
     return;
   }
   if (file.size !== ROM_SIZE) {
-    setPill('Not a 16 MiB FireRed ROM', 'bad');
-    showError(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA) or Edición Rojo Fuego (Spain), revision 0; trimmed files are not supported.`);
+    setPill(L('Not a 16 MiB FireRed ROM', 'No es una ROM de FireRed de 16 MiB'), 'bad');
+    showError(L(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA) or Edición Rojo Fuego (Spain), revision 0; trimmed files are not supported.`,
+      `${file.name} ocupa ${file.size} bytes. El Builder necesita el volcado exacto de 16 MiB de Pokémon Edición Rojo Fuego (España) o FireRed Version (USA), revisión 0; los archivos recortados no sirven.`));
     return;
   }
-  setPill('Checking…', 'busy');
+  setPill(L('Checking…', 'Comprobando…'), 'busy');
   const data = await file.arrayBuffer();
   if (crypto.subtle) {
     const sha1 = hex(await crypto.subtle.digest('SHA-1', data));
     const rom = ROMS[sha1];
     if (!rom) {
-      setPill('Unsupported ROM', 'bad');
-      showError(`SHA-1 ${sha1} is not FireRed (USA) or Rojo Fuego (Spain), revision 0. Revision 1, LeafGreen and other languages are not supported.`);
+      setPill(L('Unsupported ROM', 'ROM no compatible'), 'bad');
+      showError(L(`SHA-1 ${sha1} is not FireRed (USA) or Rojo Fuego (Spain), revision 0. Revision 1, LeafGreen and other languages are not supported.`,
+        `El SHA-1 ${sha1} no es de Rojo Fuego (España) ni de FireRed (USA), revisión 0. La revisión 1, Verde Hoja y otros idiomas no son compatibles.`));
       return;
     }
-    setPill(`${rom.name} verified`, 'ok');
+    setPill(L(`${rom.name} verified`, `${rom.name} verificada`), 'ok');
     showGame(rom.game);
   } else {
-    setPill('Will be checked when building', 'busy');
+    setPill(L('Will be checked when building', 'Se comprobará al crear el pack'), 'busy');
   }
   state.rom = file;
   state.romOk = true;
   refresh();
 }
 
+// The worker's loading steps, in the page's language.
+const LOADING = SPANISH ? {
+  'Downloading Python for your browser (about 10 MB, kept by the browser for next time)…':
+    'Descargando Python para tu navegador (unos 10 MB, el navegador lo guarda para la próxima vez)…',
+  'Loading the Builder…': 'Cargando el Builder…',
+} : {};
+
 const worker = new Worker('worker.js');
 
 worker.onmessage = (event) => {
   const message = event.data;
   if (message.type === 'loading') {
-    ui.status.textContent = message.text;
+    ui.status.textContent = LOADING[message.text] || message.text;
   } else if (message.type === 'ready') {
     state.ready = true;
-    ui.status.textContent = state.romOk ? 'Ready to build.' : 'Builder ready. Choose your ROM to start.';
+    ui.status.textContent = state.romOk ? L('Ready to build.', 'Listo para crear el pack.')
+      : L('Builder ready. Choose your ROM to start.', 'Builder listo. Elige tu ROM para empezar.');
     refresh();
   } else if (message.type === 'fatal') {
-    ui.status.textContent = 'The Builder could not start.';
-    showError(`${message.message} Check your connection and reload the page.`);
+    ui.status.textContent = L('The Builder could not start.', 'El Builder no ha podido arrancar.');
+    showError(`${message.message} ${L('Check your connection and reload the page.', 'Comprueba tu conexión y recarga la página.')}`);
   } else if (message.type === 'progress') {
     if (message.stage === 'sprites') {
       showProgress(message.total ? message.done / message.total : 0);
       ui.status.textContent = message.total
-        ? `Downloading the optional pictures… ${message.done}/${message.total}`
-        : 'Downloading the optional pictures…';
+        ? `${L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…')} ${message.done}/${message.total}`
+        : L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…');
     } else {
       showProgress(null);
-      ui.status.textContent = 'Rebuilding the pack from your ROM and checking every record… This can take a minute, more on a phone.';
+      ui.status.textContent = L('Rebuilding the pack from your ROM and checking every record… This can take a minute, more on a phone.',
+        'Reconstruyendo el pack a partir de tu ROM y comprobando cada registro… Puede tardar un minuto, más en un móvil.');
     }
   } else if (message.type === 'done') {
     finish(message.pak, message.info);
   } else if (message.type === 'error') {
     state.busy = false;
     ui.progress.classList.add('hidden');
-    ui.status.textContent = 'No pack was made.';
+    ui.status.textContent = L('No pack was made.', 'No se ha creado el pack.');
     showError(message.message);
     refresh();
   }
@@ -131,24 +147,26 @@ function finish(pak, info) {
   state.pakUrl = URL.createObjectURL(new Blob([pak], { type: 'application/octet-stream' }));
   ui.download.href = state.pakUrl;
   const lines = [
-    `${info.entries} entries, ${mib(info.bytes)}, engine ABI ${info.abi.toString(16).padStart(8, '0')}`,
+    `${info.entries} ${L('entries', 'entradas')}, ${mib(info.bytes)}, ${L('engine ABI', 'ABI del motor')} ${info.abi.toString(16).padStart(8, '0')}`,
     `SHA-256 ${info.sha256}`,
   ];
   if (info.gen4) {
     if (info.gen4.species || info.gen4.missing.length) {
-      lines.push(`HeartGold battle sprites: ${info.gen4.species} species` +
-        (info.gen4.missing.length ? `, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)` : ''));
+      lines.push(L(`HeartGold battle sprites: ${info.gen4.species} species`, `Sprites de combate de HeartGold: ${info.gen4.species} especies`) +
+        (info.gen4.missing.length ? L(`, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)`,
+          `, ${info.gen4.missing.length} con las imágenes de Rojo Fuego (falló la descarga)`) : ''));
     }
-    if (info.gen4.trainers) lines.push(`HeartGold trainer pictures: ${info.gen4.trainers}`);
-    if (info.gen4.backs) lines.push(`HeartGold-style player backs: ${info.gen4.backs}`);
-    if (info.gen4.npcs) lines.push(`New people on the map: ${info.gen4.npcs} of 74`);
-    if (info.gen4.backgrounds) lines.push(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`);
-    if (info.gen4.player) lines.push(`You as Ash and Green: ${info.gen4.player} pictures`);
+    if (info.gen4.trainers) lines.push(L('HeartGold trainer pictures: ', 'Imágenes de entrenadores de HeartGold: ') + info.gen4.trainers);
+    if (info.gen4.backs) lines.push(L('HeartGold-style player backs: ', 'Espaldas del jugador al estilo HeartGold: ') + info.gen4.backs);
+    if (info.gen4.npcs) lines.push(L(`New people on the map: ${info.gen4.npcs} of 74`, `Gente nueva en el mapa: ${info.gen4.npcs} de 74`));
+    if (info.gen4.backgrounds) lines.push(L(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`,
+      `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`));
+    if (info.gen4.player) lines.push(L(`You as Ash and Green: ${info.gen4.player} pictures`, `Ash y Green: ${info.gen4.player} imágenes`));
   }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';
   ui.result.classList.remove('hidden');
-  ui.status.textContent = 'Pack built and verified.';
+  ui.status.textContent = L('Pack built and verified.', 'Pack creado y verificado.');
   refresh();
 }
 
@@ -158,7 +176,7 @@ async function startBuild() {
   ui.error.classList.add('hidden');
   ui.result.classList.add('hidden');
   showProgress(null);
-  ui.status.textContent = 'Starting…';
+  ui.status.textContent = L('Starting…', 'Empezando…');
   refresh();
   try {
     const rom = await state.rom.arrayBuffer();
@@ -166,7 +184,7 @@ async function startBuild() {
       backgrounds: ui.backgrounds.checked, player: ui.player.checked }, [rom]);
   } catch (error) {
     state.busy = false;
-    showError(`Could not read the ROM again: ${error.message}`);
+    showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:')} ${error.message}`);
     refresh();
   }
 }
@@ -176,7 +194,7 @@ function showGame(name) {
   const url = RELEASES + name;
   drawQr('qr-game', 'url-game', url);
   $('game-download').href = url;
-  $('game-download').textContent = `Download ${name}`;
+  $('game-download').textContent = `${L('Download', 'Descargar')} ${name}`;
   $('game-name').textContent = name;
   $('game-rename').hidden = name === 'twinembers.3dsx';
 }
@@ -185,7 +203,7 @@ function showGame(name) {
 function drawQr(boxId, urlId, text) {
   $(urlId).textContent = text;
   if (typeof qrcode !== 'function') {
-    $(boxId).textContent = 'QR code unavailable offline.';
+    $(boxId).textContent = L('QR code unavailable offline.', 'Código QR no disponible sin conexión.');
     return;
   }
   const qr = qrcode(0, 'M');

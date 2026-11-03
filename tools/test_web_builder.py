@@ -186,7 +186,7 @@ class PageTest(unittest.TestCase):
         # Every ROM the Builder takes, each with the game its pack is for.
         games = {'en': 'twinembers.3dsx', 'es': 'twinembers-es.3dsx'}
         for sha1, language in SUPPORTED_ROMS.items():
-            self.assertRegex(app, rf"'{sha1}': {{ name: '[^']+', game: '{games[language]}' }}")
+            self.assertRegex(app, rf"'{sha1}': {{ name: [^}}]+, game: '{games[language]}' }}")
         self.assertIn('const ROM_SIZE = 16 * 1024 * 1024;', app)
         self.assertEqual(ROM_SIZE, 16 * 1024 * 1024)
         self.assertIn(f"const RELEASES = '{RELEASES}';", app)

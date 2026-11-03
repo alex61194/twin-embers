@@ -83,12 +83,19 @@ static void FCRow(const char *label, const char *value, int x, int right, int y)
 
 static void FCFront(const CtrPokeTouchCard *c)
 {
-    char text[24], label[24];
-    int x = FCBand(CtrUiText(UIS_CARD_TITLE)) + 8;
+    char text[24], label[24], title[24];
+    int stars = c->stars < 5 ? c->stars : 5, idLeft;
 
-    for (int i = 0; i < c->stars && i < 5; ++i)
-        FCStar(x + i * 13, sFCCard.y + 7, UI_RGB(255, 236, 140), kEmAmber.lip);
     snprintf(text, sizeof(text), "%s%05u", c->label[1], (unsigned)c->id);
+    idLeft = sFCCard.x + sFCCard.w - 12 - UiTextWidth(text, 1);
+    /* The title, its first word only when the stars and the ID would not fit after it (Spanish "FICHA ENTRENADOR"). */
+    snprintf(title, sizeof(title), "%s", CtrUiText(UIS_CARD_TITLE));
+    if (sFCCard.x + 12 + UiTextWidth(title, 1) + 8 + stars * 13 > idLeft - 4 && strchr(title, ' '))
+        *strchr(title, ' ') = 0;
+    int x = FCBand(title) + 8;
+
+    for (int i = 0; i < stars; ++i)
+        FCStar(x + i * 13, sFCCard.y + 7, UI_RGB(255, 236, 140), kEmAmber.lip);
     UiTextRight(text, sFCCard.x + sFCCard.w - 12, sFCCard.y + 8, kEmAmber.ink, kEmAmber.inkSh, 1);
     /* NAME: FireRed's label ends in ": " */
     snprintf(label, sizeof(label), "%s", c->label[0]);
