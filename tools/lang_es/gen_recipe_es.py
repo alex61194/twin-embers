@@ -30,6 +30,31 @@ import zlib
 from pathlib import Path
 
 US_SHA1 = '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc'
+# English plural suffixes the Spanish game never appends (its code has no such call):
+# filled with 0xFF they are empty strings, so the English code appends nothing.
+EMPTY_IN_SPANISH = {
+    (0x3a72a0, 2),   # scrcmd.c sText_S
+    (0x3a72a2, 4),   # scrcmd.c sText_IES
+    (0x46d94c, 4),   # pokemon_jump.c sPluralTxt
+    # data/mystery_event_msg.s: e-Reader Mystery Event scripts, laid out differently in the
+    # Spanish ROM and unreachable from the game's menus; 0xFF everywhere ends any script at once
+    (0x488e28, 2877),
+    (0x488c70, 50),  # mystery_event_msg.c gText_MysteryGiftBerry, shown only by those scripts
+}
+# Layout bytes the Spanish ROM has no copy of (its code uses other constants): these
+# sections stay in the engine as pret compiles them, out of the recipe.
+KEEP_IN_ENGINE = {
+    (0x3cd924, 2),   # trainer_card.c sTrainerCardIdXPositions
+    (0x3cd926, 2),   # trainer_card.c sTrainerCardIdYPositions
+}
+# teachy_tv.c sBg1EndGraphic: the English closing banner is an 8x2 tilemap, the Spanish
+# one 4x2 (its code passes width 4). Its two rows go into the English 8x2 rectangle,
+# each followed by four blank tiles.
+SPANISH_LENGTH = {(0x479590, 32): 16}
+
+
+def teachy_end_ops(t):
+    return [['C', t, 8], ['F', 0, 8], ['C', t + 8, 8], ['F', 0, 8]]
 ES_SHA1 = 'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a'
 
 
@@ -126,8 +151,10 @@ def main():
     entries = [e for f in sorted(glob.glob(str(recipe_dir / 'entries-*.json'))) for e in json.load(open(f))['entries']]
     units = [u for f in sorted(glob.glob(str(recipe_dir / 'units-*.json'))) for u in json.load(open(f))['units']]
 
+    path_of = {op[1]: e['path'] for e in entries for op in e['ops'] if op[0] == 'C'}
+
     # text strings found by es_sizes: USA (offset, size) -> Spanish (offset, size)
-    text = {}
+    text, text_src = {}, {}      # how each string was found: 'ptr' (pointers) or 'run' (contiguous)
     for r in json.load(open(sizes_path))['rows']:
         uo, un, eo, en = r[5], r[4], r[6], r[7]
         if eo is None or en is None or r[0] == 'asm/event_scripts.o':
@@ -137,6 +164,8 @@ def main():
         if es[eo:eo + en].count(0xff) != 1 or es[eo + en - 1] != 0xff:
             continue
         text[(uo, un)] = (eo, en)
+        text_src[(uo, un)] = 'ptr' if r[8] > 0 else 'run'
+    base_text, base_src = dict(text), dict(text_src)
     ev = json.load(open(events_path))
 
     # More strings, by pointers: every single-string C op not found yet.
@@ -153,7 +182,7 @@ def main():
         if e['path'] == 'gamedata/asm/event_scripts.bin':
             continue
         for op in e['ops']:
-            if op[0] == 'C' and (op[1], op[2]) not in text and is_string(us, op[1], op[2]) \
+            if op[0] == 'C' and is_string(us, op[1], op[2]) \
                     and es[op[1]:op[1] + op[2]] != us[op[1]:op[1] + op[2]]:
                 wanted[op[1]] = op[2]
     sites = collections.defaultdict(list)
@@ -172,10 +201,15 @@ def main():
                         t = int.from_bytes(es[q:q + 4], 'little') - 0x08000000
                         if 0 < t < len(es) and (es[t - 1] == 0xff or not strict):
                             votes[t] += 1
+            if not votes and not strict:
+                for p in sites.get(o, ()):
+                    t = pool_target(p)
+                    if t is not None and 0 < t < len(es) and es[t - 1] == 0xff:
+                        votes[t] += 1
             if votes:
                 t, v = votes.most_common(1)[0]
-                if v * 2 > sum(votes.values()) and strlen(t):
-                    text[(o, n)] = (t, strlen(t))
+                if v * 2 > sum(votes.values()) and strlen(t) and (o, n, t) not in banned:
+                    text[(o, n)] = (t, strlen(t)); text_src[(o, n)] = 'ptr'
         # contiguous runs: a string that follows another in the USA ROM follows it in the Spanish ROM
         runs = sorted((o, n) for e in entries for op in e['ops'] if op[0] == 'C'
                       for o, n in [(op[1], op[2])] if is_string(us, o, n))
@@ -186,15 +220,16 @@ def main():
                     continue
                 if (ao, an) in text and (bo, bn) not in text:
                     t = sum(text[(ao, an)]); m = strlen(t)
-                    if m:
-                        text[(bo, bn)] = (t, m); grew = True
+                    if m and (bo, bn, t) not in banned:
+                        text[(bo, bn)] = (t, m); text_src[(bo, bn)] = 'run'; grew = True
                 elif (bo, bn) in text and (ao, an) not in text:
                     t = text[(bo, bn)][0]
                     if t > 0 and es[t - 1] == 0xff:
                         j = t - 2
                         while j >= 0 and es[j] != 0xff:
                             j -= 1
-                        text[(ao, an)] = (j + 1, t - j - 1); grew = True
+                        if (ao, an, j + 1) not in banned:
+                            text[(ao, an)] = (j + 1, t - j - 1); text_src[(ao, an)] = 'run'; grew = True
             if not grew:
                 break
 
@@ -265,12 +300,21 @@ def main():
                     upos += op[2]; epos += op[2]; continue
                 if k == 'C':
                     off, n = op[1], op[2]
+                    if (off, n) in KEEP_IN_ENGINE:
+                        pmap.append((upos, n, epos, 0)); stats['kept-in-engine'] += 1
+                        upos += n; continue
+                    if (off, n) in SPANISH_LENGTH and (off, n) in pinned:
+                        ops.extend(teachy_end_ops(pinned[(off, n)][0])); pmap.append((upos, n, epos, n))
+                        stats['rearranged'] += 1
+                        upos += n; epos += n; continue
+                    if (off, n) in EMPTY_IN_SPANISH:
+                        ops.append(['F', 0xff, n]); pmap.append((upos, n, epos, n))
+                        stats['empty-in-spanish'] += 1
+                        upos += n; epos += n; continue
                     if e['path'] == 'gamedata/asm/event_scripts.bin':
                         q, m, how = ev['es_start'], ev['es_size'], 'event-scripts'
-                    elif (off, n) in banned:
-                        q = None
                     elif (off, n) in text:
-                        (q, m), how = text[(off, n)], 'text'
+                        (q, m), how = text[(off, n)], 'text-' + text_src[(off, n)]
                     elif (off, n) in pinned:
                         (q, m), how = pinned[(off, n)], 'followed'
                         report.append(f'FOLLOWED\t{e["path"]}\tC\t0x{off:x}\t{n}\t{m}')
@@ -285,6 +329,8 @@ def main():
                             q = None
                     else:
                         q = place_block(off, n, loose=not is_string(us, off, n)); m = n
+                        if (off, n, q) in banned:
+                            q = None
                         how = 'same' if q is not None and es[q:q + n] == us[off:off + n] else \
                             'loose' if (off, n) in loose_hits else 'pointers'
                         if how == 'loose':
@@ -355,10 +401,7 @@ def main():
         return p + shifts(p, 4)[0] if shifts(p, 4) else None
 
     pinned, trace, banned = {}, [], set()
-    find_strings(anchor_site)
-    *_, placed, lost = build()
-    placed.sort()
-    pstart = [x[0] for x in placed]
+    placed, pstart, nb, nstart, resized_lz = [], [], [], [], []
 
     def placed_site(p):
         """A pointer site inside a block already placed moves with that block."""
@@ -367,64 +410,150 @@ def main():
             return placed[i][2] + p - placed[i][0]
         return anchor_site(p)
 
-    find_strings(placed_site)
+    def pool_target(p):
+        """Spanish pointer at a literal-pool site whose surrounding code is the same in both
+        games (at least two of the four words beside it agree), trying each nearby shift."""
+        for d in shifts(p, 4):
+            q = p + d
+            if 8 <= q <= len(es) - 12 and es[q + 3] in (8, 9) \
+                    and sum(us[p + k:p + k + 4] == es[q + k:q + k + 4] for k in (-8, -4, 4, 8)) >= 2:
+                return int.from_bytes(es[q:q + 4], 'little') - 0x08000000
+        return None
 
-    # Tables that moved and changed (records with localized fields, lists sorted by Spanish
-    # word): follow the pointers to them from blocks already placed. The length stays the
-    # USA one unless the next block in the USA ROM, contiguous, starts elsewhere in Spain.
-    lost = {o: n for o, n in lost if not is_string(us, o, n)}
-    for _round in range(8):
-        before = len(pinned) + len(text)
-        lsites = collections.defaultdict(list)
-        for p in range(0, len(us) - 3, 4):
-            if us[p + 3] == 8:
-                v = int.from_bytes(us[p:p + 4], 'little') - 0x08000000
-                if v in lost:
-                    lsites[v].append(p)
-        for o, n in lost.items():
-            votes = collections.Counter()
-            for p in lsites.get(o, ()):
-                i = bisect.bisect_right(pstart, p) - 1
-                if i >= 0 and p + 4 <= placed[i][0] + placed[i][1]:
-                    q = placed[i][2] + p - placed[i][0]
-                    if es[q + 3] == 8:
-                        votes[int.from_bytes(es[q:q + 4], 'little') - 0x08000000] += 1
-            if not votes:
-                # only pointed to from code: the literal pool moves with the code around it;
-                # the block there must look like the USA one
+    def locate():
+        """Strings by pointers and runs, then tables by the pointers to them, avoiding banned spots."""
+        text.clear(); text.update({k: v for k, v in base_text.items() if (*k, v[0]) not in banned})
+        text_src.clear(); text_src.update(base_src)
+        pinned.clear()
+        find_strings(anchor_site)
+        *_, first, lost = build()
+        placed[:] = sorted(first); pstart[:] = [x[0] for x in placed]
+        nb[:] = sorted((t[0], t[1], t[2], t[3]) for t in trace)
+        nstart[:] = [t[0] for t in nb]
+
+        find_strings(placed_site)
+
+        # Tables that moved and changed (records with localized fields, lists sorted by Spanish
+        # word): follow the pointers to them from blocks already placed. The length stays the
+        # USA one unless the next block in the USA ROM, contiguous, starts elsewhere in Spain.
+        lost = {o: n for o, n in lost if not is_string(us, o, n)}
+        for _round in range(8):
+            before = len(pinned) + len(text)
+            lsites = collections.defaultdict(list)
+            for p in range(0, len(us) - 3, 4):
+                if us[p + 3] == 8:
+                    v = int.from_bytes(us[p:p + 4], 'little') - 0x08000000
+                    if v in lost:
+                        lsites[v].append(p)
+            for o, n in lost.items():
+                votes = collections.Counter()
                 for p in lsites.get(o, ()):
-                    q = anchor_site(p)
-                    if q is not None and 0 <= q <= len(es) - 4 and es[q + 3] == 8:
-                        t = int.from_bytes(es[q:q + 4], 'little') - 0x08000000
-                        if 0 <= t <= len(es) - n and same_but_pointers(us[o:o + n], es[t:t + n]) >= 0.75:
+                    i = bisect.bisect_right(pstart, p) - 1
+                    if i >= 0 and p + 4 <= placed[i][0] + placed[i][1]:
+                        q = placed[i][2] + p - placed[i][0]
+                        if es[q + 3] == 8:
+                            votes[int.from_bytes(es[q:q + 4], 'little') - 0x08000000] += 1
+                m = n
+                if not votes:
+                    # only pointed to from code: the literal pool moves with the code around it.
+                    # The block there must look like the USA one, have the same shape (as many
+                    # 0xFF ends: a table of fixed-width names), be an LZ stream of the same
+                    # decompressed size, or be named by several code sites at once.
+                    code = collections.Counter()
+                    for p in lsites.get(o, ()):
+                        q = anchor_site(p)
+                        if q is not None and 0 <= q <= len(es) - 4 and es[q + 3] in (8, 9):
+                            code[int.from_bytes(es[q:q + 4], 'little') - 0x08000000] += 1
+                    for t, v in code.most_common(1):
+                        if not 0 <= t <= len(es) - n:
+                            continue
+                        ff = us[o:o + n].count(0xff)
+                        lz_u = lz_span(us, o)
+                        if lz_u and lz_u[1] <= n < lz_u[1] + 4:
+                            lz_e = lz_span(es, t)
+                            if lz_e and lz_e[0] == lz_u[0]:
+                                votes[t] = v
+                                m = lz_e[1] + ((-lz_e[1]) % 4 if n > lz_u[1] else 0)
+                        elif same_but_pointers(us[o:o + n], es[t:t + n]) >= 0.75 \
+                                or (ff >= 3 and es[t:t + n].count(0xff) in range(ff - ff // 50 - 1, ff + ff // 50 + 2)) \
+                                or v >= 3:
+                            votes[t] = v
+                if not votes:
+                    for p in lsites.get(o, ()):
+                        t = pool_target(p)
+                        if t is not None and 0 <= t <= len(es) - n:
                             votes[t] += 1
-            if votes:
-                t, v = votes.most_common(1)[0]
-                if v * 2 > sum(votes.values()) and 0 <= t < len(es):
-                    pinned[(o, n)] = (t, n)
-        for (o, n), (t, m) in pinned.items():
-            if m == n and (o, n, t) not in placed:
-                placed.append((o, n, t))
-        placed.sort()
-        pstart[:] = [x[0] for x in placed]
-        find_strings(placed_site, strict=False)
-        if len(pinned) + len(text) == before:
-            break
-    starts_es = {}
-    for (o, n), (t, m) in list(text.items()) + list(pinned.items()):
-        starts_es[o] = t
-    for o, n, q in placed:
-        starts_es[o] = q
-    for (o, n), (t, m) in list(pinned.items()):
-        nxt = starts_es.get(o + n)
-        if nxt is not None and nxt != t + n and 0 < nxt - t < 2 * n:
-            pinned[(o, n)] = (t, nxt - t)
+                if not votes:
+                    # sandwiched: the blocks just before and after it moved by the same amount
+                    # and the gap between them is as long in Spain, so it sits in that gap
+                    i = bisect.bisect_right(nstart, o)
+                    if 0 < i < len(nb):
+                        a, b = nb[i - 1], nb[i]
+                        t = a[2] + a[3] + (o - a[0] - a[1])
+                        if a[0] + a[1] <= o and o + n <= b[0] and b[2] - (t + n) == b[0] - (o + n):
+                            votes[t] += 1
+                if not votes and n <= 8:
+                    # a few bytes of layout (positions, ids): the same bytes near where the neighbours went
+                    i = bisect.bisect_right(nstart, o)
+                    if 0 < i:
+                        a = nb[i - 1]
+                        c = a[2] + a[3] + (o - a[0] - a[1])
+                        for d in sorted(range(-256, 257), key=abs):
+                            if 0 <= c + d <= len(es) - n and es[c + d:c + d + n] == us[o:o + n]:
+                                votes[c + d] += 1
+                                break
+                if not votes:
+                    # next to a placed neighbour, with its shift
+                    i = bisect.bisect_right(pstart, o)
+                    for j in (i - 1, i):
+                        if 0 <= j < len(placed):
+                            t = o + placed[j][2] - placed[j][0]
+                            if 0 <= t <= len(es) - n and same_but_pointers(us[o:o + n], es[t:t + n]) >= 0.9:
+                                votes[t] += 1
+                                break
+                if votes:
+                    t, v = votes.most_common(1)[0]
+                    lz_u = lz_span(us, o)
+                    if lz_u and lz_u[1] <= n < lz_u[1] + 4:
+                        # an LZ stream, however it was found: the Spanish one must unpack to the
+                        # same size, and its own compressed length is the one copied
+                        # (a localized picture may unpack bigger or smaller: the game decompresses
+                        # it to VRAM or through its 16 KiB buffer, so up to 16 KiB is accepted)
+                        lz_e = lz_span(es, t)
+                        if not lz_e or (lz_e[0] != lz_u[0] and not 0 < lz_e[0] <= 0x4000):
+                            continue
+                        if lz_e[0] != lz_u[0]:
+                            resized_lz.append((o, lz_u[0], lz_e[0]))
+                        m = lz_e[1] + ((-lz_e[1]) % 4 if n > lz_u[1] else 0)
+                    if v * 2 > sum(votes.values()) and 0 <= t < len(es) and (o, n, t) not in banned:
+                        pinned[(o, n)] = (t, SPANISH_LENGTH.get((o, n), m))
+            for (o, n), (t, m) in pinned.items():
+                if m == n and (o, n, t) not in placed:
+                    placed.append((o, n, t))
+            placed.sort()
+            pstart[:] = [x[0] for x in placed]
+            nb[:] = sorted(set(nb) | {(o, n, t, m) for (o, n), (t, m) in list(pinned.items()) + list(text.items())})
+            nstart[:] = [t[0] for t in nb]
+            find_strings(placed_site, strict=False)
+            if len(pinned) + len(text) == before:
+                break
+        starts_es = {}
+        for (o, n), (t, m) in list(text.items()) + list(pinned.items()):
+            starts_es[o] = t
+        for o, n, q in placed:
+            starts_es[o] = q
+        for (o, n), (t, m) in list(pinned.items()):
+            nxt = starts_es.get(o + n)
+            if path_of.get(o) == 'gamedata/c/easy_chat.bin' and m == n and nxt is not None and nxt != t + n and 0 < nxt - t < 2 * n:
+                pinned[(o, n)] = (t, nxt - t)
+
     # A weak placement (string found by pointer or run, table followed by pointer, loose
     # record) that lands on bytes a strong placement owns, or on another weak one, is wrong:
     # drop it and build again.
     rank = {'same': 3, 'pointers': 3, 'records': 3, 'lz-same': 3, 'event-scripts': 3,
-            'text': 2, 'followed': 2, 'lz-localized': 2, 'lz-localized?': 1, 'loose': 1}
-    for _round in range(4):
+            'text-ptr': 2, 'followed': 2, 'lz-localized': 2, 'text-run': 1, 'lz-localized?': 1, 'loose': 1}
+    for _round in range(6):
+        locate()
         stats, report, new_entries, posmaps, *_ = build()
         tr = sorted(trace, key=lambda t: t[2])
         drop = set()
@@ -435,14 +564,16 @@ def main():
                 if (a[2], a[3]) == (b[2], b[3]) or (a[0] < b[0] + b[1] and b[0] < a[0] + a[1]):
                     continue        # the USA recipe copies these bytes twice too
                 ra, rb = rank.get(a[4], 1), rank.get(b[4], 1)
+                if ra == rb and ra < 3 and a[1] != b[1]:
+                    # two equally good guesses: the bigger block is the one many pointers agree on
+                    ra, rb = (ra + 0.5, rb) if a[1] > b[1] else (ra, rb + 0.5)
                 if ra < 3 and ra <= rb:
-                    drop.add((a[0], a[1]))
+                    drop.add((a[0], a[1], a[2]))
                 if rb < 3 and rb <= ra:
-                    drop.add((b[0], b[1]))
+                    drop.add((b[0], b[1], b[2]))
         if not drop:
             break
-        for k in drop:
-            text.pop(k, None); pinned.pop(k, None); banned.add(k)
+        banned.update(drop)
         print('dropped', len(drop), 'doubtful placements')
 
     # CRCs from the Spanish ROM, with the Builder's own interpreter
@@ -473,6 +604,8 @@ def main():
         a = pm[i]
         if a[2] is None:
             ustats['unplaced'] += 1; new_units.append([key, sec, ei, off, size, 'unplaced']); continue
+        if a[3] == 0 and off == a[0] and size == a[1]:
+            ustats['kept-in-engine'] += 1; continue
         if off == a[0]:
             end, j, esz = off + size, i, 0
             while j < len(pm) and pm[j][0] < end:
@@ -495,6 +628,8 @@ def main():
     for a, b in zip(trace, trace[1:]):
         if b[2] < a[2] + a[3] and (a[2], a[3]) != (b[2], b[3]):
             report.append(f'OVERLAP\t{a[5]}\t{a[4]}\t0x{a[0]:x}\t{a[1]}\t{b[5]}\t{b[4]}\t0x{b[0]:x}\t{b[1]}')
+    for o, a, b in sorted(set(resized_lz)):
+        report.append(f'LZ-RESIZED\t{path_of.get(o)}\t0x{o:x}\t{a}\t{b}')
     json.dump(trace, open(out_dir / 'placements.json', 'w'))
     with open(out_dir / 'recipe-es-report.txt', 'w', encoding='utf-8') as w:
         w.write(f'ops: {dict(stats)}\nunits: {dict(ustats)}\n')

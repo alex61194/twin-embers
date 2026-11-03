@@ -12,13 +12,12 @@ Twin Embers is built from the pret/pokefirered decompilation. The game data (gra
 
 ## Done since 2 Nov
 - **Spanish event scripts object**: labels and pointer sites at their Spanish offsets (420,310 bytes, all 9,954 pointer sites).
-- **Spanish recipe** (`builder/firered3ds_builder/recipes/firered-ab8f6bfe*`): every USA recipe operation mapped to the Spanish ROM, by text pointers, contiguous runs, 16-byte anchors and pointer-masked comparison, LZ headers for graphics, and pointer following for tables. 6,712 of 6,734 files are placed with CRCs; 34 graphics are the Spanish (localized) versions.
+- **Spanish recipe** (`builder/firered3ds_builder/recipes/firered-ab8f6bfe*`): every USA recipe operation mapped to the Spanish ROM, by text pointers, contiguous runs, 16-byte anchors and pointer-masked comparison, LZ headers for graphics, and pointer following for tables. all 6,734 files are placed with CRCs; 36 graphics are the Spanish (localized) versions.
 - **Build**: `make TWIN_LANG=es` uses that recipe; text sections take their Spanish length; the Builder accepts the Spanish ROM and the 3DS side only accepts a Spanish pack.
 
 ## Remaining
-1. 22 files still have something unplaced (`pending.json`): mostly Easy Chat (alphabetical lists, a few words), a few battle/union-room strings, three LZ graphics.
-2. Patch the few places where the Spanish game's code differs, for example plural suffixes (`sText_S` / `sText_IES`).
-3. First Spanish build and test (not compiled yet).
+1. First Spanish build and test (not compiled yet). Things to look at: Easy Chat (Spanish alphabetical lists), the credits' "FIN" picture and the Department Store tiles (both unpack to a new size), the trainer card ID position, Teachy TV's closing banner.
+2. Code differences of the Spanish game beyond data. Handled in the recipe so far: plural suffixes (`sText_S`, `sText_IES`, `sPluralTxt`) are empty strings, as the Spanish game never appends them. Others may show up in testing.
 
 ## Overlap with a gen1recomp-based mod
 gen1recomp is a different engine (Gen 1 Red/Blue) and, as far as we know, its Spanish mod replaces text inside that recompilation. Our pipeline never ships text and reads everything from the user's Spanish FireRed ROM. So the main work here is layout, sizes and pointers, not translation. Things that could still be shared: translations of the port's own UI strings, and knowledge of where the Spanish FireRed's code differs from the English one.

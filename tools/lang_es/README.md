@@ -30,7 +30,11 @@ Usage: `python3 -I es_events2.py "<USA rom>" "<Spain rom>"`. See STATUS.md and D
    maps every operation of the USA recipe to the Spanish ROM and writes `recipe-es/recipe-es.json`
    (offsets, lengths, CRC32s), a report and `placements.json`. It needs `builder/firered3ds_builder/`
    next to it or the checkout around it (the CRCs use the Builder's own interpreter).
-   3 Nov 2026: 6,712 of 6,734 files placed; 92 operations (mostly Easy Chat lists) still unplaced.
+   3 Nov 2026: all 6,734 files placed (engine ABI 0c92b443). Hand-decided cases are listed at the top of
+   the script: English plural suffixes and the unreachable e-Reader scripts become empty, two trainer-card
+   position bytes stay in the engine, Teachy TV's 4x2 Spanish closing banner goes into the English 8x2 slot.
+   Two localized LZ pictures unpack to another size (credits "THE END" 448 -> 1536 bytes, Department Store
+   tiles 6432 -> 6464): check them on the first Spanish build.
 4. `python3 tools/lang_es/finish_recipe_es.py recipe-es.json event_scripts_layout_es.json` (in the checkout)
    writes `builder/firered3ds_builder/recipes/firered-ab8f6bfe.json`, its parts, the Spanish event-script
    layout (`event_scripts-NN.json`) and `pending.json`. While anything is pending the recipe's engine ABI is 0

@@ -25,7 +25,7 @@ class Parts(unittest.TestCase):
         self.assertEqual(SUPPORTED_ROMS[SPANISH_SHA1],'es')
         recipe=load_recipe(default_recipe(SPANISH_SHA1))
         self.assertEqual(recipe['rom_sha1'],SPANISH_SHA1)
-        self.assertEqual(len(recipe['units']),len(load_recipe(default_recipe(SUPPORTED_SHA1))['units']))
+        self.assertLessEqual(len(recipe['units']),len(load_recipe(default_recipe(SUPPORTED_SHA1))['units']))
         if recipe['engine_abi']==0:
             with self.assertRaisesRegex(ValueError,'not finished'):
                 reconstruct(recipe,bytes(16*1024*1024))
