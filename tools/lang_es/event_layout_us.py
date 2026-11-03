@@ -3,7 +3,8 @@
 
     event_layout_us.py event_scripts.o out.json
 
-{"size", "syms": [[offset, name, global]...], "relocs": [[offset, type, symbol, addend]...]}
+{"size", "syms": [[offset, name, global]...], "relocs": [[offset, type, symbol, addend]...],
+"absolutes": [[value, name]...]}
 is what gen_event_scripts_es.py reads next to the Spanish layout. Run on the
 object as assembled, before tools/rex_objects.py turns it into NOBITS.
 """
@@ -35,7 +36,11 @@ def layout(path):
         name = obj.sections[y.shndx].name if y.type == STT_SECTION else y.name
         addend = int.from_bytes(data[r.offset:r.offset + 4], 'little', signed=True)
         relocs.append([r.offset, TYPES[r.type], name, addend])
-    return dict(size=sec.size, syms=syms, relocs=relocs)
+    # The special numbers (data/specials.inc) are absolute globals other objects link against.
+    absolutes = sorted([y.value, y.name] for y in obj.symbols
+                       if y.shndx == rex.SHN_ABS and y.name.startswith('SPECIAL_')
+                       and y.bind in (rex.STB_GLOBAL, rex.STB_WEAK))
+    return dict(size=sec.size, syms=syms, relocs=relocs, absolutes=absolutes)
 
 
 if __name__ == '__main__':

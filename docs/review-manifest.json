@@ -4813,7 +4813,7 @@
   },
   {
    "path": "tools/lang_es/gen_event_scripts_es.py",
-   "sha256": "6ab91ed741d1520f7a485fcebb79bebdb752019c1308d874f8ea559900b4345b",
+   "sha256": "e5807193ac313f3a582cf4c408a8bd53248839b17c2c44a254f491667e7832bc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6136,7 +6136,7 @@
   },
   {
    "path": "tools/lang_es/event_layout_us.py",
-   "sha256": "1e1f0e9fe81e758f18c0aa901cc927802dc0b500d774ecfb9ead752717432fe6",
+   "sha256": "ae6005429b3ef91a79308207d5e1403388b74b3a2b3233441ab43a6b570f6ff6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
