@@ -122,7 +122,7 @@ class DownloadTest(unittest.TestCase):
                     self.data[(dex, body, side)] = data
                     rows.append(row_for(dex, body, side, data))
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
-                        patch.object(gen4_sprites, "BACK_FILES", ())):
+                        patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -138,7 +138,8 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0, "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
+                                "backgrounds": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -439,7 +440,7 @@ class BackTest(unittest.TestCase):
             urls.append(url)
             return strip
 
-        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows):
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows),                 patch.object(gen4_sprites, "BG_FILES", ()):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/back/000.bin"])
         self.assertEqual(info["backs"], 1)
@@ -451,6 +452,114 @@ class BackTest(unittest.TestCase):
         self.assertRegex(gen4_sprites.BACK_COMMIT, "^[0-9a-f]{40}$")
         for row in gen4_sprites.BACK_FILES:
             self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+
+def rgb_png(rows):
+    """An RGB PNG of rows of (r, g, b), filter 0."""
+    width, height = len(rows[0]), len(rows)
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    lines = b"".join(b"\x00" + bytes(v for pixel in row for v in pixel) for row in rows)
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(lines))
+            + chunk(b"IEND", b""))
+
+
+class BackgroundTest(unittest.TestCase):
+    COLOURS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+
+    def scene(self):
+        """A 240x112 scene: a colour per 8x8 tile (so it holds four different tiles in a repeating pattern)."""
+        return [[self.COLOURS[((x // 8) + (y // 8) * 3) % 4] for x in range(240)] for y in range(112)]
+
+    def entry(self):
+        return gen4_sprites.convert_bg(rgb_png(self.scene()))
+
+    def test_an_rgb_png_is_read(self):
+        width, height, palette, rows = gen4_sprites.read_png(rgb_png([[(1, 2, 3), (4, 5, 6)]]))
+        self.assertEqual((width, height, palette, rows), (2, 1, [], [[(1, 2, 3, 255), (4, 5, 6, 255)]]))
+
+    def test_entry_layout_and_identical_tiles_stored_once(self):
+        entry = self.entry()
+        self.assertEqual(entry[:4], b"G4G1")
+        tiles = struct.unpack("<H", entry[4:6])[0]
+        self.assertEqual(tiles, 4)
+        self.assertEqual(len(entry), 8 + 32 + tiles * 32 + 64 * 32 * 2)
+
+    def test_the_map_shows_the_scene_and_repeats_its_edges(self):
+        entry = self.entry()
+        tiles = struct.unpack("<H", entry[4:6])[0]
+        entries = struct.unpack("<2048H", entry[40 + tiles * 32:])
+
+        def at(column, row):
+            return entries[(column // 32) * 1024 + row * 32 + column % 32]
+        # Every entry takes palette 2, as BG3's three palettes start there.
+        self.assertTrue(all(value >> 12 == 2 for value in entries))
+        # The picture itself: the tile of each 8x8 square, in the colour that square has.
+        for row in (0, 5, 13):
+            for column in (0, 7, 29):
+                colour = self.COLOURS[(column + row * 3) % 4]
+                tile = at(column, row) & 0x3ff
+                index = entry[40 + tile * 32] & 0xF
+                palette = struct.unpack("<16H", entry[8:40])[index]
+                self.assertEqual(((palette & 31) * 255 // 31, (palette >> 5 & 31) * 255 // 31,
+                                  (palette >> 10 & 31) * 255 // 31), colour)
+        # Beside it: the last column on the right, the first on the left (wrapping from column 63).
+        for row in range(14):
+            self.assertEqual(at(30, row), at(29, row))
+            self.assertEqual(at(31, row), at(29, row))
+            self.assertEqual(at(63, row), at(0, row))
+            self.assertEqual(at(62, row), at(0, row))
+        # Above it (rows 30 and 31 wrap to the top): the first row's tiles.
+        for column in range(30):
+            self.assertEqual(at(column, 30), at(column, 0))
+            self.assertEqual(at(column, 31), at(column, 0))
+
+    def test_a_wrong_size_or_too_many_tiles_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(rgb_png([[(0, 0, 0)] * 240] * 100))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(png([[0] * 240] * 112, [(0, 0, 0)] * 16, depth=8))
+        # 30x14 = 420 different tiles fit; with a 512 limit made smaller, they do not.
+        noisy = [[((x * 7 + y * 13) % 15 * 16, (x * 3 + y) % 15 * 16, 0) for x in range(240)] for y in range(112)]
+        with patch.object(gen4_sprites, "BG_TILES_MAX", 10), self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(rgb_png(noisy))
+
+    def test_the_pinned_scenes_and_terrains(self):
+        self.assertRegex(gen4_sprites.BG_COMMIT, "^[0-9a-f]{40}$")
+        self.assertEqual([row[:2] for row in gen4_sprites.BG_FILES], [(i, "bg") for i in range(14)])
+        self.assertEqual(len(gen4_sprites.BG_TERRAIN), 20)       # FireRed's BATTLE_TERRAIN_GRASS to CHAMPION
+        self.assertEqual(set(gen4_sprites.BG_TERRAIN), set(range(14)))
+        for row in gen4_sprites.BG_FILES:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+    def test_every_terrain_has_its_scene_or_none_has(self):
+        data = rgb_png(self.scene())
+        rows = tuple((i, "bg", "s/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(14))
+        urls = []
+
+        def get(url):
+            urls.append(url)
+            return data
+
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
+                patch.object(gen4_sprites, "BG_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+        self.assertEqual([path for path, _ in files], ["graphics/gen4/bg/%03d.bin" % i for i in range(20)])
+        self.assertEqual(info["backgrounds"], 20)
+        self.assertEqual(files[0][1], files[4][1] if gen4_sprites.BG_TERRAIN[0] == gen4_sprites.BG_TERRAIN[4]
+                         else files[0][1])
+        self.assertEqual(files[11][1], files[12][1])            # the gym and its leader share a scene
+        self.assertEqual(urls[0], "https://raw.githubusercontent.com/%s/%s/s/0.png"
+                         % (gen4_sprites.BG_REPO, gen4_sprites.BG_COMMIT))
+        # One scene that cannot be had leaves every terrain on FireRed's.
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
+                patch.object(gen4_sprites, "BG_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url.endswith("/3.png") else data))
+        self.assertEqual((files, info["backgrounds"]), ([], 0))
 
 
 class SourcesTest(unittest.TestCase):

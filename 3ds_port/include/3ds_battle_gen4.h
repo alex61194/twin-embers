@@ -106,4 +106,11 @@ typedef struct CtrGen4Obj {
  * (tile | palette << 12), or -1 without one. */
 int CtrGen4_SpriteOam(unsigned battler);
 
+/* The battle backgrounds (battle_bg.c, recipe 0210): graphics/gen4/bg/NNN.bin, NNN being FireRed's BATTLE_TERRAIN_*,
+ * a 240x112 scene as VRAM-ready data (the Builder's convert_bg). `part` 0: the tiles into the 16 KiB char block at
+ * `dest` (the rest cleared); 1: the 64x32 tile map (4096 bytes); 2: the three palettes BG3 reads from (u16[48], all
+ * the scene's one palette); 3: nothing, only whether the terrain has a scene (the entry background is then left
+ * empty). 0 without an entry for the terrain: FireRed's own data is loaded. */
+int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
+
 #endif

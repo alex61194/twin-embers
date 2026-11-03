@@ -57,6 +57,11 @@ fan-made HGSS-style backs that the gen1recomp HGSS Visual Overhaul mod (LucianoN
 keeps as 400x80 RGBA strips, Leaf's by setogabes, Red's from a public Red pack; the Builder turns
 each into at most 15 colours (BGR555) and transparency.
 
+bg/NNN.bin (NNN = FireRed's BATTLE_TERRAIN_*): b"G4G1", u16 tiles, u16 0, u16 x 16 the palette (BGR555, colour 0
+unused), then the tiles (4 bits a pixel, FireRed's own layout, 32 bytes each) and the 64x32 tile map (two 32x32
+screen blocks, entries as FireRed's BG3 reads them, palette 2), ready for the VRAM the battle scene is drawn from.
+A scene is 240x112 pixels; the map repeats its first row above it and its last columns on either side.
+
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
 personality moves it (HeartGold's RawChardata_PlaceSpindaSpots).
@@ -100,6 +105,48 @@ BACK_FILES = (
     (1, "back", "hgss_sprites/assets/battle/back-animated/leafplayer.png", 5524,
      "8c222cfdae83898370c60806bf1c9297207023da59a46ec1f0fce2e9acd8945d"),
 )
+# The battle backgrounds: Facets' SCENERY set (LibertyTwins' Battle Backgrounds Patch FR, converted to 240x112
+# PNGs of 15 colours), pinned like the rest: (scene, "bg", path, size, SHA-256). BG_TERRAIN gives each of FireRed's
+# BATTLE_TERRAIN_* (grass, long grass, sand, underwater, water, pond, mountain, cave, building, plain, link, gym, leader,
+# indoor 2, indoor 1, Lorelei, Bruno, Agatha, Lance, champion) its scene, as Facets maps them.
+BG_REPO = "ElvieBlooms/facets"
+BG_COMMIT = "9b4940d54f8bad152746481b56d841698a548e64"
+BG_PREFIX = "graphics/gen4/bg/"
+BG_MAGIC = b"G4G1"
+BG_W, BG_H = 240, 112
+BG_MAP_COLUMNS, BG_MAP_ROWS = 64, 32
+BG_TILES_MAX = 512
+BG_FILES = (
+    (0, "bg", "assets/battlebg/scenery/grass.png", 7203,
+     "26a618485a29fa74b389439d3f730b3fc0e236f2399c99e907e07e6c5df7bf74"),
+    (1, "bg", "assets/battlebg/scenery/forest.png", 8960,
+     "62cd98d05159d1c15e9fb45d11457d6fa776307759eb2d1c5301e0b73e5e1e62"),
+    (2, "bg", "assets/battlebg/scenery/beach.png", 6480,
+     "5c800d2ae752b2e04cd4105df6ccdccf1943d083451bde17eb594b712d4ad25f"),
+    (3, "bg", "assets/battlebg/scenery/underwater.png", 5485,
+     "c7f3e9e468feaea6b63cde9c0664eca40ef4bbb73e68aa32f5bb4ab24cb44c3c"),
+    (4, "bg", "assets/battlebg/scenery/sea.png", 3666,
+     "8c10cea856f281511e3f7bded7f26624c7702f9eb4bcb988d1f64f380cae3611"),
+    (5, "bg", "assets/battlebg/scenery/lake.png", 5866,
+     "11592e3ed8ed148231078ba0756496e09b212b89d25e0a770e4f654f7ed0d770"),
+    (6, "bg", "assets/battlebg/scenery/mountain.png", 9330,
+     "c66d9d846c18593d0d4053ae6be0b8362e4b781cfc2858204276860ba0cf1591"),
+    (7, "bg", "assets/battlebg/scenery/cave.png", 11799,
+     "ab0dd0dfaaa2f9ecdf15cd2c3c71131b3e3d46b913692aca35faa8b2e84df44a"),
+    (8, "bg", "assets/battlebg/scenery/lab.png", 3966,
+     "95d12a070159cd58313309c189eab2d659eb942c218a6e03c545a3ea6010f415"),
+    (9, "bg", "assets/battlebg/scenery/route.png", 9873,
+     "9b16990868cdc3aa0bd60e71510999e252dfee08755d76875d571525e5829809"),
+    (10, "bg", "assets/battlebg/scenery/indoors.png", 1586,
+     "d21831b0da6d3f7c992de0474245c2b9d8dda184b6e9e34926785efeff393b24"),
+    (11, "bg", "assets/battlebg/scenery/neutral.png", 2211,
+     "3e99166d28c748adaabded65d486d3cf0ca4a86c8a1950a50030aef3c162a865"),
+    (12, "bg", "assets/battlebg/scenery/gym.png", 4170,
+     "edc34b6191b8da6f46c8488a40473ef6fc35a967e01807d54aab41e5253030b4"),
+    (13, "bg", "assets/battlebg/scenery/space.png", 2205,
+     "13ee861c57029aa50cbe6ff2f7d532c78e149188973db1ee04d54697681db72d"),
+)
+BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
@@ -113,8 +160,8 @@ class Gen4Error(ValueError):
 # --- PNG (the 4- and 8-bit indexed images pret keeps) -------------------------------------------
 
 def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[list]]:
-    """(width, height, palette as RGB, rows of palette indices) of an indexed PNG; of an RGBA one, no palette and
-    rows of (r, g, b, a)."""
+    """(width, height, palette as RGB, rows of palette indices) of an indexed PNG; of an RGBA or RGB one, no palette
+    and rows of (r, g, b, a)."""
     if data[:8] != b"\x89PNG\r\n\x1a\n":
         raise Gen4Error("not a PNG file")
     pos, idat, palette, header = 8, bytearray(), [], None
@@ -134,10 +181,11 @@ def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[li
         raise Gen4Error("PNG without a header")
     width, height, depth, colour, _, _, interlace = header
     rgba = colour == 6 and depth == 8
-    if not (colour == 3 and depth in (4, 8) or rgba) or interlace:
-        raise Gen4Error("only non-interlaced 4- or 8-bit indexed or 8-bit RGBA PNGs are read")
-    step = 4 if rgba else 1
-    stride = width * 4 if rgba else (width * depth + 7) // 8
+    rgb = colour == 2 and depth == 8
+    if not (colour == 3 and depth in (4, 8) or rgba or rgb) or interlace:
+        raise Gen4Error("only non-interlaced 4- or 8-bit indexed or 8-bit RGB or RGBA PNGs are read")
+    step = 4 if rgba else 3 if rgb else 1
+    stride = width * step if (rgba or rgb) else (width * depth + 7) // 8
     raw = zlib.decompress(bytes(idat))
     if len(raw) != (stride + 1) * height:
         raise Gen4Error("PNG data has the wrong size")
@@ -164,6 +212,8 @@ def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[li
         previous = line
         if rgba:
             rows.append([tuple(line[x * 4:x * 4 + 4]) for x in range(width)])
+        elif rgb:
+            rows.append([tuple(line[x * 3:x * 3 + 3]) + (255,) for x in range(width)])
         elif depth == 8:
             rows.append(list(line[:width]))
         else:
@@ -475,6 +525,45 @@ def convert_back(strip: bytes) -> bytes:
     return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
+def convert_bg(scene: bytes) -> bytes:
+    """A battle background's pack entry from its 240x112 PNG: the 15-colour palette, the tiles (identical ones once)
+    and the 64x32 tile map of BG3's two screen blocks."""
+    width, height, _, rows = read_png(scene)
+    if (width, height) != (BG_W, BG_H) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a battle background is a 240x112 RGB or RGBA PNG")
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    columns, tile_rows = BG_W // 8, BG_H // 8
+    tiles: list[bytes] = []
+    seen: dict[bytes, int] = {}
+    grid = [[0] * columns for _ in range(tile_rows)]
+    for ty in range(tile_rows):
+        for tx in range(columns):
+            tile = bytearray()
+            for y in range(8):
+                base = (ty * 8 + y) * width + tx * 8
+                tile += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
+            tile = bytes(tile)
+            if tile not in seen:
+                if len(tiles) == BG_TILES_MAX:
+                    raise Gen4Error("a battle background has more than %d different tiles" % BG_TILES_MAX)
+                seen[tile] = len(tiles)
+                tiles.append(tile)
+            grid[ty][tx] = seen[tile]
+    # BG3 reads a 64x32 map (screen blocks 26 and 27, 32 columns each) with palette 2. Above the picture and beside
+    # it, the map repeats the picture's edge: its first row on the rows above (the scene is zoomed past 240x112 on
+    # the 3DS), its first column on the left (columns 63 and below) and its last on the right (columns 30 up).
+    mapped = [[0] * BG_MAP_COLUMNS for _ in range(BG_MAP_ROWS)]
+    for row in range(BG_MAP_ROWS):
+        source = grid[0] if row >= tile_rows + 16 else grid[min(row, tile_rows - 1)]
+        for column in range(BG_MAP_COLUMNS):
+            tile = source[column] if column < columns else source[columns - 1] if column < 47 else source[0]
+            mapped[row][column] = tile | 2 << 12
+    tilemap = b"".join(struct.pack("<H", mapped[row][block * 32 + column]) for block in (0, 1)
+                       for row in range(BG_MAP_ROWS) for column in range(32))
+    colours = (palette + [0] * 16)[:16]
+    return BG_MAGIC + struct.pack("<HH", len(tiles), 0) + struct.pack("<16H", *colours) + b"".join(tiles) + tilemap
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -508,7 +597,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] == "back":
+    if row[1] in ("back", "bg"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -527,18 +616,22 @@ def file_name(row: tuple) -> str:
         return "trainers_a058.narc"
     if row[1] == "back":
         return "back_{:03d}.png".format(row[0])
+    if row[1] == "bg":
+        return "bg_{:02d}.png".format(row[0])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
 def file_url(row: tuple) -> str:
     if row[1] == "back":
         return URL.format(repo=BACK_REPO, commit=BACK_COMMIT, path=source_path(row))
+    if row[1] == "bg":
+        return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
 
 
 def all_files() -> tuple:
-    """Every file the download may fetch: pret's (gen4_sources.FILES), then the fan-made backs."""
-    return tuple(gen4_sources.FILES) + BACK_FILES
+    """Every file the download may fetch: pret's (gen4_sources.FILES), the fan-made backs, then the battle scenes."""
+    return tuple(gen4_sources.FILES) + BACK_FILES + BG_FILES
 
 
 def matches(row: tuple, data: bytes | None) -> bool:
@@ -624,6 +717,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     spinda = [row for row in rows if row[1] == "spinda"]
     trainers = [row for row in rows if row[1] == "trainers"]
     backs = [row for row in rows if row[1] == "back"]
+    scenes = [row for row in rows if row[1] == "bg"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -649,5 +743,11 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     back_files = [("%s%03d.bin" % (BACK_PREFIX, row[0]), convert_back(got[row[:3]])) for row in backs
                   if row[:3] in got]
     files += back_files
+    # Every terrain gets its scene, or none of them does (half a set would mix two looks).
+    converted = {row[0]: convert_bg(got[row[:3]]) for row in scenes if row[:3] in got}
+    bg_files = []
+    if scenes and len(converted) == len(scenes):
+        bg_files = [("%s%03d.bin" % (BG_PREFIX, terrain), converted[scene]) for terrain, scene in enumerate(BG_TERRAIN)]
+    files += bg_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
-                   "backs": len(back_files), "downloaded": downloaded}
+                   "backs": len(back_files), "backgrounds": len(bg_files), "downloaded": downloaded}

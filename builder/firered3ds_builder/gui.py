@@ -173,6 +173,8 @@ class BuilderWindow(tk.Tk):
             text += "\nHeartGold trainer pictures: {0}.".format(info["trainers"])
         if info.get("backs"):
             text += "\nHeartGold-style player backs: {0}.".format(info["backs"])
+        if info.get("backgrounds"):
+            text += "\nBattle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"])
         return text
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:

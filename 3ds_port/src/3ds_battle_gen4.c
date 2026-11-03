@@ -518,3 +518,70 @@ void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow)
         for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
             memset(tiles + (((unsigned)y / 8 * CTR_GEN4_TILES + tx) * 8 + (unsigned)y % 8) * 4, 0, 4);
 }
+
+/* The battle backgrounds (CtrBattleBg_Load): the terrain's entry read once and kept while the same terrain is asked
+ * for again (a battle loads its tiles, map and palette one after the other). */
+#define BG_TERRAINS 20
+#define BG_HEADER 40
+#define BG_CHAR_BYTES 16384
+#define BG_MAP_BYTES 4096
+#define BG_TILES_MAX 512
+
+static struct {
+    bool tried;
+    unsigned terrain, tiles;
+    uint8_t *entry;
+} sBg;
+
+static const uint8_t *BgEntry(unsigned terrain)
+{
+    if (terrain >= BG_TERRAINS)
+        return NULL;
+    if (sBg.tried && sBg.terrain == terrain)
+        return sBg.entry;
+    free(sBg.entry);
+    sBg.entry = NULL;
+    sBg.tried = true;
+    sBg.terrain = terrain;
+    char path[40];
+    snprintf(path, sizeof(path), "graphics/gen4/bg/%03u.bin", terrain);
+    uint32_t size = 0;
+    uint8_t *entry = CtrData_Load(path, &size);
+    if (!entry)
+        return NULL;
+    unsigned tiles = size >= BG_HEADER ? entry[4] | entry[5] << 8 : 0;
+    if (size < BG_HEADER || memcmp(entry, "G4G1", 4) || !tiles || tiles > BG_TILES_MAX
+        || size != BG_HEADER + tiles * 32 + BG_MAP_BYTES)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    sBg.tiles = tiles;
+    sBg.entry = entry;
+    return entry;
+}
+
+int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
+{
+    const uint8_t *entry = BgEntry(terrain);
+    if (!entry)
+        return 0;
+    switch (part)
+    {
+    case 0:
+        memset(dest, 0, BG_CHAR_BYTES);
+        memcpy(dest, entry + BG_HEADER, sBg.tiles * 32);
+        return 1;
+    case 1:
+        memcpy(dest, entry + BG_HEADER + sBg.tiles * 32, BG_MAP_BYTES);
+        return 1;
+    case 2:
+        for (unsigned bank = 0; bank < 3; ++bank)
+            memcpy((uint8_t *)dest + bank * 32, entry + 8, 32);
+        return 1;
+    case 3:
+        return 1;
+    }
+    return 0;
+}

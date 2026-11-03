@@ -120,6 +120,8 @@ static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
     return obj->tiles[((y / 8) * obj->side + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
 }
 
+#define BG_CHAR 16384
+
 int main(void)
 {
     uint8_t fire[0x800];
@@ -363,6 +365,51 @@ int main(void)
     assert(!CtrGen4_IconPaletteData(2));
     sIconsEntry[0] = 'X';                  /* already read: still there */
     assert(CtrGen4_IconTiles(1));
+
+    /* The battle backgrounds: a terrain's entry (3 tiles, palette, map) goes to VRAM as it is, the rest of the char
+     * block cleared, and one palette fills the three banks BG3 reads. */
+    {
+        static uint8_t tiles[BG_CHAR], map[4096], pal[48 * 2];
+        uint16_t banks[48];
+
+        memset(sEntry, 0, sizeof(sEntry));
+        memcpy(sEntry, "G4G1", 4);
+        sEntry[4] = 3;
+        for (unsigned i = 0; i < 16; ++i)
+        {
+            sEntry[8 + i * 2] = (uint8_t)(i + 1);
+            sEntry[9 + i * 2] = 0x40;
+        }
+        for (unsigned i = 0; i < 3 * 32; ++i)
+            sEntry[40 + i] = (uint8_t)(0xA0 + i / 32);
+        for (unsigned i = 0; i < 4096; ++i)
+            sEntry[40 + 96 + i] = (uint8_t)(i * 7);
+        sEntrySize = 40 + 96 + 4096;
+        memset(tiles, 0xEE, sizeof(tiles));
+        assert(CtrBattleBg_Load(3, 3, NULL));
+        assert(strcmp(sAsked, "graphics/gen4/bg/003.bin") == 0);
+        assert(CtrBattleBg_Load(3, 0, tiles));
+        assert(tiles[0] == 0xA0 && tiles[31] == 0xA0 && tiles[32] == 0xA1 && tiles[95] == 0xA2);
+        assert(tiles[96] == 0 && tiles[BG_CHAR - 1] == 0);
+        assert(CtrBattleBg_Load(3, 1, map));
+        assert(map[0] == 0 && map[1] == 7 && map[4095] == (uint8_t)(4095 * 7));
+        assert(CtrBattleBg_Load(3, 2, pal));
+        memcpy(banks, pal, sizeof(banks));
+        for (unsigned i = 0; i < 16; ++i)
+            assert(banks[i] == (0x4000 | (i + 1)) && banks[16 + i] == banks[i] && banks[32 + i] == banks[i]);
+        assert(!CtrBattleBg_Load(3, 4, tiles));
+        assert(!CtrBattleBg_Load(20, 0, tiles) && !CtrBattleBg_Load(1000, 3, NULL));
+
+        /* Another terrain, a wrong kind and a wrong size: FireRed's own data stays. */
+        sEntry[0] = 'X';
+        assert(!CtrBattleBg_Load(4, 0, tiles));
+        sEntry[0] = 'G';
+        sEntry[4] = 4;
+        assert(!CtrBattleBg_Load(5, 0, tiles));
+        sEntry[4] = 3;
+        sEntrySize = 0;
+        assert(!CtrBattleBg_Load(6, 3, NULL));
+    }
 
     puts("battle_gen4_test: ok");
     return 0;
