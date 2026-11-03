@@ -221,9 +221,10 @@ def index(elf_path):
         spanish = es_assets.files()
         for row in rows:
             if row['path'] in spanish:
-                if spanish[row['path']][0] != row['size']:
+                size, crc = spanish[row['path']]
+                if not size <= row['size'] < size + 4:      # the array holds whole words; the file may be shorter
                     raise ValueError('Spanish size differs from the linked asset: ' + row['path'])
-                row['crc'] = spanish[row['path']][1]
+                row['size'], row['crc'] = size, crc
     rows.sort(key=lambda r: (r['address'], r['path']))
     strings = bytearray()
     records = bytearray()

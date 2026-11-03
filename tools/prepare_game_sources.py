@@ -61,8 +61,9 @@ def main() -> None:
         spanish = es_assets.files()
         resized = 0
         for name in assets:
+            size = (spanish[name][0] + 3) // 4 * 4 if name in spanish else 0   # INCBIN_U16/U32 want whole words
             if name in spanish and spanish[name][0] != (ROOT / name).stat().st_size:
-                (ROOT / name).write_bytes(bytes(spanish[name][0]))
+                (ROOT / name).write_bytes(bytes(size))
                 resized += 1
         print(f"sized {resized} assets like the Spanish game's")
     print(f"prepared {len(assets)} FireRed C assets and {len(map_headers)} map includes")
