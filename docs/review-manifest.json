@@ -4740,6 +4740,94 @@
    "modified_for_distribution": false
   },
   {
+   "path": "tools/lang_es/DISENO-event-scripts.md",
+   "sha256": "1cc5a274c9ed3e581fd2d6c1f757bc1c289836172ba4f99eec4153390b9f2719",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/README.md",
+   "sha256": "961bbfcaef4bfe80f7f61e52b13159315ff256ec02bd73c9bfb3577dc63150cb",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/STATUS.md",
+   "sha256": "a4fb83967d90e2f847d0462ce3295be90bbb339fa950c007f66c5930b6cd5026",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/align.py",
+   "sha256": "1579ec3d15e2dd1facc60f6a294450743b8ef57bd5aba9ccc7ee1fdbb0f3f089",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/align2.py",
+   "sha256": "5f147b4314a7ee96340cc75dd057507883817b9f2c36c2c2d0fde9ada9be7e8d",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/align3.py",
+   "sha256": "622bb88d48e60d976f5f13156b70366e233fe628a005a78b96292fdc0d708b6c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/es_events2.py",
+   "sha256": "8adc8b21a47bdcf8ca3445055f8da066ab7106f132fdc6aa8afa682429df27bd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/es_sizes.py",
+   "sha256": "ca562f875daa2bcbe7c607c2be252a78a8cb99da7d12361c0d6259fc4be0641f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/es_sizes2.py",
+   "sha256": "7f56aeb10d0175fc1b55b023e6c13ec2981c2a829db8ea1ae8bcf5d6839fff8a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/scrdis.py",
+   "sha256": "64f50a074a9a7e70742053de83949406552d21cf4fd796c92c78813aff9ac91d",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/script_ops.json",
+   "sha256": "b67ed9da08f8e02aa41a09fa566fed54d682af0a09dae48059899f3d664a337c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/make_battle_icons.py",
    "sha256": "5b4b5a9c48df520b03d0adabb6de2e6444cb4c2013f125110600734cb13384a4",
    "review_status": "reviewed",
