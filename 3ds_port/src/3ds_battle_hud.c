@@ -144,13 +144,14 @@ static unsigned GlyphValue(bool small, const uint8_t *src, unsigned x, unsigned 
     return (bits >> ((7 - x % 8) * 2)) & 3;
 }
 
-/* The ASCII the boxes print themselves, in the game's charset. */
+/* The ASCII the boxes print themselves, in the game's charset ('*' for its multiplication sign). */
 static uint8_t Code(char c)
 {
     if (c >= '0' && c <= '9') return (uint8_t)(0xA1 + (c - '0'));
     if (c >= 'A' && c <= 'Z') return (uint8_t)(0xBB + (c - 'A'));
     if (c >= 'a' && c <= 'z') return (uint8_t)(0xD5 + (c - 'a'));
     if (c == '/') return 0xBA;
+    if (c == '*') return 0xB9;                    /* the multiplication sign */
     return 0x00;
 }
 
@@ -464,19 +465,54 @@ static int Status(Canvas *c, int x, int y, unsigned s)
     return w;
 }
 
-/* ---- The two boxes ------------------------------------------------------------------------------------------------ */
+/* ---- The boxes -------------------------------------------------------------------------------------------------- */
+
+static const char *const STAR[7] = {"...#...", "...#...", "..###..", "#######", ".#####.", "..#.#..", ".#...#."};
+
+/* A shiny Pokemon's gold star after its name. */
+static void Star(Canvas *c, int x, int y)
+{
+    for (int j = 0; j < 7; ++j)
+        for (int k = 0; k < 7; ++k)
+            if (STAR[j][k] == '#') Put(c, x + k + 1, y + j + 1, (Rgb){150, 96, 16});
+    for (int j = 0; j < 7; ++j)
+        for (int k = 0; k < 7; ++k)
+            if (STAR[j][k] == '#') Put(c, x + k, y + j, j < 4 ? (Rgb){255, 214, 64} : (Rgb){240, 168, 32});
+}
 
 static int Name(Canvas *c, int x, int base, const CtrHudState *s)
 {
     x = Text(c, false, x, base, s->name, INK, &INK_SHADOW);
     if (s->gender != CTR_HUD_NO_GENDER) x = Mark(c, x, base, s->gender);
+    if (s->shiny) Star(c, x + 2, base - 7);
     return x;
+}
+
+static bool HasStatus(const CtrHudState *s)
+{
+    return s->status >= CTR_HUD_PSN && s->status <= CTR_HUD_BRN;
+}
+
+/* "hp/max" in the game's charset. */
+static void Numbers(const CtrHudState *s, char *out)
+{
+    char tmp[6];
+    unsigned n = 0, t = 0, v = s->hp;
+
+    do tmp[t++] = (char)('0' + v % 10); while ((v /= 10) && t < 5);
+    while (t) out[n++] = tmp[--t];
+    out[n++] = '/';
+    v = s->maxHp;
+    do tmp[t++] = (char)('0' + v % 10); while ((v /= 10) && t < 5);
+    while (t) out[n++] = tmp[--t];
+    out[n] = 0;
 }
 
 #define FOE_W 152
 #define FOE_H 36
 #define PLAYER_W 164
 #define PLAYER_H 56
+#define LOW_H 36                           /* the player's box in a double battle, and the Safari Zone's */
 
 static void FoeBox(Canvas *c, const CtrHudState *s)
 {
@@ -487,7 +523,7 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 13, s);
     Level(c, w - 14, 13, s->level);
     int hx = nx;
-    if (s->status >= CTR_HUD_PSN && s->status <= CTR_HUD_BRN) hx += Status(c, hx, 20, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 20, s->status) + 3;
     HpBar(c, hx, 21, w - 23 - hx, s->hpPixels);
 }
 
@@ -495,39 +531,72 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
 {
     const int w = PLAYER_W, h = PLAYER_H, split = 17, cap = 10;
     char numbers[12];
-    unsigned n = 0;
 
     Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, split, CAP_RIGHT, cap, 3);
     int nx = 20;
     Name(c, nx, 13, s);
     Level(c, w - cap - 6, 13, s->level);
     int hx = nx - 4;
-    if (s->status >= CTR_HUD_PSN && s->status <= CTR_HUD_BRN) hx += Status(c, hx, 30, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 30, s->status) + 3;
     int end = w - cap - 5;
     /* "hp/max", right-aligned to the bar's end, over it. */
-    {
-        char tmp[6];
-        unsigned t = 0, v = s->hp;
-        do tmp[t++] = (char)('0' + v % 10); while ((v /= 10) && t < 5);
-        while (t) numbers[n++] = tmp[--t];
-        numbers[n++] = '/';
-        v = s->maxHp;
-        do tmp[t++] = (char)('0' + v % 10); while ((v /= 10) && t < 5);
-        while (t) numbers[n++] = tmp[--t];
-        numbers[n] = 0;
-    }
+    Numbers(s, numbers);
     Ascii(c, false, end - 3 - (int)AsciiWidth(false, numbers) + 1, 27, numbers, INK, &INK_SHADOW);
     HpBar(c, hx, 31, end - hx, s->hpPixels);
     ExpBar(c, 10, 44, w - cap - 5 - 10, s->expPixels);
 }
 
+/* A double battle's player box: the single one's plate, as low as a foe's, its HP numbers beside the bar. */
+static void PlayerDoubleBox(Canvas *c, const CtrHudState *s)
+{
+    const int w = PLAYER_W, h = LOW_H, split = 17, cap = 10;
+    char numbers[12];
+
+    Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, split, CAP_RIGHT, cap, 3);
+    Name(c, 20, 13, s);
+    Level(c, w - cap - 6, 13, s->level);
+    int end = w - cap - 5;
+    Numbers(s, numbers);
+    int nw = (int)AsciiWidth(false, numbers);
+    Ascii(c, false, end - nw, 31, numbers, INK, &INK_SHADOW);
+    int hx = 16;
+    if (HasStatus(s)) hx += Status(c, hx, 20, s->status) + 3;
+    HpBar(c, hx, 21, end - nw - 4 - hx, s->hpPixels);
+}
+
+/* The Safari Zone's box: SAFARI BALLS on the name band, a Poke Ball and how many are left below. */
+static void SafariBox(Canvas *c, const CtrHudState *s)
+{
+    const int w = PLAYER_W, h = LOW_H, split = 17, cap = 10;
+    char count[8];
+    unsigned n = 0, t = 0, v = s->balls;
+    char tmp[4];
+
+    Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, split, CAP_RIGHT, cap, 3);
+    Ascii(c, false, 20, 13, "SAFARI BALLS", INK, &INK_SHADOW);
+    Ball(c, 22, 21, true);
+    count[n++] = '*';
+    do tmp[t++] = (char)('0' + v % 10); while ((v /= 10) && t < 3);
+    while (t) count[n++] = tmp[--t];
+    count[n] = 0;
+    Ascii(c, false, 36, 31, count, INK, &INK_SHADOW);
+}
+
 void CtrHud_Render(const CtrHudState *s, uint32_t *pixels, unsigned *width, unsigned *height)
 {
-    Canvas c = {pixels, s->player ? PLAYER_W + 1 : FOE_W + 1, s->player ? PLAYER_H + 2 : FOE_H + 2};
+    int w = s->kind == CTR_HUD_FOE ? FOE_W : PLAYER_W, h = s->kind == CTR_HUD_FOE ? FOE_H
+                                                       : s->kind == CTR_HUD_PLAYER ? PLAYER_H : LOW_H;
+    Canvas c = {pixels, w + 1, h + 2};
 
     for (int y = 0; y < c.h; ++y) memset(pixels + y * CTR_HUD_IMAGE_W, 0, (size_t)c.w * 4);
-    if (s->player) PlayerBox(&c, s);
-    else FoeBox(&c, s);
+    switch (s->kind)
+    {
+    case CTR_HUD_FOE: FoeBox(&c, s); break;
+    case CTR_HUD_PLAYER: PlayerBox(&c, s); break;
+    case CTR_HUD_PLAYER_DOUBLE: PlayerDoubleBox(&c, s); break;
+    case CTR_HUD_SAFARI: SafariBox(&c, s); break;
+    default: break;
+    }
     *width = (unsigned)c.w;
     *height = (unsigned)c.h;
 }
@@ -545,40 +614,66 @@ static Box sBoxes[CTR_HUD_BATTLERS];
 static const uint16_t *sUnfaded;
 static uint32_t sVersion;
 
-/* Where the box goes from its main sprite's top left (the healthbox at rest, FireRed's 64x32 pair at GBA (12, 14) for
- * the foe and its 64x64 pair at (126, 56) for the player, is the design's box at (10, 22) and (232, 134) on the
- * screen with the battle at 1.5). */
-#define FOE_DX (-28)
-#define FOE_DY (-23)
-#define PLAYER_DX 23
-#define PLAYER_DY 26
+/*
+ * Where each box goes. FireRed's healthboxes rest with their main sprite's top left at these GBA points
+ * (InitBattlerHealthboxCoords: the centre less half the sprite); the design puts the box's top left at these screen
+ * points with the battle at CTR_BATTLE_ZOOM. The box follows its sprite from there: a slide-in or a bob moves both.
+ */
+static const struct { uint8_t kind; bool doubles; uint8_t position; int16_t gbaX, gbaY, x, y; } ANCHORS[] = {
+    {CTR_HUD_FOE, false, 1, 12, 14, 10, 22},
+    {CTR_HUD_PLAYER, false, 0, 126, 56, 232, 134},
+    {CTR_HUD_SAFARI, false, 0, 126, 56, 232, 150},
+    {CTR_HUD_FOE, true, 1, 12, 3, 24, 6},
+    {CTR_HUD_FOE, true, 3, 0, 28, 6, 44},
+    {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 214, 112},
+    {CTR_HUD_PLAYER_DOUBLE, true, 2, 139, 84, 232, 150},
+};
+
+static void Anchor(const CtrHudState *s, float *dx, float *dy)
+{
+    const float offX = 200.0f - 120.0f * CTR_BATTLE_ZOOM, offY = 192.0f - 112.0f * CTR_BATTLE_ZOOM;
+    *dx = *dy = 0.0f;
+    for (unsigned i = 0; i < sizeof(ANCHORS) / sizeof(ANCHORS[0]); ++i)
+        if (ANCHORS[i].kind == s->kind && ANCHORS[i].doubles == s->doubles
+         && (ANCHORS[i].position == s->position || !s->doubles))
+        {
+            *dx = ANCHORS[i].x - (ANCHORS[i].gbaX * CTR_BATTLE_ZOOM + offX);
+            *dy = ANCHORS[i].y - (ANCHORS[i].gbaY * CTR_BATTLE_ZOOM + offY);
+            return;
+        }
+}
 
 static Box *BoxOf(unsigned battler)
 {
-    return battler < CTR_HUD_BATTLERS && sBoxes[battler].state.native ? &sBoxes[battler] : NULL;
+    return battler < CTR_HUD_BATTLERS && sBoxes[battler].state.kind != CTR_HUD_OFF ? &sBoxes[battler] : NULL;
 }
 
-void CtrHud_Box(unsigned battler, bool native, bool player, unsigned boxTile, unsigned barTile,
+void CtrHud_Box(unsigned battler, unsigned kind, unsigned position, bool doubles, unsigned boxTile, unsigned barTile,
                 const uint16_t *unfadedPalette)
 {
     if (battler >= CTR_HUD_BATTLERS) return;
+    /* A single battle has no right-hand battlers: what a double battle left there goes. */
+    if (!doubles)
+        for (unsigned i = 0; i < CTR_HUD_BATTLERS; ++i)
+            if (sBoxes[i].state.doubles) sBoxes[i].state.kind = CTR_HUD_OFF;
     Box *b = &sBoxes[battler];
     memset(&b->state, 0, sizeof(b->state));
-    b->state.native = native;
-    b->state.player = player;
+    b->state.kind = (uint8_t)(kind <= CTR_HUD_SAFARI ? kind : CTR_HUD_OFF);
+    b->state.position = (uint8_t)position;
+    b->state.doubles = doubles;
     b->state.boxTile = (uint16_t)boxTile;
     b->state.barTile = (uint16_t)barTile;
     b->state.gender = CTR_HUD_NO_GENDER;
     b->state.name[0] = EOS;
     b->dirty = true;
     sUnfaded = unfadedPalette;
-    if (native) CtrVideo_SetBattleHud(CtrHud_Match, CtrHud_Image);
+    if (b->state.kind != CTR_HUD_OFF) CtrVideo_SetBattleHud(CtrHud_Match, CtrHud_Image);
 }
 
 #define SET(battler, field, value) do { Box *b_ = BoxOf(battler); \
         if (b_ && b_->state.field != (value)) { b_->state.field = (value); b_->dirty = true; } } while (0)
 
-void CtrHud_Name(unsigned battler, const uint8_t *name, unsigned gender)
+void CtrHud_Name(unsigned battler, const uint8_t *name, unsigned gender, bool shiny)
 {
     Box *b = BoxOf(battler);
     uint8_t copy[CTR_HUD_NAME_LEN];
@@ -593,6 +688,7 @@ void CtrHud_Name(unsigned battler, const uint8_t *name, unsigned gender)
         b->dirty = true;
     }
     SET(battler, gender, (uint8_t)(gender <= CTR_HUD_NO_GENDER ? gender : CTR_HUD_NO_GENDER));
+    SET(battler, shiny, shiny);
 }
 
 void CtrHud_Level(unsigned battler, unsigned level) { SET(battler, level, (uint8_t)level); }
@@ -608,14 +704,16 @@ void CtrHud_HpBar(unsigned battler, unsigned pixels) { SET(battler, hpPixels, (u
 void CtrHud_ExpBar(unsigned battler, unsigned pixels) { SET(battler, expPixels, (uint8_t)pixels); }
 void CtrHud_Status(unsigned battler, unsigned status) { SET(battler, status, (uint8_t)status); }
 void CtrHud_Caught(unsigned battler, bool caught) { SET(battler, caught, caught); }
+void CtrHud_SafariBalls(unsigned battler, unsigned count) { SET(battler, balls, (uint8_t)(count > 99 ? 99 : count)); }
 
 unsigned CtrHud_Match(unsigned tile, unsigned *battler)
 {
     for (unsigned i = 0; i < CTR_HUD_BATTLERS; ++i)
     {
         const CtrHudState *s = &sBoxes[i].state;
-        unsigned boxTiles = s->player ? 128 : 64;     /* the two 64x64 (64x32) halves */
-        if (!s->native) continue;
+        /* The box's two halves: 64x64 each for the player's in a single battle and the Safari Zone's, else 64x32. */
+        unsigned boxTiles = s->kind == CTR_HUD_PLAYER || s->kind == CTR_HUD_SAFARI ? 128 : 64;
+        if (s->kind == CTR_HUD_OFF) continue;
         *battler = i;
         if (tile == s->boxTile) return CTR_HUD_MAIN;
         if ((tile > s->boxTile && tile < s->boxTile + boxTiles) || (tile >= s->barTile && tile < s->barTile + 9u))
@@ -635,8 +733,7 @@ const CtrHudImage *CtrHud_Image(unsigned battler)
         b->image.version = ++sVersion;
         b->image.width = (uint16_t)w;
         b->image.height = (uint16_t)h;
-        b->image.dx = (int16_t)(b->state.player ? PLAYER_DX : FOE_DX);
-        b->image.dy = (int16_t)(b->state.player ? PLAYER_DY : FOE_DY);
+        Anchor(&b->state, &b->image.dx, &b->image.dy);
         b->image.pixels = b->pixels;
         b->dirty = false;
     }

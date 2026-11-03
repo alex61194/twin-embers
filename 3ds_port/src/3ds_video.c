@@ -23,6 +23,7 @@
 #include "3ds_day_night.h"
 #include "3ds_poketouch.h"
 #include "3ds_battle_gen4.h"
+#include "3ds_battle_hud.h"
 #include "twin_font.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
@@ -3235,6 +3236,8 @@ void CtrVideo_CommitEffectOam(void)
     memcpy(sMapOamShown, sMapOamPending, sizeof(sMapOamShown));
 }
 
+#include "3ds_battle_hud_impl.h"
+
 static void DrawObjects(unsigned priority, bool effects)
 {
     if (NativeIntroActive()) { DrawNativeIntroObjects(priority, effects); return; }
@@ -3279,6 +3282,21 @@ static void DrawObjects(unsigned priority, bool effects)
             {
                 x = CtrObj_UnwrapX(x, VIEW_RIGHT);
                 y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
+            }
+        }
+        if (sBattle && sHudMatch)
+        {
+            /* A healthbox the port draws: its box in place of the main sprite, nothing for its other sprites, and
+             * nothing in a window's passes (the box is not a window's shape). */
+            unsigned battler, hud = sHudMatch(attr2 & 1023, &battler);
+            if (hud != CTR_HUD_NONE)
+            {
+                if (hud == CTR_HUD_MAIN && !affine && sObjWinPass == OBJWIN_NONE)
+                {
+                    Blend(4, effects, mode == 1);
+                    DrawHud(battler, x, y, attr2 >> 12);
+                }
+                continue;
             }
         }
         if (priority == 3)

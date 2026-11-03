@@ -66,7 +66,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -84,6 +84,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/type_chart_test.exe
 	./build/leafgreen_test.exe
 	./build/battle_gen4_test.exe
+	./build/battle_hud_test.exe
 	./build/night_wild_test.exe
 	./build/audio_cadence_test.exe
 	./build/audio_catchup_test.exe
@@ -165,6 +166,9 @@ GAME_NATIVE_OBJS += build/3ds_assets.o build/3ds_asset_memory.o build/3ds_data.o
 # HeartGold's battle sprites from the pack's optional entries, drawn by the compositor (battle_gfx_sfx_util.c).
 GAME_NATIVE_OBJS += build/3ds_battle_gen4.o
 build/3ds_battle_gen4.o: include/3ds_battle_gen4.h include/3ds_data.h
+# The port's own battle healthboxes (battle_interface.c, recipe 0207), drawn by the compositor.
+GAME_NATIVE_OBJS += build/3ds_battle_hud.o
+build/3ds_battle_hud.o: include/3ds_battle_hud.h include/3ds_video.h
 verify-m4a-arm11: build/game/m4a_1.o ../tools/verify_m4a_arm11.py
 	$(PYTHON) ../tools/verify_m4a_arm11.py --object build/game/m4a_1.o --objcopy $(DEVKITARM)/bin/arm-none-eabi-objcopy --readelf $(DEVKITARM)/bin/arm-none-eabi-readelf
 
@@ -202,7 +206,7 @@ build/firered_game_probe_3dsx.elf: build/firered_game_probe.elf ../tools/filter_
 # the recipe are NOBITS (tools/rex_objects.py) and arrive from the pack at start-up.
 GAME_FULL_OBJS := build/main_game_full.o build/3ds_rex.o build/3ds_rex_core.o build/3ds_data.o build/3ds_pak.o build/3ds_data_error.o $(GAME_PLATFORM_OBJS)
 GAME_FULL_OBJS += build/3ds_assets.o
-GAME_FULL_OBJS += build/3ds_battle_gen4.o
+GAME_FULL_OBJS += build/3ds_battle_gen4.o build/3ds_battle_hud.o
 # m4a on a worker core: the game's calls into the engine go through
 # src/3ds_sound.c, which holds the worker's lock (keep this list in sync).
 GAME_FULL_OBJS += build/3ds_sound.o
@@ -431,6 +435,10 @@ build/battle_gen4_test.exe: tests/battle_gen4_test.c src/3ds_battle_gen4.c inclu
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/battle_gen4_test.c src/3ds_battle_gen4.c -o $@
 
+build/battle_hud_test.exe: tests/battle_hud_test.c src/3ds_battle_hud.c include/3ds_battle_hud.h include/3ds_video.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/battle_hud_test.c src/3ds_battle_hud.c -lm -o $@
+
 build/leafgreen_test.exe: tests/leafgreen_test.c src/3ds_leafgreen.c include/3ds_leafgreen.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -iquote ../include tests/leafgreen_test.c src/3ds_leafgreen.c -o $@
@@ -607,7 +615,7 @@ build/game/pokemon_storage_system_tasks.o build/game/pokemon_storage_system_menu
 
 # The game pipeline preprocesses through stdin, so it cannot infer this header dependency.
 build/game/sprite.o: include/3ds_effect_oam.h include/3ds_video.h
-build/3ds_video.o: include/3ds_effect_oam.h include/3ds_battle_gen4.h
+build/3ds_video.o: include/3ds_effect_oam.h include/3ds_battle_gen4.h include/3ds_battle_hud.h src/3ds_battle_hud_impl.h
 
 build/game/field_effect.o: include/3ds_fly_phase.h
 
