@@ -120,9 +120,12 @@ When making a new file the destination uses exclusive creation, and failed
 partial writes are removed. Existing packs are preserved on failure. Do not
 remove an SD card while writing.
 
-The supported ROM is exactly 16 MiB, SHA-1
-`41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc`. Rev 1, other languages
-and modified ROMs are not supported. This is a **data pack** builder and
+The supported ROMs are exactly 16 MiB: FireRed (USA) revision 0, SHA-1
+`41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc`, for `twinembers.3dsx`, and
+Edicion Rojo Fuego (Spain) revision 0, SHA-1
+`ab8f6bfe0ccdaf41188cd015c8c74c314d02296a`, for the Spanish game
+`twinembers-es.3dsx`. The Builder picks the recipe for the ROM it is given.
+Rev 1, other languages and modified ROMs are not supported. This is a **data pack** builder and
 does not create a `.3dsx` executable.
 
 ## Command line (unchanged)

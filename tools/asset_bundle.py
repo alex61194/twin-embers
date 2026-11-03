@@ -16,6 +16,8 @@ import subprocess
 import zlib
 from rex import tool
 
+import es_assets
+
 ROOT = Path(__file__).resolve().parents[1]
 GROUPS = {'fonts-common-ui': ('graphics/fonts/', 'graphics/text_window/'),
           'pokemon-battle': ('graphics/pokemon/', 'graphics/battle_anims/',
@@ -214,6 +216,15 @@ def index(elf_path):
                     raise ValueError('Asset not in linked NOBITS storage')
                 row['address'] = value + row['offset']
                 rows.append(row)
+    if es_assets.spanish():
+        # The Spanish game's pictures: the pack holds the Spanish files, whose size the build already gave the arrays.
+        spanish = es_assets.files()
+        for row in rows:
+            if row['path'] in spanish:
+                size, crc = spanish[row['path']]
+                if not size <= row['size'] < size + 4:      # the array holds whole words; the file may be shorter
+                    raise ValueError('Spanish size differs from the linked asset: ' + row['path'])
+                row['size'], row['crc'] = size, crc
     rows.sort(key=lambda r: (r['address'], r['path']))
     strings = bytearray()
     records = bytearray()

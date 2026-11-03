@@ -23,6 +23,7 @@
     <span>Twin Embers</span>
   </a>
   <div class="links">
+    <span class="lang-switch" role="group" aria-label="Language"><a href="index.html" hreflang="en" lang="en" aria-current="page">EN</a><a href="es.html" hreflang="es" lang="es">ES</a></span>
     <a href="#gallery-title">Screens</a>
     <a href="#build-title">Build</a>
     <a href="#install-title">Install</a>
@@ -119,7 +120,7 @@
         <div class="num">1</div>
         <div>
           <h3>Choose your FireRed ROM</h3>
-          <p>Pokémon FireRed Version (USA), revision 0: a 16 MiB <span class="mono">.gba</span> file.</p>
+          <p>Pokémon FireRed Version (USA) or Pokémon Edición Rojo Fuego (Spain), revision 0: a 16 MiB <span class="mono">.gba</span> file. The Spanish ROM makes the pack for the Spanish game.</p>
           <div class="row">
             <label class="btn secondary" for="rom-input" id="rom-button" tabindex="0" role="button">Choose ROM…</label>
             <input id="rom-input" type="file" accept=".gba,.bin,application/octet-stream" class="hidden">
@@ -215,18 +216,18 @@
             <li>Tap <b>Settings</b> (the gear) &rarr; <b>Select UniStore</b>.</li>
             <li>Tap <b>+</b> and scan this code.</li>
             <li>The store is added to the list without opening: tap <b>Twin Embers</b> in the list.</li>
-            <li>Install <b>twinembers.3dsx</b>. Install the <b>HOME Menu forwarder</b> too if you want an icon on the HOME Menu.</li>
+            <li>Install <b>twinembers.3dsx</b>, or <b>twinembers.3dsx (Spanish)</b> if your pack is from the Spanish ROM. Install the <b>HOME Menu forwarder</b> too if you want an icon on the HOME Menu.</li>
           </ol>
           <span class="mono" id="url-unistore"></span>
         </div>
         <div class="qr-panel">
           <span class="qr-tag">With a phone or PC</span>
           <h3>Download the game</h3>
-          <div class="qr-box" id="qr-game" role="img" aria-label="QR code that downloads the latest twinembers.3dsx"></div>
+          <div class="qr-box" id="qr-game" role="img" aria-label="QR code that downloads the latest game"></div>
           <ol>
             <li>Scan this code with your phone, or press the button.</li>
-            <li>It downloads <b>twinembers.3dsx</b>.</li>
-            <li>Copy it to the SD card, in <span class="mono">SD:/3ds/twinembers/</span>.</li>
+            <li>It downloads <b id="game-name">twinembers.3dsx</b>, the game for the ROM you chose above (English until you choose one).</li>
+            <li>Copy it to the SD card, in <span class="mono">SD:/3ds/twinembers/</span><span id="game-rename" hidden>, renamed <span class="mono">twinembers.3dsx</span> so the HOME Menu icon finds it</span>.</li>
             <li>Start it from the <b>Homebrew Launcher</b>.</li>
           </ol>
           <div class="row qr-actions"><a class="btn secondary" id="game-download" href="#">Download twinembers.3dsx</a></div>

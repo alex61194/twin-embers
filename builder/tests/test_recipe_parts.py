@@ -2,8 +2,8 @@
 import hashlib, json, os, tempfile, unittest
 from pathlib import Path
 from firered3ds_builder.build import build, default_recipe
-from firered3ds_builder.recipe import load_recipe
-from firered3ds_builder.rom import SUPPORTED_SHA1
+from firered3ds_builder.recipe import load_recipe, reconstruct
+from firered3ds_builder.rom import SUPPORTED_SHA1, SPANISH_SHA1, SUPPORTED_ROMS
 from firered3ds_builder.pak import PakReader
 
 class Parts(unittest.TestCase):
@@ -20,6 +20,15 @@ class Parts(unittest.TestCase):
             with self.assertRaises(ValueError): load_recipe(path)
             index['recipe_parts'][0]['path']='../elsewhere.json'; path.write_text(json.dumps(index))
             with self.assertRaises(ValueError): load_recipe(path)
+
+    def test_spanish_recipe_is_shipped_and_refused_until_finished(self):
+        self.assertEqual(SUPPORTED_ROMS[SPANISH_SHA1],'es')
+        recipe=load_recipe(default_recipe(SPANISH_SHA1))
+        self.assertEqual(recipe['rom_sha1'],SPANISH_SHA1)
+        self.assertLessEqual(len(recipe['units']),len(load_recipe(default_recipe(SUPPORTED_SHA1))['units']))
+        if recipe['engine_abi']==0:
+            with self.assertRaisesRegex(ValueError,'not finished'):
+                reconstruct(recipe,bytes(16*1024*1024))
 
     @unittest.skipUnless(os.environ.get('FIRERED_TEST_ROM'),'Own ROM required; never used in CI')
     def test_complete_own_rom_pipeline(self):

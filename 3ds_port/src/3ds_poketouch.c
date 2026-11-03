@@ -24,6 +24,8 @@
 #include "poketouch_assets.h"
 #include "twin_font.h"
 #include "3ds_ui_theme.h"
+#include "3ds_lang.h"
+#include "battle_flat_icons.h"
 
 /* Game bridge (src/ctr_poketouch.c): an item's 24x24 icon decompressed from
  * FireRed's own icon table. */
@@ -220,6 +222,33 @@ static void Fill(int x, int y, int w, int h, uint16_t c)
     }
 }
 
+/* FireRed's charmap for the two-byte UTF-8 Latin letters its European
+ * releases use (U+00A1..U+00FF and Œ/œ): accents, Ñ/ñ, ¿, ¡, º, ª, ¥. */
+static unsigned LatinCode(unsigned char lead, unsigned char next)
+{
+    static const uint8_t sC3[64] = {
+        /* U+00C0 À Á Â Ã Ä Å Æ Ç */ 0x01, 0x02, 0x03, 0, 0xf1, 0, 0, 0x04,
+        /* U+00C8 È É Ê Ë Ì Í Î Ï */ 0x05, 0x06, 0x07, 0x08, 0x09, 0x5a, 0x0b, 0x0c,
+        /* U+00D0 Ð Ñ Ò Ó Ô Õ Ö × */ 0, 0x14, 0x0d, 0x0e, 0x0f, 0, 0xf2, 0,
+        /* U+00D8 Ø Ù Ú Û Ü Ý Þ ß */ 0, 0x11, 0x12, 0x13, 0xf3, 0, 0, 0x15,
+        /* U+00E0 à á â ã ä å æ ç */ 0x16, 0x17, 0, 0, 0xf4, 0, 0, 0x19,
+        /* U+00E8 è é ê ë ì í î ï */ 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x6f, 0x20, 0x21,
+        /* U+00F0 ð ñ ò ó ô õ ö ÷ */ 0, 0x29, 0x22, 0x23, 0x24, 0, 0xf5, 0,
+        /* U+00F8 ø ù ú û ü ý þ ÿ */ 0, 0x26, 0x27, 0x28, 0xf6, 0, 0, 0,
+    };
+
+    if (lead == 0xc3) return next >= 0x80 ? sC3[next - 0x80] : 0;
+    if (lead == 0xc5) return next == 0x92 ? 0x10 : next == 0x93 ? 0x25 : 0;   /* Œ œ */
+    switch (next) {   /* lead 0xc2 */
+        case 0xa1: return 0x52;   /* ¡ */
+        case 0xa5: return 0xb7;   /* ¥ */
+        case 0xaa: return 0x2b;   /* ª */
+        case 0xba: return 0x2a;   /* º */
+        case 0xbf: return 0x51;   /* ¿ */
+        default: return 0;
+    }
+}
+
 /* The character code of the next UTF-8 character of `*s` in FireRed's charmap (0 for what the font does not draw). */
 static unsigned GlyphCode(const char **s)
 {
@@ -230,8 +259,8 @@ static unsigned GlyphCode(const char **s)
     if (c >= 'A' && c <= 'Z') code = 0xbb + c - 'A';
     else if (c >= 'a' && c <= 'z') code = 0xd5 + c - 'a';
     else if (c >= '0' && c <= '9') code = 0xa1 + c - '0';
-    else if (c == 0xc3 && (unsigned char)**s == 0xa9) { ++*s; code = 0x1b; }
-    else if (c == 0xc2 && (unsigned char)**s == 0xa5) { ++*s; code = 0xb7; }
+    else if ((c == 0xc2 || c == 0xc3 || c == 0xc5) && (**s & 0xc0) == 0x80)
+        code = LatinCode(c, (unsigned char)*(*s)++);
     else if (c == 0x01 && **s) code = (unsigned char)*(*s)++;   /* a FireRed code as it is (CtrPokeTouch name text) */
     else if (c == 0x02 && **s) code = 0x100u | (unsigned char)*(*s)++;   /* a Japanese one (a Japanese Pokemon's name) */
     else switch (c) {
@@ -644,7 +673,7 @@ static void OptRow(int row, const CtrPokeTouchView *v)
                     UI_RGB(255, 214, 160));
     UiArrow(boxX + 10, fy + 4, -1, EM_STRIPE);
     UiArrow(boxX + OPT_BOX_W - 15, fy + 4, 1, EM_STRIPE);
-    if (!strcmp(value, "ON") || !strcmp(value, "OFF"))
+    if (!strcmp(value, CTR_TR("ON", "S\xC3\x8D")) || !strcmp(value, CTR_TR("OFF", "NO")))
         EmSwitch(mid - 13, fy + 3, value[1] == 'N');
     else
         UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
@@ -663,7 +692,7 @@ static const CtrPokeTouchRect sSaveNo = {172, 206, 72, 30};
 #define SAVE_LINE_Y 42
 #define SAVE_LINE_STEP 22
 #define SAVE_VALUE_RIGHT 150
-static const char *const sSaveLabel[SF_COUNT] = {"PLAYER", "BADGES", "POK\xc3\xa9" "DEX", "TIME", "MONEY"};
+static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("PLAYER", "JUGADOR"), CTR_TR("BADGES", "MEDALLAS"), "POK\xc3\xa9" "DEX", CTR_TR("TIME", "TIEMPO"), CTR_TR("MONEY", "DINERO")};
 
 static CtrPokeTouchRect SaveField(int f)
 {
@@ -724,7 +753,7 @@ static void SaveDraw(const CtrPokeTouchView *v)
     UiRoundFill(p->x + 1, p->y + 1, p->w - 2, p->h - 2, 4, SAVE_CARD);
     EmGradFill(p->x + 1, p->y + 1, p->w - 2, 22, 4, kEmAmber.top, kEmAmber.bottom);
     Fill(p->x + 1, p->y + 23, p->w - 2, 1, kEmAmber.edge);
-    UiText("SAVE", p->x + 10, p->y + 7, EM_WHITE, kEmAmber.inkSh, 1, p->x + p->w - 4);
+    UiText(CTR_TR("SAVE", "GUARDAR"), p->x + 10, p->y + 7, EM_WHITE, kEmAmber.inkSh, 1, p->x + p->w - 4);
     for (int f = 0; f < SF_COUNT; ++f) {
         UiText(sSaveLabel[f], p->x + 12, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 1, 84);
         if (f + 1 < SF_COUNT)
@@ -786,7 +815,7 @@ static void SaveButtons(const CtrPokeTouchView *v)
         if (sel)
             EmGlowRing(r.x, r.y, r.w, r.h);
         fy = EmButton(r.x, r.y, r.w, r.h, pal, BTN_DEPTH, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? "YES" : "NO", r.x, r.w, fy, r.h - BTN_DEPTH, pal);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D") : "NO", r.x, r.w, fy, r.h - BTN_DEPTH, pal);
     }
 }
 
@@ -880,12 +909,12 @@ static void Back(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchBack;
     const EmPal *pal = v->backEnabled ? &kEmViolet : &kEmGrey;
-    int w = TextWidth("BACK"), x = r->x + (r->w - w - 9) / 2, fy;
+    int w = TextWidth(CTR_TR("BACK", "ATR\xC3\x81S")), x = r->x + (r->w - w - 9) / 2, fy;
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     UiArrow(x, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, -1, pal->ink);
-    UiText("BACK", x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
+    UiText(CTR_TR("BACK", "ATR\xC3\x81S"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
 }
 
 /* PAGE: switches between OPTIONS pages (PAGE 1/2, PAGE 2/2) right above BACK. */
@@ -970,7 +999,7 @@ static int FrameSample(int type, int x, int y)
 
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
-    UiText("YES", x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("YES", "S\xC3\x8D"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     UiText("NO", x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
 }
@@ -1062,13 +1091,17 @@ static void Button(int id, const CtrPokeTouchView *v)
         ItemArt(ICON_BIKE, v->bikeItem, r->x + (r->w - 20) / 2, fy + 15 + (fh - 18 - 20) / 2, on);
         break;
     case PT_RUN:
-        UiText("RUN", r->x + 7, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + 34);
+        /* The battle menu's RUN shoe, small, beside the switch. */
+        for (int v2 = 0; v2 < FLATSHOESMALL_H; ++v2)
+            for (int u = 0; u < FLATSHOESMALL_W; ++u)
+                if (kFlatShoeSmall[v2 * FLATSHOESMALL_W + u])
+                    Px(r->x + 5 + u, fy + (fh - FLATSHOESMALL_H) / 2 + v2, kFlatShoeSmall[v2 * FLATSHOESMALL_W + u]);
         EmSwitch(r->x + r->w - 33, fy + (fh - 12) / 2, selected);
         break;
     default: {
         char name[16] = {0};
-        const char *label = id == PT_POKEDEX ? "POK\xc3\xa9" "DEX" : id == PT_POKEMON ? "POK\xc3\xa9" "MON" : id == PT_BAG ? "BAG"
-                          : id == PT_SAVE ? "SAVE" : id == PT_OPTIONS ? "OPTION" : name;
+        const char *label = id == PT_POKEDEX ? "POK\xc3\xa9" "DEX" : id == PT_POKEMON ? "POK\xc3\xa9" "MON" : id == PT_BAG ? CTR_TR("BAG", "MOCHILA")
+                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR") : id == PT_OPTIONS ? CTR_TR("OPTION", "AJUSTES") : name;
 
         if (id == PT_CARD) {
             /* The player's name (uppercase), as the game's other labels. */

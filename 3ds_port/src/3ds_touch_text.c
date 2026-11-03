@@ -70,6 +70,12 @@ void CtrTouchText_PartyMessage(const unsigned char *str, char *out, unsigned siz
         }
         else if (c == CHAR_E_ACUTE)
             out[o++] = 'E';
+        /* The European letters (accents, Ñ, Ü, ¿, ¡, º, ª) as FireRed's own codes, drawn as they are. */
+        else if ((c >= 0x01 && c <= 0x2B) || c == 0x51 || c == 0x52 || c == 0x5A || c == 0x6F || (c >= 0xF1 && c <= 0xF6))
+        {
+            out[o++] = 0x01;
+            out[o++] = (char)c;
+        }
         else if (c == CHAR_ELLIPSIS)
         {
             out[o++] = '.';

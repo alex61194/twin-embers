@@ -18,7 +18,7 @@
         "version": "latest",
         "category": ["game"],
         "console": ["3DS"],
-        "description": "Unofficial native port of Pokemon FireRed to the 3DS with a touch screen. Needs twinembers.pak in sdmc:/3ds/twinembers/, built from your own FireRed (USA) ROM with the Builder.",
+        "description": "Unofficial native port of Pokemon FireRed to the 3DS with a touch screen. Needs twinembers.pak in sdmc:/3ds/twinembers/, built from your own FireRed (USA) or Rojo Fuego (Spain) ROM with the Builder. The Spanish ROM's pack needs the Spanish game.",
         "license": "MIT (port code); game rights not included",
         "wiki": "https://github.com/alex61194/twin-embers#readme",
         "llm_generation": "yes",
@@ -26,7 +26,7 @@
         "releasenotes": "See https://github.com/alex61194/twin-embers/releases/latest",
         "icon_index": 0,
         "sheet_index": 0,
-        "preinstall_message": "The game needs its data pack: build twinembers.pak from your own FireRed (USA) ROM at alex61194.github.io/twin-embers and copy it to sdmc:/3ds/twinembers/."
+        "preinstall_message": "The game needs its data pack: build twinembers.pak from your own FireRed (USA) or Rojo Fuego (Spain) ROM at alex61194.github.io/twin-embers and copy it to sdmc:/3ds/twinembers/."
       },
       "twinembers.3dsx": [
         {
@@ -36,6 +36,17 @@
         {
           "type": "downloadFile",
           "file": "https://github.com/alex61194/twin-embers/releases/latest/download/twinembers.3dsx",
+          "output": "sdmc:/3ds/twinembers/twinembers.3dsx"
+        }
+      ],
+      "twinembers.3dsx (Spanish)": [
+        {
+          "type": "mkdir",
+          "directory": "sdmc:/3ds/twinembers"
+        },
+        {
+          "type": "downloadFile",
+          "file": "https://github.com/alex61194/twin-embers/releases/latest/download/twinembers-es.3dsx",
           "output": "sdmc:/3ds/twinembers/twinembers.3dsx"
         }
       ],

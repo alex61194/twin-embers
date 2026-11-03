@@ -68,8 +68,8 @@ def main() -> None:
         (dest / 'data.embedded').write_text('Private development image: the game data is inside this file\n')
     if args.pack:
         pak = port / 'build/twinembers.pak'
-        write_pak(pak, files, abi, bytes.fromhex(SUPPORTED_SHA1))
-        with PakReader(pak, abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
+        write_pak(pak, files, abi, bytes.fromhex(recipe['rom_sha1']))
+        with PakReader(pak, abi, bytes.fromhex(recipe['rom_sha1'])) as reader:
             reader.verify()
     print(f'engine ABI {abi:08x}; embed={args.embed}; pack={int(args.pack)}; payload files={len(files)}')
 

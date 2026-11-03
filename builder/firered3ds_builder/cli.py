@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 from .build import build
 from . import gen4_sprites
-from .rom import load_rom, SUPPORTED_SHA1
+from .rom import load_rom, SUPPORTED_ROMS
 from .pak import PakReader, PakError
 
 
@@ -58,7 +58,9 @@ def main() -> None:
                   f"engine ABI {result['abi']:08x}, SHA-256 {digest}")
             print('Copy it to /3ds/twinembers/twinembers.pak on the SD card.')
         else:
-            with PakReader(args.pak, args.abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
-                print(f'Verified {reader.verify()} payloads')
+            with PakReader(args.pak, args.abi, None) as reader:
+                if reader.rom_sha1.hex() not in SUPPORTED_ROMS:
+                    raise PakError('pack built from an unsupported ROM')
+                print(f'Verified {reader.verify()} payloads ({SUPPORTED_ROMS[reader.rom_sha1.hex()]} ROM)')
     except (ValueError, OSError, KeyError, TypeError, IndexError, PakError) as exc:
         parser.exit(1, f'builder: {exc}\n')

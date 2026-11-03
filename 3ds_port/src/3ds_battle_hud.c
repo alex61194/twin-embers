@@ -1,7 +1,7 @@
 /* The battle's healthboxes, drawn by the port (see include/3ds_battle_hud.h).
  *
  * The look: a light enamel plate with a dark outline, a white name band over a cool grey tray, FireRed's red cap at
- * one end (the foe's holds a Poke Ball, red when its species is caught), the HP bar as a dark capsule with "HP" in
+ * one end (the foe's holds a Poke Ball in wild battles, red when its species is caught), the HP bar as a dark capsule with "HP" in
  * gold and a five-tone fill, the player's HP numbers over its bar and a slim EXP capsule under it, a status as a
  * coloured pill with its own icon. Every pixel is drawn here, at the screen's own resolution; text is the game's
  * font. */
@@ -9,7 +9,11 @@
 #include <string.h>
 
 #include "3ds_battle_hud.h"
+#include "3ds_lang.h"
 #include "3ds_video.h"
+
+/* The level mark before the number: FireRed's "Lv", the Spanish game's "Nv". */
+#define LEVEL CTR_TR("Lv", "Nv")
 
 /* The game's fonts (text.c, recipes 0096 and 0120): 16x16 two-bit glyphs and 8x16 ones, and their widths. */
 extern const uint8_t *CtrTwinFontData(void);
@@ -349,7 +353,7 @@ static void Level(Canvas *c, int right, int base, unsigned level)
     codes[n] = EOS;
     int w = (int)TextWidth(false, codes);
     Text(c, false, right - w, base, codes, INK, &INK_SHADOW);
-    Ascii(c, true, right - w - (int)AsciiWidth(true, "Lv") - 1, base, "Lv", (Rgb){196, 64, 48}, NULL);
+    Ascii(c, true, right - w - (int)AsciiWidth(true, LEVEL) - 1, base, LEVEL, (Rgb){196, 64, 48}, NULL);
 }
 
 /* A dark capsule: the bars' housing. */
@@ -383,7 +387,7 @@ static void HpBar(Canvas *c, int x, int y, int w, unsigned pixels)
     int tx = x + 16, tw = w - 19, ty = y + 3;
 
     Capsule(c, x, y, w, 11, 4);
-    Ascii(c, true, x + 4, y + 8, "HP", (Rgb){255, 212, 80}, &(Rgb){120, 84, 16});
+    Ascii(c, true, x + 4, y + 8, CTR_TR("HP", "PS"), (Rgb){255, 212, 80}, &(Rgb){120, 84, 16});
     Fill(c, tx, ty, tw, 5, (Rgb){70, 76, 96});
     Fill(c, tx, ty, tw, 1, (Rgb){48, 52, 68});
     if (pixels > CTR_HUD_HP_PIXELS) pixels = CTR_HUD_HP_PIXELS;
@@ -521,7 +525,8 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
 {
     const int w = FOE_W, h = FOE_H, split = 17, cap = 17;
     Plate(c, 0, 0, w, h, END_ROUND, END_SLANT, split, CAP_LEFT, cap, 2);
-    Ball(c, 5, (h - 11) / 2, s->caught);
+    if (!s->noBall)
+        Ball(c, 5, (h - 11) / 2, s->caught);
     int nx = cap + 5;
     Name(c, nx, 13, s);
     Level(c, w - 14, 13, s->level);
@@ -710,6 +715,7 @@ void CtrHud_HpBar(unsigned battler, unsigned pixels) { SET(battler, hpPixels, (u
 void CtrHud_ExpBar(unsigned battler, unsigned pixels) { SET(battler, expPixels, (uint8_t)pixels); }
 void CtrHud_Status(unsigned battler, unsigned status) { SET(battler, status, (uint8_t)status); }
 void CtrHud_Caught(unsigned battler, bool caught) { SET(battler, caught, caught); }
+void CtrHud_NoBall(unsigned battler, bool none) { SET(battler, noBall, none); }
 void CtrHud_SafariBalls(unsigned battler, unsigned count) { SET(battler, balls, (uint8_t)(count > 99 ? 99 : count)); }
 
 unsigned CtrHud_Match(unsigned tile, unsigned *battler)

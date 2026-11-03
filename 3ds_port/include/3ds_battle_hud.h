@@ -43,6 +43,8 @@ void CtrHud_HpBar(unsigned battler, unsigned pixels);
 void CtrHud_ExpBar(unsigned battler, unsigned pixels);
 void CtrHud_Status(unsigned battler, unsigned status);
 void CtrHud_Caught(unsigned battler, bool caught);
+/* A trainer's Pokemon: the foe's box has no Poke Ball (FireRed shows whether it is caught only in wild battles). */
+void CtrHud_NoBall(unsigned battler, bool none);
 
 /* Compositor side. What an OAM tile number is: CTR_HUD_NONE, or the battler's box (its main sprite, where the box
  * is drawn) or another of its sprites (left out). */
@@ -60,7 +62,7 @@ const CtrHudImage *CtrHud_Image(unsigned battler);
 
 /* For the host test: the box drawn with this state, as CtrHud_Image does. */
 typedef struct CtrHudState {
-    bool doubles, caught, shiny;
+    bool doubles, caught, shiny, noBall;
     uint8_t kind, position, gender, level, status, hpPixels, expPixels, balls;
     uint16_t hp, maxHp, boxTile, barTile;
     uint8_t name[CTR_HUD_NAME_LEN];

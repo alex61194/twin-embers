@@ -449,6 +449,13 @@ header.hero .tagline { max-width: 600px; margin: 10px auto 16px; font-size: 18px
 .topbar .links a:hover, .topbar .links a:focus-visible { background: rgba(255, 255, 255, 0.12); color: #fff; outline: none; }
 .topbar .x-link { display: flex; align-items: center; background: #000; border: 2px solid rgba(255, 255, 255, 0.25); padding: 6px 9px !important; }
 .topbar .x-link svg { width: 18px; height: 18px; }
+/* The language selector: two segments in one pill, the page's own language lit in gold. */
+.topbar .lang-switch {
+  display: flex; flex: none; margin-right: 6px; padding: 2px; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28); border: 2px solid rgba(255, 255, 255, 0.18);
+}
+.topbar .lang-switch a { padding: 4px 10px; font-size: 14px; font-weight: 600; }
+.topbar .lang-switch a[aria-current="page"] { background: var(--gold); color: #4a2a00; }
 
 .page { max-width: 1040px; }
 header.hero { margin: 18px 0 30px; }
