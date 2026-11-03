@@ -33,7 +33,7 @@ Open <http://127.0.0.1:8000/>. The page needs `localhost`/`127.0.0.1` or HTTPS (
 The workflow `.github/workflows/pages.yml` runs the web tests, assembles the site and deploys it.
 
 1. Once: in the repository's **Settings → Pages**, set **Source** to **GitHub Actions**.
-2. It runs by itself whenever a release is **published** (not for pre-releases), from that release's tag, so the page always builds the pack for the `.3dsx` that `releases/latest` serves.
-3. To publish without a release, run **Actions → Web Builder (GitHub Pages) → Run workflow** and choose the branch or tag. Use the tag of the latest release unless you are testing: a page built from another branch may make a pack whose engine ABI does not match the released `.3dsx`.
+2. After publishing a release, run **Actions → Web Builder (GitHub Pages) → Run workflow** on `main`, with `main` at the release's commit, so the page builds the pack for the `.3dsx` that `releases/latest` serves. The `github-pages` environment only accepts deployments from `main`: the run the workflow starts by itself when a release is published (from the release's tag) builds the site but its deploy job is refused, as happened for v0.5.0.
+3. A page built from a `main` ahead of the latest release may make a pack whose engine ABI does not match the released `.3dsx`; run the workflow only when `main` matches the release, unless you are testing.
 
 The UniStore URL (`https://alex61194.github.io/twin-embers/twinembers.unistore`) is written into the store itself; change `web/twinembers.unistore` if the site ever moves.
