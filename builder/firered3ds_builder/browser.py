@@ -16,7 +16,7 @@ from .rom import load_rom
 
 def gen4_downloads() -> list[list[str]]:
     """[URL, file name] of every listed HeartGold sprite file, for the page to fetch into one folder."""
-    return [[gen4_sprites.file_url(row), gen4_sprites.file_name(row)] for row in gen4_sources.FILES]
+    return [[gen4_sprites.file_url(row), gen4_sprites.file_name(row)] for row in gen4_sprites.all_files()]
 
 
 def build(rom_path: str, output_path: str, gen4_folder: str | None = None) -> dict:

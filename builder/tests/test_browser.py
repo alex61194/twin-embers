@@ -27,11 +27,13 @@ def no_threads(*args, **kwargs):
 class Gen4DownloadsTest(unittest.TestCase):
     def test_every_listed_file_once_from_the_pinned_commit(self):
         rows = browser.gen4_downloads()
-        self.assertEqual(len(rows), len(gen4_sources.FILES))
+        listed = gen4_sprites.all_files()
+        self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.BACK_FILES))
         self.assertEqual(len({name for _, name in rows}), len(rows))
         prefix = f"https://raw.githubusercontent.com/{gen4_sources.REPO}/{gen4_sources.COMMIT}/"
-        for (url, name), row in zip(rows, gen4_sources.FILES):
-            self.assertTrue(url.startswith(prefix))
+        backs = f"https://raw.githubusercontent.com/{gen4_sprites.BACK_REPO}/{gen4_sprites.BACK_COMMIT}/"
+        for (url, name), row in zip(rows, listed):
+            self.assertTrue(url.startswith(backs if row[1] == "back" else prefix))
             self.assertTrue(url.endswith(gen4_sprites.source_path(row)))
             self.assertEqual(name, gen4_sprites.file_name(row))
         json.dumps(rows)  # plain lists of strings: they cross into JavaScript as they are
@@ -96,7 +98,7 @@ class SyntheticBuildTest(unittest.TestCase):
         with patch.object(threading.Thread, "start", no_threads):
             info = browser.build(str(self.root / "rom.gba"), str(out), str(self.folder))
         self.assertEqual(out.read_bytes(), self.desktop(True))
-        self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "downloaded": 0})
+        self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "trainers": 0, "backs": 0, "downloaded": 0})
         with PakReader(out, self.abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
             self.assertEqual(reader.verify(), 4)
 
@@ -104,7 +106,7 @@ class SyntheticBuildTest(unittest.TestCase):
         (self.folder / "002_male_back.png").write_bytes(b"\x89PNG not the listed file")
         (self.folder / "001_male_front.png").unlink()
         info = browser.build(str(self.root / "rom.gba"), str(self.root / "web.pak"), str(self.folder))
-        self.assertEqual(info["gen4"], {"species": 0, "missing": [1, 2], "icons": False, "downloaded": 0})
+        self.assertEqual(info["gen4"], {"species": 0, "missing": [1, 2], "icons": False, "trainers": 0, "backs": 0, "downloaded": 0})
         self.assertEqual(info["entries"], 2)
 
     def test_never_uses_the_network(self):

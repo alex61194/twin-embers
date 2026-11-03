@@ -11,7 +11,7 @@
 #include "3ds_video.h"
 
 /* The pack: one entry, built by each test. */
-static uint8_t sEntry[72 + 4 * CTR_GEN4_PICTURE];
+static uint8_t sEntry[40 + 5 * CTR_GEN4_BACK_PICTURE];
 static uint32_t sEntrySize;
 static char sAsked[64];
 
@@ -66,6 +66,19 @@ int CtrGen4_SpriteOam(unsigned battler)
     return sOam[battler];
 }
 
+/* The player's back sprite: tile | palette << 12 or -1, its picture, its frame and FireRed's frame. */
+static int sBackOam[4] = {-1, -1, -1, -1};
+static unsigned sBackPic, sBackFrame;
+static const void *sBackFire;
+
+int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, const void **firePic)
+{
+    *backPic = sBackPic;
+    *frame = sBackFrame;
+    *firePic = sBackFire;
+    return sBackOam[battler];
+}
+
 /* An entry whose pictures are filled with `fill` (each picture its own) down to row `bottom`. */
 static void MakeEntry(bool female, unsigned bottom)
 {
@@ -104,7 +117,7 @@ static unsigned FireNibble(const uint8_t *pic, unsigned x, unsigned y)
 
 static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
 {
-    return obj->tiles[((y / 8) * CTR_GEN4_TILES + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
+    return obj->tiles[((y / 8) * obj->side + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
 }
 
 int main(void)
@@ -130,7 +143,7 @@ int main(void)
     assert(!CtrGen4_Load(0, 1, false, false, false, fire, palette));
 
     /* The front picture, normal palette, standing on FireRed's lowest row: its row 71 (just past 70) ends on box
-     * row 61, so the box centre (32) shows picture row 71 - 29 * 1.4 = 30.4. */
+     * row 61, so the box centre (32) shows picture row 71 - 29 * 1.5 = 27.5. */
     MakeEntry(false, 70);
     assert(CtrGen4_Load(1, 6, false, false, false, fire, palette));
     assert(palette[0] == 0x10 && palette[15] == 0x1f);
@@ -139,7 +152,7 @@ int main(void)
     assert(!sMatch(0x200 | (2 << 12), &obj));       /* another palette */
     assert(!sMatch(0x240 | (1 << 12), &obj));       /* another tile */
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 30.4f) && Near(obj.scale, 1.0f / 1.4f));
+    assert(obj.slot == 1 && obj.pivotX == 40.0f && Near(obj.pivotY, 27.5f) && Near(obj.scale, 1.0f / 1.5f));
     assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 79, 70) == 0x11 && PixelByte(&obj, 79, 71) == 0);
 
     /* The picture on a background, as FireRed's 64x64 one: the box centre is coloured, the corner is not, and its
@@ -168,10 +181,10 @@ int main(void)
     assert(CtrGen4_Load(1, 3, false, true, false, fire, palette));
     assert(sMatch(0x200 | (1 << 12), &obj) && PixelByte(&obj, 5, 5) == 0x11);
 
-    /* Fainting: FireRed erases its box from row 48 down, picture row 30.4 + 16 * 1.4 = 52.8, so from row 53. */
+    /* Fainting: FireRed erases its box from row 48 down, picture row 27.5 + 16 * 1.5 = 51.5, so from row 52. */
     CtrGen4_EraseFrom(1, 48);
     assert(sMatch(0x200 | (1 << 12), &obj));
-    assert(PixelByte(&obj, 40, 52) == 0x11 && PixelByte(&obj, 40, 53) == 0 && PixelByte(&obj, 0, 70) == 0);
+    assert(PixelByte(&obj, 40, 51) == 0x11 && PixelByte(&obj, 40, 52) == 0 && PixelByte(&obj, 0, 70) == 0);
 
     /* Without its sprite, or dropped, a battler matches nothing. */
     sOam[1] = -1;
@@ -244,6 +257,93 @@ int main(void)
         assert(CtrGen4_Picture80(327, true, false, big) && big[11 * 40 + 5] == 0x22);
         assert(CtrGen4_Picture80(328, false, false, big) && big[11 * 40 + 5] == 0x11);
     }
+
+    /* Trainers: graphics/gen4/trainer/NNN.bin, matched by the picture's own tiles and palette, whatever the battler's
+     * Pokemon shows; freeing FireRed's picture drops it. */
+    CtrGen4_DropAll();
+    sEntrySize = 0;
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    assert(strcmp(sAsked, "graphics/gen4/trainer/116.bin") == 0);
+    memset(sEntry, 0, sizeof(sEntry));
+    memcpy(sEntry, "G4T1", 4);
+    for (unsigned i = 0; i < 16; ++i)
+        sEntry[8 + i * 2] = (uint8_t)(0x20 + i);
+    for (unsigned y = 0; y <= 70; ++y)
+        memset(sEntry + 40 + y * 40, 0x33, 40);
+    sEntrySize = 40 + CTR_GEN4_PICTURE;
+    sEntry[0] = 'X';
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    sEntry[0] = 'G';
+    sEntrySize -= 1;
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    sEntrySize += 1;
+    assert(!CtrGen4_LoadTrainer(4, 116, fire, 0x300, 5, palette));
+    assert(!CtrGen4_LoadTrainer(1, 116, fire, 0x300, 16, palette));
+    FirePic(fire, 60);
+    assert(CtrGen4_LoadTrainer(1, 116, fire, 0x300, 5, palette));
+    assert(palette[0] == 0x20 && palette[15] == 0x2f);
+    sOam[1] = -1;                                   /* the trainer's sprite is no Pokemon's */
+    assert(sMatch(0x300 | (5 << 12), &obj));
+    assert(obj.slot == CTR_GEN4_TRAINER_SLOT(1) && obj.slot < CTR_GEN4_SLOTS && obj.side == CTR_GEN4_TILES);
+    assert(Near(obj.pivotY, 71 - 29 / CTR_GEN4_SCALE) && Near(obj.pivotX, 40));
+    assert(PixelByte(&obj, 0, 0) == 0x33 && PixelByte(&obj, 0, 71) == 0);
+    assert(!sMatch(0x300 | (4 << 12), &obj) && !sMatch(0x301 | (5 << 12), &obj));
+    /* Its Pokemon coming out of the ball takes the battler's slot; the trainer stays matched by its own tiles. */
+    MakeEntry(false, 70);
+    assert(CtrGen4_Load(1, 6, false, false, false, fire, palette));
+    sOam[1] = 0x200 | (1 << 12);
+    assert(sMatch(0x200 | (1 << 12), &obj) && obj.slot == 1);
+    assert(sMatch(0x300 | (5 << 12), &obj) && obj.slot == CTR_GEN4_TRAINER_SLOT(1));
+    CtrGen4_DropTrainer(115);                       /* another picture: kept */
+    assert(sMatch(0x300 | (5 << 12), &obj));
+    CtrGen4_DropTrainer(116);
+    assert(!sMatch(0x300 | (5 << 12), &obj) && sMatch(0x200 | (1 << 12), &obj));
+    CtrGen4_DropAll();
+    sOam[1] = -1;
+
+
+    /* The player's back: graphics/gen4/back/NNN.bin, read once; each frame shown on the back sprite's tiles. */
+    sEntrySize = 0;
+    assert(!CtrGen4_BackPalette(1, palette));      /* Leaf's missing: never asked again */
+    assert(strcmp(sAsked, "graphics/gen4/back/001.bin") == 0);
+    assert(!CtrGen4_BackPalette(2, palette));
+    memset(sEntry, 0, sizeof(sEntry));
+    memcpy(sEntry, "G4K2", 4);
+    sEntry[4] = 5;
+    sEntry[5] = CTR_GEN4_BACK_SIZE;
+    for (unsigned i = 0; i < 16; ++i)
+        sEntry[8 + i * 2] = (uint8_t)(0x40 + i);
+    for (unsigned f = 0; f < 5; ++f)
+        for (unsigned y = 0; y <= 95; ++y)
+            memset(sEntry + 40 + f * CTR_GEN4_BACK_PICTURE + y * (CTR_GEN4_BACK_SIZE / 2), 0x11 * (f + 1),
+                   CTR_GEN4_BACK_SIZE / 2);
+    sEntrySize = 40 + 5 * CTR_GEN4_BACK_PICTURE;
+    assert(!CtrGen4_BackPalette(1, palette));
+    assert(CtrGen4_BackPalette(0, palette) && palette[0] == 0x40 && palette[15] == 0x4f);
+    sEntry[0] = 'X';                                /* already read */
+    assert(CtrGen4_BackPalette(0, palette));
+    sEntry[0] = 'G';
+    FirePic(fire, 63);
+    sBackPic = 0;
+    sBackFrame = 0;
+    sBackFire = fire;
+    sBackOam[0] = 0x100 | (8 << 12);
+    assert(sMatch(0x100 | (8 << 12), &obj));
+    assert(obj.slot == CTR_GEN4_BACK_SLOT(0) && obj.slot < CTR_GEN4_SLOTS);
+    assert(obj.side == CTR_GEN4_BACK_TILES && Near(obj.scale, CTR_GEN4_SCALE));
+    assert(Near(obj.pivotX, 52) && Near(obj.pivotY, 96 - 32 / CTR_GEN4_SCALE));
+    assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 0, 96) == 0);
+    sBackFrame = 3;
+    assert(sMatch(0x100 | (8 << 12), &obj) && PixelByte(&obj, 103, 95) == 0x44);
+    sBackFrame = 5;                                 /* no such frame: FireRed's */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
+    sBackFrame = 0;
+    assert(!sMatch(0x100 | (7 << 12), &obj) && !sMatch(0x101 | (8 << 12), &obj));
+    sBackPic = 1;                                   /* Leaf's never read: FireRed's */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
+    sBackPic = 0;
+    sBackOam[0] = -1;                               /* gone */
+    assert(!sMatch(0x100 | (8 << 12), &obj));
 
     /* Icons: read once, each with its palette; out of range or a bad index, none. */
     memcpy(sIconsEntry, "G4I1", 4);

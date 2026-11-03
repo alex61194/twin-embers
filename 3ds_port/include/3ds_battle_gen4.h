@@ -19,9 +19,14 @@
 #define CTR_GEN4_SIZE 80
 #define CTR_GEN4_TILES (CTR_GEN4_SIZE / 8)
 #define CTR_GEN4_PICTURE (CTR_GEN4_SIZE * CTR_GEN4_SIZE / 2)
-/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
- * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
-#define CTR_GEN4_SCALE (1.0f / 1.4f)
+/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.5 (CTR_BATTLE_ZOOM), so a picture pixel is
+ * 1/1.5 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels (53.3 GBA pixels: it fits FireRed's 64x64 box). */
+#define CTR_GEN4_SCALE (1.0f / 1.5f)
+/* The player's back comes 1.25 times as large as its 80x80 art, enlarged by the Builder as pixel art (100x100 on a
+ * 104x104 picture, 13x13 tiles), and is shown 1:1 like the rest. */
+#define CTR_GEN4_BACK_SIZE 104
+#define CTR_GEN4_BACK_TILES (CTR_GEN4_BACK_SIZE / 8)
+#define CTR_GEN4_BACK_PICTURE (CTR_GEN4_BACK_SIZE * CTR_GEN4_BACK_SIZE / 2)
 /* Which pictures: a species' national dex (1-386) and its form: Unown's letter 0-27 as FireRed numbers them (A to Z,
  * !, ?), Castform's weather 0-3 (normal, sun, rain, ice). The functions below that take a "nationalDex" take this
  * key. */
@@ -62,10 +67,37 @@ const uint8_t *CtrGen4_IconTiles(int key);           /* 1024 bytes: two 32x32 fr
 int CtrGen4_IconPalette(int key);                    /* which of the palettes below */
 const uint16_t *CtrGen4_IconPaletteData(unsigned index);
 
+/* Trainers (battle_gfx_sfx_util.c's DecompressTrainerFrontPic, recipe 0206): after FireRed's front picture
+ * `trainerPic` (TRAINER_PIC_*) of the trainer standing for `battler` is in `firePic` (64x64, frame 0) and its
+ * sprite sheet starts at OBJ tile `tileNum` with OBJ palette `paletteNum`: load HeartGold's picture from
+ * graphics/gen4/trainer/NNN.bin. False (FireRed's picture stays) without that entry. `palette` gets its 16
+ * colours, to load in that palette. A trainer's sprite is matched by its tiles and palette, not its battler,
+ * so it keeps its picture while the battler's Pokemon comes out. */
+bool CtrGen4_LoadTrainer(unsigned battler, unsigned trainerPic, const void *firePic, unsigned tileNum,
+                         unsigned paletteNum, uint16_t palette[16]);
+/* FireRed frees the picture's tiles and palette (FreeTrainerFrontPicPaletteAndTile). */
+void CtrGen4_DropTrainer(unsigned trainerPic);
+
+/* The player's back (Red's or Leaf's, TRAINER_BACK_PIC_*): graphics/gen4/back/NNN.bin, fan art in HeartGold's
+ * style with FireRed's five frames, 104x104 pictures (CTR_GEN4_BACK_SIZE), read once and kept. `palette` gets its 16 colours for the game to load where
+ * it loads FireRed's back palette. False without the entry. */
+bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16]);
+/* Implemented by the game's battle code: whether `battler`'s sprite is a trainer back the pack may replace, and
+ * then its OAM tile and palette (tile | palette << 12), its back picture, the frame its animation shows and
+ * FireRed's first frame (64x64, for where the picture stands); -1 otherwise. */
+int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, const void **firePic);
+
+/* Pictures the compositor can draw at once: the four battlers' Pokemon (slots 0-3), a trainer for each battler
+ * (slots 4-7), then a back for each (slots 8-11). */
+#define CTR_GEN4_SLOTS 12
+#define CTR_GEN4_TRAINER_SLOT(battler) (4 + (battler))
+#define CTR_GEN4_BACK_SLOT(battler) (8 + (battler))
+
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
-    unsigned slot;                  /* 0-3: which picture */
-    const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
+    unsigned slot;                  /* 0-11: which picture (CTR_GEN4_SLOTS) */
+    const uint8_t *tiles;           /* side x side 4bpp tiles, row by row */
+    unsigned side;                  /* tiles to a row and a column: 10 (CTR_GEN4_TILES), 13 for a back */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
 } CtrGen4Obj;

@@ -23,6 +23,7 @@
 #include "3ds_day_night.h"
 #include "3ds_poketouch.h"
 #include "3ds_battle_gen4.h"
+#include "3ds_battle_hud.h"
 #include "twin_font.h"
 
 /* Native top-screen layout, shared by the surface and all stereo planes. */
@@ -137,14 +138,14 @@ _Static_assert(CTR_OBJ_SCREEN_W == CTR_GAME_WIDTH && CTR_OBJ_SCREEN_H == CTR_GAM
                "the sprite window is the native field");
 static int sSurfaceH = 256;
 /*
- * The battle scene at 1.5 is not composed at 1.5: nearest sampling at a
- * fractional scale makes GBA pixels alternately one and two screen pixels
- * wide, which shimmers on hardware as anything moves. It is composed at 2,
- * every GBA pixel an exact 2x2 block, into a surface of its own, and that
- * surface is drawn at 0.75 with bilinear filtering: every pixel the same
- * size, edges a pixel soft ("sharp bilinear"). The text box is composed
- * after it at 1:1, crisp. See RenderBattleScene.
+ * The battle scene can be composed at 2, every GBA pixel an exact 2x2 block,
+ * into a surface of its own, and that surface drawn at CTR_BATTLE_ZOOM / 2
+ * with bilinear filtering ("sharp bilinear", see RenderBattleScene). That
+ * read as blurry at 1.4: SCENE_SURFACE is 0 and the scene is composed straight
+ * onto the logical surface at CTR_BATTLE_ZOOM (1.5), nearest-sampled, at
+ * whole-pixel offsets. The text box is composed after it at 1:1 either way.
  */
+#define SCENE_SURFACE 0
 #define SCENE_ZOOM 2.0f
 #define SCENE_W 1024
 #define SCENE_H 256
@@ -237,10 +238,10 @@ static inline uint32_t VramStamp(unsigned b)
     return CtrVramTrack_SyncBlock(sMemory.vram, sVramCopy, sVramStamp, sVramSynced, b, sVramToken);
 }
 /* HeartGold's battle pictures (3ds_battle_gen4.c) go through the tile cache like VRAM tiles, at addresses past the
- * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes. */
+ * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes; a back 169, 5408. */
 #define GEN4_VRAM 0x18000u
-#define GEN4_SLOT 0x1000u
-#define GEN4_SLOTS 4u
+#define GEN4_SLOT 0x2000u
+#define GEN4_SLOTS ((unsigned)CTR_GEN4_SLOTS)
 static bool (*sObjOverride)(unsigned attr2, struct CtrGen4Obj *out);
 static const uint8_t *sGen4Tiles[GEN4_SLOTS];
 
@@ -968,9 +969,12 @@ static void DrawSlotTinted(int slot, float x, float y, bool flipX, bool flipY, c
 {
     unsigned tileX = ((unsigned)slot % (ATLAS_SIZE / 8)) * 8;
     unsigned tileY = ((unsigned)slot / (ATLAS_SIZE / 8)) * 8;
-    Tex3DS_SubTexture sub = {8, 8, tileX / (float)ATLAS_SIZE,
-        1.0f - tileY / (float)ATLAS_SIZE,
-        (tileX + 8) / (float)ATLAS_SIZE, 1.0f - (tileY + 8) / (float)ATLAS_SIZE};
+    /* At a fractional zoom a tile's edges fall between screen pixels, and a sample right on its border can take the
+     * neighbouring atlas tile's texel: a twentieth of a texel in from every edge keeps the samples inside. */
+    float eps = sZoom != 1.0f ? 0.05f / ATLAS_SIZE : 0.0f;
+    Tex3DS_SubTexture sub = {8, 8, tileX / (float)ATLAS_SIZE + eps,
+        1.0f - tileY / (float)ATLAS_SIZE - eps,
+        (tileX + 8) / (float)ATLAS_SIZE - eps, 1.0f - (tileY + 8) / (float)ATLAS_SIZE + eps};
 
     if (++sStats.tiles >= MAX_DRAWS - 32)
     {
@@ -3232,6 +3236,8 @@ void CtrVideo_CommitEffectOam(void)
     memcpy(sMapOamShown, sMapOamPending, sizeof(sMapOamShown));
 }
 
+#include "3ds_battle_hud_impl.h"
+
 static void DrawObjects(unsigned priority, bool effects)
 {
     if (NativeIntroActive()) { DrawNativeIntroObjects(priority, effects); return; }
@@ -3282,17 +3288,32 @@ static void DrawObjects(unsigned priority, bool effects)
             DrawTitleFlameCopies(attr0, attr1, attr2, x, y, effects);
         if (x >= sClipX1 || x + (int)boxW <= sClipX0
          || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
+        if (sBattle && sHudMatch)
+        {
+            /* A healthbox the port draws: its box in place of the main sprite, nothing for its other sprites, and
+             * nothing in a window's passes (the box is not a window's shape). */
+            unsigned battler, hud = sHudMatch(attr2 & 1023, &battler);
+            if (hud != CTR_HUD_NONE)
+            {
+                if (hud == CTR_HUD_MAIN && !affine && sObjWinPass == OBJWIN_NONE)
+                {
+                    Blend(4, effects, mode == 1);
+                    DrawHud(battler, x, y, attr2 >> 12);
+                }
+                continue;
+            }
+        }
         ++sStats.sprites;
         CTR_PERF_COUNT(PERF_SPRITES,1);
         uint64_t perfAffine=affine ? CtrPerf_Begin() : 0;
         CTR_PERF_COUNT(PERF_AFFINE_OBJECTS,affine);
         Blend(4, effects, mode == 1);
         ViewBase();
-        /* A battler's FireRed picture with a HeartGold one: that 80x80 picture instead, its point (cx, cy) on the
+        /* A battler's FireRed picture with a HeartGold one: that picture instead (80x80, a back 104x104), its point (cx, cy) on the
          * 64x64 box's centre, at its own scale k (GBA pixels per picture pixel), under the sprite's own matrix. */
         struct CtrGen4Obj gen4;
         bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
-               && gen4.slot < GEN4_SLOTS;
+               && gen4.slot < GEN4_SLOTS && gen4.side * gen4.side * 32 <= GEN4_SLOT;
         float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
         if (hg)
             sGen4Tiles[gen4.slot] = gen4.tiles;
@@ -3311,19 +3332,30 @@ static void DrawObjects(unsigned priority, bool effects)
             if (fabsf(det) < 0.00001f) { Error(9, "singular OBJ affine matrix"); CtrPerf_End(PERF_OBJ_AFFINE,perfAffine); continue; }
             C3D_Mtx matrix;
             Mtx_Identity(&matrix);
-            matrix.r[0] = FVec4_New(k * d / det, -k * b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - k * (d * cx - b * cy) / det);
-            matrix.r[1] = FVec4_New(-k * c / det, k * a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - k * (a * cy - c * cx) / det);
-            ViewAffine(&matrix);
+            if (hg && !affine)
+            {
+                /* Unrotated, the picture is drawn 1:1 on the screen at a whole pixel (k is 1 / CTR_BATTLE_ZOOM): no
+                 * picture pixel is split between two screen pixels. */
+                matrix.r[0] = FVec4_New(1, 0, 0, roundf((x + CTR_VIEW_X + sLayerShift + boxW / 2.0f) * sZoom + sOffX - cx));
+                matrix.r[1] = FVec4_New(0, 1, 0, roundf((y + CTR_VIEW_Y + boxH / 2.0f) * sZoom + sOffY - cy));
+                C2D_ViewRestore(&matrix);
+            }
+            else
+            {
+                matrix.r[0] = FVec4_New(k * d / det, -k * b / det, 0, x + CTR_VIEW_X + sLayerShift + boxW / 2.0f - k * (d * cx - b * cy) / det);
+                matrix.r[1] = FVec4_New(-k * c / det, k * a / det, 0, y + CTR_VIEW_Y + boxH / 2.0f - k * (a * cy - c * cx) / det);
+                ViewAffine(&matrix);
+            }
         }
         bool flipX = !affine && (attr1 & 0x1000), flipY = !affine && (attr1 & 0x2000);
         if (hg)
         {
-            for (unsigned ty = 0; ty < CTR_GEN4_TILES; ++ty)
-                for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
+            for (unsigned ty = 0; ty < gen4.side; ++ty)
+                for (unsigned tx = 0; tx < gen4.side; ++tx)
                 {
-                    unsigned sx = flipX ? CTR_GEN4_TILES - 1 - tx : tx;
-                    unsigned sy = flipY ? CTR_GEN4_TILES - 1 - ty : ty;
-                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * CTR_GEN4_TILES + sx) * 32, 16 + (attr2 >> 12), false,
+                    unsigned sx = flipX ? gen4.side - 1 - tx : tx;
+                    unsigned sy = flipY ? gen4.side - 1 - ty : ty;
+                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * gen4.side + sx) * 32, 16 + (attr2 >> 12), false,
                              (int)tx * 8, (int)ty * 8, flipX, flipY);
                 }
             CtrPerf_End(PERF_OBJ_AFFINE,perfAffine);
@@ -4944,7 +4976,9 @@ static void SceneRelease(void)
 
 static void ScenePrepare(void)
 {
-    if (!sBattle)
+    /* The scene is composed straight onto the logical surface, nearest-sampled (SCENE_SURFACE): the filtered
+     * surface is only kept for a sharp-bilinear build. */
+    if (!sBattle || !SCENE_SURFACE || CTR_BATTLE_ZOOM == floorf(CTR_BATTLE_ZOOM))
     {
         if (sScene && sStats.frames - sSceneUsedFrame > LAYER_IDLE_FRAMES) SceneRelease();
         return;

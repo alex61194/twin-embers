@@ -178,7 +178,11 @@ static void FNTabs(const CtrPokeTouchName *n)
 
     for (int p = 0; p < 3; ++p) {
         CtrPokeTouchRect r = FNTab(p);
-        FNButton(&r, CtrUiText(kLabel[p]), n->page == p ? &kEmAmber : &kEmCream, n->pressed == PT_NAME_HIT_TAB + p);
+        /* The cursor on the page button (FireRed's first button): the tab its A turns to is the one it marks. */
+        const EmPal *pal = onButtons && n->curRow == 0 && p == (n->page + 1) % 3 ? &kEmViolet
+                         : n->page == p ? &kEmAmber : &kEmCream;
+
+        FNButton(&r, CtrUiText(kLabel[p]), pal, n->pressed == PT_NAME_HIT_TAB + p);
     }
     FNButton(&sFNDelete, CtrUiText(UIS_NAME_DELETE), onButtons && n->curRow == 1 ? &kEmAmber : &kEmCream,
              n->pressed == PT_NAME_HIT_DELETE);
