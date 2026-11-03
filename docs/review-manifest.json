@@ -73,7 +73,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "9148ceb9979bda1e982859b997527a5d45cb911a8954562f5a75cfb79cf23067",
+   "sha256": "c5de1606e4cdceb47d23a78d107f7bc9e284508b7ecba387ca053e23e8a85949",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4757,7 +4757,7 @@
   },
   {
    "path": "tools/lang_es/README.md",
-   "sha256": "72f96c26665453c7602b26299300726df3b751dbcf3a53c6015548618ffa5130",
+   "sha256": "dfc2b4423884552a64a86ad67e43143e20c1fb9068811de3f6000c44624b3480",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4821,7 +4821,7 @@
   },
   {
    "path": "tools/lang_es/gen_event_scripts_es.py",
-   "sha256": "e5807193ac313f3a582cf4c408a8bd53248839b17c2c44a254f491667e7832bc",
+   "sha256": "ef15fad596f544846d540a2dfdb3385eead293a3ed42267c9661b0689cfc9a70",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6008,7 +6008,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe.json",
-   "sha256": "21bfc0574e68b2dcba8b69cfa222e27198077dd57e6f5c328751729d0c19ea7f",
+   "sha256": "434e41011d8ca253399bbd32b60363eb21c0abcc6d49397fa69b85c0810d9a6c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6024,7 +6024,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-00.json",
-   "sha256": "22279d4fb9a38f8254144c881efeccc6297e12da20b9f0aa2452ecfc2d4e63b9",
+   "sha256": "5903753ddc0de6da18fd41270eb9981007dbeca7ad9fc82bc79af2e6b4fdc48a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6071,6 +6071,14 @@
    "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
   },
   {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/battle_scripts_1-00.json",
+   "sha256": "85ed9bbcafe945a60210cbdd7a342a441b27ef4ae7a2448c886a01fb8218e1e2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/event_scripts-00.json",
    "sha256": "770246c475f0379d44516003fff9828fb9816a54a21b2965bef53cb250e4a4dd",
    "review_status": "reviewed",
@@ -6104,7 +6112,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-00.json",
-   "sha256": "f6b7b866082847d900944324460f15af799dab1c43020fad3e781d8c82f18363",
+   "sha256": "ad5cc27158a47a8361dfb5603e6dadc95917816e7a5f2790a0acb83be41fb7cd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6208,7 +6216,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_hud.c",
-   "sha256": "661dbe0e8e09aa99f620ef78ce4ccde4ef743a8cf68e89486c71ef9dad3b03c1",
+   "sha256": "baf1978f0ec941d2aa22bb080acb5e484ed2aa777e96a6b56f9803c4ffb09977",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -35,6 +35,11 @@ Usage: `python3 -I es_events2.py "<USA rom>" "<Spain rom>"`. See STATUS.md and D
    position bytes stay in the engine, Teachy TV's 4x2 Spanish closing banner goes into the English 8x2 slot.
    Two localized LZ pictures unpack to another size (credits "THE END" 448 -> 1536 bytes, Department Store
    tiles 6432 -> 6464): check them on the first Spanish build.
+   The Spanish battle scripts are 6 bytes longer: Teeter Dance's loop gained a `jumpifhasnohp` at USA offset
+   7638 (gamedata/asm/battle_scripts_1.bin, 12,548 -> 12,554 bytes, engine ABI 8b60009e). That entry and its
+   unit were corrected by hand after finish_recipe_es.py, and `battle_scripts_1-00.json` gives the build the
+   moved layout (`inserts` and `extra_sites`, read by gen_event_scripts_es.py). Redo both if the recipe is
+   regenerated.
 4. `python3 tools/lang_es/finish_recipe_es.py recipe-es.json event_scripts_layout_es.json` (in the checkout)
    writes `builder/firered3ds_builder/recipes/firered-ab8f6bfe.json`, its parts, the Spanish event-script
    layout (`event_scripts-NN.json`) and `pending.json`. While anything is pending the recipe's engine ABI is 0

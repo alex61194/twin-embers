@@ -387,7 +387,7 @@ static void HpBar(Canvas *c, int x, int y, int w, unsigned pixels)
     int tx = x + 16, tw = w - 19, ty = y + 3;
 
     Capsule(c, x, y, w, 11, 4);
-    Ascii(c, true, x + 4, y + 8, "HP", (Rgb){255, 212, 80}, &(Rgb){120, 84, 16});
+    Ascii(c, true, x + 4, y + 8, CTR_TR("HP", "PS"), (Rgb){255, 212, 80}, &(Rgb){120, 84, 16});
     Fill(c, tx, ty, tw, 5, (Rgb){70, 76, 96});
     Fill(c, tx, ty, tw, 1, (Rgb){48, 52, 68});
     if (pixels > CTR_HUD_HP_PIXELS) pixels = CTR_HUD_HP_PIXELS;
