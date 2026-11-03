@@ -139,6 +139,7 @@ extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
 extern int CtrBattle_TargetInfo(int target, char *name, int size, int *level, int *hp, int *maxHp);
 extern int CtrBattle_BagPending(void);
+extern int CtrBattle_NickHold(void);
 extern int CtrBattle_PartyPending(void);
 extern int CtrBottomParty_InBattle(void);
 extern int CtrBottomParty_Action(void);
@@ -3784,6 +3785,23 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
+    /* The naming keyboard's buttons are a row above the keys here (the tabs, DELETE, OK), FireRed's a column beside
+     * them: the cursor crosses between keys and buttons only through NameDirection, never through FireRed's own D-pad. */
+    if (CurrentMode() == MODE_NAMING && CtrBottomNaming_IsOpen()) {
+        int col, row, cols = CtrBottomNaming_Columns();
+
+        CtrBottomNaming_Cursor(&col, &row);
+        if (col >= cols)
+            held &= ~(K_LEFT | K_RIGHT | K_UP | K_DOWN);
+        else {
+            if (row == 0)
+                held &= ~K_UP;
+            if (col == 0)
+                held &= ~K_LEFT;
+            if (col == cols - 1)
+                held &= ~K_RIGHT;
+        }
+    }
     /* On TRAINER (the Summary's last tab) RIGHT goes nowhere: FireRed would turn its first page to the next. */
     if (CurrentMode() == MODE_SUMMARY && sHaveShown && sShown.summaryUi && sShown.sum.trainer)
         held &= ~K_RIGHT;
@@ -4499,11 +4517,41 @@ static void RunNamePlan(void)
     sNamePlan.release = 1;
 }
 
+/* The keyboard's cursor as the lower screen draws it: the keys, and above them the row of buttons (FireRed's button
+ * column from the top: the page's tab, DELETE, OK, left to right). UP from the first row climbs to the buttons, LEFT and
+ * RIGHT walk along them, DOWN returns to the key it left; LEFT and RIGHT at the keys' ends wrap to the other end. */
+static void NameDirection(const CtrInput *in)
+{
+    static int sKeyCol;
+    int col, row, cols = CtrBottomNaming_Columns();
+    uint16_t d = in->down & (K_LEFT | K_RIGHT | K_UP | K_DOWN);
+
+    if (!d || (in->held & 0x3ffu & ~(uint16_t)(K_LEFT | K_RIGHT | K_UP | K_DOWN)))
+        return;
+    CtrBottomNaming_Cursor(&col, &row);
+    if (col >= cols) {
+        if (d & K_LEFT && row > 0)
+            CtrBottomNaming_Touch(cols, row - 1);
+        else if (d & K_RIGHT && row < 2)
+            CtrBottomNaming_Touch(cols, row + 1);
+        else if (d & K_DOWN)
+            CtrBottomNaming_Touch(sKeyCol < cols ? sKeyCol : 0, 0);
+    } else if (d & K_UP && row == 0) {
+        sKeyCol = col;
+        CtrBottomNaming_Touch(cols, 0);
+    } else if (d & K_LEFT && col == 0)
+        CtrBottomNaming_Touch(cols - 1, row);
+    else if (d & K_RIGHT && col == cols - 1)
+        CtrBottomNaming_Touch(0, row);
+}
+
 static void ProcessNameTouch(const CtrInput *in)
 {
     int hit = -1, ready = sHaveShown && sShown.mode == MODE_NAMING && sShown.touch.name.on
                           && CtrBottomNaming_Ready() && !CtrBottom_IsFading();
 
+    if (ready)
+        NameDirection(in);
     if (in->touchActive && ready)
         hit = CtrPokeTouch_NameHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
     if ((in->held & 0x3ffu) || !ready) {
@@ -5339,7 +5387,7 @@ void CtrBottom_Frame(void)
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || mode == MODE_NAMING;   /* SAVE keeps TOP on the frozen frame */
+        || mode == MODE_NAMING || CtrBattle_NickHold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
