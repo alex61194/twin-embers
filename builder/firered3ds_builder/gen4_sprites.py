@@ -1075,6 +1075,10 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     if icons:
         files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))
     trainer_files = convert_trainers(got[trainers[0][:3]]) if trainers and trainers[0][:3] in got else []
+    # The player's own front pictures take the place of HeartGold's Red when they come too.
+    fronts = {"%s%03d.bin" % (TRAINER_PREFIX, PLAYER_FRONT[row[0]]) for row in player
+              if row[:3] in got and row[2].endswith("/front.png")}
+    trainer_files = [entry for entry in trainer_files if entry[0] not in fronts]
     files += trainer_files
     back_files = [("%s%03d.bin" % (BACK_PREFIX, row[0]), convert_back(got[row[:3]])) for row in backs
                   if row[:3] in got]

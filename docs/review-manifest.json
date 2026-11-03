@@ -5640,7 +5640,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "6823cb5161b46f1ab34526faaf423bcdab84ba70f75efb918eff5d0d8eb97905",
+   "sha256": "83a8803eb39b56e27bc3ece346b51225be3072d1af92db8c48d8b8f049f8e31d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5656,7 +5656,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "1af9e3e78247b45e652e065a1d8098941f28367dd9a918a498e0e2fdd2911e14",
+   "sha256": "e9045d10649aa1fab813cb4b5ecca555a7fca91947f3d91ba9d6001f7a387022",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

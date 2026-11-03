@@ -737,6 +737,19 @@ class PlayerTest(unittest.TestCase):
             ("icon", "gbapal"))], [2048, 32, 6144, 64, 128, 32])
         frames = {path: entry[4] for path, entry in files if path.startswith("graphics/gen4/npc/")}
         self.assertEqual([frames[path] for path in npc], [20, 9, 12, 9, 12, 9, 6] * 2)
+        # With HeartGold's trainer pictures too, the player's front pictures take the place of their Red, once.
+        archive = b"narc"
+        trainers = (rows + ((0, "trainers", "t", len(archive), hashlib.sha256(archive).hexdigest()),))
+        heartgold = [("graphics/gen4/trainer/135.bin", b"hg red"), ("graphics/gen4/trainer/001.bin", b"hg")]
+        with patch.object(gen4_sprites, "PLAYER_FILES", trainers),                 patch.object(gen4_sprites, "convert_trainers", lambda data: list(heartgold)):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: archive if url.endswith(gen4_sprites.gen4_sources.TRAINERS_PATH) else get(url)),
+                groups=("player",))
+        named = [path for path, _ in files]
+        self.assertEqual(len(named), len(set(named)))
+        self.assertIn("graphics/gen4/trainer/001.bin", named)
+        self.assertNotEqual(dict(files)["graphics/gen4/trainer/135.bin"], b"hg red")
+        self.assertEqual(info["trainers"], 1)
         # With HeartGold's sprites too, the player's backs take the place of the fan-made ones.
         self.assertFalse(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon", "player"))))
         self.assertTrue(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon",))))
