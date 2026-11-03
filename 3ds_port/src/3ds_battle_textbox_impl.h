@@ -16,7 +16,7 @@
 #define BOX_ARROW_ROW 112               /* the prompt arrow's */
 #define BOX_FRAME_TILES 0x40            /* FireRed's frame tiles; the windows' start at 0x090 */
 #define BOX_TEXT_X 8
-#define BOX_TEXT_Y (-2)              /* two lines of FireRed's text inside the inner rim */
+#define BOX_TEXT_Y 0                 /* two lines of FireRed's text inside the inner rim */
 #define BOX_ARROW_X 378
 #define BOX_TAB_X0 16                   /* the red tab, rows 6 to 9 */
 #define BOX_TAB_X1 68
