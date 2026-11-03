@@ -73,7 +73,7 @@ int main(void)
     const CtrHudImage *player = sImage(0);
     assert(player && player->width == 137 && player->height == 51 && player->unfaded == UNFADED);
     float sx = 126 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + player->dx;
-    float sy = 56 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + player->dy;
+    float sy = 72 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + player->dy;
     assert(fabsf(sx - 260) < 0.01f && fabsf(sy - 141) < 0.01f);
     /* Outside the plate it is clear; the drop shadow is translucent; the plate opaque. */
     assert(Pixel(player, 0, 0) == 0);
