@@ -23,6 +23,22 @@
   at the commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not
   stored in this repository. They depict Nintendo, Game Freak and Creatures'
   characters; credit is not a license grant.
+- **Facets, by ElvieBlooms** (https://github.com/ElvieBlooms/facets, MIT for its code; its art is free to use with
+  credit) — the optional new people on the map and battle backgrounds, downloaded by the user's Builder at the
+  commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. People:
+  **KyleDove**, **Jext** and **Hyo** (with some by **DiegoWT** and **Aqua**) for the community set, **DiegoWT**
+  (Black/White style), **Taiga** (ORAS style) and **PurpleZaffre** (Agatha, Lorelei, Mr. Fuji and Giovanni).
+  Backgrounds: **LibertyTwins**, **princess-phoenix**, **carchagui**, **aveontrainer**, **WesleyFG**,
+  **kWharever**, **worldslayer608** and **knizz** (Battle Backgrounds Patch FR). The characters belong to
+  Nintendo, Game Freak and Creatures; credit is not a license grant.
+- **Emerald Lens, by ElvieBlooms** (https://github.com/ElvieBlooms/emerald_lens, MIT for its code; its looks are
+  shared with credit) — the optional player looks, downloaded by the user's Builder at the commit pinned in
+  `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. Ash (HGSS style) by
+  **PKMNTrainerRick**; Green (HGSS style) compiled by **ChromeValiant**, art by **Poltergeist/Coffee Cup**,
+  **Mid117**, **Wolfang62** and **aethestode**; Green's back, front, intro picture and map icon from her Gen 3 look there,
+  compiled from **virdiangrass** and Team Aqua's asset repo, with edits by **Elvie**; Ash's map icon from his Gen 3
+  look, shared by **kalarie** on PokéCommunity. The characters belong to Nintendo,
+  Game Freak and Creatures; credit is not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

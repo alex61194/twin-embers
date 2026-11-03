@@ -18,8 +18,63 @@ static char sAsked[64];
 /* icons.bin: 3 icons, 2 palettes. */
 static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
 
+/* The game's object events and the compositor's palettes, as the NPC tests need them. */
+static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF;
+static uint16_t sNpcUnfaded[512];
+static uint16_t sNpcPalette[16][16];
+static unsigned sNpcPaletteSets;
+
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
+                  unsigned *frame, const uint16_t **unfaded)
+{
+    /* The game checks the position; here the person stands at (40, 60) on OBJ palette 3, and its reflection (palette 9)
+     * at (40, 90). */
+    if (tileNum != sNpcTile || oamX != 40 || !((paletteNum == 3 && oamY == 60) || (paletteNum == 9 && oamY == 90)))
+        return 0;
+    *graphicsId = sNpcGfx;
+    *frame = sNpcFrame;
+    *unfaded = sNpcUnfaded;
+    return paletteNum == 9 ? 2 + 3 : 1;
+}
+
+void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
+{
+    memcpy(sNpcPalette[slot], colours, 32);
+    ++sNpcPaletteSets;
+}
+
+/* FireRed's player pictures (CtrPlayer_Asset): stand-ins whose addresses are all that counts; the pack has Ash's front
+ * picture (both halves) and his icon's tiles, the icon's palette with a wrong size, nothing of Leaf's. */
+static const uint8_t sFirePlayer[3][2][2][4];
+static CtrDataBackend sBackend = CTR_DATA_NONE;
+
+CtrDataBackend CtrData_GetBackend(void)
+{
+    return sBackend;
+}
+
+const void *CtrPlayer_Asset(unsigned which, unsigned female, unsigned palette)
+{
+    return which < CTR_PLAYER_PICTURES ? sFirePlayer[which][female][palette] : NULL;
+}
+
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
+    static const struct { const char *path; uint32_t size; uint8_t fill; } kPlayer[] = {
+        {"graphics/gen4/player/front_boy.4bpp", 2048, 0xA1}, {"graphics/gen4/player/front_boy.gbapal", 32, 0xA2},
+        {"graphics/gen4/player/icon_boy.4bpp", 128, 0xA3}, {"graphics/gen4/player/icon_boy.gbapal", 30, 0xA4},
+    };
+
+    for (unsigned i = 0; i < sizeof(kPlayer) / sizeof(kPlayer[0]); ++i)
+        if (strcmp(path, kPlayer[i].path) == 0)
+        {
+            void *copy = malloc(kPlayer[i].size);
+            memset(copy, kPlayer[i].fill, kPlayer[i].size);
+            *outSize = kPlayer[i].size;
+            return copy;
+        }
+    if (strncmp(path, "graphics/gen4/player/", 21) == 0)
+        return NULL;
     if (strcmp(path, "graphics/gen4/spinda.bin") == 0)
     {
         /* One spot of two pixels, (10, 10) and (11, 10); the other three empty. */
@@ -119,6 +174,8 @@ static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
 {
     return obj->tiles[((y / 8) * obj->side + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
 }
+
+#define BG_CHAR 16384
 
 int main(void)
 {
@@ -363,6 +420,192 @@ int main(void)
     assert(!CtrGen4_IconPaletteData(2));
     sIconsEntry[0] = 'X';                  /* already read: still there */
     assert(CtrGen4_IconTiles(1));
+
+    /* The battle backgrounds: a terrain's entry (3 tiles, palette, map) goes to VRAM as it is, the rest of the char
+     * block cleared, and one palette fills the three banks BG3 reads. */
+    {
+        static uint8_t tiles[BG_CHAR], map[4096], pal[48 * 2];
+        uint16_t banks[48];
+
+        memset(sEntry, 0, sizeof(sEntry));
+        memcpy(sEntry, "G4G1", 4);
+        sEntry[4] = 3;
+        for (unsigned i = 0; i < 16; ++i)
+        {
+            sEntry[8 + i * 2] = (uint8_t)(i + 1);
+            sEntry[9 + i * 2] = 0x40;
+        }
+        for (unsigned i = 0; i < 3 * 32; ++i)
+            sEntry[40 + i] = (uint8_t)(0xA0 + i / 32);
+        for (unsigned i = 0; i < 4096; ++i)
+            sEntry[40 + 96 + i] = (uint8_t)(i * 7);
+        sEntrySize = 40 + 96 + 4096;
+        memset(tiles, 0xEE, sizeof(tiles));
+        assert(CtrBattleBg_Load(3, 3, NULL));
+        assert(strcmp(sAsked, "graphics/gen4/bg/003.bin") == 0);
+        assert(CtrBattleBg_Load(3, 0, tiles));
+        assert(tiles[0] == 0xA0 && tiles[31] == 0xA0 && tiles[32] == 0xA1 && tiles[95] == 0xA2);
+        assert(tiles[96] == 0 && tiles[BG_CHAR - 1] == 0);
+        assert(CtrBattleBg_Load(3, 1, map));
+        assert(map[0] == 0 && map[1] == 7 && map[4095] == (uint8_t)(4095 * 7));
+        assert(CtrBattleBg_Load(3, 2, pal));
+        memcpy(banks, pal, sizeof(banks));
+        for (unsigned i = 0; i < 16; ++i)
+            assert(banks[i] == (0x4000 | (i + 1)) && banks[16 + i] == banks[i] && banks[32 + i] == banks[i]);
+        assert(!CtrBattleBg_Load(3, 4, tiles));
+        assert(!CtrBattleBg_Load(20, 0, tiles) && !CtrBattleBg_Load(1000, 3, NULL));
+
+        /* Another terrain, a wrong kind and a wrong size: FireRed's own data stays. */
+        sEntry[0] = 'X';
+        assert(!CtrBattleBg_Load(4, 0, tiles));
+        sEntry[0] = 'G';
+        sEntry[4] = 4;
+        assert(!CtrBattleBg_Load(5, 0, tiles));
+        sEntry[4] = 3;
+        sEntrySize = 0;
+        assert(!CtrBattleBg_Load(6, 3, NULL));
+    }
+
+    /* The field's people: a person's entry (nine 32x32 frames and a palette) is read once, the frame its sprite shows
+     * is the picture, drawn on its own slot and palette; no entry, a wrong one or no sprite leaves FireRed's. */
+    {
+        CtrGen4Obj person;
+
+        memset(sEntry, 0, sizeof(sEntry));
+        memcpy(sEntry, "G4N1", 4);
+        sEntry[4] = 9;
+        sEntry[5] = 32;
+        for (unsigned i = 0; i < 16; ++i)
+        {
+            sEntry[8 + i * 2] = (uint8_t)(0x10 + i);
+            sEntry[9 + i * 2] = 0x20;
+        }
+        for (unsigned f = 0; f < 9; ++f)
+            memset(sEntry + 40 + f * 512, (int)(0x30 + f), 512);
+        sEntrySize = 40 + 9 * 512;
+        sNpcTile = 100;
+        sNpcGfx = 21;
+        sNpcFrame = 4;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(strcmp(sAsked, "graphics/gen4/npc/021.bin") == 0);
+        assert(person.side == 4 && person.tiles[0] == 0x34 && person.tiles[511] == 0x34);
+        assert(person.pivotX == 16.0f && person.pivotY == 16.0f && person.scale == 1.0f);
+        assert(person.unfaded == sNpcUnfaded);
+        assert(sNpcPaletteSets == 1 && sNpcPalette[person.slot][1] == 0x2011);
+        /* Read once: the same person again, another frame, the same slot, the palette not set again. */
+        sNpcFrame = 0;
+        {
+            CtrGen4Obj again;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 16, &again));
+            assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
+            assert(sNpcPaletteSets == 1);
+        }
+        /* A person's tenth image is drawn as the first. */
+        sNpcFrame = 9;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        /* Another person takes another slot. */
+        sNpcGfx = 22;
+        {
+            CtrGen4Obj other;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &other) && other.slot != person.slot && sNpcPaletteSets == 2);
+        }
+        /* Not a person's tiles, palette or place: nothing. */
+        assert(!CtrNpc_Match(61, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 101 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(60, 40, 100 | 4 << 12, 16, 32, &person));
+        /* Entry missing, wrong or too large an id: FireRed's own, and the read is not repeated. */
+        sEntrySize = 0;
+        sNpcGfx = 30;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        sEntrySize = 40 + 9 * 512;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        sNpcGfx = 31;
+        sEntry[4] = 8;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        sNpcGfx = 300;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
+        sEntry[4] = 9;
+        for (unsigned g = 40; g < 40 + 12; ++g)
+        {
+            sNpcGfx = g;
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        }
+        sNpcGfx = 21;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        /* The player's sheets have as many frames as FireRed's pic table: walking and running, 20; past the last, the
+         * first. No frames at all is not an entry. */
+        sEntry[4] = 20;
+        for (unsigned f = 0; f < 20; ++f)
+            memset(sEntry + 40 + f * 512, (int)(0x30 + f), 512);
+        sEntrySize = 40 + 20 * 512;
+        sNpcGfx = 0;
+        sNpcFrame = 15;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x3F);
+        assert(strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
+        sNpcFrame = 20;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        sEntry[4] = 0;
+        sEntrySize = 40;
+        sNpcGfx = 7;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        /* A reflection: the person's frame on a bank past the slots, its colours moved the way FireRed moved the
+         * object's (here each channel halved and 2 added: 0x2011's 17, 0 and 8 become 10, 2 and 6). */
+        sEntry[4] = 9;
+        sEntry[5] = 32;
+        sEntrySize = 40 + 9 * 512;
+        sNpcGfx = 60;
+        sNpcFrame = 2;
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            unsigned r = i * 2, g = 31 - i * 2, b = i;
+            sNpcUnfaded[256 + 3 * 16 + i] = (uint16_t)(r | g << 5 | b << 10);
+            sNpcUnfaded[256 + 9 * 16 + i] = (uint16_t)((r / 2 + 2) | (g / 2 + 2) << 5 | (b / 2 + 2) << 10);
+        }
+        {
+            CtrGen4Obj own, mirrored;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &own) && own.bank == own.slot);
+            assert(CtrNpc_Match(90, 40, 100 | 9 << 12, 16, 32, &mirrored));
+            assert(mirrored.slot == own.slot && mirrored.bank >= CTR_GEN4_SLOTS && mirrored.bank < 16);
+            assert(mirrored.tiles == own.tiles && mirrored.tiles[0] == 0x32);
+            uint16_t c = sNpcPalette[mirrored.bank][1];
+            assert((c & 31) >= 9 && (c & 31) <= 11 && (c >> 5 & 31) <= 3 && (c >> 10 & 31) >= 5 && (c >> 10 & 31) <= 7);
+        }
+        /* The Fly bird carrying the player: 64x64 frames, the picture the OBJ's size, drawn on its centre. */
+        sEntry[4] = 2;
+        sEntry[5] = 64;
+        memset(sEntry + 40, 0x41, 2048);
+        memset(sEntry + 40 + 2048, 0x42, 2048);
+        sEntrySize = 40 + 2 * 2048;
+        sNpcGfx = CTR_NPC_BIRD;
+        sNpcFrame = 1;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 64, 64, &person));
+        assert(person.side == 8 && person.tiles[0] == 0x42 && person.pivotX == 32.0f && person.pivotY == 32.0f);
+        sEntry[5] = 48;
+        sNpcGfx = CTR_NPC_BIRD + 1;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 64, 64, &person));
+    }
+
+    /* The player's whole pictures: nothing before the pack is open (and asked again once it is); then Ash's in place
+     * of Red's where the size is FireRed's, FireRed's own everywhere else. */
+    {
+        static uint8_t out[2048];
+
+        memset(out, 0, sizeof(out));
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2048));
+        sBackend = CTR_DATA_PAK;
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2048) && out[0] == 0xA1 && out[2047] == 0xA1);
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][1], out, 32) && out[0] == 0xA2 && out[32] == 0xA1);
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_ICON][0][0], out, 128) && out[0] == 0xA3);
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_ICON][0][1], out, 32));      /* 30 bytes: not FireRed's 32 */
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2047));
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][1][0], out, 2048));   /* no Leaf in the pack */
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_INTRO][0][0], out, 6144));
+        assert(!CtrPlayer_Swap(out, out, 32));
+    }
 
     puts("battle_gen4_test: ok");
     return 0;

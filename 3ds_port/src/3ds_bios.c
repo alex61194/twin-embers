@@ -6,6 +6,16 @@
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "3ds_assets.h"
+#include "3ds_battle_gen4.h"
+
+/* The player's pictures from the pack (3ds_battle_gen4.c); none where that module is not linked (host tests). */
+__attribute__((weak)) bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size)
+{
+    (void)src;
+    (void)dest;
+    (void)size;
+    return false;
+}
 
 enum {
     RESET_PALETTE = 0x04,
@@ -101,6 +111,8 @@ void CpuSet(const void *src, void *dest, uint32_t control)
     if (count == 0)
         return;
     CTR_ASSET_READ(src, (control & CPU_SRC_FIXED) ? width : (size_t)count * width);
+    if (!(control & CPU_SRC_FIXED) && CtrPlayer_Swap(src, dest, count * width))
+        return;
     uint64_t perfStart = CtrPerf_Begin();
     CTR_PERF_TRANSFER(dest, (size_t)count * width);
     if (control & CPU_SRC_FIXED)
@@ -146,6 +158,8 @@ static void DecompressLz77(const void *src, void *dest)
     uint32_t length = (uint32_t)from[1] | ((uint32_t)from[2] << 8)
                     | ((uint32_t)from[3] << 16);
     if (length > 0x1000000)
+        return;
+    if (CtrPlayer_Swap(src, dest, length))
         return;
     uint64_t perfStart=CtrPerf_Begin();
     from += 4;

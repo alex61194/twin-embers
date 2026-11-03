@@ -100,10 +100,44 @@ typedef struct CtrGen4Obj {
     unsigned side;                  /* tiles to a row and a column: 10 (CTR_GEN4_TILES), 13 for a back */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
+    const uint16_t *unfaded;        /* a field NPC's: the game's unfaded palette buffer, for its fade */
+    unsigned bank;                  /* a field NPC's: its palette (CtrVideo_SetNpcPalette's slot, 0-15) */
 } CtrGen4Obj;
 
 /* Implemented by the game's battle code: the battler sprite's OAM tile number and palette
  * (tile | palette << 12), or -1 without one. */
 int CtrGen4_SpriteOam(unsigned battler);
+
+/* The battle backgrounds (battle_bg.c, recipe 0210): graphics/gen4/bg/NNN.bin, NNN being FireRed's BATTLE_TERRAIN_*,
+ * a 240x112 scene as VRAM-ready data (the Builder's convert_bg). `part` 0: the tiles into the 16 KiB char block at
+ * `dest` (the rest cleared); 1: the 64x32 tile map (4096 bytes); 2: the three palettes BG3 reads from (u16[48], all
+ * the scene's one palette); 3: nothing, only whether the terrain has a scene (the entry background is then left
+ * empty). 0 without an entry for the terrain: FireRed's own data is loaded. */
+int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
+
+/* The field's people (3ds_video.c's OAM loop, recipe 0211): graphics/gen4/npc/NNN.bin, NNN being FireRed's
+ * OBJ_EVENT_GFX_* of a person, nine 32x32 frames in FireRed's order (down, up, left, then the walking ones) and their
+ * 16 colours (the Builder's convert_npc). Match gives the picture an OBJ with this attr2 and size stands for: drawn
+ * 1:1, centred across the OBJ, its lowest row on the OBJ's. False: FireRed's own picture is drawn. */
+bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out);
+/* Implemented by the game's object events (event_object_movement.c, recipe 0215): what the OBJ with these tiles and
+ * palette at about this OAM position (x 0-511, y 0-255; another sprite may share the tiles and palette) shows, with the
+ * image its animation shows and the game's unfaded palette buffer. 1: an object event (its graphics id); 2 + its OBJ
+ * palette slot: that object event's reflection in water; 1 with CTR_NPC_BIRD + gender and image 0 or 1: the Fly bird
+ * carrying the player. 0: none. */
+#define CTR_NPC_BIRD 250
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
+                  unsigned *frame, const uint16_t **unfaded);
+
+/* The player's pictures that FireRed copies out whole (the front picture of the trainer card, the Hall of Fame and a
+ * link battle, the Oak intro's picture, the Region Map icon): when the pack has the Builder's own of one
+ * (graphics/gen4/player/, the "You as Ash and Green" download, in FireRed's own format and size), the BIOS copy or
+ * decompression of FireRed's (CpuSet, LZ77UnComp*) writes it instead. True when `src` is one of them and its entry has
+ * exactly `size` bytes: `dest` then has it. */
+bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size);
+/* Implemented by the game (recipe 0212): FireRed's data for picture `which` (CTR_PLAYER_*) of Red (`female` 0) or
+ * Leaf, its tiles or (`palette` 1) its colours, compressed as the game keeps it; NULL for none. */
+enum { CTR_PLAYER_FRONT, CTR_PLAYER_INTRO, CTR_PLAYER_ICON, CTR_PLAYER_PICTURES };
+const void *CtrPlayer_Asset(unsigned which, unsigned female, unsigned palette);
 
 #endif

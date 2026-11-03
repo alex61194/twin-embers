@@ -142,6 +142,8 @@ void CtrVideo_SetDayNightMapTile(uint16_t (*tile)(unsigned bg, int x, int y));
 /* In battle, the HeartGold picture an OAM entry stands for (3ds_battle_gen4.c), drawn in its place. NULL: none. */
 struct CtrGen4Obj;
 void CtrVideo_SetObjOverride(bool (*match)(unsigned attr2, struct CtrGen4Obj *out));
+/* The 16 colours (BGR555, colour 0 unused) of a field NPC picture slot (CtrNpc_Match). */
+void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours);
 /* In battle, the port's own healthboxes (3ds_battle_hud.c): which OAM tiles are a healthbox's, and its picture. */
 struct CtrHudImage;
 void CtrVideo_SetBattleHud(unsigned (*match)(unsigned tile, unsigned *battler),

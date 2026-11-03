@@ -17,6 +17,12 @@ def main() -> None:
     make.add_argument('--rom', type=Path, required=True)
     make.add_argument('--output', type=Path, default=Path('twinembers.pak'))
     make.add_argument('--recipe', type=Path, help=argparse.SUPPRESS)
+    make.add_argument('--npc-sprites', action='store_true',
+                      help="also download the field's people (Facets' sets; needs internet)")
+    make.add_argument('--battle-backgrounds', action='store_true',
+                      help='also download the battle backgrounds (LibertyTwins\' set through Facets; needs internet)')
+    make.add_argument('--player-sprites', action='store_true',
+                      help="also download the player as Ash and Green (Emerald Lens' HGSS-style looks; needs internet)")
     make.add_argument('--gen4-sprites', action='store_true',
                       help='also download HeartGold battle sprites (optional, needs internet)')
     pack = sub.add_parser('verify-pak', help='check every payload of an existing pack')
@@ -30,11 +36,22 @@ def main() -> None:
             rom = load_rom(args.rom)
             print(f'ROM verified: {rom.sha1}')
             extra = []
-            if args.gen4_sprites:
-                extra, info = gen4_sprites.pack_files(gen4_sprites.Downloader(gen4_sprites.cache_dir()))
-                print(f"HeartGold battle sprites: {info['species']} species "
-                      f"({info['downloaded']} files downloaded), {len(info['missing'])} missing, "
-                      f"{info['trainers']} trainer pictures, {info['backs']} player backs")
+            groups = tuple(group for flag, group in ((args.gen4_sprites, gen4_sprites.GROUP_POKEMON),
+                                                     (args.npc_sprites, gen4_sprites.GROUP_NPC),
+                                                     (args.battle_backgrounds, gen4_sprites.GROUP_BG),
+                                                     (args.player_sprites, gen4_sprites.GROUP_PLAYER)) if flag)
+            if groups:
+                extra, info = gen4_sprites.pack_files(gen4_sprites.Downloader(gen4_sprites.cache_dir()), groups=groups)
+                if args.gen4_sprites:
+                    print(f"HeartGold battle sprites: {info['species']} species "
+                          f"({info['downloaded']} files downloaded), {len(info['missing'])} missing, "
+                          f"{info['trainers']} trainer pictures, {info['backs']} player backs")
+                if args.npc_sprites:
+                    print(f"People of the field: {info['npcs']} of {len(gen4_sprites.NPC_FILES)}")
+                if args.battle_backgrounds:
+                    print(f"Battle backgrounds: {info['backgrounds']} of 20 terrains")
+                if args.player_sprites:
+                    print(f"The player as Ash and Green: {info['player']} pictures")
             result = build(args.rom, args.recipe, args.output, extra)
             digest = hashlib.sha256(args.output.read_bytes()).hexdigest()
             print(f"Wrote {args.output}: {result['entries']} entries, {args.output.stat().st_size} bytes, "

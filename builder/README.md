@@ -1,12 +1,13 @@
 # Twin Embers data Builder
 
-User-owned ROM reconstruction, offline unless you tick the optional HeartGold
-battle sprites (below). Python 3.11+ is required. The GUI uses only Python's
+User-owned ROM reconstruction, offline unless you tick one of the three optional
+downloads (below): HeartGold sprites, new people on the map and new battle
+backgrounds, each on its own. Python 3.11+ is required. The GUI uses only Python's
 standard library: no SDK, online account, telemetry or game content is included.
 
 ## Optional HeartGold battle sprites
 
-Ticking "Also download HeartGold battle sprites and icons" (or
+Ticking "HeartGold sprites and icons" (or
 `build --gen4-sprites` on the command line) adds Generation 4 battle sprites
 and menu icons to the pack for the 386 species FireRed has (the icons only when
 every one of them could be had, since their palettes replace FireRed's). They
@@ -38,6 +39,50 @@ The entries are optional: the engine ABI does not cover them, and a species
 whose files could not be had (no network, a file that did not match) keeps
 FireRed's pictures. The sprites remain Nintendo, Game Freak and Creatures'
 work; pret's repository has no licence of its own.
+
+## Optional new people on the map
+
+Ticking "New people on the map" (or `build --npc-sprites`) adds 74 characters redrawn in a DS style
+(32x32, nine frames in FireRed's order) from
+[ElvieBlooms/facets](https://github.com/ElvieBlooms/facets) at a pinned commit: the townsfolk, trainers,
+gym leaders, Team Rocket, nurses, Professor Oak, Bill, Mr. Fuji... The Builder takes the community set
+(KyleDove, Jext and Hyo) where it has a person, then DiegoWT's Black/White-style one, Taiga's ORAS-style one
+and PurpleZaffre's, converts each sheet to one palette of 15 colours (the rarest fold into their nearest, which
+changes about one pixel in a hundred) and writes `graphics/gen4/npc/NNN.bin` for each of FireRed's `OBJ_EVENT_GFX_*`.
+The rival and everything that is not a person keep FireRed's pictures; Red and Leaf have an option of their own
+(below). A sheet that could not be had
+(no network, a file that did not match its size and SHA-256) leaves that person as FireRed draws them.
+
+## Optional new battle backgrounds
+
+Ticking "New battle backgrounds" (or `build --battle-backgrounds`) replaces FireRed's 20 battle settings with 14
+hand-drawn 240x112 scenes (grass, forest, beach, underwater, sea, lake, mountain, cave, lab, route, indoors,
+neutral, gym and space) of LibertyTwins' Battle Backgrounds Patch FR, as converted by Facets (the same repository
+and pinned commit as the people). The Builder turns each into tiles, a tile map and a palette
+(`graphics/gen4/bg/NNN.bin`) and gives every terrain its scene (the gym, its leaders and the Elite Four share the
+gym's). The 3DS shows more than 240x112 of the scene, so the tile map mirrors the picture around its edges with
+flipped tiles instead of stretching its last row and columns. It writes all of them or none, so a battle never mixes
+two looks.
+
+## Optional player looks: Ash and Green
+
+Ticking "You as Ash and Green" (or `build --player-sprites`) draws Red as Ash and Leaf as Green, in HGSS style, from
+[ElvieBlooms/emerald_lens](https://github.com/ElvieBlooms/emerald_lens) at a pinned commit: Ash by PKMNTrainerRick,
+Green compiled by ChromeValiant (her back, front picture, intro picture and map icon from her Gen 3 look there, and
+Ash's map icon from his, as Emerald Lens itself falls back to). Each sheet is in FireRed's own order, so the Builder converts it like a person's (15 colours, 32x32 frames)
+for the graphics ids it draws: walking and running (20 frames), the bike (9), surfing (12), fishing (12), the field
+move and VS Seeker pose (9) and the VS Seeker on the bike (6), as `graphics/gen4/npc/000-013.bin`. The back's five
+64x64 frames are enlarged 1.5 times as pixel art into `graphics/gen4/back/000-001.bin` (they take the place of the
+fan-made backs when HeartGold's sprites are ticked too) and the front picture 1.25 times into
+`graphics/gen4/trainer/135-136.bin`, the size HeartGold's trainer pictures have. The front picture, the Oak
+intro's picture and the Region Map icon also go in as FireRed keeps its own (`graphics/gen4/player/`), so the trainer
+card, the Hall of Fame, the new-game intro and the maps show Ash or Green: the port hands them to the game when it
+copies or decompresses Red's or Leaf's (recipe 0212 tells it where those are). The Fly bird carrying them becomes
+`graphics/gen4/npc/250-251.bin` (two 64x64 frames each); their reflections in water are their own pictures, which the
+port recolours the way FireRed recolours the player's reflection (recipe 0215).
+
+All four entries are optional: the engine ABI does not cover them. The art stays its authors' work (see
+CREDITS.md).
 
 ## Graphical interface (Windows)
 

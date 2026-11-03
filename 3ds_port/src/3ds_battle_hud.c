@@ -9,7 +9,11 @@
 #include <string.h>
 
 #include "3ds_battle_hud.h"
+#include "3ds_lang.h"
 #include "3ds_video.h"
+
+/* The level mark before the number: FireRed's "Lv", the Spanish game's "Nv". */
+#define LEVEL CTR_TR("Lv", "Nv")
 
 /* The game's fonts (text.c, recipes 0096 and 0120): 16x16 two-bit glyphs and 8x16 ones, and their widths. */
 extern const uint8_t *CtrTwinFontData(void);
@@ -349,7 +353,7 @@ static void Level(Canvas *c, int right, int base, unsigned level)
     codes[n] = EOS;
     int w = (int)TextWidth(false, codes);
     Text(c, false, right - w, base, codes, INK, &INK_SHADOW);
-    Ascii(c, true, right - w - (int)AsciiWidth(true, "Lv") - 1, base, "Lv", (Rgb){196, 64, 48}, NULL);
+    Ascii(c, true, right - w - (int)AsciiWidth(true, LEVEL) - 1, base, LEVEL, (Rgb){196, 64, 48}, NULL);
 }
 
 /* A dark capsule: the bars' housing. */
@@ -622,11 +626,13 @@ static uint32_t sVersion;
  * Where each box goes. FireRed's healthboxes rest with their main sprite's top left at these GBA points
  * (InitBattlerHealthboxCoords: the centre less half the sprite); the design puts the box's top left at these screen
  * points with the battle at CTR_BATTLE_ZOOM. The box follows its sprite from there: a slide-in or a bob moves both.
+ * The player's single and Safari boxes are made 64x32 and turned 64x64 afterwards, keeping the 64x32 centre: their
+ * top left is 16 rows lower than a 64x64 sprite's would be (the centre's y less 16, not less 32).
  */
 static const struct { uint8_t kind; bool doubles; uint8_t position; int16_t gbaX, gbaY, x, y; } ANCHORS[] = {
     {CTR_HUD_FOE, false, 1, 12, 14, 10, 22},
-    {CTR_HUD_PLAYER, false, 0, 126, 56, 260, 141},
-    {CTR_HUD_SAFARI, false, 0, 126, 56, 260, 154},
+    {CTR_HUD_PLAYER, false, 0, 126, 72, 260, 141},
+    {CTR_HUD_SAFARI, false, 0, 126, 72, 260, 154},
     {CTR_HUD_FOE, true, 1, 12, 3, 24, 6},
     {CTR_HUD_FOE, true, 3, 0, 28, 6, 44},
     {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 252, 136},

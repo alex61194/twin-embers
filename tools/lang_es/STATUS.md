@@ -15,6 +15,12 @@ Twin Embers is built from the pret/pokefirered decompilation. The game data (gra
 - **Spanish recipe** (`builder/firered3ds_builder/recipes/firered-ab8f6bfe*`): every USA recipe operation mapped to the Spanish ROM, by text pointers, contiguous runs, 16-byte anchors and pointer-masked comparison, LZ headers for graphics, and pointer following for tables. all 6,734 files are placed with CRCs; 36 graphics are the Spanish (localized) versions.
 - **Build**: `make TWIN_LANG=es` uses that recipe; text sections take their Spanish length; the Builder accepts the Spanish ROM and the 3DS side only accepts a Spanish pack.
 
+## Done since 3 Nov (with v0.5.0 merged in)
+- v0.5.0 is merged into this branch (new battle look, battle backgrounds, new people, Ash and Green). The game's pack
+  recipe did not change, so the Spanish recipe still covers every file.
+- The port's healthbox writes the Spanish level mark ("Nv" for "Lv"). The Safari Zone box keeps "SAFARI BALLS", as
+  the Spanish game itself does.
+
 ## Remaining
 1. First Spanish build and test (not compiled yet). Things to look at: Easy Chat (Spanish alphabetical lists), the credits' "FIN" picture and the Department Store tiles (both unpack to a new size), the trainer card ID position, Teachy TV's closing banner.
 2. Code differences of the Spanish game beyond data. Handled in the recipe so far: plural suffixes (`sText_S`, `sText_IES`, `sPluralTxt`) are empty strings, as the Spanish game never appends them. Others may show up in testing.
