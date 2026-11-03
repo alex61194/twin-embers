@@ -18,11 +18,20 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.4.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.5.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
+
+**In v0.5.0:**
+
+- **A new battle look, if you want it.** Battles are drawn at 1.5 times the GBA's size and without blur, with new healthboxes drawn by the port (a Poké Ball in the foe's, red once you own the species, a star for a shiny, your HP numbers and an EXP bar, the Safari Zone's balls left), a new message box, and the trainers you battle shown with HeartGold's pictures.
+- **New battle backgrounds, as an option.** Fourteen hand-drawn scenes (grass, forest, beach, sea, lake, mountain, cave, lab, gym, space...) replace FireRed's twenty settings.
+- **New people on the map, as an option.** Seventy-four characters (townsfolk, trainers, gym leaders, Team Rocket, nurses, Professor Oak...) redrawn in a DS style, with 15 colours each. Red, Leaf and the rival keep FireRed's pictures.
+- **Three separate choices in every Builder** (the desktop app, the command line and the web page): HeartGold sprites, new people and new battle backgrounds. Each downloads only what you pick.
+- **Naming a caught Pokémon** keeps the battle on the upper screen, and the D-pad moves through the lower keyboard's tabs, DELETE and OK in the order they are drawn.
+- **Fixes:** a Rare Candy that makes a Pokémon evolve no longer freezes, the end of an in-game trade no longer crashes, quitting the slot machine in the Game Corner no longer crashes, and, with the HeartGold-style backs, yours no longer changes picture as it leaves the screen after the ball is thrown. The evolution scene is drawn like a battle.
 
 **In v0.4.1:**
 
