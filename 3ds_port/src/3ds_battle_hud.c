@@ -513,7 +513,9 @@ static void Numbers(const CtrHudState *s, char *out)
 /* The player's boxes are kept clear of the foe's ground: narrower and lower than the design's first 164x56. */
 #define PLAYER_W 136
 #define PLAYER_H 49
-#define LOW_H 36                           /* the player's box in a double battle, and the Safari Zone's */
+#define LOW_H 36                           /* the Safari Zone's box */
+/* The player's boxes in a double battle: one row for the name and one for the bar, so both fit under the foe's ground. */
+#define DOUBLE_H 26
 
 static void FoeBox(Canvas *c, const CtrHudState *s)
 {
@@ -547,22 +549,22 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
     ExpBar(c, 10, 38, w - cap - 5 - 10, s->expPixels);
 }
 
-/* A double battle's player box: the single one's plate, as low as a foe's, its HP numbers beside the bar. */
+/* A double battle's player box: the single one's plate, 26 high, its HP numbers beside the bar. */
 static void PlayerDoubleBox(Canvas *c, const CtrHudState *s)
 {
-    const int w = PLAYER_W, h = LOW_H, split = 17, cap = 10;
+    const int w = PLAYER_W, h = DOUBLE_H, split = 12, cap = 10;
     char numbers[12];
 
     Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, split, CAP_RIGHT, cap, 3);
-    Name(c, 20, 13, s);
-    Level(c, w - cap - 6, 13, s->level);
+    Name(c, 20, 10, s);
+    Level(c, w - cap - 6, 10, s->level);
     int end = w - cap - 5;
     Numbers(s, numbers);
     int nw = (int)AsciiWidth(false, numbers);
-    Ascii(c, false, end - nw, 31, numbers, INK, &INK_SHADOW);
+    Ascii(c, false, end - nw, 23, numbers, INK, &INK_SHADOW);
     int hx = 16;
-    if (HasStatus(s)) hx += Status(c, hx, 20, s->status) + 3;
-    HpBar(c, hx, 21, end - nw - 4 - hx, s->hpPixels);
+    if (HasStatus(s)) hx += Status(c, hx, 12, s->status) + 3;
+    HpBar(c, hx, 13, end - nw - 4 - hx, s->hpPixels);
 }
 
 /* The Safari Zone's box: SAFARI BALLS on the name band, a Poke Ball and how many are left below. */
@@ -586,7 +588,8 @@ static void SafariBox(Canvas *c, const CtrHudState *s)
 void CtrHud_Render(const CtrHudState *s, uint32_t *pixels, unsigned *width, unsigned *height)
 {
     int w = s->kind == CTR_HUD_FOE ? FOE_W : PLAYER_W, h = s->kind == CTR_HUD_FOE ? FOE_H
-                                                       : s->kind == CTR_HUD_PLAYER ? PLAYER_H : LOW_H;
+                                                       : s->kind == CTR_HUD_PLAYER ? PLAYER_H
+                                                       : s->kind == CTR_HUD_PLAYER_DOUBLE ? DOUBLE_H : LOW_H;
     Canvas c = {pixels, w + 1, h + 2};
 
     for (int y = 0; y < c.h; ++y) memset(pixels + y * CTR_HUD_IMAGE_W, 0, (size_t)c.w * 4);
@@ -626,8 +629,8 @@ static const struct { uint8_t kind; bool doubles; uint8_t position; int16_t gbaX
     {CTR_HUD_SAFARI, false, 0, 126, 56, 260, 154},
     {CTR_HUD_FOE, true, 1, 12, 3, 24, 6},
     {CTR_HUD_FOE, true, 3, 0, 28, 6, 44},
-    {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 242, 112},
-    {CTR_HUD_PLAYER_DOUBLE, true, 2, 139, 84, 260, 150},
+    {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 252, 136},
+    {CTR_HUD_PLAYER_DOUBLE, true, 2, 139, 84, 260, 164},
 };
 
 static void Anchor(const CtrHudState *s, float *dx, float *dy)

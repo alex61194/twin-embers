@@ -114,10 +114,10 @@ int main(void)
     assert(sMatch(0x140, &battler) == CTR_HUD_MAIN && battler == 1);
     assert(sMatch(0x1C0, &battler) == CTR_HUD_MAIN && battler == 3);
     const CtrHudImage *low = sImage(2);
-    assert(low && low->width == 137 && low->height == 38);
+    assert(low && low->width == 137 && low->height == 28);
     sx = 139 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + low->dx;
     sy = 84 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + low->dy;
-    assert(fabsf(sx - 260) < 0.01f && fabsf(sy - 150) < 0.01f);
+    assert(fabsf(sx - 260) < 0.01f && fabsf(sy - 164) < 0.01f);
     sx = 0 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + sImage(3)->dx;
     assert(fabsf(sx - 6) < 0.01f);
 
