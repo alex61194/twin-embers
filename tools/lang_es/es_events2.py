@@ -10,7 +10,7 @@ B = us[base:base+size]
 rel = sorted(set(r[0] for r in L['relocs'])); relset = set(rel); relmask = set(x + k for x in rel for k in range(4))
 offs = sorted(set([0] + [s[0] for s in L['syms'] if s[0] < size] + [size]))
 names = {}
-for o, n in L['syms']: names.setdefault(o, n)
+for o, n, *_ in L['syms']: names.setdefault(o, n)
 def has_rel(a, b):
     i = bisect.bisect_left(rel, a); return i < len(rel) and rel[i] < b
 def is_text(a, b):
@@ -38,11 +38,15 @@ for a, b in zip(offs, offs[1:]):
         cmds = []; p = a
         while p < b:
             c = scrdis.command(B, p); cmds.append((p, c[0], [x for x in c[1] if p + x in relset])); p += c[0]
-        q = e; ok = True
+        covered = sum(len(rs) for _, _, rs in cmds)
+        if covered != bisect.bisect_left(rel, b) - bisect.bisect_left(rel, a):
+            sw = None   # a table, not bytecode: its pointers are not command arguments
+    if sw and sw[0] == b:
+        q = e; ok = True; mine = []
         for (p, n, rs) in cmds:
             c = scrdis.command(es, q)
             if c is None or es[q] != B[p]: ok = False; break
-            sites += [q - E0 + x for x in rs]; q += c[0]
+            mine += [[q - E0 + x, p + x] for x in rs]; q += c[0]
         if ok and b < size and es[q] != B[b] and B[b - 1] not in (2, 3):
             # el ES puede llevar comandos extra al final del tramo (p. ej. un delay)
             q0 = q
@@ -53,6 +57,7 @@ for a, b in zip(offs, offs[1:]):
                 if es[q] == B[b]: break
             if es[q] != B[b]: q = q0
         if ok:
+            sites += mine
             kinds['script' if q - e == b - a else 'script_distinto'] += 1
             e = q; continue
         # alinear secuencias de comandos (el ES puede tener comandos insertados o quitados)
@@ -67,7 +72,7 @@ for a, b in zip(offs, offs[1:]):
         for blk in sm.get_matching_blocks():
             for k in range(blk.size):
                 (p, n, rs), (q2, n2, _) = cmds[blk.a + k], ec[blk.b + k]
-                got += [q2 - E0 + x for x in rs]; last = blk.b + k
+                got += [[q2 - E0 + x, p + x] for x in rs]; last = blk.b + k
         if last is not None and sum(m.size for m in sm.get_matching_blocks()) >= 0.8 * len(cmds):
             sites += got
             # el ultimo comando USA debe estar emparejado
@@ -80,14 +85,14 @@ for a, b in zip(offs, offs[1:]):
     # fijo
     kinds['fijo'] += 1
     d = sum(1 for k in range(a, b) if k not in relmask and B[k] != es[e + k - a])
-    sites += [e - E0 + (x - a) for x in rel[bisect.bisect_left(rel, a):bisect.bisect_left(rel, b)]]
+    sites += [[e - E0 + (x - a), x] for x in rel[bisect.bisect_left(rel, a):bisect.bisect_left(rel, b)]]
     if d: diffs.append([names.get(a), a, b - a, d])
     e += b - a
 pos[size] = e - E0
 print(dict(kinds)); print('tamano ES', pos[size], 'USA', size, 'diferencias', len(diffs))
 # validacion: punteros internos
 ok = ko = 0; badp = []
-for s in sites:
+for s, _u in sites:
     w = int.from_bytes(es[E0+s:E0+s+4], 'little')
     if not 0x08000000 <= w < 0x0a000000: ko += 1; badp.append(s); continue
     t = w - 0x08000000 - E0

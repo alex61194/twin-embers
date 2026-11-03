@@ -16,3 +16,11 @@ Usage: `python3 -I es_events2.py "<USA rom>" "<Spain rom>"`. See STATUS.md and D
 `make tools && make build/firered/data/event_scripts.o`, and dump `arm-none-eabi-nm -n --defined-only`
 (symbols t/d) and `arm-none-eabi-readelf -rW` (R_ARM_ABS32 offsets) into
 `{"size": 421686, "us_start": 1440180, "syms": [[off, name]...], "relocs": [[off, type, sym]...]}`.
+
+## Event scripts, Spanish object
+1. `python3 -I es_events2.py "<USA rom>" "<Spain rom>"` writes `event_scripts_layout_es.json`
+   (Spanish offset of every label, and every pointer site paired with its USA relocation).
+2. `python3 gen_event_scripts_es.py event_scripts_layout_us.json event_scripts_layout_es.json event_scripts_es.s`
+   writes the Spanish `data/event_scripts.s`: labels, `.space` and `.4byte` targets only, no ROM bytes.
+   Fed the USA layout as both inputs it reproduces pret's object exactly (same 9,832 symbols, 9,954 relocations,
+   421,686 bytes). With the Spanish layout: 420,310 bytes, 9,954 pointer sites (2 Nov 2026).

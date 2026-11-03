@@ -4749,7 +4749,7 @@
   },
   {
    "path": "tools/lang_es/README.md",
-   "sha256": "961bbfcaef4bfe80f7f61e52b13159315ff256ec02bd73c9bfb3577dc63150cb",
+   "sha256": "1fa0087bdff5b554552c700f515638b336bb94854ce77aa3fe307f6118543dc1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4789,7 +4789,7 @@
   },
   {
    "path": "tools/lang_es/es_events2.py",
-   "sha256": "8adc8b21a47bdcf8ca3445055f8da066ab7106f132fdc6aa8afa682429df27bd",
+   "sha256": "0bd781147db84726ed14d7dda498a5a083fa5bc2387532cc4ccca740edbc5569",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4806,6 +4806,14 @@
   {
    "path": "tools/lang_es/es_sizes2.py",
    "sha256": "7f56aeb10d0175fc1b55b023e6c13ec2981c2a829db8ea1ae8bcf5d6839fff8a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/gen_event_scripts_es.py",
+   "sha256": "612afbe7a795e49f609cebeaa8cb90b993a03624c4baf09f6253bdc13eb0e8c9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
