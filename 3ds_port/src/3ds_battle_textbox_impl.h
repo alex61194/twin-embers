@@ -16,7 +16,11 @@
 #define BOX_ARROW_ROW 112               /* the prompt arrow's */
 #define BOX_FRAME_TILES 0x40            /* FireRed's frame tiles; the windows' start at 0x090 */
 #define BOX_TEXT_X 8
-#define BOX_TEXT_Y 0                 /* two lines of FireRed's text inside the inner rim */
+#define BOX_TEXT_Y 0
+/* FireRed's second line (band rows from BOX_LINE2_ROW) comes BOX_LINE2_UP closer to the first: the two lines and their
+ * spacing would not fit between the red tab and the inner rim. */
+#define BOX_LINE2_ROW 27
+#define BOX_LINE2_UP 4
 #define BOX_ARROW_X 378
 #define BOX_TAB_X0 16                   /* the red tab, rows 6 to 9 */
 #define BOX_TAB_X1 68
@@ -297,10 +301,12 @@ static bool DrawBattleBox(unsigned map, unsigned size, unsigned chars, unsigned 
     Scissor(x0, y0, x1, y1);
     ViewBase();
     BoxDraw(BoxSub(0, 0, BOX_W, BOX_H), left, top, &tint);
-    BoxDraw(BoxSub(0, BOX_TEXT_ROW, 240, BOX_H), left + BOX_TEXT_X, top + BOX_TEXT_Y, &tint);
+    BoxDraw(BoxSub(0, BOX_TEXT_ROW, 240, BOX_LINE2_ROW), left + BOX_TEXT_X, top + BOX_TEXT_Y, &tint);
+    BoxDraw(BoxSub(0, BOX_TEXT_ROW + BOX_LINE2_ROW, 240, BOX_H - BOX_LINE2_ROW), left + BOX_TEXT_X,
+            top + BOX_TEXT_Y + BOX_LINE2_ROW - BOX_LINE2_UP, &tint);
     if (sBoxArrowW && sBoxArrowH)
-        BoxDraw(BoxSub(0, BOX_ARROW_ROW, sBoxArrowW, sBoxArrowH), left + BOX_ARROW_X, top + BOX_TEXT_Y + sBoxArrowY0,
-                &tint);
+        BoxDraw(BoxSub(0, BOX_ARROW_ROW, sBoxArrowW, sBoxArrowH), left + BOX_ARROW_X,
+                top + BOX_TEXT_Y + sBoxArrowY0 - (sBoxArrowY0 >= BOX_LINE2_ROW ? BOX_LINE2_UP : 0), &tint);
     C2D_Flush();
     RestoreScissor();
     return true;

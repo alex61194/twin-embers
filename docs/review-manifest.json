@@ -5920,7 +5920,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_textbox_impl.h",
-   "sha256": "a5b74baa1fb4561843620663c9f7b385c5423a21290b4fa3d2982297c8dc7957",
+   "sha256": "b1d803b4b87d69f86b273f48b262757a244bbb3a8be2528e67491cac76cb5503",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
