@@ -22,6 +22,8 @@
 /* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
  * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
 #define CTR_GEN4_SCALE (1.0f / 1.4f)
+/* The player's back is drawn as large as FireRed's: one picture pixel to a GBA pixel, the scene's zoom on the screen. */
+#define CTR_GEN4_BACK_SCALE 1.0f
 /* Which pictures: a species' national dex (1-386) and its form: Unown's letter 0-27 as FireRed numbers them (A to Z,
  * !, ?), Castform's weather 0-3 (normal, sun, rain, ice). The functions below that take a "nationalDex" take this
  * key. */

@@ -172,7 +172,7 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
                     memcpy(linear + y * (CTR_GEN4_SIZE / 2) + tx * 4,
                            back->tiles[0] + (((y / 8) * CTR_GEN4_TILES + tx) * 8 + y % 8) * 4, 4);
             int bottom = FireBottom(fire), gen4 = Gen4Bottom(linear);
-            back->pivotY = bottom >= 0 && gen4 >= 0 ? (gen4 + 1) - (bottom + 1 - 32) / CTR_GEN4_SCALE
+            back->pivotY = bottom >= 0 && gen4 >= 0 ? (gen4 + 1) - (bottom + 1 - 32) / CTR_GEN4_BACK_SCALE
                                                     : CTR_GEN4_SIZE / 2.0f;
             back->placed = true;
         }
@@ -180,7 +180,7 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
         out->tiles = back->tiles[frame];
         out->pivotX = CTR_GEN4_SIZE / 2.0f;
         out->pivotY = back->placed ? back->pivotY : CTR_GEN4_SIZE / 2.0f;
-        out->scale = CTR_GEN4_SCALE;
+        out->scale = CTR_GEN4_BACK_SCALE;
         return true;
     }
     for (unsigned b = 0; b < BATTLERS; ++b)

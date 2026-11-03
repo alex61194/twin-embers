@@ -5672,7 +5672,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "a7ec8c93338aa756e2c2c8cdcc11f78f4cae81bf905c0c84061df3c184185ce6",
+   "sha256": "bd06e3dac10b28688ca81700a4765a701f5ea3c575ffe1557166d5a68151df25",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5680,7 +5680,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "88892d0e2dfe61f1b6fc4f4f23b2f6d32c07858dc2f28eebcbd7c899757c77fd",
+   "sha256": "74beb62c6228fd00b023b307942f0b8718b92e8229c35af0f92f52e8b0ded586",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5688,7 +5688,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "aad248fa5b066ace98032a1ffe1f0611fa8d754273e93fe5480f804e942fa002",
+   "sha256": "a65c542a05de08f89487fb9aad17e9a93ab8237a91085fd99ef36cb0cae3dfa6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

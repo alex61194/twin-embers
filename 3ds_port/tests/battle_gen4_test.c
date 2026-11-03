@@ -328,7 +328,8 @@ int main(void)
     sBackOam[0] = 0x100 | (8 << 12);
     assert(sMatch(0x100 | (8 << 12), &obj));
     assert(obj.slot == CTR_GEN4_BACK_SLOT(0) && obj.slot < CTR_GEN4_SLOTS);
-    assert(Near(obj.pivotX, 40) && Near(obj.pivotY, 76 - 32 / CTR_GEN4_SCALE));
+    assert(Near(obj.pivotX, 40) && Near(obj.pivotY, 76 - 32 / CTR_GEN4_BACK_SCALE));
+    assert(Near(obj.scale, CTR_GEN4_BACK_SCALE));
     assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 0, 76) == 0);
     sBackFrame = 3;
     assert(sMatch(0x100 | (8 << 12), &obj) && PixelByte(&obj, 79, 75) == 0x44);
