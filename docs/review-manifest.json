@@ -73,7 +73,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "be4e607ec071d0527653ee42119426947927386f61c113ee2c44399dc89e6d71",
+   "sha256": "7c76f2db9a61d2ded055357aff49ffc1796d7db264bdea76cfdb16e9a0f3d3f9",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -997,7 +997,7 @@
   },
   {
    "path": "3ds_port/src/3ds_data.c",
-   "sha256": "e05b2e9504f46ab34daad93e143a0f6194bd89caacbc4f01c0cbfec57d00f3a4",
+   "sha256": "845b8ec2a3fd98109ec9851d17474b8f276e69fbc0fb411a0d6949b7c4550d0e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2105,7 +2105,7 @@
   },
   {
    "path": "builder/firered3ds_builder/cli.py",
-   "sha256": "a785a2bd84af4028ccbcafc0e1e511c90a8c20efbafcda91dc482607dc4b6f9c",
+   "sha256": "75b769cbe5f0fee2fb461edc10610d40b69e2fd2419e9f034891829373c15355",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2131,7 +2131,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gui_service.py",
-   "sha256": "c38222446b7e1b3e1eb2c37a877cc70df332c1766ea6cb0753e9f3a51e2b6d33",
+   "sha256": "816f64e609b11691b9be99bcea5641365d94254adc21025f59b928b8d651a06c",
    "review_status": "reviewed",
    "credit": "alex61194 (original GUI-only source code with disclosed AI assistance)",
    "license": "MIT for original GUI workflow only; original game and external dependencies excluded",
@@ -2156,7 +2156,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipe.py",
-   "sha256": "86b3f2ac1cd0b13ec06934c67371ba9b21549fe05bd83e25049b22aed1acb1ef",
+   "sha256": "dc48494bd62f74d96700675ae4f93ee9d08ba683bc10870ad7fef30386fe8b00",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2338,7 +2338,7 @@
   },
   {
    "path": "builder/firered3ds_builder/rom.py",
-   "sha256": "5435df3c58c2d96c30797ecfa51939850ab6a70c3a35db82f7cc925ae134b65a",
+   "sha256": "c133a27559d5f1f5fbfc8dc276bd348aac4baf1314aa5b012daf258873656c15",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2425,7 +2425,7 @@
   },
   {
    "path": "builder/tests/test_recipe_parts.py",
-   "sha256": "fb47e24f9d0ec2553c7314851cfc4a7556866181e5099c24c141554f93b94635",
+   "sha256": "548c892e1fad29b9543df0a5e9cdffc0f16ac3a8c78f2454e4ab6f90230b18ee",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4749,7 +4749,7 @@
   },
   {
    "path": "tools/lang_es/README.md",
-   "sha256": "1fa0087bdff5b554552c700f515638b336bb94854ce77aa3fe307f6118543dc1",
+   "sha256": "764af4bd077378eab1d4aed9f655372d264fa33d70c32b2e749cf23fab5d1952",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4757,7 +4757,7 @@
   },
   {
    "path": "tools/lang_es/STATUS.md",
-   "sha256": "a4fb83967d90e2f847d0462ce3295be90bbb339fa950c007f66c5930b6cd5026",
+   "sha256": "431700bc29b8bd74498f575d842cd163017f5144ac65ed5b2c6ef27289fe35df",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4813,7 +4813,7 @@
   },
   {
    "path": "tools/lang_es/gen_event_scripts_es.py",
-   "sha256": "612afbe7a795e49f609cebeaa8cb90b993a03624c4baf09f6253bdc13eb0e8c9",
+   "sha256": "6ab91ed741d1520f7a485fcebb79bebdb752019c1308d874f8ea559900b4345b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -4883,7 +4883,7 @@
   },
   {
    "path": "tools/port_common/staging.py",
-   "sha256": "26df5dcff8dd68b77f8ca2490f435346e8a09c733fc5a2ba0c689890655d7436",
+   "sha256": "dc9c043298471f2c9b8dd424f3eaf5ba4ba70d776dd9412938a3cd160c032736",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -4975,7 +4975,7 @@
   },
   {
    "path": "tools/rex_objects.py",
-   "sha256": "f57bda81c642460010feea85478d57ec6c03f7c2de8f338dfe074ad69efc65f1",
+   "sha256": "26b0f21d9ba3619dec6d6de187e5eda28ba9f3ba3f3554178ec5e87d9f1ad67e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5182,7 +5182,7 @@
   },
   {
    "path": "tools/test_rex_pipeline.py",
-   "sha256": "b951c90695db0fb4d34fd61dc86a63c6637f19e01895e1593d1965b6ff64d893",
+   "sha256": "eb9a5922dde87b9ec701a1ce59f0e7c93435398e48ec4907e5a7e1896ebc0a53",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5993,6 +5993,166 @@
   {
    "path": ".github/workflows/pages.yml",
    "sha256": "769d08650edbe0e6dc828c4f102a72a31639780c0cad6d331ec26d71c7e616c6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe.json",
+   "sha256": "e6398c9dcf1c65967d8bb67feecfb6abc55dc9c7fc78a3a0c58b3a5cda74abfe",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/engine_units-00.json",
+   "sha256": "713bc7bf49799cad18103f7bfb5f12c507ba7a6623ff988a50a78af6d5dc7ff5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-00.json",
+   "sha256": "cf9f63a3f064655b3d6a76c02ec548f41b2afdc8b393e9febc7a24e067c21b0b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-01.json",
+   "sha256": "9e3ce767f47de04b5c90b33490582682f113fec52a50f6861c4b74f6640122b4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-02.json",
+   "sha256": "ed103513715e53b1691d8163691baa72adb1d26eeca237fe3c6d7efe7626fda1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-03.json",
+   "sha256": "37e2e151a6945781e676e3c72392f8055d5667186b9d6b7906b91ebc5ee3aa66",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-04.json",
+   "sha256": "497181df8c8c8572d13cd49de8d4339953d30c255134a66c285153dc9ca72436",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/entries-05.json",
+   "sha256": "65326f9dca11e318cfa604f26a8b172e11ab3a4ef906a68b6e50410d2bee667c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/event_scripts-00.json",
+   "sha256": "770246c475f0379d44516003fff9828fb9816a54a21b2965bef53cb250e4a4dd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/event_scripts-01.json",
+   "sha256": "14352aa4074d84d5afc1fe0aec7cab0267ad75ea09ba4a6a0ac7a873ad1269bb",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/event_scripts-02.json",
+   "sha256": "30a7ccec5286ca463e7070d84262e7ad6cf8f8e31154b9f407a22069003af630",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/pending.json",
+   "sha256": "d857b191e4c6acebf39d5b2b9a410a77e11602b5e4d26f758a26cc9796a4fb25",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-00.json",
+   "sha256": "6be2e16f9ac24fb4155a00b2c366098dc92bd93b1e00dc63a58d4e6c3e643996",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-01.json",
+   "sha256": "fdf58d64c476b79c09c38a5b35a0533195284a51577d28a37352c94a7225622e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-02.json",
+   "sha256": "af7fccc33a661bb56a4644045c13cd938c8c1c65587c6198d10c5c9db0ccafe1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-03.json",
+   "sha256": "e7aa561aa5f9dc1d68346c59c1251672b08f0f1649edd0fe79bac4ac1049745f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-ab8f6bfe/units-04.json",
+   "sha256": "f8f6ab4e36e280e0ee188fb970483022c529208859ac88242f9d8729ceeaef74",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
+  },
+  {
+   "path": "tools/lang_es/event_layout_us.py",
+   "sha256": "1e1f0e9fe81e758f18c0aa901cc927802dc0b500d774ecfb9ead752717432fe6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/finish_recipe_es.py",
+   "sha256": "02d4441f34d34947703cafccbf850653a25099ae25a798ae2072b7428fdfc0c2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_es/gen_recipe_es.py",
+   "sha256": "ce7da143a1c9b750bc6fe62e2f19a2ff5c8580d9c9d24062a5ea9148dbbdc819",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

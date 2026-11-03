@@ -6,15 +6,25 @@ offset and every pointer site with its target. rex_objects.py turns the section
 into NOBITS and the Spanish ROM's bytes arrive from the pack, so the gaps are
 `.space` and nothing of the ROM is written here.
 
-  gen_event_scripts_es.py event_scripts_layout_us.json event_scripts_layout_es.json out.s
+  gen_event_scripts_es.py event_scripts_layout_us.json event_scripts_layout_es.json [more parts...] out.s
+
+The Spanish layout may come in parts (the recipe folder's event_scripts-NN.json):
+their lists are joined in order.
 """
 import json
 import sys
 
 
-def main(us_path, es_path, out_path):
+def main(us_path, *rest):
+    *es_paths, out_path = rest
     us = json.load(open(us_path))
-    es = json.load(open(es_path))
+    es = {}
+    for part in es_paths:
+        for key, value in json.load(open(part)).items():
+            if isinstance(value, list):
+                es.setdefault(key, []).extend(value)
+            else:
+                es[key] = value
     pos = {int(k): v for k, v in es['pos']}           # USA offset of a label -> Spanish offset
     size = es['es_size']
     local = {}
@@ -64,4 +74,6 @@ def main(us_path, es_path, out_path):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:4])
+    if len(sys.argv) < 4:
+        raise SystemExit(__doc__)
+    main(*sys.argv[1:])

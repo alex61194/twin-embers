@@ -4,6 +4,12 @@ import hashlib
 from pathlib import Path
 
 SUPPORTED_SHA1 = '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc'
+SPANISH_SHA1 = 'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a'
+# Every ROM a recipe exists for: SHA-1 -> the language of the .3dsx its pack is for.
+SUPPORTED_ROMS = {
+    SUPPORTED_SHA1: 'en',   # FireRed (USA, Europe) 1.0
+    SPANISH_SHA1: 'es',     # Edicion Rojo Fuego (Spain) 1.0
+}
 ROM_SIZE = 16 * 1024 * 1024
 
 
@@ -13,6 +19,10 @@ class Rom:
     sha1: str
     source: Path
 
+    @property
+    def language(self) -> str:
+        return SUPPORTED_ROMS[self.sha1]
+
 
 def load_rom(path: Path) -> Rom:
     path = Path(path)
@@ -21,6 +31,7 @@ def load_rom(path: Path) -> Rom:
     with path.open('rb') as file:
         data = file.read(ROM_SIZE + 1)
     digest = hashlib.sha1(data).hexdigest()
-    if len(data) != ROM_SIZE or digest != SUPPORTED_SHA1:
-        raise ValueError(f'Unsupported ROM. Expected SHA-1 {SUPPORTED_SHA1}; Rev 1 and other languages are unsupported')
+    if len(data) != ROM_SIZE or digest not in SUPPORTED_ROMS:
+        raise ValueError(f'Unsupported ROM. Expected FireRed USA 1.0 (SHA-1 {SUPPORTED_SHA1}) or Rojo Fuego Spain 1.0 '
+                         f'(SHA-1 {SPANISH_SHA1}); Rev 1 and other languages are unsupported')
     return Rom(data, digest, path)

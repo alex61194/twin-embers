@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include "3ds_data.h"
+#include "3ds_lang.h"
 #include "3ds_pak.h"
 #include "3ds_platform.h"
 #include "3ds_perf.h"
@@ -29,10 +30,17 @@
 /* Written by tools/port_common/staging.py: a clean release image may only read the pack. */
 static const uint8_t sCleanProfile[8] = { 'F', 'R', '3', 'D', 'C', 'L', 'N', 0 };
 
-/* The one ROM the data pack can be built from: PokÃ©mon FireRed (USA, Europe). */
+/* The one ROM this build's data pack can be built from: one .3dsx per language. */
 static const uint8_t sSupportedRomSha1[20] = {
+#if CTR_LANG_ES
+    /* Pokemon Edicion Rojo Fuego (Spain) 1.0 */
+    0xab, 0x8f, 0x6b, 0xfe, 0x0c, 0xcd, 0xaf, 0x41, 0x18, 0x8c,
+    0xd0, 0x15, 0xc8, 0xc7, 0x4c, 0x31, 0x4d, 0x02, 0x29, 0x6a,
+#else
+    /* Pokemon FireRed (USA, Europe) 1.0 */
     0x41, 0xcb, 0x23, 0xd8, 0xdc, 0xcc, 0x8e, 0xbd, 0x7c, 0x64,
     0x9c, 0xd8, 0xfb, 0xb5, 0x8e, 0xea, 0xce, 0x6e, 0x2f, 0xdc,
+#endif
 };
 
 typedef struct
@@ -209,8 +217,11 @@ static bool OpenPak(void)
         goto fail;
     case CTR_PAK_BAD_ROM:
         SetError("The data pack comes from another ROM.",
-                 "Only Pokemon FireRed (USA, Europe) is\n"
-                 "supported. Run the builder with that ROM.");
+                 CTR_TR("Only Pokemon FireRed (USA, Europe) is\n"
+                        "supported. Run the builder with that ROM.",
+                        "This Spanish build needs a pack made\n"
+                        "from Pokemon Rojo Fuego (Spain).\n"
+                        "Run the builder with that ROM."));
         goto fail;
     default:
         SetError("The data pack is damaged.",

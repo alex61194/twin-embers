@@ -24,7 +24,7 @@ import json
 from pathlib import Path
 import zlib
 from .pak import normalise, engine_abi
-from .rom import SUPPORTED_SHA1
+from .rom import SUPPORTED_ROMS
 
 MAX_FILE = 32 * 1024 * 1024
 
@@ -128,11 +128,13 @@ def execute(ops: list, rom: bytes, size: int) -> bytes:
 
 
 def reconstruct(recipe: dict, rom: bytes) -> list[tuple[str, bytes]]:
-    if recipe.get('schema') not in (1, 2) or recipe.get('rom_sha1') != SUPPORTED_SHA1:
+    if recipe.get('schema') not in (1, 2) or recipe.get('rom_sha1') not in SUPPORTED_ROMS:
         raise ValueError('Recipe schema/ROM mismatch')
     entries = recipe.get('entries')
     if not isinstance(entries, list) or not 0 < len(entries) <= 65536:
         raise ValueError('Invalid recipe entry count')
+    if not recipe.get('engine_abi') or any(e.get('crc32') is None for e in entries):
+        raise ValueError('This recipe is not finished yet (some data is not located in this ROM)')
     files = []
     seen = set()
     total = 0

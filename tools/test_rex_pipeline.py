@@ -65,4 +65,38 @@ class ObjectPipeline(unittest.TestCase):
             self.assertEqual(blob[:4],b'F3RX')
             self.assertIn(b'gamedata/c/sample.bin\0',blob)
 
+    @unittest.skipUnless(Path(rex.tool('arm-none-eabi-gcc')).exists() or shutil.which(rex.tool('arm-none-eabi-gcc')),
+                         'ARM compiler required; installed explicitly by CI')
+    def test_localized_recipe_resizes_text(self):
+        # A Spanish recipe gives a string its Spanish length; a table with pointers keeps its own.
+        with tempfile.TemporaryDirectory() as tmp:
+            port=Path(tmp); (port/'build/game').mkdir(parents=True)
+            source=port/'fixture.c'
+            source.write_text('const unsigned char sText_Hello[]={1,2,3,0xff};\n'
+                              'const unsigned char *const sTable[1]={sText_Hello};\n')
+            obj=port/'build/game/text.o'
+            cc=rex.tool('arm-none-eabi-gcc')
+            subprocess.run([cc,'-march=armv6k','-fdata-sections','-c',str(source),'-o',str(obj)],check=True)
+            original=rex.Obj.load(obj)
+            text=original.section('.rodata.sText_Hello'); table=original.section('.rodata.sTable')
+            units=[['c/text.o',text.name,0,0,9],['c/text.o',table.name,0,12,table.size]]
+            recipe={'schema':2,'entries':[],'units':units,'engine_units':[],
+                    'rom_sha1':'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a','engine_abi':1}
+            rows=rex_objects.transform(obj,recipe)
+            changed=rex.Obj.load(obj)
+            sec=changed.section(next(r['section'] for r in rows if r['original']==text.name))
+            self.assertEqual((sec.type,sec.size),(rex.SHT_NOBITS,9))
+            self.assertEqual(next(y for y in changed.symbols if y.name=='sText_Hello').size,9)
+            self.assertEqual(next(r for r in rows if r['original']==text.name)['compiled_size'],4)
+            # the table has a relocation, so a different length is an error, as for the USA recipe
+            subprocess.run([cc,'-march=armv6k','-fdata-sections','-c',str(source),'-o',str(obj)],check=True)
+            units[1][4]=table.size+4
+            with self.assertRaises(ValueError):
+                rex_objects.transform(obj,recipe)
+            # and the USA recipe never resizes
+            subprocess.run([cc,'-march=armv6k','-fdata-sections','-c',str(source),'-o',str(obj)],check=True)
+            units[1][4]=table.size; recipe['rom_sha1']='41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc'
+            with self.assertRaises(ValueError):
+                rex_objects.transform(obj,recipe)
+
 if __name__=='__main__': unittest.main()

@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import os
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -65,16 +66,47 @@ def target_of(obj: rex.Obj, key: str, reloc: rex.Reloc, data: bytes, renamed: di
     return ['g', alias, sym.value + addend, 4]
 
 
+def resize_nobits(path: Path, sizes: dict[str, tuple[int, int]]) -> None:
+    """Give NOBITS sections a new length, and the symbol that spans each one the same.
+
+    A NOBITS section has no bytes in the file, so only its header and its symbol change;
+    the linker then lays the storage out with the recipe's length."""
+    if not sizes:
+        return
+    obj = rex.Obj.load(path)
+    raw = bytearray(obj.raw)
+    e_shoff, = struct.unpack_from('<I', raw, 0x20)
+    for sec in obj.sections:
+        if sec.name not in sizes:
+            continue
+        old, new = sizes[sec.name]
+        if sec.type != rex.SHT_NOBITS or sec.size != old:
+            raise ValueError(f'{path}: cannot resize {sec.name}')
+        struct.pack_into('<I', raw, e_shoff + sec.index * 40 + 20, new)
+        symtab = next(s for s in obj.sections if s.type == rex.SHT_SYMTAB)
+        spans = [y for y in obj.symbols if y.shndx == sec.index and y.size]
+        if any(y.value != 0 or y.size != old for y in spans):
+            raise ValueError(f'{path}: {sec.name} holds more than one sized symbol')
+        for y in spans:
+            struct.pack_into('<I', raw, symtab.offset + y.index * 16 + 8, new)
+    path.write_bytes(bytes(raw))
+
+
 def transform(path: Path, manifest: dict) -> list[dict]:
     key = rex.object_key(path)
     wanted = rex.units_by_object(manifest).get(key, {})
+    # A recipe for another language's ROM (one .3dsx per language) gives its own lengths for
+    # text and for lists without pointers; such a section takes the recipe's length.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'builder'))
+    from firered3ds_builder.rom import SUPPORTED_SHA1
+    localized = manifest.get('rom_sha1') != SUPPORTED_SHA1
     obj = rex.Obj.load(path)
     chosen = []
     for sec in obj.sections:
         unit = wanted.get(sec.name)
         if unit is None or not rex.is_unit_candidate(sec):
             continue
-        if sec.size != unit[2]:
+        if sec.size != unit[2] and not (localized and not obj.relocs(sec)):
             raise ValueError(f'{path}: {sec.name} is {sec.size} bytes, the manifest expects {unit[2]}: '
                              'regenerate the manifest (tools/rex_manifest.py)')
         chosen.append((sec, unit))
@@ -89,6 +121,8 @@ def transform(path: Path, manifest: dict) -> list[dict]:
             sites.append([reloc.offset, *target_of(obj, key, reloc, data, renamed, sec.index, aliases)])
         rows.append(dict(section=renamed[sec.index], original=sec.name, size=size, align=sec.align,
                          entry=entry, offset=offset, sites=sites))
+        if size != sec.size:
+            rows[-1]['compiled_size'] = sec.size
         command += ['--rename-section', f'{sec.name}={renamed[sec.index]},alloc']
         for rel in obj.rel_sections(sec):
             command += ['--remove-section', rel.name]
@@ -103,7 +137,8 @@ def transform(path: Path, manifest: dict) -> list[dict]:
         changed = rex.Obj.load(temp)
         for row in rows:
             sec = changed.section(row['section'])
-            if sec is None or sec.type != rex.SHT_NOBITS or sec.size != row['size'] or sec.align != row['align']:
+            if sec is None or sec.type != rex.SHT_NOBITS or sec.size != row.get('compiled_size', row['size']) \
+                    or sec.align != row['align']:
                 raise ValueError(f'{path}: NOBITS conversion changed {row["original"]}')
         names = {sec.name: renamed[sec.index] for sec, _ in chosen}
 
@@ -115,6 +150,7 @@ def transform(path: Path, manifest: dict) -> list[dict]:
         after = [r for r in shape(changed, {}) if not r[0].startswith('__ctr_rex_')]
         if after != before:
             raise ValueError(f'{path}: symbol table changed by the conversion')
+        resize_nobits(temp, {r['section']: (r['compiled_size'], r['size']) for r in rows if 'compiled_size' in r})
         temp.replace(path)
     path.with_suffix('.rex.json').write_text(json.dumps(dict(key=key, units=rows), separators=(',', ':')) + '\n')
     return rows

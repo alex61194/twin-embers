@@ -24,3 +24,20 @@ Usage: `python3 -I es_events2.py "<USA rom>" "<Spain rom>"`. See STATUS.md and D
    writes the Spanish `data/event_scripts.s`: labels, `.space` and `.4byte` targets only, no ROM bytes.
    Fed the USA layout as both inputs it reproduces pret's object exactly (same 9,832 symbols, 9,954 relocations,
    421,686 bytes). With the Spanish layout: 420,310 bytes, 9,954 pointer sites (2 Nov 2026).
+
+## Spanish recipe
+3. `python3 -I gen_recipe_es.py "<USA rom>" "<Spain rom>" recipe es_sizes2.json event_scripts_layout_es.json recipe-es`
+   maps every operation of the USA recipe to the Spanish ROM and writes `recipe-es/recipe-es.json`
+   (offsets, lengths, CRC32s), a report and `placements.json`. It needs `builder/firered3ds_builder/`
+   next to it or the checkout around it (the CRCs use the Builder's own interpreter).
+   3 Nov 2026: 6,712 of 6,734 files placed; 92 operations (mostly Easy Chat lists) still unplaced.
+4. `python3 tools/lang_es/finish_recipe_es.py recipe-es.json event_scripts_layout_es.json` (in the checkout)
+   writes `builder/firered3ds_builder/recipes/firered-ab8f6bfe.json`, its parts, the Spanish event-script
+   layout (`event_scripts-NN.json`) and `pending.json`. While anything is pending the recipe's engine ABI is 0
+   and the Builder refuses it.
+
+## Spanish build
+`make TWIN_LANG=es` uses the Spanish recipe. `tools/rex_objects.py` gives every text section the Spanish
+length the recipe states (only sections without pointers, only for a non-USA recipe), and
+`data/event_scripts.s` is rewritten with the Spanish layout (`event_layout_us.py` + `gen_event_scripts_es.py`).
+The 3DS side then only accepts a pack built from the Spanish ROM (`3ds_data.c`).

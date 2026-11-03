@@ -292,9 +292,9 @@ romfs/engine/assets.bin: build/firered_game.elf ../tools/asset_bundle.py
 romfs/engine/rex.bin: build/firered_game.elf $(REX_TOOLS) ../tools/rex_link.py
 	$(PYTHON) ../tools/rex_link.py --recipe $(REX_RECIPE)
 runtime-data: romfs/engine/assets.bin romfs/engine/rex.bin
-	$(PYTHON) ../tools/port_common/staging.py --embed $(EMBED_DATA) --dest $(RUNTIME_ROMFS) --profile $(STAGE_PROFILE) $(if $(FIRERED_ROM),--rom $(FIRERED_ROM))
+	$(PYTHON) ../tools/port_common/staging.py --recipe $(REX_RECIPE) --embed $(EMBED_DATA) --dest $(RUNTIME_ROMFS) --profile $(STAGE_PROFILE) $(if $(FIRERED_ROM),--rom $(FIRERED_ROM))
 private-pack: romfs/engine/assets.bin romfs/engine/rex.bin
-	$(PYTHON) ../tools/port_common/staging.py --embed $(EMBED_DATA) --pack --dest $(RUNTIME_ROMFS) --profile $(STAGE_PROFILE) $(if $(FIRERED_ROM),--rom $(FIRERED_ROM))
+	$(PYTHON) ../tools/port_common/staging.py --recipe $(REX_RECIPE) --embed $(EMBED_DATA) --pack --dest $(RUNTIME_ROMFS) --profile $(STAGE_PROFILE) $(if $(FIRERED_ROM),--rom $(FIRERED_ROM))
 
 $(IMAGE_3DSX): build/firered_game_3dsx.elf build/firered_game.smdh runtime-data
 	$(DEVKITPRO)/tools/bin/3dsxtool build/firered_game_3dsx.elf $@ --smdh=build/firered_game.smdh --romfs=$(RUNTIME_ROMFS)
@@ -317,7 +317,7 @@ clean-game-3dsx: verify-clean-release
 verify-clean-release:
 	@echo "Binary publication remains blocked by distribution policy"
 	$(MAKE) CLEAN_RELEASE=1 verify-game-3dsx
-	$(PYTHON) ../tools/audit_clean_release.py --tree .. --elf build/firered_game.elf --map build/firered_game.map \
+	$(PYTHON) ../tools/audit_clean_release.py --recipe $(REX_RECIPE) --tree .. --elf build/firered_game.elf --map build/firered_game.map \
 		--3dsx twinembers.3dsx --release --coverage $(if $(FIRERED_ROM_REFERENCE),--rom "$(FIRERED_ROM_REFERENCE)")
 	$(PYTHON) ../tools/source_audit.py --release
 
@@ -485,6 +485,14 @@ GAMEFLAGS += -DCTR_EXTERNAL_ASSETS=1
 # the objects as NOBITS storage and loads from the pack (docs/CLEAN_RELEASE_AUDIT.md).
 REX_RECIPE := ../builder/firered3ds_builder/recipes/firered-41cb23d8.json
 REX_TOOLS := ../tools/rex.py ../tools/rex_objects.py $(REX_RECIPE) $(wildcard ../builder/firered3ds_builder/recipes/firered-41cb23d8/*.json)
+# The Spanish build loads the Spanish FireRed's data: its recipe gives Spanish offsets
+# and the Spanish length of every text (tools/lang_es/, tools/rex_objects.py).
+ifeq ($(TWIN_LANG),es)
+REX_RECIPE := ../builder/firered3ds_builder/recipes/firered-ab8f6bfe.json
+REX_TOOLS := ../tools/rex.py ../tools/rex_objects.py $(REX_RECIPE) $(wildcard ../builder/firered3ds_builder/recipes/firered-ab8f6bfe/*.json)
+ES_EVENT_LAYOUT := $(sort $(wildcard ../builder/firered3ds_builder/recipes/firered-ab8f6bfe/event_scripts-*.json))
+GAMEFLAGS += -DCTR_LANG_ES=1
+endif
 GAMEFLAGS += -iquote $(abspath include) -iquote $(abspath ../include) -iquote $(abspath ../include/constants) -iquote $(abspath ..)
 
 # Authored full-screen pictures retain GBA coordinates. Field/camera/object
@@ -577,6 +585,25 @@ build/game_data/%.o: ../data/%.s $(PREPROC) Makefile $(REX_TOOLS)
 		| sed -e 's/\.4byte/\.int/g;s/\.2byte/\.short/g' \
 		| $(DEVKITARM)/bin/arm-none-eabi-as -mcpu=mpcore --defsym MODERN=1 --defsym FIRERED=1 --defsym ENGLISH=1 --defsym REVISION=0 -I. -o $(CURDIR)/$@ -
 	$(PYTHON) ../tools/rex_objects.py --manifest $(REX_RECIPE) --object $@
+
+# Spanish event scripts: the USA source is assembled only to read its labels and pointer
+# sites; the object linked is data/event_scripts.s rewritten with the Spanish layout
+# (tools/lang_es/gen_event_scripts_es.py), whose bytes come from the Spanish ROM.
+ifeq ($(TWIN_LANG),es)
+build/game_data/event_scripts.o: ../data/event_scripts.s $(PREPROC) Makefile $(REX_TOOLS) $(ES_EVENT_LAYOUT) \
+		../tools/lang_es/event_layout_us.py ../tools/lang_es/gen_event_scripts_es.py
+	@mkdir -p $(dir $@)
+	cd .. && $(PREPROC) data/event_scripts.s charmap.txt \
+		| $(DEVKITARM)/bin/arm-none-eabi-cpp -Iinclude -I. - \
+		| sed 's/\r$$//' \
+		| $(PREPROC) -ie data/event_scripts.s charmap.txt \
+		| sed -e 's/\.4byte/\.int/g;s/\.2byte/\.short/g' \
+		| $(DEVKITARM)/bin/arm-none-eabi-as -mcpu=mpcore --defsym MODERN=1 --defsym FIRERED=1 --defsym ENGLISH=1 --defsym REVISION=0 -I. -o $(CURDIR)/build/game_data/event_scripts.us.o -
+	$(PYTHON) ../tools/lang_es/event_layout_us.py build/game_data/event_scripts.us.o build/game_data/event_scripts.us.json
+	$(PYTHON) ../tools/lang_es/gen_event_scripts_es.py build/game_data/event_scripts.us.json $(ES_EVENT_LAYOUT) build/game_data/event_scripts_es.s
+	$(DEVKITARM)/bin/arm-none-eabi-as -mcpu=mpcore -o $@ build/game_data/event_scripts_es.s
+	$(PYTHON) ../tools/rex_objects.py --manifest $(REX_RECIPE) --object $@
+endif
 
 build/game_data/sound_data.o: build/sound_assets.stamp
 

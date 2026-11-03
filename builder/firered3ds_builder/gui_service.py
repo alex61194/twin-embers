@@ -19,7 +19,7 @@ from typing import Callable
 from .build import build
 from . import gen4_sprites
 from .pak import PakReader
-from .rom import load_rom, SUPPORTED_SHA1
+from .rom import load_rom, SUPPORTED_ROMS
 
 Stage = Callable[[str, str], None]
 
@@ -95,7 +95,7 @@ def build_private_pack(
     _cancel(cancel)
     _stage(on_progress, "rom", "Verifying your local ROM...")
     rom = load_rom(rom_path)
-    if rom.sha1 != SUPPORTED_SHA1:
+    if rom.sha1 not in SUPPORTED_ROMS:
         raise ValueError("Unsupported ROM revision or language.")
     _check_target(rom_path, output_path, overwrite)
     _cancel(cancel)
