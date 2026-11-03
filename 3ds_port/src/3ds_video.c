@@ -1624,6 +1624,8 @@ static unsigned BattleBoxMiddle(unsigned cap)
     return step ? (cap & ~1023u) | (tile + step) : 0;
 }
 
+#include "3ds_battle_textbox_impl.h"
+
 static void DrawBattleText(unsigned bg)
 {
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -1640,6 +1642,8 @@ static void DrawBattleText(unsigned bg)
 
     /* Above the text box: windows, where the game put them. */
     DrawBattleCut(bg, 0, 240, 0, BATTLE_BAND_TOP, 0);
+    /* The port's message box in place of FireRed's frame (3ds_battle_textbox_impl.h). */
+    if (DrawBattleBox(map, size, chars, first, scrollY, rows)) return;
     /* The box from its left cap, on the left edge of the screen... */
     DrawBattleCut(bg, VIEW_LEFT, fill0, BATTLE_BAND_TOP, 160, VIEW_LEFT);
     /* ...its right cap on the right edge... */
