@@ -1,7 +1,7 @@
 /* The battle's healthboxes, drawn by the port (see include/3ds_battle_hud.h).
  *
  * The look: a light enamel plate with a dark outline, a white name band over a cool grey tray, FireRed's red cap at
- * one end (the foe's holds a Poke Ball, red when its species is caught), the HP bar as a dark capsule with "HP" in
+ * one end (the foe's holds a Poke Ball in wild battles, red when its species is caught), the HP bar as a dark capsule with "HP" in
  * gold and a five-tone fill, the player's HP numbers over its bar and a slim EXP capsule under it, a status as a
  * coloured pill with its own icon. Every pixel is drawn here, at the screen's own resolution; text is the game's
  * font. */
@@ -525,7 +525,8 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
 {
     const int w = FOE_W, h = FOE_H, split = 17, cap = 17;
     Plate(c, 0, 0, w, h, END_ROUND, END_SLANT, split, CAP_LEFT, cap, 2);
-    Ball(c, 5, (h - 11) / 2, s->caught);
+    if (!s->noBall)
+        Ball(c, 5, (h - 11) / 2, s->caught);
     int nx = cap + 5;
     Name(c, nx, 13, s);
     Level(c, w - 14, 13, s->level);
@@ -714,6 +715,7 @@ void CtrHud_HpBar(unsigned battler, unsigned pixels) { SET(battler, hpPixels, (u
 void CtrHud_ExpBar(unsigned battler, unsigned pixels) { SET(battler, expPixels, (uint8_t)pixels); }
 void CtrHud_Status(unsigned battler, unsigned status) { SET(battler, status, (uint8_t)status); }
 void CtrHud_Caught(unsigned battler, bool caught) { SET(battler, caught, caught); }
+void CtrHud_NoBall(unsigned battler, bool none) { SET(battler, noBall, none); }
 void CtrHud_SafariBalls(unsigned battler, unsigned count) { SET(battler, balls, (uint8_t)(count > 99 ? 99 : count)); }
 
 unsigned CtrHud_Match(unsigned tile, unsigned *battler)

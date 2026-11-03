@@ -105,6 +105,10 @@ int main(void)
     assert(Rgb(Pixel(foe, 5 + 4, 12 + 2)) == 0xAAAEBA);
     CtrHud_Caught(1, true);
     assert(Rgb(Pixel(sImage(1), 5 + 4, 12 + 2)) == 0xE8382C);
+    /* A trainer's Pokemon: no Poke Ball. */
+    CtrHud_NoBall(1, true);
+    assert(Rgb(Pixel(sImage(1), 5 + 4, 12 + 2)) != 0xE8382C);
+    CtrHud_NoBall(1, false);
 
     /* A double battle: four boxes, the player's low ones (no EXP bar), 64x32 pairs. */
     for (unsigned b = 0; b < 4; ++b)
