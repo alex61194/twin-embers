@@ -19,9 +19,9 @@
 #define CTR_GEN4_SIZE 80
 #define CTR_GEN4_TILES (CTR_GEN4_SIZE / 8)
 #define CTR_GEN4_PICTURE (CTR_GEN4_SIZE * CTR_GEN4_SIZE / 2)
-/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
- * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
-#define CTR_GEN4_SCALE (1.0f / 1.4f)
+/* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.5 (CTR_BATTLE_ZOOM), so a picture pixel is
+ * 1/1.5 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels (53.3 GBA pixels: it fits FireRed's 64x64 box). */
+#define CTR_GEN4_SCALE (1.0f / 1.5f)
 /* The player's back comes 1.25 times as large as its 80x80 art, enlarged by the Builder as pixel art (100x100 on a
  * 104x104 picture, 13x13 tiles), and is shown 1:1 like the rest. */
 #define CTR_GEN4_BACK_SIZE 104

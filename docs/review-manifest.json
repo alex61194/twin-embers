@@ -73,7 +73,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "e2c21c85e82f6b9d7e5c2cb3a8a0a2e3aa78ac7b2eb61eea20ba04e35638dbcd",
+   "sha256": "2fe45cf6c1187139ff2f59ebbd59c4507464bfd5cceec4ba3da8dee89dd47550",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -731,7 +731,7 @@
   },
   {
    "path": "3ds_port/include/3ds_video.h",
-   "sha256": "18fcf34d4b36b00cefb03ba580021cb8986cade7827106249e9dd56b711b9511",
+   "sha256": "836db8eeeb826d6c71f0f43fcd669a80d2f49a636b197478aa52f1394f66a3be",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1398,7 +1398,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "a94a37531aa8bf7dccaf5bd146aefdcd2a08dee1ae13c49d1daa18823cbe8323",
+   "sha256": "e2288e82fadde677e10c1982454f927910fa7a34e466ce1bcd5649c7b6f728d3",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5680,7 +5680,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "63c11dfaadcd5da91a62a82f23d2428e33cb9180801275d4207cc9e070604142",
+   "sha256": "aca9fce44acc4dc8803a4b4bfb0e97e2154806b8d41edf0ede4a989af182a8d5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5688,7 +5688,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "1a2f79dfe21c3acf3246b27ea06fc7ff96e965468bc4210eb2d91876678a19e2",
+   "sha256": "472ca07232b4384a1861e86d304d3bcd4a7d521dae835c3d3aaed3f3d331d223",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5905,6 +5905,46 @@
   {
    "path": ".github/workflows/pages.yml",
    "sha256": "769d08650edbe0e6dc828c4f102a72a31639780c0cad6d331ec26d71c7e616c6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_battle_hud_impl.h",
+   "sha256": "f927f7135b412a78ca7b9c390baf8aec549a718032d43aa59c806e2002c08ac5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0207-native-battle-healthboxes.json",
+   "sha256": "2980838e77875ce077198e98db81aac652c94c0521b87ef10148edc4489252af",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/battle_hud_test.c",
+   "sha256": "b4bc5246ffea85b2e87355f17a022972f0cc3f60935cb2c4ddb90c35a54e65e2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_battle_hud.c",
+   "sha256": "2035a6aa9670f29afa8e9125b799d67f1254bb48595e50bdeaaf399c7cbfc543",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_battle_hud.h",
+   "sha256": "f12536c10ecb62ca750b07797ba8711b364d0ca2e380e56dbc0427cf72a9b9e3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
