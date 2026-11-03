@@ -5943,6 +5943,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0209-slot-machine-quit-no-null-read.json",
+   "sha256": "406af7e7d195c1dca7ed48a2bb3ae4c9db9c7ec057ccaf648a399a4c6d0681b8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/battle_hud_test.c",
    "sha256": "cd0ad89f9b5d6a24d525c70b69639f869c2085fb4e40e07af1fe92523b1190e1",
    "review_status": "reviewed",
