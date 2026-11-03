@@ -63,7 +63,7 @@ int main(void)
     assert(sMatch(0x23F, &battler) == CTR_HUD_PART && sMatch(0x240, &battler) == CTR_HUD_NONE);
     assert(!sImage(2) && !sImage(3));
 
-    /* The player's box: 164x56 and its shadow; at rest it is where the design puts it (232, 134). */
+    /* The player's box: 150x52 and its shadow; at rest it is where the design puts it (246, 138). */
     CtrHud_Name(0, NAME, CTR_HUD_MALE, false);
     CtrHud_Level(0, 12);
     CtrHud_Hp(0, 27, false);
@@ -71,23 +71,23 @@ int main(void)
     CtrHud_HpBar(0, 48);
     CtrHud_ExpBar(0, 32);
     const CtrHudImage *player = sImage(0);
-    assert(player && player->width == 165 && player->height == 58 && player->unfaded == UNFADED);
+    assert(player && player->width == 151 && player->height == 54 && player->unfaded == UNFADED);
     float sx = 126 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + player->dx;
     float sy = 56 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + player->dy;
-    assert(fabsf(sx - 232) < 0.01f && fabsf(sy - 134) < 0.01f);
+    assert(fabsf(sx - 246) < 0.01f && fabsf(sy - 138) < 0.01f);
     /* Outside the plate it is clear; the drop shadow is translucent; the plate opaque. */
     assert(Pixel(player, 0, 0) == 0);
-    assert((Pixel(player, 164, 50) & 255) == 107);
+    assert((Pixel(player, 150, 46) & 255) == 107);
     assert((Pixel(player, 80, 10) & 255) == 255);
 
     /* A full HP bar is green to its end; a fifth is red. The track starts 16 past the capsule's left (x 16). */
     unsigned version = player->version;
-    assert(Rgb(Pixel(player, 16 + 16 + 4, 31 + 5)) == 0x48D478);   /* the fill's third row */
+    assert(Rgb(Pixel(player, 16 + 16 + 4, 28 + 5)) == 0x48D478);   /* the fill's third row */
     CtrHud_HpBar(0, 9);
     player = sImage(0);
     assert(player->version != version);
-    assert(Rgb(Pixel(player, 16 + 16 + 2, 31 + 5)) == 0xEC4434);
-    assert(Rgb(Pixel(player, 16 + 16 + 60, 31 + 5)) == 0x464C60);  /* the empty track */
+    assert(Rgb(Pixel(player, 16 + 16 + 2, 28 + 5)) == 0xEC4434);
+    assert(Rgb(Pixel(player, 16 + 16 + 60, 28 + 5)) == 0x464C60);  /* the empty track */
     /* Nothing changed, nothing redrawn. */
     version = player->version;
     CtrHud_HpBar(0, 9);
@@ -114,10 +114,10 @@ int main(void)
     assert(sMatch(0x140, &battler) == CTR_HUD_MAIN && battler == 1);
     assert(sMatch(0x1C0, &battler) == CTR_HUD_MAIN && battler == 3);
     const CtrHudImage *low = sImage(2);
-    assert(low && low->width == 165 && low->height == 38);
+    assert(low && low->width == 151 && low->height == 38);
     sx = 139 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + low->dx;
     sy = 84 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + low->dy;
-    assert(fabsf(sx - 232) < 0.01f && fabsf(sy - 150) < 0.01f);
+    assert(fabsf(sx - 246) < 0.01f && fabsf(sy - 150) < 0.01f);
     sx = 0 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + sImage(3)->dx;
     assert(fabsf(sx - 6) < 0.01f);
 
@@ -129,7 +129,7 @@ int main(void)
     assert(sMatch(0x1C0, &battler) == CTR_HUD_NONE);
     assert(sMatch(0x17F, &battler) == CTR_HUD_PART && battler == 0);
     CtrHud_SafariBalls(0, 30);
-    assert(sImage(0)->width == 165 && sImage(0)->height == 38);
+    assert(sImage(0)->width == 151 && sImage(0)->height == 38);
 
     /* A box the port leaves to FireRed matches nothing and has no picture. */
     CtrHud_Box(0, CTR_HUD_OFF, 0, false, 0x100, 0x300, UNFADED);

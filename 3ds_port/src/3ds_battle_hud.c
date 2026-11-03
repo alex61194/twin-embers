@@ -510,8 +510,9 @@ static void Numbers(const CtrHudState *s, char *out)
 
 #define FOE_W 152
 #define FOE_H 36
-#define PLAYER_W 164
-#define PLAYER_H 56
+/* The player's boxes are kept clear of the foe's ground: narrower than the design's first 164x56. */
+#define PLAYER_W 150
+#define PLAYER_H 52
 #define LOW_H 36                           /* the player's box in a double battle, and the Safari Zone's */
 
 static void FoeBox(Canvas *c, const CtrHudState *s)
@@ -537,13 +538,13 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 13, s);
     Level(c, w - cap - 6, 13, s->level);
     int hx = nx - 4;
-    if (HasStatus(s)) hx += Status(c, hx, 30, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 27, s->status) + 3;
     int end = w - cap - 5;
     /* "hp/max", right-aligned to the bar's end, over it. */
     Numbers(s, numbers);
-    Ascii(c, false, end - 3 - (int)AsciiWidth(false, numbers) + 1, 27, numbers, INK, &INK_SHADOW);
-    HpBar(c, hx, 31, end - hx, s->hpPixels);
-    ExpBar(c, 10, 44, w - cap - 5 - 10, s->expPixels);
+    Ascii(c, false, end - 3 - (int)AsciiWidth(false, numbers) + 1, 26, numbers, INK, &INK_SHADOW);
+    HpBar(c, hx, 28, end - hx, s->hpPixels);
+    ExpBar(c, 10, 41, w - cap - 5 - 10, s->expPixels);
 }
 
 /* A double battle's player box: the single one's plate, as low as a foe's, its HP numbers beside the bar. */
@@ -621,12 +622,12 @@ static uint32_t sVersion;
  */
 static const struct { uint8_t kind; bool doubles; uint8_t position; int16_t gbaX, gbaY, x, y; } ANCHORS[] = {
     {CTR_HUD_FOE, false, 1, 12, 14, 10, 22},
-    {CTR_HUD_PLAYER, false, 0, 126, 56, 232, 134},
-    {CTR_HUD_SAFARI, false, 0, 126, 56, 232, 150},
+    {CTR_HUD_PLAYER, false, 0, 126, 56, 246, 138},
+    {CTR_HUD_SAFARI, false, 0, 126, 56, 246, 154},
     {CTR_HUD_FOE, true, 1, 12, 3, 24, 6},
     {CTR_HUD_FOE, true, 3, 0, 28, 6, 44},
-    {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 214, 112},
-    {CTR_HUD_PLAYER_DOUBLE, true, 2, 139, 84, 232, 150},
+    {CTR_HUD_PLAYER_DOUBLE, true, 0, 127, 59, 228, 112},
+    {CTR_HUD_PLAYER_DOUBLE, true, 2, 139, 84, 246, 150},
 };
 
 static void Anchor(const CtrHudState *s, float *dx, float *dy)
