@@ -3284,6 +3284,10 @@ static void DrawObjects(unsigned priority, bool effects)
                 y = CtrObj_UnwrapY(y, VIEW_BOTTOM);
             }
         }
+        if (priority == 3)
+            DrawTitleFlameCopies(attr0, attr1, attr2, x, y, effects);
+        if (x >= sClipX1 || x + (int)boxW <= sClipX0
+         || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
         if (sBattle && sHudMatch)
         {
             /* A healthbox the port draws: its box in place of the main sprite, nothing for its other sprites, and
@@ -3299,10 +3303,6 @@ static void DrawObjects(unsigned priority, bool effects)
                 continue;
             }
         }
-        if (priority == 3)
-            DrawTitleFlameCopies(attr0, attr1, attr2, x, y, effects);
-        if (x >= sClipX1 || x + (int)boxW <= sClipX0
-         || y >= sClipY1 || y + (int)boxH <= sClipY0) continue;
         ++sStats.sprites;
         CTR_PERF_COUNT(PERF_SPRITES,1);
         uint64_t perfAffine=affine ? CtrPerf_Begin() : 0;
