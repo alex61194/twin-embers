@@ -59,7 +59,9 @@ hand-drawn 240x112 scenes (grass, forest, beach, underwater, sea, lake, mountain
 neutral, gym and space) of LibertyTwins' Battle Backgrounds Patch FR, as converted by Facets (the same repository
 and pinned commit as the people). The Builder turns each into tiles, a tile map and a palette
 (`graphics/gen4/bg/NNN.bin`) and gives every terrain its scene (the gym, its leaders and the Elite Four share the
-gym's). It writes all of them or none, so a battle never mixes two looks.
+gym's). The 3DS shows more than 240x112 of the scene, so the tile map mirrors the picture around its edges with
+flipped tiles instead of stretching its last row and columns. It writes all of them or none, so a battle never mixes
+two looks.
 
 All three entries are optional: the engine ABI does not cover them. The art stays its authors' work (see
 CREDITS.md).

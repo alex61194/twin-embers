@@ -729,15 +729,22 @@ def convert_bg(scene: bytes) -> bytes:
                 seen[tile] = len(tiles)
                 tiles.append(tile)
             grid[ty][tx] = seen[tile]
-    # BG3 reads a 64x32 map (screen blocks 26 and 27, 32 columns each) with palette 2. Above the picture and beside
-    # it, the map repeats the picture's edge: its first row on the rows above (the scene is zoomed past 240x112 on
-    # the 3DS), its first column on the left (columns 63 and below) and its last on the right (columns 30 up).
+    # BG3 reads a 64x32 map (screen blocks 26 and 27, 32 columns each) with palette 2. The 3DS shows the scene past
+    # its 240x112, so around the picture the map mirrors it with flipped tiles: the rows above (wrapping from 31) are
+    # its top rows upside down, the rows below its bottom ones, the columns on the right (30 up) its last columns
+    # reversed and those on the left (wrapping from 63) its first ones. A mirror has no seam, unlike a repeated edge.
+    def mirror(position: int, size: int, wrap: int, below: int) -> tuple[int, int]:
+        if position < size:
+            return position, 0
+        if position < below:
+            return 2 * size - 1 - position, 1
+        return wrap - 1 - position, 1
     mapped = [[0] * BG_MAP_COLUMNS for _ in range(BG_MAP_ROWS)]
     for row in range(BG_MAP_ROWS):
-        source = grid[0] if row >= tile_rows + 16 else grid[min(row, tile_rows - 1)]
+        source_row, vflip = mirror(row, tile_rows, BG_MAP_ROWS, tile_rows + 4)
         for column in range(BG_MAP_COLUMNS):
-            tile = source[column] if column < columns else source[columns - 1] if column < 47 else source[0]
-            mapped[row][column] = tile | 2 << 12
+            source_column, hflip = mirror(column, columns, BG_MAP_COLUMNS, 47)
+            mapped[row][column] = grid[source_row][source_column] | hflip << 10 | vflip << 11 | 2 << 12
     tilemap = b"".join(struct.pack("<H", mapped[row][block * 32 + column]) for block in (0, 1)
                        for row in range(BG_MAP_ROWS) for column in range(32))
     colours = (palette + [0] * 16)[:16]

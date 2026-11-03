@@ -491,7 +491,7 @@ class BackgroundTest(unittest.TestCase):
         self.assertEqual(tiles, 4)
         self.assertEqual(len(entry), 8 + 32 + tiles * 32 + 64 * 32 * 2)
 
-    def test_the_map_shows_the_scene_and_repeats_its_edges(self):
+    def test_the_map_shows_the_scene_and_mirrors_it_around(self):
         entry = self.entry()
         tiles = struct.unpack("<H", entry[4:6])[0]
         entries = struct.unpack("<2048H", entry[40 + tiles * 32:])
@@ -509,16 +509,27 @@ class BackgroundTest(unittest.TestCase):
                 palette = struct.unpack("<16H", entry[8:40])[index]
                 self.assertEqual(((palette & 31) * 255 // 31, (palette >> 5 & 31) * 255 // 31,
                                   (palette >> 10 & 31) * 255 // 31), colour)
-        # Beside it: the last column on the right, the first on the left (wrapping from column 63).
+        H, V = 1 << 10, 1 << 11
+        # The picture's own tiles are not flipped.
+        self.assertFalse(any(at(column, row) & (H | V) for row in range(14) for column in range(30)))
+        # Beside it, mirrored: its last columns reversed on the right, its first ones on the left (wrapping from 63).
         for row in range(14):
-            self.assertEqual(at(30, row), at(29, row))
-            self.assertEqual(at(31, row), at(29, row))
-            self.assertEqual(at(63, row), at(0, row))
-            self.assertEqual(at(62, row), at(0, row))
-        # Above it (rows 30 and 31 wrap to the top): the first row's tiles.
+            self.assertEqual(at(30, row), at(29, row) | H)
+            self.assertEqual(at(31, row), at(28, row) | H)
+            self.assertEqual(at(46, row), at(13, row) | H)
+            self.assertEqual(at(63, row), at(0, row) | H)
+            self.assertEqual(at(62, row), at(1, row) | H)
+            self.assertEqual(at(47, row), at(16, row) | H)
+        # Above it (rows 31 down wrap to the top) its top rows upside down, below it its bottom ones.
         for column in range(30):
-            self.assertEqual(at(column, 30), at(column, 0))
-            self.assertEqual(at(column, 31), at(column, 0))
+            self.assertEqual(at(column, 31), at(column, 0) | V)
+            self.assertEqual(at(column, 30), at(column, 1) | V)
+            self.assertEqual(at(column, 18), at(column, 13) | V)
+            self.assertEqual(at(column, 14), at(column, 13) | V)
+            self.assertEqual(at(column, 17), at(column, 10) | V)
+        # The corners take both flips.
+        self.assertEqual(at(63, 31), at(0, 0) | H | V)
+        self.assertEqual(at(30, 30), at(29, 1) | H | V)
 
     def test_a_wrong_size_or_too_many_tiles_is_refused(self):
         with self.assertRaises(gen4_sprites.Gen4Error):
