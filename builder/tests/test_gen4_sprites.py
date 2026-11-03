@@ -1,5 +1,6 @@
 """Synthetic-only tests for the optional HeartGold battle sprites (no network, no real sprite)."""
 import hashlib
+import re
 import struct
 import tempfile
 import unittest
@@ -122,7 +123,8 @@ class DownloadTest(unittest.TestCase):
                     self.data[(dex, body, side)] = data
                     rows.append(row_for(dex, body, side, data))
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
-                        patch.object(gen4_sprites, "BACK_FILES", ())):
+                        patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ()),
+                        patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -138,7 +140,8 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0, "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
+                                "backgrounds": 0, "npcs": 0, "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -439,8 +442,9 @@ class BackTest(unittest.TestCase):
             urls.append(url)
             return strip
 
-        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows):
-            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows), \
+                patch.object(gen4_sprites, "BG_FILES", ()), patch.object(gen4_sprites, "NPC_FILES", ()):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get), groups=("pokemon",))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/back/000.bin"])
         self.assertEqual(info["backs"], 1)
         self.assertEqual(urls, ["https://raw.githubusercontent.com/%s/%s/a/red.png"
@@ -451,6 +455,309 @@ class BackTest(unittest.TestCase):
         self.assertRegex(gen4_sprites.BACK_COMMIT, "^[0-9a-f]{40}$")
         for row in gen4_sprites.BACK_FILES:
             self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+
+def rgb_png(rows):
+    """An RGB PNG of rows of (r, g, b), filter 0."""
+    width, height = len(rows[0]), len(rows)
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    lines = b"".join(b"\x00" + bytes(v for pixel in row for v in pixel) for row in rows)
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(lines))
+            + chunk(b"IEND", b""))
+
+
+class BackgroundTest(unittest.TestCase):
+    COLOURS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+
+    def scene(self):
+        """A 240x112 scene: a colour per 8x8 tile (so it holds four different tiles in a repeating pattern)."""
+        return [[self.COLOURS[((x // 8) + (y // 8) * 3) % 4] for x in range(240)] for y in range(112)]
+
+    def entry(self):
+        return gen4_sprites.convert_bg(rgb_png(self.scene()))
+
+    def test_an_rgb_png_is_read(self):
+        width, height, palette, rows = gen4_sprites.read_png(rgb_png([[(1, 2, 3), (4, 5, 6)]]))
+        self.assertEqual((width, height, palette, rows), (2, 1, [], [[(1, 2, 3, 255), (4, 5, 6, 255)]]))
+
+    def test_entry_layout_and_identical_tiles_stored_once(self):
+        entry = self.entry()
+        self.assertEqual(entry[:4], b"G4G1")
+        tiles = struct.unpack("<H", entry[4:6])[0]
+        self.assertEqual(tiles, 4)
+        self.assertEqual(len(entry), 8 + 32 + tiles * 32 + 64 * 32 * 2)
+
+    def test_the_map_shows_the_scene_and_mirrors_it_around(self):
+        entry = self.entry()
+        tiles = struct.unpack("<H", entry[4:6])[0]
+        entries = struct.unpack("<2048H", entry[40 + tiles * 32:])
+
+        def at(column, row):
+            return entries[(column // 32) * 1024 + row * 32 + column % 32]
+        # Every entry takes palette 2, as BG3's three palettes start there.
+        self.assertTrue(all(value >> 12 == 2 for value in entries))
+        # The picture itself: the tile of each 8x8 square, in the colour that square has.
+        for row in (0, 5, 13):
+            for column in (0, 7, 29):
+                colour = self.COLOURS[(column + row * 3) % 4]
+                tile = at(column, row) & 0x3ff
+                index = entry[40 + tile * 32] & 0xF
+                palette = struct.unpack("<16H", entry[8:40])[index]
+                self.assertEqual(((palette & 31) * 255 // 31, (palette >> 5 & 31) * 255 // 31,
+                                  (palette >> 10 & 31) * 255 // 31), colour)
+        H, V = 1 << 10, 1 << 11
+        # The picture's own tiles are not flipped.
+        self.assertFalse(any(at(column, row) & (H | V) for row in range(14) for column in range(30)))
+        # Beside it, mirrored: its last columns reversed on the right, its first ones on the left (wrapping from 63).
+        for row in range(14):
+            self.assertEqual(at(30, row), at(29, row) | H)
+            self.assertEqual(at(31, row), at(28, row) | H)
+            self.assertEqual(at(46, row), at(13, row) | H)
+            self.assertEqual(at(63, row), at(0, row) | H)
+            self.assertEqual(at(62, row), at(1, row) | H)
+            self.assertEqual(at(47, row), at(16, row) | H)
+        # Above it (rows 31 down wrap to the top) its top rows upside down, below it its bottom ones.
+        for column in range(30):
+            self.assertEqual(at(column, 31), at(column, 0) | V)
+            self.assertEqual(at(column, 30), at(column, 1) | V)
+            self.assertEqual(at(column, 18), at(column, 13) | V)
+            self.assertEqual(at(column, 14), at(column, 13) | V)
+            self.assertEqual(at(column, 17), at(column, 10) | V)
+        # The corners take both flips.
+        self.assertEqual(at(63, 31), at(0, 0) | H | V)
+        self.assertEqual(at(30, 30), at(29, 1) | H | V)
+
+    def test_a_wrong_size_or_too_many_tiles_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(rgb_png([[(0, 0, 0)] * 240] * 100))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(png([[0] * 240] * 112, [(0, 0, 0)] * 16, depth=8))
+        # 30x14 = 420 different tiles fit; with a 512 limit made smaller, they do not.
+        noisy = [[((x * 7 + y * 13) % 15 * 16, (x * 3 + y) % 15 * 16, 0) for x in range(240)] for y in range(112)]
+        with patch.object(gen4_sprites, "BG_TILES_MAX", 10), self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg(rgb_png(noisy))
+
+    def test_the_pinned_scenes_and_terrains(self):
+        self.assertRegex(gen4_sprites.BG_COMMIT, "^[0-9a-f]{40}$")
+        self.assertEqual([row[:2] for row in gen4_sprites.BG_FILES], [(i, "bg") for i in range(14)])
+        self.assertEqual(len(gen4_sprites.BG_TERRAIN), 20)       # FireRed's BATTLE_TERRAIN_GRASS to CHAMPION
+        self.assertEqual(set(gen4_sprites.BG_TERRAIN), set(range(14)))
+        for row in gen4_sprites.BG_FILES:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+    def test_every_terrain_has_its_scene_or_none_has(self):
+        data = rgb_png(self.scene())
+        rows = tuple((i, "bg", "s/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(14))
+        urls = []
+
+        def get(url):
+            urls.append(url)
+            return data
+
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
+                patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "BG_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+        self.assertEqual([path for path, _ in files], ["graphics/gen4/bg/%03d.bin" % i for i in range(20)])
+        self.assertEqual(info["backgrounds"], 20)
+        self.assertEqual(files[0][1], files[4][1] if gen4_sprites.BG_TERRAIN[0] == gen4_sprites.BG_TERRAIN[4]
+                         else files[0][1])
+        self.assertEqual(files[11][1], files[12][1])            # the gym and its leader share a scene
+        self.assertEqual(urls[0], "https://raw.githubusercontent.com/%s/%s/s/0.png"
+                         % (gen4_sprites.BG_REPO, gen4_sprites.BG_COMMIT))
+        # One scene that cannot be had leaves every terrain on FireRed's.
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
+                patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "BG_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url.endswith("/3.png") else data))
+        self.assertEqual((files, info["backgrounds"]), ([], 0))
+
+
+class PeopleTest(unittest.TestCase):
+    COLOURS = [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255), (255, 255, 0, 255)]
+
+    def sheet(self):
+        """Nine frames; in frame f, the pixel (x, y) takes colour (f + x // 4 + y // 4) % 4 inside a 24x24 body."""
+        rows = []
+        for y in range(32 * 9):
+            frame, fy = divmod(y, 32)
+            rows.append([self.COLOURS[(frame + x // 4 + fy // 4) % 4] if 4 <= x < 28 and 4 <= fy < 28 else (0, 0, 0, 0)
+                         for x in range(32)])
+        return rows
+
+    def test_entry_layout_and_tile_order(self):
+        entry = gen4_sprites.convert_npc(rgba_png(self.sheet()))
+        self.assertEqual(entry[:8], b"G4N1" + bytes([9, 32, 0, 0]))
+        self.assertEqual(len(entry), 40 + 9 * 512)
+        palette = struct.unpack("<16H", entry[8:40])
+        self.assertEqual(palette[0], 0)
+        self.assertEqual(len(set(palette[1:5])), 4)
+        # Frame 2, tile (1, 0), its first row (pixels 8 to 15 of the first row: the body starts at 4, in rows from 4):
+        # the tile's own bytes are 32 from the frame's start plus a tile's 32.
+        sheet = self.sheet()
+        for frame, tx, ty, y in ((0, 0, 0, 5), (2, 1, 2, 3), (8, 3, 3, 7)):
+            tile = entry[40 + frame * 512 + (ty * 4 + tx) * 32 + y * 4:][:4]
+            row = sheet[frame * 32 + ty * 8 + y][tx * 8:tx * 8 + 8]
+            for x in range(8):
+                index = tile[x // 2] >> (4 * (x & 1)) & 15
+                if row[x][3] == 0:
+                    self.assertEqual(index, 0)
+                else:
+                    colour = struct.unpack("<H", entry[8 + index * 2:10 + index * 2])[0]
+                    self.assertEqual(((colour & 31) * 255 // 31, (colour >> 5 & 31) * 255 // 31,
+                                      (colour >> 10 & 31) * 255 // 31), row[x][:3])
+
+    def test_a_wrong_sheet_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(rgba_png([[(0, 0, 0, 255)] * 32] * 100))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(png([[0] * 32] * 288, [(0, 0, 0)] * 16, depth=8))
+
+    def test_pinned_people(self):
+        rows = gen4_sprites.NPC_FILES
+        self.assertEqual(len(rows), 74)
+        self.assertEqual(len({row[0] for row in rows}), 74)           # each graphics id once
+        self.assertTrue(all(row[1] == "npc" and 16 <= row[0] < 256 for row in rows))
+        self.assertTrue(all(re.match(r"^assets/npcs/(community|diego|taiga|zaffre)/gen3/frlg/[A-Z_0-9]+\.png$", row[2])
+                            for row in rows))
+        for row in rows:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+        # Red, Leaf and the rival are not among them: they keep FireRed's.
+        self.assertFalse({0, 1, 2, 3, 4, 5, 6, 7, 8, 72} & {row[0] for row in rows})
+
+    def test_the_groups_choose_the_files_and_the_entries(self):
+        self.assertEqual(len(gen4_sprites.all_files(("npc",))), 74)
+        self.assertEqual(len(gen4_sprites.all_files(("bg",))), 14)
+        self.assertEqual(len(gen4_sprites.all_files(())), 0)
+        self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14
+                         + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES))
+        data = rgba_png(self.sheet())
+        rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
+        with patch.object(gen4_sprites, "NPC_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: data), groups=("npc",))
+            self.assertEqual([path for path, _ in files], ["graphics/gen4/npc/%03d.bin" % (16 + i) for i in range(3)])
+            self.assertEqual((info["npcs"], info["species"], info["backgrounds"]), (3, 0, 0))
+            # One sheet that cannot be had leaves that person on FireRed's, the others are drawn.
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url.endswith("/1.png") else data), groups=("npc",))
+            self.assertEqual([path for path, _ in files], ["graphics/gen4/npc/016.bin", "graphics/gen4/npc/018.bin"])
+            self.assertEqual(info["npcs"], 2)
+            # Without the group nothing of them is fetched.
+            urls = []
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: urls.append(url) or data), groups=())
+            self.assertEqual((files, urls, info["npcs"]), ([], [], 0))
+
+
+class PlayerTest(unittest.TestCase):
+    COLOURS = PeopleTest.COLOURS
+
+    def column(self, frames, side=32):
+        """`frames` square frames one under the other; in frame f, the pixel (x, y) of the body takes colour
+        (f + x // 4 + y // 4) % 4."""
+        edge = side // 8
+        return [[self.COLOURS[(f + x // 4 + fy // 4) % 4] if edge <= x < side - edge and edge <= fy < side - edge
+                 else (0, 0, 0, 0) for x in range(side)]
+                for f, fy in (divmod(y, side) for y in range(side * frames))]
+
+    def test_the_player_sheets_keep_their_frames(self):
+        entry = gen4_sprites.convert_npc(rgba_png(self.column(20)), 20)
+        self.assertEqual(entry[:8], b"G4N1" + bytes([20, 32, 0, 0]))
+        self.assertEqual(len(entry), 40 + 20 * 512)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(rgba_png(self.column(20)))      # a person has nine
+
+    def test_a_gba_back_is_enlarged_half_again(self):
+        entry = gen4_sprites.convert_back(rgba_png(self.column(5, 64)))
+        self.assertEqual(entry[:8], b"G4K2" + bytes([5, 104, 0, 0]))
+        self.assertEqual(len(entry), 40 + 5 * 104 * 104 // 2)
+        # The 64x64 frame stands 96 pixels tall, centred: rows 4 to 99 are drawn, the body 96 * 3 / 4 of them.
+        frame = entry[40:40 + 104 * 52]
+        drawn = [y for y in range(104) if any(frame[y * 52:(y + 1) * 52])]
+        self.assertEqual((drawn[0], drawn[-1]), (4 + 12, 4 + 83))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_back(rgba_png(self.column(4, 64)))
+
+    def test_a_gba_front_fills_the_trainer_picture(self):
+        entry = gen4_sprites.convert_front(rgba_png(self.column(1, 64)))
+        self.assertEqual(entry[:8], b"G4T1" + bytes(4))
+        self.assertEqual(len(entry), 40 + 80 * 40)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_front(rgba_png(self.column(1, 32)))
+
+    def test_the_intro_picture_takes_firereds_colours(self):
+        tiles, colours = gen4_sprites.convert_intro(rgba_png(self.column(1, 64)[:96] + self.column(1, 64)[:32]))
+        self.assertEqual((len(tiles), len(colours)), (6144, 64))
+        self.assertEqual(set(tiles) - {0}, {64, 65, 66, 67})
+        self.assertEqual(tiles[:8], bytes(8))                       # the first row of the frame is empty
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_intro(rgba_png(self.column(1, 64)))
+
+    def test_pinned_looks(self):
+        rows = gen4_sprites.PLAYER_FILES
+        self.assertRegex(gen4_sprites.PLAYER_COMMIT, "^[0-9a-f]{40}$")
+        self.assertEqual(len({gen4_sprites.file_name(row) for row in rows}), len(rows))
+        for gender in ("boy", "girl"):
+            sheets = {row[2].rsplit("/", 1)[1][:-4] for row in rows if row[0] == gender}
+            self.assertEqual(sheets, set(gen4_sprites.PLAYER_SHEETS) | {"back", "front", "intro", "mapIcon", "flyBird"})
+        for row in rows:
+            self.assertEqual(row[1], "player")
+            self.assertRegex(row[2], r"^assets/sprites/(ash_hgss|ash|green_hgss|green)/gen3/frlg/[A-Za-z]+\.png$")
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+    def test_each_sheet_goes_where_firered_draws_it(self):
+        sizes = {"walk": 20, "bike": 9, "surf": 12, "fishing": 12, "fieldMove": 9, "vsSeekerBike": 6}
+        data = {name: rgba_png(self.column(count)) for name, count in sizes.items()}
+        data["back"] = rgba_png(self.column(5, 64))
+        data["front"] = rgba_png(self.column(1, 64))
+        data["intro"] = rgba_png(self.column(1, 64)[:96] + self.column(1, 64)[:32])
+        data["mapIcon"] = rgba_png(self.column(1, 16))
+        data["flyBird"] = rgba_png(self.column(2, 64))
+        rows = tuple((gender, "player", "x/%s/%s.png" % (gender, name), len(data[name]),
+                      hashlib.sha256(data[name]).hexdigest()) for gender in ("boy", "girl") for name in data)
+
+        def get(url):
+            return data[url.rsplit("/", 1)[1][:-4]]
+        with patch.object(gen4_sprites, "PLAYER_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get), groups=("player",))
+        paths = sorted(path for path, _ in files)
+        npc = ["graphics/gen4/npc/%03d.bin" % gfx for gfx in range(14)]
+        whole = ["graphics/gen4/player/%s_%s.%s" % (name, gender, kind) for gender in ("boy", "girl")
+                 for name, kinds in (("front", ("4bpp", "gbapal")), ("intro", ("8bpp", "gbapal")),
+                                     ("icon", ("4bpp", "gbapal"))) for kind in kinds]
+        birds = ["graphics/gen4/npc/250.bin", "graphics/gen4/npc/251.bin"]
+        self.assertEqual(paths, sorted(npc + whole + birds + ["graphics/gen4/back/000.bin", "graphics/gen4/back/001.bin",
+                                                              "graphics/gen4/trainer/135.bin",
+                                                              "graphics/gen4/trainer/136.bin"]))
+        self.assertEqual(info["player"], 32)
+        bird = dict(files)["graphics/gen4/npc/250.bin"]
+        self.assertEqual((bird[:6], len(bird)), (b"G4N1" + bytes([2, 64]), 40 + 2 * 2048))
+        # FireRed's own sizes: what the port checks before it puts one in the place of Red's or Leaf's.
+        sizes = {path: len(entry) for path, entry in files}
+        self.assertEqual([sizes["graphics/gen4/player/%s_boy.%s" % pair] for pair in (
+            ("front", "4bpp"), ("front", "gbapal"), ("intro", "8bpp"), ("intro", "gbapal"), ("icon", "4bpp"),
+            ("icon", "gbapal"))], [2048, 32, 6144, 64, 128, 32])
+        frames = {path: entry[4] for path, entry in files if path.startswith("graphics/gen4/npc/")}
+        self.assertEqual([frames[path] for path in npc], [20, 9, 12, 9, 12, 9, 6] * 2)
+        # With HeartGold's trainer pictures too, the player's front pictures take the place of their Red, once.
+        archive = b"narc"
+        trainers = (rows + ((0, "trainers", "t", len(archive), hashlib.sha256(archive).hexdigest()),))
+        heartgold = [("graphics/gen4/trainer/135.bin", b"hg red"), ("graphics/gen4/trainer/001.bin", b"hg")]
+        with patch.object(gen4_sprites, "PLAYER_FILES", trainers),                 patch.object(gen4_sprites, "convert_trainers", lambda data: list(heartgold)):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: archive if url.endswith(gen4_sprites.gen4_sources.TRAINERS_PATH) else get(url)),
+                groups=("player",))
+        named = [path for path, _ in files]
+        self.assertEqual(len(named), len(set(named)))
+        self.assertIn("graphics/gen4/trainer/001.bin", named)
+        self.assertNotEqual(dict(files)["graphics/gen4/trainer/135.bin"], b"hg red")
+        self.assertEqual(info["trainers"], 1)
+        # With HeartGold's sprites too, the player's backs take the place of the fan-made ones.
+        self.assertFalse(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon", "player"))))
+        self.assertTrue(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon",))))
 
 
 class SourcesTest(unittest.TestCase):

@@ -518,3 +518,279 @@ void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow)
         for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
             memset(tiles + (((unsigned)y / 8 * CTR_GEN4_TILES + tx) * 8 + (unsigned)y % 8) * 4, 0, 4);
 }
+
+/* The battle backgrounds (CtrBattleBg_Load): the terrain's entry read once and kept while the same terrain is asked
+ * for again (a battle loads its tiles, map and palette one after the other). */
+#define BG_TERRAINS 20
+#define BG_HEADER 40
+#define BG_CHAR_BYTES 16384
+#define BG_MAP_BYTES 4096
+#define BG_TILES_MAX 512
+
+static struct {
+    bool tried;
+    unsigned terrain, tiles;
+    uint8_t *entry;
+} sBg;
+
+static const uint8_t *BgEntry(unsigned terrain)
+{
+    if (terrain >= BG_TERRAINS)
+        return NULL;
+    if (sBg.tried && sBg.terrain == terrain)
+        return sBg.entry;
+    free(sBg.entry);
+    sBg.entry = NULL;
+    sBg.tried = true;
+    sBg.terrain = terrain;
+    char path[40];
+    snprintf(path, sizeof(path), "graphics/gen4/bg/%03u.bin", terrain);
+    uint32_t size = 0;
+    uint8_t *entry = CtrData_Load(path, &size);
+    if (!entry)
+        return NULL;
+    unsigned tiles = size >= BG_HEADER ? entry[4] | entry[5] << 8 : 0;
+    if (size < BG_HEADER || memcmp(entry, "G4G1", 4) || !tiles || tiles > BG_TILES_MAX
+        || size != BG_HEADER + tiles * 32 + BG_MAP_BYTES)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    sBg.tiles = tiles;
+    sBg.entry = entry;
+    return entry;
+}
+
+int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
+{
+    const uint8_t *entry = BgEntry(terrain);
+    if (!entry)
+        return 0;
+    switch (part)
+    {
+    case 0:
+        memset(dest, 0, BG_CHAR_BYTES);
+        memcpy(dest, entry + BG_HEADER, sBg.tiles * 32);
+        return 1;
+    case 1:
+        memcpy(dest, entry + BG_HEADER + sBg.tiles * 32, BG_MAP_BYTES);
+        return 1;
+    case 2:
+        for (unsigned bank = 0; bank < 3; ++bank)
+            memcpy((uint8_t *)dest + bank * 32, entry + 8, 32);
+        return 1;
+    case 3:
+        return 1;
+    }
+    return 0;
+}
+
+/* The field's people (CtrNpc_Match): each person's entry read once and kept while it is on screen, in one of as many
+ * slots as the compositor has pictures; the least recently shown goes when a new one comes. A person has nine 32x32
+ * frames, the player as many as FireRed's pic table (up to 20), the Fly bird carrying them two 64x64 ones. Each slot
+ * has its palette bank; the reflections in water take the banks past them (NPC_REFLECTION_BANK on). */
+#define NPC_FRAMES_MAX 32
+#define NPC_HEADER 40
+#define NPC_REFLECTION_BANK CTR_GEN4_SLOTS
+#define NPC_REFLECTION_BANKS (16 - CTR_GEN4_SLOTS)
+
+typedef struct {
+    bool used;
+    unsigned gfx;
+    uint32_t stamp;
+    uint8_t *entry;
+} Npc;
+
+static Npc sNpcs[CTR_GEN4_SLOTS];
+static uint32_t sNpcTick;
+static uint32_t sNpcFailed[8];      /* graphics ids whose entry is not there or not right: asked once */
+
+static Npc *NpcLoad(unsigned gfx)
+{
+    unsigned i, slot = 0;
+    char path[40];
+    uint32_t size = 0;
+    uint8_t *entry;
+
+    for (i = 0; i < CTR_GEN4_SLOTS; ++i)
+        if (sNpcs[i].used && sNpcs[i].gfx == gfx)
+            return &sNpcs[i];
+    if (gfx > 255 || (sNpcFailed[gfx / 32] >> (gfx % 32) & 1))
+        return NULL;
+    sNpcFailed[gfx / 32] |= 1u << (gfx % 32);
+    snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
+    entry = CtrData_Load(path, &size);
+    if (!entry)
+        return NULL;
+    if (size < NPC_HEADER || memcmp(entry, "G4N1", 4) || !entry[4] || entry[4] > NPC_FRAMES_MAX
+        || (entry[5] != 32 && entry[5] != 64) || size != NPC_HEADER + entry[4] * (uint32_t)entry[5] * entry[5] / 2)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    for (i = 0; i < CTR_GEN4_SLOTS; ++i)
+        if (!sNpcs[i].used)
+        {
+            slot = i;
+            break;
+        }
+        else if (sNpcs[i].stamp < sNpcs[slot].stamp)
+            slot = i;
+    free(sNpcs[slot].entry);
+    sNpcs[slot] = (Npc){true, gfx, ++sNpcTick, entry};
+    sNpcFailed[gfx / 32] &= ~(1u << (gfx % 32));
+    {
+        uint16_t palette[16];
+
+        for (i = 0; i < 16; ++i)
+            palette[i] = (uint16_t)(entry[8 + i * 2] | entry[9 + i * 2] << 8);
+        CtrVideo_SetNpcPalette(slot, palette);
+    }
+    return &sNpcs[slot];
+}
+
+/* A reflection's colours: FireRed makes its reflection palette from the object's own colour by colour, so each channel
+ * of the picture's colours goes the way the object's went, along the straight line that fits its 15 pairs best. */
+static unsigned ReflectionBank(const Npc *npc, unsigned slot, const uint16_t *own, const uint16_t *reflected)
+{
+    static struct { unsigned slot; uint32_t stamp; } banks[NPC_REFLECTION_BANKS];
+    static uint32_t tick;
+    unsigned bank = 0;
+    uint16_t colours[16] = {0};
+
+    for (unsigned i = 0; i < NPC_REFLECTION_BANKS; ++i)
+        if (banks[i].stamp && banks[i].slot == slot)
+        {
+            bank = i;
+            break;
+        }
+        else if (banks[i].stamp < banks[bank].stamp)
+            bank = i;
+    banks[bank].slot = slot;
+    banks[bank].stamp = ++tick;
+    for (unsigned shift = 0; shift < 15; shift += 5)
+    {
+        float sx = 0, sy = 0, sxx = 0, sxy = 0, a = 1, b;
+
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            float x = (float)(own[i] >> shift & 31), y = (float)(reflected[i] >> shift & 31);
+
+            sx += x;
+            sy += y;
+            sxx += x * x;
+            sxy += x * y;
+        }
+        if (15 * sxx - sx * sx > 0.5f)
+            a = (15 * sxy - sx * sy) / (15 * sxx - sx * sx);
+        b = (sy - a * sx) / 15;
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            unsigned c = npc->entry[8 + i * 2] | npc->entry[9 + i * 2] << 8;
+            float v = a * (float)(c >> shift & 31) + b + 0.5f;
+
+            colours[i] |= (uint16_t)((v < 0 ? 0u : v > 31 ? 31u : (unsigned)v) << shift);
+        }
+    }
+    CtrVideo_SetNpcPalette(NPC_REFLECTION_BANK + bank, colours);
+    return NPC_REFLECTION_BANK + bank;
+}
+
+bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out)
+{
+    unsigned gfx = 0, frame = 0, side;
+    const uint16_t *unfaded = NULL;
+    Npc *npc;
+    int shows = CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, attr1 & 511, attr0 & 255, &gfx, &frame, &unfaded);
+
+    if (!shows)
+        return false;
+    npc = NpcLoad(gfx);
+    if (!npc)
+        return false;
+    npc->stamp = ++sNpcTick;
+    if (frame >= npc->entry[4])
+        frame = 0;                  /* a person's tenth image (a bow) is not drawn */
+    (void)width;
+    side = npc->entry[5] / 8u;
+    out->slot = (unsigned)(npc - sNpcs);
+    out->bank = out->slot;
+    if (shows >= 2 && unfaded)      /* a reflection: the object's own palette slot, then the reflection's */
+        out->bank = ReflectionBank(npc, out->slot, unfaded + 256 + (unsigned)(shows - 2) % 16 * 16,
+                                   unfaded + 256 + (attr2 >> 12) * 16);
+    out->tiles = npc->entry + NPC_HEADER + frame * side * side * 32;
+    out->side = side;
+    out->pivotX = (float)side * 4.0f;
+    out->pivotY = (float)side * 8.0f - (float)height / 2.0f;
+    out->scale = 1.0f;
+    out->unfaded = unfaded;
+    return true;
+}
+
+/* The player's whole pictures (CtrPlayer_Swap): FireRed's data for each, as the game gives it (CtrPlayer_Asset), with
+ * the pack's entry that takes its place; read once, the first time the BIOS asks with the pack open. */
+#define SWAPS (CTR_PLAYER_PICTURES * 2 * 2)
+
+static struct {
+    const void *src;
+    uint8_t *data;
+    uint32_t size;
+} sSwaps[SWAPS];
+static unsigned sSwapCount;
+static bool sSwapsRead;
+
+static void SwapsRead(void)
+{
+    static const char *const kNames[CTR_PLAYER_PICTURES] = {"front", "intro", "icon"};
+    static const char *const kGender[2] = {"boy", "girl"};
+    static const char *const kKind[CTR_PLAYER_PICTURES][2] = {{"4bpp", "gbapal"}, {"8bpp", "gbapal"},
+                                                               {"4bpp", "gbapal"}};
+
+    sSwapsRead = true;
+    for (unsigned which = 0; which < CTR_PLAYER_PICTURES; ++which)
+        for (unsigned female = 0; female < 2; ++female)
+            for (unsigned palette = 0; palette < 2; ++palette)
+            {
+                const void *src = CtrPlayer_Asset(which, female, palette);
+                char path[48];
+                uint32_t size = 0;
+                uint8_t *data;
+
+                if (!src)
+                    continue;
+                snprintf(path, sizeof(path), "graphics/gen4/player/%s_%s.%s", kNames[which], kGender[female],
+                         kKind[which][palette]);
+                data = CtrData_Load(path, &size);
+                if (!data)
+                    continue;
+                sSwaps[sSwapCount].src = src;
+                sSwaps[sSwapCount].data = data;
+                sSwaps[sSwapCount].size = size;
+                ++sSwapCount;
+            }
+}
+
+bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size)
+{
+    if (!sSwapsRead)
+    {
+        if (CtrData_GetBackend() == CTR_DATA_NONE)
+            return false;           /* before the pack is open (the BIOS copies from the start) */
+        SwapsRead();
+    }
+    for (unsigned i = 0; i < sSwapCount; ++i)
+        if (sSwaps[i].src == src)
+        {
+            if (sSwaps[i].size != size)
+            {
+                CtrLog_Write(CTR_LOG_GAME, "GEN4 player picture %u: %lu bytes, FireRed's has %lu", i,
+                             (unsigned long)sSwaps[i].size, (unsigned long)size);
+                return false;
+            }
+            memcpy(dest, sSwaps[i].data, size);
+            return true;
+        }
+    return false;
+}

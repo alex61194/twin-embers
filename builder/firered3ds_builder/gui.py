@@ -35,6 +35,9 @@ class BuilderWindow(tk.Tk):
         self.details = tk.StringVar(value="Choose your own supported FireRed ROM to begin.")
         self.phase = tk.StringVar(value="READY")
         self.gen4 = tk.BooleanVar(value=False)
+        self.npcs = tk.BooleanVar(value=False)
+        self.backgrounds = tk.BooleanVar(value=False)
+        self.player = tk.BooleanVar(value=False)
 
         style = ttk.Style(self)
         # Clam honors the palette on Windows instead of reverting to grey
@@ -119,9 +122,23 @@ class BuilderWindow(tk.Tk):
                   style="Step.TLabel").grid(row=0, column=0, sticky="w")
         self.gen4_check = ttk.Checkbutton(
             build_card, variable=self.gen4,
-            text="Also download HeartGold battle sprites and icons (optional, needs internet: "
-                 "about 1,300 small files from GitHub, checked one by one)")
+            text="HeartGold sprites and icons: Pokémon, trainers and your own back "
+                 "(optional, needs internet: about 1,300 small files from GitHub, checked one by one)")
         self.gen4_check.grid(row=6, column=0, sticky="w", pady=(10, 0))
+        self.npcs_check = ttk.Checkbutton(
+            build_card, variable=self.npcs,
+            text="New people on the map: 74 characters redrawn in DS style, by Facets and its artists "
+                 "(optional, needs internet)")
+        self.npcs_check.grid(row=7, column=0, sticky="w", pady=(4, 0))
+        self.backgrounds_check = ttk.Checkbutton(
+            build_card, variable=self.backgrounds,
+            text="New battle backgrounds: 14 scenes by LibertyTwins and others (optional, needs internet)")
+        self.backgrounds_check.grid(row=8, column=0, sticky="w", pady=(4, 0))
+        self.player_check = ttk.Checkbutton(
+            build_card, variable=self.player,
+            text="You as Ash and Green: HGSS-style looks on the map and in battle, from Emerald Lens "
+                 "(optional, needs internet)")
+        self.player_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -166,14 +183,23 @@ class BuilderWindow(tk.Tk):
         """The optional sprites' line in the final report."""
         if not info:
             return ""
-        text = "\n\nHeartGold battle sprites: {0} of 386 species.".format(info["species"])
-        if info["missing"]:
-            text += " The others keep FireRed's pictures (no network, or a file did not match)."
+        lines = []
+        if info.get("species") or info.get("missing"):
+            line = "HeartGold battle sprites: {0} of 386 species.".format(info["species"])
+            if info["missing"]:
+                line += " The others keep FireRed's pictures (no network, or a file did not match)."
+            lines.append(line)
         if info.get("trainers"):
-            text += "\nHeartGold trainer pictures: {0}.".format(info["trainers"])
+            lines.append("HeartGold trainer pictures: {0}.".format(info["trainers"]))
         if info.get("backs"):
-            text += "\nHeartGold-style player backs: {0}.".format(info["backs"])
-        return text
+            lines.append("HeartGold-style player backs: {0}.".format(info["backs"]))
+        if info.get("npcs"):
+            lines.append("New people on the map: {0} of 74.".format(info["npcs"]))
+        if info.get("backgrounds"):
+            lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
+        if info.get("player"):
+            lines.append("You as Ash and Green: {0} pictures.".format(info["player"]))
+        return "\n\n" + "\n".join(lines) if lines else ""
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
         border = tk.Frame(parent, background="#dfc3a4", padx=1, pady=1)
@@ -222,7 +248,8 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button, self.gen4_check):
+                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check,
+                       self.player_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
         if busy:
@@ -245,6 +272,9 @@ class BuilderWindow(tk.Tk):
                     rom, target, overwrite=overwrite,
                     create_directories=self._create_dirs,
                     gen4=self.gen4.get(),
+                    npcs=self.npcs.get(),
+                    backgrounds=self.backgrounds.get(),
+                    player=self.player.get(),
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))

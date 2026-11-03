@@ -14,21 +14,25 @@ from .build import build as build_pack
 from .rom import load_rom
 
 
-def gen4_downloads() -> list[list[str]]:
-    """[URL, file name] of every listed HeartGold sprite file, for the page to fetch into one folder."""
-    return [[gen4_sprites.file_url(row), gen4_sprites.file_name(row)] for row in gen4_sprites.all_files()]
+def gen4_downloads(groups=None) -> list[list[str]]:
+    """[URL, file name] of every listed file of the groups asked (all by default: HeartGold's, the people, the
+    backgrounds), for the page to fetch into one folder."""
+    chosen = tuple(groups) if groups is not None else gen4_sprites.GROUPS
+    return [[gen4_sprites.file_url(row), gen4_sprites.file_name(row)] for row in gen4_sprites.all_files(chosen)]
 
 
-def build(rom_path: str, output_path: str, gen4_folder: str | None = None) -> dict:
+def build(rom_path: str, output_path: str, gen4_folder: str | None = None, groups=None) -> dict:
     """Verify the ROM and write the pack, as `firered3ds-builder build [--gen4-sprites]` does.
 
-    `gen4_folder`: the folder the page fetched the sprite files into, or None to leave them out.
+    `gen4_folder`: the folder the page fetched the sprite files into, or None to leave them out; `groups`: which of
+    them to use (all by default). 
     Files there are used only if their size and SHA-256 match gen4_sources.py."""
     rom = load_rom(Path(rom_path))
     extra, sprites = [], None
     if gen4_folder is not None:
         extra, sprites = gen4_sprites.pack_files(
-            gen4_sprites.Downloader(folder=Path(gen4_folder), get=None, threads=0))
+            gen4_sprites.Downloader(folder=Path(gen4_folder), get=None, threads=0),
+            groups=tuple(groups) if groups is not None else gen4_sprites.GROUPS)
     output = Path(output_path)
     result = build_pack(Path(rom_path), None, output, extra)
     return {

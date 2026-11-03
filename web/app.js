@@ -12,7 +12,8 @@ const UNISTORE_URL = new URL('twinembers.unistore', location.href).href;
 const $ = (id) => document.getElementById(id);
 const ui = {
   romInput: $('rom-input'), romButton: $('rom-button'), romPill: $('rom-pill'),
-  gen4: $('gen4-toggle'), build: $('build-button'),
+  gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'), player: $('player-toggle'),
+  build: $('build-button'),
   progress: $('progress'), fill: $('progress-fill'), status: $('status'),
   result: $('result'), download: $('download'), details: $('result-details'), error: $('error'),
 };
@@ -27,7 +28,7 @@ function setPill(text, kind) {
 function refresh() {
   ui.build.disabled = !(state.ready && state.romOk && !state.busy);
   ui.romInput.disabled = state.busy;
-  ui.gen4.disabled = state.busy;
+  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = state.busy;
   ui.romButton.setAttribute('aria-disabled', state.busy ? 'true' : 'false');
 }
 
@@ -101,8 +102,8 @@ worker.onmessage = (event) => {
     if (message.stage === 'sprites') {
       showProgress(message.total ? message.done / message.total : 0);
       ui.status.textContent = message.total
-        ? `Downloading HeartGold battle sprites… ${message.done}/${message.total}`
-        : 'Downloading HeartGold battle sprites…';
+        ? `Downloading the optional pictures… ${message.done}/${message.total}`
+        : 'Downloading the optional pictures…';
     } else {
       showProgress(null);
       ui.status.textContent = 'Rebuilding the pack from your ROM and checking every record… This can take a minute, more on a phone.';
@@ -129,10 +130,15 @@ function finish(pak, info) {
     `SHA-256 ${info.sha256}`,
   ];
   if (info.gen4) {
-    lines.push(`HeartGold battle sprites: ${info.gen4.species} species` +
-      (info.gen4.missing.length ? `, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)` : ''));
+    if (info.gen4.species || info.gen4.missing.length) {
+      lines.push(`HeartGold battle sprites: ${info.gen4.species} species` +
+        (info.gen4.missing.length ? `, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)` : ''));
+    }
     if (info.gen4.trainers) lines.push(`HeartGold trainer pictures: ${info.gen4.trainers}`);
     if (info.gen4.backs) lines.push(`HeartGold-style player backs: ${info.gen4.backs}`);
+    if (info.gen4.npcs) lines.push(`New people on the map: ${info.gen4.npcs} of 74`);
+    if (info.gen4.backgrounds) lines.push(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`);
+    if (info.gen4.player) lines.push(`You as Ash and Green: ${info.gen4.player} pictures`);
   }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';
@@ -151,7 +157,8 @@ async function startBuild() {
   refresh();
   try {
     const rom = await state.rom.arrayBuffer();
-    worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked }, [rom]);
+    worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked, npcs: ui.npcs.checked,
+      backgrounds: ui.backgrounds.checked, player: ui.player.checked }, [rom]);
   } catch (error) {
     state.busy = false;
     showError(`Could not read the ROM again: ${error.message}`);

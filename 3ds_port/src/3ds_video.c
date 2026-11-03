@@ -266,14 +266,19 @@ static bool sStereo;
 static Tile sTiles[CACHE_COUNT];
 static uint16_t sHash[HASH_COUNT];
 static uint16_t sPalette[512];
-static uint16_t sTexturePalette[512];
+/* A field NPC's picture has a palette of its own: 16 more banks (ids NPC_BANK0 up, colours from 512) beside the
+ * game's 32 and the two 256-colour ids (CtrVideo_SetNpcPalette). */
+#define NPC_BANK0 34u
+#define NPC_BANKS 16u
+#define PAL_IDS (NPC_BANK0 + NPC_BANKS)
+static uint16_t sTexturePalette[512 + NPC_BANKS * 16];
 static uint8_t sMorton[64];
 static C2D_ImageTint sTint;
 /* The pass composing the OBJ window's surface (ObjWindowCompose), if one is: its sprites into the mask, or the layers
  * it adds over them. */
 enum { OBJWIN_NONE, OBJWIN_MASK, OBJWIN_LAYERS };
 static unsigned sObjWinPass;
-static uint32_t sPaletteVersion[34];
+static uint32_t sPaletteVersion[PAL_IDS];
 /*
  * Whole-screen fades (the battle transition's gray flash, fades to black)
  * are BlendPalette steps of one base palette towards one colour. Field
@@ -293,8 +298,33 @@ static unsigned sFadeCoeff;
 static uint16_t sFadeTarget;
 /* Field layers composed from sFadeBase this frame. */
 static bool sLayerFadeTint[4];
-static uint32_t sPaletteChanges[34][8];
+static uint32_t sPaletteChanges[PAL_IDS][8];
 static unsigned sUsed;
+
+__attribute__((weak)) bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height,
+                                        struct CtrGen4Obj *out)
+{
+    (void)attr0; (void)attr1; (void)attr2; (void)width; (void)height; (void)out;
+    return false;
+}
+
+void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
+{
+    unsigned id = NPC_BANK0 + slot, changed = 0;
+
+    if (slot >= NPC_BANKS) return;
+    for (unsigned i = 0; i < 16; ++i)
+    {
+        uint16_t v = i ? CtrVideo_RGBA5551(colours[i]) : 0;
+        if (sTexturePalette[512 + slot * 16 + i] == v) continue;
+        sTexturePalette[512 + slot * 16 + i] = v;
+        changed |= 1u << i;
+    }
+    if (!changed) return;
+    memset(sPaletteChanges[id], 0, sizeof(sPaletteChanges[id]));
+    sPaletteChanges[id][0] = changed;
+    ++sPaletteVersion[id];
+}
 
 /* Forgets which tiles the cache holds (their atlas slots are decoded again on demand). Only the
  * index goes: the atlas, the palettes, VRAM and the serial counter stay. */
@@ -834,7 +864,7 @@ static bool TileVersionChanged(const Tile *tile, uint32_t version, const uint32_
 static bool TilePaletteChanged(const Tile *tile, unsigned paletteId)
 {
     return TileVersionChanged(tile, sPaletteVersion[paletteId], sPaletteChanges[paletteId],
-                              paletteId < 32 ? 1u : 8u);
+                              paletteId < 32 || paletteId >= NPC_BANK0 ? 1u : 8u);
 }
 
 /*
@@ -876,7 +906,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
         source = sMemory.vram + address;
     }
     unsigned paletteId = color256 ? 32 + (bank >= 16) : bank;
-    uint32_t key = ((address / 32) * 34 + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
+    uint32_t key = ((address / 32) * PAL_IDS + paletteId + 1) | (fadeBase ? 0x80000000u : 0);
     unsigned hash = (key * 2654435761u) & (HASH_COUNT - 1);
     while (sHash[hash] && sTiles[sHash[hash] - 1].key != key)
         hash = (hash + 1) & (HASH_COUNT - 1);
@@ -921,7 +951,7 @@ static int GetTileSlotFrom(unsigned address, unsigned bank, bool color256, bool 
             CTR_PERF_COUNT(PERF_VRAM_READ_BYTES,bytes);
             if (perfDecode) CTR_PERF_COUNT(PERF_DECODE_SAMPLE_COUNT,1);
             memcpy(tile->bytes, source, bytes);
-            unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank * 16;
+            unsigned paletteBase = color256 ? (bank >= 16 ? 256 : 0) : bank >= NPC_BANK0 ? 512 + (bank - NPC_BANK0) * 16 : bank * 16;
             uint16_t *dest = (uint16_t *)sAtlas.data + slot * 64;
             const uint16_t *palette = fadeBase && paletteBase < 256 ? sFadeBaseTexture : sTexturePalette;
             /* Decoded aside first: a tile that comes out texel for texel as the slot already holds keeps its
@@ -1624,6 +1654,8 @@ static unsigned BattleBoxMiddle(unsigned cap)
     return step ? (cap & ~1023u) | (tile + step) : 0;
 }
 
+#include "3ds_battle_textbox_impl.h"
+
 static void DrawBattleText(unsigned bg)
 {
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
@@ -1640,6 +1672,8 @@ static void DrawBattleText(unsigned bg)
 
     /* Above the text box: windows, where the game put them. */
     DrawBattleCut(bg, 0, 240, 0, BATTLE_BAND_TOP, 0);
+    /* The port's message box in place of FireRed's frame (3ds_battle_textbox_impl.h). */
+    if (DrawBattleBox(map, size, chars, first, scrollY, rows)) return;
     /* The box from its left cap, on the left edge of the screen... */
     DrawBattleCut(bg, VIEW_LEFT, fill0, BATTLE_BAND_TOP, 160, VIEW_LEFT);
     /* ...its right cap on the right edge... */
@@ -3314,6 +3348,11 @@ static void DrawObjects(unsigned priority, bool effects)
         struct CtrGen4Obj gen4;
         bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
                && gen4.slot < GEN4_SLOTS && gen4.side * gen4.side * 32 <= GEN4_SLOT;
+        /* A person of the field with a picture in the pack (3ds_battle_gen4.h): drawn the same way, on a palette of its own. */
+        bool npc = !hg && !sBattle && sFieldLayers && !color256 && width <= 64 && height <= 64
+                && CtrNpc_Match(attr0, attr1, attr2, width, height, &gen4) && gen4.slot < GEN4_SLOTS && gen4.bank < NPC_BANKS;
+        C2D_ImageTint npcTint, savedTint = sTint;
+        hg = hg || npc;
         float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
         if (hg)
             sGen4Tiles[gen4.slot] = gen4.tiles;
@@ -3350,14 +3389,22 @@ static void DrawObjects(unsigned priority, bool effects)
         bool flipX = !affine && (attr1 & 0x1000), flipY = !affine && (attr1 & 0x2000);
         if (hg)
         {
+            if (npc)
+            {
+                CtrHudImage fade = {.unfaded = gen4.unfaded};
+                HudTint(&fade, attr2 >> 12, &npcTint);
+                sTint = npcTint;
+            }
             for (unsigned ty = 0; ty < gen4.side; ++ty)
                 for (unsigned tx = 0; tx < gen4.side; ++tx)
                 {
                     unsigned sx = flipX ? gen4.side - 1 - tx : tx;
                     unsigned sy = flipY ? gen4.side - 1 - ty : ty;
-                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * gen4.side + sx) * 32, 16 + (attr2 >> 12), false,
+                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * gen4.side + sx) * 32,
+                             npc ? NPC_BANK0 + gen4.bank : 16 + (attr2 >> 12), false,
                              (int)tx * 8, (int)ty * 8, flipX, flipY);
                 }
+            sTint = savedTint;
             CtrPerf_End(PERF_OBJ_AFFINE,perfAffine);
             continue;
         }
