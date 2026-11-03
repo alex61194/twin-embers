@@ -379,19 +379,37 @@ class BackTest(unittest.TestCase):
         self.assertEqual(got, rows)
 
     def test_entry_layout_transparency_and_frames(self):
-        entry = gen4_sprites.convert_back(rgba_png(self.strip(6)))
-        self.assertEqual(entry[:8], b"G4K1" + bytes([5, 0, 0, 0]))
-        self.assertEqual(len(entry), 40 + 5 * gen4_sprites.PICTURE)
+        # Each frame its own colour, with a transparent corner and a half-transparent pixel.
+        rows = [[(0, 0, 0, 0) if fx < 4 and y < 4 else (255, 255, 255, 60) if (fx, y) == (10, 10)
+                 else (f * 40, 8, 8, 255) for f in range(5) for fx in range(80)] for y in range(80)]
+        entry = gen4_sprites.convert_back(rgba_png(rows))
+        self.assertEqual(entry[:8], b"G4K2" + bytes([5, 104, 0, 0]))
+        self.assertEqual(len(entry), 40 + 5 * gen4_sprites.BACK_PICTURE)
         palette = struct.unpack_from("<16H", entry, 8)
 
         def pixel(frame, x, y):
-            return (entry[40 + frame * gen4_sprites.PICTURE + y * 40 + x // 2] >> (4 * (x & 1))) & 15
+            return (entry[40 + frame * gen4_sprites.BACK_PICTURE + y * 52 + x // 2] >> (4 * (x & 1))) & 15
 
-        self.assertEqual(pixel(0, 0, 0), 0)            # transparent
-        self.assertEqual(pixel(2, 10, 10), 0)          # alpha under 128
         for frame in range(5):
+            self.assertEqual(pixel(frame, 0, 0), 0)        # the picture's edge
+            self.assertEqual(pixel(frame, 103, 103), 0)
+            self.assertEqual(pixel(frame, 3, 3), 0)        # transparent, enlarged
+            self.assertEqual(pixel(frame, 14, 14), 0)      # alpha under 128, enlarged
             r = frame * 40
-            self.assertEqual(palette[pixel(frame, 5, 5)], (r >> 3) | (8 >> 3) << 5 | (8 >> 3) << 10)
+            self.assertEqual(palette[pixel(frame, 52, 52)], (r >> 3) | (8 >> 3) << 5 | (8 >> 3) << 10)
+            self.assertEqual(pixel(frame, 101, 101), pixel(frame, 52, 52))
+
+    def test_scale3x_rounds_a_corner_and_keeps_its_colours(self):
+        self.assertEqual(gen4_sprites.scale3x([[1, 1], [1, 0]])[3:6], [[1, 1, 1, 1, 1, 0],
+                                                                     [1, 1, 1, 1, 0, 0],
+                                                                     [1, 1, 1, 0, 0, 0]])
+        self.assertEqual(gen4_sprites.scale3x([[2] * 3] * 3), [[2] * 9] * 9)
+
+    def test_enlarged_back_is_centred_on_its_picture(self):
+        picture = gen4_sprites.enlarge_back([[5] * 80 for _ in range(80)])
+        self.assertEqual((len(picture), len(picture[0])), (104, 104))
+        self.assertEqual(sum(v == 5 for row in picture for v in row), 100 * 100)
+        self.assertEqual((picture[1][1], picture[2][2], picture[101][101], picture[102][102]), (0, 5, 5, 0))
 
     def test_too_many_colours_fold_into_fifteen(self):
         palette, indices = gen4_sprites.quantize([(c * 8, 0, 0, 255) for c in range(20) for _ in range(c + 1)]

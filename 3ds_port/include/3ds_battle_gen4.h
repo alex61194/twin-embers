@@ -22,8 +22,11 @@
 /* The pictures are shown 1:1 on the screen: the battle scene is zoomed 1.4 (CTR_BATTLE_ZOOM), so a picture pixel is
  * 1/1.4 of a GBA pixel and an 80x80 picture takes 80x80 screen pixels. */
 #define CTR_GEN4_SCALE (1.0f / 1.4f)
-/* The player's back is drawn as large as FireRed's: one picture pixel to a GBA pixel, the scene's zoom on the screen. */
-#define CTR_GEN4_BACK_SCALE 1.0f
+/* The player's back comes 1.25 times as large as its 80x80 art, enlarged by the Builder as pixel art (100x100 on a
+ * 104x104 picture, 13x13 tiles), and is shown 1:1 like the rest. */
+#define CTR_GEN4_BACK_SIZE 104
+#define CTR_GEN4_BACK_TILES (CTR_GEN4_BACK_SIZE / 8)
+#define CTR_GEN4_BACK_PICTURE (CTR_GEN4_BACK_SIZE * CTR_GEN4_BACK_SIZE / 2)
 /* Which pictures: a species' national dex (1-386) and its form: Unown's letter 0-27 as FireRed numbers them (A to Z,
  * !, ?), Castform's weather 0-3 (normal, sun, rain, ice). The functions below that take a "nationalDex" take this
  * key. */
@@ -76,7 +79,7 @@ bool CtrGen4_LoadTrainer(unsigned battler, unsigned trainerPic, const void *fire
 void CtrGen4_DropTrainer(unsigned trainerPic);
 
 /* The player's back (Red's or Leaf's, TRAINER_BACK_PIC_*): graphics/gen4/back/NNN.bin, fan art in HeartGold's
- * style with FireRed's five frames, read once and kept. `palette` gets its 16 colours for the game to load where
+ * style with FireRed's five frames, 104x104 pictures (CTR_GEN4_BACK_SIZE), read once and kept. `palette` gets its 16 colours for the game to load where
  * it loads FireRed's back palette. False without the entry. */
 bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16]);
 /* Implemented by the game's battle code: whether `battler`'s sprite is a trainer back the pack may replace, and
@@ -93,7 +96,8 @@ int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, con
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
     unsigned slot;                  /* 0-11: which picture (CTR_GEN4_SLOTS) */
-    const uint8_t *tiles;           /* 10x10 4bpp tiles, row by row */
+    const uint8_t *tiles;           /* side x side 4bpp tiles, row by row */
+    unsigned side;                  /* tiles to a row and a column: 10 (CTR_GEN4_TILES), 13 for a back */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
 } CtrGen4Obj;

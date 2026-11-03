@@ -29,7 +29,10 @@ fan-made HeartGold-style strips: two PNGs (80x80, five frames, FireRed's
 throwing animation) from
 [LucianoNeo/gen1recomp-mods](https://github.com/LucianoNeo/gen1recomp-mods) at
 a pinned commit, checked by size and SHA-256 like the rest (`BACK_FILES` in
-`gen4_sprites.py`). Without them you keep FireRed's back.
+`gen4_sprites.py`). The Builder enlarges each frame 1.25 times as pixel art
+(Scale3x, then every 2.4th pixel: 100x100, no new colour), so your back stands
+a little larger than the Pokémon while every pixel stays one screen pixel.
+Without them you keep FireRed's back.
 
 The entries are optional: the engine ABI does not cover them, and a species
 whose files could not be had (no network, a file that did not match) keeps

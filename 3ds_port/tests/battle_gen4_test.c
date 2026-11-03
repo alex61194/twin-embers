@@ -11,7 +11,7 @@
 #include "3ds_video.h"
 
 /* The pack: one entry, built by each test. */
-static uint8_t sEntry[40 + 5 * CTR_GEN4_PICTURE];
+static uint8_t sEntry[40 + 5 * CTR_GEN4_BACK_PICTURE];
 static uint32_t sEntrySize;
 static char sAsked[64];
 
@@ -117,7 +117,7 @@ static unsigned FireNibble(const uint8_t *pic, unsigned x, unsigned y)
 
 static uint8_t PixelByte(const CtrGen4Obj *obj, unsigned x, unsigned y)
 {
-    return obj->tiles[((y / 8) * CTR_GEN4_TILES + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
+    return obj->tiles[((y / 8) * obj->side + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2];
 }
 
 int main(void)
@@ -284,7 +284,7 @@ int main(void)
     assert(palette[0] == 0x20 && palette[15] == 0x2f);
     sOam[1] = -1;                                   /* the trainer's sprite is no Pokemon's */
     assert(sMatch(0x300 | (5 << 12), &obj));
-    assert(obj.slot == CTR_GEN4_TRAINER_SLOT(1) && obj.slot < CTR_GEN4_SLOTS);
+    assert(obj.slot == CTR_GEN4_TRAINER_SLOT(1) && obj.slot < CTR_GEN4_SLOTS && obj.side == CTR_GEN4_TILES);
     assert(Near(obj.pivotY, 71 - 29 / CTR_GEN4_SCALE) && Near(obj.pivotX, 40));
     assert(PixelByte(&obj, 0, 0) == 0x33 && PixelByte(&obj, 0, 71) == 0);
     assert(!sMatch(0x300 | (4 << 12), &obj) && !sMatch(0x301 | (5 << 12), &obj));
@@ -308,14 +308,16 @@ int main(void)
     assert(strcmp(sAsked, "graphics/gen4/back/001.bin") == 0);
     assert(!CtrGen4_BackPalette(2, palette));
     memset(sEntry, 0, sizeof(sEntry));
-    memcpy(sEntry, "G4K1", 4);
+    memcpy(sEntry, "G4K2", 4);
     sEntry[4] = 5;
+    sEntry[5] = CTR_GEN4_BACK_SIZE;
     for (unsigned i = 0; i < 16; ++i)
         sEntry[8 + i * 2] = (uint8_t)(0x40 + i);
     for (unsigned f = 0; f < 5; ++f)
-        for (unsigned y = 0; y <= 75; ++y)
-            memset(sEntry + 40 + f * CTR_GEN4_PICTURE + y * 40, 0x11 * (f + 1), 40);
-    sEntrySize = 40 + 5 * CTR_GEN4_PICTURE;
+        for (unsigned y = 0; y <= 95; ++y)
+            memset(sEntry + 40 + f * CTR_GEN4_BACK_PICTURE + y * (CTR_GEN4_BACK_SIZE / 2), 0x11 * (f + 1),
+                   CTR_GEN4_BACK_SIZE / 2);
+    sEntrySize = 40 + 5 * CTR_GEN4_BACK_PICTURE;
     assert(!CtrGen4_BackPalette(1, palette));
     assert(CtrGen4_BackPalette(0, palette) && palette[0] == 0x40 && palette[15] == 0x4f);
     sEntry[0] = 'X';                                /* already read */
@@ -328,11 +330,11 @@ int main(void)
     sBackOam[0] = 0x100 | (8 << 12);
     assert(sMatch(0x100 | (8 << 12), &obj));
     assert(obj.slot == CTR_GEN4_BACK_SLOT(0) && obj.slot < CTR_GEN4_SLOTS);
-    assert(Near(obj.pivotX, 40) && Near(obj.pivotY, 76 - 32 / CTR_GEN4_BACK_SCALE));
-    assert(Near(obj.scale, CTR_GEN4_BACK_SCALE));
-    assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 0, 76) == 0);
+    assert(obj.side == CTR_GEN4_BACK_TILES && Near(obj.scale, CTR_GEN4_SCALE));
+    assert(Near(obj.pivotX, 52) && Near(obj.pivotY, 96 - 32 / CTR_GEN4_SCALE));
+    assert(PixelByte(&obj, 0, 0) == 0x11 && PixelByte(&obj, 0, 96) == 0);
     sBackFrame = 3;
-    assert(sMatch(0x100 | (8 << 12), &obj) && PixelByte(&obj, 79, 75) == 0x44);
+    assert(sMatch(0x100 | (8 << 12), &obj) && PixelByte(&obj, 103, 95) == 0x44);
     sBackFrame = 5;                                 /* no such frame: FireRed's */
     assert(!sMatch(0x100 | (8 << 12), &obj));
     sBackFrame = 0;

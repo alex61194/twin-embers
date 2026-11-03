@@ -37,13 +37,12 @@ typedef struct {
     unsigned frames;
     uint16_t palette[16];
     float pivotY;
-    uint8_t (*tiles)[CTR_GEN4_PICTURE];
+    int bottom;                     /* the first frame's lowest row, -1 if empty */
+    uint8_t (*tiles)[CTR_GEN4_BACK_PICTURE];
 } Back;
 
 static Back sBacks[BACKS];
-static void Tiles(uint8_t *tiles, const uint8_t *linear);
 static int FireBottom(const uint8_t *pic);
-static int Gen4Bottom(const uint8_t *linear);
 
 /* A key's pack entry: graphics/gen4/battle/NNN.bin, or NNN_FF.bin for Unown's letters B to ? (form 1-27). */
 static bool KeyPath(unsigned key, char *path, size_t size)
@@ -147,6 +146,7 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
             continue;
         out->slot = b;
         out->tiles = sBattlers[b].tiles;
+        out->side = CTR_GEN4_TILES;
         out->pivotX = CTR_GEN4_SIZE / 2.0f;
         out->pivotY = sBattlers[b].pivotY;
         out->scale = CTR_GEN4_SCALE;
@@ -164,23 +164,18 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
             continue;
         if (!back->placed && fire)
         {
-            /* Where the first frame stands: its lowest row on FireRed's, as for the Pokemon. The tiles keep the
-             * rows, so the first frame's lowest row is found in them. */
-            static uint8_t linear[CTR_GEN4_PICTURE];
-            for (unsigned y = 0; y < CTR_GEN4_SIZE; ++y)
-                for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
-                    memcpy(linear + y * (CTR_GEN4_SIZE / 2) + tx * 4,
-                           back->tiles[0] + (((y / 8) * CTR_GEN4_TILES + tx) * 8 + y % 8) * 4, 4);
-            int bottom = FireBottom(fire), gen4 = Gen4Bottom(linear);
-            back->pivotY = bottom >= 0 && gen4 >= 0 ? (gen4 + 1) - (bottom + 1 - 32) / CTR_GEN4_BACK_SCALE
-                                                    : CTR_GEN4_SIZE / 2.0f;
+            /* Where the first frame stands: its lowest row on FireRed's, as for the Pokemon. */
+            int bottom = FireBottom(fire);
+            back->pivotY = bottom >= 0 && back->bottom >= 0 ? (back->bottom + 1) - (bottom + 1 - 32) / CTR_GEN4_SCALE
+                                                           : CTR_GEN4_BACK_SIZE / 2.0f;
             back->placed = true;
         }
         out->slot = CTR_GEN4_BACK_SLOT(b);
         out->tiles = back->tiles[frame];
-        out->pivotX = CTR_GEN4_SIZE / 2.0f;
-        out->pivotY = back->placed ? back->pivotY : CTR_GEN4_SIZE / 2.0f;
-        out->scale = CTR_GEN4_BACK_SCALE;
+        out->side = CTR_GEN4_BACK_TILES;
+        out->pivotX = CTR_GEN4_BACK_SIZE / 2.0f;
+        out->pivotY = back->placed ? back->pivotY : CTR_GEN4_BACK_SIZE / 2.0f;
+        out->scale = CTR_GEN4_SCALE;
         return true;
     }
     for (unsigned b = 0; b < BATTLERS; ++b)
@@ -190,6 +185,7 @@ static bool Match(unsigned attr2, CtrGen4Obj *out)
             continue;
         out->slot = CTR_GEN4_TRAINER_SLOT(b);
         out->tiles = trainer->shown.tiles;
+        out->side = CTR_GEN4_TILES;
         out->pivotX = CTR_GEN4_SIZE / 2.0f;
         out->pivotY = trainer->shown.pivotY;
         out->scale = CTR_GEN4_SCALE;
@@ -274,19 +270,18 @@ bool CtrGen4_Palette(unsigned nationalDex, bool shiny, uint16_t palette[16])
 
 /* An 80x80 picture in rows of 40 bytes into `shown`: the GBA's 8x8 tiles, ten to a row, and the picture row on the
  * 64x64 box's centre so that it stands where FireRed's picture `firePic` stood. */
-/* Rows of 40 bytes to the GBA's 8x8 tiles, ten to a row. */
-static void Tiles(uint8_t *tiles, const uint8_t *linear)
+/* Rows of side * 4 bytes to the GBA's 8x8 tiles, `side` to a row. */
+static void Tiles(uint8_t *tiles, const uint8_t *linear, unsigned side)
 {
-    for (unsigned ty = 0; ty < CTR_GEN4_TILES; ++ty)
-        for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
+    for (unsigned ty = 0; ty < side; ++ty)
+        for (unsigned tx = 0; tx < side; ++tx)
             for (unsigned r = 0; r < 8; ++r)
-                memcpy(tiles + ((ty * CTR_GEN4_TILES + tx) * 8 + r) * 4,
-                       linear + (ty * 8 + r) * (CTR_GEN4_SIZE / 2) + tx * 4, 4);
+                memcpy(tiles + ((ty * side + tx) * 8 + r) * 4, linear + (ty * 8 + r) * side * 4 + tx * 4, 4);
 }
 
 static void Place(Battler *shown, const uint8_t *linear, const void *firePic)
 {
-    Tiles(shown->tiles, linear);
+    Tiles(shown->tiles, linear, CTR_GEN4_TILES);
     /* Standing where FireRed's picture stood, centred across: the picture's lowest row ends on the box row where
      * FireRed's ends. The box's centre (row 32) shows picture row pivotY; a picture row is SCALE box rows. */
     int fire = FireBottom(firePic), gen4 = Gen4Bottom(linear);
@@ -370,8 +365,8 @@ bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16])
         if (!entry)
             return false;
         unsigned frames = size >= 8 ? entry[4] : 0;
-        if (memcmp(entry, "G4K1", 4) || !frames || frames > BACK_FRAMES_MAX
-            || size != TRAINER_HEADER + frames * CTR_GEN4_PICTURE)
+        if (memcmp(entry, "G4K2", 4) || !frames || frames > BACK_FRAMES_MAX || entry[5] != CTR_GEN4_BACK_SIZE
+            || size != TRAINER_HEADER + frames * CTR_GEN4_BACK_PICTURE)
         {
             CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
             free(entry);
@@ -385,7 +380,11 @@ bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16])
         }
         memcpy(back->palette, entry + 8, 32);
         for (unsigned f = 0; f < frames; ++f)
-            Tiles(back->tiles[f], entry + TRAINER_HEADER + f * CTR_GEN4_PICTURE);
+            Tiles(back->tiles[f], entry + TRAINER_HEADER + f * CTR_GEN4_BACK_PICTURE, CTR_GEN4_BACK_TILES);
+        back->bottom = -1;
+        for (unsigned i = 0; i < CTR_GEN4_BACK_PICTURE; ++i)
+            if (entry[TRAINER_HEADER + i])
+                back->bottom = (int)(i / (CTR_GEN4_BACK_SIZE / 2));
         back->frames = frames;
         back->ok = true;
         free(entry);

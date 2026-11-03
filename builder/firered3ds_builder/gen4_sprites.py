@@ -85,8 +85,12 @@ SPINDA = "graphics/gen4/spinda.bin"
 TRAINER_PREFIX = "graphics/gen4/trainer/"
 TRAINER_MAGIC = b"G4T1"
 BACK_PREFIX = "graphics/gen4/back/"
-BACK_MAGIC = b"G4K1"
+BACK_MAGIC = b"G4K2"
 BACK_FRAMES = 5
+# The back is enlarged 1.25 as pixel art (Scale3x, then every 2.4th pixel) to 100x100, on a 104x104 picture of
+# 13x13 tiles (CTR_GEN4_BACK_SIZE): shown 1:1, it stands 1.25 times as large as the 80x80 art.
+BACK_SHOWN, BACK_SIZE = 100, 104
+BACK_PICTURE = BACK_SIZE * BACK_SIZE // 2
 # The fan-made backs, pinned like pret's files: (FireRed's TRAINER_BACK_PIC_*, "back", path, size, SHA-256).
 BACK_REPO = "LucianoNeo/gen1recomp-mods"
 BACK_COMMIT = "768f60d9d0f097b9cc65e78099574c296a3f63d2"
@@ -414,19 +418,61 @@ def quantize(pixels: list[tuple[int, int, int, int]], colours: int = 15) -> tupl
     return [0] + order, [index[key(pixel)] if pixel[3] >= 128 else 0 for pixel in pixels]
 
 
+def scale3x(rows: list[list[int]]) -> list[list[int]]:
+    """Scale3x (AdvMAME3x) on a grid of palette indices: three times as large, its stairs rounded off, no colour
+    it did not have."""
+    h, w = len(rows), len(rows[0])
+
+    def at(x, y):
+        return rows[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
+    out = [[0] * (w * 3) for _ in range(h * 3)]
+    for y in range(h):
+        for x in range(w):
+            a, b, c = at(x - 1, y - 1), at(x, y - 1), at(x + 1, y - 1)
+            d, e, f = at(x - 1, y), at(x, y), at(x + 1, y)
+            g, hh, i = at(x - 1, y + 1), at(x, y + 1), at(x + 1, y + 1)
+            cells = [e] * 9
+            if b != hh and d != f:
+                cells = [d if d == b else e,
+                         b if (d == b and e != c) or (b == f and e != a) else e,
+                         f if b == f else e,
+                         d if (d == b and e != g) or (d == hh and e != a) else e,
+                         e,
+                         f if (b == f and e != i) or (hh == f and e != c) else e,
+                         d if d == hh else e,
+                         hh if (d == hh and e != i) or (hh == f and e != g) else e,
+                         f if hh == f else e]
+            for k, v in enumerate(cells):
+                out[y * 3 + k // 3][x * 3 + k % 3] = v
+    return out
+
+
+def enlarge_back(frame: list[list[int]]) -> list[list[int]]:
+    """An 80x80 frame of indices as the 104x104 picture the port shows (BACK_SHOWN pixels, centred)."""
+    big = scale3x(frame)
+    step = len(big) / BACK_SHOWN
+    picture = [[0] * BACK_SIZE for _ in range(BACK_SIZE)]
+    edge = (BACK_SIZE - BACK_SHOWN) // 2
+    for y in range(BACK_SHOWN):
+        source = big[int((y + 0.5) * step)]
+        for x in range(BACK_SHOWN):
+            picture[edge + y][edge + x] = source[int((x + 0.5) * step)]
+    return picture
+
+
 def convert_back(strip: bytes) -> bytes:
-    """A fan-made back's pack entry from its 400x80 RGBA strip of five 80x80 frames."""
+    """A fan-made back's pack entry from its 400x80 RGBA strip of five 80x80 frames, each enlarged to 104x104."""
     width, height, _, rows = read_png(strip)
     if (width, height) != (BACK_FRAMES * SIZE, SIZE) or not isinstance(rows[0][0], tuple):
         raise Gen4Error("a back is an RGBA strip of five 80x80 frames")
     palette, indices = quantize([pixel for row in rows for pixel in row])
     frames = b""
     for frame in range(BACK_FRAMES):
-        for y in range(SIZE):
-            line = indices[y * width + frame * SIZE:y * width + frame * SIZE + SIZE]
-            frames += bytes(line[x] | line[x + 1] << 4 for x in range(0, SIZE, 2))
+        grid = [indices[y * width + frame * SIZE:y * width + frame * SIZE + SIZE] for y in range(SIZE)]
+        for line in enlarge_back(grid):
+            frames += bytes(line[x] | line[x + 1] << 4 for x in range(0, BACK_SIZE, 2))
     colours = (palette + [0] * 16)[:16]
-    return BACK_MAGIC + bytes([BACK_FRAMES, 0, 0, 0]) + struct.pack("<16H", *colours) + frames
+    return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
