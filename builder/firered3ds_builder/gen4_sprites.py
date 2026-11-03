@@ -68,6 +68,9 @@ u16 x 16 the palette (BGR555, colour 0 unused), then the 32x32 frames in FireRed
 walking ones), each as 16 tiles of 4 bits a pixel, row by row of tiles: what the field draws a person from.
 The player's back and front picture (Ash's and Green's, from Emerald Lens) are back/000-001.bin and
 trainer/135-136.bin: their 64x64 frames enlarged as pixel art, 1.5 times for the back and 1.25 for the front.
+player/front_boy.4bpp and .gbapal, intro_boy.8bpp and .gbapal, icon_boy.4bpp and .gbapal (and _girl): the front
+picture, the Oak intro's picture and the Region Map icon in FireRed's own format and size (4bpp tiles and 16 colours;
+96 8bpp tiles on BG colours 64-95 and those 32 colours), which the port puts in the place of Red's and Leaf's.
 
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
@@ -310,8 +313,8 @@ NPC_FILES = (
      "be50e7bb159d3b15975de2fc5885bb93e2847fbf1587aaf1c949e000c7651a92"),
 )
 # The player, as Ash (for Red) and Green (for Leaf): Emerald Lens' HGSS-style looks, by PKMNTrainerRick (Ash) and
-# compiled by ChromeValiant (Green), with Green's Gen 3 look ("Big Puff") for her back and front, which her HGSS look
-# does not draw. Pinned like the rest: ("boy" or "girl", "player", path, size, SHA-256). Each sheet's frames are in
+# compiled by ChromeValiant (Green), with Green's Gen 3 look ("Big Puff") for her back, front, intro picture and map
+# icon and Ash's Gen 3 one (kalarie's) for his map icon, which their HGSS looks do not draw. Pinned like the rest: ("boy" or "girl", "player", path, size, SHA-256). Each sheet's frames are in
 # FireRed's pic table order; PLAYER_SHEETS gives each the OBJ_EVENT_GFX_* it draws (Leaf's are Red's plus 7).
 PLAYER_REPO = "ElvieBlooms/emerald_lens"
 PLAYER_COMMIT = "36a945a5ed4d1efef24449aab71cc04f067ba4fe"
@@ -332,6 +335,10 @@ PLAYER_FILES = (
      "1ce1e780a245fd9aa3cb3d6a797890a2143bab5d781ad3046c952cff7874a7d8"),
     ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/front.png", 1975,
      "975beeb274d2d07df74af63fc6b6348909d6c5d4a4ef18fbfa65309b9a9086dc"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/intro.png", 2159,
+     "b7684428b5ca5abcfee0edb3d515356ba33b1088e1b1cc15df3da92df6c3c208"),
+    ("boy", "player", "assets/sprites/ash/gen3/frlg/mapIcon.png", 343,
+     "e4d9d24bff2f9b0ad9ede0ef5e013fbfeb6dc0500fb76c60ca77c8ef2e0cdf87"),
     ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/walk.png", 3784,
      "5151530a52e432d7d465671272d1a3ff3468ebf615b4f437cf2a566da7f49a20"),
     ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/bike.png", 1986,
@@ -348,6 +355,10 @@ PLAYER_FILES = (
      "7515b4f3ba55b979f21fa80c638490c38dd72b92b7921317cadbaa2e956a6f37"),
     ("girl", "player", "assets/sprites/green/gen3/frlg/front.png", 1840,
      "07e5418d6212cc10d4442c7baaa540ef065c208c2431c25d600c64508661b803"),
+    ("girl", "player", "assets/sprites/green/gen3/frlg/intro.png", 2583,
+     "b75d8666d96bcf121943c9342a9a336e83b287351cc465a1d710e29503de7e5e"),
+    ("girl", "player", "assets/sprites/green/gen3/frlg/mapIcon.png", 293,
+     "0ee911c1b14ef22b14f656645253b69da8e65338747de577079471c0f8f2b02a"),
 )
 # Sheet name: (the OBJ_EVENT_GFX_* of Red it draws, its frames). The field move sheet is also the VS Seeker's (both
 # take FireRed's "item" pictures).
@@ -356,6 +367,9 @@ PLAYER_SHEETS = {"walk": ((0,), 20), "bike": ((1,), 9), "surf": ((2,), 12), "fie
 PLAYER_GFX = {"boy": 0, "girl": 7}
 PLAYER_BACK = {"boy": 0, "girl": 1}           # TRAINER_BACK_PIC_RED, _LEAF
 PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
+# The pictures FireRed copies out whole, in its own format, for the port to put in place of Red's and Leaf's
+# (CtrPlayer_Swap): the front picture (trainer card, Hall of Fame), the Oak intro's and the Region Map icon.
+PLAYER_PREFIX = "graphics/gen4/player/"
 GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER = "pokemon", "npc", "bg", "player"
 GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER)
 BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
@@ -752,6 +766,44 @@ def convert_back(strip: bytes) -> bytes:
     return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
+def gba_tiles(indices: list[list[int]]) -> bytes:
+    """Rows of 4-bit indices as GBA tiles: 8x8, row by row of tiles, the left pixel in the low nibble."""
+    out = bytearray()
+    for ty in range(0, len(indices), 8):
+        for tx in range(0, len(indices[0]), 8):
+            for y in range(8):
+                row = indices[ty + y]
+                out += bytes(row[tx + x] | row[tx + x + 1] << 4 for x in range(0, 8, 2))
+    return bytes(out)
+
+
+def convert_gba_sprite(picture: bytes, side: int) -> tuple[bytes, bytes]:
+    """A square RGBA picture drawn for the GBA (the 64x64 front, the 16x16 map icon) as FireRed keeps its own:
+    (4bpp tiles, 16 colours)."""
+    width, height, _, rows = read_png(picture)
+    if (width, height) != (side, side) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a %dx%d RGBA picture was expected" % (side, side))
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    grid = [indices[y * side:(y + 1) * side] for y in range(side)]
+    return gba_tiles(grid), struct.pack("<16H", *(palette + [0] * 16)[:16])
+
+
+def convert_intro(picture: bytes) -> tuple[bytes, bytes]:
+    """The Oak intro's 64x96 picture as FireRed keeps the player's: 96 8bpp tiles, eight to a row, whose pixels take
+    BG colours 64 to 95 (the 32 it loads from BG palette 4), 0 transparent; and those 32 colours."""
+    width, height, _, rows = read_png(picture)
+    if (width, height) != (64, 96) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("an intro picture is a 64x96 RGBA PNG")
+    palette, indices = quantize([pixel for row in rows for pixel in row], 31)
+    tiles = bytearray()
+    for ty in range(12):
+        for tx in range(8):
+            for y in range(8):
+                base = (ty * 8 + y) * 64 + tx * 8
+                tiles += bytes(63 + indices[base + x] if indices[base + x] else 0 for x in range(8))
+    return bytes(tiles), struct.pack("<32H", *(palette[1:] + [0] * 32)[:32])
+
+
 def convert_front(picture: bytes) -> bytes:
     """A trainer picture's pack entry (as HeartGold's, 80x80) from a 64x64 RGBA one drawn for the GBA, enlarged 1.25
     as pixel art to fill it."""
@@ -1049,6 +1101,17 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             player_files.append(("%s%03d.bin" % (BACK_PREFIX, PLAYER_BACK[row[0]]), convert_back(data)))
         elif sheet == "front":
             player_files.append(("%s%03d.bin" % (TRAINER_PREFIX, PLAYER_FRONT[row[0]]), convert_front(data)))
+            tiles, colours = convert_gba_sprite(data, 64)
+            player_files += [("%sfront_%s.4bpp" % (PLAYER_PREFIX, row[0]), tiles),
+                             ("%sfront_%s.gbapal" % (PLAYER_PREFIX, row[0]), colours)]
+        elif sheet == "intro":
+            tiles, colours = convert_intro(data)
+            player_files += [("%sintro_%s.8bpp" % (PLAYER_PREFIX, row[0]), tiles),
+                             ("%sintro_%s.gbapal" % (PLAYER_PREFIX, row[0]), colours)]
+        elif sheet == "mapIcon":
+            tiles, colours = convert_gba_sprite(data, 16)
+            player_files += [("%sicon_%s.4bpp" % (PLAYER_PREFIX, row[0]), tiles),
+                             ("%sicon_%s.gbapal" % (PLAYER_PREFIX, row[0]), colours)]
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),

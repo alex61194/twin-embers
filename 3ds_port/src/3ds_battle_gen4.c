@@ -673,3 +673,69 @@ bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *o
     out->unfaded = unfaded;
     return true;
 }
+
+/* The player's whole pictures (CtrPlayer_Swap): FireRed's data for each, as the game gives it (CtrPlayer_Asset), with
+ * the pack's entry that takes its place; read once, the first time the BIOS asks with the pack open. */
+#define SWAPS (CTR_PLAYER_PICTURES * 2 * 2)
+
+static struct {
+    const void *src;
+    uint8_t *data;
+    uint32_t size;
+} sSwaps[SWAPS];
+static unsigned sSwapCount;
+static bool sSwapsRead;
+
+static void SwapsRead(void)
+{
+    static const char *const kNames[CTR_PLAYER_PICTURES] = {"front", "intro", "icon"};
+    static const char *const kGender[2] = {"boy", "girl"};
+    static const char *const kKind[CTR_PLAYER_PICTURES][2] = {{"4bpp", "gbapal"}, {"8bpp", "gbapal"},
+                                                               {"4bpp", "gbapal"}};
+
+    sSwapsRead = true;
+    for (unsigned which = 0; which < CTR_PLAYER_PICTURES; ++which)
+        for (unsigned female = 0; female < 2; ++female)
+            for (unsigned palette = 0; palette < 2; ++palette)
+            {
+                const void *src = CtrPlayer_Asset(which, female, palette);
+                char path[48];
+                uint32_t size = 0;
+                uint8_t *data;
+
+                if (!src)
+                    continue;
+                snprintf(path, sizeof(path), "graphics/gen4/player/%s_%s.%s", kNames[which], kGender[female],
+                         kKind[which][palette]);
+                data = CtrData_Load(path, &size);
+                if (!data)
+                    continue;
+                sSwaps[sSwapCount].src = src;
+                sSwaps[sSwapCount].data = data;
+                sSwaps[sSwapCount].size = size;
+                ++sSwapCount;
+            }
+}
+
+bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size)
+{
+    if (!sSwapsRead)
+    {
+        if (CtrData_GetBackend() == CTR_DATA_NONE)
+            return false;           /* before the pack is open (the BIOS copies from the start) */
+        SwapsRead();
+    }
+    for (unsigned i = 0; i < sSwapCount; ++i)
+        if (sSwaps[i].src == src)
+        {
+            if (sSwaps[i].size != size)
+            {
+                CtrLog_Write(CTR_LOG_GAME, "GEN4 player picture %u: %lu bytes, FireRed's has %lu", i,
+                             (unsigned long)sSwaps[i].size, (unsigned long)size);
+                return false;
+            }
+            memcpy(dest, sSwaps[i].data, size);
+            return true;
+        }
+    return false;
+}

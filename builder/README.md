@@ -68,13 +68,16 @@ two looks.
 
 Ticking "You as Ash and Green" (or `build --player-sprites`) draws Red as Ash and Leaf as Green, in HGSS style, from
 [ElvieBlooms/emerald_lens](https://github.com/ElvieBlooms/emerald_lens) at a pinned commit: Ash by PKMNTrainerRick,
-Green compiled by ChromeValiant (her back and front picture from her Gen 3 look there, as Emerald Lens itself falls
-back to). Each sheet is in FireRed's own order, so the Builder converts it like a person's (15 colours, 32x32 frames)
+Green compiled by ChromeValiant (her back, front picture, intro picture and map icon from her Gen 3 look there, and
+Ash's map icon from his, as Emerald Lens itself falls back to). Each sheet is in FireRed's own order, so the Builder converts it like a person's (15 colours, 32x32 frames)
 for the graphics ids it draws: walking and running (20 frames), the bike (9), surfing (12), fishing (12), the field
 move and VS Seeker pose (9) and the VS Seeker on the bike (6), as `graphics/gen4/npc/000-013.bin`. The back's five
 64x64 frames are enlarged 1.5 times as pixel art into `graphics/gen4/back/000-001.bin` (they take the place of the
 fan-made backs when HeartGold's sprites are ticked too) and the front picture 1.25 times into
-`graphics/gen4/trainer/135-136.bin`, the size HeartGold's trainer pictures have.
+`graphics/gen4/trainer/135-136.bin`, the size HeartGold's trainer pictures have. The front picture, the Oak
+intro's picture and the Region Map icon also go in as FireRed keeps its own (`graphics/gen4/player/`), so the trainer
+card, the Hall of Fame, the new-game intro and the maps show Ash or Green: the port hands them to the game when it
+copies or decompresses Red's or Leaf's (recipe 0212 tells it where those are).
 
 All four entries are optional: the engine ABI does not cover them. The art stays its authors' work (see
 CREDITS.md).

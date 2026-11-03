@@ -40,8 +40,38 @@ void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
     ++sNpcPaletteSets;
 }
 
+/* FireRed's player pictures (CtrPlayer_Asset): stand-ins whose addresses are all that counts; the pack has Ash's front
+ * picture (both halves) and his icon's tiles, the icon's palette with a wrong size, nothing of Leaf's. */
+static const uint8_t sFirePlayer[3][2][2][4];
+static CtrDataBackend sBackend = CTR_DATA_NONE;
+
+CtrDataBackend CtrData_GetBackend(void)
+{
+    return sBackend;
+}
+
+const void *CtrPlayer_Asset(unsigned which, unsigned female, unsigned palette)
+{
+    return which < CTR_PLAYER_PICTURES ? sFirePlayer[which][female][palette] : NULL;
+}
+
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
+    static const struct { const char *path; uint32_t size; uint8_t fill; } kPlayer[] = {
+        {"graphics/gen4/player/front_boy.4bpp", 2048, 0xA1}, {"graphics/gen4/player/front_boy.gbapal", 32, 0xA2},
+        {"graphics/gen4/player/icon_boy.4bpp", 128, 0xA3}, {"graphics/gen4/player/icon_boy.gbapal", 30, 0xA4},
+    };
+
+    for (unsigned i = 0; i < sizeof(kPlayer) / sizeof(kPlayer[0]); ++i)
+        if (strcmp(path, kPlayer[i].path) == 0)
+        {
+            void *copy = malloc(kPlayer[i].size);
+            memset(copy, kPlayer[i].fill, kPlayer[i].size);
+            *outSize = kPlayer[i].size;
+            return copy;
+        }
+    if (strncmp(path, "graphics/gen4/player/", 21) == 0)
+        return NULL;
     if (strcmp(path, "graphics/gen4/spinda.bin") == 0)
     {
         /* One spot of two pixels, (10, 10) and (11, 10); the other three empty. */
@@ -517,6 +547,24 @@ int main(void)
         sEntrySize = 40;
         sNpcGfx = 7;
         assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+    }
+
+    /* The player's whole pictures: nothing before the pack is open (and asked again once it is); then Ash's in place
+     * of Red's where the size is FireRed's, FireRed's own everywhere else. */
+    {
+        static uint8_t out[2048];
+
+        memset(out, 0, sizeof(out));
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2048));
+        sBackend = CTR_DATA_PAK;
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2048) && out[0] == 0xA1 && out[2047] == 0xA1);
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][1], out, 32) && out[0] == 0xA2 && out[32] == 0xA1);
+        assert(CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_ICON][0][0], out, 128) && out[0] == 0xA3);
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_ICON][0][1], out, 32));      /* 30 bytes: not FireRed's 32 */
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][0][0], out, 2047));
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][1][0], out, 2048));   /* no Leaf in the pack */
+        assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_INTRO][0][0], out, 6144));
+        assert(!CtrPlayer_Swap(out, out, 32));
     }
 
     puts("battle_gen4_test: ok");

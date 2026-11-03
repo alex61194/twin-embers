@@ -123,4 +123,15 @@ bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *o
  * palette; its graphics id, the image its animation shows and the game's unfaded palette buffer. 0 for none. */
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned *graphicsId, unsigned *frame, const uint16_t **unfaded);
 
+/* The player's pictures that FireRed copies out whole (the front picture of the trainer card, the Hall of Fame and a
+ * link battle, the Oak intro's picture, the Region Map icon): when the pack has the Builder's own of one
+ * (graphics/gen4/player/, the "You as Ash and Green" download, in FireRed's own format and size), the BIOS copy or
+ * decompression of FireRed's (CpuSet, LZ77UnComp*) writes it instead. True when `src` is one of them and its entry has
+ * exactly `size` bytes: `dest` then has it. */
+bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size);
+/* Implemented by the game (recipe 0212): FireRed's data for picture `which` (CTR_PLAYER_*) of Red (`female` 0) or
+ * Leaf, its tiles or (`palette` 1) its colours, compressed as the game keeps it; NULL for none. */
+enum { CTR_PLAYER_FRONT, CTR_PLAYER_INTRO, CTR_PLAYER_ICON, CTR_PLAYER_PICTURES };
+const void *CtrPlayer_Asset(unsigned which, unsigned female, unsigned palette);
+
 #endif
