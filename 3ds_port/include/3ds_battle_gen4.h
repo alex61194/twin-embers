@@ -101,6 +101,7 @@ typedef struct CtrGen4Obj {
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
     const uint16_t *unfaded;        /* a field NPC's: the game's unfaded palette buffer, for its fade */
+    unsigned bank;                  /* a field NPC's: its palette (CtrVideo_SetNpcPalette's slot, 0-15) */
 } CtrGen4Obj;
 
 /* Implemented by the game's battle code: the battler sprite's OAM tile number and palette
@@ -119,9 +120,12 @@ int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
  * 16 colours (the Builder's convert_npc). Match gives the picture an OBJ with this attr2 and size stands for: drawn
  * 1:1, centred across the OBJ, its lowest row on the OBJ's. False: FireRed's own picture is drawn. */
 bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out);
-/* Implemented by the game's object events (event_object_movement.c): the one whose sprite shows these OBJ tiles and
- * palette at about this OAM position (x 0-511, y 0-255; another sprite may share the tiles and palette); its graphics
- * id, the image its animation shows and the game's unfaded palette buffer. 0 for none. */
+/* Implemented by the game's object events (event_object_movement.c, recipe 0215): what the OBJ with these tiles and
+ * palette at about this OAM position (x 0-511, y 0-255; another sprite may share the tiles and palette) shows, with the
+ * image its animation shows and the game's unfaded palette buffer. 1: an object event (its graphics id); 2 + its OBJ
+ * palette slot: that object event's reflection in water; 1 with CTR_NPC_BIRD + gender and image 0 or 1: the Fly bird
+ * carrying the player. 0: none. */
+#define CTR_NPC_BIRD 250
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
                   unsigned *frame, const uint16_t **unfaded);
 

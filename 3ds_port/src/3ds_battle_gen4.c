@@ -587,11 +587,13 @@ int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
 }
 
 /* The field's people (CtrNpc_Match): each person's entry read once and kept while it is on screen, in one of as many
- * slots as the compositor has pictures; the least recently shown goes when a new one comes. A person has nine frames,
- * the player as many as FireRed's pic table (up to 20). */
+ * slots as the compositor has pictures; the least recently shown goes when a new one comes. A person has nine 32x32
+ * frames, the player as many as FireRed's pic table (up to 20), the Fly bird carrying them two 64x64 ones. Each slot
+ * has its palette bank; the reflections in water take the banks past them (NPC_REFLECTION_BANK on). */
 #define NPC_FRAMES_MAX 32
 #define NPC_HEADER 40
-#define NPC_FRAME_BYTES 512
+#define NPC_REFLECTION_BANK CTR_GEN4_SLOTS
+#define NPC_REFLECTION_BANKS (16 - CTR_GEN4_SLOTS)
 
 typedef struct {
     bool used;
@@ -621,8 +623,8 @@ static Npc *NpcLoad(unsigned gfx)
     entry = CtrData_Load(path, &size);
     if (!entry)
         return NULL;
-    if (size < NPC_HEADER || memcmp(entry, "G4N1", 4) || !entry[4] || entry[4] > NPC_FRAMES_MAX || entry[5] != 32
-        || size != NPC_HEADER + entry[4] * (uint32_t)NPC_FRAME_BYTES)
+    if (size < NPC_HEADER || memcmp(entry, "G4N1", 4) || !entry[4] || entry[4] > NPC_FRAMES_MAX
+        || (entry[5] != 32 && entry[5] != 64) || size != NPC_HEADER + entry[4] * (uint32_t)entry[5] * entry[5] / 2)
     {
         CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
         free(entry);
@@ -649,13 +651,61 @@ static Npc *NpcLoad(unsigned gfx)
     return &sNpcs[slot];
 }
 
+/* A reflection's colours: FireRed makes its reflection palette from the object's own colour by colour, so each channel
+ * of the picture's colours goes the way the object's went, along the straight line that fits its 15 pairs best. */
+static unsigned ReflectionBank(const Npc *npc, unsigned slot, const uint16_t *own, const uint16_t *reflected)
+{
+    static struct { unsigned slot; uint32_t stamp; } banks[NPC_REFLECTION_BANKS];
+    static uint32_t tick;
+    unsigned bank = 0;
+    uint16_t colours[16] = {0};
+
+    for (unsigned i = 0; i < NPC_REFLECTION_BANKS; ++i)
+        if (banks[i].stamp && banks[i].slot == slot)
+        {
+            bank = i;
+            break;
+        }
+        else if (banks[i].stamp < banks[bank].stamp)
+            bank = i;
+    banks[bank].slot = slot;
+    banks[bank].stamp = ++tick;
+    for (unsigned shift = 0; shift < 15; shift += 5)
+    {
+        float sx = 0, sy = 0, sxx = 0, sxy = 0, a = 1, b;
+
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            float x = (float)(own[i] >> shift & 31), y = (float)(reflected[i] >> shift & 31);
+
+            sx += x;
+            sy += y;
+            sxx += x * x;
+            sxy += x * y;
+        }
+        if (15 * sxx - sx * sx > 0.5f)
+            a = (15 * sxy - sx * sy) / (15 * sxx - sx * sx);
+        b = (sy - a * sx) / 15;
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            unsigned c = npc->entry[8 + i * 2] | npc->entry[9 + i * 2] << 8;
+            float v = a * (float)(c >> shift & 31) + b + 0.5f;
+
+            colours[i] |= (uint16_t)((v < 0 ? 0u : v > 31 ? 31u : (unsigned)v) << shift);
+        }
+    }
+    CtrVideo_SetNpcPalette(NPC_REFLECTION_BANK + bank, colours);
+    return NPC_REFLECTION_BANK + bank;
+}
+
 bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out)
 {
-    unsigned gfx = 0, frame = 0;
+    unsigned gfx = 0, frame = 0, side;
     const uint16_t *unfaded = NULL;
     Npc *npc;
+    int shows = CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, attr1 & 511, attr0 & 255, &gfx, &frame, &unfaded);
 
-    if (!CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, attr1 & 511, attr0 & 255, &gfx, &frame, &unfaded))
+    if (!shows)
         return false;
     npc = NpcLoad(gfx);
     if (!npc)
@@ -664,11 +714,16 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
     if (frame >= npc->entry[4])
         frame = 0;                  /* a person's tenth image (a bow) is not drawn */
     (void)width;
+    side = npc->entry[5] / 8u;
     out->slot = (unsigned)(npc - sNpcs);
-    out->tiles = npc->entry + NPC_HEADER + frame * NPC_FRAME_BYTES;
-    out->side = 4;
-    out->pivotX = 16.0f;
-    out->pivotY = 32.0f - (float)height / 2.0f;
+    out->bank = out->slot;
+    if (shows >= 2 && unfaded)      /* a reflection: the object's own palette slot, then the reflection's */
+        out->bank = ReflectionBank(npc, out->slot, unfaded + 256 + (unsigned)(shows - 2) % 16 * 16,
+                                   unfaded + 256 + (attr2 >> 12) * 16);
+    out->tiles = npc->entry + NPC_HEADER + frame * side * side * 32;
+    out->side = side;
+    out->pivotX = (float)side * 4.0f;
+    out->pivotY = (float)side * 8.0f - (float)height / 2.0f;
     out->scale = 1.0f;
     out->unfaded = unfaded;
     return true;

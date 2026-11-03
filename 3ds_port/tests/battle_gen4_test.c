@@ -20,20 +20,21 @@ static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
 
 /* The game's object events and the compositor's palettes, as the NPC tests need them. */
 static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF;
-static const uint16_t sNpcUnfaded[512];
-static uint16_t sNpcPalette[12][16];
+static uint16_t sNpcUnfaded[512];
+static uint16_t sNpcPalette[16][16];
 static unsigned sNpcPaletteSets;
 
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
                   unsigned *frame, const uint16_t **unfaded)
 {
-    /* The game checks the position; here the person stands at (40, 60). */
-    if (tileNum != sNpcTile || paletteNum != 3 || oamX != 40 || oamY != 60)
+    /* The game checks the position; here the person stands at (40, 60) on OBJ palette 3, and its reflection (palette 9)
+     * at (40, 90). */
+    if (tileNum != sNpcTile || oamX != 40 || !((paletteNum == 3 && oamY == 60) || (paletteNum == 9 && oamY == 90)))
         return 0;
     *graphicsId = sNpcGfx;
     *frame = sNpcFrame;
     *unfaded = sNpcUnfaded;
-    return 1;
+    return paletteNum == 9 ? 2 + 3 : 1;
 }
 
 void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
@@ -550,6 +551,42 @@ int main(void)
         sEntrySize = 40;
         sNpcGfx = 7;
         assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        /* A reflection: the person's frame on a bank past the slots, its colours moved the way FireRed moved the
+         * object's (here each channel halved and 2 added: 0x2011's 17, 0 and 8 become 10, 2 and 6). */
+        sEntry[4] = 9;
+        sEntry[5] = 32;
+        sEntrySize = 40 + 9 * 512;
+        sNpcGfx = 60;
+        sNpcFrame = 2;
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            unsigned r = i * 2, g = 31 - i * 2, b = i;
+            sNpcUnfaded[256 + 3 * 16 + i] = (uint16_t)(r | g << 5 | b << 10);
+            sNpcUnfaded[256 + 9 * 16 + i] = (uint16_t)((r / 2 + 2) | (g / 2 + 2) << 5 | (b / 2 + 2) << 10);
+        }
+        {
+            CtrGen4Obj own, mirrored;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &own) && own.bank == own.slot);
+            assert(CtrNpc_Match(90, 40, 100 | 9 << 12, 16, 32, &mirrored));
+            assert(mirrored.slot == own.slot && mirrored.bank >= CTR_GEN4_SLOTS && mirrored.bank < 16);
+            assert(mirrored.tiles == own.tiles && mirrored.tiles[0] == 0x32);
+            uint16_t c = sNpcPalette[mirrored.bank][1];
+            assert((c & 31) >= 9 && (c & 31) <= 11 && (c >> 5 & 31) <= 3 && (c >> 10 & 31) >= 5 && (c >> 10 & 31) <= 7);
+        }
+        /* The Fly bird carrying the player: 64x64 frames, the picture the OBJ's size, drawn on its centre. */
+        sEntry[4] = 2;
+        sEntry[5] = 64;
+        memset(sEntry + 40, 0x41, 2048);
+        memset(sEntry + 40 + 2048, 0x42, 2048);
+        sEntrySize = 40 + 2 * 2048;
+        sNpcGfx = CTR_NPC_BIRD;
+        sNpcFrame = 1;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 64, 64, &person));
+        assert(person.side == 8 && person.tiles[0] == 0x42 && person.pivotX == 32.0f && person.pivotY == 32.0f);
+        sEntry[5] = 48;
+        sNpcGfx = CTR_NPC_BIRD + 1;
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 64, 64, &person));
     }
 
     /* The player's whole pictures: nothing before the pack is open (and asked again once it is); then Ash's in place

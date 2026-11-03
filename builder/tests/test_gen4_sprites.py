@@ -702,7 +702,7 @@ class PlayerTest(unittest.TestCase):
         self.assertEqual(len({gen4_sprites.file_name(row) for row in rows}), len(rows))
         for gender in ("boy", "girl"):
             sheets = {row[2].rsplit("/", 1)[1][:-4] for row in rows if row[0] == gender}
-            self.assertEqual(sheets, set(gen4_sprites.PLAYER_SHEETS) | {"back", "front", "intro", "mapIcon"})
+            self.assertEqual(sheets, set(gen4_sprites.PLAYER_SHEETS) | {"back", "front", "intro", "mapIcon", "flyBird"})
         for row in rows:
             self.assertEqual(row[1], "player")
             self.assertRegex(row[2], r"^assets/sprites/(ash_hgss|ash|green_hgss|green)/gen3/frlg/[A-Za-z]+\.png$")
@@ -715,6 +715,7 @@ class PlayerTest(unittest.TestCase):
         data["front"] = rgba_png(self.column(1, 64))
         data["intro"] = rgba_png(self.column(1, 64)[:96] + self.column(1, 64)[:32])
         data["mapIcon"] = rgba_png(self.column(1, 16))
+        data["flyBird"] = rgba_png(self.column(2, 64))
         rows = tuple((gender, "player", "x/%s/%s.png" % (gender, name), len(data[name]),
                       hashlib.sha256(data[name]).hexdigest()) for gender in ("boy", "girl") for name in data)
 
@@ -727,9 +728,13 @@ class PlayerTest(unittest.TestCase):
         whole = ["graphics/gen4/player/%s_%s.%s" % (name, gender, kind) for gender in ("boy", "girl")
                  for name, kinds in (("front", ("4bpp", "gbapal")), ("intro", ("8bpp", "gbapal")),
                                      ("icon", ("4bpp", "gbapal"))) for kind in kinds]
-        self.assertEqual(paths, sorted(npc + whole + ["graphics/gen4/back/000.bin", "graphics/gen4/back/001.bin",
-                                                      "graphics/gen4/trainer/135.bin", "graphics/gen4/trainer/136.bin"]))
-        self.assertEqual(info["player"], 30)
+        birds = ["graphics/gen4/npc/250.bin", "graphics/gen4/npc/251.bin"]
+        self.assertEqual(paths, sorted(npc + whole + birds + ["graphics/gen4/back/000.bin", "graphics/gen4/back/001.bin",
+                                                              "graphics/gen4/trainer/135.bin",
+                                                              "graphics/gen4/trainer/136.bin"]))
+        self.assertEqual(info["player"], 32)
+        bird = dict(files)["graphics/gen4/npc/250.bin"]
+        self.assertEqual((bird[:6], len(bird)), (b"G4N1" + bytes([2, 64]), 40 + 2 * 2048))
         # FireRed's own sizes: what the port checks before it puts one in the place of Red's or Leaf's.
         sizes = {path: len(entry) for path, entry in files}
         self.assertEqual([sizes["graphics/gen4/player/%s_boy.%s" % pair] for pair in (

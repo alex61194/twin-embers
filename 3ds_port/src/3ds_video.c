@@ -3349,8 +3349,8 @@ static void DrawObjects(unsigned priority, bool effects)
         bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
                && gen4.slot < GEN4_SLOTS && gen4.side * gen4.side * 32 <= GEN4_SLOT;
         /* A person of the field with a picture in the pack (3ds_battle_gen4.h): drawn the same way, on a palette of its own. */
-        bool npc = !hg && !sBattle && sFieldLayers && !affine && !color256 && width <= 32 && height <= 32
-                && CtrNpc_Match(attr0, attr1, attr2, width, height, &gen4) && gen4.slot < GEN4_SLOTS && gen4.slot < NPC_BANKS;
+        bool npc = !hg && !sBattle && sFieldLayers && !color256 && width <= 64 && height <= 64
+                && CtrNpc_Match(attr0, attr1, attr2, width, height, &gen4) && gen4.slot < GEN4_SLOTS && gen4.bank < NPC_BANKS;
         C2D_ImageTint npcTint, savedTint = sTint;
         hg = hg || npc;
         float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
@@ -3401,7 +3401,7 @@ static void DrawObjects(unsigned priority, bool effects)
                     unsigned sx = flipX ? gen4.side - 1 - tx : tx;
                     unsigned sy = flipY ? gen4.side - 1 - ty : ty;
                     DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * gen4.side + sx) * 32,
-                             npc ? NPC_BANK0 + gen4.slot : 16 + (attr2 >> 12), false,
+                             npc ? NPC_BANK0 + gen4.bank : 16 + (attr2 >> 12), false,
                              (int)tx * 8, (int)ty * 8, flipX, flipY);
                 }
             sTint = savedTint;

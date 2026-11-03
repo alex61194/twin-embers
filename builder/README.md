@@ -77,7 +77,9 @@ fan-made backs when HeartGold's sprites are ticked too) and the front picture 1.
 `graphics/gen4/trainer/135-136.bin`, the size HeartGold's trainer pictures have. The front picture, the Oak
 intro's picture and the Region Map icon also go in as FireRed keeps its own (`graphics/gen4/player/`), so the trainer
 card, the Hall of Fame, the new-game intro and the maps show Ash or Green: the port hands them to the game when it
-copies or decompresses Red's or Leaf's (recipe 0212 tells it where those are).
+copies or decompresses Red's or Leaf's (recipe 0212 tells it where those are). The Fly bird carrying them becomes
+`graphics/gen4/npc/250-251.bin` (two 64x64 frames each); their reflections in water are their own pictures, which the
+port recolours the way FireRed recolours the player's reflection (recipe 0215).
 
 All four entries are optional: the engine ABI does not cover them. The art stays its authors' work (see
 CREDITS.md).

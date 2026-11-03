@@ -339,6 +339,8 @@ PLAYER_FILES = (
      "b7684428b5ca5abcfee0edb3d515356ba33b1088e1b1cc15df3da92df6c3c208"),
     ("boy", "player", "assets/sprites/ash/gen3/frlg/mapIcon.png", 343,
      "e4d9d24bff2f9b0ad9ede0ef5e013fbfeb6dc0500fb76c60ca77c8ef2e0cdf87"),
+    ("boy", "player", "assets/sprites/ash_hgss/gen3/frlg/flyBird.png", 1656,
+     "4cc11b57eb3d6ed294ac7224270e886b281f8662c12923c4093ef9f79651588f"),
     ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/walk.png", 3784,
      "5151530a52e432d7d465671272d1a3ff3468ebf615b4f437cf2a566da7f49a20"),
     ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/bike.png", 1986,
@@ -359,12 +361,17 @@ PLAYER_FILES = (
      "b75d8666d96bcf121943c9342a9a336e83b287351cc465a1d710e29503de7e5e"),
     ("girl", "player", "assets/sprites/green/gen3/frlg/mapIcon.png", 293,
      "0ee911c1b14ef22b14f656645253b69da8e65338747de577079471c0f8f2b02a"),
+    ("girl", "player", "assets/sprites/green_hgss/gen3/frlg/flyBird.png", 5206,
+     "decccc300af17b6027ff77f03cf1d8413d0661ad596848f5eced7f58d3ad6d28"),
 )
 # Sheet name: (the OBJ_EVENT_GFX_* of Red it draws, its frames). The field move sheet is also the VS Seeker's (both
 # take FireRed's "item" pictures).
 PLAYER_SHEETS = {"walk": ((0,), 20), "bike": ((1,), 9), "surf": ((2,), 12), "fieldMove": ((3, 5), 9),
                  "fishing": ((4,), 12), "vsSeekerBike": ((6,), 6)}
 PLAYER_GFX = {"boy": 0, "girl": 7}
+# The Fly bird carrying the player (FireRed's bird images 1-2 Red's, 3-4 Leaf's): two 64x64 frames, as the
+# graphics ids the port asks for it (CTR_NPC_BIRD + gender).
+PLAYER_BIRD = {"boy": 250, "girl": 251}
 PLAYER_BACK = {"boy": 0, "girl": 1}           # TRAINER_BACK_PIC_RED, _LEAF
 PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
 # The pictures FireRed copies out whole, in its own format, for the port to put in place of Red's and Leaf's
@@ -816,23 +823,23 @@ def convert_front(picture: bytes) -> bytes:
     return TRAINER_MAGIC + bytes(4) + struct.pack("<16H", *(palette + [0] * 16)[:16]) + frame
 
 
-def convert_npc(sheet: bytes, count: int = NPC_FRAMES) -> bytes:
+def convert_npc(sheet: bytes, count: int = NPC_FRAMES, size: int = 32) -> bytes:
     """A person's pack entry from its 32x288 RGBA sheet of nine 32x32 frames (the player's sheets have `count` of
-    them): one palette of 15 colours (the rarest folded into their nearest, as for the backs) and each frame as 4x4
-    tiles."""
+    them, the Fly bird carrying the player two of 64x64): one palette of 15 colours (the rarest folded into their
+    nearest, as for the backs) and each frame as tiles, row by row of tiles."""
     width, height, _, rows = read_png(sheet)
-    if (width, height) != (32, 32 * count) or not isinstance(rows[0][0], tuple):
-        raise Gen4Error("a person is a 32-wide RGBA sheet of %d 32x32 frames" % count)
+    if (width, height) != (size, size * count) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a person is a %d-wide RGBA sheet of %d %dx%d frames" % (size, count, size, size))
     palette, indices = quantize([pixel for row in rows for pixel in row])
     frames = b""
     for frame in range(count):
-        for ty in range(4):
-            for tx in range(4):
+        for ty in range(size // 8):
+            for tx in range(size // 8):
                 for y in range(8):
-                    base = (frame * 32 + ty * 8 + y) * 32 + tx * 8
+                    base = (frame * size + ty * 8 + y) * size + tx * 8
                     frames += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
     colours = (palette + [0] * 16)[:16]
-    return NPC_MAGIC + bytes([count, 32, 0, 0]) + struct.pack("<16H", *colours) + frames
+    return NPC_MAGIC + bytes([count, size, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
 def convert_bg(scene: bytes) -> bytes:
@@ -1112,6 +1119,8 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             tiles, colours = convert_intro(data)
             player_files += [("%sintro_%s.8bpp" % (PLAYER_PREFIX, row[0]), tiles),
                              ("%sintro_%s.gbapal" % (PLAYER_PREFIX, row[0]), colours)]
+        elif sheet == "flyBird":
+            player_files.append(("%s%03d.bin" % (NPC_PREFIX, PLAYER_BIRD[row[0]]), convert_npc(data, 2, 64)))
         elif sheet == "mapIcon":
             tiles, colours = convert_gba_sprite(data, 16)
             player_files += [("%sicon_%s.4bpp" % (PLAYER_PREFIX, row[0]), tiles),
