@@ -83,8 +83,8 @@ function clearWork() {
 
 // Fetches every listed sprite file into WORK/gen4. A file that fails is simply absent: the Builder
 // then leaves that species on FireRed's pictures, exactly like the desktop Builder offline.
-async function fetchSprites() {
-  const rows = browser.gen4_downloads().toJs();
+async function fetchSprites(groups) {
+  const rows = browser.gen4_downloads(pyodide.toPy(groups)).toJs();
   const folder = `${WORK}/gen4`;
   pyodide.FS.mkdirTree(folder);
   let next = 0;
@@ -112,19 +112,23 @@ function pythonMessage(error) {
   return lines[lines.length - 1].replace(/^\w+(Error|Exception): /, '');
 }
 
-async function build(rom, gen4) {
+async function build(rom, options) {
+  const groups = [];
+  if (options.gen4) groups.push('pokemon');
+  if (options.npcs) groups.push('npc');
+  if (options.backgrounds) groups.push('bg');
   clearWork();
   pyodide.FS.writeFile(`${WORK}/rom.gba`, new Uint8Array(rom));
   let folder; // undefined reaches Python as None (null would be JsNull)
   let failed = 0;
-  if (gen4) {
+  if (groups.length) {
     post('progress', { stage: 'sprites', done: 0, total: 0 });
-    ({ folder, failed } = await fetchSprites());
+    ({ folder, failed } = await fetchSprites(groups));
   }
   post('progress', { stage: 'build' });
   // Let the page paint the new stage before Python holds the worker for a while.
   await new Promise((resolve) => setTimeout(resolve, 0));
-  const result = browser.build(`${WORK}/rom.gba`, `${WORK}/twinembers.pak`, folder);
+  const result = browser.build(`${WORK}/rom.gba`, `${WORK}/twinembers.pak`, folder, pyodide.toPy(groups));
   const info = result.toJs({ dict_converter: Object.fromEntries });
   result.destroy();
   const pak = pyodide.FS.readFile(`${WORK}/twinembers.pak`);
@@ -137,7 +141,7 @@ self.onmessage = async (event) => {
   const message = event.data;
   if (message.type !== 'build') return;
   try {
-    await build(message.rom, message.gen4);
+    await build(message.rom, { gen4: message.gen4, npcs: message.npcs, backgrounds: message.backgrounds });
   } catch (error) {
     try { clearWork(); } catch (ignored) { /* nothing left to clean */ }
     post('error', { message: pythonMessage(error) });

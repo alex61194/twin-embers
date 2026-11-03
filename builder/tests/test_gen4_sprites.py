@@ -1,5 +1,6 @@
 """Synthetic-only tests for the optional HeartGold battle sprites (no network, no real sprite)."""
 import hashlib
+import re
 import struct
 import tempfile
 import unittest
@@ -122,7 +123,8 @@ class DownloadTest(unittest.TestCase):
                     self.data[(dex, body, side)] = data
                     rows.append(row_for(dex, body, side, data))
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
-                        patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ())):
+                        patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ()),
+                        patch.object(gen4_sprites, "NPC_FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -139,7 +141,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "backgrounds": 0, "downloaded": 8})
+                                "backgrounds": 0, "npcs": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -440,7 +442,8 @@ class BackTest(unittest.TestCase):
             urls.append(url)
             return strip
 
-        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows),                 patch.object(gen4_sprites, "BG_FILES", ()):
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows), \
+                patch.object(gen4_sprites, "BG_FILES", ()), patch.object(gen4_sprites, "NPC_FILES", ()):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/back/000.bin"])
         self.assertEqual(info["backs"], 1)
@@ -545,7 +548,7 @@ class BackgroundTest(unittest.TestCase):
             return data
 
         with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
-                patch.object(gen4_sprites, "BG_FILES", rows):
+                patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "BG_FILES", rows):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/bg/%03d.bin" % i for i in range(20)])
         self.assertEqual(info["backgrounds"], 20)
@@ -556,10 +559,85 @@ class BackgroundTest(unittest.TestCase):
                          % (gen4_sprites.BG_REPO, gen4_sprites.BG_COMMIT))
         # One scene that cannot be had leaves every terrain on FireRed's.
         with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", ()), \
-                patch.object(gen4_sprites, "BG_FILES", rows):
+                patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "BG_FILES", rows):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
                 None, get=lambda url: b"" if url.endswith("/3.png") else data))
         self.assertEqual((files, info["backgrounds"]), ([], 0))
+
+
+class PeopleTest(unittest.TestCase):
+    COLOURS = [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255), (255, 255, 0, 255)]
+
+    def sheet(self):
+        """Nine frames; in frame f, the pixel (x, y) takes colour (f + x // 4 + y // 4) % 4 inside a 24x24 body."""
+        rows = []
+        for y in range(32 * 9):
+            frame, fy = divmod(y, 32)
+            rows.append([self.COLOURS[(frame + x // 4 + fy // 4) % 4] if 4 <= x < 28 and 4 <= fy < 28 else (0, 0, 0, 0)
+                         for x in range(32)])
+        return rows
+
+    def test_entry_layout_and_tile_order(self):
+        entry = gen4_sprites.convert_npc(rgba_png(self.sheet()))
+        self.assertEqual(entry[:8], b"G4N1" + bytes([9, 32, 0, 0]))
+        self.assertEqual(len(entry), 40 + 9 * 512)
+        palette = struct.unpack("<16H", entry[8:40])
+        self.assertEqual(palette[0], 0)
+        self.assertEqual(len(set(palette[1:5])), 4)
+        # Frame 2, tile (1, 0), its first row (pixels 8 to 15 of the first row: the body starts at 4, in rows from 4):
+        # the tile's own bytes are 32 from the frame's start plus a tile's 32.
+        sheet = self.sheet()
+        for frame, tx, ty, y in ((0, 0, 0, 5), (2, 1, 2, 3), (8, 3, 3, 7)):
+            tile = entry[40 + frame * 512 + (ty * 4 + tx) * 32 + y * 4:][:4]
+            row = sheet[frame * 32 + ty * 8 + y][tx * 8:tx * 8 + 8]
+            for x in range(8):
+                index = tile[x // 2] >> (4 * (x & 1)) & 15
+                if row[x][3] == 0:
+                    self.assertEqual(index, 0)
+                else:
+                    colour = struct.unpack("<H", entry[8 + index * 2:10 + index * 2])[0]
+                    self.assertEqual(((colour & 31) * 255 // 31, (colour >> 5 & 31) * 255 // 31,
+                                      (colour >> 10 & 31) * 255 // 31), row[x][:3])
+
+    def test_a_wrong_sheet_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(rgba_png([[(0, 0, 0, 255)] * 32] * 100))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(png([[0] * 32] * 288, [(0, 0, 0)] * 16, depth=8))
+
+    def test_pinned_people(self):
+        rows = gen4_sprites.NPC_FILES
+        self.assertEqual(len(rows), 74)
+        self.assertEqual(len({row[0] for row in rows}), 74)           # each graphics id once
+        self.assertTrue(all(row[1] == "npc" and 16 <= row[0] < 256 for row in rows))
+        self.assertTrue(all(re.match(r"^assets/npcs/(community|diego|taiga|zaffre)/gen3/frlg/[A-Z_0-9]+\.png$", row[2])
+                            for row in rows))
+        for row in rows:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+        # Red, Leaf and the rival are not among them: they keep FireRed's.
+        self.assertFalse({0, 1, 2, 3, 4, 5, 6, 7, 8, 72} & {row[0] for row in rows})
+
+    def test_the_groups_choose_the_files_and_the_entries(self):
+        self.assertEqual(len(gen4_sprites.all_files(("npc",))), 74)
+        self.assertEqual(len(gen4_sprites.all_files(("bg",))), 14)
+        self.assertEqual(len(gen4_sprites.all_files(())), 0)
+        self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14)
+        data = rgba_png(self.sheet())
+        rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
+        with patch.object(gen4_sprites, "NPC_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: data), groups=("npc",))
+            self.assertEqual([path for path, _ in files], ["graphics/gen4/npc/%03d.bin" % (16 + i) for i in range(3)])
+            self.assertEqual((info["npcs"], info["species"], info["backgrounds"]), (3, 0, 0))
+            # One sheet that cannot be had leaves that person on FireRed's, the others are drawn.
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url.endswith("/1.png") else data), groups=("npc",))
+            self.assertEqual([path for path, _ in files], ["graphics/gen4/npc/016.bin", "graphics/gen4/npc/018.bin"])
+            self.assertEqual(info["npcs"], 2)
+            # Without the group nothing of them is fetched.
+            urls = []
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: urls.append(url) or data), groups=())
+            self.assertEqual((files, urls, info["npcs"]), ([], [], 0))
 
 
 class SourcesTest(unittest.TestCase):

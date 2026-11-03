@@ -23,6 +23,14 @@
   at the commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not
   stored in this repository. They depict Nintendo, Game Freak and Creatures'
   characters; credit is not a license grant.
+- **Facets, by ElvieBlooms** (https://github.com/ElvieBlooms/facets, MIT for its code; its art is free to use with
+  credit) — the optional new people on the map and battle backgrounds, downloaded by the user's Builder at the
+  commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. People:
+  **KyleDove**, **Jext** and **Hyo** (with some by **DiegoWT** and **Aqua**) for the community set, **DiegoWT**
+  (Black/White style), **Taiga** (ORAS style) and **PurpleZaffre** (Agatha, Lorelei, Mr. Fuji and Giovanni).
+  Backgrounds: **LibertyTwins**, **princess-phoenix**, **carchagui**, **aveontrainer**, **WesleyFG**,
+  **kWharever**, **worldslayer608** and **knizz** (Battle Backgrounds Patch FR). The characters belong to
+  Nintendo, Game Freak and Creatures; credit is not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

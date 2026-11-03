@@ -62,6 +62,10 @@ unused), then the tiles (4 bits a pixel, FireRed's own layout, 32 bytes each) an
 screen blocks, entries as FireRed's BG3 reads them, palette 2), ready for the VRAM the battle scene is drawn from.
 A scene is 240x112 pixels; the map repeats its first row above it and its last columns on either side.
 
+npc/NNN.bin (NNN = FireRed's OBJ_EVENT_GFX_*): b"G4N1", u8 9 frames, u8 32 (their size), u16 0, u16 x 16 the palette
+(BGR555, colour 0 unused), then nine 32x32 frames in FireRed's order (down, up, left, then the walking ones), each as
+16 tiles of 4 bits a pixel, row by row of tiles: what the field draws a person from.
+
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
 personality moves it (HeartGold's RawChardata_PlaceSpindaSpots).
@@ -146,6 +150,164 @@ BG_FILES = (
     (13, "bg", "assets/battlebg/scenery/space.png", 2205,
      "13ee861c57029aa50cbe6ff2f7d532c78e149188973db1ee04d54697681db72d"),
 )
+# The field's people: Facets' NPC sets for FireRed and LeafGreen at the same pinned commit, one file for each of the 74
+# people it draws (FireRed's OBJ_EVENT_GFX_* in the first place): the community set where it has one, DiegoWT's,
+# Taiga's, then PurpleZaffre's. Each is a 32x288 RGBA sheet of nine 32x32 frames, ordered as FireRed's own.
+NPC_PREFIX = "graphics/gen4/npc/"
+NPC_MAGIC = b"G4N1"
+NPC_FRAMES = 9
+NPC_FILES = (
+    (16, "npc", "assets/npcs/community/gen3/frlg/LITTLE_BOY.png", 1727,
+     "774ba68a4057f5fa7041b9bb8f0b7df99d41511cf390580b1d8900c2ec10e2b2"),
+    (17, "npc", "assets/npcs/community/gen3/frlg/LITTLE_GIRL.png", 2041,
+     "f069dfb2aa18a69abe95fe6816a7d3170095286fc2fa2ef5f30a512da0eaa2f2"),
+    (18, "npc", "assets/npcs/diego/gen3/frlg/YOUNGSTER.png", 2147,
+     "6b7116a5a551953556ff6e7acbde04cccc905830f25b6dcf736a344c86505d4e"),
+    (19, "npc", "assets/npcs/diego/gen3/frlg/BOY.png", 1643,
+     "716ed945ecbe8ae886cbfb47d642a37fe3bec4bf5f0c27313c01e4ae4defa2bb"),
+    (20, "npc", "assets/npcs/taiga/gen3/frlg/BUG_CATCHER.png", 2283,
+     "94c1d2ba16317c06d5f993f20ef284d2fd5adc8604794622b1434b3e5f6a7e70"),
+    (21, "npc", "assets/npcs/community/gen3/frlg/SITTING_BOY.png", 1054,
+     "42a45f6fc4fcb425f5d25e0036ba99603f9158e1a3b82fb21da8ce431b9ab954"),
+    (22, "npc", "assets/npcs/diego/gen3/frlg/LASS.png", 2636,
+     "09d0189611a651e9b6d34373fd8b5458008ba39bfa7b5870084e7167bc46acdc"),
+    (23, "npc", "assets/npcs/community/gen3/frlg/WOMAN_1.png", 1899,
+     "87e0e261a5a6d43fb7d70907964f08c5ecd147651c2b817fe7ded1910576c1d0"),
+    (24, "npc", "assets/npcs/diego/gen3/frlg/CRUSH_GIRL.png", 2207,
+     "7636a664691600e5c80058fb891ac8feafadbf4a41a908136f37a3a3711961e2"),
+    (25, "npc", "assets/npcs/community/gen3/frlg/MAN.png", 2759,
+     "75d723215f787932406a7ffdadfd41cc857ccfc5b0f818eaa3a677a7a9386c23"),
+    (26, "npc", "assets/npcs/diego/gen3/frlg/ROCKER.png", 3107,
+     "70978119d206bb38eb0f5508f293b079ba6875d2ff02e108915ddcba92fe4f0c"),
+    (27, "npc", "assets/npcs/community/gen3/frlg/FAT_MAN.png", 2611,
+     "2c662d91ce38fff2bfef1e180bb813774e9a6f8fde6c4521db81fdd5c3bc422b"),
+    (28, "npc", "assets/npcs/community/gen3/frlg/WOMAN_2.png", 2637,
+     "516364c4d90f7f94836ba171008ba350dfbe3d18718b1f1500d2172700f4be77"),
+    (29, "npc", "assets/npcs/diego/gen3/frlg/BEAUTY.png", 2418,
+     "ecd85827d671874879df235920e102f258674f26c7a8bdec7d637083a0f9c6a8"),
+    (30, "npc", "assets/npcs/community/gen3/frlg/BALDING_MAN.png", 2277,
+     "1119ba41db634865c67db1740a54be9870be38a80320b37d69c51f6e30aeca19"),
+    (31, "npc", "assets/npcs/community/gen3/frlg/WOMAN_3.png", 2444,
+     "cbf14682dadb3be47955d8d4f488984b2cb5a78772bbd98b888a86d5986cd423"),
+    (32, "npc", "assets/npcs/community/gen3/frlg/OLD_MAN_1.png", 1821,
+     "1d4184d5f4b85c442b866423747f59599558a843e35cc8fbdd73d4aafaa0cac3"),
+    (33, "npc", "assets/npcs/diego/gen3/frlg/OLD_MAN_2.png", 2045,
+     "0edca25760ee955358c53981b8bbde9344f1c33cf99d162a45a6760c2df359cd"),
+    (34, "npc", "assets/npcs/community/gen3/frlg/OLD_MAN_LYING_DOWN.png", 708,
+     "aeafeefece683881216932bdfeb4c10e7972c294601bc210ab4d42df69abc89f"),
+    (35, "npc", "assets/npcs/community/gen3/frlg/OLD_WOMAN.png", 1793,
+     "3335ebbe0b22f9da3893c68d2f8a50021ca0ada721536da85b0513859b5a47be"),
+    (36, "npc", "assets/npcs/community/gen3/frlg/TUBER_M_WATER.png", 1047,
+     "31532db27232ee5ef3cdf3ef7c7f3249241b42cb207d58b8f04bf7ad72b682cf"),
+    (37, "npc", "assets/npcs/community/gen3/frlg/TUBER_F.png", 1288,
+     "05de9d86fbd84bb304e3bfcad0f992323fdc224fc5f9b672f84cbc25e4772f2f"),
+    (38, "npc", "assets/npcs/community/gen3/frlg/TUBER_M_LAND.png", 1139,
+     "287a3469661c4a34c7c6cf1bc1a46bbbadc96fdefe0811847fcaa6890979b8d7"),
+    (39, "npc", "assets/npcs/taiga/gen3/frlg/CAMPER.png", 2293,
+     "e6f38fff59cd33d6fabc2de0ea176d05d7e8395aa790bd755116a628652885e2"),
+    (40, "npc", "assets/npcs/community/gen3/frlg/PICNICKER.png", 2600,
+     "288d05f1dcd306679c42fd5e013fc0af8ba2c58a46007e0ec5689906ddd5e366"),
+    (41, "npc", "assets/npcs/diego/gen3/frlg/COOLTRAINER_M.png", 2034,
+     "9e23887e621740d9ebe15bc84af51e422521393ad97643239ea5dca65bf5ea97"),
+    (42, "npc", "assets/npcs/diego/gen3/frlg/COOLTRAINER_F.png", 2924,
+     "f4a558111df0bf78c8a98b01fddbd5013ebec0bacb5aeec163f53d697cb819b7"),
+    (43, "npc", "assets/npcs/community/gen3/frlg/SWIMMER_M_WATER.png", 1822,
+     "99725cd8e58fb7a48d7102c6fafe5c1b5b7cd5c2e9627c82080334bf7e15054f"),
+    (44, "npc", "assets/npcs/community/gen3/frlg/SWIMMER_F_WATER.png", 1951,
+     "24ec173bb6a81c5fffd85fd9cfb87988175669e263a1e845684c4d7912e7d072"),
+    (45, "npc", "assets/npcs/community/gen3/frlg/SWIMMER_M_LAND.png", 2331,
+     "a9e844afaca8321d27f8ef6aa460cfb1863108fa25826329e5c23dd3ff6afa15"),
+    (46, "npc", "assets/npcs/community/gen3/frlg/SWIMMER_F_LAND.png", 2790,
+     "66363fb204f6f6da435e88639f6d09833e68d4238d7b222f4beef9163bdd57fe"),
+    (47, "npc", "assets/npcs/diego/gen3/frlg/WORKER_M.png", 2060,
+     "fbf269493b349223774380a1e68f68e7b9b8d9ac04fc633c49baacf22ca7d5ae"),
+    (48, "npc", "assets/npcs/community/gen3/frlg/WORKER_F.png", 2626,
+     "659143c68149edb236096ca64e5bd51ced5c4a0bd953ac3b56c53a65cb5df78b"),
+    (49, "npc", "assets/npcs/community/gen3/frlg/ROCKET_M.png", 2085,
+     "344f7ee3e4c55fe726cf16375ed4501c7a8489b0cc1b9403c499abb83b870263"),
+    (50, "npc", "assets/npcs/community/gen3/frlg/ROCKET_F.png", 2127,
+     "4a6cc596a799a0bc371dd3ef5b765f8c9f25404ecb1c3c3a2f5f7303b84c4feb"),
+    (51, "npc", "assets/npcs/community/gen3/frlg/GBA_KID.png", 2389,
+     "72f7333bfeded9ea8c41c6a64938d752a9cd6fc2c53919172b0dcdff09bc069b"),
+    (52, "npc", "assets/npcs/taiga/gen3/frlg/POKE_MANIAC.png", 2438,
+     "c471f1f38a19ccdba03ba69c0c9a478d6c0309203719e3a9978600a0253a073a"),
+    (53, "npc", "assets/npcs/diego/gen3/frlg/BIKER.png", 2060,
+     "e20d880fdb9f9f97a6d9e758c20810cac597d543fbfbcc4ec6e9c8de47260a6c"),
+    (54, "npc", "assets/npcs/diego/gen3/frlg/BLACK_BELT.png", 2614,
+     "8c2364f1a87b3c655f13a45ff6626fb8e7292b455046805c9fd34d4f9c279410"),
+    (55, "npc", "assets/npcs/diego/gen3/frlg/SCIENTIST.png", 2283,
+     "123eb88028821953a7b3306ebd53bacf62b03032a908b65354d558d423ac0710"),
+    (56, "npc", "assets/npcs/diego/gen3/frlg/HIKER.png", 2352,
+     "c44108dc43a4c95115e6cec2fa8ad3f608361acb89c6e643c8e8493afe87eba7"),
+    (57, "npc", "assets/npcs/diego/gen3/frlg/FISHER.png", 2496,
+     "ede4622165f704ec0484316fb7d06f51f590581e2483cb9a4d95dfcd0f983572"),
+    (58, "npc", "assets/npcs/community/gen3/frlg/CHANNELER.png", 3078,
+     "868dccc9b88dcd3c48c6032263182e7c82256922d97e12a54015fdf65d758a41"),
+    (59, "npc", "assets/npcs/diego/gen3/frlg/CHEF.png", 2334,
+     "1074cf14d8a9fa013893948cceec162737686d8d00cdf7dba30fbee40e655f6b"),
+    (60, "npc", "assets/npcs/diego/gen3/frlg/POLICEMAN.png", 2289,
+     "5ae9a0029b6a59ced791c364e4ab3109629b29dda1dbb5d6f93ebe7d4460441f"),
+    (61, "npc", "assets/npcs/diego/gen3/frlg/GENTLEMAN.png", 2303,
+     "178d0882c2c1661334fda5ee74a99c3762758e847ae1dfe9a9b3026eeb1c7dcb"),
+    (62, "npc", "assets/npcs/taiga/gen3/frlg/SAILOR.png", 3196,
+     "4ec7008e65284632a9ee3553c574ceaa3216aa14150d4d6b7f57da313aaf8edc"),
+    (63, "npc", "assets/npcs/diego/gen3/frlg/CAPTAIN.png", 2328,
+     "f977fa58034996d5671eccfc9cd199c6f4d9b39791db6ef39068419421a941c7"),
+    (64, "npc", "assets/npcs/diego/gen3/frlg/NURSE.png", 2472,
+     "3c5133e123abb20355953ec479e494256dfa500cc7bbc126d9e332d5deb3d1cf"),
+    (65, "npc", "assets/npcs/community/gen3/frlg/CABLE_CLUB_RECEPTIONIST.png", 1869,
+     "5e8e98d12b8f1baa65a92d6aa127a0c9872ab35f2435bde9d5810b820f3be672"),
+    (66, "npc", "assets/npcs/community/gen3/frlg/UNION_ROOM_RECEPTIONIST.png", 1952,
+     "9bcf25073656b64d54ef4d0d3241e9e3a76f9106376805594d26cfd5127d0d76"),
+    (68, "npc", "assets/npcs/diego/gen3/frlg/CLERK.png", 1909,
+     "c5ab73f3f25be514ab2ed14d8df0d43c8e8d30962eb4afa29d69d6aa32e14fbf"),
+    (69, "npc", "assets/npcs/taiga/gen3/frlg/MG_DELIVERYMAN.png", 2779,
+     "018bbd0edec470590be71f05335f108c0be8f2b119343b5cead175564986629d"),
+    (70, "npc", "assets/npcs/community/gen3/frlg/TRAINER_TOWER_DUDE.png", 2367,
+     "d9cc5103d7386a2a16225a467ea0e6d76118bdcc8ac1e355919e9d44f0c59aff"),
+    (71, "npc", "assets/npcs/community/gen3/frlg/PROF_OAK.png", 2693,
+     "86a41c7c152d7a483ceae8c000a455ad37ec02e50db9e948003bf9c0cbb55d6e"),
+    (73, "npc", "assets/npcs/community/gen3/frlg/BILL.png", 2684,
+     "58b0c3f53b8f560f5a87c2bdfa03510250f39a762cd419982b3c1b33bbeb472a"),
+    (74, "npc", "assets/npcs/community/gen3/frlg/LANCE.png", 2848,
+     "8d5336796ce32ea67b1bde39af13cb2194d392b6b088d9576472c8b88772dc60"),
+    (75, "npc", "assets/npcs/zaffre/gen3/frlg/AGATHA.png", 2257,
+     "37913540a3dca1f1df9342af552332823d2372883fbb62017a3b31b2c45a1d57"),
+    (76, "npc", "assets/npcs/community/gen3/frlg/DAISY.png", 2901,
+     "7eab83d35c3f7ca7a87efd55c8e4791be16cf2bb5a8d271cd8915ed0c601d72f"),
+    (77, "npc", "assets/npcs/zaffre/gen3/frlg/LORELEI.png", 2488,
+     "8155386a388c66fa88cdf19bbf57c19835d24a1745b325a8b6ea8d7e812ae41f"),
+    (78, "npc", "assets/npcs/zaffre/gen3/frlg/MR_FUJI.png", 1736,
+     "b9c5eee86e5d33a5032e1db4405aa7292e4b2fb8871fb47acd3451ca3f7d29cc"),
+    (79, "npc", "assets/npcs/community/gen3/frlg/BRUNO.png", 3788,
+     "9b0fbe0a195bfa829e91ba23d98bd0bd4818b45ec132b6000492693d23e79a99"),
+    (80, "npc", "assets/npcs/community/gen3/frlg/BROCK.png", 2780,
+     "53fe765b0f0cb4bab252a2760bb1875b1f2c90240cbae4927634177732cbeb81"),
+    (81, "npc", "assets/npcs/community/gen3/frlg/MISTY.png", 2746,
+     "1f93c32e474a362dbe195c86706d7fcce27b0bb00500fcc771d7114eab9cca80"),
+    (82, "npc", "assets/npcs/community/gen3/frlg/LT_SURGE.png", 2720,
+     "9e8e785ec2f25810fcb8549f4b37b46e5da4c7252d60836ab9ffb5b8b3186812"),
+    (83, "npc", "assets/npcs/community/gen3/frlg/ERIKA.png", 2473,
+     "12f1ef5c9d4b63a6cdbf023e0f0873bd7045e3d3735b815a906eebefaaa84497"),
+    (84, "npc", "assets/npcs/community/gen3/frlg/KOGA.png", 2817,
+     "f660fe8608e0521f21903d355d433e8217848ce16fbddf02b8df1b702c546bb4"),
+    (85, "npc", "assets/npcs/community/gen3/frlg/SABRINA.png", 2272,
+     "d6e9b2a121cc7bad6b8aece2d5108d89368ba63c190d38bb169cdab444817a98"),
+    (86, "npc", "assets/npcs/community/gen3/frlg/BLAINE.png", 2514,
+     "4f51ba6732ef9c51a7fea28cc5131daf66ac3c531780b60d50b8cad86826caf9"),
+    (87, "npc", "assets/npcs/zaffre/gen3/frlg/GIOVANNI.png", 2106,
+     "21d8217e56392877b928b6ea40b7db12678b94cfa37da51993dddb6b6866b745"),
+    (88, "npc", "assets/npcs/community/gen3/frlg/MOM.png", 2300,
+     "ab7b16fac5954439a29182fa6be876e16997b41fe696aa13bff21e428187f46b"),
+    (89, "npc", "assets/npcs/community/gen3/frlg/CELIO.png", 2578,
+     "7100a2d7922cc4e789549020d7e9e90c079041f721c72e808c966bda796d9b31"),
+    (90, "npc", "assets/npcs/community/gen3/frlg/TEACHY_TV_HOST.png", 2008,
+     "9b47f544d74dc1f20c06bd37c783be47c587750d2cc2224e6702d3ca5eb29106"),
+    (91, "npc", "assets/npcs/community/gen3/frlg/GYM_GUY.png", 2570,
+     "be50e7bb159d3b15975de2fc5885bb93e2847fbf1587aaf1c949e000c7651a92"),
+)
+GROUP_POKEMON, GROUP_NPC, GROUP_BG = "pokemon", "npc", "bg"
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG)
 BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
@@ -525,6 +687,24 @@ def convert_back(strip: bytes) -> bytes:
     return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
+def convert_npc(sheet: bytes) -> bytes:
+    """A person's pack entry from its 32x288 RGBA sheet of nine 32x32 frames: one palette of 15 colours (the rarest
+    folded into their nearest, as for the backs) and each frame as 4x4 tiles."""
+    width, height, _, rows = read_png(sheet)
+    if (width, height) != (32, 32 * NPC_FRAMES) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a person is a 32x288 RGBA sheet of nine 32x32 frames")
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    frames = b""
+    for frame in range(NPC_FRAMES):
+        for ty in range(4):
+            for tx in range(4):
+                for y in range(8):
+                    base = (frame * 32 + ty * 8 + y) * 32 + tx * 8
+                    frames += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
+    colours = (palette + [0] * 16)[:16]
+    return NPC_MAGIC + bytes([NPC_FRAMES, 32, 0, 0]) + struct.pack("<16H", *colours) + frames
+
+
 def convert_bg(scene: bytes) -> bytes:
     """A battle background's pack entry from its 240x112 PNG: the 15-colour palette, the tiles (identical ones once)
     and the 64x32 tile map of BG3's two screen blocks."""
@@ -597,7 +777,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg"):
+    if row[1] in ("back", "bg", "npc"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -618,20 +798,30 @@ def file_name(row: tuple) -> str:
         return "back_{:03d}.png".format(row[0])
     if row[1] == "bg":
         return "bg_{:02d}.png".format(row[0])
+    if row[1] == "npc":
+        return "npc_{:03d}.png".format(row[0])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
 def file_url(row: tuple) -> str:
     if row[1] == "back":
         return URL.format(repo=BACK_REPO, commit=BACK_COMMIT, path=source_path(row))
-    if row[1] == "bg":
+    if row[1] in ("bg", "npc"):
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
 
 
-def all_files() -> tuple:
-    """Every file the download may fetch: pret's (gen4_sources.FILES), the fan-made backs, then the battle scenes."""
-    return tuple(gen4_sources.FILES) + BACK_FILES + BG_FILES
+def all_files(groups: tuple = GROUPS) -> tuple:
+    """Every file the download may fetch for the groups asked: HeartGold's (pret's gen4_sources.FILES and the fan-made
+    backs), the field's people, the battle scenes."""
+    rows: tuple = ()
+    if GROUP_POKEMON in groups:
+        rows += tuple(gen4_sources.FILES) + BACK_FILES
+    if GROUP_NPC in groups:
+        rows += NPC_FILES
+    if GROUP_BG in groups:
+        rows += BG_FILES
+    return rows
 
 
 def matches(row: tuple, data: bytes | None) -> bool:
@@ -675,10 +865,11 @@ class Downloader:
         return data, True
 
 
-def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | None = None
-               ) -> tuple[list[tuple[str, bytes]], dict]:
-    """The pack entries for every species whose files could be had, the icons if all could, and a summary."""
-    rows = list(all_files())
+def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | None = None,
+               groups: tuple = GROUPS) -> tuple[list[tuple[str, bytes]], dict]:
+    """The pack entries of the groups asked (HeartGold's pictures, the field's people, the battle backgrounds): every
+    species whose files could be had, the icons if all could, and a summary."""
+    rows = list(all_files(groups))
     got: dict[tuple, bytes] = {}
     downloaded = done = 0
     # Plain threads taking rows from a queue: concurrent.futures would bring multiprocessing (and ctypes, libffi,
@@ -718,6 +909,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     trainers = [row for row in rows if row[1] == "trainers"]
     backs = [row for row in rows if row[1] == "back"]
     scenes = [row for row in rows if row[1] == "bg"]
+    people = [row for row in rows if row[1] == "npc"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -749,5 +941,9 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     if scenes and len(converted) == len(scenes):
         bg_files = [("%s%03d.bin" % (BG_PREFIX, terrain), converted[scene]) for terrain, scene in enumerate(BG_TERRAIN)]
     files += bg_files
+    # A person whose sheet could not be had keeps FireRed's picture; the others are drawn.
+    npc_files = [("%s%03d.bin" % (NPC_PREFIX, row[0]), convert_npc(got[row[:3]])) for row in people if row[:3] in got]
+    files += npc_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
-                   "backs": len(back_files), "backgrounds": len(bg_files), "downloaded": downloaded}
+                   "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
+                   "downloaded": downloaded}

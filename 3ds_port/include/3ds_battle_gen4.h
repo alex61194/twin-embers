@@ -100,6 +100,7 @@ typedef struct CtrGen4Obj {
     unsigned side;                  /* tiles to a row and a column: 10 (CTR_GEN4_TILES), 13 for a back */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
+    const uint16_t *unfaded;        /* a field NPC's: the game's unfaded palette buffer, for its fade */
 } CtrGen4Obj;
 
 /* Implemented by the game's battle code: the battler sprite's OAM tile number and palette
@@ -112,5 +113,14 @@ int CtrGen4_SpriteOam(unsigned battler);
  * the scene's one palette); 3: nothing, only whether the terrain has a scene (the entry background is then left
  * empty). 0 without an entry for the terrain: FireRed's own data is loaded. */
 int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
+
+/* The field's people (3ds_video.c's OAM loop, recipe 0211): graphics/gen4/npc/NNN.bin, NNN being FireRed's
+ * OBJ_EVENT_GFX_* of a person, nine 32x32 frames in FireRed's order (down, up, left, then the walking ones) and their
+ * 16 colours (the Builder's convert_npc). Match gives the picture an OBJ with this attr2 and size stands for: drawn
+ * 1:1, centred across the OBJ, its lowest row on the OBJ's. False: FireRed's own picture is drawn. */
+bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out);
+/* Implemented by the game's object events (event_object_movement.c): the one whose sprite shows these OBJ tiles and
+ * palette; its graphics id, the image its animation shows and the game's unfaded palette buffer. 0 for none. */
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned *graphicsId, unsigned *frame, const uint16_t **unfaded);
 
 #endif

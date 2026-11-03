@@ -1,12 +1,13 @@
 # Twin Embers data Builder
 
-User-owned ROM reconstruction, offline unless you tick the optional HeartGold
-battle sprites (below). Python 3.11+ is required. The GUI uses only Python's
+User-owned ROM reconstruction, offline unless you tick one of the three optional
+downloads (below): HeartGold sprites, new people on the map and new battle
+backgrounds, each on its own. Python 3.11+ is required. The GUI uses only Python's
 standard library: no SDK, online account, telemetry or game content is included.
 
 ## Optional HeartGold battle sprites
 
-Ticking "Also download HeartGold battle sprites and icons" (or
+Ticking "HeartGold sprites and icons" (or
 `build --gen4-sprites` on the command line) adds Generation 4 battle sprites
 and menu icons to the pack for the 386 species FireRed has (the icons only when
 every one of them could be had, since their palettes replace FireRed's). They
@@ -38,6 +39,30 @@ The entries are optional: the engine ABI does not cover them, and a species
 whose files could not be had (no network, a file that did not match) keeps
 FireRed's pictures. The sprites remain Nintendo, Game Freak and Creatures'
 work; pret's repository has no licence of its own.
+
+## Optional new people on the map
+
+Ticking "New people on the map" (or `build --npc-sprites`) adds 74 characters redrawn in a DS style
+(32x32, nine frames in FireRed's order) from
+[ElvieBlooms/facets](https://github.com/ElvieBlooms/facets) at a pinned commit: the townsfolk, trainers,
+gym leaders, Team Rocket, nurses, Professor Oak, Bill, Mr. Fuji... The Builder takes the community set
+(KyleDove, Jext and Hyo) where it has a person, then DiegoWT's Black/White-style one, Taiga's ORAS-style one
+and PurpleZaffre's, converts each sheet to one palette of 15 colours (the rarest fold into their nearest, which
+changes about one pixel in a hundred) and writes `graphics/gen4/npc/NNN.bin` for each of FireRed's `OBJ_EVENT_GFX_*`.
+Red, Leaf, the rival and everything that is not a person keep FireRed's pictures. A sheet that could not be had
+(no network, a file that did not match its size and SHA-256) leaves that person as FireRed draws them.
+
+## Optional new battle backgrounds
+
+Ticking "New battle backgrounds" (or `build --battle-backgrounds`) replaces FireRed's 20 battle settings with 14
+hand-drawn 240x112 scenes (grass, forest, beach, underwater, sea, lake, mountain, cave, lab, route, indoors,
+neutral, gym and space) of LibertyTwins' Battle Backgrounds Patch FR, as converted by Facets (the same repository
+and pinned commit as the people). The Builder turns each into tiles, a tile map and a palette
+(`graphics/gen4/bg/NNN.bin`) and gives every terrain its scene (the gym, its leaders and the Elite Four share the
+gym's). It writes all of them or none, so a battle never mixes two looks.
+
+All three entries are optional: the engine ABI does not cover them. The art stays its authors' work (see
+CREDITS.md).
 
 ## Graphical interface (Windows)
 

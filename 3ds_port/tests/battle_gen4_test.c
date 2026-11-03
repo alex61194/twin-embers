@@ -18,6 +18,28 @@ static char sAsked[64];
 /* icons.bin: 3 icons, 2 palettes. */
 static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
 
+/* The game's object events and the compositor's palettes, as the NPC tests need them. */
+static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF;
+static const uint16_t sNpcUnfaded[512];
+static uint16_t sNpcPalette[12][16];
+static unsigned sNpcPaletteSets;
+
+int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned *graphicsId, unsigned *frame, const uint16_t **unfaded)
+{
+    if (tileNum != sNpcTile || paletteNum != 3)
+        return 0;
+    *graphicsId = sNpcGfx;
+    *frame = sNpcFrame;
+    *unfaded = sNpcUnfaded;
+    return 1;
+}
+
+void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
+{
+    memcpy(sNpcPalette[slot], colours, 32);
+    ++sNpcPaletteSets;
+}
+
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
     if (strcmp(path, "graphics/gen4/spinda.bin") == 0)
@@ -409,6 +431,76 @@ int main(void)
         sEntry[4] = 3;
         sEntrySize = 0;
         assert(!CtrBattleBg_Load(6, 3, NULL));
+    }
+
+    /* The field's people: a person's entry (nine 32x32 frames and a palette) is read once, the frame its sprite shows
+     * is the picture, drawn on its own slot and palette; no entry, a wrong one or no sprite leaves FireRed's. */
+    {
+        CtrGen4Obj person;
+
+        memset(sEntry, 0, sizeof(sEntry));
+        memcpy(sEntry, "G4N1", 4);
+        sEntry[4] = 9;
+        sEntry[5] = 32;
+        for (unsigned i = 0; i < 16; ++i)
+        {
+            sEntry[8 + i * 2] = (uint8_t)(0x10 + i);
+            sEntry[9 + i * 2] = 0x20;
+        }
+        for (unsigned f = 0; f < 9; ++f)
+            memset(sEntry + 40 + f * 512, (int)(0x30 + f), 512);
+        sEntrySize = 40 + 9 * 512;
+        sNpcTile = 100;
+        sNpcGfx = 21;
+        sNpcFrame = 4;
+        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        assert(strcmp(sAsked, "graphics/gen4/npc/021.bin") == 0);
+        assert(person.side == 4 && person.tiles[0] == 0x34 && person.tiles[511] == 0x34);
+        assert(person.pivotX == 16.0f && person.pivotY == 16.0f && person.scale == 1.0f);
+        assert(person.unfaded == sNpcUnfaded);
+        assert(sNpcPaletteSets == 1 && sNpcPalette[person.slot][1] == 0x2011);
+        /* Read once: the same person again, another frame, the same slot, the palette not set again. */
+        sNpcFrame = 0;
+        {
+            CtrGen4Obj again;
+
+            assert(CtrNpc_Match(100 | 3 << 12, 16, 16, &again));
+            assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
+            assert(sNpcPaletteSets == 1);
+        }
+        /* FireRed's tenth image is drawn as the first. */
+        sNpcFrame = 9;
+        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        /* Another person takes another slot. */
+        sNpcGfx = 22;
+        {
+            CtrGen4Obj other;
+
+            assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &other) && other.slot != person.slot && sNpcPaletteSets == 2);
+        }
+        /* Not a person's tiles or palette: nothing. */
+        assert(!CtrNpc_Match(101 | 3 << 12, 16, 32, &person));
+        assert(!CtrNpc_Match(100 | 4 << 12, 16, 32, &person));
+        /* Entry missing, wrong or too large an id: FireRed's own, and the read is not repeated. */
+        sEntrySize = 0;
+        sNpcGfx = 30;
+        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        sEntrySize = 40 + 9 * 512;
+        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        sNpcGfx = 31;
+        sEntry[4] = 8;
+        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        sNpcGfx = 300;
+        assert(!CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
+        sEntry[4] = 9;
+        for (unsigned g = 40; g < 40 + 12; ++g)
+        {
+            sNpcGfx = g;
+            assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
+        }
+        sNpcGfx = 21;
+        assert(CtrNpc_Match(100 | 3 << 12, 16, 32, &person));
     }
 
     puts("battle_gen4_test: ok");

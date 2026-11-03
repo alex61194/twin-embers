@@ -585,3 +585,90 @@ int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
     }
     return 0;
 }
+
+/* The field's people (CtrNpc_Match): each person's entry read once and kept while it is on screen, in one of as many
+ * slots as the compositor has pictures; the least recently shown goes when a new one comes. */
+#define NPC_FRAMES 9
+#define NPC_HEADER 40
+#define NPC_FRAME_BYTES 512
+
+typedef struct {
+    bool used;
+    unsigned gfx;
+    uint32_t stamp;
+    uint8_t *entry;
+} Npc;
+
+static Npc sNpcs[CTR_GEN4_SLOTS];
+static uint32_t sNpcTick;
+static uint32_t sNpcFailed[8];      /* graphics ids whose entry is not there or not right: asked once */
+
+static Npc *NpcLoad(unsigned gfx)
+{
+    unsigned i, slot = 0;
+    char path[40];
+    uint32_t size = 0;
+    uint8_t *entry;
+
+    for (i = 0; i < CTR_GEN4_SLOTS; ++i)
+        if (sNpcs[i].used && sNpcs[i].gfx == gfx)
+            return &sNpcs[i];
+    if (gfx > 255 || (sNpcFailed[gfx / 32] >> (gfx % 32) & 1))
+        return NULL;
+    sNpcFailed[gfx / 32] |= 1u << (gfx % 32);
+    snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
+    entry = CtrData_Load(path, &size);
+    if (!entry)
+        return NULL;
+    if (size != NPC_HEADER + NPC_FRAMES * NPC_FRAME_BYTES || memcmp(entry, "G4N1", 4) || entry[4] != NPC_FRAMES
+        || entry[5] != 32)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    for (i = 0; i < CTR_GEN4_SLOTS; ++i)
+        if (!sNpcs[i].used)
+        {
+            slot = i;
+            break;
+        }
+        else if (sNpcs[i].stamp < sNpcs[slot].stamp)
+            slot = i;
+    free(sNpcs[slot].entry);
+    sNpcs[slot] = (Npc){true, gfx, ++sNpcTick, entry};
+    sNpcFailed[gfx / 32] &= ~(1u << (gfx % 32));
+    {
+        uint16_t palette[16];
+
+        for (i = 0; i < 16; ++i)
+            palette[i] = (uint16_t)(entry[8 + i * 2] | entry[9 + i * 2] << 8);
+        CtrVideo_SetNpcPalette(slot, palette);
+    }
+    return &sNpcs[slot];
+}
+
+bool CtrNpc_Match(unsigned attr2, unsigned width, unsigned height, CtrGen4Obj *out)
+{
+    unsigned gfx = 0, frame = 0;
+    const uint16_t *unfaded = NULL;
+    Npc *npc;
+
+    if (!CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, &gfx, &frame, &unfaded))
+        return false;
+    npc = NpcLoad(gfx);
+    if (!npc)
+        return false;
+    npc->stamp = ++sNpcTick;
+    if (frame >= NPC_FRAMES)
+        frame = 0;                  /* FireRed's tenth image (a bow) is not drawn */
+    (void)width;
+    out->slot = (unsigned)(npc - sNpcs);
+    out->tiles = npc->entry + NPC_HEADER + frame * NPC_FRAME_BYTES;
+    out->side = 4;
+    out->pivotX = 16.0f;
+    out->pivotY = 32.0f - (float)height / 2.0f;
+    out->scale = 1.0f;
+    out->unfaded = unfaded;
+    return true;
+}
