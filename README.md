@@ -15,7 +15,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 ## The short version
 
 - **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
-- **Game:** Pokémon FireRed, USA, Revision 0. Nothing else is accepted.
+- **Game:** Pokémon FireRed, USA, Revision 0, or Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game). Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
 - **Status:** alpha (v0.5.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
@@ -26,11 +26,14 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 **In v0.5.0:**
 
-- **A new battle look, if you want it.** Battles are drawn at 1.5 times the GBA's size and without blur, with new healthboxes drawn by the port (a Poké Ball in the foe's, red once you own the species, a star for a shiny, your HP numbers and an EXP bar, the Safari Zone's balls left), a new message box, and the trainers you battle shown with HeartGold's pictures.
+- **Twin Embers in Spanish.** `twinembers-es.3dsx` is the whole game in Spanish: every text, name and picture comes from your own Pokémon Edición Rojo Fuego (Spain), and the lower screen's own words are translated. Build its pack from the Spanish ROM with any Builder; each `.3dsx` only takes the pack made from its own language's ROM.
+- **The web Builder in Spanish**, with an EN/ES selector. It takes either ROM and offers the matching game.
+- **A new battle look, if you want it.** Battles are drawn at 1.5 times the GBA's size and without blur, with new healthboxes drawn by the port (in wild battles a Poké Ball in the foe's, red once you own the species, a star for a shiny, your HP numbers and an EXP bar, the Safari Zone's balls left), a new message box, and the trainers you battle shown with HeartGold's pictures.
 - **New battle backgrounds, as an option.** Fourteen hand-drawn scenes (grass, forest, beach, sea, lake, mountain, cave, lab, gym, space...) replace FireRed's twenty settings.
 - **New people on the map, as an option.** Seventy-four characters (townsfolk, trainers, gym leaders, Team Rocket, nurses, Professor Oak...) redrawn in a DS style, with 15 colours each. The rival keeps FireRed's pictures.
 - **You as Ash and Green, as an option.** Red becomes Ash and Leaf becomes Green, in HGSS style: walking, running, cycling, surfing, fishing and using a move on the map, your back in battle, your picture on the trainer card and in the Hall of Fame, the new-game intro, the map icon, riding the bird in Fly and your reflection in water.
 - **Four separate choices in every Builder** (the desktop app, the command line and the web page): HeartGold sprites, new people, new battle backgrounds and Ash and Green. Each downloads only what you pick.
+- **The lower screen** draws accented letters and Ñ in item names and descriptions, and the running switch shows the battle menu's RUN shoe.
 - **Naming a caught Pokémon** keeps the battle on the upper screen, and the D-pad moves through the lower keyboard's tabs, DELETE and OK in the order they are drawn.
 - **Fixes:** a Rare Candy that makes a Pokémon evolve no longer freezes, the end of an in-game trade no longer crashes, quitting the slot machine in the Game Corner no longer crashes, and, with the HeartGold-style backs, yours no longer changes picture as it leaves the screen after the ball is thrown. The evolution scene is drawn like a battle.
 
@@ -113,7 +116,7 @@ Setup is a one-time job of about five minutes. You need three things on the SD c
 
 **1. Get the downloads** from the [latest release](https://github.com/alex61194/twin-embers/releases/latest). They are separate files:
 
-- `twinembers.3dsx`, the game itself.
+- `twinembers.3dsx`, the game itself, or `twinembers-es.3dsx` for the Spanish game (Spanish ROM). Keep the name `twinembers.3dsx` on the SD card if you use the HOME Menu shortcut.
 - `TwinEmbersBuilder.exe`, the Windows tool.
 - `TwinEmbers-Forwarder.cia`, optional: a HOME Menu shortcut (see below).
 
@@ -151,9 +154,11 @@ If Windows SmartScreen warns about the Builder, compare its SHA-256 with the one
 
 | | |
 |---|---|
-| Game | Pokémon FireRed, USA, **Revision 0** |
-| Size | 16,777,216 bytes |
-| SHA-1 | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` |
+| | English game (`twinembers.3dsx`) | Spanish game (`twinembers-es.3dsx`) |
+|---|---|---|
+| Game | Pokémon FireRed, USA, **Revision 0** | Pokémon Edición Rojo Fuego, Spain, **Revision 0** |
+| Size | 16,777,216 bytes | 16,777,216 bytes |
+| SHA-1 | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` | `ab8f6bfe0ccdaf41188cd015c8c74c314d02296a` |
 
 Revision 1, LeafGreen, other languages, modified ROMs and trimmed dumps are refused. No ROM links are provided here or anywhere in this project.
 
@@ -183,8 +188,8 @@ Turbo works while exploring and in battle. It skips drawing frames, not game log
 
 - **Not listed in Homebrew Launcher.** The file must be exactly `SD:/3ds/twinembers/twinembers.3dsx`.
 - **"Data pack missing."** In the Builder, press **SD folder…** and choose the root of the card, not the `3ds` folder.
-- **Pack does not match the engine.** Rebuild it with the Builder from the same release as the `.3dsx`.
-- **"Unsupported ROM."** Check it is FireRed USA Revision 0 against the SHA-1 above.
+- **Pack does not match the engine.** Rebuild it with the Builder from the same release as the `.3dsx`, and from the ROM of the same language: the Spanish ROM's pack only works with `twinembers-es.3dsx`, the USA ROM's with `twinembers.3dsx`.
+- **"Unsupported ROM."** Check it is FireRed USA or Rojo Fuego Spain, Revision 0, against the SHA-1s above.
 - **Builder cannot write.** Free at least 32 MiB and check the card's write-protect switch.
 - **No sound.** Look for `SD:/3ds/dspfirm.cdc`.
 - **Save error.** The message stays on the lower screen until you press A. Leave the card alone, keep your backup (`twinembers.sav.bak`), and report it.
