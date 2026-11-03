@@ -11,11 +11,18 @@
 - **pret/pokefirered contributors** — external decompilation and reconstruction
   tools. Credit is not a license grant for the game source.
 - **pret/pokeheartgold contributors** — external Pokémon HeartGold decompilation
-  (https://github.com/pret/pokeheartgold). The optional Generation 4 battle sprites
-  and menu icons are downloaded by the user's Builder from it at the commit pinned
+  (https://github.com/pret/pokeheartgold). The optional Generation 4 battle sprites,
+  trainer pictures and menu icons are downloaded by the user's Builder from it at the commit pinned
   in `gen4_sources.py`, verified by size and SHA-256, and are not stored in this
   repository. The artwork belongs to Nintendo, Game Freak and Creatures; credit is
   not a license grant.
+- **Fan-made HeartGold-style player backs** — Leaf's by `setogabes` (Discord),
+  Red's from the Battle Art Voxel Fork collection
+  (https://github.com/absol89/DramaticShapeVoxelMod), both as bundled in
+  https://github.com/LucianoNeo/gen1recomp-mods. Downloaded by the user's Builder
+  at the commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not
+  stored in this repository. They depict Nintendo, Game Freak and Creatures'
+  characters; credit is not a license grant.
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

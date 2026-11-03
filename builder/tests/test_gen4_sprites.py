@@ -121,9 +121,10 @@ class DownloadTest(unittest.TestCase):
                     data = png(*sprite(dex * 7 + len(body) + len(side), dex * 30))
                     self.data[(dex, body, side)] = data
                     rows.append(row_for(dex, body, side, data))
-        patcher = patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows))
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
+                        patch.object(gen4_sprites, "BACK_FILES", ())):
+            patcher.start()
+            self.addCleanup(patcher.stop)
         self.urls = []
 
     def get(self, url):
@@ -137,7 +138,7 @@ class DownloadTest(unittest.TestCase):
         cache = self.root / "cache"
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
-        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "downloaded": 8})
+        self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -239,6 +240,219 @@ class SpindaTest(unittest.TestCase):
                                                  for i in (1, 2, 3, 4)))
 
 
+def nitro(magic, kind, body):
+    """A Nitro graphics file with one block."""
+    block = kind + struct.pack("<I", 8 + len(body)) + body
+    return magic + struct.pack("<HHIHH", 0xFEFF, 0x0100, 16 + len(block), 16, 1) + block
+
+
+def narc(members):
+    """A NARC archive of `members`, without names."""
+    data, spans = b"", []
+    for member in members:
+        spans.append((len(data), len(data) + len(member)))
+        data += member + bytes(-len(member) % 4)
+    fat = b"BTAF" + struct.pack("<IHH", 12 + 8 * len(spans), len(spans), 0) + b"".join(
+        struct.pack("<II", *span) for span in spans)
+    fnt = b"BTNF" + struct.pack("<I", 16) + struct.pack("<IHH", 4, 0, 1)
+    img = b"GMIF" + struct.pack("<I", 8 + len(data)) + data
+    return b"NARC" + struct.pack("<HHIHH", 0xFFFE, 0x0100, 16 + len(fat) + len(fnt) + len(img), 16, 3) + fat + fnt + img
+
+
+def scramble_dp(plain, seed):
+    """The inverse of HeartGold's UnscanPokepic_DP: the last word is the seed (and its pixels read back as 0)."""
+    words = list(struct.unpack("<%dH" % (len(plain) // 2), plain))
+    words[-1] = 0
+    out, value = [0] * len(words), seed
+    for i in range(len(words) - 1, -1, -1):
+        out[i] = words[i] ^ (value & 0xFFFF)
+        value = (value * 1103515245 + 24691) & 0xFFFFFFFF
+    return struct.pack("<%dH" % len(out), *out)
+
+
+class TrainerTest(unittest.TestCase):
+    def picture(self, seed):
+        """Two 80x80 frames side by side, rows of 80 bytes, as HeartGold keeps them before scrambling."""
+        return bytes((x * 7 + y * 3 + seed) % 256 for y in range(80) for x in range(80))
+
+    def files(self, cls, seed):
+        plain = self.picture(seed)
+        picture = nitro(b"RGCN", b"RAHC", struct.pack("<HHIIIII", 10, 20, 3, 0, 0, 6400, 0x18)
+                        + scramble_dp(plain, 0xBEEF + seed))
+        palette = nitro(b"RLCN", b"TTLP", struct.pack("<IIII", 3, 0, 32, 0x10)
+                        + struct.pack("<16H", *[(cls * 16 + i) & 0x7FFF for i in range(16)]))
+        return [b"cut", palette, b"cells", b"anim", picture], plain
+
+    def archive(self, classes):
+        members, plains = [], {}
+        for cls in range(classes):
+            files, plains[cls] = self.files(cls, cls)
+            members += files
+        return narc(members), plains
+
+    def test_entry_layout_palette_and_first_frame(self):
+        files, plain = self.files(3, 5)
+        entry = gen4_sprites.trainer_entry(files[4], files[1])
+        self.assertEqual(entry[:8], b"G4T1" + bytes(4))
+        self.assertEqual(struct.unpack_from("<16H", entry, 8), tuple(3 * 16 + i for i in range(16)))
+        self.assertEqual(len(entry), 40 + gen4_sprites.PICTURE)
+        # Row 7 of the first frame is bytes 7*80 .. 7*80+39 of the unscrambled picture.
+        self.assertEqual(entry[40 + 7 * 40:40 + 8 * 40], plain[7 * 80:7 * 80 + 40])
+
+    def test_every_firered_picture_gets_its_class(self):
+        classes = max(gen4_sprites.TRAINER_CLASSES.values()) + 1
+        archive, plains = self.archive(classes)
+        out = dict(gen4_sprites.convert_trainers(archive))
+        self.assertEqual(sorted(out), ["graphics/gen4/trainer/%03d.bin" % pic
+                                       for pic in sorted(gen4_sprites.TRAINER_CLASSES)])
+        brock = out["graphics/gen4/trainer/116.bin"]
+        self.assertEqual(brock[40:80], plains[gen4_sprites.TRAINER_CLASSES[116]][:40])
+
+    def test_player_pictures_are_never_replaced(self):
+        # FireRed's Leaf, Oak and the elite four without a HeartGold picture keep their own.
+        for pic in (112, 114, 132, 136):
+            self.assertNotIn(pic, gen4_sprites.TRAINER_CLASSES)
+
+    def test_a_short_or_wrong_archive_is_refused(self):
+        archive, _ = self.archive(3)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_trainers(archive)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_trainers(b"NOPE" + bytes(40))
+        files, _ = self.files(0, 0)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.trainer_entry(nitro(b"RGCN", b"RAHC", bytes(64)), files[1])
+
+    def test_trainers_come_with_the_download(self):
+        classes = max(gen4_sprites.TRAINER_CLASSES.values()) + 1
+        archive, _ = self.archive(classes)
+        rows = ((0, "trainers", "front", len(archive), hashlib.sha256(archive).hexdigest()),)
+        with patch.object(gen4_sprites.gen4_sources, "FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: archive))
+            self.assertEqual(info["trainers"], len(gen4_sprites.TRAINER_CLASSES))
+            self.assertEqual(len(files), len(gen4_sprites.TRAINER_CLASSES))
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: archive + b"x"))
+            self.assertEqual((files, info["trainers"]), ([], 0))
+
+
+def rgba_png(rows):
+    """An RGBA PNG of rows of (r, g, b, a), every row with filter 1 (left), as image editors often write."""
+    width, height = len(rows[0]), len(rows)
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    lines = b""
+    for row in rows:
+        raw = bytes(v for pixel in row for v in pixel)
+        lines += b"\x01" + bytes((raw[x] - (raw[x - 4] if x >= 4 else 0)) & 0xFF for x in range(len(raw)))
+    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(lines))
+            + chunk(b"IEND", b""))
+
+
+class BackTest(unittest.TestCase):
+    def strip(self, colours):
+        """Five 80x80 frames of `colours` opaque colours in stripes, a transparent corner and a half-transparent
+        pixel; frame f's top-left pixel is colour f."""
+        rows = []
+        for y in range(80):
+            row = []
+            for x in range(400):
+                frame, fx = divmod(x, 80)
+                if fx < 4 and y < 4:
+                    row.append((0, 0, 0, 0))
+                elif (fx, y) == (10, 10):
+                    row.append((255, 255, 255, 60))
+                elif (fx, y) == (5, 5):
+                    row.append((frame * 40, 8, 8, 255))
+                else:
+                    c = (fx + y) % colours
+                    row.append((c * 8, 255 - c * 8, 128, 255))
+            rows.append(row)
+        return rows
+
+    def test_rgba_png_reads_back(self):
+        rows = self.strip(4)
+        width, height, palette, got = gen4_sprites.read_png(rgba_png(rows))
+        self.assertEqual((width, height, palette), (400, 80, []))
+        self.assertEqual(got, rows)
+
+    def test_entry_layout_transparency_and_frames(self):
+        # Each frame its own colour, with a transparent corner and a half-transparent pixel.
+        rows = [[(0, 0, 0, 0) if fx < 4 and y < 4 else (255, 255, 255, 60) if (fx, y) == (10, 10)
+                 else (f * 40, 8, 8, 255) for f in range(5) for fx in range(80)] for y in range(80)]
+        entry = gen4_sprites.convert_back(rgba_png(rows))
+        self.assertEqual(entry[:8], b"G4K2" + bytes([5, 104, 0, 0]))
+        self.assertEqual(len(entry), 40 + 5 * gen4_sprites.BACK_PICTURE)
+        palette = struct.unpack_from("<16H", entry, 8)
+
+        def pixel(frame, x, y):
+            return (entry[40 + frame * gen4_sprites.BACK_PICTURE + y * 52 + x // 2] >> (4 * (x & 1))) & 15
+
+        for frame in range(5):
+            self.assertEqual(pixel(frame, 0, 0), 0)        # the picture's edge
+            self.assertEqual(pixel(frame, 103, 103), 0)
+            self.assertEqual(pixel(frame, 3, 3), 0)        # transparent, enlarged
+            self.assertEqual(pixel(frame, 14, 14), 0)      # alpha under 128, enlarged
+            r = frame * 40
+            self.assertEqual(palette[pixel(frame, 52, 52)], (r >> 3) | (8 >> 3) << 5 | (8 >> 3) << 10)
+            self.assertEqual(pixel(frame, 101, 101), pixel(frame, 52, 52))
+
+    def test_scale3x_rounds_a_corner_and_keeps_its_colours(self):
+        self.assertEqual(gen4_sprites.scale3x([[1, 1], [1, 0]])[3:6], [[1, 1, 1, 1, 1, 0],
+                                                                     [1, 1, 1, 1, 0, 0],
+                                                                     [1, 1, 1, 0, 0, 0]])
+        self.assertEqual(gen4_sprites.scale3x([[2] * 3] * 3), [[2] * 9] * 9)
+
+    def test_enlarged_back_is_centred_on_its_picture(self):
+        picture = gen4_sprites.enlarge_back([[5] * 80 for _ in range(80)])
+        self.assertEqual((len(picture), len(picture[0])), (104, 104))
+        self.assertEqual(sum(v == 5 for row in picture for v in row), 100 * 100)
+        self.assertEqual((picture[1][1], picture[2][2], picture[101][101], picture[102][102]), (0, 5, 5, 0))
+
+    def test_too_many_colours_fold_into_fifteen(self):
+        palette, indices = gen4_sprites.quantize([(c * 8, 0, 0, 255) for c in range(20) for _ in range(c + 1)]
+                                                 + [(0, 0, 0, 0)])
+        self.assertEqual(len(palette), 16)
+        self.assertEqual(palette[0], 0)
+        self.assertEqual(indices[-1], 0)
+        self.assertTrue(all(1 <= i <= 15 for i in indices[:-1]))
+        # The commonest colour keeps its own entry, first after transparency.
+        self.assertEqual(palette[1], 19)
+        # Black is a colour like any other, never transparency.
+        palette, indices = gen4_sprites.quantize([(0, 0, 0, 255), (8, 8, 8, 255)])
+        self.assertEqual(indices, [1, 2] if palette[1] == 0 else [2, 1])
+
+    def test_a_wrong_size_or_indexed_strip_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_back(rgba_png([[(0, 0, 0, 255)] * 80] * 80))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_back(png([[0] * 400] * 80, [(0, 0, 0)] * 16))
+
+    def test_backs_come_with_the_download_from_their_own_repository(self):
+        strip = rgba_png(self.strip(3))
+        rows = ((0, "back", "a/red.png", len(strip), hashlib.sha256(strip).hexdigest()),)
+        urls = []
+
+        def get(url):
+            urls.append(url)
+            return strip
+
+        with patch.object(gen4_sprites.gen4_sources, "FILES", ()), patch.object(gen4_sprites, "BACK_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=get))
+        self.assertEqual([path for path, _ in files], ["graphics/gen4/back/000.bin"])
+        self.assertEqual(info["backs"], 1)
+        self.assertEqual(urls, ["https://raw.githubusercontent.com/%s/%s/a/red.png"
+                                % (gen4_sprites.BACK_REPO, gen4_sprites.BACK_COMMIT)])
+
+    def test_pinned_backs_are_red_and_leaf(self):
+        self.assertEqual([row[:2] for row in gen4_sprites.BACK_FILES], [(0, "back"), (1, "back")])
+        self.assertRegex(gen4_sprites.BACK_COMMIT, "^[0-9a-f]{40}$")
+        for row in gen4_sprites.BACK_FILES:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+
+
 class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
         from firered3ds_builder import gen4_sources
@@ -247,6 +461,7 @@ class SourcesTest(unittest.TestCase):
         self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "unown"}), list(range(1, 28)))
         self.assertEqual(sorted({row[0] for row in gen4_sources.FILES if row[1] == "castform"}), [1, 2, 3])
         self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "spinda"], [("spinda", "spots")])
+        self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "trainers"], [("trainers", "front")])
         species = {row[0] for row in battle}
         self.assertEqual(species, set(range(1, 387)))
         for dex in species:

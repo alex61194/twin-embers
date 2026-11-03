@@ -17,6 +17,23 @@ SHA-256 match that list, converts it and adds it to the pack. Nothing is
 uploaded. Files already downloaded are kept in
 `%LOCALAPPDATA%\TwinEmbers\gen4` for the next build.
 
+The same download brings HeartGold's trainer front pictures (one archive,
+`files/a/0/5/8`, also pinned by size and SHA-256): the trainers you battle show
+HeartGold's picture of their class, 71 of FireRed's trainer pictures in all
+(`TRAINER_CLASSES` in `gen4_sprites.py`), your rival included. Trainers
+HeartGold has no picture of (Lorelei, Agatha, Professor Oak, Leaf and a few
+classes) keep FireRed's.
+
+HeartGold has no back of Red or Leaf, so your own back in battle comes from
+fan-made HeartGold-style strips: two PNGs (80x80, five frames, FireRed's
+throwing animation) from
+[LucianoNeo/gen1recomp-mods](https://github.com/LucianoNeo/gen1recomp-mods) at
+a pinned commit, checked by size and SHA-256 like the rest (`BACK_FILES` in
+`gen4_sprites.py`). The Builder enlarges each frame 1.25 times as pixel art
+(Scale3x, then every 2.4th pixel: 100x100, no new colour), so your back stands
+a little larger than the Pokémon while every pixel stays one screen pixel.
+Without them you keep FireRed's back.
+
 The entries are optional: the engine ABI does not cover them, and a species
 whose files could not be had (no network, a file that did not match) keeps
 FireRed's pictures. The sprites remain Nintendo, Game Freak and Creatures'

@@ -237,10 +237,10 @@ static inline uint32_t VramStamp(unsigned b)
     return CtrVramTrack_SyncBlock(sMemory.vram, sVramCopy, sVramStamp, sVramSynced, b, sVramToken);
 }
 /* HeartGold's battle pictures (3ds_battle_gen4.c) go through the tile cache like VRAM tiles, at addresses past the
- * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes. */
+ * VRAM: picture slot s at GEN4_VRAM + s * GEN4_SLOT. A picture is 100 tiles, 3200 bytes; a back 169, 5408. */
 #define GEN4_VRAM 0x18000u
-#define GEN4_SLOT 0x1000u
-#define GEN4_SLOTS 4u
+#define GEN4_SLOT 0x2000u
+#define GEN4_SLOTS ((unsigned)CTR_GEN4_SLOTS)
 static bool (*sObjOverride)(unsigned attr2, struct CtrGen4Obj *out);
 static const uint8_t *sGen4Tiles[GEN4_SLOTS];
 
@@ -3288,11 +3288,11 @@ static void DrawObjects(unsigned priority, bool effects)
         CTR_PERF_COUNT(PERF_AFFINE_OBJECTS,affine);
         Blend(4, effects, mode == 1);
         ViewBase();
-        /* A battler's FireRed picture with a HeartGold one: that 80x80 picture instead, its point (cx, cy) on the
+        /* A battler's FireRed picture with a HeartGold one: that picture instead (80x80, a back 104x104), its point (cx, cy) on the
          * 64x64 box's centre, at its own scale k (GBA pixels per picture pixel), under the sprite's own matrix. */
         struct CtrGen4Obj gen4;
         bool hg = sBattle && sObjOverride && !color256 && width == 64 && height == 64 && sObjOverride(attr2, &gen4)
-               && gen4.slot < GEN4_SLOTS;
+               && gen4.slot < GEN4_SLOTS && gen4.side * gen4.side * 32 <= GEN4_SLOT;
         float cx = hg ? gen4.pivotX : width / 2.0f, cy = hg ? gen4.pivotY : height / 2.0f, k = hg ? gen4.scale : 1.0f;
         if (hg)
             sGen4Tiles[gen4.slot] = gen4.tiles;
@@ -3318,12 +3318,12 @@ static void DrawObjects(unsigned priority, bool effects)
         bool flipX = !affine && (attr1 & 0x1000), flipY = !affine && (attr1 & 0x2000);
         if (hg)
         {
-            for (unsigned ty = 0; ty < CTR_GEN4_TILES; ++ty)
-                for (unsigned tx = 0; tx < CTR_GEN4_TILES; ++tx)
+            for (unsigned ty = 0; ty < gen4.side; ++ty)
+                for (unsigned tx = 0; tx < gen4.side; ++tx)
                 {
-                    unsigned sx = flipX ? CTR_GEN4_TILES - 1 - tx : tx;
-                    unsigned sy = flipY ? CTR_GEN4_TILES - 1 - ty : ty;
-                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * CTR_GEN4_TILES + sx) * 32, 16 + (attr2 >> 12), false,
+                    unsigned sx = flipX ? gen4.side - 1 - tx : tx;
+                    unsigned sy = flipY ? gen4.side - 1 - ty : ty;
+                    DrawTile(GEN4_VRAM + gen4.slot * GEN4_SLOT + (sy * gen4.side + sx) * 32, 16 + (attr2 >> 12), false,
                              (int)tx * 8, (int)ty * 8, flipX, flipY);
                 }
             CtrPerf_End(PERF_OBJ_AFFINE,perfAffine);

@@ -16,6 +16,11 @@ Pack entries, one per species with a complete set, and the icons:
     graphics/gen4/spinda.bin        where HeartGold draws Spinda's spots (from pret's pokepic.c)
     graphics/gen4/icons.bin         every menu icon, only when all of them could be had
                                     (their palettes replace FireRed's for every icon)
+    graphics/gen4/trainer/NNN.bin   NNN = FireRed's trainer picture (TRAINER_PIC_*), the
+                                    HeartGold class TRAINER_CLASSES pairs with it; a picture
+                                    left out (Lorelei, Agatha, Oak, Leaf...) keeps FireRed's
+    graphics/gen4/back/NNN.bin      NNN = 000 Red's, 001 Leaf's back (TRAINER_BACK_PIC_*): fan
+                                    art in HeartGold's style (BACK_FILES), not pret's
 
 Layout (little endian):
 
@@ -39,6 +44,18 @@ icons.bin (little endian):
     200  u8 x icons  each icon's palette, then zeros to a multiple of 4
     then 1024 bytes an icon: two 32x32 frames, each 16 8x8 4bpp tiles row by row,
          as FireRed's icons
+
+trainer/NNN.bin (little endian): b"G4T1", u32 0, u16 x 16 the palette (BGR555, colour 0
+transparent), then the picture's first frame, 80 x 80 pixels, 4 bits a pixel as above. HeartGold
+keeps the trainer pictures in one NARC (files/a/0/5/8), five files a class: the fifth is the picture (an NCGR
+of two 80x80 frames side by side, its pixels scrambled as Diamond and Pearl's are), its palette
+(the second, an NCLR); the Builder does not need the other three.
+
+back/NNN.bin: b"G4K1", u8 frames (5, FireRed's throw), three zero bytes, u16 x 16 the palette, then
+each frame, 80 x 80 pixels, 4 bits a pixel. HeartGold has no Red or Leaf back: these come from the
+fan-made HGSS-style backs that the gen1recomp HGSS Visual Overhaul mod (LucianoNeo/gen1recomp-mods)
+keeps as 400x80 RGBA strips, Leaf's by setogabes, Red's from a public Red pack; the Builder turns
+each into at most 15 colours (BGR555) and transparency.
 
 spinda.bin: b"G4P1", then the four spots, each a u8 count and that many
 (x, y) u8 pairs: the pixels of the spot on the front picture before the
@@ -65,6 +82,24 @@ MAGIC = b"G4B1"
 PREFIX = "graphics/gen4/battle/"
 ICONS = "graphics/gen4/icons.bin"
 SPINDA = "graphics/gen4/spinda.bin"
+TRAINER_PREFIX = "graphics/gen4/trainer/"
+TRAINER_MAGIC = b"G4T1"
+BACK_PREFIX = "graphics/gen4/back/"
+BACK_MAGIC = b"G4K2"
+BACK_FRAMES = 5
+# The back is enlarged 1.25 as pixel art (Scale3x, then every 2.4th pixel) to 100x100, on a 104x104 picture of
+# 13x13 tiles (CTR_GEN4_BACK_SIZE): shown 1:1, it stands 1.25 times as large as the 80x80 art.
+BACK_SHOWN, BACK_SIZE = 100, 104
+BACK_PICTURE = BACK_SIZE * BACK_SIZE // 2
+# The fan-made backs, pinned like pret's files: (FireRed's TRAINER_BACK_PIC_*, "back", path, size, SHA-256).
+BACK_REPO = "LucianoNeo/gen1recomp-mods"
+BACK_COMMIT = "768f60d9d0f097b9cc65e78099574c296a3f63d2"
+BACK_FILES = (
+    (0, "back", "hgss_sprites/assets/battle/back-animated/redplayer.png", 10199,
+     "26448af5283a349c17016e920aa7c8a6b75e93791b1cad4147870db221ca3cc5"),
+    (1, "back", "hgss_sprites/assets/battle/back-animated/leafplayer.png", 5524,
+     "8c222cfdae83898370c60806bf1c9297207023da59a46ec1f0fce2e9acd8945d"),
+)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
@@ -77,8 +112,9 @@ class Gen4Error(ValueError):
 
 # --- PNG (the 4- and 8-bit indexed images pret keeps) -------------------------------------------
 
-def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[list[int]]]:
-    """(width, height, palette as RGB, rows of palette indices) of an indexed PNG."""
+def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[list]]:
+    """(width, height, palette as RGB, rows of palette indices) of an indexed PNG; of an RGBA one, no palette and
+    rows of (r, g, b, a)."""
     if data[:8] != b"\x89PNG\r\n\x1a\n":
         raise Gen4Error("not a PNG file")
     pos, idat, palette, header = 8, bytearray(), [], None
@@ -97,9 +133,11 @@ def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[li
     if header is None:
         raise Gen4Error("PNG without a header")
     width, height, depth, colour, _, _, interlace = header
-    if colour != 3 or depth not in (4, 8) or interlace:
-        raise Gen4Error("only non-interlaced 4- or 8-bit indexed PNGs are read")
-    stride = (width * depth + 7) // 8
+    rgba = colour == 6 and depth == 8
+    if not (colour == 3 and depth in (4, 8) or rgba) or interlace:
+        raise Gen4Error("only non-interlaced 4- or 8-bit indexed or 8-bit RGBA PNGs are read")
+    step = 4 if rgba else 1
+    stride = width * 4 if rgba else (width * depth + 7) // 8
     raw = zlib.decompress(bytes(idat))
     if len(raw) != (stride + 1) * height:
         raise Gen4Error("PNG data has the wrong size")
@@ -108,9 +146,9 @@ def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[li
         kind = raw[y * (stride + 1)]
         line = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
         for x in range(stride):
-            left = line[x - 1] if x else 0
+            left = line[x - step] if x >= step else 0
             up = previous[x]
-            corner = previous[x - 1] if x else 0
+            corner = previous[x - step] if x >= step else 0
             if kind == 1:
                 line[x] = (line[x] + left) & 0xFF
             elif kind == 2:
@@ -124,7 +162,9 @@ def read_png(data: bytes) -> tuple[int, int, list[tuple[int, int, int]], list[li
             elif kind:
                 raise Gen4Error("unknown PNG filter")
         previous = line
-        if depth == 8:
+        if rgba:
+            rows.append([tuple(line[x * 4:x * 4 + 4]) for x in range(width)])
+        elif depth == 8:
             rows.append(list(line[:width]))
         else:
             rows.append([(line[x // 2] >> (0 if x & 1 else 4)) & 0xF for x in range(width)])
@@ -197,6 +237,244 @@ def convert_spinda(source: bytes) -> bytes:
     return bytes(out)
 
 
+# FireRed's trainer pictures (include/constants/trainers.h, TRAINER_PIC_*) and the HeartGold trainer class
+# (pret/pokeheartgold include/constants/trainer_class.h, TRAINERCLASS_*) whose front picture stands for each one.
+# FireRed's player pictures (backs, the Oak intro) are not trainer front pictures and are never replaced.
+TRAINER_CLASSES = {
+    7: 44,     # RS_TUBER_M -> TUBER_M
+    13: 32,    # RICH_BOY -> RICH_BOY
+    18: 64,    # KINDLER -> FIREBREATHER
+    29: 60,    # SCHOOL_KID_M -> SCHOOL_KID_M
+    30: 61,    # SCHOOL_KID_F -> SCHOOL_KID_F
+    32: 20,    # POKEFAN_M -> POKEFAN_M
+    33: 21,    # POKEFAN_F -> POKEFAN
+    39: 12,    # CYCLING_TRIATHLETE_M -> CYCLIST_M
+    40: 13,    # CYCLING_TRIATHLETE_F -> CYCLIST_F
+    41: 19,    # RUNNING_TRIATHLETE_M -> JOGGER
+    45: 29,    # DRAGON_TAMER -> DRAGON_TAMER
+    47: 28,    # NINJA_BOY -> NINJA_BOY
+    48: 10,    # BATTLE_GIRL -> BATTLE_GIRL
+    49: 80,    # PARASOL_LADY -> PARASOL_LADY
+    54: 37,    # COLLECTOR -> COLLECTOR
+    82: 2,     # YOUNGSTER -> YOUNGSTER
+    83: 6,     # BUG_CATCHER -> BUG_CATCHER
+    84: 3,     # LASS -> LASS
+    85: 46,    # SAILOR -> SAILOR
+    86: 4,     # CAMPER -> CAMPER
+    87: 5,     # PICNICKER -> PICNICKER
+    88: 68,    # POKEMANIAC -> POKE_MANIAC
+    89: 78,    # SUPER_NERD -> SUPER_NERD
+    90: 9,     # HIKER -> HIKER
+    91: 65,    # BIKER -> BIKER
+    92: 63,    # BURGLAR -> BURGLAR
+    93: 59,    # ENGINEER -> WORKER
+    94: 11,    # FISHERMAN -> FISHERMAN
+    95: 42,    # SWIMMER_M -> SWIMMER_M
+    96: 57,    # CUE_BALL -> ROUGHNECK
+    98: 36,    # BEAUTY -> BEAUTY
+    99: 43,    # SWIMMER_F -> SWIMMER_F
+    100: 49,   # PSYCHIC_M -> PSYCHIC_M
+    101: 52,   # ROCKER -> GUITARIST
+    102: 31,   # JUGGLER -> JUGGLER
+    104: 69,   # BIRD_KEEPER -> BIRD_KEEPER_GS
+    105: 14,   # BLACK_BELT -> BLACK_BELT
+    106: 110,  # RIVAL_EARLY -> LEADER_BLUE
+    107: 113,  # SCIENTIST -> SCIENTIST_GS
+    108: 124,  # LEADER_GIOVANNI -> ROCKET_BOSS
+    109: 55,   # ROCKET_GRUNT_M -> TEAM_ROCKET
+    110: 53,   # COOLTRAINER_M -> ACE_TRAINER_M_GS
+    111: 54,   # COOLTRAINER_F -> ACE_TRAINER_F_GS
+    113: 112,  # ELITE_FOUR_BRUNO -> ELITE_FOUR_BRUNO
+    115: 86,   # ELITE_FOUR_LANCE -> CHAMPION (Lance)
+    116: 98,   # LEADER_BROCK -> LEADER_BROCK
+    117: 103,  # LEADER_MISTY -> LEADER_MISTY
+    118: 104,  # LEADER_LT_SURGE -> LEADER_LT_SURGE
+    119: 105,  # LEADER_ERIKA -> LEADER_ERIKA
+    120: 89,   # LEADER_KOGA -> ELITE_FOUR_KOGA
+    121: 108,  # LEADER_BLAINE -> LEADER_BLAINE
+    122: 107,  # LEADER_SABRINA -> LEADER_SABRINA
+    123: 34,   # GENTLEMAN -> GENTLEMAN
+    124: 110,  # RIVAL_LATE -> LEADER_BLUE
+    125: 110,  # CHAMPION_RIVAL -> LEADER_BLUE
+    126: 82,   # CHANNELER -> MEDIUM
+    127: 8,    # TWINS -> TWINS
+    128: 121,  # COOL_COUPLE -> DOUBLE_TEAM
+    129: 122,  # YOUNG_COUPLE -> YOUNG_COUPLE
+    135: 109,  # RED -> PKMN_TRAINER_RED
+    137: 62,   # ROCKET_GRUNT_F -> TEAM_ROCKET_F
+    138: 50,   # PSYCHIC_F -> PSYCHIC_F
+    139: 10,   # CRUSH_GIRL -> BATTLE_GIRL
+    140: 45,   # TUBER_F -> TUBER_F
+    141: 17,   # POKEMON_BREEDER -> PKMN_BREEDER_F
+    142: 39,   # POKEMON_RANGER_M -> PKMN_RANGER_M
+    143: 40,   # POKEMON_RANGER_F -> PKMN_RANGER_F
+    144: 7,    # AROMA_LADY -> AROMA_LADY
+    145: 48,   # RUIN_MANIAC -> RUIN_MANIAC
+    146: 33,   # LADY -> LADY
+    147: 15,   # PAINTER -> ARTIST
+}
+TRAINER_FILES = 5  # a class's files in the NARC: a cut picture, the palette, cells, animation, the whole picture
+TRAINER_PICTURE, TRAINER_PALETTE = 4, 1
+
+
+def narc_files(data: bytes) -> list[bytes]:
+    """The members of a Nitro archive (NARC: BTAF offsets, BTNF names, GMIF data)."""
+    if data[:4] != b"NARC" or len(data) < 28:
+        raise Gen4Error("not a NARC archive")
+    pos = struct.unpack_from("<H", data, 12)[0]
+    if data[pos:pos + 4] != b"BTAF":
+        raise Gen4Error("NARC without its file table")
+    size, count = struct.unpack_from("<IH", data, pos + 4)
+    if pos + 12 + 8 * count > len(data):
+        raise Gen4Error("NARC file table is cut short")
+    spans = [struct.unpack_from("<II", data, pos + 12 + 8 * i) for i in range(count)]
+    pos += size
+    if data[pos:pos + 4] != b"BTNF":
+        raise Gen4Error("NARC without its name table")
+    pos += struct.unpack_from("<I", data, pos + 4)[0]
+    if data[pos:pos + 4] != b"GMIF":
+        raise Gen4Error("NARC without its data")
+    base = pos + 8
+    if any(start > end or base + end > len(data) for start, end in spans):
+        raise Gen4Error("NARC member outside the archive")
+    return [data[base + start:base + end] for start, end in spans]
+
+
+def nitro_block(data: bytes, magic: bytes, kind: bytes) -> bytes:
+    """The first block of a Nitro graphics file (NCGR, NCLR...) after its block header."""
+    if data[:4] != magic:
+        raise Gen4Error("not a %s file" % magic[::-1].decode())
+    pos = struct.unpack_from("<H", data, 12)[0]
+    if data[pos:pos + 4] != kind:
+        raise Gen4Error("%s without its %s block" % (magic[::-1].decode(), kind[::-1].decode()))
+    return data[pos:pos + struct.unpack_from("<I", data, pos + 4)[0]]
+
+
+def unscramble_dp(pixels: bytes) -> bytes:
+    """Diamond and Pearl's scrambled pictures (HeartGold's UnscanPokepic_DP, used for its trainer pictures): each
+    16-bit word from the last back is XORed with an LCG seeded by the last word."""
+    words = list(struct.unpack("<%dH" % (len(pixels) // 2), pixels))
+    seed = words[-1]
+    for i in range(len(words) - 1, -1, -1):
+        words[i] ^= seed & 0xFFFF
+        seed = (seed * 1103515245 + 24691) & 0xFFFFFFFF
+    return struct.pack("<%dH" % len(words), *words)
+
+
+def trainer_entry(picture: bytes, palette: bytes) -> bytes:
+    """One trainer picture's pack entry from HeartGold's NCGR (two 80x80 frames side by side) and NCLR."""
+    block = nitro_block(picture, b"RGCN", b"RAHC")
+    height, width, depth = struct.unpack_from("<HHI", block, 8)
+    pixels = block[0x20:]
+    if (height, width, depth) != (SIZE // 8, 2 * SIZE // 8, 3) or len(pixels) != 2 * PICTURE:
+        raise Gen4Error("a trainer picture is two 80x80 frames in 16 colours")
+    pixels = unscramble_dp(pixels)
+    frame = b"".join(pixels[y * SIZE:y * SIZE + SIZE // 2] for y in range(SIZE))
+    colours = nitro_block(palette, b"RLCN", b"TTLP")[0x18:0x18 + 32]
+    if len(colours) != 32:
+        raise Gen4Error("a trainer palette has 16 colours")
+    return TRAINER_MAGIC + bytes(4) + colours + frame
+
+
+def convert_trainers(archive: bytes) -> list[tuple[str, bytes]]:
+    """The pack entries for FireRed's trainer pictures from HeartGold's archive (TRAINER_CLASSES)."""
+    files = narc_files(archive)
+    out = []
+    for pic, cls in sorted(TRAINER_CLASSES.items()):
+        if (cls + 1) * TRAINER_FILES > len(files):
+            raise Gen4Error("the trainer archive has no class %d" % cls)
+        first = cls * TRAINER_FILES
+        out.append(("%s%03d.bin" % (TRAINER_PREFIX, pic),
+                    trainer_entry(files[first + TRAINER_PICTURE], files[first + TRAINER_PALETTE])))
+    return out
+
+
+def quantize(pixels: list[tuple[int, int, int, int]], colours: int = 15) -> tuple[list[int], list[int]]:
+    """RGBA pixels to at most `colours` BGR555 colours and transparency (alpha under 128): (palette with colour 0
+    the transparent one, each pixel's index). The rarest colour is folded into its nearest one until they fit,
+    so a few edge pixels of a strip with more colours change shade and nothing else does."""
+    def key(pixel):
+        r, g, b, _ = pixel
+        return (r >> 3) | (g >> 3) << 5 | (b >> 3) << 10
+    counts: dict[int, int] = {}
+    for pixel in pixels:
+        if pixel[3] >= 128:
+            counts[key(pixel)] = counts.get(key(pixel), 0) + 1
+    merged = {c: c for c in counts}
+
+    def channels(c):
+        return c & 31, (c >> 5) & 31, (c >> 10) & 31
+
+    while len(counts) > colours:
+        rare = min(counts, key=lambda c: (counts[c], c))
+        rest = [c for c in counts if c != rare]
+        near = min(rest, key=lambda c: (sum((a - b) ** 2 for a, b in zip(channels(c), channels(rare))), c))
+        counts[near] += counts.pop(rare)
+        for c, into in merged.items():
+            if into == rare:
+                merged[c] = near
+    order = sorted(counts, key=lambda c: (-counts[c], c))
+    index = {c: order.index(merged[c]) + 1 for c in merged}
+    return [0] + order, [index[key(pixel)] if pixel[3] >= 128 else 0 for pixel in pixels]
+
+
+def scale3x(rows: list[list[int]]) -> list[list[int]]:
+    """Scale3x (AdvMAME3x) on a grid of palette indices: three times as large, its stairs rounded off, no colour
+    it did not have."""
+    h, w = len(rows), len(rows[0])
+
+    def at(x, y):
+        return rows[min(max(y, 0), h - 1)][min(max(x, 0), w - 1)]
+    out = [[0] * (w * 3) for _ in range(h * 3)]
+    for y in range(h):
+        for x in range(w):
+            a, b, c = at(x - 1, y - 1), at(x, y - 1), at(x + 1, y - 1)
+            d, e, f = at(x - 1, y), at(x, y), at(x + 1, y)
+            g, hh, i = at(x - 1, y + 1), at(x, y + 1), at(x + 1, y + 1)
+            cells = [e] * 9
+            if b != hh and d != f:
+                cells = [d if d == b else e,
+                         b if (d == b and e != c) or (b == f and e != a) else e,
+                         f if b == f else e,
+                         d if (d == b and e != g) or (d == hh and e != a) else e,
+                         e,
+                         f if (b == f and e != i) or (hh == f and e != c) else e,
+                         d if d == hh else e,
+                         hh if (d == hh and e != i) or (hh == f and e != g) else e,
+                         f if hh == f else e]
+            for k, v in enumerate(cells):
+                out[y * 3 + k // 3][x * 3 + k % 3] = v
+    return out
+
+
+def enlarge_back(frame: list[list[int]]) -> list[list[int]]:
+    """An 80x80 frame of indices as the 104x104 picture the port shows (BACK_SHOWN pixels, centred)."""
+    big = scale3x(frame)
+    step = len(big) / BACK_SHOWN
+    picture = [[0] * BACK_SIZE for _ in range(BACK_SIZE)]
+    edge = (BACK_SIZE - BACK_SHOWN) // 2
+    for y in range(BACK_SHOWN):
+        source = big[int((y + 0.5) * step)]
+        for x in range(BACK_SHOWN):
+            picture[edge + y][edge + x] = source[int((x + 0.5) * step)]
+    return picture
+
+
+def convert_back(strip: bytes) -> bytes:
+    """A fan-made back's pack entry from its 400x80 RGBA strip of five 80x80 frames, each enlarged to 104x104."""
+    width, height, _, rows = read_png(strip)
+    if (width, height) != (BACK_FRAMES * SIZE, SIZE) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a back is an RGBA strip of five 80x80 frames")
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    frames = b""
+    for frame in range(BACK_FRAMES):
+        grid = [indices[y * width + frame * SIZE:y * width + frame * SIZE + SIZE] for y in range(SIZE)]
+        for line in enlarge_back(grid):
+            frames += bytes(line[x] | line[x + 1] << 4 for x in range(0, BACK_SIZE, 2))
+    colours = (palette + [0] * 16)[:16]
+    return BACK_MAGIC + bytes([BACK_FRAMES, BACK_SIZE, 0, 0]) + struct.pack("<16H", *colours) + frames
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -228,6 +506,10 @@ def source_path(row: tuple) -> str:
         return gen4_sources.CASTFORM_PATH.format(gen4_sources.CASTFORM_NAMES[row[0]], row[2])
     if row[1] == "spinda":
         return gen4_sources.SPINDA_PATH
+    if row[1] == "trainers":
+        return gen4_sources.TRAINERS_PATH
+    if row[1] == "back":
+        return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
 
@@ -241,11 +523,22 @@ def file_name(row: tuple) -> str:
         return "castform_{:02d}_{}.png".format(row[0], row[2])
     if row[1] == "spinda":
         return "pokepic.c"
+    if row[1] == "trainers":
+        return "trainers_a058.narc"
+    if row[1] == "back":
+        return "back_{:03d}.png".format(row[0])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
 def file_url(row: tuple) -> str:
+    if row[1] == "back":
+        return URL.format(repo=BACK_REPO, commit=BACK_COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
+
+
+def all_files() -> tuple:
+    """Every file the download may fetch: pret's (gen4_sources.FILES), then the fan-made backs."""
+    return tuple(gen4_sources.FILES) + BACK_FILES
 
 
 def matches(row: tuple, data: bytes | None) -> bool:
@@ -292,7 +585,7 @@ class Downloader:
 def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | None = None
                ) -> tuple[list[tuple[str, bytes]], dict]:
     """The pack entries for every species whose files could be had, the icons if all could, and a summary."""
-    rows = list(gen4_sources.FILES)
+    rows = list(all_files())
     got: dict[tuple, bytes] = {}
     downloaded = done = 0
     # Plain threads taking rows from a queue: concurrent.futures would bring multiprocessing (and ctypes, libffi,
@@ -329,6 +622,8 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     icon_rows = sorted((row for row in rows if row[1] == "icon"), key=lambda row: row[0])
     form_rows = {kind: [row for row in rows if row[1] == kind] for kind in ("unown", "castform")}
     spinda = [row for row in rows if row[1] == "spinda"]
+    trainers = [row for row in rows if row[1] == "trainers"]
+    backs = [row for row in rows if row[1] == "back"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -349,4 +644,10 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     icons = icon_rows and all(row[:3] in got for row in icon_rows)
     if icons:
         files.append((ICONS, convert_icons([got[row[:3]] for row in icon_rows])))
-    return files, {"species": species, "missing": missing, "icons": bool(icons), "downloaded": downloaded}
+    trainer_files = convert_trainers(got[trainers[0][:3]]) if trainers and trainers[0][:3] in got else []
+    files += trainer_files
+    back_files = [("%s%03d.bin" % (BACK_PREFIX, row[0]), convert_back(got[row[:3]])) for row in backs
+                  if row[:3] in got]
+    files += back_files
+    return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
+                   "backs": len(back_files), "downloaded": downloaded}
