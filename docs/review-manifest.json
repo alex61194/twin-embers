@@ -5935,6 +5935,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0208-player-back-while-it-slides-out.json",
+   "sha256": "1a8045a62ce88bf40a11947ba877a9657fd75793f35ac1aa9ef47b1e8399a250",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/battle_hud_test.c",
    "sha256": "cd0ad89f9b5d6a24d525c70b69639f869c2085fb4e40e07af1fe92523b1190e1",
    "review_status": "reviewed",
