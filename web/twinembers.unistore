@@ -47,7 +47,7 @@
         {
           "type": "downloadFile",
           "file": "https://github.com/alex61194/twin-embers/releases/latest/download/twinembers-es.3dsx",
-          "output": "sdmc:/3ds/twinembers/twinembers.3dsx"
+          "output": "sdmc:/3ds/twinembers/twinembers-es.3dsx"
         }
       ],
       "HOME Menu forwarder (CIA)": [
