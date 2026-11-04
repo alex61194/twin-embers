@@ -673,7 +673,7 @@ static void OptRow(int row, const CtrPokeTouchView *v)
                     UI_RGB(255, 214, 160));
     UiArrow(boxX + 10, fy + 4, -1, EM_STRIPE);
     UiArrow(boxX + OPT_BOX_W - 15, fy + 4, 1, EM_STRIPE);
-    if (!strcmp(value, CTR_TR("ON", "S\xC3\x8D")) || !strcmp(value, CTR_TR("OFF", "NO")))
+    if (!strcmp(value, CTR_TR("ON", "S\xC3\x8D", "AN")) || !strcmp(value, CTR_TR("OFF", "NO", "AUS")))
         EmSwitch(mid - 13, fy + 3, value[1] == 'N');
     else
         UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
@@ -692,7 +692,7 @@ static const CtrPokeTouchRect sSaveNo = {172, 206, 72, 30};
 #define SAVE_LINE_Y 42
 #define SAVE_LINE_STEP 22
 #define SAVE_VALUE_RIGHT 150
-static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("PLAYER", "JUGADOR"), CTR_TR("BADGES", "MEDALLAS"), "POK\xc3\xa9" "DEX", CTR_TR("TIME", "TIEMPO"), CTR_TR("MONEY", "DINERO")};
+static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("PLAYER", "JUGADOR", "Spieler"), CTR_TR("BADGES", "MEDALLAS", "Orden"), CTR_TR("POK\xc3\xa9" "DEX", "POK\xc3\xa9" "DEX", "Pok\xc3\xa9" "dex"), CTR_TR("TIME", "TIEMPO", "Zeit"), CTR_TR("MONEY", "DINERO", "Geld")};
 
 static CtrPokeTouchRect SaveField(int f)
 {
@@ -720,9 +720,11 @@ static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
                              (unsigned)(v->saveMinutes > 59 ? 59 : v->saveMinutes)); break;
     default:        snprintf(text, sizeof(text), "\xc2\xa5%u", (unsigned)(v->saveMoney > 999999u ? 999999u : v->saveMoney)); break;
     }
+#if !CTR_LANG_DE
     for (char *c = text; f == SF_NAME && *c; ++c)
         if (*c >= 'a' && *c <= 'z')
             *c = (char)(*c - ('a' - 'A'));
+#endif
     UiText(text, SAVE_VALUE_RIGHT - TextWidth(text), r.y + 3, UI_RGB(48, 80, 200), UI_RGB(176, 196, 240), 1,
            SAVE_VALUE_RIGHT + 1);
 }
@@ -753,7 +755,7 @@ static void SaveDraw(const CtrPokeTouchView *v)
     UiRoundFill(p->x + 1, p->y + 1, p->w - 2, p->h - 2, 4, SAVE_CARD);
     EmGradFill(p->x + 1, p->y + 1, p->w - 2, 22, 4, kEmAmber.top, kEmAmber.bottom);
     Fill(p->x + 1, p->y + 23, p->w - 2, 1, kEmAmber.edge);
-    UiText(CTR_TR("SAVE", "GUARDAR"), p->x + 10, p->y + 7, EM_WHITE, kEmAmber.inkSh, 1, p->x + p->w - 4);
+    UiText(CTR_TR("SAVE", "GUARDAR", "Sichern"), p->x + 10, p->y + 7, EM_WHITE, kEmAmber.inkSh, 1, p->x + p->w - 4);
     for (int f = 0; f < SF_COUNT; ++f) {
         UiText(sSaveLabel[f], p->x + 12, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 1, 84);
         if (f + 1 < SF_COUNT)
@@ -815,7 +817,7 @@ static void SaveButtons(const CtrPokeTouchView *v)
         if (sel)
             EmGlowRing(r.x, r.y, r.w, r.h);
         fy = EmButton(r.x, r.y, r.w, r.h, pal, BTN_DEPTH, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D") : "NO", r.x, r.w, fy, r.h - BTN_DEPTH, pal);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D", "Ja") : CTR_TR("NO", "NO", "Nein"), r.x, r.w, fy, r.h - BTN_DEPTH, pal);
     }
 }
 
@@ -909,12 +911,12 @@ static void Back(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchBack;
     const EmPal *pal = v->backEnabled ? &kEmViolet : &kEmGrey;
-    int w = TextWidth(CTR_TR("BACK", "ATR\xC3\x81S")), x = r->x + (r->w - w - 9) / 2, fy;
+    int w = TextWidth(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK")), x = r->x + (r->w - w - 9) / 2, fy;
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     UiArrow(x, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, -1, pal->ink);
-    UiText(CTR_TR("BACK", "ATR\xC3\x81S"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
+    UiText(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
 }
 
 /* PAGE: switches between OPTIONS pages (PAGE 1/2, PAGE 2/2) right above BACK. */
@@ -924,7 +926,7 @@ static void OptPageButton(const CtrPokeTouchView *v)
     char label[16];
     int fy;
 
-    snprintf(label, sizeof(label), "PAGE %u/%u", (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
+    snprintf(label, sizeof(label), CTR_TR("PAGE %u/%u", "P\xC3\x81G. %u/%u", "SEITE %u/%u"), (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
     EmLabel(label, r->x, r->w, fy, r->h - COL_DEPTH, &kEmCream);
@@ -999,8 +1001,8 @@ static int FrameSample(int type, int x, int y)
 
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
-    UiText(CTR_TR("YES", "S\xC3\x8D"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
-    UiText("NO", x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("YES", "S\xC3\x8D", "JA"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("NO", "NO", "NEIN"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
 }
 
@@ -1100,16 +1102,22 @@ static void Button(int id, const CtrPokeTouchView *v)
         break;
     default: {
         char name[16] = {0};
-        const char *label = id == PT_POKEDEX ? "POK\xc3\xa9" "DEX" : id == PT_POKEMON ? "POK\xc3\xa9" "MON" : id == PT_BAG ? CTR_TR("BAG", "MOCHILA")
-                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR") : id == PT_OPTIONS ? CTR_TR("OPTION", "AJUSTES") : name;
+        const char *label = id == PT_POKEDEX ? CTR_TR("POK\xc3\xa9" "DEX", "POK\xc3\xa9" "DEX", "Pok\xc3\xa9" "dex")
+                          : id == PT_POKEMON ? CTR_TR("POK\xc3\xa9" "MON", "POK\xc3\xa9" "MON", "Pok\xc3\xa9" "mon")
+                          : id == PT_BAG ? CTR_TR("BAG", "MOCHILA", "Beutel")
+                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR", "Sichern") : id == PT_OPTIONS ? CTR_TR("OPTION", "AJUSTES", "Option") : name;
 
         if (id == PT_CARD) {
-            /* The player's name (uppercase), as the game's other labels. */
+            /* The player's name (in original case for modern Title Case, or uppercase otherwise). */
             int n = 0;
 
             for (; n < (int)sizeof(name) - 1 && v->playerName[n]; ++n) {
                 char ch = v->playerName[n];
+#if CTR_LANG_DE
+                name[n] = ch;
+#else
                 name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
+#endif
             }
             name[n] = 0;
         }

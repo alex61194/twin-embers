@@ -1,0 +1,401 @@
+{
+ "schema": 1,
+ "technical_reference": "96f95e015af9f5f38e4a8aefca7cab29a78b030d",
+ "files": [
+  {
+   "path": "src/pokemon.c",
+   "before_sha256": "496c4b0d163e1fa3b37bfc611ec93bb026d05d63022ce714776a3dca9b7bc1e3",
+   "after_sha256": "cd1697bb492271c50c5a1d6cab4b7c2b7732bb3ccef7f469a73f802b5bd09855",
+   "remove": false,
+   "lines": [
+    {
+     "span": [
+      0,
+      39
+     ]
+    },
+    {
+     "port": "#include \"characters.h\"\n"
+    },
+    {
+     "span": [
+      39,
+      3005
+     ]
+    },
+    {
+     "port": "#if defined(PLATFORM_3DS)\n"
+    },
+    {
+     "port": "            bool8 isSpeciesName = FALSE;\n"
+    },
+    {
+     "port": "            u16 species = GetBoxMonData(boxMon, MON_DATA_SPECIES, NULL);\n"
+    },
+    {
+     "port": "            if (species > SPECIES_NONE && species < NUM_SPECIES)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                u8 k;\n"
+    },
+    {
+     "port": "                isSpeciesName = TRUE;\n"
+    },
+    {
+     "port": "                for (k = 0; k < POKEMON_NAME_LENGTH; k++)\n"
+    },
+    {
+     "port": "                {\n"
+    },
+    {
+     "port": "                    u8 c1 = boxMon->nickname[k];\n"
+    },
+    {
+     "port": "                    u8 c2 = gSpeciesNames[species][k];\n"
+    },
+    {
+     "port": "                    if (c1 >= CHAR_a && c1 <= CHAR_z) c1 -= (CHAR_a - CHAR_A);\n"
+    },
+    {
+     "port": "                    else if (c1 >= 0xF4 && c1 <= 0xF6) c1 -= 3;\n"
+    },
+    {
+     "port": "                    if (c2 >= CHAR_a && c2 <= CHAR_z) c2 -= (CHAR_a - CHAR_A);\n"
+    },
+    {
+     "port": "                    else if (c2 >= 0xF4 && c2 <= 0xF6) c2 -= 3;\n"
+    },
+    {
+     "port": "                    if (c1 != c2)\n"
+    },
+    {
+     "port": "                    {\n"
+    },
+    {
+     "port": "                        isSpeciesName = FALSE;\n"
+    },
+    {
+     "port": "                        break;\n"
+    },
+    {
+     "port": "                    }\n"
+    },
+    {
+     "port": "                    if (c1 == EOS)\n"
+    },
+    {
+     "port": "                        break;\n"
+    },
+    {
+     "port": "                }\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "#endif\n"
+    },
+    {
+     "port": "            bool8 newWord = TRUE;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "            for (retVal = 0; retVal < POKEMON_NAME_LENGTH; retVal++)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                u8 b = boxMon->nickname[retVal];\n"
+    },
+    {
+     "port": "                data[retVal] = b;\n"
+    },
+    {
+     "port": "                if (b == EOS)\n"
+    },
+    {
+     "port": "                    break;\n"
+    },
+    {
+     "port": "#if defined(PLATFORM_3DS)\n"
+    },
+    {
+     "port": "                if (isSpeciesName)\n"
+    },
+    {
+     "port": "                {\n"
+    },
+    {
+     "port": "                    if (newWord)\n"
+    },
+    {
+     "port": "                    {\n"
+    },
+    {
+     "port": "                        if (b != CHAR_SPACE && b != CHAR_HYPHEN && b != CHAR_PERIOD)\n"
+    },
+    {
+     "port": "                            newWord = FALSE;\n"
+    },
+    {
+     "port": "                    }\n"
+    },
+    {
+     "port": "                    else\n"
+    },
+    {
+     "port": "                    {\n"
+    },
+    {
+     "port": "                        if (b == CHAR_SPACE || b == CHAR_HYPHEN || b == CHAR_PERIOD)\n"
+    },
+    {
+     "port": "                        {\n"
+    },
+    {
+     "port": "                            newWord = TRUE;\n"
+    },
+    {
+     "port": "                        }\n"
+    },
+    {
+     "port": "                        else if (b >= CHAR_A && b <= CHAR_Z)\n"
+    },
+    {
+     "port": "                        {\n"
+    },
+    {
+     "port": "                            data[retVal] = b + (CHAR_a - CHAR_A);\n"
+    },
+    {
+     "port": "                        }\n"
+    },
+    {
+     "port": "                        else if (b >= 0xF1 && b <= 0xF3)\n"
+    },
+    {
+     "port": "                        {\n"
+    },
+    {
+     "port": "                            data[retVal] = b + 3;\n"
+    },
+    {
+     "port": "                        }\n"
+    },
+    {
+     "port": "                    }\n"
+    },
+    {
+     "port": "                }\n"
+    },
+    {
+     "port": "#endif\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "span": [
+      3047,
+      3558
+     ]
+    },
+    {
+     "port": "    u16 species;\n"
+    },
+    {
+     "port": "    u8 (*names)[POKEMON_NAME_LENGTH + 1] = (u8 (*)[POKEMON_NAME_LENGTH + 1])gSpeciesNames;\n"
+    },
+    {
+     "span": [
+      6605,
+      3
+     ]
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "    for (species = 1; species < NUM_SPECIES; species++)\n"
+    },
+    {
+     "port": "    {\n"
+    },
+    {
+     "port": "        u8 *name = names[species];\n"
+    },
+    {
+     "port": "        u8 j;\n"
+    },
+    {
+     "port": "        bool8 newWord = TRUE;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (j = 0; j < POKEMON_NAME_LENGTH && name[j] != EOS; j++)\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            u8 b = name[j];\n"
+    },
+    {
+     "port": "            if (newWord)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                if (b != CHAR_SPACE && b != CHAR_HYPHEN && b != CHAR_PERIOD)\n"
+    },
+    {
+     "port": "                    newWord = FALSE;\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "            else\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                if (b == CHAR_SPACE || b == CHAR_HYPHEN || b == CHAR_PERIOD)\n"
+    },
+    {
+     "port": "                {\n"
+    },
+    {
+     "port": "                    newWord = TRUE;\n"
+    },
+    {
+     "port": "                }\n"
+    },
+    {
+     "port": "                else if (b >= CHAR_A && b <= CHAR_Z)\n"
+    },
+    {
+     "port": "                {\n"
+    },
+    {
+     "port": "                    name[j] = b + (CHAR_a - CHAR_A);\n"
+    },
+    {
+     "port": "                }\n"
+    },
+    {
+     "port": "                else if (b >= 0xF1 && b <= 0xF3)\n"
+    },
+    {
+     "port": "                {\n"
+    },
+    {
+     "port": "                    name[j] = b + 3;\n"
+    },
+    {
+     "port": "                }\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "    }\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "    {\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuPokemon[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuPokedex[];\n"
+    },
+    {
+     "port": "        u8 *p = (u8 *)gText_MenuPokemon;\n"
+    },
+    {
+     "port": "        if (p != NULL && p[0] == CHAR_P)\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            p[1] = CHAR_o;\n"
+    },
+    {
+     "port": "            p[2] = CHAR_k;\n"
+    },
+    {
+     "port": "            p[3] = 0x1B; // \u00e9\n"
+    },
+    {
+     "port": "            p[4] = CHAR_m;\n"
+    },
+    {
+     "port": "            p[5] = CHAR_o;\n"
+    },
+    {
+     "port": "            p[6] = CHAR_n;\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "        p = (u8 *)gText_MenuPokedex;\n"
+    },
+    {
+     "port": "        if (p != NULL && p[0] == CHAR_P)\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            p[1] = CHAR_o;\n"
+    },
+    {
+     "port": "            p[2] = CHAR_k;\n"
+    },
+    {
+     "port": "            p[3] = 0x1B; // \u00e9\n"
+    },
+    {
+     "port": "            p[4] = CHAR_d;\n"
+    },
+    {
+     "port": "            p[5] = CHAR_e;\n"
+    },
+    {
+     "port": "            p[6] = CHAR_x;\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "    }\n"
+    },
+    {
+     "span": [
+      6608,
+      2
+     ]
+    }
+   ]
+  }
+ ]
+}

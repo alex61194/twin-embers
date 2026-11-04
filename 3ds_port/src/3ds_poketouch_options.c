@@ -6,13 +6,13 @@
 #include "3ds_settings.h"
 #include "3ds_lang.h"
 
-static const char *const sTextSpeed[] = {CTR_TR("SLOW", "LENTA"), CTR_TR("MID", "MEDIA"), CTR_TR("FAST", "R\xC3\x81PIDA")};
-static const char *const sBattleScene[] = {CTR_TR("ON", "S\xC3\x8D"), CTR_TR("OFF", "NO")};
-static const char *const sBattleStyle[] = {CTR_TR("SHIFT", "CAMBIO"), CTR_TR("SET", "FIJO")};
-static const char *const sSound[] = {CTR_TR("MONO", "MONO"), CTR_TR("STEREO", "EST\xC3\x89REO")};
-static const char *const sButtonMode[] = {CTR_TR("HELP", "AYUDA"), "LR", "L=A"};
-static const char *const sFps[] = {CTR_TR("ON", "S\xC3\x8D"), CTR_TR("OFF", "NO")};
-static const char *const sDayNight[] = {CTR_TR("CLOCK", "RELOJ"), CTR_TR("FIXED", "FIJA"), CTR_TR("OFF", "NO")};
+static const char *const sTextSpeed[] = {CTR_TR("SLOW", "LENTA", "LANGSAM"), CTR_TR("MID", "MEDIA", "MITTEL"), CTR_TR("FAST", "R\xC3\x81PIDA", "SCHNELL")};
+static const char *const sBattleScene[] = {CTR_TR("ON", "S\xC3\x8D", "EIN"), CTR_TR("OFF", "NO", "AUS")};
+static const char *const sBattleStyle[] = {CTR_TR("SHIFT", "CAMBIO", "WECHSEL"), CTR_TR("SET", "FIJO", "FOLGE")};
+static const char *const sSound[] = {CTR_TR("MONO", "MONO", "MONO"), CTR_TR("STEREO", "EST\xC3\x89REO", "STEREO")};
+static const char *const sButtonMode[] = {CTR_TR("HELP", "AYUDA", "HILFE"), "LR", "L=A"};
+static const char *const sFps[] = {CTR_TR("ON", "S\xC3\x8D", "EIN"), CTR_TR("OFF", "NO", "AUS")};
+static const char *const sDayNight[] = {CTR_TR("CLOCK", "RELOJ", "UHRZEIT"), CTR_TR("FIXED", "FIJA", "FEST"), CTR_TR("OFF", "NO", "AUS")};
 enum { DAY_NIGHT_CLOCK, DAY_NIGHT_FIXED, DAY_NIGHT_OFF, DAY_NIGHT_COUNT };
 /* FIXED's hour, picked on the HOUR row: any half hour of the 24, 00:00 to 23:30. */
 #define HOUR_STEP_SECONDS 1800
@@ -28,7 +28,7 @@ static const char *const sHourName[HOUR_COUNT] = {
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
     "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
 };
-static const char *const sEmbers[] = {CTR_TR("OFF", "NO"), CTR_TR("LOW", "POCAS"), CTR_TR("HIGH", "MUCHAS")};     /* CTR_EMBERS_* */
+static const char *const sEmbers[] = {CTR_TR("OFF", "NO", "AUS"), CTR_TR("LOW", "POCAS", "WENIG"), CTR_TR("HIGH", "MUCHAS", "VIEL")};     /* CTR_EMBERS_* */
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
@@ -77,27 +77,27 @@ void CtrOptions_EmbersInit(int isNew3ds)
 
 /* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
 static const CtrOptionRow sRows[] = {
-    {CTR_TR("TEXT SPEED", "VEL. TEXTO"), {CTR_TR("How fast dialogue", "La velocidad a la que"), CTR_TR("text is printed.", "aparece el texto.")}, PT_OPT_TEXT_SPEED, sTextSpeed, NULL, NULL, NULL, NULL},
-    {CTR_TR("BATTLE SCENE", "ANIMACI\xC3\x93N"), {CTR_TR("Show or skip the move", "Ver o saltar las animaciones"), CTR_TR("animations in battle.", "de los ataques en combate.")}, PT_OPT_BATTLE_SCENE, sBattleScene, NULL,
+    {CTR_TR("TEXT SPEED", "VEL. TEXTO", "TEXTTEMPO"), {CTR_TR("How fast dialogue", "La velocidad a la que", "Geschwindigkeit der"), CTR_TR("text is printed.", "aparece el texto.", "Textanzeige.")}, PT_OPT_TEXT_SPEED, sTextSpeed, NULL, NULL, NULL, NULL},
+    {CTR_TR("BATTLE SCENE", "ANIMACI\xC3\x93N", "KAMPFANIMATION"), {CTR_TR("Show or skip the move", "Ver o saltar las animaciones", "Kampfanimationen im Kampf"), CTR_TR("animations in battle.", "de los ataques en combate.", "anzeigen oder nicht.")}, PT_OPT_BATTLE_SCENE, sBattleScene, NULL,
      NULL, NULL, NULL},
-    {CTR_TR("BATTLE STYLE", "ESTILO COMBATE"), {CTR_TR("SHIFT offers a switch", "CAMBIO te deja cambiar"), CTR_TR("after a foe faints.", "cuando el rival se debilita.")}, PT_OPT_BATTLE_STYLE, sBattleStyle, NULL,
+    {CTR_TR("BATTLE STYLE", "ESTILO COMBATE", "KAMPFSTIL"), {CTR_TR("SHIFT offers a switch", "CAMBIO te deja cambiar", "WECHSEL erlaubt Tausch"), CTR_TR("after a foe faints.", "cuando el rival se debilita.", "nach besiegtem Gegner.")}, PT_OPT_BATTLE_STYLE, sBattleStyle, NULL,
      NULL, NULL, NULL},
-    {CTR_TR("SOUND", "SONIDO"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
-    {CTR_TR("BUTTON MODE", "MODO BOTONES"), {CTR_TR("What the L and R buttons", "Qu\xC3\xA9 hacen los botones L y R:"), CTR_TR("do: HELP, LR or L=A.", "AYUDA, LR o L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
+    {CTR_TR("SOUND", "SONIDO", "TON"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo.", "Mono- oder Stereo-Klang."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
+    {CTR_TR("BUTTON MODE", "MODO BOTONES", "TASTENMODUS"), {CTR_TR("What the L and R buttons", "Qu\xC3\xA9 hacen los botones L y R:", "Funktion der L- und R-Tasten:"), CTR_TR("do: HELP, LR or L=A.", "AYUDA, LR o L=A.", "HILFE, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
-    {CTR_TR("FRAME", "MARCO"), {CTR_TR("The frame of menu", "El marco de los men\xC3\xBAs"), CTR_TR("and YES/NO boxes.", "y de las cajas S\xC3\x8D/NO.")}, PT_OPT_FRAME, NULL, CTR_TR("TYPE", "TIPO"), NULL, NULL, NULL},
+    {CTR_TR("FRAME", "MARCO", "FENSTER"), {CTR_TR("The frame of menu", "El marco de los men\xC3\xBAs", "Das Design der Men\xC3\xBCs"), CTR_TR("and YES/NO boxes.", "y de las cajas S\xC3\x8D/NO.", "und JA/NEIN-Fenster.")}, PT_OPT_FRAME, NULL, CTR_TR("TYPE", "TIPO", "TYP"), NULL, NULL, NULL},
     /* The 3DS's own: the counter in the top-right corner of the top screen (stored in the save's spare bit). */
-    {CTR_TR("FPS COUNTER", "CONTADOR FPS"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por"), CTR_TR("second on the top screen.", "segundo arriba.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
+    {CTR_TR("FPS COUNTER", "CONTADOR FPS", "FPS-ANZEIGE"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second on the top screen.", "segundo arriba.", "auf dem Topscreen anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
     /* Page 2: 3DS Port QoL options. */
-    {CTR_TR("TYPE MATCHUP", "EFICACIA TIPOS"), {CTR_TR("Show type effectiveness", "Muestra la eficacia de tipos"), CTR_TR("on battle move cards.", "en los ataques del combate.")}, 0, sFps, NULL,
+    {CTR_TR("TYPE MATCHUP", "EFICACIA TIPOS", "TYP-EFFEKT."), {CTR_TR("Show type effectiveness", "Muestra la eficacia de tipos", "Typenvor-/nachteile bei"), CTR_TR("on battle move cards.", "en los ataques del combate.", "Attacken im Kampf anzeigen.")}, 0, sFps, NULL,
      GetTypeMatchup, TwoCount, SetTypeMatchup},
-    {CTR_TR("MOVE DETAILS", "DATOS ATAQUES"), {CTR_TR("Show live move details", "Muestra los datos y la clase"), CTR_TR("and category in battle.", "de los ataques en combate.")}, 0, sFps, NULL,
+    {CTR_TR("MOVE DETAILS", "DATOS ATAQUES", "ATTACKEN-INFOS"), {CTR_TR("Show live move details", "Muestra los datos y la clase", "Werte und Schadensklasse"), CTR_TR("and category in battle.", "de los ataques en combate.", "der Attacken anzeigen.")}, 0, sFps, NULL,
      GetMoveDetails, TwoCount, SetMoveDetails},
-    {CTR_TR("DAY/NIGHT", "D\xC3\x8D" "A/NOCHE"), {CTR_TR("The 3DS clock's hour, the", "La hora de la 3DS, la HORA"), CTR_TR("HOUR below, or off.", "de abajo, o desactivado.")}, 0, sDayNight, NULL,
+    {CTR_TR("DAY/NIGHT", "D\xC3\x8D" "A/NOCHE", "TAG/NACHT"), {CTR_TR("The 3DS clock's hour, the", "La hora de la 3DS, la HORA", "3DS-Uhrzeit, die STUNDE"), CTR_TR("HOUR below, or off.", "de abajo, o desactivado.", "unten, oder deaktiviert.")}, 0, sDayNight, NULL,
      GetDayNight, DayNightCount, SetDayNight},
-    {CTR_TR("HOUR", "HORA"), {CTR_TR("The hour outdoors when", "La hora en el exterior si"), CTR_TR("DAY/NIGHT is FIXED.", "D\xC3\x8D" "A/NOCHE est\xC3\xA1 en FIJA.")}, 0, sHourName, NULL,
+    {CTR_TR("HOUR", "HORA", "STUNDE"), {CTR_TR("The hour outdoors when", "La hora en el exterior si", "Uhrzeit in der Oberwelt,"), CTR_TR("DAY/NIGHT is FIXED.", "D\xC3\x8D" "A/NOCHE est\xC3\xA1 en FIJA.", "wenn TAG/NACHT FEST ist.")}, 0, sHourName, NULL,
      GetHour, HourCount, SetHour},
-    {CTR_TR("EMBERS", "ASCUAS"), {CTR_TR("Sparks rising behind the", "Chispas que suben tras los"), CTR_TR("menus. LOW suits an Old 3DS.", "men\xC3\xBAs. POCAS para Old 3DS.")}, 0, sEmbers, NULL,
+    {CTR_TR("EMBERS", "ASCUAS", "FUNKEN"), {CTR_TR("Sparks rising behind the", "Chispas que suben tras los", "Funken hinter den Men\xC3\xBCs."), CTR_TR("menus. LOW suits an Old 3DS.", "men\xC3\xBAs. POCAS para Old 3DS.", "WENIG eignet sich f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
      GetEmbers, ThreeCount, SetEmbers},
 };
 

@@ -32,7 +32,11 @@ static const uint8_t sCleanProfile[8] = { 'F', 'R', '3', 'D', 'C', 'L', 'N', 0 }
 
 /* The one ROM this build's data pack can be built from: one .3dsx per language. */
 static const uint8_t sSupportedRomSha1[20] = {
-#if CTR_LANG_ES
+#if CTR_LANG_DE
+    /* Pokemon Feuerrote Edition (Germany) 1.0 */
+    0x18, 0xa3, 0x75, 0x8c, 0xee, 0xef, 0x2c, 0x77, 0xb3, 0x15,
+    0x14, 0x4b, 0xe2, 0xc3, 0x91, 0x0d, 0x6f, 0x1f, 0x69, 0xfe,
+#elif CTR_LANG_ES
     /* Pokemon Edicion Rojo Fuego (Spain) 1.0 */
     0xab, 0x8f, 0x6b, 0xfe, 0x0c, 0xcd, 0xaf, 0x41, 0x18, 0x8c,
     0xd0, 0x15, 0xc8, 0xc7, 0x4c, 0x31, 0x4d, 0x02, 0x29, 0x6a,
@@ -221,7 +225,10 @@ static bool OpenPak(void)
                         "supported. Run the builder with that ROM.",
                         "This Spanish build needs a pack made\n"
                         "from Pokemon Rojo Fuego (Spain).\n"
-                        "Run the builder with that ROM."));
+                        "Run the builder with that ROM.",
+                        "Diese deutsche Version ben\xC3\xB6tigt ein Pack,\n"
+                        "das aus Pok\xC3\xA9mon Feuerrot (Deutschland)\n"
+                        "erstellt wurde. Starte den Builder erneut."));
         goto fail;
     default:
         SetError("The data pack is damaged.",
