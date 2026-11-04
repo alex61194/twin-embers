@@ -3,7 +3,7 @@ import hashlib, json, os, tempfile, unittest
 from pathlib import Path
 from firered3ds_builder.build import build, default_recipe
 from firered3ds_builder.recipe import load_recipe, reconstruct
-from firered3ds_builder.rom import SUPPORTED_SHA1, SPANISH_SHA1, SUPPORTED_ROMS
+from firered3ds_builder.rom import SUPPORTED_SHA1, SPANISH_SHA1, GERMAN_SHA1, SUPPORTED_ROMS
 from firered3ds_builder.pak import PakReader
 
 class Parts(unittest.TestCase):
@@ -29,6 +29,13 @@ class Parts(unittest.TestCase):
         if recipe['engine_abi']==0:
             with self.assertRaisesRegex(ValueError,'not finished'):
                 reconstruct(recipe,bytes(16*1024*1024))
+
+    def test_german_recipe_is_shipped_and_valid(self):
+        self.assertEqual(SUPPORTED_ROMS[GERMAN_SHA1], 'de')
+        recipe = load_recipe(default_recipe(GERMAN_SHA1))
+        self.assertEqual(recipe['rom_sha1'], GERMAN_SHA1)
+        self.assertLessEqual(len(recipe['units']), len(load_recipe(default_recipe(SUPPORTED_SHA1))['units']))
+        self.assertNotEqual(recipe['engine_abi'], 0)
 
     @unittest.skipUnless(os.environ.get('FIRERED_TEST_ROM'),'Own ROM required; never used in CI')
     def test_complete_own_rom_pipeline(self):

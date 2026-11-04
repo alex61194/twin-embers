@@ -23,8 +23,8 @@
 
 #include "3ds_forwarder.h"
 
-// The games it starts: the English game's name and the Spanish game's.
-static const char *const kTargets[] = {"/3ds/twinembers/twinembers.3dsx", "/3ds/twinembers/twinembers-es.3dsx"};
+// The games it starts: the English game's name, the Spanish game's, and the German game's.
+static const char *const kTargets[] = {"/3ds/twinembers/twinembers.3dsx", "/3ds/twinembers/twinembers-es.3dsx", "/3ds/twinembers/twinembers-de.3dsx"};
 #define PACK_PATH      "sdmc:/3ds/twinembers/twinembers.pak"
 #ifndef TWIN_EMBERS_VERSION
 #define TWIN_EMBERS_VERSION "?"

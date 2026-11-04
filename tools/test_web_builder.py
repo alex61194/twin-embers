@@ -184,7 +184,7 @@ class PageTest(unittest.TestCase):
         from firered3ds_builder.rom import SUPPORTED_ROMS, ROM_SIZE
         app = self.read('app.js')
         # Every ROM the Builder takes, each with the game its pack is for.
-        games = {'en': 'twinembers.3dsx', 'es': 'twinembers-es.3dsx'}
+        games = {'en': 'twinembers.3dsx', 'es': 'twinembers-es.3dsx', 'de': 'twinembers-de.3dsx'}
         for sha1, language in SUPPORTED_ROMS.items():
             self.assertRegex(app, rf"'{sha1}': {{ name: [^}}]+, game: '{games[language]}' }}")
         self.assertIn('const ROM_SIZE = 16 * 1024 * 1024;', app)

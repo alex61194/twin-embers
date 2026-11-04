@@ -8,10 +8,11 @@ const SPANISH = document.documentElement.lang === 'es';
 const L = (en, es) => (SPANISH ? es : en);
 
 const ROM_SIZE = 16 * 1024 * 1024;
-// The ROMs the Builder takes: each makes the pack for its own .3dsx (the Spanish one, twinembers-es.3dsx).
+// The ROMs the Builder takes: each makes the pack for its own .3dsx (the Spanish one, twinembers-es.3dsx; the German one, twinembers-de.3dsx).
 const ROMS = {
   '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc': { name: 'FireRed (USA)', game: 'twinembers.3dsx' },
   'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: L('Rojo Fuego (Spain)', 'Rojo Fuego (España)'), game: 'twinembers-es.3dsx' },
+  '18a3758ceeef2c77b315144be2c3910d6f1f69fe': { name: L('Feuerrote Edition (Germany)', 'Feuerrote Edition (Alemania)'), game: 'twinembers-de.3dsx' },
 };
 const RELEASES = 'https://github.com/alex61194/twin-embers/releases/latest/download/';
 const FORWARDER_URL = RELEASES + 'TwinEmbers-Forwarder.cia';
