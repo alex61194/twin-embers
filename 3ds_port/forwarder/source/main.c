@@ -3,8 +3,8 @@
 // Adapted from the forwarder of ZallaxDev's pokeemerald-3Ds-dualscreen
 // (3ds_port/forwarder, MIT; see licenses/ZallaxDev-MIT.txt and NOTICE.md).
 //
-// Installed once as a CIA, it starts sdmc:/3ds/twinembers/twinembers.3dsx (or, when that is missing,
-// twinembers-es.3dsx, the Spanish game as the release names it), so
+// Installed once as a CIA, it starts sdmc:/3ds/twinembers/twinembers.3dsx or twinembers-es.3dsx (the Spanish game
+// as the release names it), the newer of the two when both are there, so
 // updating the game only ever replaces the 3DSX. It asks Luma3DS's hb:ldr to
 // load that file, makes its own title the one Luma loads 3DSX files through
 // (no Homebrew Launcher title has to be installed) and restarts itself, so Luma
@@ -19,10 +19,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "3ds_forwarder.h"
 
-// The games it starts, the first one found: the usual name, then the Spanish game's release name.
+// The games it starts: the English game's name and the Spanish game's.
 static const char *const kTargets[] = {"/3ds/twinembers/twinembers.3dsx", "/3ds/twinembers/twinembers-es.3dsx"};
 #define PACK_PATH      "sdmc:/3ds/twinembers/twinembers.pak"
 #ifndef TWIN_EMBERS_VERSION
@@ -89,20 +90,35 @@ static bool FileExists(const char *path)
     return stat(path, &st) == 0 && S_ISREG(st.st_mode) && st.st_size > 0;
 }
 
+// Whether a file is there and, if the card keeps it, its modification time (0 when it does not).
+static bool FileTime(const char *path, time_t *when)
+{
+    struct stat st;
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size <= 0)
+        return false;
+    *when = st.st_mtime;
+    return true;
+}
+
 static Checks Check(void)
 {
     Checks c;
     c.luma = IsLuma() && LUMA_SHARED_CONFIG->useHbldr;
+    // Both on the card (the language changed): the one copied or installed last, the first name when the card keeps
+    // no times.
+    time_t newest = 0;
     c.game = false;
     c.target = kTargets[0];
-    for (unsigned i = 0; i < sizeof(kTargets) / sizeof(kTargets[0]) && !c.game; ++i)
+    for (unsigned i = 0; i < sizeof(kTargets) / sizeof(kTargets[0]); ++i)
     {
         char path[64];
         snprintf(path, sizeof(path), "sdmc:%s", kTargets[i]);
-        if (FileExists(path))
+        time_t when = 0;
+        if (FileTime(path, &when) && (!c.game || when > newest))
         {
             c.game = true;
             c.target = kTargets[i];
+            newest = when;
         }
     }
     c.pack = FileExists(PACK_PATH);

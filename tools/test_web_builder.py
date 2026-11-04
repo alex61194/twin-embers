@@ -119,11 +119,11 @@ class UniStoreTest(unittest.TestCase):
         self.assertEqual(game[0], {'type': 'mkdir', 'directory': 'sdmc:/3ds/twinembers'})
         self.assertEqual(game[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers.3dsx',
                                    'output': 'sdmc:/3ds/twinembers/twinembers.3dsx'})
-        # The Spanish game, for a pack from the Spanish ROM: the same place, so the forwarder starts it too.
+        # The Spanish game, for a pack from the Spanish ROM, under its own name: the forwarder starts either.
         spanish = entry['twinembers.3dsx (Spanish)']
         self.assertEqual(spanish[0], game[0])
         self.assertEqual(spanish[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers-es.3dsx',
-                                      'output': 'sdmc:/3ds/twinembers/twinembers.3dsx'})
+                                      'output': 'sdmc:/3ds/twinembers/twinembers-es.3dsx'})
         cia = entry['HOME Menu forwarder (CIA)']
         self.assertEqual([a['type'] for a in cia], ['downloadFile', 'installCia', 'deleteFile'])
         self.assertEqual(cia[0]['file'], RELEASES + 'TwinEmbers-Forwarder.cia')

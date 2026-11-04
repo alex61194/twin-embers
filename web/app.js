@@ -189,14 +189,13 @@ async function startBuild() {
   }
 }
 
-// The game the download code and button offer: the English one, or the Spanish one once a Spanish ROM is chosen.
+// The game the download code and button offer: the page's language's, then the one for the ROM chosen.
 function showGame(name) {
   const url = RELEASES + name;
   drawQr('qr-game', 'url-game', url);
   $('game-download').href = url;
   $('game-download').textContent = `${L('Download', 'Descargar')} ${name}`;
   $('game-name').textContent = name;
-  $('game-rename').hidden = name === 'twinembers.3dsx';
 }
 
 // QR codes as SVG, drawn from qrcode-generator's module matrix with the standard 4-module margin.
@@ -230,7 +229,7 @@ ui.romButton.addEventListener('keydown', (event) => {
 });
 ui.build.addEventListener('click', startBuild);
 drawQr('qr-unistore', 'url-unistore', UNISTORE_URL);
-showGame('twinembers.3dsx');
+showGame(SPANISH ? 'twinembers-es.3dsx' : 'twinembers.3dsx');
 drawQr('qr-fbi', 'url-fbi', FORWARDER_URL);
 refresh();
 

@@ -116,7 +116,7 @@ Setup is a one-time job of about five minutes. You need three things on the SD c
 
 **1. Get the downloads** from the [latest release](https://github.com/alex61194/twin-embers/releases/latest). They are separate files:
 
-- `twinembers.3dsx`, the game itself, or `twinembers-es.3dsx` for the Spanish game (Spanish ROM). The HOME Menu shortcut of v0.5.0 starts either name.
+- `twinembers.3dsx`, the game itself, or `twinembers-es.3dsx` for the Spanish game (Spanish ROM). The HOME Menu shortcut of v0.5.0 starts either name (the newer one when both are on the card).
 - `TwinEmbersBuilder.exe`, the Windows tool.
 - `TwinEmbers-Forwarder.cia`, optional: a HOME Menu shortcut (see below).
 
@@ -139,7 +139,7 @@ SD:/3ds/
 
 ### HOME Menu shortcut (optional)
 
-`TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx` (or `twinembers-es.3dsx` when that is missing), so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
+`TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx` or `twinembers-es.3dsx` (the newer one when both are there), so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
 
 ### Install from the 3DS itself (optional)
 
