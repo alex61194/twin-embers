@@ -5742,7 +5742,7 @@
   },
   {
    "path": "patches/pokefirered/0231-port-symbols-clean-release.json",
-   "sha256": "464a582d9a2bb4704f6d6d7b9c3d2a5dad2e13890fce704787784fd0c27a9f2e",
+   "sha256": "5fe7db4319bef32a05023758bd2bdcea08f4c3be8ecf91efc333298adb73b804",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
