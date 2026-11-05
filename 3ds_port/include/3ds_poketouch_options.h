@@ -49,6 +49,8 @@ enum { CTR_EMBERS_OFF, CTR_EMBERS_LOW, CTR_EMBERS_HIGH, CTR_EMBERS_COUNT };
 void CtrOptions_EmbersInit(int isNew3ds);
 int CtrOptions_Embers(void);        /* on unless OFF */
 int CtrOptions_EmbersLow(void);
+int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
+int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);

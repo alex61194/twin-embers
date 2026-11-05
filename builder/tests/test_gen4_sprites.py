@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 import zlib
 
-from firered3ds_builder import gen4_sprites
+from firered3ds_builder import gen4_followers, gen4_sprites, nsbtx
 
 
 def png(rows, palette, depth=4, filters=(0,)):
@@ -124,7 +124,8 @@ class DownloadTest(unittest.TestCase):
                     rows.append(row_for(dex, body, side, data))
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
                         patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ()),
-                        patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ())):
+                        patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ()),
+                        patch.object(gen4_sprites, "FOLLOWER_FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -141,7 +142,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "backgrounds": 0, "npcs": 0, "player": 0, "downloaded": 8})
+                                "backgrounds": 0, "npcs": 0, "followers": 0, "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -631,9 +632,11 @@ class PeopleTest(unittest.TestCase):
     def test_the_groups_choose_the_files_and_the_entries(self):
         self.assertEqual(len(gen4_sprites.all_files(("npc",))), 74)
         self.assertEqual(len(gen4_sprites.all_files(("bg",))), 14)
+        self.assertEqual(len(gen4_sprites.all_files(("follower",))), len(gen4_sprites.FOLLOWER_FILES))
         self.assertEqual(len(gen4_sprites.all_files(())), 0)
         self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14
-                         + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES))
+                         + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES)
+                         + len(gen4_sprites.FOLLOWER_FILES))
         data = rgba_png(self.sheet())
         rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
         with patch.object(gen4_sprites, "NPC_FILES", rows):
@@ -650,6 +653,133 @@ class PeopleTest(unittest.TestCase):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
                 None, get=lambda url: urls.append(url) or data), groups=())
             self.assertEqual((files, urls, info["npcs"]), ([], [], 0))
+
+
+def nsbtx_archive(size=32, textures=8, palette_shift=0):
+    """A synthetic texture archive in HeartGold's layout (no game data): `textures` 16-colour textures of size x size
+    named like a follower's, texture n filled with colour index n + 1 (colour 0 transparent), two palettes."""
+    def dictionary(count, entry_size, entries, names):
+        out = struct.pack("<BBH", 0, count, 8 + (count + 1) * 4 + 4 + count * entry_size + count * 16)
+        out += bytes((count + 1) * 4)
+        out += struct.pack("<HHI", 4, 4 + count * entry_size, 0x017F)
+        out += b"".join(entries)
+        out += b"".join(name.encode().ljust(16, b"\0") for name in names)
+        return out
+    per = size * size // 2
+    texture_data = b"".join(bytes([(n + 1) | (n + 1) << 4]) * per for n in range(textures))
+    infos = [struct.pack("<HHI", n * per >> 3, ({32: 2, 64: 3}[size] << 4) | ({32: 2, 64: 3}[size] << 7) | 3 << 10 | 1 << 13, 0)
+             for n in range(textures)]
+    names = ["tsure_poke.%d" % (n + 1) for n in range(textures)]
+    tex_dict = dictionary(textures, 8, infos, names)
+    pal_names = ["tsure_poke0", "tsure_poke1"]
+    pal_dict = dictionary(2, 4, [struct.pack("<HH", 0, 0), struct.pack("<HH", 4, 0)], pal_names)
+    colours = [0] + [0x001F + (c << 5) * 0 for c in range(1, 16)]           # colour n: pure red shades, set below
+    palette0 = b"".join(struct.pack("<H", (c * 2) | ((c * 2) << 5) | ((c * 2) << 10) if c else 0) for c in range(16))
+    palette1 = b"".join(struct.pack("<H", 31 if c else 0) for c in range(16))
+    header_size = 0x3C
+    tex_dict_at = header_size
+    pal_dict_at = tex_dict_at + len(tex_dict)
+    texture_at = pal_dict_at + len(pal_dict)
+    palette_at = texture_at + len(texture_data)
+    block = bytearray(header_size)
+    block[0:4] = b"TEX0"
+    struct.pack_into("<H", block, 0x0C, len(texture_data) >> 3)
+    struct.pack_into("<H", block, 0x0E, tex_dict_at)
+    struct.pack_into("<I", block, 0x14, texture_at)
+    struct.pack_into("<I", block, 0x30, 0)
+    struct.pack_into("<I", block, 0x34, pal_dict_at)
+    struct.pack_into("<I", block, 0x38, palette_at)
+    block = bytes(block) + tex_dict + pal_dict + texture_data + palette0 + palette1
+    struct.pack_into("<I", bytearray(4), 0, 0)
+    head = b"BTX0" + struct.pack("<HHIHH", 0xFEFF, 1, 0x14 + len(block), 16, 1) + struct.pack("<I", 0x14)
+    return head + block
+
+
+class FollowerTest(unittest.TestCase):
+    def test_the_table_is_the_national_dex(self):
+        rows = gen4_sprites.FOLLOWER_FILES
+        self.assertEqual(len(rows), len(gen4_followers.FILES))
+        males = [row for row in rows if row[0] < gen4_sprites.FOLLOWER_FEMALE]
+        self.assertEqual([row[0] for row in males], list(range(1, 387)))
+        self.assertTrue(all(row[1] == "follower" and row[2].startswith("files/data/mmodel/mmodel/mmodel_")
+                            and row[2].endswith(".NSBTX") for row in rows))
+        for row in rows:
+            self.assertRegex(row[4], "^[0-9a-f]{64}$")
+        # Bulbasaur is the first archive; the females are marked 1000 + dex.
+        self.assertEqual(rows[0][:3], (1, "follower", "files/data/mmodel/mmodel/mmodel_00000297.NSBTX"))
+        self.assertTrue(all(row[0] - gen4_sprites.FOLLOWER_FEMALE in {r[0] for r in males} for row in rows
+                            if row[0] >= gen4_sprites.FOLLOWER_FEMALE))
+
+    def test_the_archive_is_read(self):
+        archive = nsbtx.Archive(nsbtx_archive())
+        self.assertEqual(len(archive.textures), 8)
+        self.assertEqual([p[0] for p in archive.palettes], ["tsure_poke0", "tsure_poke1"])
+        width, height, pixels = archive.decode(2, 0)
+        self.assertEqual((width, height, len(pixels)), (32, 32, 1024))
+        self.assertEqual(pixels[0], (6 * 255 // 31, 6 * 255 // 31, 6 * 255 // 31, 255))
+        self.assertEqual(archive.decode(2, 1)[2][0], (255, 0, 0, 255))        # the shiny palette
+        with self.assertRaises(nsbtx.NsbtxError):
+            nsbtx.Archive(b"NOPE" + bytes(100))
+
+    def test_the_frames_are_in_fireReds_order(self):
+        entry = gen4_sprites.convert_follower(nsbtx_archive())
+        self.assertEqual(entry[:8], b"G4N1" + bytes([9, 32, 0, 0]))
+        self.assertEqual(len(entry), 40 + 9 * 32 * 32 // 2)
+        palette = struct.unpack_from("<16H", entry, 8)
+        self.assertEqual(palette[0], 0)
+        # Each texture is one colour (index n + 1 in the source): find the colour in each frame's first pixel.
+        def frame_colour(n):
+            byte = entry[40 + n * 512]
+            return palette[byte & 15]
+        source = nsbtx.Archive(nsbtx_archive())
+        def colour(texture):
+            r, g, b, _ = source.decode(texture, 0)[2][0]
+            return (r >> 3) | (g >> 3) << 5 | (b >> 3) << 10
+        # textures: 0, 1 back (north), 2, 3 front (south), 4, 5 left (west). Frames: S N W, S2 S2 N2 N2 W2 W2.
+        expected = [colour(2), colour(0), colour(4), colour(3), colour(3), colour(1), colour(1), colour(5), colour(5)]
+        self.assertEqual([frame_colour(n) for n in range(9)], expected)
+
+    def test_the_big_ones_and_the_bad_ones(self):
+        big = gen4_sprites.convert_follower(nsbtx_archive(64))
+        self.assertEqual(big[:8], b"G4N1" + bytes([9, 64, 0, 0]))
+        self.assertEqual(len(big), 40 + 9 * 64 * 64 // 2)
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_follower(nsbtx_archive(32, 6))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_follower(b"BTX0" + bytes(40))
+
+    def test_the_group_chooses_the_files_and_the_entries(self):
+        data = nsbtx_archive()
+        digest = hashlib.sha256(data).hexdigest()
+        rows = ((4, "follower", "m/a.NSBTX", len(data), digest),
+                (1004, "follower", "m/b.NSBTX", len(data), digest),
+                (9, "follower", "m/c.NSBTX", len(data), digest))
+        with patch.object(gen4_sprites, "FOLLOWER_FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=lambda url: data), groups=("follower",))
+            self.assertEqual(sorted(path for path, _ in files), ["graphics/gen4/follower/004.bin",
+                                                                  "graphics/gen4/follower/004_f.bin",
+                                                                  "graphics/gen4/follower/009.bin"])
+            self.assertEqual((info["followers"], info["species"], info["npcs"]), (3, 0, 0))
+            # An archive that cannot be had leaves that Pokémon without a follower.
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url.endswith("/c.NSBTX") else data), groups=("follower",))
+            self.assertEqual(info["followers"], 2)
+            # A 64x64 one is kept too, as a 64x64 entry.
+            big = nsbtx_archive(64)
+            rows2 = rows[:2] + ((9, "follower", "m/c.NSBTX", len(big), hashlib.sha256(big).hexdigest()),)
+            with patch.object(gen4_sprites, "FOLLOWER_FILES", rows2):
+                files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                    None, get=lambda url: big if url.endswith("/c.NSBTX") else data), groups=("follower",))
+                self.assertEqual(info["followers"], 3)
+                self.assertEqual([entry[5] for path, entry in files if path.endswith("009.bin")], [64])
+            # Without the group nothing of them is fetched.
+            urls = []
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: urls.append(url) or data), groups=())
+            self.assertEqual((files, urls, info["followers"]), ([], [], 0))
+        self.assertIn("raw.githubusercontent.com/pret/pokeheartgold/" + gen4_followers.COMMIT + "/files/data/mmodel/",
+                      gen4_sprites.file_url(gen4_sprites.FOLLOWER_FILES[0]))
+        self.assertEqual(gen4_sprites.file_name(gen4_sprites.FOLLOWER_FILES[0]), "follower_0001.nsbtx")
 
 
 class PlayerTest(unittest.TestCase):

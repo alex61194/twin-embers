@@ -2,17 +2,19 @@
 // player picks, shows progress, offers the finished pack for download and draws the install QR codes.
 'use strict';
 
-// The page's language (index.html English, es.html Spanish): L(english, spanish) picks the words, as CTR_TR does in
-// the game.
-const SPANISH = document.documentElement.lang === 'es';
-const L = (en, es) => (SPANISH ? es : en);
+// The page's language (index.html English, es.html Spanish, de.html German): L(english, spanish, german) picks the
+// words, as CTR_TR does in the game (English where a German one is missing).
+const LANG = document.documentElement.lang;
+const SPANISH = LANG === 'es';
+const GERMAN = LANG === 'de';
+const L = (en, es, de) => (SPANISH ? es : GERMAN && de !== undefined ? de : en);
 
 const ROM_SIZE = 16 * 1024 * 1024;
 // The ROMs the Builder takes: each makes the pack for its own .3dsx (the Spanish one, twinembers-es.3dsx; the German one, twinembers-de.3dsx).
 const ROMS = {
   '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc': { name: 'FireRed (USA)', game: 'twinembers.3dsx' },
-  'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: L('Rojo Fuego (Spain)', 'Rojo Fuego (España)'), game: 'twinembers-es.3dsx' },
-  '18a3758ceeef2c77b315144be2c3910d6f1f69fe': { name: L('Feuerrote Edition (Germany)', 'Feuerrote Edition (Alemania)'), game: 'twinembers-de.3dsx' },
+  'ab8f6bfe0ccdaf41188cd015c8c74c314d02296a': { name: L('Rojo Fuego (Spain)', 'Rojo Fuego (España)', 'Rojo Fuego (Spanien)'), game: 'twinembers-es.3dsx' },
+  '18a3758ceeef2c77b315144be2c3910d6f1f69fe': { name: L('Feuerrote Edition (Germany)', 'Feuerrote Edition (Alemania)', 'Feuerrote Edition (Deutschland)'), game: 'twinembers-de.3dsx' },
 };
 const RELEASES = 'https://github.com/alex61194/twin-embers/releases/latest/download/';
 const FORWARDER_URL = RELEASES + 'TwinEmbers-Forwarder.cia';
@@ -22,6 +24,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   romInput: $('rom-input'), romButton: $('rom-button'), romPill: $('rom-pill'),
   gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'), player: $('player-toggle'),
+  followers: $('followers-toggle'),
   build: $('build-button'),
   progress: $('progress'), fill: $('progress-fill'), status: $('status'),
   result: $('result'), download: $('download'), details: $('result-details'), error: $('error'),
@@ -37,7 +40,7 @@ function setPill(text, kind) {
 function refresh() {
   ui.build.disabled = !(state.ready && state.romOk && !state.busy);
   ui.romInput.disabled = state.busy;
-  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = state.busy;
+  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = ui.followers.disabled = state.busy;
   ui.romButton.setAttribute('aria-disabled', state.busy ? 'true' : 'false');
 }
 
@@ -68,30 +71,32 @@ async function chooseRom(file) {
   ui.result.classList.add('hidden');
   refresh();
   if (!file) {
-    setPill(L('No ROM chosen', 'Ninguna ROM elegida'));
+    setPill(L('No ROM chosen', 'Ninguna ROM elegida', 'Kein ROM gewählt'));
     return;
   }
   if (file.size !== ROM_SIZE) {
-    setPill(L('Not a 16 MiB FireRed ROM', 'No es una ROM de FireRed de 16 MiB'), 'bad');
-    showError(L(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA) or Edición Rojo Fuego (Spain), revision 0; trimmed files are not supported.`,
-      `${file.name} ocupa ${file.size} bytes. El Builder necesita el volcado exacto de 16 MiB de Pokémon Edición Rojo Fuego (España) o FireRed Version (USA), revisión 0; los archivos recortados no sirven.`));
+    setPill(L('Not a 16 MiB FireRed ROM', 'No es una ROM de FireRed de 16 MiB', 'Kein 16-MiB-Feuerrot-ROM'), 'bad');
+    showError(L(`${file.name} is ${file.size} bytes. The Builder needs the exact 16 MiB dump of Pokémon FireRed Version (USA), Edición Rojo Fuego (Spain) or Feuerrote Edition (Germany), revision 0; trimmed files are not supported.`,
+      `${file.name} ocupa ${file.size} bytes. El Builder necesita el volcado exacto de 16 MiB de Pokémon Edición Rojo Fuego (España), FireRed Version (USA) o Feuerrote Edition (Alemania), revisión 0; los archivos recortados no sirven.`,
+      `${file.name} ist ${file.size} Bytes groß. Der Builder braucht den genauen 16-MiB-Dump von Pokémon Feuerrote Edition (Deutschland), FireRed Version (USA) oder Edición Rojo Fuego (Spanien), Revision 0; gekürzte Dateien gehen nicht.`));
     return;
   }
-  setPill(L('Checking…', 'Comprobando…'), 'busy');
+  setPill(L('Checking…', 'Comprobando…', 'Wird geprüft…'), 'busy');
   const data = await file.arrayBuffer();
   if (crypto.subtle) {
     const sha1 = hex(await crypto.subtle.digest('SHA-1', data));
     const rom = ROMS[sha1];
     if (!rom) {
-      setPill(L('Unsupported ROM', 'ROM no compatible'), 'bad');
-      showError(L(`SHA-1 ${sha1} is not FireRed (USA) or Rojo Fuego (Spain), revision 0. Revision 1, LeafGreen and other languages are not supported.`,
-        `El SHA-1 ${sha1} no es de Rojo Fuego (España) ni de FireRed (USA), revisión 0. La revisión 1, Verde Hoja y otros idiomas no son compatibles.`));
+      setPill(L('Unsupported ROM', 'ROM no compatible', 'ROM nicht unterstützt'), 'bad');
+      showError(L(`SHA-1 ${sha1} is not FireRed (USA), Rojo Fuego (Spain) or Feuerrote Edition (Germany), revision 0. Revision 1, LeafGreen and other languages are not supported.`,
+        `El SHA-1 ${sha1} no es de Rojo Fuego (España), FireRed (USA) ni Feuerrote Edition (Alemania), revisión 0. La revisión 1, Verde Hoja y otros idiomas no son compatibles.`,
+        `SHA-1 ${sha1} ist weder Feuerrote Edition (Deutschland), FireRed (USA) noch Rojo Fuego (Spanien), Revision 0. Revision 1, Blattgrün und andere Sprachen werden nicht unterstützt.`));
       return;
     }
-    setPill(L(`${rom.name} verified`, `${rom.name} verificada`), 'ok');
+    setPill(L(`${rom.name} verified`, `${rom.name} verificada`, `${rom.name} geprüft`), 'ok');
     showGame(rom.game);
   } else {
-    setPill(L('Will be checked when building', 'Se comprobará al crear el pack'), 'busy');
+    setPill(L('Will be checked when building', 'Se comprobará al crear el pack', 'Wird beim Erstellen geprüft'), 'busy');
   }
   state.rom = file;
   state.romOk = true;
@@ -103,6 +108,10 @@ const LOADING = SPANISH ? {
   'Downloading Python for your browser (about 10 MB, kept by the browser for next time)…':
     'Descargando Python para tu navegador (unos 10 MB, el navegador lo guarda para la próxima vez)…',
   'Loading the Builder…': 'Cargando el Builder…',
+} : GERMAN ? {
+  'Downloading Python for your browser (about 10 MB, kept by the browser for next time)…':
+    'Python für deinen Browser wird geladen (etwa 10 MB, der Browser behält es für das nächste Mal)…',
+  'Loading the Builder…': 'Der Builder wird geladen…',
 } : {};
 
 const worker = new Worker('worker.js');
@@ -113,29 +122,30 @@ worker.onmessage = (event) => {
     ui.status.textContent = LOADING[message.text] || message.text;
   } else if (message.type === 'ready') {
     state.ready = true;
-    ui.status.textContent = state.romOk ? L('Ready to build.', 'Listo para crear el pack.')
-      : L('Builder ready. Choose your ROM to start.', 'Builder listo. Elige tu ROM para empezar.');
+    ui.status.textContent = state.romOk ? L('Ready to build.', 'Listo para crear el pack.', 'Bereit zum Erstellen.')
+      : L('Builder ready. Choose your ROM to start.', 'Builder listo. Elige tu ROM para empezar.', 'Builder bereit. Wähle dein ROM, um zu beginnen.');
     refresh();
   } else if (message.type === 'fatal') {
-    ui.status.textContent = L('The Builder could not start.', 'El Builder no ha podido arrancar.');
-    showError(`${message.message} ${L('Check your connection and reload the page.', 'Comprueba tu conexión y recarga la página.')}`);
+    ui.status.textContent = L('The Builder could not start.', 'El Builder no ha podido arrancar.', 'Der Builder konnte nicht starten.');
+    showError(`${message.message} ${L('Check your connection and reload the page.', 'Comprueba tu conexión y recarga la página.', 'Prüfe deine Verbindung und lade die Seite neu.')}`);
   } else if (message.type === 'progress') {
     if (message.stage === 'sprites') {
       showProgress(message.total ? message.done / message.total : 0);
       ui.status.textContent = message.total
-        ? `${L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…')} ${message.done}/${message.total}`
-        : L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…');
+        ? `${L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…', 'Die optionalen Bilder werden geladen…')} ${message.done}/${message.total}`
+        : L('Downloading the optional pictures…', 'Descargando las imágenes opcionales…', 'Die optionalen Bilder werden geladen…');
     } else {
       showProgress(null);
       ui.status.textContent = L('Rebuilding the pack from your ROM and checking every record… This can take a minute, more on a phone.',
-        'Reconstruyendo el pack a partir de tu ROM y comprobando cada registro… Puede tardar un minuto, más en un móvil.');
+        'Reconstruyendo el pack a partir de tu ROM y comprobando cada registro… Puede tardar un minuto, más en un móvil.',
+        'Das Paket wird aus deinem ROM erstellt und jeder Eintrag geprüft… Das kann eine Minute dauern, auf dem Handy länger.');
     }
   } else if (message.type === 'done') {
     finish(message.pak, message.info);
   } else if (message.type === 'error') {
     state.busy = false;
     ui.progress.classList.add('hidden');
-    ui.status.textContent = L('No pack was made.', 'No se ha creado el pack.');
+    ui.status.textContent = L('No pack was made.', 'No se ha creado el pack.', 'Es wurde kein Paket erstellt.');
     showError(message.message);
     refresh();
   }
@@ -148,26 +158,32 @@ function finish(pak, info) {
   state.pakUrl = URL.createObjectURL(new Blob([pak], { type: 'application/octet-stream' }));
   ui.download.href = state.pakUrl;
   const lines = [
-    `${info.entries} ${L('entries', 'entradas')}, ${mib(info.bytes)}, ${L('engine ABI', 'ABI del motor')} ${info.abi.toString(16).padStart(8, '0')}`,
+    `${info.entries} ${L('entries', 'entradas', 'Einträge')}, ${mib(info.bytes)}, ${L('engine ABI', 'ABI del motor', 'Engine-ABI')} ${info.abi.toString(16).padStart(8, '0')}`,
     `SHA-256 ${info.sha256}`,
   ];
   if (info.gen4) {
     if (info.gen4.species || info.gen4.missing.length) {
-      lines.push(L(`HeartGold battle sprites: ${info.gen4.species} species`, `Sprites de combate de HeartGold: ${info.gen4.species} especies`) +
+      lines.push(L(`HeartGold battle sprites: ${info.gen4.species} species`, `Sprites de combate de HeartGold: ${info.gen4.species} especies`,
+        `HeartGold-Kampf-Sprites: ${info.gen4.species} Arten`) +
         (info.gen4.missing.length ? L(`, ${info.gen4.missing.length} kept on FireRed's pictures (download failed)`,
-          `, ${info.gen4.missing.length} con las imágenes de Rojo Fuego (falló la descarga)`) : ''));
+          `, ${info.gen4.missing.length} con las imágenes de Rojo Fuego (falló la descarga)`,
+          `, ${info.gen4.missing.length} mit den Bildern aus Feuerrot (Download fehlgeschlagen)`) : ''));
     }
-    if (info.gen4.trainers) lines.push(L('HeartGold trainer pictures: ', 'Imágenes de entrenadores de HeartGold: ') + info.gen4.trainers);
-    if (info.gen4.backs) lines.push(L('HeartGold-style player backs: ', 'Espaldas del jugador al estilo HeartGold: ') + info.gen4.backs);
-    if (info.gen4.npcs) lines.push(L(`New people on the map: ${info.gen4.npcs} of 74`, `Gente nueva en el mapa: ${info.gen4.npcs} de 74`));
+    if (info.gen4.trainers) lines.push(L('HeartGold trainer pictures: ', 'Imágenes de entrenadores de HeartGold: ', 'HeartGold-Trainerbilder: ') + info.gen4.trainers);
+    if (info.gen4.backs) lines.push(L('HeartGold-style player backs: ', 'Espaldas del jugador al estilo HeartGold: ', 'Spielerrücken im HeartGold-Stil: ') + info.gen4.backs);
+    if (info.gen4.npcs) lines.push(L(`New people on the map: ${info.gen4.npcs} of 74`, `Gente nueva en el mapa: ${info.gen4.npcs} de 74`,
+      `Neue Leute auf der Karte: ${info.gen4.npcs} von 74`));
     if (info.gen4.backgrounds) lines.push(L(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`,
-      `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`));
-    if (info.gen4.player) lines.push(L(`You as Ash and Green: ${info.gen4.player} pictures`, `Ash y Green: ${info.gen4.player} imágenes`));
+      `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`, `Kampfhintergründe: ${info.gen4.backgrounds} der 20 aus Feuerrot`));
+    if (info.gen4.player) lines.push(L(`You as Ash and Green: ${info.gen4.player} pictures`, `Ash y Green: ${info.gen4.player} imágenes`,
+      `Du als Ash und Green: ${info.gen4.player} Bilder`));
+    if (info.gen4.followers) lines.push(L(`Pokémon that walk behind you: ${info.gen4.followers}`, `Pokémon que andan tras de ti: ${info.gen4.followers}`,
+      `Pokémon, die dir folgen: ${info.gen4.followers}`));
   }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';
   ui.result.classList.remove('hidden');
-  ui.status.textContent = L('Pack built and verified.', 'Pack creado y verificado.');
+  ui.status.textContent = L('Pack built and verified.', 'Pack creado y verificado.', 'Paket erstellt und geprüft.');
   refresh();
 }
 
@@ -177,15 +193,15 @@ async function startBuild() {
   ui.error.classList.add('hidden');
   ui.result.classList.add('hidden');
   showProgress(null);
-  ui.status.textContent = L('Starting…', 'Empezando…');
+  ui.status.textContent = L('Starting…', 'Empezando…', 'Es geht los…');
   refresh();
   try {
     const rom = await state.rom.arrayBuffer();
     worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked, npcs: ui.npcs.checked,
-      backgrounds: ui.backgrounds.checked, player: ui.player.checked }, [rom]);
+      backgrounds: ui.backgrounds.checked, player: ui.player.checked, followers: ui.followers.checked }, [rom]);
   } catch (error) {
     state.busy = false;
-    showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:')} ${error.message}`);
+    showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:', 'Das ROM konnte nicht erneut gelesen werden:')} ${error.message}`);
     refresh();
   }
 }
@@ -195,7 +211,7 @@ function showGame(name) {
   const url = RELEASES + name;
   drawQr('qr-game', 'url-game', url);
   $('game-download').href = url;
-  $('game-download').textContent = `${L('Download', 'Descargar')} ${name}`;
+  $('game-download').textContent = GERMAN ? `${name} herunterladen` : `${L('Download', 'Descargar')} ${name}`;
   $('game-name').textContent = name;
 }
 
@@ -203,7 +219,7 @@ function showGame(name) {
 function drawQr(boxId, urlId, text) {
   $(urlId).textContent = text;
   if (typeof qrcode !== 'function') {
-    $(boxId).textContent = L('QR code unavailable offline.', 'Código QR no disponible sin conexión.');
+    $(boxId).textContent = L('QR code unavailable offline.', 'Código QR no disponible sin conexión.', 'QR-Code offline nicht verfügbar.');
     return;
   }
   const qr = qrcode(0, 'M');
@@ -230,7 +246,7 @@ ui.romButton.addEventListener('keydown', (event) => {
 });
 ui.build.addEventListener('click', startBuild);
 drawQr('qr-unistore', 'url-unistore', UNISTORE_URL);
-showGame(SPANISH ? 'twinembers-es.3dsx' : 'twinembers.3dsx');
+showGame(SPANISH ? 'twinembers-es.3dsx' : GERMAN ? 'twinembers-de.3dsx' : 'twinembers.3dsx');
 drawQr('qr-fbi', 'url-fbi', FORWARDER_URL);
 refresh();
 

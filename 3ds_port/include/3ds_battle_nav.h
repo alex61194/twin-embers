@@ -34,6 +34,30 @@ static inline int CtrBattleActionStep(int cursor, int dir)
     return next < 0 ? cursor : next;
 }
 
+/*
+ * The quick ball (issue #16): in a wild battle the lower screen draws a ball button between BAG and POKeMON,
+ *
+ *          FIGHT
+ *   BAG  BALL  POKeMON  RUN
+ *
+ * and the controller's cursor can be on it too (CTR_ACTION_BALL, past FireRed's own four), while `ball` (a ball can be
+ * thrown). CtrBattle_QuickBall (battle_controller_player.c) says what the button shows, CTR_QUICK_BALL_*: nothing (no
+ * button: a trainer, the Safari Zone...), a ball ready, no balls, or the boxes full (shown, not usable).
+ */
+#define CTR_ACTION_BALL 4
+enum { CTR_QUICK_BALL_NONE = 0, CTR_QUICK_BALL_READY, CTR_QUICK_BALL_EMPTY, CTR_QUICK_BALL_FULL };
+
+static inline int CtrBattleActionStepBall(int cursor, int dir, int ball)
+{
+    if (!ball)
+        return CtrBattleActionStep(cursor, dir);
+    if (cursor == CTR_ACTION_BALL)
+        return dir == CTR_NAV_UP ? 0 : dir == CTR_NAV_LEFT ? 1 : dir == CTR_NAV_RIGHT ? 2 : cursor;
+    if ((cursor == 1 && dir == CTR_NAV_RIGHT) || (cursor == 2 && dir == CTR_NAV_LEFT))
+        return CTR_ACTION_BALL;
+    return CtrBattleActionStep(cursor, dir);
+}
+
 /* Steps of a shortest walk from `from` to `to`; -1 when there is none. */
 static inline int CtrBattleActionDistance(int from, int to)
 {

@@ -126,6 +126,14 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
  * palette slot: that object event's reflection in water; 1 with CTR_NPC_BIRD + gender and image 0 or 1: the Fly bird
  * carrying the player. 0: none. */
 #define CTR_NPC_BIRD 250
+/* The Pokemon that walks behind the player (the Builder's "Pokemon that walk behind you"): an object event whose
+ * graphics id is CTR_NPC_FOLLOWER + its national dex number (+ CTR_NPC_FOLLOWER_FEMALE for a female picture of its
+ * own) is drawn from graphics/gen4/follower/NNN.bin (NNN_f.bin), the same entry as a person (nine 32x32 frames). */
+#define CTR_NPC_FOLLOWER 1024
+#define CTR_NPC_FOLLOWER_FEMALE 512
+#define CTR_FOLLOWER_SPECIES 386
+/* Whether the pack has a follower for this national dex number (1-386) and, with `female`, its female picture. */
+bool CtrFollower_Has(unsigned dex, bool female);
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
                   unsigned *frame, const uint16_t **unfaded);
 

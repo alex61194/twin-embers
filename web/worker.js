@@ -118,6 +118,7 @@ async function build(rom, options) {
   if (options.npcs) groups.push('npc');
   if (options.backgrounds) groups.push('bg');
   if (options.player) groups.push('player');
+  if (options.followers) groups.push('follower');
   clearWork();
   pyodide.FS.writeFile(`${WORK}/rom.gba`, new Uint8Array(rom));
   let folder; // undefined reaches Python as None (null would be JsNull)
@@ -143,7 +144,7 @@ self.onmessage = async (event) => {
   if (message.type !== 'build') return;
   try {
     await build(message.rom, { gen4: message.gen4, npcs: message.npcs, backgrounds: message.backgrounds,
-      player: message.player });
+      player: message.player, followers: message.followers });
   } catch (error) {
     try { clearWork(); } catch (ignored) { /* nothing left to clean */ }
     post('error', { message: pythonMessage(error) });

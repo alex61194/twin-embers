@@ -38,6 +38,7 @@ class BuilderWindow(tk.Tk):
         self.npcs = tk.BooleanVar(value=False)
         self.backgrounds = tk.BooleanVar(value=False)
         self.player = tk.BooleanVar(value=False)
+        self.followers = tk.BooleanVar(value=False)
 
         style = ttk.Style(self)
         # Clam honors the palette on Windows instead of reverting to grey
@@ -139,6 +140,11 @@ class BuilderWindow(tk.Tk):
             text="You as Ash and Green: HGSS-style looks on the map and in battle, from Emerald Lens "
                  "(optional, needs internet)")
         self.player_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
+        self.followers_check = ttk.Checkbutton(
+            build_card, variable=self.followers,
+            text="Pokémon that walk behind you: your first Pokémon follows you on the map, as in HeartGold "
+                 "(optional, needs internet: about 390 small files from GitHub)")
+        self.followers_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -199,6 +205,8 @@ class BuilderWindow(tk.Tk):
             lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
         if info.get("player"):
             lines.append("You as Ash and Green: {0} pictures.".format(info["player"]))
+        if info.get("followers"):
+            lines.append("Pokémon that walk behind you: {0}.".format(info["followers"]))
         return "\n\n" + "\n".join(lines) if lines else ""
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
@@ -275,6 +283,7 @@ class BuilderWindow(tk.Tk):
                     npcs=self.npcs.get(),
                     backgrounds=self.backgrounds.get(),
                     player=self.player.get(),
+                    followers=self.followers.get(),
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))

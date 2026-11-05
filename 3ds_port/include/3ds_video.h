@@ -165,6 +165,8 @@ void CtrVideo_SetBattle(bool battle);
 void CtrVideo_SetLineScroll(unsigned reg, bool wide, const void *values, unsigned lines);
 /* Per-scanline BLDY values produced by the title's HBlank DMA. NULL disables. */
 void CtrVideo_SetLineBrightness(const uint16_t *values, unsigned lines);
+/* A battle transition's bend of the field, a value per GBA line (160): 1 across, 2 up and down, 0 none. */
+void CtrVideo_SetFieldLineShift(int kind, const int16_t *shift, unsigned lines);
 const CtrVideoStats *CtrVideo_GetStats(void);
 void CtrScene_Init(void);
 void CtrScene_Update(void);

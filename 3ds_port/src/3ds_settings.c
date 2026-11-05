@@ -19,13 +19,16 @@
 static unsigned sTurbo;
 static int sAutoRun;
 static int sEmbers = -1;
+static int sRepelAgain = 1;
+static int sCompanion;
+static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
 /* The file stays open from the first read to the exit and is rewritten in place, padded to a fixed size: creating or
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 64
+#define SETTINGS_FILE_BYTES 128
 static FILE *sFile;
 
 static void Load(void)
@@ -52,6 +55,12 @@ static void Load(void)
             sAutoRun = value != 0;
         else if (sscanf(line, "embers=%u", &value) == 1)
             sEmbers = value <= 2 ? (int)value : -1;
+        else if (sscanf(line, "repel=%u", &value) == 1)
+            sRepelAgain = value != 0;
+        else if (sscanf(line, "companion=%u", &value) == 1)
+            sCompanion = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "ball=%u", &value) == 1)
+            sBall = value <= 0xffff ? value : 0;
     }
 }
 
@@ -74,10 +83,16 @@ static void WriteText(const char *text)
 
 static void Format(char *text, size_t size)
 {
-    int length = snprintf(text, size, "turbo=%u\nautorun=%d\n", sTurbo, sAutoRun);
+    int length = snprintf(text, size, "turbo=%u\nautorun=%d\nrepel=%d\n", sTurbo, sAutoRun, sRepelAgain);
 
     if (sEmbers >= 0 && length > 0 && (size_t)length < size)
-        snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
+    {
+        length += snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
+    }
+    if (sCompanion && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
+    if (sBall && length > 0 && (size_t)length < size)
+        snprintf(text + length, size - (size_t)length, "ball=%u\n", sBall);
 }
 
 #ifdef __arm__
@@ -87,7 +102,7 @@ static void Format(char *text, size_t size)
 static LightEvent sWake;
 static LightLock sLock;
 static Thread sThread;
-static char sPending[96];
+static char sPending[SETTINGS_FILE_BYTES];
 static int sHavePending, sStarted;
 static volatile int sStop;
 
@@ -166,7 +181,7 @@ static void Save(void)
 #else
 static void Save(void)
 {
-    char text[96];
+    char text[SETTINGS_FILE_BYTES];
 
     Format(text, sizeof(text));
     WriteText(text);
@@ -212,11 +227,57 @@ int CtrSettings_Embers(void)
     return sEmbers;
 }
 
+int CtrSettings_RepelAgain(void)
+{
+    Load();
+    return sRepelAgain;
+}
+
+void CtrSettings_SetRepelAgain(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sRepelAgain)
+        return;
+    sRepelAgain = on;
+    Save();
+}
+
+int CtrSettings_Companion(void)
+{
+    Load();
+    return sCompanion;
+}
+
+void CtrSettings_SetCompanion(int mode)
+{
+    Load();
+    if (mode < 0 || mode > 2 || mode == sCompanion)
+        return;
+    sCompanion = mode;
+    Save();
+}
+
 void CtrSettings_SetEmbers(int level)
 {
     Load();
     if (level < 0 || level > 2 || level == sEmbers)
         return;
     sEmbers = level;
+    Save();
+}
+
+unsigned CtrSettings_LastBall(void)
+{
+    Load();
+    return sBall;
+}
+
+void CtrSettings_SetLastBall(unsigned item)
+{
+    Load();
+    if (item == sBall || item > 0xffff)
+        return;
+    sBall = item;
     Save();
 }

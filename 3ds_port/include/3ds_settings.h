@@ -4,7 +4,7 @@
 /* The port's own settings that outlive a session, kept in a small text file on the SD card
  * (sdmc:/3ds/twinembers/settings.cfg, lines of "name=number") and not in the game save, so they
  * travel with the console and never touch the save format. Read once on first use; a missing or
- * damaged file means the defaults (turbo off, auto-run off, EMBERS not chosen). Each setter writes the file only when
+ * damaged file means the defaults (turbo off, auto-run off, EMBERS not chosen, REPEL AGAIN on). Each setter writes the file only when
  * the value changes. */
 
 #ifndef CTR_SETTINGS_PATH
@@ -22,5 +22,16 @@ void CtrSettings_SetAutoRun(int on);
 /* The EMBERS level the player chose (CTR_EMBERS_*, 0..2), or -1 when none was: the console's default then. */
 int CtrSettings_Embers(void);
 void CtrSettings_SetEmbers(int level);
+
+/* Whether a Repel that wears off offers to use another (REPEL AGAIN on the OPTIONS screen): on by default. */
+int CtrSettings_RepelAgain(void);
+void CtrSettings_SetRepelAgain(int on);
+/* The COMPANION choice (the OPTIONS screen): 0 none, 1 the first Pokemon walks behind the player, 2 the player is that
+ * Pokemon on the map. Off until chosen. */
+int CtrSettings_Companion(void);
+void CtrSettings_SetCompanion(int mode);
+/* The ball the battle's ball button last threw (an item number, 0 for none yet): the button starts on it. */
+unsigned CtrSettings_LastBall(void);
+void CtrSettings_SetLastBall(unsigned item);
 
 #endif

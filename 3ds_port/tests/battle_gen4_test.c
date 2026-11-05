@@ -100,6 +100,18 @@ void *CtrData_Load(const char *path, uint32_t *outSize)
     return copy;
 }
 
+/* The pack's index: only two followers are in it (004.bin, and 012_f.bin, a female picture of its own). */
+static unsigned sSizeAsked;
+
+bool CtrData_Size(const char *path, uint32_t *outSize)
+{
+    ++sSizeAsked;
+    if (strcmp(path, "graphics/gen4/follower/004.bin") && strcmp(path, "graphics/gen4/follower/012_f.bin"))
+        return false;
+    *outSize = 40 + 9 * 512;
+    return true;
+}
+
 void CtrLog_Write(CtrLogCategory category, const char *format, ...)
 {
     (void)category;
@@ -526,8 +538,43 @@ int main(void)
         assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         sNpcGfx = 300;
         assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
-        /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
+        /* The Pokemon that walks behind the player: graphics ids from CTR_NPC_FOLLOWER, entries in follower/. */
         sEntry[4] = 9;
+        sEntrySize = 40 + 9 * 512;
+        sNpcGfx = CTR_NPC_FOLLOWER + 4;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(strcmp(sAsked, "graphics/gen4/follower/004.bin") == 0 && person.side == 4);
+        /* The player running as the Pokemon: the running images are the walking ones (south, north, west). */
+        sNpcGfx = CTR_NPC_FOLLOWER + 4;
+        for (unsigned f = 9, want = 0; f < 18; ++f, ++want)
+        {
+            static const unsigned kWalk[9] = {0, 3, 4, 1, 5, 6, 2, 7, 8};
+
+            sNpcFrame = f;
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30 + kWalk[want]);
+        }
+        sNpcFrame = 19;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x30);
+        sNpcFrame = 4;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.tiles[0] == 0x34);
+        sNpcGfx = CTR_NPC_FOLLOWER + CTR_NPC_FOLLOWER_FEMALE + 12;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(strcmp(sAsked, "graphics/gen4/follower/012_f.bin") == 0);
+        sNpcGfx = CTR_NPC_FOLLOWER + 2 * CTR_NPC_FOLLOWER_FEMALE;   /* past the last one */
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        sNpcGfx = 700;                                              /* between people and followers */
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        /* Whether the pack has one: asked once, remembered, and only for the national dex. */
+        assert(CtrFollower_Has(4, false) && !CtrFollower_Has(4, true));
+        assert(CtrFollower_Has(12, true) && !CtrFollower_Has(12, false));
+        assert(!CtrFollower_Has(5, false) && !CtrFollower_Has(0, false) && !CtrFollower_Has(387, false));
+        {
+            unsigned asked = sSizeAsked;
+
+            assert(CtrFollower_Has(4, false) && !CtrFollower_Has(5, false) && CtrFollower_Has(12, true));
+            assert(sSizeAsked == asked);
+        }
+        /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
         for (unsigned g = 40; g < 40 + 12; ++g)
         {
             sNpcGfx = g;

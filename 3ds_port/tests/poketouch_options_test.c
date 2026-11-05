@@ -51,7 +51,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 12, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 14, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
@@ -59,6 +59,8 @@ int main(void)
     CHECK(strcmp(CtrOptions_Row(9)->label, "DAY/NIGHT") == 0, "DAY/NIGHT is row 9");
     CHECK(strcmp(CtrOptions_Row(10)->label, "HOUR") == 0, "HOUR is row 10");
     CHECK(strcmp(CtrOptions_Row(11)->label, "EMBERS") == 0, "EMBERS is row 11");
+    CHECK(strcmp(CtrOptions_Row(12)->label, "REPEL AGAIN") == 0, "REPEL AGAIN is row 12");
+    CHECK(strcmp(CtrOptions_Row(13)->label, "COMPANION") == 0, "COMPANION is row 13");
 
     /* Valid values: the names FireRed uses, FRAME as TYPE1..TYPE10. */
     for (int row = 0; row < 7; ++row) {
@@ -136,6 +138,25 @@ int main(void)
     CtrOptions_Fill(&view, 11);
     CHECK(view.optSegCount[4] == 3 && view.optSegValue[4] == CTR_EMBERS_HIGH && strcmp(view.optSegName[4][0], "OFF") == 0
           && strcmp(view.optSegName[4][2], "HIGH") == 0 && view.optSegCount[3] == 0, "EMBERS shown as levels");
+    /* COMPANION: none until chosen, then FOLLOW, then BE IT; a row of levels, kept in the settings. */
+    Text(13, "OFF");
+    CHECK(CtrOptions_Companion() == 0 && CtrSettings_Companion() == 0, "COMPANION starts off");
+    CtrOptions_Step(13, 1);
+    Text(13, "FOLLOW");
+    CHECK(CtrOptions_Companion() == 1 && CtrSettings_Companion() == 1, "COMPANION stepped to FOLLOW");
+    CtrOptions_Step(13, 1);
+    Text(13, "BE IT");
+    CHECK(CtrOptions_Companion() == 2 && CtrSettings_Companion() == 2, "COMPANION stepped to BE IT");
+    CtrOptions_Step(13, 1);
+    Text(13, "OFF");
+    CtrOptions_Set(13, 2);
+    CtrOptions_Set(13, 3);
+    CHECK(CtrOptions_Companion() == 2, "a value that is not a level is refused");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 13);
+    CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "FOLLOW") == 0
+          && strcmp(view.optSegName[6][2], "BE IT") == 0, "COMPANION shown as levels");
+    CtrOptions_Set(13, 0);
     /* The choice outlives the session (settings.cfg); without one the console decides. */
     CHECK(CtrSettings_Embers() == CTR_EMBERS_HIGH, "EMBERS kept in the settings");
     CtrOptions_EmbersInit(0);
@@ -157,8 +178,26 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 5 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
+    /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
+    CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0
+          && view.optSwitch[4] == 0 && view.optSwitch[5] == 2, "page 2 switches");
+    CtrOptions_Set(8, 1);
+    CtrOptions_Step(9, -1);
+    CtrOptions_Fill(&view, 8);
+    CHECK(view.optSwitch[1] == 1 && view.optSwitch[2] == 0 && strcmp(view.optValue[2], "OFF") == 0,
+          "MOVE DETAILS off is an off switch; DAY/NIGHT OFF stays text");
+    CtrOptions_Set(8, 0);
+    CtrOptions_Step(9, 1);
+    /* REPEL AGAIN: on by default, kept in settings.cfg. */
+    Text(12, "ON");
+    CHECK(CtrOptions_RepelAgain() == 1, "REPEL AGAIN starts on");
+    CtrOptions_Step(12, 1);
+    Text(12, "OFF");
+    CHECK(CtrOptions_RepelAgain() == 0 && CtrSettings_RepelAgain() == 0, "REPEL AGAIN off, kept in the settings");
+    CtrOptions_Step(12, 1);
+    CHECK(CtrOptions_RepelAgain() == 1 && CtrSettings_RepelAgain() == 1, "REPEL AGAIN back on");
 
     /* Stepping wraps both ways through the valid values. */
     sStored[PT_OPT_TEXT_SPEED] = 2;

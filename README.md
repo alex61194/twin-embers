@@ -15,14 +15,23 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 ## The short version
 
 - **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
-- **Game:** Pokémon FireRed, USA, Revision 0, or Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game). Nothing else is accepted.
+- **Game:** Pokémon FireRed, USA, Revision 0, Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game), or Pokémon Feuerrote Edition, Germany, Revision 0 (the German game). Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.5.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.5.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
+
+**In v0.5.1:**
+
+- **Twin Embers in German.** `twinembers-de.3dsx` is the German game, built from your own Pokémon Feuerrote Edition (Germany), with the lower screen's words translated (thanks to mcl5500). The web Builder has an EN/ES/DE selector.
+- **A Pokémon that follows you.** The COMPANION option makes your first Pokémon walk behind you on the map, as in HeartGold (all 386, a new Builder option), or lets you play as it.
+- **Quick ball.** In a wild battle a fourth button throws a ball at once; its arrows, a swipe or SELECT change the ball. The battle Bag shows your items only, with BERRIES for the Berry Pouch.
+- **REPEL AGAIN**, an option that offers another Repel when one wears off, and **TMs and HMs in one press** when a Pokémon already knows four moves.
+- **Battle transitions as FireRed draws them** (the cave's wipe, the big Poké Ball, the swirl, the slices, the ripples), and still move backgrounds such as Solar Beam's fill the screen.
+- **Spanish:** "salvaje" and "enemigo" after the Pokémon's name, as in the Spanish game.
 
 **In v0.5.0:**
 
