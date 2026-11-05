@@ -1,4 +1,4 @@
-/* CtrSettings: the turbo and auto-run that survive a restart. */
+/* CtrSettings: the turbo, auto-run and REPEL AGAIN that survive a restart. */
 #include <assert.h>
 #include <stdio.h>
 
@@ -11,7 +11,7 @@ int main(void)
     remove(CTR_SETTINGS_PATH);
 
     /* No file: the defaults. */
-    assert(CtrSettings_Turbo() == 0 && CtrSettings_AutoRun() == 0);
+    assert(CtrSettings_Turbo() == 0 && CtrSettings_AutoRun() == 0 && CtrSettings_RepelAgain() == 1);
 
     CtrSettings_SetTurbo(3);
     CtrSettings_SetAutoRun(1);
@@ -24,8 +24,8 @@ int main(void)
     assert(fread(text, 1, sizeof(text) - 1, file) > 0);
     fclose(file);
     /* Rewritten in place: the text, then blank lines up to a fixed size. */
-    assert(strncmp(text, "turbo=3\nautorun=1\n", 18) == 0);
-    for (size_t i = 18; text[i] != 0; ++i)
+    assert(strncmp(text, "turbo=3\nautorun=1\nrepel=1\n", 26) == 0);
+    for (size_t i = 26; text[i] != 0; ++i)
         assert(text[i] == '\n');
 
     /* A value outside 2..4 is off. */
@@ -38,7 +38,26 @@ int main(void)
     memset(text, 0, sizeof(text));
     assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) == 63);
     fclose(file);
-    assert(strncmp(text, "turbo=0\nautorun=0\n", 18) == 0 && strchr(text + 18, 'u') == NULL);
+    assert(strncmp(text, "turbo=0\nautorun=0\nrepel=1\n", 26) == 0 && strchr(text + 26, 'u') == NULL);
+
+    /* REPEL AGAIN off is kept, and read back as off. */
+    CtrSettings_SetRepelAgain(0);
+    assert(CtrSettings_RepelAgain() == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) == 63);
+    fclose(file);
+    assert(strstr(text, "repel=0\n") != NULL);
+
+    /* The battle's ball button: the ball it last threw, kept after the others. */
+    assert(CtrSettings_LastBall() == 0);
+    CtrSettings_SetLastBall(3);
+    assert(CtrSettings_LastBall() == 3);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) == 63);
+    fclose(file);
+    assert(strstr(text, "ball=3\n") != NULL);
 
     remove(CTR_SETTINGS_PATH);
     puts("settings_test ok");

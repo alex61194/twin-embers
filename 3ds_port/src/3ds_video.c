@@ -1776,16 +1776,10 @@ static bool BattleRowShown(unsigned map, unsigned size, unsigned chars, bool col
 }
 
 /*
- * A move's background (fadetobg: Solar Beam's rays, the ghost's dark, Psychic's
- * waves...) replaces the terrain on BG3 with a 240x160 picture in the first
- * 32 columns of its 64-column map. The rest of the map still holds the
- * terrain, which the GBA never shows while the picture holds still, but the
- * zoomed scene's margins reach into it. So while such a picture holds still
- * (a shake of a few pixels included), only the picture is drawn from the map,
- * and its edge pixels are carried out to the screen's edges, as rays and
- * gradients run on. A picture that slides (Agility, Fly) wraps as before: the
- * margin then shows what is about to slide in. Maps of 64 columns (Surf's
- * water, Fissure) are made to wrap and are left alone.
+ * A move's background (fadetobg: Solar Beam's rays, the ghost's dark...) is a 240x160 picture in the first 32 columns
+ * of BG3's 64-column map; the rest still holds the terrain, which the zoomed margins reach. While the picture holds
+ * still (a shake, or the same scroll for 8 frames: Solar Beam aims off the origin), its edge pixels are carried out to
+ * the screen's edges. One that slides (Agility, Fly) wraps as before; 64-column maps (Surf, Fissure) are left alone.
  */
 static bool sMoveBackground;
 
@@ -1800,11 +1794,22 @@ static int SignedScroll(unsigned scroll)
     return scroll >= 256 ? (int)scroll - 512 : (int)scroll;
 }
 
+static unsigned sMoveScroll = ~0u, sMoveSteady;
+
+static void MoveBackgroundTrack(void)
+{
+    unsigned s = (Reg(0x1c) & 511) | (Reg(0x1e) & 511) << 16;
+
+    sMoveSteady = sBattle && sMoveBackground && s == sMoveScroll ? sMoveSteady + (sMoveSteady < 99) : 0;
+    sMoveScroll = s;
+}
+
 static bool MoveBackgroundStill(unsigned bg, unsigned scrollX, unsigned scrollY)
 {
     int sx = SignedScroll(scrollX), sy = SignedScroll(scrollY);
 
-    return bg == 3 && sMoveBackground && sx >= -16 && sx <= 16 && sy >= -16 && sy <= 16;
+    return bg == 3 && sMoveBackground
+        && ((sx >= -16 && sx <= 16 && sy >= -16 && sy <= 16) || sMoveSteady >= 8);
 }
 
 /*
@@ -4437,10 +4442,12 @@ static uint16_t sFlashWindow[160];
 static unsigned sFlashWindowCount;
 
 /* These bounds describe a screen-wide effect in 240x160 units, not a
- * local field rectangle. Saturated endpoints reach the native screen edge. */
+ * local field rectangle. Saturated endpoints reach the native screen edge;
+ * a right edge before the left one means 240, as on hardware (GBATEK). */
 static void FlashWindowSpan(unsigned limits, int *first, int *last)
 {
     unsigned a = Min(limits >> 8, 240u), b = Min(limits & 255, 240u);
+    if ((limits >> 8) > (limits & 255)) b = 240;
     *first = (int)((a * CTR_GAME_WIDTH + 120) / 240);
     *last = b > a ? (int)((b * CTR_GAME_WIDTH + 120) / 240) : *first;
 }
@@ -5212,6 +5219,8 @@ static void ComposeLogical(uint32_t clear, float parallax)
     C3D_FrameSplit(0);
 }
 
+#include "3ds_line_shift_impl.h"
+
 static void RenderEye(C3D_RenderTarget *target, uint32_t clear, float parallax)
 {
     const Tex3DS_SubTexture logical = {sPresentation.width, sPresentation.height, 0, 1,
@@ -5223,8 +5232,9 @@ static void RenderEye(C3D_RenderTarget *target, uint32_t clear, float parallax)
     C2D_SceneBegin(target);
     C2D_ViewReset();
     Blend(5, false, false);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &logical}, sPresentation.x, sPresentation.y, 0, NULL,
-                    sPresentation.scale, sPresentation.scale);
+    if (!DrawLogicalShifted())
+        C2D_DrawImageAt((C2D_Image){&sSurface, &logical}, sPresentation.x, sPresentation.y, 0, NULL,
+                        sPresentation.scale, sPresentation.scale);
     C2D_Flush();
     C3D_FrameSplit(0);
 }
@@ -5868,6 +5878,7 @@ static void ApplyPresentationView(void)
     /* Neither the trail nor a move's background outlives its screen. */
     if (!sFieldLayers && sTrailShown) CtrPokeballTrail_Reset();
     if (!sBattle) sMoveBackground = false;
+    MoveBackgroundTrack();
     int mode = sIntro ? 6 : sNativeUi ? 5 : sStage ? 1 : sCentred ? 2 : sBattle ? 3 : sNative ? 4 : 0;
     if (mode != lastMode)
     {

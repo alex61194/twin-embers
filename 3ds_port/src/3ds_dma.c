@@ -160,7 +160,7 @@ bool CtrDma_ReadHBlank16(unsigned channel, const void *dest,
      || (dma->control & (DMA_ENABLE | DMA_START_MASK | DMA_REPEAT | DMA_32BIT))
         != (DMA_ENABLE | DMA_START_HBLANK | DMA_REPEAT)
      || ((dma->control >> 7) & 3) != 0 /* incrementing source */
-     || ((dma->control >> 5) & 3) != 3) /* reload destination */
+     || ((dma->control >> 5) & 3) < 2) /* fixed or reload destination: one register either way */
         return false;
     /* FireRed supplies the source starting at entry 1. Its VBlank handler
      * writes entry 0 directly before arming DMA. HBlank after line y writes

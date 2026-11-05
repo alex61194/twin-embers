@@ -604,7 +604,7 @@ typedef struct {
 
 static Npc sNpcs[CTR_GEN4_SLOTS];
 static uint32_t sNpcTick;
-static uint32_t sNpcFailed[8];      /* graphics ids whose entry is not there or not right: asked once */
+static uint32_t sNpcFailed[(CTR_NPC_FOLLOWER + 2 * CTR_NPC_FOLLOWER_FEMALE) / 32];   /* graphics ids whose entry is not there or not right: asked once */
 
 static Npc *NpcLoad(unsigned gfx)
 {
@@ -616,10 +616,19 @@ static Npc *NpcLoad(unsigned gfx)
     for (i = 0; i < CTR_GEN4_SLOTS; ++i)
         if (sNpcs[i].used && sNpcs[i].gfx == gfx)
             return &sNpcs[i];
-    if (gfx > 255 || (sNpcFailed[gfx / 32] >> (gfx % 32) & 1))
+    if (gfx >= CTR_NPC_FOLLOWER + 2 * CTR_NPC_FOLLOWER_FEMALE || (gfx > 255 && gfx < CTR_NPC_FOLLOWER)
+        || (sNpcFailed[gfx / 32] >> (gfx % 32) & 1))
         return NULL;
     sNpcFailed[gfx / 32] |= 1u << (gfx % 32);
-    snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
+    if (gfx >= CTR_NPC_FOLLOWER)
+    {
+        unsigned dex = gfx - CTR_NPC_FOLLOWER, female = dex >= CTR_NPC_FOLLOWER_FEMALE;
+
+        dex -= female ? CTR_NPC_FOLLOWER_FEMALE : 0;
+        snprintf(path, sizeof(path), "graphics/gen4/follower/%03u%s.bin", dex, female ? "_f" : "");
+    }
+    else
+        snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
     entry = CtrData_Load(path, &size);
     if (!entry)
         return NULL;
@@ -649,6 +658,26 @@ static Npc *NpcLoad(unsigned gfx)
         CtrVideo_SetNpcPalette(slot, palette);
     }
     return &sNpcs[slot];
+}
+
+/* A follower is in the pack when its entry is: a lookup of the pack's index, remembered (two bits a species). */
+bool CtrFollower_Has(unsigned dex, bool female)
+{
+    static uint8_t known[(CTR_FOLLOWER_SPECIES + 1) * 2 / 4 + 1];     /* 2 bits: asked, there */
+    unsigned bit = (dex * 2 + (female ? 1 : 0)) * 2;
+    char path[40];
+    uint32_t size;
+
+    if (dex < 1 || dex > CTR_FOLLOWER_SPECIES)
+        return false;
+    if (!(known[bit / 8] >> (bit % 8) & 1))
+    {
+        snprintf(path, sizeof(path), "graphics/gen4/follower/%03u%s.bin", dex, female ? "_f" : "");
+        known[bit / 8] |= (uint8_t)(1u << (bit % 8));
+        if (CtrData_Size(path, &size) && size > 40)
+            known[bit / 8] |= (uint8_t)(2u << (bit % 8));
+    }
+    return known[bit / 8] >> (bit % 8) & 2;
 }
 
 /* A reflection's colours: FireRed makes its reflection palette from the object's own colour by colour, so each channel
@@ -711,6 +740,14 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
     if (!npc)
         return false;
     npc->stamp = ++sNpcTick;
+    if (gfx >= CTR_NPC_FOLLOWER && npc->entry[4] == 9 && frame >= 9)
+    {
+        /* A follower has a person's nine pictures, and the player as the Pokemon runs: the running images of the
+         * player's sheet (9-17: south, north and west, three each) are the walking ones. */
+        static const uint8_t kRun[9] = {0, 3, 4, 1, 5, 6, 2, 7, 8};
+
+        frame = frame < 18 ? kRun[frame - 9] : 0;
+    }
     if (frame >= npc->entry[4])
         frame = 0;                  /* a person's tenth image (a bow) is not drawn */
     (void)width;

@@ -100,6 +100,11 @@ extern void CtrBottomParty_Description(int slot, char *out);
 extern int CtrBattle_InBattle(void);
 extern int CtrBattle_State(void);
 extern int CtrBattle_ActionCursor(void);
+/* The quick ball (battle_controller_player.c): what its button shows (CTR_QUICK_BALL_*), the next or previous ball;
+ * the Berry Pouch the battle Bag's BERRIES opens (0 without one). */
+extern int CtrBattle_QuickBall(unsigned *item, unsigned *quantity, int *place, int *count);
+extern void CtrBattle_QuickBallStep(int dir);
+extern unsigned CtrBattle_BerryPouch(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
@@ -238,6 +243,8 @@ extern int CtrBottomPouch_Prompt(char *out, int size);
 extern int CtrBottomPouch_Message(char *out, int size);
 extern void CtrBottomPouch_CloseLabel(char *out, int size);
 extern unsigned CtrBottomPouch_PouchItem(void);
+/* The Berry Pouch opened from the battle Bag (its BERRIES): shown with no field menu round it. */
+extern int CtrBottomPouch_FromBattle(void);
 extern int CtrSave_Begin(void);
 extern void CtrMenu_SetSwitchTarget(int target);
 extern int CtrMenu_TakeSwitched(void);
@@ -671,6 +678,7 @@ static struct {
 /* Dragging a list: a finger on a row that moves this far up or down scrolls instead of tapping, one row per
  * LIST_DRAG_ROW pixels (the lower screen's row pitch), the content following the finger. */
 #define LIST_DRAG_SLOP 8
+#define BALL_SWIPE_STEP 18      /* pixels across the quick ball for one ball */
 #define LIST_DRAG_ROW 26
 
 /* The field's choice's touch (ProcessChoiceTouch), as the Bag's. */
@@ -784,7 +792,7 @@ static int CurrentMode(void)
      * lower-screen session. */
     if (CtrBottomTMCase_IsOpen() && (sSession.active || sStorageSession))
         return MODE_TMCASE;
-    if (CtrBottomPouch_IsOpen() && (sSession.active || sStorageSession))
+    if (CtrBottomPouch_IsOpen() && (sSession.active || sStorageSession || CtrBottomPouch_FromBattle()))
         return MODE_POUCH;
     /* The real Trainer Card, from its setup to its close: the field must not
      * show through, so it is the mode for as long as the card is alive. */
@@ -1580,13 +1588,16 @@ static void HomeMapState(Snapshot *s)
     snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap a destination", "Toca un destino", "Ziel antippen"));
 }
 
-/* The battle screen's touch: a button pressed under a finger (a BUI_ACT_* number). */
+/* The battle screen's touch: a button pressed under a finger (a BUI_ACT_* number); on the quick ball, where the
+ * finger was when it last changed the ball, and whether it has swiped (a swipe throws nothing). */
 static struct {
     int down, inside, btn, state;
+    int swipeX, swiped;
 } sBat;
 static int sBatTouchLast;           /* the last input was the touch screen: no cursor drawn */
 static unsigned sBatAnim;           /* counts the frames of a battle, for the lead's icon to bounce */
 static int sBatHold, sBatHoldFrames; /* BAG was picked: the upper screen keeps the battle until the Bag shows */
+static int sPouchHold;              /* the battle Bag's Berry Pouch was opened: the upper screen keeps the battle until it is back */
 
 /* The party slot of the Pokemon in the field. The party keeps its order in a battle (a switch changes only which
  * slot the battle points at), so the slot is found by what the battle knows of its left battler: its level, its
@@ -1703,6 +1714,7 @@ static void BattleBagFill(CtrBattleView *v)
     }
     if (b->bagState == BAG_MESSAGE)
         CtrBottomBag_Message(b->message, sizeof(b->message));
+    b->berries = (uint16_t)CtrBattle_BerryPouch();
 }
 
 static void BatCopy(char *dst, size_t size, const char *src)
@@ -1874,8 +1886,20 @@ static void BattleFill(CtrBattleView *v)
         return;
     }
     if (v->state == BUI_ACTION) {
+        unsigned item, qty;
+        int place, count;
+
         v->cursor = (int8_t)CtrBattle_ActionCursor();
         v->showCursor = !sBatTouchLast;
+        v->ball = (uint8_t)CtrBattle_QuickBall(&item, &qty, &place, &count);
+        if (v->ball != CTR_QUICK_BALL_NONE) {
+            v->ballItem = (uint16_t)item;
+            v->ballQty = (uint16_t)(qty > 999 ? 999 : qty);
+            v->ballPlace = (uint8_t)place;
+            v->ballCount = (uint8_t)count;
+            if (item)
+                CtrBottomBag_ItemName(item, v->ballName, sizeof(v->ballName));
+        }
     }
     if (v->state != BUI_MOVE)
         return;
@@ -2076,9 +2100,9 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         /* The entry whose session this is: BAG for the field Bag, POKeMON
          * for Party's GIVE Bag (and Summary). */
         s->touch.selected = (uint8_t)(sSession.active ? sSession.owner : mode == MODE_BAG ? PT_BAG : PT_POKEMON);
-        if (sStorageSession) {
+        if (sStorageSession || (mode == MODE_POUCH && CtrBottomPouch_FromBattle())) {
             /* Summary and GIVE-item Bag opened from a box belong to the PC,
-             * not to a field PokÃ©Touch root. */
+             * not to a field PokÃ©Touch root; the Berry Pouch of the battle Bag belongs to the battle. */
             memset(s->touch.enabled, 0, sizeof(s->touch.enabled));
             s->touch.selected = PT_NONE;
         }
@@ -3749,19 +3773,45 @@ static void ProcessBattleTouch(const CtrInput *in)
         sBat.down = sBat.inside = btn >= 0;
         sBat.btn = btn;
         sBat.state = state;
+        sBat.swipeX = (int)in->touchX;
+        sBat.swiped = 0;
         return;
     }
     if (!sBat.down)
         return;
     if (in->touchActive) {
-        sBat.inside = btn == sBat.btn;
+        /* Across the quick ball, a finger that moves a step changes the ball (to the left: the next one), and keeps on
+         * changing it every step; such a touch throws nothing. */
+        if (state == BATTLE_ACTION && sBat.btn >= BUI_ACT_BALL && sBat.btn <= BUI_ACT_BALL_NEXT
+            && sShown.battle.ball == CTR_QUICK_BALL_READY) {
+            int dx = (int)in->touchX - sBat.swipeX;
+
+            if (dx <= -BALL_SWIPE_STEP || dx >= BALL_SWIPE_STEP) {
+                CtrBattle_QuickBallStep(dx < 0 ? 1 : -1);
+                sBat.swipeX = (int)in->touchX;
+                sBat.swiped = 1;
+            }
+        }
+        sBat.inside = !sBat.swiped && btn == sBat.btn;
+        return;
+    }
+    if (sBat.inside && (sBat.btn == BUI_ACT_BALL_PREV || sBat.btn == BUI_ACT_BALL_NEXT)) {
+        if (sShown.battle.ball == CTR_QUICK_BALL_READY)
+            CtrBattle_QuickBallStep(sBat.btn == BUI_ACT_BALL_NEXT ? 1 : -1);
+        sBat.down = sBat.inside = 0;
+        return;
+    }
+    if (sBat.inside && sBat.btn == BUI_ACT_BALL && sShown.battle.ball != CTR_QUICK_BALL_READY) {
+        sBat.down = sBat.inside = 0;               /* no balls, or the boxes full: the button only says so */
         return;
     }
     if (sBat.inside) {
         BatPlanClear();
         sBatPlan.active = 1;
         sBatPlan.state = state;
-        if (sBat.btn == BUI_CANCEL)
+        if (sBat.btn == BUI_ACT_BALL)
+            sBatPlan.target = CTR_ACTION_BALL;      /* the controller's cursor on the ball button, then A: it throws */
+        else if (sBat.btn == BUI_CANCEL)
             sBatPlan.press = K_B;               /* the controller's own cancel: back to the action menu, no choice made */
         else if (state == BATTLE_TARGET)
             sBatPlan.target = sShown.battle.target[sBat.btn].battler;    /* the battler the card stands for */
@@ -3778,9 +3828,10 @@ static void ProcessBattleTouch(const CtrInput *in)
  * An invalid use stays in the Bag with the Bag's own message (shown, A to continue). A held physical button
  * cancels it all, except the horizontal D-pad that shares the pocket router. */
 static struct {
-    int pocketTarget, pocketWait;   /* the pocket the last tab tap or D-pad press asked for (-1 none), frames left to get there */
+    int pocketTarget, pocketWait;   /* the pocket the Bag is being walked to (-1 none), frames left to get there */
     int autoWait;                   /* frames left to confirm USE once the item's menu opens */
-} sBatBag = {-1, 0, 0};
+    int berryWait;                  /* BERRIES: frames left to find the Berry Pouch once the Key Items pocket shows */
+} sBatBag = {-1, 0, 0, 0};
 
 uint16_t CtrBottom_FilterGameKeys(uint16_t held)
 {
@@ -3820,12 +3871,11 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     return held;
 }
 
+/* The battle Bag shows the Items pocket only (the balls have their own button on the action screen, the Berry Pouch
+ * its BERRIES): the D-pad's LEFT and RIGHT change no pocket. */
 static int BattleBagVisiblePocketStep(int pocket, uint16_t keys)
 {
-    if (keys == K_RIGHT)
-        return pocket == 0 ? 2 : pocket == 2 ? 1 : pocket;
-    if (keys == K_LEFT)
-        return pocket == 1 ? 2 : pocket == 2 ? 0 : pocket;
+    (void)keys;
     return pocket;
 }
 
@@ -3844,6 +3894,7 @@ static void ProcessBattleBagTouch(const CtrInput *in)
     if (physical) {
         sBatBag.pocketTarget = -1;
         sBatBag.autoWait = 0;
+        sBatBag.berryWait = 0;
     }
     if (!physical && ready && state == BAG_LIST && !NavPending(MODE_BAG)
         && (in->down & (K_LEFT | K_RIGHT))) {
@@ -3872,6 +3923,24 @@ static void ProcessBattleBagTouch(const CtrInput *in)
                 sBatBag.pocketTarget = -1;
             else if (state == BAG_LIST)
                 BagPlanStart(list, BAGPLAN_PRESS, 0, 0, pocket < sBatBag.pocketTarget ? K_RIGHT : K_LEFT);
+        } else if (sBatBag.berryWait > 0) {
+            /* BERRIES: in the Key Items pocket, the Berry Pouch is selected and used (USE confirmed as a tap's). */
+            unsigned pouch = CtrBattle_BerryPouch();
+
+            --sBatBag.berryWait;
+            if (state == BAG_LIST && CtrBottomBag_Pocket() == 1) {
+                for (int i = 0, n = CtrBottomBag_Count(); pouch && i < n; ++i)
+                    if (CtrBottomBag_Item(i) == pouch) {
+                        BagPlanStart(list, BAGPLAN_LIST, i, 1, 0);
+                        sBatBag.autoWait = 90;
+                        break;
+                    }
+                sBatBag.berryWait = 0;
+            }
+        } else if (state == BAG_LIST && CtrBottomBag_Pocket() != 0 && !NavPending(MODE_BAG)) {
+            /* Back from the Berry Pouch (or a Bag left in another pocket): the battle Bag is the Items pocket. */
+            sBatBag.pocketTarget = 0;
+            sBatBag.pocketWait = 40;
         }
     }
     if (NavPending(MODE_BAG)) {               /* a pocket is being walked to: its tap is not answered twice */
@@ -3888,6 +3957,7 @@ static void ProcessBattleBagTouch(const CtrInput *in)
         sBagPlan.kind = BAGPLAN_NONE;
         sBatBag.pocketTarget = -1;
         sBatBag.autoWait = 0;
+        sBatBag.berryWait = 0;
         sBat.down = sBat.inside = btn >= 0;
         sBat.btn = btn;
         sBat.state = state;
@@ -3909,9 +3979,10 @@ static void ProcessBattleBagTouch(const CtrInput *in)
             BagPlanStart(list, BAGPLAN_LIST, index, choose, 0);
             if (choose)
                 sBatBag.autoWait = 90;
-        } else if (code >= BUI_BAG_TAB && code < BUI_BAG_TAB + 3) {
-            sBatBag.pocketTarget = CtrBattleUi_TabPocket(code - BUI_BAG_TAB);
+        } else if (code == BUI_BAG_BERRIES && b->berries) {
+            sBatBag.pocketTarget = 1;               /* the Key Items pocket, where the Berry Pouch is */
             sBatBag.pocketWait = 40;
+            sBatBag.berryWait = 90;
         } else if (code >= BUI_BAG_MENU && code < BUI_BAG_MENU + 3)
             BagPlanStart(list, BAGPLAN_MENU, code - BUI_BAG_MENU, 1, 0);
         else if (code == BUI_BAG_CANCEL)
@@ -5387,7 +5458,23 @@ void CtrBottom_Frame(void)
         sChoiceGrace = CHOICE_HOLD_GRACE;
     else if (sChoiceGrace)
         --sChoiceGrace;
-    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
+    /* The battle Bag's Berry Pouch: the upper screen keeps the battle it had under the Bag, through the Pouch, its
+     * fades and the way back to the Bag (released there, TOP showed the fade's black until the battle came back). */
+    {
+        static int sPouchGrace;
+        int battleBag = (mode == MODE_POUCH && CtrBottomPouch_FromBattle()) || (mode == MODE_BAG && CtrBottomBag_InBattle());
+
+        /* From BERRIES on (the Bag walked to its Key Items pocket for the Pouch) to the Pouch itself. */
+        if ((mode == MODE_POUCH && CtrBottomPouch_FromBattle()) || (mode == MODE_BAG && CtrBottomBag_InBattle() && CtrBottomBag_Pocket() == 1))
+            sPouchHold = 1;
+        else if (!battleBag && sPouchHold && ++sPouchGrace > 90)
+            sPouchHold = 0;
+        if (battleBag || !sPouchHold)
+            sPouchGrace = 0;
+        if (mode == MODE_BATTLE)
+            sPouchHold = 0;
+    }
+    hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || sPouchHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */

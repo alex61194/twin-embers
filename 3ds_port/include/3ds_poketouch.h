@@ -62,7 +62,7 @@ enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COU
 #define PT_OPT_LABEL_LEN 16
 #define PT_OPT_VALUE_LEN 12
 #define PT_OPT_SEGS 3
-#define PT_OPT_SEG_LEN 6
+#define PT_OPT_SEG_LEN 8
 enum { PT_OPT_ZONE_NONE, PT_OPT_ZONE_LABEL, PT_OPT_ZONE_PREV, PT_OPT_ZONE_NEXT, PT_OPT_ZONE_SEG };
 /* FireRed's own options (the game bridge, ctr_poketouch_options.c), in the order of its menu. */
 enum { PT_OPT_TEXT_SPEED, PT_OPT_BATTLE_SCENE, PT_OPT_BATTLE_STYLE, PT_OPT_SOUND, PT_OPT_BUTTON_MODE, PT_OPT_FRAME,
@@ -320,6 +320,7 @@ typedef struct {
     uint8_t optFrameType;       /* ... 0..9 */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
+    uint8_t optSwitch[PT_OPT_MAX];      /* an ON/OFF row, drawn as a switch: 0 not one, 1 off, 2 on */
     uint8_t optSegCount[PT_OPT_MAX];    /* a row of levels: how many (0: the "<" value ">" row) ... */
     uint8_t optSegValue[PT_OPT_MAX];    /* ... the one chosen, and their names */
     char optSegName[PT_OPT_MAX][PT_OPT_SEGS][PT_OPT_SEG_LEN];
@@ -434,9 +435,12 @@ void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo);
  * upper one. While the player's controller waits at the action menu it is the MAIN design (FIGHT large, BAG, RUN
  * and POKeMON below, the party's six Poke Balls above); at the move list, the four move cards (name, type,
  * description and power of the real moves) and CANCEL; at any other moment only the frame and the balls.
- * Everything shown is what the controller reports: the screen has no state of its own. In the battle Bag (BUI_BAG, the
- * Bag FireRed opens from BAG) it is a remote for that Bag: its pockets as tabs, the pocket's items with icon and quantity,
- * the selected item's detail, and CANCEL; what it shows is the Bag's own state and save data. In the battle Party (BUI_PARTY:
+ * Everything shown is what the controller reports: the screen has no state of its own. In a wild battle a fourth button
+ * between BAG and POKeMON throws a ball at once (the quick ball: the ball's own icon, name and count, arrows or a swipe
+ * across it for the others, CTR_ACTION_BALL as the controller's cursor). In the battle Bag (BUI_BAG, the Bag FireRed
+ * opens from BAG) it is a remote for that Bag: its items (the Items pocket: the balls have their button, the key items
+ * stay out but for the Berry Pouch, which BERRIES opens) with icon and quantity, the selected item's detail, and
+ * CANCEL; what it shows is the Bag's own state and save data. In the battle Party (BUI_PARTY:
  * a switch, the replacement for a Pokemon that fainted, or the target of an item) it is a remote for FireRed's Party: the
  * six Pokemon as panels in two columns (sprite, name, level, HP bar and numbers, status), its menu or message when it has one
  * open, and CANCEL unless the Party cannot be cancelled.
@@ -445,6 +449,8 @@ enum { BUI_IDLE = 0, BUI_ACTION, BUI_MOVE, BUI_BAG, BUI_PARTY, BUI_TARGET, BUI_S
 /* Buttons (CtrBattleUi_Hit): the controller's action numbers while choosing an action, the move slots 0-3 and
  * BUI_CANCEL while choosing a move; in the Bag the codes below. */
 enum { BUI_ACT_FIGHT = 0, BUI_ACT_BAG = 1, BUI_ACT_POKEMON = 2, BUI_ACT_RUN = 3, BUI_CANCEL = 4 };
+/* The quick ball's parts (hit codes of the action screen): the button (a throw), its arrows (the other balls). */
+enum { BUI_ACT_BALL = 8, BUI_ACT_BALL_PREV = 9, BUI_ACT_BALL_NEXT = 10 };
 #define BUI_NAME_LEN 18
 #define BUI_DESC_LEN 112
 typedef struct {
@@ -462,7 +468,7 @@ typedef struct {
     char desc[BUI_DESC_LEN];        /* FireRed's description, wrapped when drawn */
 } CtrBattleMove;
 enum { BUI_BAG_TAB = 100, BUI_BAG_ROW = 200, BUI_BAG_MENU = 300, BUI_BAG_CANCEL = 400, BUI_BAG_MESSAGE = 500,
-       BUI_BAG_UP = 600, BUI_BAG_DOWN = 601 };
+       BUI_BAG_UP = 600, BUI_BAG_DOWN = 601, BUI_BAG_BERRIES = 602 };
 #define BUI_BAG_ROWS 5
 #define BUI_ITEM_LEN 20
 typedef struct {
@@ -483,6 +489,7 @@ typedef struct {
     int8_t menuCursor;
     char menuName[3][12];
     char message[96];               /* what the Bag printed and waits on */
+    uint16_t berries;               /* the Berry Pouch when the Bag has it (BERRIES opens it), else 0 */
 } CtrBattleBag;
 enum { BUI_PTY_SLOT = 700, BUI_PTY_CANCEL = 710, BUI_PTY_CONFIRM = 711, BUI_PTY_MENU = 720, BUI_PTY_MESSAGE = 730 };
 /* BUI_PTY_MULTI: the picks of several Pokemon (a link battle, the Union Room), with CONFIRM over CANCEL. */
@@ -545,6 +552,10 @@ typedef struct {
     uint16_t activeIcon;            /* its party icon (a species number, as CtrBottomParty_IconSpecies gives it) */
     uint8_t activeFrame;            /* 0 or 1, the icon's bounce: it flips about four times a second */
     uint16_t activeHp, activeMaxHp;
+    uint8_t ball;                   /* the quick ball: CTR_QUICK_BALL_* (3ds_battle_nav.h), NONE for no button */
+    uint8_t ballPlace, ballCount;   /* the ball shown among the Bag's balls (the dots) */
+    uint16_t ballItem, ballQty;
+    char ballName[BUI_ITEM_LEN];
     CtrBattleMove move[4];
     CtrBattleBag bag;
     CtrBattleParty pty;

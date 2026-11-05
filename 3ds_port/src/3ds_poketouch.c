@@ -673,8 +673,8 @@ static void OptRow(int row, const CtrPokeTouchView *v)
                     UI_RGB(255, 214, 160));
     UiArrow(boxX + 10, fy + 4, -1, EM_STRIPE);
     UiArrow(boxX + OPT_BOX_W - 15, fy + 4, 1, EM_STRIPE);
-    if (!strcmp(value, CTR_TR("ON", "S\xC3\x8D", "AN")) || !strcmp(value, CTR_TR("OFF", "NO", "AUS")))
-        EmSwitch(mid - 13, fy + 3, value[1] == 'N');
+    if (v->optSwitch[row])
+        EmSwitch(mid - 13, fy + 3, v->optSwitch[row] == 2);
     else
         UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
 }

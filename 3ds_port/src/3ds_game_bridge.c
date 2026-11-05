@@ -353,6 +353,9 @@ extern int CtrBottom_IsFieldCallback(void);
 extern int CtrMugshot_Active(void);
 extern int CtrTransition_Bg0Canvas(void);
 extern void CtrMugshot_LineScroll(uint16_t *lines);
+/* The transitions bent line by line (Swirl, Slice, Shuffle, Ripple) and the white bars' brightness per line. */
+extern int CtrTransition_LineShift(int16_t *shift);
+extern int CtrTransition_LineBrightness(uint16_t *lines);
 
 static void UpdateStage(void)
 {
@@ -692,13 +695,21 @@ void VBlankIntrWait(void)
     uint16_t lineBrightness[160];
     uint64_t perfScanline = CtrPerf_Begin();
     if (CtrDma_ReadHBlank16(0, gGbaShadow.regs + 0x54,
-                             lineBrightness, 160))
+                             lineBrightness, 160)
+        || (sTransition.on && CtrTransition_LineBrightness(lineBrightness)))
         CtrVideo_SetLineBrightness(lineBrightness, 160);
     else
         CtrVideo_SetLineBrightness(NULL, 0);
+    {
+        int16_t shift[160];
+        int kind = sTransition.on ? CtrTransition_LineShift(shift) : 0;
+
+        CtrVideo_SetFieldLineShift(kind, kind ? shift : NULL, 160);
+    }
     uint16_t flashWindow[160];
-    /* The banners' edges are a WIN0H value per line, like the cave's flash. */
-    if (((CtrField_FlashMaskActive() && CtrBottom_IsFieldCallback()) || CtrMugshot_Active())
+    /* The banners' edges are a WIN0H value per line, like the cave's flash, and so are the battle transitions' wipes
+     * (the cave's clockwise wipe, the big Poke Ball, the angled wipes...). */
+    if (((CtrField_FlashMaskActive() && CtrBottom_IsFieldCallback()) || CtrMugshot_Active() || sTransition.on)
         && CtrDma_ReadHBlank16(0, gGbaShadow.regs + 0x40, flashWindow, 160))
         CtrVideo_SetFlashWindow(flashWindow, 160);
     else

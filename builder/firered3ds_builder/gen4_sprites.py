@@ -89,7 +89,7 @@ import zlib
 from pathlib import Path
 from typing import Callable
 
-from . import gen4_sources
+from . import gen4_followers, gen4_sources, nsbtx
 
 SIZE = 80
 PICTURE = SIZE * SIZE // 2
@@ -377,8 +377,18 @@ PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
 # The pictures FireRed copies out whole, in its own format, for the port to put in place of Red's and Leaf's
 # (CtrPlayer_Swap): the front picture (trainer card, Hall of Fame), the Oak intro's and the Region Map icon.
 PLAYER_PREFIX = "graphics/gen4/player/"
-GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER = "pokemon", "npc", "bg", "player"
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER)
+GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "bg", "player", "follower"
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER)
+# The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
+# a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
+# nine 32x32 frames), the game flipping the west frames for the east. Rows: (dex, or 1000 + dex for the female one,
+# "follower", the file's path in the pinned commit, size, SHA-256).
+FOLLOWER_PREFIX = "graphics/gen4/follower/"
+FOLLOWER_FEMALE = 1000
+FOLLOWER_FILES = tuple(
+    (dex + (FOLLOWER_FEMALE if body == "female" else 0), "follower",
+     gen4_followers.MMODEL_PATH.format(gen4_followers.BASE + number), size, digest)
+    for dex, body, number, size, digest in gen4_followers.FILES)
 BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
@@ -842,6 +852,39 @@ def convert_npc(sheet: bytes, count: int = NPC_FRAMES, size: int = 32) -> bytes:
     return NPC_MAGIC + bytes([count, size, 0, 0]) + struct.pack("<16H", *colours) + frames
 
 
+def convert_follower(archive: bytes) -> bytes:
+    """A follower Pokémon's pack entry from its HeartGold texture archive: the person entry of nine 32x32 frames (64x64
+    for the big ones, which HeartGold draws a tile taller than a person: Steelix, Lugia, Ho-Oh, Wailord, Kyogre, Groudon,
+    Rayquaza) in
+    FireRed's order (south, north and west standing, then two steps of each, which the game cycles with the standing
+    one), from the archive's eight textures: back (north), front (south), left (west) and right, two each. The east
+    frames are the west ones flipped by the game, so the archive's right ones are not kept. Its normal palette; colour
+    0 is transparent."""
+    try:
+        source = nsbtx.Archive(archive)
+        textures = [source.decode(n) for n in range(len(source.textures))]
+    except (nsbtx.NsbtxError, IndexError, struct.error) as error:
+        raise Gen4Error("a follower is not a readable texture archive: %s" % error) from error
+    if len(textures) != 8:
+        raise Gen4Error("a follower has eight textures")
+    size = textures[0][0]
+    if size not in (32, 64) or any((width, height) != (size, size) for width, height, _ in textures):
+        raise Gen4Error("a follower's textures are 32x32 or 64x64")
+    # The textures are ordered back, front, left and right, two of each: [back 1, back 2, front 1, front 2, ...].
+    north, south, west = (textures[0][2], textures[1][2]), (textures[2][2], textures[3][2]), (textures[4][2], textures[5][2])
+    frames = [south[0], north[0], west[0], south[1], south[1], north[1], north[1], west[1], west[1]]
+    palette, indices = quantize([pixel for frame in frames for pixel in frame])
+    tiles = b""
+    for frame in range(NPC_FRAMES):
+        for ty in range(size // 8):
+            for tx in range(size // 8):
+                for y in range(8):
+                    base = (frame * size + ty * 8 + y) * size + tx * 8
+                    tiles += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
+    colours = (palette + [0] * 16)[:16]
+    return NPC_MAGIC + bytes([NPC_FRAMES, size, 0, 0]) + struct.pack("<16H", *colours) + tiles
+
+
 def convert_bg(scene: bytes) -> bytes:
     """A battle background's pack entry from its 240x112 PNG: the 15-colour palette, the tiles (identical ones once)
     and the 64x32 tile map of BG3's two screen blocks."""
@@ -921,7 +964,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg", "npc", "player"):
+    if row[1] in ("back", "bg", "npc", "player", "follower"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -946,6 +989,8 @@ def file_name(row: tuple) -> str:
         return "npc_{:03d}.png".format(row[0])
     if row[1] == "player":
         return "player_{}_{}".format(row[0], row[2].rsplit("/", 1)[1])
+    if row[1] == "follower":
+        return "follower_{:04d}.nsbtx".format(row[0])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -956,6 +1001,8 @@ def file_url(row: tuple) -> str:
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     if row[1] == "player":
         return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
+    if row[1] == "follower":
+        return URL.format(repo=gen4_followers.REPO, commit=gen4_followers.COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
 
 
@@ -971,6 +1018,8 @@ def all_files(groups: tuple = GROUPS) -> tuple:
         rows += BG_FILES
     if GROUP_PLAYER in groups:
         rows += PLAYER_FILES
+    if GROUP_FOLLOWER in groups:
+        rows += FOLLOWER_FILES
     return rows
 
 
@@ -1061,6 +1110,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     scenes = [row for row in rows if row[1] == "bg"]
     people = [row for row in rows if row[1] == "npc"]
     player = [row for row in rows if row[1] == "player"]
+    followers = [row for row in rows if row[1] == "follower"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -1099,6 +1149,13 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     # A person whose sheet could not be had keeps FireRed's picture; the others are drawn.
     npc_files = [("%s%03d.bin" % (NPC_PREFIX, row[0]), convert_npc(got[row[:3]])) for row in people if row[:3] in got]
     files += npc_files
+    # A Pokémon whose archive could not be had has no follower; the others walk behind the player.
+    follower_files = []
+    for row in (row for row in followers if row[:3] in got):
+        dex = row[0] % FOLLOWER_FEMALE
+        name = "%s%03d%s.bin" % (FOLLOWER_PREFIX, dex, "_f" if row[0] >= FOLLOWER_FEMALE else "")
+        follower_files.append((name, convert_follower(got[row[:3]])))
+    files += follower_files
     # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
     player_files = []
     for row in (row for row in player if row[:3] in got):
@@ -1128,4 +1185,5 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
+                   "followers": len(follower_files),
                    "player": len(player_files), "downloaded": downloaded}

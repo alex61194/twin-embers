@@ -13,7 +13,7 @@ static unsigned sBrightnessKeyCount;
 
 static unsigned LineBrightnessAt(int y)
 {
-    if (NativeIntroTitle()) y = y * 160 / 240;
+    if (NativeIntroTitle() || sFieldLayers) y = y * 160 / 240;     /* both are the 400x240 canvas over 160 lines */
     unsigned line = y < 0 ? 0 : (unsigned)y >= sLineBrightnessCount
                   ? sLineBrightnessCount - 1 : (unsigned)y;
     return sLineBrightness[line];

@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / 'web'
 PACKAGE = ROOT / 'builder' / 'firered3ds_builder'
-PAGES = ('index.html', 'es.html', 'style.css', 'app.js', 'worker.js')
+PAGES = ('index.html', 'es.html', 'de.html', 'style.css', 'app.js', 'worker.js')
 # The README's images the page shows (docs/media, reviewed there): the banner and the gallery's captures.
 MEDIA = ROOT / 'docs' / 'media'
 # The banner and every README capture (docs/media/NN-name.png); the page's gallery shows them all.
@@ -35,7 +35,7 @@ ICON = MEDIA / 'twin-embers-icon.png'
 SHEET = 'twinembers.t3x'
 # What firered3ds_builder.browser imports, directly or not. The GUI, CLI and Windows parts stay out.
 MODULES = ('__init__.py', 'browser.py', 'build.py', 'rom.py', 'recipe.py', 'pak.py',
-           'gen4_sprites.py', 'gen4_sources.py')
+           'gen4_sprites.py', 'gen4_sources.py', 'gen4_followers.py', 'nsbtx.py')
 
 # Universal-Updater's own rules (source/store/store.cpp, storeEntry.cpp, script.cpp): what it
 # needs to accept a store, and the fields each script action must have.

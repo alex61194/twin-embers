@@ -102,15 +102,19 @@ int CtrBottomSummary_Pic80(unsigned char *pixels, unsigned short *pal, int *flip
 { (void)pixels; (void)pal; (void)flip; return 0; }
 int CtrPokeTouch_Wallpaper(unsigned id, unsigned short *rgb555)
 { (void)id; (void)rgb555; return 0; }
-int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes)
-{ (void)mark; (void)indexes; return 0; }
 
 static uint16_t canvas[W * H], reference[W * H];
 static uint16_t at(int x, int y) { return canvas[x * H + H - 1 - y]; }
 
+/* The state last drawn: the action menu and the Bag were redrawn for the quick ball (issue #16), so their geometry
+ * is checked by the assertions on them below, not against the renderer before the restyle. */
+static int sState;
+
 static void settle(const CtrBattleView *old, const CtrBattleView *v)
 {
     CtrDirtyList dirty;
+
+    sState = v->state;
 
     CtrDirty_Clear(&dirty);
     CtrBattleUi_Update(canvas, old, v, &dirty);
@@ -132,6 +136,9 @@ static unsigned sMaskCrc;
 static void mask(void)
 {
     uint16_t bg = at(1, 100);
+
+    if (sState == BUI_ACTION || sState == BUI_BAG)
+        return;
 
     for (int x = 0; x < W; ++x)
         for (int y = 0; y < H; ++y)
@@ -209,6 +216,8 @@ static void put(const char *dir, const char *name)
 static unsigned sHitCrc;
 static void hits(const CtrBattleView *v)
 {
+    if (v->state == BUI_ACTION || v->state == BUI_BAG)
+        return;
     for (int y = 0; y < H; y += 3)
         for (int x = 0; x < W; x += 3) {
             int h = CtrBattleUi_Hit(v, x, y);
@@ -310,6 +319,43 @@ int main(int argc, char **argv)
         v.pressed = -1; settle(&old, &v); old = v;
     }
     v.showCursor = 0; settle(&old, &v); old = v;
+#ifndef BATTLE_UI_BEFORE
+    /* The quick ball (a wild battle): four buttons in the row, the ball's button between BAG and POKeMON with its
+     * arrows in its lower corners; the cursor on it and off it, its presses, another ball, none left, the boxes full,
+     * one kind only (no arrows), and back to three buttons (a trainer). */
+    v.ball = CTR_QUICK_BALL_READY; v.ballCount = 4; v.ballPlace = 1; v.ballItem = 2; v.ballQty = 21;
+    names(v.ballName, BUI_ITEM_LEN, "GREAT BALL");
+    settle(&old, &v); old = v; put(out, "02b_action_ball");
+    assert(CtrBattleUi_Hit(&v, 8 + 30, 120 + 30) == BUI_ACT_BAG);
+    assert(CtrBattleUi_Hit(&v, 85 + 36, 120 + 30) == BUI_ACT_BALL);
+    assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL_PREV);
+    assert(CtrBattleUi_Hit(&v, 85 + 73 - 13, 120 + 95) == BUI_ACT_BALL_NEXT);
+    assert(CtrBattleUi_Hit(&v, 162 + 36, 120 + 30) == BUI_ACT_POKEMON);
+    assert(CtrBattleUi_Hit(&v, 239 + 36, 120 + 30) == BUI_ACT_RUN);
+    assert(CtrBattleUi_Hit(&v, 150, 60) == BUI_ACT_FIGHT);
+    v.showCursor = 1;
+    for (k = 0; k < 5; ++k) {
+        v.cursor = (int8_t)k; settle(&old, &v); old = v;
+    }
+    v.cursor = CTR_ACTION_BALL;
+    for (k = BUI_ACT_BALL; k <= BUI_ACT_BALL_NEXT; ++k) {
+        v.pressed = (int16_t)k; settle(&old, &v); old = v;
+        if (k == BUI_ACT_BALL) put(out, "02c_action_ball_pressed");
+        v.pressed = -1; settle(&old, &v); old = v;
+    }
+    v.pressed = 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
+    v.ballPlace = 2; v.ballItem = 3; v.ballQty = 8; names(v.ballName, BUI_ITEM_LEN, "ULTRA BALL");
+    settle(&old, &v); old = v;
+    v.ball = CTR_QUICK_BALL_EMPTY; v.ballCount = 0; settle(&old, &v); old = v; put(out, "02d_action_no_balls");
+    assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* no arrows: the button only says so */
+    v.ball = CTR_QUICK_BALL_FULL; v.ballCount = 4; settle(&old, &v); old = v;
+    v.ball = CTR_QUICK_BALL_READY; v.ballCount = 1; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* one kind of ball: no other to go to */
+    v.ball = CTR_QUICK_BALL_NONE; v.cursor = 0; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 8 + 30, 120 + 30) == BUI_ACT_BAG && CtrBattleUi_Hit(&v, 111 + 30, 120 + 30) == BUI_ACT_POKEMON
+           && CtrBattleUi_Hit(&v, 214 + 30, 120 + 30) == BUI_ACT_RUN);
+    v.showCursor = 0; settle(&old, &v); old = v;
+#endif
 
     /* MOVE */
     v.state = BUI_MOVE; v.showCursor = 1; v.cursor = 1;
@@ -477,7 +523,12 @@ int main(int argc, char **argv)
     }
     settle(&old, &v); old = v; put(out, "07_bag"); hits(&v);
     v.pressed = BUI_BAG_ROW + 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
-    v.pressed = BUI_BAG_TAB + 1; settle(&old, &v); old = v; put(out, "08_bag_tab_pressed"); v.pressed = -1; settle(&old, &v); old = v;
+    /* The Berry Pouch in the Bag: BERRIES beside the title, which takes the whole width without it. */
+    v.bag.berries = 365; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 260, 16) == BUI_BAG_BERRIES);
+    v.pressed = BUI_BAG_BERRIES; settle(&old, &v); old = v; put(out, "08_bag_berries_pressed"); v.pressed = -1; settle(&old, &v); old = v;
+    v.bag.berries = 0; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 260, 16) == -1);
     v.bag.menuCount = 2; v.bag.menuCursor = 0; names(v.bag.menuName[0], 12, "USE"); names(v.bag.menuName[1], 12, "CANCEL");
     settle(&old, &v); old = v; put(out, "09_bag_menu"); hits(&v);
     v.bag.menuCount = 0; names(v.bag.message, sizeof(v.bag.message), "The POKeMON's HP was restored by 50 points.");
