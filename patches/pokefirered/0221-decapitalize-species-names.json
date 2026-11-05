@@ -5,7 +5,7 @@
   {
    "path": "src/pokemon.c",
    "before_sha256": "496c4b0d163e1fa3b37bfc611ec93bb026d05d63022ce714776a3dca9b7bc1e3",
-   "after_sha256": "cd1697bb492271c50c5a1d6cab4b7c2b7732bb3ccef7f469a73f802b5bd09855",
+   "after_sha256": "71f208938b19ce07504eb3adbde38125d0530c62798a03c24ca23b6ab00ba34b",
    "remove": false,
    "lines": [
     {
@@ -203,7 +203,124 @@
     {
      "span": [
       3047,
-      3558
+      3552
+     ]
+    },
+    {
+     "port": "void CtrConvertTitleCase(u8 *str, u32 maxLen)\n"
+    },
+    {
+     "port": "{\n"
+    },
+    {
+     "port": "    u32 j;\n"
+    },
+    {
+     "port": "    bool8 newWord = TRUE;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "    if (str == NULL)\n"
+    },
+    {
+     "port": "        return;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "    if ((str[0] == CHAR_T || str[0] == CHAR_V) && str[1] == CHAR_M)\n"
+    },
+    {
+     "port": "        return;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "    for (j = 0; j < maxLen && str[j] != EOS; j++)\n"
+    },
+    {
+     "port": "    {\n"
+    },
+    {
+     "port": "        u8 b = str[j];\n"
+    },
+    {
+     "port": "        if (newWord)\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            if (b != CHAR_SPACE && b != CHAR_HYPHEN && b != CHAR_PERIOD && b != CHAR_SLASH)\n"
+    },
+    {
+     "port": "                newWord = FALSE;\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "        else\n"
+    },
+    {
+     "port": "        {\n"
+    },
+    {
+     "port": "            if (b == CHAR_SPACE || b == CHAR_HYPHEN || b == CHAR_PERIOD || b == CHAR_SLASH)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                newWord = TRUE;\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "            else if (b >= CHAR_A && b <= CHAR_Z)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                str[j] = b + (CHAR_a - CHAR_A);\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "            else if (b >= 0xF1 && b <= 0xF3)\n"
+    },
+    {
+     "port": "            {\n"
+    },
+    {
+     "port": "                str[j] = b + 3;\n"
+    },
+    {
+     "port": "            }\n"
+    },
+    {
+     "port": "        }\n"
+    },
+    {
+     "port": "    }\n"
+    },
+    {
+     "port": "}\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "span": [
+      6599,
+      6
      ]
     },
     {
@@ -228,91 +345,160 @@
      "port": "    {\n"
     },
     {
-     "port": "        u8 *name = names[species];\n"
+     "port": "        CtrConvertTitleCase(names[species], POKEMON_NAME_LENGTH);\n"
     },
     {
-     "port": "        u8 j;\n"
-    },
-    {
-     "port": "        bool8 newWord = TRUE;\n"
+     "port": "    }\n"
     },
     {
      "port": "\n"
     },
     {
-     "port": "        for (j = 0; j < POKEMON_NAME_LENGTH && name[j] != EOS; j++)\n"
+     "port": "#if defined(CTR_LANG_DE) && CTR_LANG_DE\n"
+    },
+    {
+     "port": "    {\n"
+    },
+    {
+     "port": "        extern const u8 gMoveNames[][MOVE_NAME_LENGTH + 1];\n"
+    },
+    {
+     "port": "        extern const struct Item gItems[];\n"
+    },
+    {
+     "port": "        extern const u8 gAbilityNames[ABILITIES_COUNT][ABILITY_NAME_LENGTH + 1];\n"
+    },
+    {
+     "port": "        extern const u8 gTypeNames[][TYPE_NAME_LENGTH + 1];\n"
+    },
+    {
+     "port": "        extern const u8 gTrainerClassNames[][13];\n"
+    },
+    {
+     "port": "        extern const u8 *const gNatureNamePointers[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuBag[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuSave[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuOption[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuExit[];\n"
+    },
+    {
+     "port": "        extern const u8 gText_MenuRetire[];\n"
+    },
+    {
+     "port": "        u32 i;\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 1; i < MOVES_COUNT; i++)\n"
+    },
+    {
+     "port": "            CtrConvertTitleCase((u8 *)gMoveNames[i], MOVE_NAME_LENGTH);\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 1; i < ITEMS_COUNT; i++)\n"
+    },
+    {
+     "port": "            CtrConvertTitleCase((u8 *)gItems[i].name, 14);\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 1; i < ABILITIES_COUNT; i++)\n"
+    },
+    {
+     "port": "            CtrConvertTitleCase((u8 *)gAbilityNames[i], ABILITY_NAME_LENGTH);\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 0; i < NUMBER_OF_MON_TYPES; i++)\n"
+    },
+    {
+     "port": "            CtrConvertTitleCase((u8 *)gTypeNames[i], TYPE_NAME_LENGTH);\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 0; i < 107; i++)\n"
+    },
+    {
+     "port": "            CtrConvertTitleCase((u8 *)gTrainerClassNames[i], 12);\n"
+    },
+    {
+     "port": "\n"
+    },
+    {
+     "port": "        for (i = 0; i < NUM_NATURES; i++)\n"
     },
     {
      "port": "        {\n"
     },
     {
-     "port": "            u8 b = name[j];\n"
+     "port": "            if (gNatureNamePointers[i] != NULL)\n"
     },
     {
-     "port": "            if (newWord)\n"
+     "port": "                CtrConvertTitleCase((u8 *)gNatureNamePointers[i], 16);\n"
     },
     {
-     "port": "            {\n"
+     "port": "        }\n"
     },
     {
-     "port": "                if (b != CHAR_SPACE && b != CHAR_HYPHEN && b != CHAR_PERIOD)\n"
+     "port": "\n"
     },
     {
-     "port": "                    newWord = FALSE;\n"
+     "port": "        CtrConvertTitleCase((u8 *)gText_MenuBag, 16);\n"
     },
     {
-     "port": "            }\n"
+     "port": "        CtrConvertTitleCase((u8 *)gText_MenuSave, 16);\n"
     },
     {
-     "port": "            else\n"
+     "port": "        CtrConvertTitleCase((u8 *)gText_MenuOption, 16);\n"
     },
     {
-     "port": "            {\n"
+     "port": "        CtrConvertTitleCase((u8 *)gText_MenuExit, 16);\n"
     },
     {
-     "port": "                if (b == CHAR_SPACE || b == CHAR_HYPHEN || b == CHAR_PERIOD)\n"
+     "port": "        CtrConvertTitleCase((u8 *)gText_MenuRetire, 16);\n"
     },
     {
-     "port": "                {\n"
+     "port": "\n"
     },
     {
-     "port": "                    newWord = TRUE;\n"
+     "port": "        {\n"
     },
     {
-     "port": "                }\n"
+     "port": "            extern void CtrRegionMap_ApplyDecap(void);\n"
     },
     {
-     "port": "                else if (b >= CHAR_A && b <= CHAR_Z)\n"
-    },
-    {
-     "port": "                {\n"
-    },
-    {
-     "port": "                    name[j] = b + (CHAR_a - CHAR_A);\n"
-    },
-    {
-     "port": "                }\n"
-    },
-    {
-     "port": "                else if (b >= 0xF1 && b <= 0xF3)\n"
-    },
-    {
-     "port": "                {\n"
-    },
-    {
-     "port": "                    name[j] = b + 3;\n"
-    },
-    {
-     "port": "                }\n"
-    },
-    {
-     "port": "            }\n"
+     "port": "            CtrRegionMap_ApplyDecap();\n"
     },
     {
      "port": "        }\n"
     },
     {
      "port": "    }\n"
+    },
+    {
+     "span": [
+      6609,
+      1
+     ]
     },
     {
      "port": "\n"
@@ -390,10 +576,10 @@
      "port": "    }\n"
     },
     {
-     "span": [
-      6608,
-      2
-     ]
+     "port": "}\n"
+    },
+    {
+     "port": "#endif\n"
     }
    ]
   }
