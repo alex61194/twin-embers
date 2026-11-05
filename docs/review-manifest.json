@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "53112d2fbb7473249e4a36686e03f18c3f3f897f8947228591b175b77fd86acd",
+   "sha256": "95fb3637cdb55f2bf6bb77f8258f28a19ca1f68c410b16af0c4a90bad2b2ef93",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -195,7 +195,7 @@
   },
   {
    "path": "3ds_port/forwarder/Makefile",
-   "sha256": "63d9cae084b96daaca1920d9594ca94422e795fdd10071d7fe102d093e596b31",
+   "sha256": "5472f0d0238da8ba6f4f09c26de759e6c5febfde3717bd0faf83717570e5fa7b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

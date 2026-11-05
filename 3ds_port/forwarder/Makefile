@@ -10,7 +10,8 @@
 #   ICON_SRC=icon.jpg BANNER_SRC=logo.jpg   the owner's pictures, kept outside the
 #                                           repository, made into the icon and a
 #                                           transparent banner by prepare_art.py (Pillow)
-#   (neither)                               two flames drawn by make_art.py
+#   (neither)                               two flames drawn by make_art.py (a PUBLIC release must not
+#                                           ship them: pass REQUIRE_ART=1 and the build stops without both)
 .SUFFIXES:
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= $(DEVKITPRO)/devkitARM
@@ -50,6 +51,9 @@ ifneq ($(and $(ICON_SRC),$(BANNER_SRC)),)
 $(ART)/icon.png $(ART)/banner.png $(ART)/banner.wav &: prepare_art.py make_art.py $(ICON_SRC) $(BANNER_SRC)
 	$(PYTHON) prepare_art.py --icon "$(ICON_SRC)" --icon-crop $(ICON_CROP) --banner "$(BANNER_SRC)" $(ART)
 else
+ifneq ($(REQUIRE_ART),)
+$(error REQUIRE_ART is set but ICON_SRC and BANNER_SRC are not both given: the CIA would get the placeholder flames instead of the Twin Embers icon and banner)
+endif
 $(ART)/icon.png $(ART)/banner.png $(ART)/banner.wav &: make_art.py
 	$(PYTHON) make_art.py $(ART)
 endif

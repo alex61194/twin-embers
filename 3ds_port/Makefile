@@ -254,16 +254,22 @@ build/firered_game_3dsx.elf: build/firered_game.elf ../tools/filter_3dsx_relocs.
 # (forwarder/Makefile). No artwork is stored in the repository:
 #   ICON_SRC=icon.jpg   the owner's picture, kept outside the repository, fitted
 #                       into 48x48 by forwarder/prepare_art.py (Pillow)
-#   (none)              the two flames drawn by forwarder/make_art.py
+#   ICON_CROP=0         for a picture that already is the 48x48 icon (default 0.09 cut from each side)
+#   (none)              the two flames drawn by forwarder/make_art.py (a PUBLIC release must not ship
+#                       them: pass REQUIRE_ART=1 and the build stops when ICON_SRC is missing)
 APP_TITLE := Twin Embers
 APP_DESCRIPTION := A FireRed port for the 3DS
 APP_AUTHOR := alex61194
 ICON_SRC ?=
+ICON_CROP ?= 0.09
 ICON_ART := build/icon-art
 ifneq ($(ICON_SRC),)
 $(ICON_ART)/icon.png: forwarder/prepare_art.py forwarder/make_art.py $(ICON_SRC)
-	$(PYTHON) forwarder/prepare_art.py --icon "$(ICON_SRC)" $(ICON_ART)
+	$(PYTHON) forwarder/prepare_art.py --icon "$(ICON_SRC)" --icon-crop $(ICON_CROP) $(ICON_ART)
 else
+ifneq ($(REQUIRE_ART),)
+$(error REQUIRE_ART is set but ICON_SRC is not: the 3DSX would get the placeholder flames instead of the Twin Embers icon)
+endif
 $(ICON_ART)/icon.png: forwarder/make_art.py
 	$(PYTHON) forwarder/make_art.py $(ICON_ART)
 endif
