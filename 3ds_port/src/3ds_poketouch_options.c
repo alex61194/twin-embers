@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "3ds_poketouch_options.h"
+#include "3ds_looks.h"
 #include "3ds_settings.h"
 #include "3ds_lang.h"
 
@@ -64,6 +65,23 @@ static int GetRepelAgain(void) { return !CtrSettings_RepelAgain(); }
 static void SetRepelAgain(int v) { CtrSettings_SetRepelAgain(!(v & 1)); }
 static int GetCompanion(void) { return CtrSettings_Companion(); }
 static void SetCompanion(int v) { CtrSettings_SetCompanion(v); }
+/* The look of Red, Leaf and the rival Blue (the Builder's alternative looks): DEFAULT, then each look the pack has. */
+static const char *sLookNames[1 + CTR_LOOKS_MAX];
+static void LookNamesFill(void)
+{
+    int n = CtrLooks_Count();
+
+    sLookNames[0] = CTR_TR("DEFAULT", "NORMAL", "STANDARD");
+    for (int i = 0; i < n; ++i)
+        sLookNames[1 + i] = CtrLooks_Name(i);
+}
+static int LookCount(void) { LookNamesFill(); return 1 + CtrLooks_Count(); }
+static int GetLookRed(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_RED) + 1; }
+static int GetLookLeaf(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_LEAF) + 1; }
+static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_BLUE) + 1; }
+static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
+static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
+static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
 static int GetEmbers(void) { return sPortEmbers; }
@@ -121,6 +139,12 @@ static const CtrOptionRow sRows[] = {
     /* Page 3. */
     {CTR_TR("EXP SHARE", "REPARTIR EXP", "EP-TEILER"), {CTR_TR("Share EXP with the whole", "Reparte la EXP con todo", "EP an das ganze Team:"), CTR_TR("team: HALF or FULL.", "el equipo: MITAD o TODA.", "HALB oder VOLL.")}, 0, sExpShare, NULL,
      GetExpShare, ThreeCount, SetExpShare},
+    {CTR_TR("RED LOOK", "ASPECTO ROJO", "ROT-LOOK"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de los", "Das Aussehen von Rot, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookRed, LookCount, SetLookRed},
+    {CTR_TR("LEAF LOOK", "ASPECTO HOJA", "BLATT-LOOK"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de los", "Das Aussehen von Blatt, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookLeaf, LookCount, SetLookLeaf},
+    {CTR_TR("RIVAL LOOK", "ASPECTO RIVAL", "RIVALEN-LOOK"), {CTR_TR("The look of Blue, your rival,", "El aspecto de Azul, tu rival,", "Das Aussehen von Blau, dem Rivalen,"), CTR_TR("from the alternative looks.", "de los aspectos del Builder.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookBlue, LookCount, SetLookBlue},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
