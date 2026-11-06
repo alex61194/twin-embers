@@ -679,6 +679,44 @@ static void OptRow(int row, const CtrPokeTouchView *v)
         UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
 }
 
+static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color);
+
+/* The preview under the look rows of OPTIONS (3ds_poketouch.h CtrPokeTouchLook): in the rows the page does not use, a note card
+ * with the look's walking picture facing down, twice as large (as it walks in the field), its name and its artists. */
+static CtrPokeTouchRect OptLookRect(const CtrPokeTouchView *v)
+{
+    CtrPokeTouchRect r = {OPT_X, (int16_t)(OPT_Y + v->optCount * OPT_STEP), OPT_W,
+                          (int16_t)((PT_OPT_MAX - v->optCount) * OPT_STEP - 2)};
+
+    return r;
+}
+
+static void OptLookPanel(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchLook *l = &v->optLook;
+    CtrPokeTouchRect r = OptLookRect(v);
+    int textX = r.x + 84;
+
+    if (r.h < 40)
+        return;
+    TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+    EmNote(r.x, r.y, r.w, r.h);
+    if (l->has) {
+        static uint8_t pixels[32 * 32];
+        uint16_t pal[16];
+
+        for (int py = 0; py < 32; ++py)
+            for (int px = 0; px < 32; ++px)
+                pixels[py * 32 + px] = (uint8_t)((l->tiles[(py / 8 * 4 + px / 8) * 32 + py % 8 * 4 + px % 8 / 2] >> (px & 1) * 4) & 15);
+        for (int i = 0; i < 16; ++i)
+            pal[i] = GbaColor(l->palette[i]);
+        /* The first rows of a person are empty: the note's height holds the other 30 at twice the size. */
+        UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
+    }
+    UiText(l->name, textX, r.y + 8, EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
+    BDescribeN(l->credit, textX, r.y + 24, r.x + r.w - 6 - textX, 3, EM_DIM);
+}
+
 /* The SAVE screen: FireRed's save information in a card over the frame where the picture goes: a title band, the five
  * lines (label on the left, value on the right) and the player's own map icon, enlarged by 3, on a plate. Each value
  * has its own rectangle, filled with the card's colour before its text, so one that changes (the play clock) is
@@ -896,6 +934,8 @@ static void MenuFrame(const CtrPokeTouchView *v)
     if (v->options && !v->viewport) {
         for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
             OptRow(i, v);
+        if (v->optLook.on)
+            OptLookPanel(v);
         return;
     }
     if (!FrameShown(v))
@@ -1207,7 +1247,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
         Bar(v);
         Mark(dirty, &sBar);
     } else if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
-        || (v->options && !v->viewport && old->optCount != v->optCount)
+        || (v->options && !v->viewport && (old->optCount != v->optCount || old->optLook.on != v->optLook.on))
         || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
@@ -1257,6 +1297,17 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
                 OptRow(i, v);
                 Mark(dirty, &r);
             }
+        }
+        /* The preview: its look (or the one chosen for another slot) changed. */
+        if (v->optLook.on && memcmp(&old->optLook, &v->optLook, sizeof(v->optLook))) {
+            CtrPokeTouchRect r = OptLookRect(v);
+
+            r.x -= 2;
+            r.y -= 2;
+            r.w += 4;
+            r.h += 4;
+            OptLookPanel(v);
+            Mark(dirty, &r);
         }
     }
     if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->optFrameShow != v->optFrameShow

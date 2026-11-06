@@ -67,6 +67,19 @@ enum { PT_OPT_ZONE_NONE, PT_OPT_ZONE_LABEL, PT_OPT_ZONE_PREV, PT_OPT_ZONE_NEXT, 
 /* FireRed's own options (the game bridge, ctr_poketouch_options.c), in the order of its menu. */
 enum { PT_OPT_TEXT_SPEED, PT_OPT_BATTLE_SCENE, PT_OPT_BATTLE_STYLE, PT_OPT_SOUND, PT_OPT_BUTTON_MODE, PT_OPT_FRAME,
        PT_OPT_FPS, PT_OPT_GAME_COUNT };
+/* The preview OPTIONS shows under the look rows (RED LOOK, LEAF LOOK, RIVAL LOOK) while one is selected: the look chosen for it,
+ * its name and its artists, and its walking picture facing down (32x32 at 4 bits, 4x4 tiles of 32 bytes, row by row of tiles)
+ * drawn twice as large. `has` is 0 when the choice is the default (no picture, the name says so) or the pack has no picture. */
+#define PT_LOOK_NAME_LEN 12
+#define PT_LOOK_CREDIT_LEN 128
+typedef struct {
+    uint8_t on;                     /* a look row is selected: the panel under the rows is drawn */
+    uint8_t has;
+    char name[PT_LOOK_NAME_LEN];
+    char credit[PT_LOOK_CREDIT_LEN];
+    uint8_t tiles[512];
+    uint16_t palette[16];           /* 15-bit colours, 0 clear */
+} CtrPokeTouchLook;
 /* The SAVE screen (the facts come from FireRed's save window, ctr_poketouch.h CtrSave_*): the whole
  * viewport shows the game's save information, and the contextual bar becomes the dialogue: its two or
  * three text lines on the left and, on the right of the same bar, YES / NO (SAVE_CONFIRM), nothing
@@ -318,6 +331,7 @@ typedef struct {
     uint8_t optZone;
     uint8_t optFrameShow;       /* the selected row is FRAME: the bar shows a sample of its type ... */
     uint8_t optFrameType;       /* ... 0..9 */
+    CtrPokeTouchLook optLook;   /* a look row is selected: the preview panel */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
     uint8_t optSwitch[PT_OPT_MAX];      /* an ON/OFF row, drawn as a switch: 0 not one, 1 off, 2 on */
