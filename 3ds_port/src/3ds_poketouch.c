@@ -911,12 +911,12 @@ static void Back(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchBack;
     const EmPal *pal = v->backEnabled ? &kEmViolet : &kEmGrey;
-    int w = TextWidth(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK")), x = r->x + (r->w - w - 9) / 2, fy;
+    int w = TextWidth(CTR_TR("BACK", "ATR\xC3\x81S", "Zur\xC3\xBC" "ck")), x = r->x + (r->w - w - 9) / 2, fy;
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     UiArrow(x, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, -1, pal->ink);
-    UiText(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
+    UiText(CTR_TR("BACK", "ATR\xC3\x81S", "Zur\xC3\xBC" "ck"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
 }
 
 /* PAGE: switches between OPTIONS pages (PAGE 1/2, PAGE 2/2) right above BACK. */
@@ -926,7 +926,7 @@ static void OptPageButton(const CtrPokeTouchView *v)
     char label[16];
     int fy;
 
-    snprintf(label, sizeof(label), CTR_TR("PAGE %u/%u", "P\xC3\x81G. %u/%u", "SEITE %u/%u"), (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
+    snprintf(label, sizeof(label), CTR_TR("PAGE %u/%u", "P\xC3\x81G. %u/%u", "Seite %u/%u"), (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
     EmLabel(label, r->x, r->w, fy, r->h - COL_DEPTH, &kEmCream);
@@ -1001,8 +1001,8 @@ static int FrameSample(int type, int x, int y)
 
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
-    UiText(CTR_TR("YES", "S\xC3\x8D", "JA"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
-    UiText(CTR_TR("NO", "NO", "NEIN"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("YES", "S\xC3\x8D", "Ja"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("NO", "NO", "Nein"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
 }
 

@@ -124,6 +124,11 @@ class UniStoreTest(unittest.TestCase):
         self.assertEqual(spanish[0], game[0])
         self.assertEqual(spanish[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers-es.3dsx',
                                       'output': 'sdmc:/3ds/twinembers/twinembers-es.3dsx'})
+        # The German game, for a pack from the German ROM, under its own name: the forwarder starts either.
+        german = entry['twinembers.3dsx (German)']
+        self.assertEqual(german[0], game[0])
+        self.assertEqual(german[1], {'type': 'downloadFile', 'file': RELEASES + 'twinembers-de.3dsx',
+                                     'output': 'sdmc:/3ds/twinembers/twinembers-de.3dsx'})
         cia = entry['HOME Menu forwarder (CIA)']
         self.assertEqual([a['type'] for a in cia], ['downloadFile', 'installCia', 'deleteFile'])
         self.assertEqual(cia[0]['file'], RELEASES + 'TwinEmbers-Forwarder.cia')
