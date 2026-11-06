@@ -581,7 +581,8 @@ int CtrBattleUi_Hit(const CtrBattleView *view, int x, int y);
  */
 enum { SUI_TAB_INFO = 0, SUI_TAB_STATS, SUI_TAB_MOVES, SUI_TAB_TRAINER, SUI_TABS };
 /* Hit codes (CtrSummaryUi_Hit): the tabs, the previous / next Pokemon, BACK, a move card or row, the details' CANCEL. */
-enum { SUI_HIT_TAB = 0, SUI_HIT_PREV = 10, SUI_HIT_NEXT = 11, SUI_HIT_BACK = 12, SUI_HIT_MOVE = 20, SUI_HIT_CANCEL = 24 };
+enum { SUI_HIT_TAB = 0, SUI_HIT_PREV = 10, SUI_HIT_NEXT = 11, SUI_HIT_BACK = 12, SUI_HIT_MOVE = 20, SUI_HIT_CANCEL = 24,
+       SUI_HIT_IVTOGGLE = 30 /* the STATS page's EXP / IV-EV switch */ };
 /* FireRed's Summary pages (pokemon_summary_screen.h PSS_PAGE_*). */
 enum { SUI_PAGE_INFO = 0, SUI_PAGE_SKILLS, SUI_PAGE_MOVES, SUI_PAGE_MOVES_INFO };
 typedef struct {
@@ -589,6 +590,7 @@ typedef struct {
     uint16_t icon;                  /* FireRed's icon species of the Pokemon shown (the icon cache's key) */
     int16_t pressed;                /* the hit code under a held touch, or -1 */
     uint8_t trainer;                /* TRAINER is shown (FireRed is on its first page) */
+    uint8_t ivView;                 /* STATS shows the IVs, EVs and Hidden Power instead of the experience */
     uint8_t loading;                /* nothing reported yet: the frame only */
 } CtrSummaryUiView;
 
