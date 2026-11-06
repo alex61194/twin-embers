@@ -4,7 +4,7 @@ Art by Bentley734 (HD Dynamic Battlefields), used with the author's permission; 
 A row: (its number, "hd", its path in REPO at COMMIT and in the pack, size, SHA-256)."""
 
 REPO = 'alex61194/twin-embers-hd'
-COMMIT = '0000000000000000000000000000000000000000'
+COMMIT = 'ec1b35d2b47eed0ddc15c78bbd59be3d87c9c0c1'
 FILES = (
     (0, 'hd', 'graphics/gen4/hd/000.bin', 19336, '4f9497eddc09580789e371c25253de0613b5a1a901ea157327ceca8dd3b72a4e'),
     (1, 'hd', 'graphics/gen4/hd/002.bin', 19336, 'b3f7b86f681b5ed2b5b3720c5511928c6ae871e5e02c3ab689277a35eef4300f'),

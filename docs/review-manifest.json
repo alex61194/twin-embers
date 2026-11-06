@@ -2271,7 +2271,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_hd.py",
-   "sha256": "e91f6632d996807a9fcbd5825e6a09204ba158fd270b42151b10ef010ed25904",
+   "sha256": "681a26c2de6f10616df44b7727ac2f3cba3d96ccbf928901370fe0d981894201",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
