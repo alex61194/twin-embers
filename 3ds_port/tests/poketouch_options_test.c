@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "3ds_poketouch_options.h"
+#include "3ds_looks.h"
 #include "3ds_settings.h"
 
 static int failures;
@@ -40,6 +41,16 @@ const char *CtrLooks_Id(int i) { static const char *const k[3] = {"ash", "gary_k
 const char *CtrLooks_Name(int i) { static const char *const k[3] = {"ASH", "GARY", "GREEN"}; return i >= 0 && i < 3 ? k[i] : NULL; }
 int CtrLooks_Chosen(int slot) { return sLookChoice[slot]; }
 void CtrLooks_Choose(int slot, int index) { sLookChoice[slot] = index; }
+const char *CtrLooks_Credit(int i) { static const char *const k[3] = {"By Kalarie", "By Alan_Flygon", "By Poltergeist"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+int CtrLooks_Walk(int i, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[16])
+{
+    if (i == 1)
+        return 0;                                           /* this look has no picture in the pack */
+    memset(tiles, 0x11 * (i + 1), CTR_LOOK_WALK_BYTES);
+    for (int c = 0; c < 16; ++c)
+        palette[c] = (uint16_t)c;
+    return 1;
+}
 
 static void Text(int row, const char *expect)
 {
@@ -197,6 +208,27 @@ int main(void)
     CtrOptions_Set(17, 9);
     Text(17, "GARY");
     CHECK(!CtrOptions_IsLevels(15), "a look row is a value between arrows");
+    /* The preview: on while a look row is selected, for the look chosen for that row (GREEN for Red here, ASH for Leaf, GARY for
+     * the rival), the default's name with no picture, and nothing on another row. */
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 15);
+    CHECK(view.optLook.on && view.optLook.has && strcmp(view.optLook.name, "GREEN") == 0
+          && strcmp(view.optLook.credit, "By Poltergeist") == 0 && view.optLook.tiles[0] == 0x33 && view.optLook.palette[5] == 5,
+          "the preview of the look chosen for Red");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 17);
+    CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "GARY") == 0
+          && strcmp(view.optLook.credit, "By Alan_Flygon") == 0, "a look without a picture: its name and artists only");
+    CtrOptions_Set(16, 0);
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 16);
+    CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "DEFAULT") == 0 && view.optLook.credit[0],
+          "the default: its name and no picture");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 14);
+    CHECK(!view.optLook.on && view.optLook.name[0] == 0, "no preview on another row");
+    CtrOptions_Fill(&view, 3);
+    CHECK(!view.optLook.on, "no preview on the first page");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 13);
     CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "FOLLOW") == 0

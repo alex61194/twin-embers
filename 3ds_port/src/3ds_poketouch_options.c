@@ -236,6 +236,35 @@ void CtrOptions_ValueText(int row, char *out, int size)
         snprintf(out, (size_t)size, "%s%d", r->prefix != NULL ? r->prefix : "", value + 1);
 }
 
+/* The preview for the selected look row: the look chosen for it (its name, artists and walking picture), or the default's name. */
+static void LookPreview(CtrPokeTouchView *v, int selected)
+{
+    CtrPokeTouchLook *l = &v->optLook;
+    int first = -1, slot, index;
+    const char *text;
+
+    for (int i = 0; i < ROWS && first < 0; ++i)    /* the looks' rows: RED LOOK, LEAF LOOK, RIVAL LOOK in a run */
+        if (sRows[i].names == sLookNames)
+            first = i;
+    slot = first >= 0 ? selected - first : -1;
+
+    memset(l, 0, sizeof(*l));
+    if (slot < 0 || slot > 2)
+        return;
+    l->on = 1;
+    index = CtrLooks_Chosen(slot);
+    text = index >= 0 ? CtrLooks_Name(index) : CTR_TR("DEFAULT", "NORMAL", "Standard");
+    snprintf(l->name, sizeof(l->name), "%s", text ? text : "");
+    if (index < 0)
+    {
+        snprintf(l->credit, sizeof(l->credit), "%s", CTR_TR("The look the game had before.", "El aspecto que ten\xC3\xADa el juego.", "Das Aussehen, das das Spiel hatte."));
+        return;
+    }
+    text = CtrLooks_Credit(index);
+    snprintf(l->credit, sizeof(l->credit), "%s", text ? text : "");
+    l->has = (uint8_t)CtrLooks_Walk(index, l->tiles, l->palette);
+}
+
 void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
 {
     int page, base, count;
@@ -285,6 +314,7 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
         v->optFrameShow = type >= 0 && type < 10;
         v->optFrameType = (uint8_t)(v->optFrameShow ? type : 0);
     }
+    LookPreview(v, selected);
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);
     snprintf(v->bar[1], PT_BAR_LEN, "%s", sRows[selected].description[0]);
     snprintf(v->bar[2], PT_BAR_LEN, "%s", sRows[selected].description[1]);
