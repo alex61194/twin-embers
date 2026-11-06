@@ -5790,7 +5790,7 @@
   },
   {
    "path": "patches/pokefirered/0235-heal-from-party-menu.json",
-   "sha256": "17ac7e087b6a5a04bc43c57f8a8c2f757d46321e7c84ef3c3e112c0ab4ff59b7",
+   "sha256": "54d7ef7b7251f0a971c7447050c7fc05437c81006ec4ca86a412cb24268da185",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
