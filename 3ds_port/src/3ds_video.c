@@ -1912,8 +1912,11 @@ static bool DrawBattleLayerTex(unsigned bg, int x0, int x1, int y0, int y1)
     return true;
 }
 
+#include "3ds_battle_backdrop_impl.h"
+
 static void DrawBattleBg(unsigned bg)
 {
+    if (bg == 3 && DrawBattleBackdrop()) return;
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
     unsigned map = ((control >> 8) & 31) * 0x800;
     unsigned chars = ((control >> 2) & 3) * 0x4000;

@@ -4,6 +4,7 @@
 #include "3ds_night_wild.h"
 #ifndef CTR_HOST_TEST
 #include <3ds.h>
+#include "3ds_day_night.h"
 #endif
 
 /* A slot of one map that gives another species at night (or by day). `slot` -1 is every slot holding `from`;
@@ -143,5 +144,17 @@ unsigned CtrNightWild_Second(void)
     int fixed = CtrOptions_DayNightSecond();
 
     return fixed >= 0 ? (unsigned)fixed % 86400u : (unsigned)((osGetTime() / 1000u) % 86400u);
+}
+
+extern int CtrOptions_DayNight(void);
+
+/* Whether the battle scene is the night's: the DAY/NIGHT option is not OFF and the outdoors, as the field shows it at this
+ * hour (3ds_day_night.h), is darker than halfway between the day and the night: from about 20:00, in the middle of the
+ * dusk, to about 05:45 in the dawn. The scene then agrees with the map the player just left. */
+bool CtrBattleBg_IsNight(void)
+{
+    uint32_t red = CtrDayNight_Tint(CtrNightWild_Second()) >> 16 & 255u;
+
+    return CtrOptions_DayNight() && red < (255u + CTR_DAY_NIGHT_DARKEST) / 2u;
 }
 #endif

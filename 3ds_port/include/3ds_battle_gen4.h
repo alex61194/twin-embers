@@ -114,6 +114,20 @@ int CtrGen4_SpriteOam(unsigned battler);
  * the scene's one palette); 3: nothing, only whether the terrain has a scene (the entry background is then left
  * empty). 0 without an entry for the terrain: FireRed's own data is loaded. */
 int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest);
+/* What picks the scene (see the top of the background code in 3ds_battle_gen4.c): the map the player is on (group << 8 |
+ * number; the game's battle_bg.c gives it, recipe 0226) and whether the DAY/NIGHT option says it is night. With
+ * graphics/gen4/hd/ in the pack the scene is the painting of the place, else the terrain's own. */
+unsigned CtrBattleBg_Map(void);
+bool CtrBattleBg_IsNight(void);
+
+/* A battle scene at the 3DS's own resolution: graphics/gen4/hdn/NNN.bin, NNN the same number as hd/'s. The picture is
+ * the whole top screen (the message box is drawn over its bottom), CTR_BACKDROP_W x CTR_BACKDROP_H, as RGB565 row by row. While one is
+ * the scene, BG3 is empty and 3ds_video.c draws this behind the layers. NULL when the scene is not one; `generation`
+ * changes with each picture, so the GPU's copy is made once. */
+#define CTR_BACKDROP_W 400
+#define CTR_BACKDROP_H 240
+#define CTR_BACKDROP_HEADER 8
+const uint16_t *CtrBattleBackdrop(unsigned *generation);
 
 /* The field's people (3ds_video.c's OAM loop, recipe 0211): graphics/gen4/npc/NNN.bin, NNN being FireRed's
  * OBJ_EVENT_GFX_* of a person, nine 32x32 frames in FireRed's order (down, up, left, then the walking ones) and their

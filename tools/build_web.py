@@ -35,7 +35,7 @@ ICON = MEDIA / 'twin-embers-icon.png'
 SHEET = 'twinembers.t3x'
 # What firered3ds_builder.browser imports, directly or not. The GUI, CLI and Windows parts stay out.
 MODULES = ('__init__.py', 'browser.py', 'build.py', 'rom.py', 'recipe.py', 'pak.py',
-           'gen4_sprites.py', 'gen4_sources.py', 'gen4_followers.py', 'nsbtx.py')
+           'gen4_sprites.py', 'gen4_sources.py', 'gen4_followers.py', 'gen4_hd.py', 'nsbtx.py')
 
 # Universal-Updater's own rules (source/store/store.cpp, storeEntry.cpp, script.cpp): what it
 # needs to accept a store, and the fields each script action must have.

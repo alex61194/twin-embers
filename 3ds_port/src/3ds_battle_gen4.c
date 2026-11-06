@@ -519,34 +519,122 @@ void CtrGen4_EraseFrom(unsigned battler, unsigned boxRow)
             memset(tiles + (((unsigned)y / 8 * CTR_GEN4_TILES + tx) * 8 + (unsigned)y % 8) * 4, 0, 4);
 }
 
-/* The battle backgrounds (CtrBattleBg_Load): the terrain's entry read once and kept while the same terrain is asked
- * for again (a battle loads its tiles, map and palette one after the other). */
+/* The battle backgrounds (CtrBattleBg_Load): a scene's entry read once and kept while the same one is asked for again (a
+ * battle loads its tiles, map and palette one after the other). The scene is the HD painting of the place when the pack
+ * has them (graphics/gen4/hd/, the Builder's local test tool): its environment is what the map table says for the map
+ * the player is on, the water one for a battle on the water, by night when the night is on; else the terrain's own
+ * (graphics/gen4/bg/). */
 #define BG_TERRAINS 20
 #define BG_HEADER 40
 #define BG_CHAR_BYTES 16384
 #define BG_MAP_BYTES 4096
 #define BG_TILES_MAX 512
+#define BG_TERRAIN_UNDERWATER 3
+#define BG_TERRAIN_WATER 4
+#define BG_TERRAIN_POND 5
+#define BG_TERRAIN_LINK 10
+#define HD_NONE 255
+#define HD_MAP_ENTRY 4
 
 static struct {
     bool tried;
-    unsigned terrain, tiles;
+    unsigned key, tiles;
     uint8_t *entry;
 } sBg;
 
-static const uint8_t *BgEntry(unsigned terrain)
+static struct {
+    bool tried;
+    unsigned count;
+    uint8_t *table;     /* b"G4M1", u16 count, then (u16 map, u8 environment, u8 water environment) sorted by map */
+} sHd;
+
+/* The scene at the 3DS's own resolution (graphics/gen4/hdn/NNN.bin: b"G4H1", u16 width, u16 height, then the picture as
+ * RGB565, row by row): while it is the scene, BG3 is left empty and the video code draws the picture behind the layers
+ * (CtrBattleBackdrop, 3ds_video.c). */
+static struct {
+    bool active;
+    unsigned generation;
+    uint8_t *data;
+} sBackdrop;
+
+const uint16_t *CtrBattleBackdrop(unsigned *generation)
 {
-    if (terrain >= BG_TERRAINS)
+    if (!sBackdrop.active)
         return NULL;
-    if (sBg.tried && sBg.terrain == terrain)
-        return sBg.entry;
-    free(sBg.entry);
-    sBg.entry = NULL;
-    sBg.tried = true;
-    sBg.terrain = terrain;
-    char path[40];
-    snprintf(path, sizeof(path), "graphics/gen4/bg/%03u.bin", terrain);
+    *generation = sBackdrop.generation;
+    return (const uint16_t *)(const void *)(sBackdrop.data + CTR_BACKDROP_HEADER);
+}
+
+static uint8_t *BackdropRead(const char *path)
+{
     uint32_t size = 0;
     uint8_t *entry = CtrData_Load(path, &size);
+
+    if (!entry)
+        return NULL;
+    if (size != CTR_BACKDROP_HEADER + CTR_BACKDROP_W * CTR_BACKDROP_H * 2u || memcmp(entry, "G4H1", 4)
+        || (entry[4] | entry[5] << 8) != CTR_BACKDROP_W || (entry[6] | entry[7] << 8) != CTR_BACKDROP_H)
+    {
+        CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
+        free(entry);
+        return NULL;
+    }
+    return entry;
+}
+
+/* The painting's file number for this terrain here and now (environment * 2, + 1 by night), or -1 for none. */
+static int HdScene(unsigned terrain)
+{
+    unsigned map, low = 0, high, env;
+    const uint8_t *row;
+
+    if (terrain == BG_TERRAIN_LINK)
+        return -1;
+    if (!sHd.tried)
+    {
+        uint32_t size = 0;
+        uint8_t *table = CtrData_Load("graphics/gen4/hd/map.bin", &size);
+
+        sHd.tried = true;
+        if (table && size >= 6 && !memcmp(table, "G4M1", 4)
+            && size == 6u + HD_MAP_ENTRY * (unsigned)(table[4] | table[5] << 8))
+        {
+            sHd.count = (unsigned)(table[4] | table[5] << 8);
+            sHd.table = table;
+        }
+        else
+            free(table);
+    }
+    if (!sHd.table)
+        return -1;
+    map = CtrBattleBg_Map();
+    high = sHd.count;
+    while (low < high)
+    {
+        unsigned mid = (low + high) / 2;
+
+        row = sHd.table + 6 + mid * HD_MAP_ENTRY;
+        if ((unsigned)(row[0] | row[1] << 8) < map)
+            low = mid + 1;
+        else
+            high = mid;
+    }
+    if (low >= sHd.count)
+        return -1;
+    row = sHd.table + 6 + low * HD_MAP_ENTRY;
+    if ((unsigned)(row[0] | row[1] << 8) != map)
+        return -1;
+    env = terrain == BG_TERRAIN_UNDERWATER || terrain == BG_TERRAIN_WATER || terrain == BG_TERRAIN_POND ? row[3] : row[2];
+    if (env == HD_NONE)
+        return -1;
+    return (int)(env * 2 + (CtrBattleBg_IsNight() ? 1 : 0));
+}
+
+static uint8_t *BgRead(const char *path)
+{
+    uint32_t size = 0;
+    uint8_t *entry = CtrData_Load(path, &size);
+
     if (!entry)
         return NULL;
     unsigned tiles = size >= BG_HEADER ? entry[4] | entry[5] << 8 : 0;
@@ -558,8 +646,71 @@ static const uint8_t *BgEntry(unsigned terrain)
         return NULL;
     }
     sBg.tiles = tiles;
-    sBg.entry = entry;
     return entry;
+}
+
+static const uint8_t *BgEntry(unsigned terrain)
+{
+    char path[40];
+    int hd;
+    unsigned key;
+
+    if (terrain >= BG_TERRAINS)
+        return NULL;
+    hd = HdScene(terrain);
+    key = terrain | (unsigned)(hd + 1) << 8;
+    if (sBg.tried && sBg.key == key)
+        return sBg.entry;
+    free(sBg.entry);
+    sBg.entry = NULL;
+    sBg.tried = true;
+    sBg.key = key;
+    sBackdrop.active = false;
+    if (hd >= 0)
+    {
+        /* The painting at the screen's own size, if the pack has it (a night one missing, the day one): BG3 then shows
+         * nothing of its own, a tile that is empty and a map of it. */
+        uint8_t *picture;
+
+        snprintf(path, sizeof(path), "graphics/gen4/hdn/%03d.bin", hd);
+        picture = BackdropRead(path);
+        if (!picture && (hd & 1))
+        {
+            snprintf(path, sizeof(path), "graphics/gen4/hdn/%03d.bin", hd - 1);
+            picture = BackdropRead(path);
+        }
+        if (picture)
+        {
+            uint8_t *empty = calloc(1, BG_HEADER + 32 + BG_MAP_BYTES);
+
+            if (empty)
+            {
+                memcpy(empty, "G4G1", 4);
+                empty[4] = 1;
+                free(sBackdrop.data);
+                sBackdrop.data = picture;
+                sBackdrop.active = true;
+                ++sBackdrop.generation;
+                sBg.tiles = 1;
+                sBg.entry = empty;
+                return sBg.entry;
+            }
+            free(picture);
+        }
+        snprintf(path, sizeof(path), "graphics/gen4/hd/%03d.bin", hd);
+        sBg.entry = BgRead(path);
+        if (!sBg.entry && (hd & 1))     /* a place with no night painting keeps its day one */
+        {
+            snprintf(path, sizeof(path), "graphics/gen4/hd/%03d.bin", hd - 1);
+            sBg.entry = BgRead(path);
+        }
+    }
+    if (!sBg.entry)
+    {
+        snprintf(path, sizeof(path), "graphics/gen4/bg/%03u.bin", terrain);
+        sBg.entry = BgRead(path);
+    }
+    return sBg.entry;
 }
 
 int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)

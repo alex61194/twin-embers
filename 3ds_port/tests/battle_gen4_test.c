@@ -58,8 +58,50 @@ const void *CtrPlayer_Asset(unsigned which, unsigned female, unsigned palette)
     return which < CTR_PLAYER_PICTURES ? sFirePlayer[which][female][palette] : NULL;
 }
 
+/* The HD scenes' map table: map 0x0313 is environment 2 (water environment 4), 0x0414 has no land one and water 6. */
+static const uint8_t sHdMapTable[] = {'G', '4', 'M', '1', 2, 0, 0x13, 0x03, 2, 4, 0x14, 0x04, 255, 6};
+static unsigned sMapKey;
+static bool sNight;
+static const char *sMissing;
+/* The scenes at the screen's own size (hdn/): present when sHdn is set; its first pixel tells which file it is. */
+static bool sHdn;
+static unsigned sHdnFileSize = CTR_BACKDROP_HEADER + CTR_BACKDROP_W * CTR_BACKDROP_H * 2;
+
+unsigned CtrBattleBg_Map(void) { return sMapKey; }
+bool CtrBattleBg_IsNight(void) { return sNight; }
+
 void *CtrData_Load(const char *path, uint32_t *outSize)
 {
+    if (strcmp(path, "graphics/gen4/hd/map.bin") == 0)
+    {
+        void *copy = malloc(sizeof(sHdMapTable));
+
+        memcpy(copy, sHdMapTable, sizeof(sHdMapTable));
+        *outSize = sizeof(sHdMapTable);
+        return copy;
+    }
+    if (strncmp(path, "graphics/gen4/hdn/", 18) == 0)
+    {
+        uint8_t *copy;
+
+        snprintf(sAsked, sizeof(sAsked), "%s", path);
+        if (!sHdn || (sMissing && strcmp(path, sMissing) == 0))
+            return NULL;
+        copy = calloc(1, sHdnFileSize);
+        memcpy(copy, "G4H1", 4);
+        copy[4] = CTR_BACKDROP_W & 255;
+        copy[5] = CTR_BACKDROP_W >> 8;
+        copy[6] = CTR_BACKDROP_H & 255;
+        copy[7] = CTR_BACKDROP_H >> 8;
+        copy[CTR_BACKDROP_HEADER] = (uint8_t)atoi(path + 18);      /* the file number, in the first pixel */
+        *outSize = sHdnFileSize;
+        return copy;
+    }
+    if (sMissing && strcmp(path, sMissing) == 0)
+    {
+        snprintf(sAsked, sizeof(sAsked), "%s", path);
+        return NULL;
+    }
     static const struct { const char *path; uint32_t size; uint8_t fill; } kPlayer[] = {
         {"graphics/gen4/player/front_boy.4bpp", 2048, 0xA1}, {"graphics/gen4/player/front_boy.gbapal", 32, 0xA2},
         {"graphics/gen4/player/icon_boy.4bpp", 128, 0xA3}, {"graphics/gen4/player/icon_boy.gbapal", 30, 0xA4},
@@ -476,6 +518,72 @@ int main(void)
         sEntry[4] = 3;
         sEntrySize = 0;
         assert(!CtrBattleBg_Load(6, 3, NULL));
+
+        /* The HD scenes: the painting of the map's environment (file = environment * 2, + 1 by night), the water one
+         * on the water, the day one when a night one is missing, FireRed's terrain scene without a place for it. */
+        sEntry[4] = 3;
+        sEntrySize = 40 + 96 + 4096;
+        sMapKey = 0x0313;
+        assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/004.bin") == 0);
+        sNight = true;
+        assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/005.bin") == 0);
+        assert(CtrBattleBg_Load(4, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/009.bin") == 0);   /* water 4, night */
+        sNight = false;
+        assert(CtrBattleBg_Load(5, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/008.bin") == 0);   /* pond: water, day */
+        sNight = true;
+        sMissing = "graphics/gen4/hd/005.bin";
+        assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/004.bin") == 0);   /* no night painting */
+        sMissing = NULL;
+        sMapKey = 0x0414;
+        assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/bg/000.bin") == 0);   /* no land painting */
+        assert(CtrBattleBg_Load(3, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/013.bin") == 0);   /* underwater: water 6 */
+        sMapKey = 0x0999;
+        assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/bg/000.bin") == 0);   /* a map not listed */
+        sMapKey = 0x0313;
+        assert(CtrBattleBg_Load(10, 3, NULL) && strcmp(sAsked, "graphics/gen4/bg/010.bin") == 0);  /* a link battle */
+
+        /* The scenes at the screen's own size: the backdrop is the picture, BG3's own scene one empty tile and its map
+         * of it; a night one missing keeps the day one; none leaves the HD tile scene. */
+        {
+            unsigned generation = 0, before;
+            const uint16_t *picture;
+            static uint8_t empty[BG_CHAR], emptyMap[4096];
+
+            assert(!CtrBattleBackdrop(&generation));
+            sHdn = true;
+            sNight = false;
+            assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hdn/004.bin") == 0);
+            picture = CtrBattleBackdrop(&generation);
+            assert(picture && (picture[0] & 255) == 4);
+            before = generation;
+            memset(empty, 0xEE, sizeof(empty));
+            memset(emptyMap, 0xEE, sizeof(emptyMap));
+            assert(CtrBattleBg_Load(0, 0, empty) && empty[0] == 0 && empty[BG_CHAR - 1] == 0);
+            assert(CtrBattleBg_Load(0, 1, emptyMap) && emptyMap[0] == 0 && emptyMap[4095] == 0);
+            picture = CtrBattleBackdrop(&generation);
+            assert(picture && generation == before);               /* the same scene: not loaded again */
+            sNight = true;
+            assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hdn/005.bin") == 0);
+            picture = CtrBattleBackdrop(&generation);
+            assert(picture && (picture[0] & 255) == 5 && generation == before + 1);
+            sMissing = "graphics/gen4/hdn/005.bin";
+            assert(CtrBattleBg_Load(5, 3, NULL));                  /* pond: water 4 by night, then ... */
+            sMissing = NULL;
+            sMissing = "graphics/gen4/hdn/005.bin";
+            assert(CtrBattleBg_Load(0, 3, NULL));
+            picture = CtrBattleBackdrop(&generation);
+            assert(picture && (picture[0] & 255) == 4);           /* the day picture stands in for the night's */
+            sMissing = NULL;
+            sHdnFileSize = 100;                                    /* a wrong size is not a picture */
+            sNight = false;
+            assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/004.bin") == 0);
+            assert(!CtrBattleBackdrop(&generation));
+            sHdnFileSize = CTR_BACKDROP_HEADER + CTR_BACKDROP_W * CTR_BACKDROP_H * 2;
+            sHdn = false;
+            assert(CtrBattleBg_Load(0, 3, NULL) && !CtrBattleBackdrop(&generation));
+        }
+        sNight = false;
+        sMapKey = 0;
     }
 
     /* The field's people: a person's entry (nine 32x32 frames and a palette) is read once, the frame its sprite shows
