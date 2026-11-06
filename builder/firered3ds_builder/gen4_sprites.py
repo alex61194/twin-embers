@@ -1000,6 +1000,15 @@ def convert_bg_wide(scene: bytes) -> bytes:
 LOOK_PREFIX = "graphics/gen4/look/"
 
 
+LOOK_INDEX = LOOK_PREFIX + "index.bin"
+
+
+def look_index(looks: list[tuple[str, str, str]]) -> bytes:
+    """The list of the looks the pack has, for the game's options: b"G4L1\n", then a line "folder<TAB>name<TAB>boy or girl" for
+    each, in the order the Builder lists them."""
+    return b"G4L1\n" + "".join("%s\t%s\t%s\n" % look for look in looks).encode("ascii")
+
+
 def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes]]:
     """The pack entries of one player look, for any of the game's player slots (Red, Leaf, the rival): each sheet it has, in
     the pack's formats, under graphics/gen4/look/<folder>/ with the sheet's own name: the walking family and the Fly bird as
@@ -1297,11 +1306,15 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     # The looks: one set of entries for each look whose walking sheet could be had; a sheet it lacks keeps FireRed's picture.
     look_files = []
     looks_made = 0
-    for number, (folder, *_rest) in enumerate(gen4_looks.LOOKS):
+    made = []
+    for number, (folder, name, _character, gender, _credit) in enumerate(gen4_looks.LOOKS):
         sheets = {row[2].rsplit("/", 1)[1][:-4]: got[row[:3]] for row in look_rows if row[0] == number and row[:3] in got}
         if "walk" in sheets:
             look_files += look_entries(folder, sheets)
             looks_made += 1
+            made.append((folder, name, gender))
+    if looks_made:
+        files.append((LOOK_INDEX, look_index(made)))
     files += look_files
     # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
     player_files = []

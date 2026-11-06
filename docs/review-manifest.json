@@ -2279,7 +2279,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_looks.py",
-   "sha256": "8bb84e93b837abb28f0466d5836fba792a7a9ab9c6260c9f76f78d157c7f6023",
+   "sha256": "12ba7d47860e29c2c21d45b01cf17a89dc60a7b286fd3e5a63fca5cab0f3c577",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2295,7 +2295,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "02704faef5bee034fefb1a2c3509c3d5dd6c788f43ede999f7290c8d11d0b5a9",
+   "sha256": "ce2529abb54cb4c1970cbe710e98c18a889c77df6b5d5903028b60fac8917b3e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2883,7 +2883,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "6a83366c5963ccfddbdf3dafe9d0bef5e6c14d32b559cce15e5d2cb47f39b374",
+   "sha256": "8c876435163e1c9218e413554bbade4e646f35d9c49feaa616ed5803c7b5bb7b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6173,7 +6173,7 @@
   },
   {
    "path": "tools/make_gen4_looks.py",
-   "sha256": "6f28e355759ef3576a83080b8ec054f9b98a868b413038431cc13c00bf226812",
+   "sha256": "573dedd6024ef25f9c163210ebb5b3511ee6354770d25f00ae9bc45b60e34b6e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

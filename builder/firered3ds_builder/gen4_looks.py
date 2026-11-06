@@ -1,30 +1,30 @@
 """The player looks of Emerald Lens the Builder may fetch (tools/make_gen4_looks.py; do not edit).
 
 By the artists named in each look's credit, shared in ElvieBlooms' Emerald Lens (https://github.com/ElvieBlooms/emerald_lens),
-used with the author's permission; see docs/THIRD-PARTY-ART.md. LOOKS: (folder, label, character, gender, credit); a
+used with the author's permission; see docs/THIRD-PARTY-ART.md. LOOKS: (folder, name, character, gender, credit); a
 row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256)."""
 
 REPO = 'ElvieBlooms/emerald_lens'
 COMMIT = 'cdff5a9bd5acdff67773bcb608ce72c62805111e'
 LOOKS = (
     ('ash', 'ASH', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
-    ('ash_hgss', 'HGSS', 'ASH', 'boy', 'Made by PKMNTrainerRick'),
-    ('ash_hatless', 'HATLESS', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
-    ('ash_backwards', 'BACK CAP', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
-    ('gary_kanto', 'KANTO', 'GARY', 'boy', 'Made by Alan_Flygon'),
-    ('silver_hgss', 'HGSS', 'SILVER', 'boy', 'Made by lichenprincess'),
+    ('ash_hgss', 'ASH HGSS', 'ASH', 'boy', 'Made by PKMNTrainerRick'),
+    ('ash_hatless', 'ASH NO CAP', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
+    ('ash_backwards', 'ASH BACKCAP', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
+    ('gary_kanto', 'GARY', 'GARY', 'boy', 'Made by Alan_Flygon'),
+    ('silver_hgss', 'SILVER', 'SILVER', 'boy', 'Made by lichenprincess'),
     ('gold', 'GOLD', 'GOLD', 'boy', "RSE from Team Aqua's Asset Repo; FRLG made by FourLeafSunny"),
-    ('gold_hgss', 'HGSS', 'GOLD', 'boy', 'Made by GregarLink10'),
-    ('brendan_oras', 'ORAS BRENDAN', 'BRENDAN', 'boy', "Both game sets use Team Aqua's Asset Repo"),
-    ('brendan_hgss', 'HGSS', 'BRENDAN', 'boy', 'Made by DiegoWT'),
-    ('green', 'BIG PUFF', 'GREEN', 'girl', 'Sprites compiled from virdiangrass and Team Aquas asset Repo; Additional Edits and AcroJiggly made by Elvie'),
-    ('green_hgss', 'HGSS', 'GREEN', 'girl', 'Compiled by ChromeValiant; Art by Poltergeist/Coffee Cup, Mid117, Wolfang62, and aethestode'),
-    ('green_lou', 'GREEN', 'GREEN', 'girl', 'Made by LouLilie'),
+    ('gold_hgss', 'GOLD HGSS', 'GOLD', 'boy', 'Made by GregarLink10'),
+    ('brendan_oras', 'BRENDAN', 'BRENDAN', 'boy', "Both game sets use Team Aqua's Asset Repo"),
+    ('brendan_hgss', 'BRENDAN HG', 'BRENDAN', 'boy', 'Made by DiegoWT'),
+    ('green', 'GREEN', 'GREEN', 'girl', 'Sprites compiled from virdiangrass and Team Aquas asset Repo; Additional Edits and AcroJiggly made by Elvie'),
+    ('green_hgss', 'GREEN HGSS', 'GREEN', 'girl', 'Compiled by ChromeValiant; Art by Poltergeist/Coffee Cup, Mid117, Wolfang62, and aethestode'),
+    ('green_lou', 'GREEN LOU', 'GREEN', 'girl', 'Made by LouLilie'),
     ('kris', 'KRIS', 'KRIS', 'girl', 'RSE Made by richardPT; FRLG made by FourLeafSunny'),
     ('kris_blue', 'KRIS BLUE', 'KRIS', 'girl', 'RSE Made by richardPT; FRLG made by FourLeafSunny; Edited by eykav'),
-    ('kris_hgss', 'LOULILIE', 'KRIS', 'girl', 'Made by LouLilie'),
-    ('may_oras', 'ORAS MAY', 'MAY', 'girl', "Both Packs sourced from Team Aqua's Asset Repo"),
-    ('may_hgss', 'HGSS', 'MAY', 'girl', 'Made by DiegoWT'),
+    ('kris_hgss', 'KRIS LOU', 'KRIS', 'girl', 'Made by LouLilie'),
+    ('may_oras', 'MAY', 'MAY', 'girl', "Both Packs sourced from Team Aqua's Asset Repo"),
+    ('may_hgss', 'MAY HGSS', 'MAY', 'girl', 'Made by DiegoWT'),
 )
 FILES = (
     (0, 'look', 'assets/sprites/ash/gen3/frlg/walk.png', 2822, '09b884356200c50d3872cc81442607e38415b111d9b7f31db341c432af18fb55'),

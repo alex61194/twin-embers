@@ -1021,7 +1021,8 @@ class LookTest(unittest.TestCase):
         with patch.object(gen4_looks, "FILES", rows), patch.object(gen4_looks, "LOOKS", looks):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("looks",))
             self.assertEqual(sorted(path for path, _ in files),
-                             ["graphics/gen4/look/a/bike.bin", "graphics/gen4/look/a/walk.bin"])
+                             ["graphics/gen4/look/a/bike.bin", "graphics/gen4/look/a/walk.bin", "graphics/gen4/look/index.bin"])
+            self.assertEqual(dict(files)["graphics/gen4/look/index.bin"], b"G4L1\na\tA\tboy\n")
             self.assertEqual((info["looks"], info["player"], info["hd"]), (1, 0, 0))
             urls = []
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
