@@ -24,7 +24,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   romInput: $('rom-input'), romButton: $('rom-button'), romPill: $('rom-pill'),
   gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'), player: $('player-toggle'),
-  followers: $('followers-toggle'), hd: $('hd-toggle'),
+  followers: $('followers-toggle'), hd: $('hd-toggle'), looks: $('looks-toggle'),
   build: $('build-button'),
   progress: $('progress'), fill: $('progress-fill'), status: $('status'),
   result: $('result'), download: $('download'), details: $('result-details'), error: $('error'),
@@ -40,7 +40,7 @@ function setPill(text, kind) {
 function refresh() {
   ui.build.disabled = !(state.ready && state.romOk && !state.busy);
   ui.romInput.disabled = state.busy;
-  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = ui.followers.disabled = ui.hd.disabled = state.busy;
+  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = ui.followers.disabled = ui.hd.disabled = ui.looks.disabled = state.busy;
   ui.romButton.setAttribute('aria-disabled', state.busy ? 'true' : 'false');
 }
 
@@ -181,6 +181,8 @@ function finish(pak, info) {
       `Pokémon, die dir folgen: ${info.gen4.followers}`));
     if (info.gen4.hd) lines.push(L(`HD battle scenes: ${info.gen4.hd} files`, `Escenas de combate HD: ${info.gen4.hd} archivos`,
       `HD-Kampfszenen: ${info.gen4.hd} Dateien`));
+    if (info.gen4.looks) lines.push(L(`More characters to be: ${info.gen4.looks} looks`, `Más personajes: ${info.gen4.looks} aspectos`,
+      `Mehr Figuren: ${info.gen4.looks} Looks`));
   }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';
@@ -200,7 +202,7 @@ async function startBuild() {
   try {
     const rom = await state.rom.arrayBuffer();
     worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked, npcs: ui.npcs.checked,
-      backgrounds: ui.backgrounds.checked, player: ui.player.checked, followers: ui.followers.checked, hd: ui.hd.checked }, [rom]);
+      backgrounds: ui.backgrounds.checked, player: ui.player.checked, followers: ui.followers.checked, hd: ui.hd.checked, looks: ui.looks.checked }, [rom]);
   } catch (error) {
     state.busy = false;
     showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:', 'Das ROM konnte nicht erneut gelesen werden:')} ${error.message}`);

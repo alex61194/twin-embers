@@ -2307,7 +2307,7 @@
    "credit": "alex61194 (original source-only offline GUI with disclosed AI assistance)",
    "license": "MIT for owned GUI contributions only; inherited game content and dependencies excluded",
    "basis": "Reviewed original Tk/ttk presentation, synthetic GUI regressions and Windows builder-only packaging; no game assets, ROM, pak or game binary; CLI, SHA-1, ABI, file safety and binary release gate unchanged.",
-   "sha256": "3b53450a9dd196f820c105a6afb60891070dbed78850d4d37c95c55eede84ee8",
+   "sha256": "1ba3f178b7be2fd92280c7d81c4e2f6bd531b254c6d8f655b3b48c72325f0d48",
    "modified_for_distribution": true,
    "gui_review": "Remove the standalone Verify ROM GUI action and shortcut; automatic ROM validation, CLI, pack safety and data/ABI remain unchanged",
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
@@ -2315,7 +2315,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gui_service.py",
-   "sha256": "6cb97dff6a0587da77e10f004edc9ba7acc175825514d951b85fea63948282eb",
+   "sha256": "72fc9a60bc1932358fb8a6796ed7e7e90de96cd7dbfbda4beeabe6a263040d37",
    "review_status": "reviewed",
    "credit": "alex61194 (original GUI-only source code with disclosed AI assistance)",
    "license": "MIT for original GUI workflow only; original game and external dependencies excluded",
@@ -6712,7 +6712,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "34d74f6cc9b750e8159117374c38a5ae995e7377b65d1cecf75dc19390d21736",
+   "sha256": "0da055b84dd4cb0a57f33244914e6b342d0ef8ccb1334a8aa1ebce4fab28e181",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6720,7 +6720,7 @@
   },
   {
    "path": "web/de.html",
-   "sha256": "fb2f24cf884d9186bc5f8deffad247d2766eb57ab0e2504df4b7783c32051915",
+   "sha256": "86a5877dbe3a337c021bcd5fc121b6039b9778570601d7ae0f128e0835fda026",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6728,7 +6728,7 @@
   },
   {
    "path": "web/es.html",
-   "sha256": "bc5daa1c296da6bc7fca7d88de20e7d8a220edf59822132cae31025319b99523",
+   "sha256": "06dea72de29c1e73d192886b3d08b76f74013be610ffb83774821b903f2e8708",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6736,7 +6736,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "61fd67e7d86454ef658b5575459440ab55d34caebab04b2f66ef59484a460769",
+   "sha256": "0fcadddb6d62a8f719e14d98eeb04af9ea876098ace9df8a0f1b5f603abe6826",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6760,7 +6760,7 @@
   },
   {
    "path": "web/worker.js",
-   "sha256": "f7b103dbb21bc03b22d6820a4b4fada719be3497b6353f5635af5153bd05ad2b",
+   "sha256": "c39208fb91455aab74ee5cf48d9264447e8124a88d05cfd73d05931ac414545e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

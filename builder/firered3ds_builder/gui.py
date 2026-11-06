@@ -40,6 +40,7 @@ class BuilderWindow(tk.Tk):
         self.player = tk.BooleanVar(value=False)
         self.followers = tk.BooleanVar(value=False)
         self.hd_backgrounds = tk.BooleanVar(value=False)
+        self.alt_looks = tk.BooleanVar(value=False)
 
         style = ttk.Style(self)
         # Clam honors the palette on Windows instead of reverting to grey
@@ -151,6 +152,11 @@ class BuilderWindow(tk.Tk):
             text="HD battle scenes: the whole top screen painted, by Bentley734 (HD Dynamic Battlefields), "
                  "used with his permission (optional, needs internet: about 13 MB from GitHub)")
         self.hd_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
+        self.looks_check = ttk.Checkbutton(
+            build_card, variable=self.alt_looks,
+            text="More characters to be: 18 looks (Ash, Gary, Silver, Gold, Brendan, May, Green, Kris...) for you, Leaf and your rival "
+                 "to pick in OPTIONS, from Emerald Lens (optional, needs internet: about 180 small files from GitHub)")
+        self.looks_check.grid(row=12, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -215,6 +221,8 @@ class BuilderWindow(tk.Tk):
             lines.append("Pokémon that walk behind you: {0}.".format(info["followers"]))
         if info.get("hd"):
             lines.append("HD battle scenes: {0} files.".format(info["hd"]))
+        if info.get("looks"):
+            lines.append("More characters to be: {0} looks.".format(info["looks"]))
         return "\n\n" + "\n".join(lines) if lines else ""
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
@@ -293,6 +301,7 @@ class BuilderWindow(tk.Tk):
                     player=self.player.get(),
                     followers=self.followers.get(),
                     hd_backgrounds=self.hd_backgrounds.get(),
+                    alt_looks=self.alt_looks.get(),
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))
