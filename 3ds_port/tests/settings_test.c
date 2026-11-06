@@ -69,9 +69,7 @@ int main(void)
     memset(text, 0, sizeof(text));
     assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
     fclose(file);
-    assert(strstr(text, "expshare=2
-") != NULL && strstr(text, "ball=3
-") != NULL);
+    assert(strstr(text, "expshare=2\n") != NULL && strstr(text, "ball=3\n") != NULL);
 
     remove(CTR_SETTINGS_PATH);
     puts("settings_test ok");

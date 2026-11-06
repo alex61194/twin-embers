@@ -2021,7 +2021,7 @@
   },
   {
    "path": "3ds_port/tests/settings_test.c",
-   "sha256": "2702efc17f4611c4beab9c85076d0c67bbb4b1a7ad76845e7bb889b57ca543b1",
+   "sha256": "59764834bfc6410994ca3bcfe167702f4883870afdbb4ecc70e156a754f692cd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
