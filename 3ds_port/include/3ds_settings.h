@@ -34,6 +34,11 @@ void CtrSettings_SetCompanion(int mode);
  * 2 every Pokemon that can still fight gets the full share of one that fought. Off until chosen. */
 int CtrSettings_ExpShare(void);
 void CtrSettings_SetExpShare(int mode);
+/* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the
+ * Builder's --alt-looks), "" for none: the picture that was there before. Only [a-z0-9_] and 15 characters are kept. */
+enum { CTR_LOOK_RED, CTR_LOOK_LEAF, CTR_LOOK_BLUE, CTR_LOOK_SLOTS };
+const char *CtrSettings_Look(int slot);
+void CtrSettings_SetLook(int slot, const char *id);
 /* The ball the battle's ball button last threw (an item number, 0 for none yet): the button starts on it. */
 unsigned CtrSettings_LastBall(void);
 void CtrSettings_SetLastBall(unsigned item);

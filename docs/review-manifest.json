@@ -301,7 +301,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "a0049d0628573baf07776aab1c10ae181dcebee7a66ceec1e8f069ceaad1466c",
+   "sha256": "1b515f6e300bfef96f7c736d63c9a96f73352478cb98b4a27e24879d214ab830",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -694,7 +694,7 @@
   },
   {
    "path": "3ds_port/include/3ds_settings.h",
-   "sha256": "06473674072137a468b0e0fe983c1c8cae17a5ca8139e3498cffa04e6b307702",
+   "sha256": "5321789ebf1bcdf9f5472624657874e166e21e2ade88d6cc8ba2b0c4731fbfe8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -955,7 +955,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "dd9b5179f782a07dce628f2435eb4a5d26c7ea773e7e1f90749ab3c253c5174e",
+   "sha256": "66500e0a4d259927c2a2de0ea9f67fd088ef4cd0ae1696b70ac1aa36047e7f9f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1454,7 +1454,7 @@
   },
   {
    "path": "3ds_port/src/3ds_settings.c",
-   "sha256": "cd5e5b0bb873e7235a88751709afb3cc84e4d2e51376d672de48524c256e8c8a",
+   "sha256": "db090a2e1dd41b60362aafbbad995b314bba0ea7dfb3d379a086c856c0669189",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1669,7 +1669,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "980cdedf046856cc4dda5927a3ee1972e0d02dcd37cfda3727616dd21ab69931",
+   "sha256": "4f7456007ac1df74e3f3e2767626ab7ee03bd2c6d740c7ea1adaba95b1e3609c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2021,7 +2021,7 @@
   },
   {
    "path": "3ds_port/tests/settings_test.c",
-   "sha256": "59764834bfc6410994ca3bcfe167702f4883870afdbb4ecc70e156a754f692cd",
+   "sha256": "6841ad131657351d8e296831a95b57158d0a32d025b7955ef7cad79181aabc17",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

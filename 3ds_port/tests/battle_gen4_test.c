@@ -145,9 +145,20 @@ void *CtrData_Load(const char *path, uint32_t *outSize)
 /* The pack's index: only two followers are in it (004.bin, and 012_f.bin, a female picture of its own). */
 static unsigned sSizeAsked;
 
+/* The look the player chose for Red, Leaf and Blue (settings), and whether the pack has the looks' entries. */
+static const char *sLook[3];
+static bool sLookPack;
+
+const char *CtrSettings_Look(int slot) { return sLook[slot]; }
+
 bool CtrData_Size(const char *path, uint32_t *outSize)
 {
     ++sSizeAsked;
+    if (strncmp(path, "graphics/gen4/look/", 19) == 0)
+    {
+        *outSize = 40 + 9 * 512;
+        return sLookPack;
+    }
     if (strcmp(path, "graphics/gen4/follower/004.bin") && strcmp(path, "graphics/gen4/follower/012_f.bin"))
         return false;
     *outSize = 40 + 9 * 512;
@@ -760,6 +771,66 @@ int main(void)
         assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_FRONT][1][0], out, 2048));   /* no Leaf in the pack */
         assert(!CtrPlayer_Swap(sFirePlayer[CTR_PLAYER_INTRO][0][0], out, 6144));
         assert(!CtrPlayer_Swap(out, out, 32));
+    }
+
+    /* The alternative looks: a person of Red's, Leaf's or Blue's graphics ids is drawn from the look the player chose for it when
+     * the pack has it, from the pack's usual entry otherwise, and a change of look drops what was read. */
+    {
+        CtrGen4Obj person;
+
+        memset(sEntry, 0, sizeof(sEntry));
+        memcpy(sEntry, "G4N1", 4);
+        sEntry[4] = 9;
+        sEntry[5] = 32;
+        sEntrySize = 40 + 9 * 512;
+        sNpcTile = 100;
+        sNpcFrame = 0;
+        sNpcGfx = 0;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
+        sLook[0] = "ash_hgss";
+        sLook[2] = "gary_kanto";
+        sLookPack = true;
+        /* Nothing is dropped until the game says the choice changed: the picture read stays. */
+        sAsked[0] = 0;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && sAsked[0] == 0);
+        CtrGen4_LooksChanged();
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/look/ash_hgss/walk.bin") == 0);
+        sNpcGfx = 3;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/look/ash_hgss/fieldMove.bin") == 0);
+        sNpcGfx = 6;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/look/ash_hgss/vsSeekerBike.bin") == 0);
+        sNpcGfx = 250;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/look/ash_hgss/flyBird.bin") == 0);
+        sNpcGfx = 72;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/look/gary_kanto/walk.bin") == 0);
+        /* Leaf has no look chosen: her own entry. Someone else's graphics id is never a look's. */
+        sNpcGfx = 7;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/007.bin") == 0);
+        sNpcGfx = 21;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/021.bin") == 0);
+        /* The pack without the looks (or a look without the sheet): the usual entry, asked again after the change. */
+        sLookPack = false;
+        CtrGen4_LooksChanged();
+        sNpcGfx = 0;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
+        /* The trainer pictures: Red's 135 and the rival's three. */
+        sLookPack = true;
+        CtrGen4_LooksChanged();
+        {
+            static uint8_t fire[0x800];
+            uint16_t palette[16];
+
+            memset(sEntry, 0, sizeof(sEntry));
+            memcpy(sEntry, "G4T1", 4);
+            sEntrySize = 40 + CTR_GEN4_PICTURE;
+            assert(CtrGen4_LoadTrainer(0, 135, fire, 100, 3, palette) && strcmp(sAsked, "graphics/gen4/look/ash_hgss/front.bin") == 0);
+            assert(CtrGen4_LoadTrainer(0, 124, fire, 100, 3, palette) && strcmp(sAsked, "graphics/gen4/look/gary_kanto/front.bin") == 0);
+            assert(CtrGen4_LoadTrainer(0, 136, fire, 100, 3, palette) && strcmp(sAsked, "graphics/gen4/trainer/136.bin") == 0);
+            assert(CtrGen4_LoadTrainer(0, 7, fire, 100, 3, palette) && strcmp(sAsked, "graphics/gen4/trainer/007.bin") == 0);
+        }
+        sLook[0] = sLook[2] = NULL;
+        sLookPack = false;
+        CtrGen4_LooksChanged();
     }
 
     puts("battle_gen4_test: ok");

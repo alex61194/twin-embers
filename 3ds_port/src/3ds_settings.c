@@ -21,6 +21,7 @@ static int sAutoRun;
 static int sEmbers = -1;
 static int sRepelAgain = 1;
 static int sCompanion;
+static char sLook[3][16];     /* look_red, look_leaf, look_blue */
 static int sExpShare;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
@@ -29,8 +30,35 @@ static int sLoaded;
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 128
+#define SETTINGS_FILE_BYTES 256
 static FILE *sFile;
+
+static const char *const kLookKey[3] = {"look_red=", "look_leaf=", "look_blue="};
+
+/* A look's name is its folder's: only [a-z0-9_], at most 15 characters, up to the first other one (the line's end). */
+static void LookSet(int slot, const char *text)
+{
+    size_t n = 0;
+
+    while (n < sizeof(sLook[slot]) - 1
+           && ((text[n] >= 'a' && text[n] <= 'z') || (text[n] >= '0' && text[n] <= '9') || text[n] == '_'))
+    {
+        sLook[slot][n] = text[n];
+        ++n;
+    }
+    sLook[slot][n] = 0;
+}
+
+static int LookLine(const char *line)
+{
+    for (int slot = 0; slot < 3; ++slot)
+        if (strncmp(line, kLookKey[slot], strlen(kLookKey[slot])) == 0)
+        {
+            LookSet(slot, line + strlen(kLookKey[slot]));
+            return 1;
+        }
+    return 0;
+}
 
 static void Load(void)
 {
@@ -62,6 +90,8 @@ static void Load(void)
             sCompanion = value <= 2 ? (int)value : 0;
         else if (sscanf(line, "expshare=%u", &value) == 1)
             sExpShare = value <= 2 ? (int)value : 0;
+        else if (LookLine(line))
+            ;
         else if (sscanf(line, "ball=%u", &value) == 1)
             sBall = value <= 0xffff ? value : 0;
     }
@@ -96,6 +126,9 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
     if (sExpShare && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "expshare=%d\n", sExpShare);
+    for (int slot = 0; slot < 3; ++slot)
+        if (sLook[slot][0] && length > 0 && (size_t)length < size)
+            length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
     if (sBall && length > 0 && (size_t)length < size)
         snprintf(text + length, size - (size_t)length, "ball=%u\n", sBall);
 }
@@ -276,6 +309,25 @@ void CtrSettings_SetExpShare(int mode)
         return;
     sExpShare = mode;
     Save();
+}
+
+const char *CtrSettings_Look(int slot)
+{
+    Load();
+    return slot >= 0 && slot < 3 ? sLook[slot] : "";
+}
+
+void CtrSettings_SetLook(int slot, const char *id)
+{
+    char before[16];
+
+    Load();
+    if (slot < 0 || slot >= 3)
+        return;
+    memcpy(before, sLook[slot], sizeof(before));
+    LookSet(slot, id ? id : "");
+    if (memcmp(before, sLook[slot], sizeof(before)))
+        Save();
 }
 
 void CtrSettings_SetEmbers(int level)

@@ -71,6 +71,28 @@ int main(void)
     fclose(file);
     assert(strstr(text, "expshare=2\n") != NULL && strstr(text, "ball=3\n") != NULL);
 
+    /* The look for Red, Leaf and Blue: none until chosen, kept after the others, only a folder's name ([a-z0-9_], 15). */
+    assert(CtrSettings_Look(CTR_LOOK_RED)[0] == 0 && CtrSettings_Look(CTR_LOOK_BLUE)[0] == 0);
+    CtrSettings_SetLook(CTR_LOOK_RED, "ash_hgss");
+    CtrSettings_SetLook(CTR_LOOK_BLUE, "gary_kanto");
+    assert(strcmp(CtrSettings_Look(CTR_LOOK_RED), "ash_hgss") == 0 && strcmp(CtrSettings_Look(CTR_LOOK_BLUE), "gary_kanto") == 0);
+    assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0 && CtrSettings_Look(3)[0] == 0);
+    CtrSettings_SetLook(CTR_LOOK_LEAF, "Bad Name/..");
+    assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0);                       /* the first character is not allowed: nothing */
+    CtrSettings_SetLook(CTR_LOOK_LEAF, "abcdefghijklmnopqrstu");
+    assert(strlen(CtrSettings_Look(CTR_LOOK_LEAF)) == 15);
+    CtrSettings_SetLook(CTR_LOOK_LEAF, "");
+    assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    {
+        char big[256 + 1] = {0};
+
+        assert(file != NULL && fread(big, 1, 256, file) == 256);
+        fclose(file);
+        assert(strstr(big, "look_red=ash_hgss\n") != NULL && strstr(big, "look_blue=gary_kanto\n") != NULL
+               && strstr(big, "look_leaf") == NULL && strstr(big, "expshare=2\n") != NULL && strstr(big, "ball=3\n") != NULL);
+    }
+
     remove(CTR_SETTINGS_PATH);
     puts("settings_test ok");
     return 0;

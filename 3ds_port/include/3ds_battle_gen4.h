@@ -157,6 +157,9 @@ int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned
  * decompression of FireRed's (CpuSet, LZ77UnComp*) writes it instead. True when `src` is one of them and its entry has
  * exactly `size` bytes: `dest` then has it. */
 bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size);
+/* The player's choice of look (CtrSettings_Look, for Red, Leaf and the rival Blue) changed: what was read of the old ones
+ * (people, backs, whole pictures) is dropped the next time one is asked for. */
+void CtrGen4_LooksChanged(void);
 /* Implemented by the game (recipe 0212): FireRed's data for picture `which` (CTR_PLAYER_*) of Red (`female` 0) or
  * Leaf, its tiles or (`palette` 1) its colours, compressed as the game keeps it; NULL for none. */
 enum { CTR_PLAYER_FRONT, CTR_PLAYER_INTRO, CTR_PLAYER_ICON, CTR_PLAYER_PICTURES };
