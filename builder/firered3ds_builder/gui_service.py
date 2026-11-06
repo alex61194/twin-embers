@@ -85,6 +85,7 @@ def build_private_pack(
     player: bool = False,
     followers: bool = False,
     hd_backgrounds: bool = False,
+    alt_looks: bool = False,
     downloader: gen4_sprites.Downloader | None = None,
 ) -> dict:
     """Build with the original engine; publish only a fully verified pack.
@@ -120,7 +121,8 @@ def build_private_pack(
                                                  (backgrounds, gen4_sprites.GROUP_BG),
                                                  (player, gen4_sprites.GROUP_PLAYER),
                                                  (followers, gen4_sprites.GROUP_FOLLOWER),
-                                                 (hd_backgrounds, gen4_sprites.GROUP_HD)) if flag)
+                                                 (hd_backgrounds, gen4_sprites.GROUP_HD),
+                                                 (alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
         if groups:
             _stage(on_progress, "sprites", "Downloading the optional pictures...")
             extra, sprites = gen4_sprites.pack_files(
