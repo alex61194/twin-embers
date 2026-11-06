@@ -750,7 +750,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "47c00fbae4996a56f31a8c632d1e8128bdb00d78d8cec959cac9b77c1e9aa97b",
+   "sha256": "ff18b006793fee1552b8525e41109e9938ee77574921bb83129a47be1ad7210f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -979,7 +979,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "3a18059648dcb36c5f1b3d8e1ae5a34bd38f8a31b8672179d74b49bf6856fa9c",
+   "sha256": "590efa894a3068ebb28708055c01238532e14c88136d4f38516f9b995429ba8a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1018,7 +1018,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "78a1bd4092be73d5e9cbf752634a7d697d8a49b8e758a87e4a334dc7f661746d",
+   "sha256": "78f5beaa307f7e4add58f48347faa7bee8fcea83caac42d35394dec5208e6bfe",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1376,7 +1376,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "4035b1464f6fffbae9bcde4410ded8b1e5ab4a926ba64cd2212277134817ef6a",
+   "sha256": "5fa8a2892249cc7e60f1e99ac7174af75988d9f0a6e43b5814c924852c056f16",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1467,7 +1467,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "5bd3be0135a9b40ab2b83bb00c5d4a9b3da9af777c39cdf34bd003866500a0eb",
+   "sha256": "9f0226143a10730bfc6fb5ee15d0922e39a30623f2156cf3209dcc4eb8fd35a2",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -5670,7 +5670,7 @@
   },
   {
    "path": "patches/pokefirered/0221-decapitalize-species-names.json",
-   "sha256": "7a94df789f3dfd8566fb5ef828e5c067358755bd2cd9df6ba1e03419c7b28039",
+   "sha256": "a6d2fd2ef6788f50ff3c5ee92652ab1147c9e50d74149adce6344e054dd7f146",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5743,6 +5743,14 @@
   {
    "path": "patches/pokefirered/0231-port-symbols-clean-release.json",
    "sha256": "5fe7db4319bef32a05023758bd2bdcea08f4c3be8ecf91efc333298adb73b804",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0232-german-dialogue-and-menu-decapitalization.json",
+   "sha256": "721d1364f8c5ccee879536a4691558ceda7ffbea039d62e95f807259a86d3435",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6519,7 +6527,7 @@
   },
   {
    "path": "tools/test_web_builder.py",
-   "sha256": "36becd0c3c19572332152d9004775056440597bf63af3ed2a6a8f78d7ab699ad",
+   "sha256": "702b0871669cb3507cb85692a4cd87f11f48599cb2c64575240948e55eeeb273",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -9,7 +9,7 @@ static const CtrPokeTouchRect sSTab[SUI_TABS] = {{3, 45, 77, 24}, {82, 45, 77, 2
 static const CtrPokeTouchRect sSBody = {3, 72, 314, 138};
 static const CtrPokeTouchRect sSFooter = {3, 213, 230, 24};
 static const CtrPokeTouchRect sSBack = {236, 213, 81, 24};
-static const char *const sSTabLabel[SUI_TABS] = {CTR_TR("INFO", "INFO", "INFO"), CTR_TR("STATS", "STATS", "STATUS"), CTR_TR("MOVES", "ATAQUES", "ATTACKEN"), CTR_TR("TRAINER", "ENTREN.", "TRAINER")};
+static const char *const sSTabLabel[SUI_TABS] = {CTR_TR("INFO", "INFO", "Info"), CTR_TR("STATS", "STATS", "Status"), CTR_TR("MOVES", "ATAQUES", "Attacken"), CTR_TR("TRAINER", "ENTREN.", "Trainer")};
 
 /* The moves page's cards (2x2) and the details' rows (four moves, then CANCEL) and panel. */
 static CtrPokeTouchRect SCard(int i)
@@ -121,8 +121,8 @@ static void SGender(char gender, int x, int y)
 static uint16_t SStatusColor(const char *status)
 {
     static const struct { const char *code; uint16_t color; } sColors[] = {
-        {CTR_TR("PSN", "ENV", "GFT"), UI_RGB(170, 80, 190)}, {CTR_TR("PRZ", "PAR", "PAR"), UI_RGB(214, 170, 30)}, {CTR_TR("SLP", "DOR", "SLF"), UI_RGB(120, 128, 150)},
-        {CTR_TR("FRZ", "CON", "EFR"), UI_RGB(80, 170, 220)}, {CTR_TR("BRN", "QUE", "BRN"), UI_RGB(226, 96, 48)}, {CTR_TR("PKR", "PKR", "PKR"), UI_RGB(200, 90, 160)}, {CTR_TR("FNT", "DEB", "BES"), UI_DANGER},
+        {CTR_TR("PSN", "ENV", "Gft"), UI_RGB(170, 80, 190)}, {CTR_TR("PRZ", "PAR", "Par"), UI_RGB(214, 170, 30)}, {CTR_TR("SLP", "DOR", "Slf"), UI_RGB(120, 128, 150)},
+        {CTR_TR("FRZ", "CON", "Efr"), UI_RGB(80, 170, 220)}, {CTR_TR("BRN", "QUE", "Brn"), UI_RGB(226, 96, 48)}, {CTR_TR("PKR", "PKR", "PKR"), UI_RGB(200, 90, 160)}, {CTR_TR("FNT", "DEB", "Bes"), UI_DANGER},
     };
 
     for (unsigned i = 0; i < sizeof(sColors) / sizeof(sColors[0]); ++i)
@@ -311,7 +311,7 @@ static void SInfo(const CtrSummaryUiView *v)
         SIcon(v, plate.x + 10, plate.y + 8, 2);
     SCardBox(side.x, side.y, side.w, side.h);
     if (d->egg) {
-        UiText(CTR_TR("EGG", "HUEVO", "EI"), 101, 82, S_INK, EM_DARK_SH, 1, 307);
+        UiText(CTR_TR("EGG", "HUEVO", "Ei"), 101, 82, S_INK, EM_DARK_SH, 1, 307);
         SRule(101, 94, 206);
         BDescribeN(d->hatch, 101, 100, 206, 5, S_LABEL);
         return;
@@ -324,10 +324,10 @@ static void SInfo(const CtrSummaryUiView *v)
         UiTypeBadge(&t0, d->typeIds[0], d->types[0]);
         if (second)
             UiTypeBadge(&t1, d->typeIds[1], d->types[1]);
-        SRowText(101, 82, 206, CTR_TR("SPECIES", "ESPECIE", "SPEZIES"), d->species, 1);
-        SRowText(101, 97, 206, CTR_TR("ITEM", "OBJETO", "ITEM"), d->item[0] ? d->item : CTR_TR("NONE", "NINGUNO", "KEINES"), 1);
-        SRowText(101, 112, 206, CTR_TR("NATURE", "NATURALEZA", "WESEN"), d->nature, 1);
-        SRowText(101, 127, 206, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\x84HIGKEIT"), d->ability, 0);
+        SRowText(101, 82, 206, CTR_TR("SPECIES", "ESPECIE", "Spezies"), d->species, 1);
+        SRowText(101, 97, 206, CTR_TR("ITEM", "OBJETO", "Item"), d->item[0] ? d->item : CTR_TR("NONE", "NINGUNO", "Keines"), 1);
+        SRowText(101, 112, 206, CTR_TR("NATURE", "NATURALEZA", "Wesen"), d->nature, 1);
+        SRowText(101, 127, 206, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\xA4higkeit"), d->ability, 0);
         BDescribeN(d->abilityDesc, 101, 141, 206, 2, S_LABEL);
         SRule(101, 165, 206);
         snprintf(hp, sizeof(hp), "%u/%u", d->hpCur, d->hpMax);
@@ -341,7 +341,7 @@ static void SInfo(const CtrSummaryUiView *v)
 
 static void SStats(const CtrSummaryUiView *v)
 {
-    static const char *const sLabels[5] = {CTR_TR("ATTACK", "ATAQUE", "ANGRIFF"), CTR_TR("DEFENSE", "DEFENSA", "VERT."), CTR_TR("SP. ATK", "AT. ESP.", "SP. ANG."), CTR_TR("SP. DEF", "DEF. ESP.", "SP. VER."), CTR_TR("SPEED", "VELOCIDAD", "INIT.")};
+    static const char *const sLabels[5] = {CTR_TR("ATTACK", "ATAQUE", "Angriff"), CTR_TR("DEFENSE", "DEFENSA", "Vert."), CTR_TR("SP. ATK", "AT. ESP.", "Sp. Ang."), CTR_TR("SP. DEF", "DEF. ESP.", "Sp. Ver."), CTR_TR("SPEED", "VELOCIDAD", "Init.")};
     const CtrSummaryView *d = &v->data;
     char hp[16];
 
@@ -355,13 +355,13 @@ static void SStats(const CtrSummaryUiView *v)
     }
     for (int i = 0; i < 5; ++i)
         SRowText(13, 106 + 20 * i, 139, sLabels[i], d->stats[i], i < 4);
-    UiText(CTR_TR("EXP. POINTS", "PUNTOS EXP.", "EXP. PUNKTE"), 168, 82, S_LABEL, EM_DARK_SH, 1, 307);
+    UiText(CTR_TR("EXP. POINTS", "PUNTOS EXP.", "Exp. Punkte"), 168, 82, S_LABEL, EM_DARK_SH, 1, 307);
     UiTextRight(d->exp, 307, 96, S_INK, EM_DARK_SH, 1);
     SRule(168, 109, 139);
-    UiText(CTR_TR("TO NEXT LV.", "PARA SUBIR", "N\xC3\x84" "CHST. LV."), 168, 114, S_LABEL, EM_DARK_SH, 1, 307);
+    UiText(CTR_TR("TO NEXT LV.", "PARA SUBIR", "N\xC3\xA4" "chst. Lv."), 168, 114, S_LABEL, EM_DARK_SH, 1, 307);
     UiTextRight(d->nextExp, 307, 128, S_INK, EM_DARK_SH, 1);
     SRule(168, 141, 139);
-    SRowText(168, 146, 139, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\x84HIGKEIT"), d->ability, 0);
+    SRowText(168, 146, 139, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\xA4higkeit"), d->ability, 0);
     BDescribeN(d->abilityDesc, 168, 162, 139, 4, S_LABEL);
 }
 
@@ -386,11 +386,11 @@ static void SMoveCard(const CtrSummaryUiView *v, int i)
         unsigned pp = SNumber(d->pp[i], 0), max = SNumber(d->pp[i], 1);
 
         UiTypeBadge(&badge, d->moveTypeIds[i], d->moveTypes[i]);
-        UiText(CTR_TR("PWR", "POT", "ST\xC3\x84"), r.x + r.w - 52, fy + 26, S_LABEL, EM_DARK_SH, 1, r.x + r.w);
+        UiText(CTR_TR("PWR", "POT", "St\xC3\xA4"), r.x + r.w - 52, fy + 26, S_LABEL, EM_DARK_SH, 1, r.x + r.w);
         UiTextRight(d->power[i], r.x + r.w - 8, fy + 26, S_INK, EM_DARK_SH, 1);
         UiText("PP", r.x + 12, fy + 43, S_LABEL, EM_DARK_SH, 1, r.x + 30);
         UiText(d->pp[i], r.x + 28, fy + 43, SPpColor(pp, max), EM_DARK_SH, 1, r.x + 84);
-        UiText(CTR_TR("ACC", "PRE", "GEN"), r.x + r.w - 52, fy + 43, S_LABEL, EM_DARK_SH, 1, r.x + r.w);
+        UiText(CTR_TR("ACC", "PRE", "Gen"), r.x + r.w - 52, fy + 43, S_LABEL, EM_DARK_SH, 1, r.x + r.w);
         UiTextRight(d->accuracy[i], r.x + r.w - 8, fy + 43, S_INK, EM_DARK_SH, 1);
     }
 }
@@ -410,7 +410,7 @@ static void SMoveRow(const CtrSummaryUiView *v, int i)
         return;
     fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, pressed);
     if (i == 4) {
-        EmLabel(CTR_TR("CANCEL", "CANCELAR", "ZUR\xC3\x9C" "CK"), r.x, r.w, fy, r.h - 2, pal);
+        EmLabel(CTR_TR("CANCEL", "CANCELAR", "Zur\xC3\xBC" "ck"), r.x, r.w, fy, r.h - 2, pal);
     } else if (d->moves[i]) {
         Fill(r.x + 3, fy + 4, 3, r.h - 2 - 8, UiTypeColor(d->moveTypeIds[i]));
         UiText(d->moveNames[i], r.x + 10, fy + 7, pal->ink, pal->inkSh, 1, r.x + 100);
@@ -442,9 +442,9 @@ static void SMoveDetail(const CtrSummaryUiView *v)
         Fill(band.x + 4, band.y + 1, band.w - 8, 7, UiMix(color, EM_WHITE, 2));
         UiText(d->moveNames[i], p->x + 8, p->y + 7, EM_WHITE, UiMix(color, UI_RGB(0, 0, 0), 4), 1, p->x + p->w - 4);
         UiTypeBadge(&badge, d->moveTypeIds[i], d->moveTypes[i]);
-        UiText(CTR_TR("PWR", "POT", "ST\xC3\x84"), p->x + 66, p->y + 29, S_LABEL, EM_DARK_SH, 1, p->x + p->w);
+        UiText(CTR_TR("PWR", "POT", "St\xC3\xA4"), p->x + 66, p->y + 29, S_LABEL, EM_DARK_SH, 1, p->x + p->w);
         UiTextRight(d->power[i], p->x + p->w - 8, p->y + 29, S_INK, EM_DARK_SH, 1);
-        UiText(CTR_TR("ACC", "PRE", "GEN"), p->x + 66, p->y + 43, S_LABEL, EM_DARK_SH, 1, p->x + p->w);
+        UiText(CTR_TR("ACC", "PRE", "Gen"), p->x + 66, p->y + 43, S_LABEL, EM_DARK_SH, 1, p->x + p->w);
         UiTextRight(d->accuracy[i], p->x + p->w - 8, p->y + 43, S_INK, EM_DARK_SH, 1);
         SRule(p->x + 6, p->y + 57, p->w - 12);
         BDescribeN(d->moveDesc, p->x + 6, p->y + 63, p->w - 12, 6, S_LABEL);
@@ -470,12 +470,12 @@ static void STrainer(const CtrSummaryUiView *v)
     SCardBox(7, 76, 306, 130);
     snprintf(ribbons, sizeof(ribbons), "%u", d->ribbons);
     SRowText(13, 82, 294, "OT", d->ot, 1);
-    SRowText(13, 97, 294, CTR_TR("ID No.", "N.\xC2\xBA ID", "ID-NR."), d->id, 1);
+    SRowText(13, 97, 294, CTR_TR("ID No.", "N.\xC2\xBA ID", "ID-Nr."), d->id, 1);
     if (!d->egg) {
-        SRowText(13, 112, 294, CTR_TR("NATURE", "NATURALEZA", "WESEN"), d->nature, 1);
-        SRowText(13, 127, 294, CTR_TR("RIBBONS", "CINTAS", "B\xC3\x84NDER"), ribbons, 1);
+        SRowText(13, 112, 294, CTR_TR("NATURE", "NATURALEZA", "Wesen"), d->nature, 1);
+        SRowText(13, 127, 294, CTR_TR("RIBBONS", "CINTAS", "B\xC3\xA4nder"), ribbons, 1);
     }
-    UiText(CTR_TR("TRAINER MEMO", "NOTAS ENTRENADOR", "TRAINER-MEMO"), 13, d->egg ? 113 : 143, EM_STRIPE, EM_DARK_SH, 1, 307);
+    UiText(CTR_TR("TRAINER MEMO", "NOTAS ENTRENADOR", "Trainer-Memo"), 13, d->egg ? 113 : 143, EM_STRIPE, EM_DARK_SH, 1, 307);
     BDescribeN(d->memo, 13, d->egg ? 127 : 157, 294, d->egg ? 2 : 4, S_INK);
     if (d->egg)
         BDescribeN(d->hatch, 13, 154, 294, 4, S_LABEL);
@@ -500,13 +500,13 @@ static const char *SHint(const CtrSummaryUiView *v)
 {
     return v->loading ? "" : v->data.page == SUI_PAGE_MOVES ? CTR_TR("Tap a move for its details.", "Toca un ataque para ver sus datos.", "Attacke antippen f\xC3\xBCr Details.")
          : v->data.page == SUI_PAGE_MOVES_INFO ? (v->data.swapping ? CTR_TR("Tap where to move it.", "Toca d\xC3\xB3nde moverlo.", "Neuen Platz antippen.") : CTR_TR("Tap the selected move to move it.", "Toca el ataque elegido para moverlo.", "Ausgew\xC3\xA4hlte Attacke antippen zum Tauschen."))
-         : v->data.egg ? "" : CTR_TR("UP / DOWN: another POK\xc3\xa9MON", "ARRIBA / ABAJO: otro POK\xc3\xa9MON", "HOCH / RUNTER: anderes Pok\xc3\xa9mon");
+         : v->data.egg ? "" : CTR_TR("UP / DOWN: another POK\xc3\xa9MON", "ARRIBA / ABAJO: otro POK\xc3\xa9MON", "Hoch / Runter: anderes Pok\xc3\xa9mon");
 }
 
 static void SFooter(const CtrSummaryUiView *v)
 {
     const char *hint = SHint(v);
-    int pressed = v->pressed == SUI_HIT_BACK, w = UiTextWidth(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), 1), fy, x;
+    int pressed = v->pressed == SUI_HIT_BACK, w = UiTextWidth(CTR_TR("BACK", "ATR\xC3\x81S", "Zur\xC3\xBC" "ck"), 1), fy, x;
 
     TsBgRect(sSFooter.x, sSFooter.y, sSBack.x + sSBack.w - sSFooter.x, sSFooter.h);
     EmNote(sSFooter.x, sSFooter.y, sSFooter.w, sSFooter.h);
@@ -514,7 +514,7 @@ static void SFooter(const CtrSummaryUiView *v)
     fy = EmButton(sSBack.x, sSBack.y, sSBack.w, sSBack.h, &kEmViolet, 2, pressed);
     x = sSBack.x + (sSBack.w - w - 9) / 2;
     UiArrow(x, fy + (sSBack.h - 2 - UI_TEXT_H) / 2 + 1, -1, EM_WHITE);
-    UiText(CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), x + 9, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmViolet.inkSh, 1, sSBack.x + sSBack.w);
+    UiText(CTR_TR("BACK", "ATR\xC3\x81S", "Zur\xC3\xBC" "ck"), x + 9, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmViolet.inkSh, 1, sSBack.x + sSBack.w);
 }
 
 void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)
