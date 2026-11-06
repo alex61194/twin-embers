@@ -30,6 +30,10 @@ void CtrSettings_SetRepelAgain(int on);
  * Pokemon on the map. Off until chosen. */
 int CtrSettings_Companion(void);
 void CtrSettings_SetCompanion(int mode);
+/* The EXP SHARE choice (the OPTIONS screen): 0 the game's own, 1 the whole team shares as if each held an EXP. SHARE,
+ * 2 every Pokemon that can still fight gets the full share of one that fought. Off until chosen. */
+int CtrSettings_ExpShare(void);
+void CtrSettings_SetExpShare(int mode);
 /* The ball the battle's ball button last threw (an item number, 0 for none yet): the button starts on it. */
 unsigned CtrSettings_LastBall(void);
 void CtrSettings_SetLastBall(unsigned item);

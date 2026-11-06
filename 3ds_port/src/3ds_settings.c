@@ -21,6 +21,7 @@ static int sAutoRun;
 static int sEmbers = -1;
 static int sRepelAgain = 1;
 static int sCompanion;
+static int sExpShare;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
@@ -59,6 +60,8 @@ static void Load(void)
             sRepelAgain = value != 0;
         else if (sscanf(line, "companion=%u", &value) == 1)
             sCompanion = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "expshare=%u", &value) == 1)
+            sExpShare = value <= 2 ? (int)value : 0;
         else if (sscanf(line, "ball=%u", &value) == 1)
             sBall = value <= 0xffff ? value : 0;
     }
@@ -91,6 +94,8 @@ static void Format(char *text, size_t size)
     }
     if (sCompanion && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
+    if (sExpShare && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "expshare=%d\n", sExpShare);
     if (sBall && length > 0 && (size_t)length < size)
         snprintf(text + length, size - (size_t)length, "ball=%u\n", sBall);
 }
@@ -255,6 +260,21 @@ void CtrSettings_SetCompanion(int mode)
     if (mode < 0 || mode > 2 || mode == sCompanion)
         return;
     sCompanion = mode;
+    Save();
+}
+
+int CtrSettings_ExpShare(void)
+{
+    Load();
+    return sExpShare;
+}
+
+void CtrSettings_SetExpShare(int mode)
+{
+    Load();
+    if (mode < 0 || mode > 2 || mode == sExpShare)
+        return;
+    sExpShare = mode;
     Save();
 }
 

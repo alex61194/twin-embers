@@ -59,6 +59,20 @@ int main(void)
     fclose(file);
     assert(strstr(text, "ball=3\n") != NULL);
 
+    /* EXP SHARE: off until chosen, kept after the others, and a value that is not a level leaves it as it was. */
+    assert(CtrSettings_ExpShare() == 0);
+    CtrSettings_SetExpShare(2);
+    assert(CtrSettings_ExpShare() == 2);
+    CtrSettings_SetExpShare(5);
+    assert(CtrSettings_ExpShare() == 2);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "expshare=2
+") != NULL && strstr(text, "ball=3
+") != NULL);
+
     remove(CTR_SETTINGS_PATH);
     puts("settings_test ok");
     return 0;

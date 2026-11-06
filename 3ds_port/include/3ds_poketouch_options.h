@@ -51,6 +51,7 @@ int CtrOptions_Embers(void);        /* on unless OFF */
 int CtrOptions_EmbersLow(void);
 int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
+int CtrOptions_ExpShare(void);      /* 0 the game's own, 1 the team shares by halves, 2 everyone gets the full share (EXP SHARE) */
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);

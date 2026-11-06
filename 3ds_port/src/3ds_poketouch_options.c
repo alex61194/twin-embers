@@ -29,6 +29,9 @@ static const char *const sHourName[HOUR_COUNT] = {
     "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
 };
 static const char *const sEmbers[] = {CTR_TR("OFF", "NO", "AUS"), CTR_TR("LOW", "BAJO", "WENIG"), CTR_TR("HIGH", "ALTO", "VIEL")};     /* CTR_EMBERS_* */
+/* EXP SHARE: who gets experience (HALF: the whole team shares as if each held an EXP. SHARE; FULL: every Pokemon that can
+ * still fight gets the share of one that fought). */
+static const char *const sExpShare[] = {CTR_TR("OFF", "NO", "AUS"), CTR_TR("HALF", "MITAD", "HALB"), CTR_TR("FULL", "TODA", "VOLL")};
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
 static const char *const sCompanion[] = {CTR_TR("OFF", "NO", "AUS"), CTR_TR("FOLLOW", "SIGUE", "FOLGT"), CTR_TR("BE IT", "SER", "SPIELEN")};
 
@@ -61,6 +64,8 @@ static int GetRepelAgain(void) { return !CtrSettings_RepelAgain(); }
 static void SetRepelAgain(int v) { CtrSettings_SetRepelAgain(!(v & 1)); }
 static int GetCompanion(void) { return CtrSettings_Companion(); }
 static void SetCompanion(int v) { CtrSettings_SetCompanion(v); }
+static int GetExpShare(void) { return CtrSettings_ExpShare(); }
+static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
 static int GetEmbers(void) { return sPortEmbers; }
 static void SetEmbers(int v)
 {
@@ -76,6 +81,7 @@ int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
 int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }
 int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
+int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
 
 void CtrOptions_EmbersInit(int isNew3ds)
 {
@@ -112,10 +118,13 @@ static const CtrOptionRow sRows[] = {
      GetRepelAgain, TwoCount, SetRepelAgain},
     {CTR_TR("COMPANION", "ACOMPA\xC3\x91" "NTE", "BEGLEITER"), {CTR_TR("A Pokemon walks behind you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you are that Pokemon.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist das Pok\xC3\xA9mon.")}, 0, sCompanion, NULL,
      GetCompanion, ThreeCount, SetCompanion},
+    /* Page 3. */
+    {CTR_TR("EXP SHARE", "REPARTIR EXP", "EP-TEILER"), {CTR_TR("Share EXP with the whole", "Reparte la EXP con todo", "EP an das ganze Team:"), CTR_TR("team: HALF or FULL.", "el equipo: MITAD o TODA.", "HALB oder VOLL.")}, 0, sExpShare, NULL,
+     GetExpShare, ThreeCount, SetExpShare},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
-_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX * 2, "the OPTIONS screen holds up to two pages of PT_OPT_MAX rows");
+_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX * 3, "the OPTIONS screen holds up to three pages of PT_OPT_MAX rows");
 
 int CtrOptions_RowCount(void)
 {
@@ -169,7 +178,7 @@ int CtrOptions_IsLevels(int row)
 {
     const CtrOptionRow *r = CtrOptions_Row(row);
 
-    return r != NULL && (r->names == sEmbers || r->names == sCompanion);
+    return r != NULL && (r->names == sEmbers || r->names == sCompanion || r->names == sExpShare);
 }
 
 void CtrOptions_Set(int row, int value)

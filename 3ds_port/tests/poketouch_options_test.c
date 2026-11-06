@@ -51,8 +51,8 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 14, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
-    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
+    CHECK(CtrOptions_RowCount() == 15, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 3, "more rows than three pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
     CHECK(strcmp(CtrOptions_Row(8)->label, "MOVE DETAILS") == 0, "MOVE DETAILS is row 8");
@@ -152,6 +152,22 @@ int main(void)
     CtrOptions_Set(13, 2);
     CtrOptions_Set(13, 3);
     CHECK(CtrOptions_Companion() == 2, "a value that is not a level is refused");
+    /* EXP SHARE, alone on page 3: the game's own until chosen, then HALF, then FULL; levels, kept in the settings. */
+    Text(14, "OFF");
+    CHECK(CtrOptions_ExpShare() == 0 && CtrSettings_ExpShare() == 0, "EXP SHARE starts off");
+    CtrOptions_Step(14, 1);
+    Text(14, "HALF");
+    CHECK(CtrOptions_ExpShare() == 1 && CtrSettings_ExpShare() == 1, "EXP SHARE stepped to HALF");
+    CtrOptions_Step(14, 1);
+    Text(14, "FULL");
+    CHECK(CtrOptions_ExpShare() == 2, "EXP SHARE stepped to FULL");
+    CtrOptions_Set(14, 3);
+    CHECK(CtrOptions_ExpShare() == 2 && CtrOptions_IsLevels(14), "a value that is not a level is refused; a row of levels");
+    CtrOptions_Step(14, 1);
+    CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 14);
+    CHECK(view.optPage == 2 && view.optPageCount == 3 && view.optCount == 1, "page 3 holds the one row");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 13);
     CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "FOLLOW") == 0
@@ -178,7 +194,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 3 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0
