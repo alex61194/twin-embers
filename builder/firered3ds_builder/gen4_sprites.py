@@ -89,7 +89,7 @@ import zlib
 from pathlib import Path
 from typing import Callable
 
-from . import gen4_followers, gen4_hd, gen4_sources, nsbtx
+from . import gen4_followers, gen4_hd, gen4_looks, gen4_sources, nsbtx
 
 SIZE = 80
 PICTURE = SIZE * SIZE // 2
@@ -379,7 +379,8 @@ PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
 PLAYER_PREFIX = "graphics/gen4/player/"
 GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "bg", "player", "follower"
 GROUP_HD = "hd"     # the HD battle scenes (Bentley734's): graphics/gen4/hdn/ and hd/, each as it is in the pack
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER, GROUP_HD)
+GROUP_LOOKS = "looks"   # the alternative player looks (Emerald Lens'): graphics/gen4/look/<look>/<sheet>, for the player to pick in the game
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)
 # The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
 # a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
 # nine 32x32 frames), the game flipping the west frames for the east. Rows: (dex, or 1000 + dex for the female one,
@@ -839,6 +840,12 @@ def convert_npc(sheet: bytes, count: int = NPC_FRAMES, size: int = 32) -> bytes:
     them, the Fly bird carrying the player two of 64x64): one palette of 15 colours (the rarest folded into their
     nearest, as for the backs) and each frame as tiles, row by row of tiles."""
     width, height, _, rows = read_png(sheet)
+    if size == 32 and (width, height) == (16, 32 * count) and rows and isinstance(rows[0][0], tuple):
+        # A GBA person is 16 wide: its frames go in the middle of the 32-wide ones the pack keeps, as the game draws a person
+        # centred across its sprite.
+        gap = [(0, 0, 0, 0)] * 8
+        rows = [gap + list(row) + gap for row in rows]
+        width = 32
     if (width, height) != (size, size * count) or not isinstance(rows[0][0], tuple):
         raise Gen4Error("a person is a %d-wide RGBA sheet of %d %dx%d frames" % (size, count, size, size))
     palette, indices = quantize([pixel for row in rows for pixel in row])
@@ -990,6 +997,36 @@ def convert_bg_wide(scene: bytes) -> bytes:
     return BG_MAGIC + struct.pack("<HH", len(tiles), 0) + struct.pack("<16H", *colours) + b"".join(tiles) + tilemap
 
 
+LOOK_PREFIX = "graphics/gen4/look/"
+
+
+def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes]]:
+    """The pack entries of one player look, for any of the game's player slots (Red, Leaf, the rival): each sheet it has, in
+    the pack's formats, under graphics/gen4/look/<folder>/ with the sheet's own name: the walking family and the Fly bird as
+    person entries (PLAYER_SHEETS' frame counts), back.bin, front.bin, and the pictures FireRed copies out whole as
+    front.4bpp/.gbapal, intro.8bpp/.gbapal and icon.4bpp/.gbapal."""
+    base = LOOK_PREFIX + folder + "/"
+    out: list[tuple[str, bytes]] = []
+    for sheet, data in sheets.items():
+        if sheet in PLAYER_SHEETS:
+            out.append((base + sheet + ".bin", convert_npc(data, PLAYER_SHEETS[sheet][1])))
+        elif sheet == "flyBird":
+            out.append((base + "flyBird.bin", convert_npc(data, 2, 64)))
+        elif sheet == "back":
+            out.append((base + "back.bin", convert_back(data)))
+        elif sheet == "front":
+            out.append((base + "front.bin", convert_front(data)))
+            tiles, colours = convert_gba_sprite(data, 64)
+            out += [(base + "front.4bpp", tiles), (base + "front.gbapal", colours)]
+        elif sheet == "intro":
+            tiles, colours = convert_intro(data)
+            out += [(base + "intro.8bpp", tiles), (base + "intro.gbapal", colours)]
+        elif sheet == "mapIcon":
+            tiles, colours = convert_gba_sprite(data, 16)
+            out += [(base + "icon.4bpp", tiles), (base + "icon.gbapal", colours)]
+    return out
+
+
 HD_NATIVE_MAGIC, HD_MAP_MAGIC = b"G4H1", b"G4M1"
 HD_NATIVE_W, HD_NATIVE_H = 400, 240
 
@@ -1046,7 +1083,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg", "npc", "player", "follower", "hd"):
+    if row[1] in ("back", "bg", "npc", "player", "follower", "hd", "look"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -1075,6 +1112,8 @@ def file_name(row: tuple) -> str:
         return "follower_{:04d}.nsbtx".format(row[0])
     if row[1] == "hd":
         return "hd_" + row[2].rsplit("gen4/", 1)[1].replace("/", "_")
+    if row[1] == "look":
+        return "look_{:02d}_{}".format(row[0], row[2].rsplit("/", 1)[1])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -1085,6 +1124,8 @@ def file_url(row: tuple) -> str:
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     if row[1] == "player":
         return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
+    if row[1] == "look":
+        return URL.format(repo=gen4_looks.REPO, commit=gen4_looks.COMMIT, path=row[2])
     if row[1] == "hd":
         return URL.format(repo=gen4_hd.REPO, commit=gen4_hd.COMMIT, path=row[2])
     if row[1] == "follower":
@@ -1108,6 +1149,8 @@ def all_files(groups: tuple = GROUPS) -> tuple:
         rows += FOLLOWER_FILES
     if GROUP_HD in groups:
         rows += tuple(gen4_hd.FILES)
+    if GROUP_LOOKS in groups:
+        rows += tuple(gen4_looks.FILES)
     return rows
 
 
@@ -1200,6 +1243,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     player = [row for row in rows if row[1] == "player"]
     followers = [row for row in rows if row[1] == "follower"]
     hd_rows = [row for row in rows if row[1] == "hd"]
+    look_rows = [row for row in rows if row[1] == "look"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -1250,6 +1294,15 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     if hd_rows and all(row[:3] in got for row in hd_rows):
         hd_files = [(row[2], check_hd(row[2], got[row[:3]])) for row in hd_rows]
     files += hd_files
+    # The looks: one set of entries for each look whose walking sheet could be had; a sheet it lacks keeps FireRed's picture.
+    look_files = []
+    looks_made = 0
+    for number, (folder, *_rest) in enumerate(gen4_looks.LOOKS):
+        sheets = {row[2].rsplit("/", 1)[1][:-4]: got[row[:3]] for row in look_rows if row[0] == number and row[:3] in got}
+        if "walk" in sheets:
+            look_files += look_entries(folder, sheets)
+            looks_made += 1
+    files += look_files
     # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
     player_files = []
     for row in (row for row in player if row[:3] in got):
@@ -1279,5 +1332,5 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
-                   "followers": len(follower_files), "hd": len(hd_files),
+                   "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made,
                    "player": len(player_files), "downloaded": downloaded}

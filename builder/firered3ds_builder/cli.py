@@ -2,7 +2,7 @@ import argparse
 import hashlib
 from pathlib import Path
 from .build import build
-from . import gen4_hd, gen4_sprites
+from . import gen4_hd, gen4_looks, gen4_sprites
 from .rom import load_rom, SUPPORTED_ROMS
 from .pak import PakReader, PakError
 
@@ -27,6 +27,8 @@ def main() -> None:
                       help="also download the Pokemon that walk behind you (HeartGold's; needs internet)")
     make.add_argument('--hd-backgrounds', action='store_true',
                       help="also download the HD battle scenes (Bentley734's HD Dynamic Battlefields; needs internet)")
+    make.add_argument('--alt-looks', action='store_true',
+                      help="also download the alternative player looks (Emerald Lens'), for the player to pick in the game; needs internet")
     make.add_argument('--extra-dir', type=Path, help=argparse.SUPPRESS)   # local test files, added as they are
     make.add_argument('--gen4-sprites', action='store_true',
                       help='also download HeartGold battle sprites (optional, needs internet)')
@@ -46,7 +48,8 @@ def main() -> None:
                                                      (args.battle_backgrounds, gen4_sprites.GROUP_BG),
                                                      (args.player_sprites, gen4_sprites.GROUP_PLAYER),
                                                      (args.follower_sprites, gen4_sprites.GROUP_FOLLOWER),
-                                                     (args.hd_backgrounds, gen4_sprites.GROUP_HD)) if flag)
+                                                     (args.hd_backgrounds, gen4_sprites.GROUP_HD),
+                                                     (args.alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
             if groups:
                 extra, info = gen4_sprites.pack_files(gen4_sprites.Downloader(gen4_sprites.cache_dir()), groups=groups)
                 if args.gen4_sprites:
@@ -63,6 +66,8 @@ def main() -> None:
                     print(f"Pokemon that walk behind you: {info['followers']} of {len(gen4_sprites.FOLLOWER_FILES)} files")
                 if args.hd_backgrounds:
                     print(f"HD battle scenes: {info['hd']} of {len(gen4_hd.FILES)} files")
+                if args.alt_looks:
+                    print(f"Alternative player looks: {info['looks']} of {len(gen4_looks.LOOKS)}")
             if args.extra_dir:
                 # Files made by a local tool (tools/dev_hd_battlefields.py), each under its path in the folder.
                 extra += [(file.relative_to(args.extra_dir).as_posix(), file.read_bytes())

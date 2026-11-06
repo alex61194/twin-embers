@@ -2107,7 +2107,7 @@
   },
   {
    "path": "CREDITS.md",
-   "sha256": "c44043efe404e859c27beda542233e1baf1e60b4b5cbb126f9893c0012c992a2",
+   "sha256": "fd119fa759f11af9c671b28108163e35b69c650affd7a2513c88878f4d00cbfb",
    "review_status": "reviewed",
    "credit": "Original rightsholders/authors identified in the preserved legal notice",
    "license": "Exact component scope and original notice text; no expanded grant",
@@ -2249,7 +2249,7 @@
   },
   {
    "path": "builder/firered3ds_builder/cli.py",
-   "sha256": "bab6dba427ac2b390dd25c6413eb2f211acdc95c8e8d2c337b1dca1d13070d76",
+   "sha256": "0495768fc8a823a8d94892c2a85695558a1d5e5b7c1337be8e2b10d40b7b3958",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2278,6 +2278,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "builder/firered3ds_builder/gen4_looks.py",
+   "sha256": "8bb84e93b837abb28f0466d5836fba792a7a9ab9c6260c9f76f78d157c7f6023",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "builder/firered3ds_builder/gen4_sources.py",
    "sha256": "e95165f6160faf87a780d348f8d3b1b780a68ccd39f8abd0c485294fd40fb201",
    "review_status": "reviewed",
@@ -2287,7 +2295,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "cb78c1e25dc29b340a8a0f5a5f1b09be53c16ddbdd6f2c3a1a2c09b4e4ec5c7d",
+   "sha256": "02704faef5bee034fefb1a2c3509c3d5dd6c788f43ede999f7290c8d11d0b5a9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2854,7 +2862,7 @@
   },
   {
    "path": "builder/tests/test_browser.py",
-   "sha256": "787fce636e205bb7dec30384db41fe1eb9ba5c887a89f09d8bf1ffca6e0b8c6d",
+   "sha256": "5a523ebe82c6525a606bcaa8f843dcb1faca7176d425aeabec73a03ca996f1be",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2875,7 +2883,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "e4f9e8d12e1a45219fdd6c56ca172cd9f8511dd68c0a8fab9e966dbc5baec781",
+   "sha256": "6a83366c5963ccfddbdf3dafe9d0bef5e6c14d32b559cce15e5d2cb47f39b374",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3123,7 +3131,7 @@
   },
   {
    "path": "docs/THIRD-PARTY-ART.md",
-   "sha256": "192b68ef5e47eb3a2e22f91867068eb2a292b92a64799f8eb5af2a4d20f664da",
+   "sha256": "555e69bbf4c69a7c8e1ed81d3fdbfdde6af7c4ad54d52ff7632b5fd0bfa77204",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -5835,7 +5843,7 @@
   },
   {
    "path": "tools/build_web.py",
-   "sha256": "97cb575d7cab70bd2cafcc7513386a99bce0e923deeb7fa3ba0ebcf482a5382c",
+   "sha256": "d86427b1d5fc30a00d9c8639dd0ef5c98aa42fca2304b95f346ddd999e744325",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6158,6 +6166,14 @@
   {
    "path": "tools/make_gen4_hd.py",
    "sha256": "8a9c131f61040dd2195fc8902bbc17b50dfa415836eb481cd0483a6b35666144",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/make_gen4_looks.py",
+   "sha256": "6f28e355759ef3576a83080b8ec054f9b98a868b413038431cc13c00bf226812",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
