@@ -265,6 +265,32 @@ int main(int argc, char **argv)
         for(int i=0;i<512;++i) v.optLook.tiles[i]=(uint8_t)(i*7);
         for(int i=1;i<16;++i) v.optLook.palette[i]=(uint16_t)(i*0x0421);
         update(&old,&v);
+        {   /* For a look at the screen: PT_PREVIEW_PPM names the file to write, PT_PREVIEW_WALK a walk.bin to show, with its
+             * name and artists in PT_PREVIEW_NAME and PT_PREVIEW_CREDIT. */
+            const char *out=getenv("PT_PREVIEW_PPM"), *walk=getenv("PT_PREVIEW_WALK");
+            if(out && walk) {
+                const char *fp=getenv("PT_PREVIEW_FONT");   /* a 256x64-byte glyph file, a local viewing aid */
+                if(fp) { FILE *ff=fopen(fp,"rb"); assert(ff); assert(fread(font,1,sizeof(font),ff)==sizeof(font)); fclose(ff); }
+                FILE *w=fopen(walk,"rb"); assert(w);
+                uint8_t entry[40+512]; assert(fread(entry,1,sizeof(entry),w)==sizeof(entry)); fclose(w);
+                memcpy(v.optLook.tiles,entry+40,512);
+                for(int i=0;i<16;++i) v.optLook.palette[i]=(uint16_t)(entry[8+i*2]|entry[9+i*2]<<8);
+                snprintf(v.optLook.name,sizeof(v.optLook.name),"%s",getenv("PT_PREVIEW_NAME")?getenv("PT_PREVIEW_NAME"):"LOOK");
+                snprintf(v.optLook.credit,sizeof(v.optLook.credit),"%s",getenv("PT_PREVIEW_CREDIT")?getenv("PT_PREVIEW_CREDIT"):"");
+                strcpy(v.optLabel[0],"EXP SHARE"); strcpy(v.optValue[0],"OFF");
+                strcpy(v.optLabel[1],"RED LOOK"); strcpy(v.optValue[1],v.optLook.name);
+                strcpy(v.optLabel[2],"LEAF LOOK"); strcpy(v.optValue[2],"DEFAULT");
+                strcpy(v.optLabel[3],"RIVAL LOOK"); strcpy(v.optValue[3],"DEFAULT");
+                update(&old,&v);
+                FILE *f=fopen(out,"wb"); assert(f);
+                fprintf(f,"P6\n320 240\n255\n");
+                for(int y=0;y<H;++y) for(int x=0;x<W;++x) {
+                    uint16_t c=at(x,y); uint8_t p[3]={(uint8_t)((c>>11)*255/31),(uint8_t)(((c>>5)&63)*255/63),(uint8_t)((c&31)*255/31)};
+                    fwrite(p,1,3,f);
+                }
+                fclose(f);
+            }
+        }
         strcpy(v.optLook.name,"GARY"); strcpy(v.optLook.credit,"Made by Alan_Flygon, a credit long enough to need a second and a third line of the note card");
         update(&old,&v);
         v.optLook.has=0; strcpy(v.optLook.name,"DEFAULT"); update(&old,&v);       /* the default: no picture */
