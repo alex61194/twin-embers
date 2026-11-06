@@ -786,6 +786,7 @@ int main(void)
         sNpcTile = 100;
         sNpcFrame = 0;
         sNpcGfx = 0;
+        CtrGen4_LooksChanged();         /* what the people tests above left (a missing entry for 0 is remembered) is dropped */
         assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/000.bin") == 0);
         sLook[0] = "ash_hgss";
         sLook[2] = "gary_kanto";

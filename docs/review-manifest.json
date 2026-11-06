@@ -1685,7 +1685,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "4f7456007ac1df74e3f3e2767626ab7ee03bd2c6d740c7ea1adaba95b1e3609c",
+   "sha256": "e0e3c9b1532fc5e26776c0e4c9747c87553154a9f56f47e47c8432c8ff3d91f3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
