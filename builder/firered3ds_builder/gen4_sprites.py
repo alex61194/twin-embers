@@ -89,7 +89,7 @@ import zlib
 from pathlib import Path
 from typing import Callable
 
-from . import gen4_followers, gen4_sources, nsbtx
+from . import gen4_followers, gen4_hd, gen4_sources, nsbtx
 
 SIZE = 80
 PICTURE = SIZE * SIZE // 2
@@ -378,7 +378,8 @@ PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
 # (CtrPlayer_Swap): the front picture (trainer card, Hall of Fame), the Oak intro's and the Region Map icon.
 PLAYER_PREFIX = "graphics/gen4/player/"
 GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "bg", "player", "follower"
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER)
+GROUP_HD = "hd"     # the HD battle scenes (Bentley734's): graphics/gen4/hdn/ and hd/, each as it is in the pack
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER, GROUP_HD)
 # The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
 # a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
 # nine 32x32 frames), the game flipping the west frames for the east. Rows: (dex, or 1000 + dex for the female one,
@@ -931,6 +932,87 @@ def convert_bg(scene: bytes) -> bytes:
     return BG_MAGIC + struct.pack("<HH", len(tiles), 0) + struct.pack("<16H", *colours) + b"".join(tiles) + tilemap
 
 
+BG_WIDE_W = 272         # the battle view is 400 / 1.5 = 267 GBA pixels wide, centred on the 240: 16 pixels on each side
+BG_WIDE_LEFT = 2        # tile columns of the picture left of the scene's column 0 (map columns 62 and 63)
+
+
+def convert_bg_wide(scene: bytes) -> bytes:
+    """A battle scene that fills the 3DS's width: its 272x112 PNG (the 240 of the GBA's screen and 16 pixels more on each
+    side) as the same pack entry as convert_bg's, but the two outer tile columns go where the GBA's map wraps (columns 62
+    and 63) and the rest are the map's columns 0-31, so nothing is mirrored in the sight of the player. At most 34 x 14
+    tiles, under the 512 a screen block takes."""
+    width, height, _, rows = read_png(scene)
+    if (width, height) != (BG_WIDE_W, BG_H) or not isinstance(rows[0][0], tuple):
+        raise Gen4Error("a wide battle background is a 272x112 RGB or RGBA PNG")
+    palette, indices = quantize([pixel for row in rows for pixel in row])
+    columns, tile_rows = BG_WIDE_W // 8, BG_H // 8
+    tiles: list[bytes] = []
+    seen: dict[bytes, int] = {}
+    grid = [[0] * columns for _ in range(tile_rows)]
+    for ty in range(tile_rows):
+        for tx in range(columns):
+            tile = bytearray()
+            for y in range(8):
+                base = (ty * 8 + y) * width + tx * 8
+                tile += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
+            tile = bytes(tile)
+            if tile not in seen:
+                if len(tiles) == BG_TILES_MAX:
+                    raise Gen4Error("a battle background has more than %d different tiles" % BG_TILES_MAX)
+                seen[tile] = len(tiles)
+                tiles.append(tile)
+            grid[ty][tx] = seen[tile]
+
+    def column_of(map_column: int) -> int:
+        """The picture's tile column in a map column: 0-31 are its columns 2-33, 62 and 63 its 0 and 1; the columns the
+        view never reaches (32-61) repeat the nearest edge."""
+        if map_column < 32:
+            return map_column + BG_WIDE_LEFT
+        if map_column >= BG_MAP_COLUMNS - BG_WIDE_LEFT:
+            return map_column - (BG_MAP_COLUMNS - BG_WIDE_LEFT)
+        return columns - 1 if map_column < 48 else 0
+
+    def row_of(row: int) -> tuple[int, int]:
+        """The rows below the 14 of the scene (the message box covers them) mirror it, as convert_bg's do."""
+        if row < tile_rows:
+            return row, 0
+        if row < tile_rows + 4:
+            return 2 * tile_rows - 1 - row, 1
+        return BG_MAP_ROWS - 1 - row, 1
+    mapped = [[0] * BG_MAP_COLUMNS for _ in range(BG_MAP_ROWS)]
+    for row in range(BG_MAP_ROWS):
+        source_row, vflip = row_of(row)
+        for column in range(BG_MAP_COLUMNS):
+            mapped[row][column] = grid[source_row][column_of(column)] | vflip << 11 | 2 << 12
+    tilemap = b"".join(struct.pack("<H", mapped[row][block * 32 + column]) for block in (0, 1)
+                       for row in range(BG_MAP_ROWS) for column in range(32))
+    colours = (palette + [0] * 16)[:16]
+    return BG_MAGIC + struct.pack("<HH", len(tiles), 0) + struct.pack("<16H", *colours) + b"".join(tiles) + tilemap
+
+
+HD_NATIVE_MAGIC, HD_MAP_MAGIC = b"G4H1", b"G4M1"
+HD_NATIVE_W, HD_NATIVE_H = 400, 240
+
+
+def check_hd(path: str, data: bytes) -> bytes:
+    """An HD scene file as it goes into the pack, once it is known to be what the game reads: graphics/gen4/hdn/NNN.bin is
+    the scene at the 3DS's own resolution (G4H1, u16 400, u16 240, RGB565 rows), graphics/gen4/hd/NNN.bin a tile scene
+    like convert_bg's and graphics/gen4/hd/map.bin the table of maps (G4M1, u16 count, four bytes each)."""
+    if path.startswith("graphics/gen4/hdn/"):
+        if (data[:4] != HD_NATIVE_MAGIC or struct.unpack_from("<HH", data, 4) != (HD_NATIVE_W, HD_NATIVE_H)
+                or len(data) != 8 + HD_NATIVE_W * HD_NATIVE_H * 2):
+            raise Gen4Error("%s is not a 400x240 HD scene" % path)
+    elif path == "graphics/gen4/hd/map.bin":
+        if data[:4] != HD_MAP_MAGIC or len(data) != 6 + 4 * struct.unpack_from("<H", data, 4)[0]:
+            raise Gen4Error("%s is not the HD map table" % path)
+    elif path.startswith("graphics/gen4/hd/"):
+        if data[:4] != BG_MAGIC:
+            raise Gen4Error("%s is not an HD tile scene" % path)
+    else:
+        raise Gen4Error("%s is not an HD scene file" % path)
+    return data
+
+
 def convert(front: bytes, back: bytes, female: tuple[bytes, bytes] | None = None) -> bytes:
     """One species' pack entry from its PNG files (male front and back, optional female pair)."""
     _, _, normal, front_rows = read_png(front)
@@ -964,7 +1046,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg", "npc", "player", "follower"):
+    if row[1] in ("back", "bg", "npc", "player", "follower", "hd"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -991,6 +1073,8 @@ def file_name(row: tuple) -> str:
         return "player_{}_{}".format(row[0], row[2].rsplit("/", 1)[1])
     if row[1] == "follower":
         return "follower_{:04d}.nsbtx".format(row[0])
+    if row[1] == "hd":
+        return "hd_" + row[2].rsplit("gen4/", 1)[1].replace("/", "_")
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -1001,6 +1085,8 @@ def file_url(row: tuple) -> str:
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     if row[1] == "player":
         return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
+    if row[1] == "hd":
+        return URL.format(repo=gen4_hd.REPO, commit=gen4_hd.COMMIT, path=row[2])
     if row[1] == "follower":
         return URL.format(repo=gen4_followers.REPO, commit=gen4_followers.COMMIT, path=source_path(row))
     return URL.format(repo=gen4_sources.REPO, commit=gen4_sources.COMMIT, path=source_path(row))
@@ -1020,6 +1106,8 @@ def all_files(groups: tuple = GROUPS) -> tuple:
         rows += PLAYER_FILES
     if GROUP_FOLLOWER in groups:
         rows += FOLLOWER_FILES
+    if GROUP_HD in groups:
+        rows += tuple(gen4_hd.FILES)
     return rows
 
 
@@ -1111,6 +1199,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     people = [row for row in rows if row[1] == "npc"]
     player = [row for row in rows if row[1] == "player"]
     followers = [row for row in rows if row[1] == "follower"]
+    hd_rows = [row for row in rows if row[1] == "hd"]
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -1156,6 +1245,11 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
         name = "%s%03d%s.bin" % (FOLLOWER_PREFIX, dex, "_f" if row[0] >= FOLLOWER_FEMALE else "")
         follower_files.append((name, convert_follower(got[row[:3]])))
     files += follower_files
+    # The HD scenes: all of them or none (the map table names every scene), each checked and added as it is.
+    hd_files = []
+    if hd_rows and all(row[:3] in got for row in hd_rows):
+        hd_files = [(row[2], check_hd(row[2], got[row[:3]])) for row in hd_rows]
+    files += hd_files
     # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
     player_files = []
     for row in (row for row in player if row[:3] in got):
@@ -1185,5 +1279,5 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
-                   "followers": len(follower_files),
+                   "followers": len(follower_files), "hd": len(hd_files),
                    "player": len(player_files), "downloaded": downloaded}

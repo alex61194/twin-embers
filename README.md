@@ -236,6 +236,7 @@ Twin Embers is directed and maintained by [alex61194](https://github.com/alex611
 Credit where the work is not ours:
 
 - **ZallaxDev and the Pokémon Emerald 3Ds Dual Screen contributors** wrote the MIT-licensed backend, compositor, input and pack components this port builds on. Their notices are preserved in [NOTICE.md](NOTICE.md), [CREDITS.md](CREDITS.md) and [licenses/](licenses/).
+- **Bentley734** painted the HD battle scenes the Builder can add ([HD Dynamic Battlefields](https://github.com/Bentley734/HD-Dynamic-Battlefields)), and let us use them in this port. Details in [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md).
 - **@xsh3d0r_** (Discord) drew the Twin Embers logo used for this README and the HOME Menu banner.
 - **kwak8709** made the HOME Menu forwarder for Twin Embers.
 - **The [pret/pokeheartgold](https://github.com/pret/pokeheartgold) project and its contributors**, authors of the Pokémon HeartGold decompilation, whose files are where the optional HeartGold battle sprites and menu icons come from. The Builder downloads them from that repository at a pinned commit and nothing from it is stored in this repository or shipped in the release; the artwork itself remains Nintendo, Game Freak and Creatures' work, and pret's repository has no licence of its own.

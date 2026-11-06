@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 import zlib
 
-from firered3ds_builder import gen4_followers, gen4_sprites, nsbtx
+from firered3ds_builder import gen4_followers, gen4_hd, gen4_sprites, nsbtx
 
 
 def png(rows, palette, depth=4, filters=(0,)):
@@ -125,7 +125,7 @@ class DownloadTest(unittest.TestCase):
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
                         patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ()),
                         patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ()),
-                        patch.object(gen4_sprites, "FOLLOWER_FILES", ())):
+                        patch.object(gen4_sprites, "FOLLOWER_FILES", ()), patch.object(gen4_hd, "FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -142,7 +142,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "backgrounds": 0, "npcs": 0, "followers": 0, "player": 0, "downloaded": 8})
+                                "backgrounds": 0, "npcs": 0, "followers": 0, "hd": 0, "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -636,7 +636,7 @@ class PeopleTest(unittest.TestCase):
         self.assertEqual(len(gen4_sprites.all_files(())), 0)
         self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14
                          + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES)
-                         + len(gen4_sprites.FOLLOWER_FILES))
+                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES))
         data = rgba_png(self.sheet())
         rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
         with patch.object(gen4_sprites, "NPC_FILES", rows):
@@ -693,6 +693,38 @@ def nsbtx_archive(size=32, textures=8, palette_shift=0):
     struct.pack_into("<I", bytearray(4), 0, 0)
     head = b"BTX0" + struct.pack("<HHIHH", 0xFEFF, 1, 0x14 + len(block), 16, 1) + struct.pack("<I", 0x14)
     return head + block
+
+
+class WideSceneTest(unittest.TestCase):
+    def scene(self):
+        """272x112: tile column c (0-33) of every row is one of 14 shades, so each column has its own tile."""
+        return [[(8 * (x // 8 % 14) + 20, 40, 60) for x in range(272)] for _ in range(112)]
+
+    def entry(self):
+        return gen4_sprites.convert_bg_wide(rgb_png(self.scene()))
+
+    def tile_ids(self, entry):
+        tiles = struct.unpack_from("<H", entry, 4)[0]
+        data = entry[40 + tiles * 32:]
+        return tiles, [[struct.unpack_from("<H", data, 2 * (block * 1024 + row * 32 + c))[0] & 1023
+                        for block in (0, 1) for c in range(32)] for row in range(32)]
+
+    def test_the_whole_width_is_the_picture(self):
+        entry = self.entry()
+        self.assertEqual(entry[:4], gen4_sprites.BG_MAGIC)
+        tiles, rows = self.tile_ids(entry)
+        self.assertLessEqual(tiles, 512)
+        top = rows[0]
+        # Map columns 0-31 are the picture's columns 2-33; 62 and 63 its columns 0 and 1. The picture's columns c and
+        # c + 14 have one shade, so one tile: picture column 0 is map column 12 (its column 14) and column 1 is 13.
+        self.assertEqual(top[62], top[12])
+        self.assertEqual(top[63], top[13])
+        self.assertNotEqual(top[62], top[0])            # column 0 is the picture's column 2, another shade
+        self.assertNotEqual(top[62], top[63])
+
+    def test_a_scene_of_the_wrong_size_is_refused(self):
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_bg_wide(rgb_png([[(0, 0, 0)] * 240] * 112))
 
 
 class FollowerTest(unittest.TestCase):
@@ -888,6 +920,60 @@ class PlayerTest(unittest.TestCase):
         # With HeartGold's sprites too, the player's backs take the place of the fan-made ones.
         self.assertFalse(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon", "player"))))
         self.assertTrue(any(row[1] == "back" for row in gen4_sprites.all_files(("pokemon",))))
+
+
+class HdSceneTest(unittest.TestCase):
+    native = b"G4H1" + struct.pack("<HH", 400, 240) + bytes(400 * 240 * 2)
+    tiles = b"G4G1" + bytes(40)
+    table = b"G4M1" + struct.pack("<H", 2) + bytes(8)
+
+    def rows(self):
+        files = (("graphics/gen4/hdn/000.bin", self.native), ("graphics/gen4/hd/000.bin", self.tiles),
+                 ("graphics/gen4/hd/map.bin", self.table))
+        return tuple((number, "hd", path, len(data), hashlib.sha256(data).hexdigest())
+                     for number, (path, data) in enumerate(files)), dict(files)
+
+    def test_the_pinned_list_is_the_scenes_and_their_map(self):
+        paths = [row[2] for row in gen4_hd.FILES]
+        self.assertIn("graphics/gen4/hd/map.bin", paths)
+        self.assertEqual(sum(path.startswith("graphics/gen4/hdn/") for path in paths), 62)
+        self.assertEqual(len(set(paths)), len(paths))
+        for number, kind, path, size, digest in gen4_hd.FILES:
+            self.assertEqual((kind, len(digest)), ("hd", 64))
+            self.assertTrue(path.startswith("graphics/gen4/hd"))
+            self.assertGreater(size, 0)
+        self.assertIn("raw.githubusercontent.com/" + gen4_hd.REPO + "/" + gen4_hd.COMMIT + "/graphics/gen4/hd",
+                      gen4_sprites.file_url(gen4_hd.FILES[0]))
+        self.assertEqual(gen4_sprites.file_name(gen4_hd.FILES[0]), "hd_hd_000.bin")
+
+    def test_a_scene_file_is_checked_before_it_goes_in(self):
+        self.assertEqual(gen4_sprites.check_hd("graphics/gen4/hdn/000.bin", self.native), self.native)
+        self.assertEqual(gen4_sprites.check_hd("graphics/gen4/hd/map.bin", self.table), self.table)
+        for path, data in (("graphics/gen4/hdn/000.bin", self.native[:-2]),
+                           ("graphics/gen4/hdn/000.bin", b"G4H1" + struct.pack("<HH", 240, 160) + bytes(240 * 160 * 2)),
+                           ("graphics/gen4/hd/map.bin", self.table + b"\0"),
+                           ("graphics/gen4/hd/000.bin", b"XXXX"),
+                           ("graphics/gen4/other.bin", self.native)):
+            with self.assertRaises(gen4_sprites.Gen4Error):
+                gen4_sprites.check_hd(path, data)
+
+    def test_the_group_chooses_the_files_and_the_entries(self):
+        rows, contents = self.rows()
+        by_url = {gen4_sprites.file_url(row): contents[row[2]] for row in rows}
+        with patch.object(gen4_hd, "FILES", rows):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("hd",))
+            self.assertEqual(sorted(path for path, _ in files), sorted(contents))
+            self.assertEqual((info["hd"], info["npcs"], info["backgrounds"]), (3, 0, 0))
+            # All of them or none: the map table names every scene.
+            lost = next(url for url in by_url if url.endswith("/map.bin"))
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: b"" if url == lost else by_url[url]), groups=("hd",))
+            self.assertEqual((files, info["hd"]), ([], 0))
+            # Without the group nothing of them is fetched.
+            urls = []
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: urls.append(url) or b""), groups=())
+            self.assertEqual((files, urls, info["hd"]), ([], [], 0))
 
 
 class SourcesTest(unittest.TestCase):

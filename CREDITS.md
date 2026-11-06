@@ -31,6 +31,11 @@
   Backgrounds: **LibertyTwins**, **princess-phoenix**, **carchagui**, **aveontrainer**, **WesleyFG**,
   **kWharever**, **worldslayer608** and **knizz** (Battle Backgrounds Patch FR). The characters belong to
   Nintendo, Game Freak and Creatures; credit is not a license grant.
+- **HD Dynamic Battlefields, by Bentley734** (https://github.com/Bentley734/HD-Dynamic-Battlefields, no licence
+  file; used with the author's permission, see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)) — the optional HD
+  battle scenes: his paintings cut and reduced to the 3DS's resolution by `tools/dev_hd_battlefields.py`, downloaded
+  by the user's Builder at the commit pinned in `gen4_hd.py`, verified by size and SHA-256, and not stored in this
+  repository. The characters and settings belong to Nintendo, Game Freak and Creatures; credit is not a license grant.
 - **Emerald Lens, by ElvieBlooms** (https://github.com/ElvieBlooms/emerald_lens, MIT for its code; its looks are
   shared with credit) — the optional player looks, downloaded by the user's Builder at the commit pinned in
   `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. Ash (HGSS style) by
