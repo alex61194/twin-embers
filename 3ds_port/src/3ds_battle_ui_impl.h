@@ -1172,18 +1172,33 @@ static void BMoveCard(int i, const CtrBattleView *v)
     else if (!m->power[0] || m->power[0] == '-')
         UiTextRight(CTR_TR("STATUS", "ESTADO", "Status"), r->x + r->w - 8, fy + 25, label, p->inkSh, 1);
     {
-        int lit = m->maxPp ? ((int)m->pp * 10 + m->maxPp - 1) / m->maxPp : 0;
+        /* The last row: PP as five pips (a fifth of the move's PP each) and its number, and the move's accuracy between them. */
+        int lit = m->maxPp ? ((int)m->pp * 5 + m->maxPp - 1) / m->maxPp : 0;
         uint16_t on = m->pp * 4 <= m->maxPp ? UI_RGB(232, 110, 30) : m->pp * 2 <= m->maxPp ? UI_RGB(236, 190, 30)
                     : UI_RGB(72, 190, 96);
         /* On the amber card the unlit pips are its dark brown: its orange looked like lit pips (a move at 0 PP read full). */
         uint16_t off = focused ? UiMix(p->lip, p->edge, 4) : UiMix(p->bottom, p->edge, 3);
         char pp[16];
 
-        for (int k = 0; k < 10; ++k)
+        const char *accLabel = CTR_TR("ACC", "PRE", "Gen");
+        const char *acc = m->accuracy[0] && m->accuracy[0] != '-' ? m->accuracy : "--";
+        int pipsEnd = r->x + 12 + 5 * 6, ppLeft, accRight, accStart;
+
+        for (int k = 0; k < 5; ++k)
             UiRoundFill(r->x + 12 + 6 * k, fy + 45, 5, 5, 2, k < lit ? on : off);
         snprintf(pp, sizeof(pp), "%u/%u", m->pp, m->maxPp);
         UiTextRight(pp, r->x + r->w - 8, fy + 43, BEmPpInk(m->pp, m->maxPp, p), p->inkSh, 1);
+        ppLeft = r->x + r->w - 13 - UiTextWidth(pp, 1) - UiTextWidth("PP", 1);
         UiTextRight("PP", r->x + r->w - 13 - UiTextWidth(pp, 1), fy + 43, label, p->inkSh, 1);
+        /* The accuracy sits just before PP; where its label does not fit between the pips and PP, only the number is shown. */
+        accRight = ppLeft - 8;
+        accStart = accRight - UiTextWidth(acc, 1) - 3 - UiTextWidth(accLabel, 1);
+        if (accStart >= pipsEnd + 5) {
+            UiText(accLabel, accStart, fy + 43, label, p->inkSh, 1, accRight);
+            UiTextRight(acc, accRight, fy + 43, p->ink, p->inkSh, 1);
+        } else {
+            UiTextRight(acc, accRight, fy + 43, p->ink, p->inkSh, 1);
+        }
     }
 }
 
