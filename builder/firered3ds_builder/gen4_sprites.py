@@ -1003,10 +1003,11 @@ LOOK_PREFIX = "graphics/gen4/look/"
 LOOK_INDEX = LOOK_PREFIX + "index.bin"
 
 
-def look_index(looks: list[tuple[str, str, str]]) -> bytes:
-    """The list of the looks the pack has, for the game's options: b"G4L1\n", then a line "folder<TAB>name<TAB>boy or girl" for
-    each, in the order the Builder lists them."""
-    return b"G4L1\n" + "".join("%s\t%s\t%s\n" % look for look in looks).encode("ascii")
+def look_index(looks: list[tuple[str, str, str, str]]) -> bytes:
+    """The list of the looks the pack has, for the game's options: b"G4L1\n", then a line "folder<TAB>name<TAB>boy or girl<TAB>credit" for
+    each, in the order the Builder lists them (the credit is what the options show under the look: its artists)."""
+    lines = ("%s\t%s\t%s\t%s\n" % (folder, name, gender, " ".join(credit.split())) for folder, name, gender, credit in looks)
+    return b"G4L1\n" + "".join(lines).encode("ascii", "replace")
 
 
 def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes]]:
@@ -1307,12 +1308,12 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     look_files = []
     looks_made = 0
     made = []
-    for number, (folder, name, _character, gender, _credit) in enumerate(gen4_looks.LOOKS):
+    for number, (folder, name, _character, gender, credit) in enumerate(gen4_looks.LOOKS):
         sheets = {row[2].rsplit("/", 1)[1][:-4]: got[row[:3]] for row in look_rows if row[0] == number and row[:3] in got}
         if "walk" in sheets:
             look_files += look_entries(folder, sheets)
             looks_made += 1
-            made.append((folder, name, gender))
+            made.append((folder, name, gender, credit))
     if looks_made:
         files.append((LOOK_INDEX, look_index(made)))
     files += look_files
