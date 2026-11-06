@@ -607,6 +607,21 @@ int main(int argc, char **argv)
             sv.pressed = SUI_HIT_TAB + 1; settle_summary(&so, &sv); so = sv;
             sv.pressed = -1; settle_summary(&so, &sv); so = sv;
         }
+        /* STATS' other view: the IVs as bars, the EVs, Hidden Power; the switch in its corner is hit on STATS only. */
+        {
+            static const unsigned char iv[6] = {25, 30, 14, 31, 19, 28}, ev[6] = {6, 0, 0, 252, 0, 252};
+
+            sv.data.page = SUI_PAGE_SKILLS; sv.trainer = 0; sv.pressed = -1; sv.ivView = 1;
+            memcpy(sv.data.iv, iv, sizeof(iv)); memcpy(sv.data.ev, ev, sizeof(ev));
+            sv.data.hpType = 10; sv.data.hpPower = 70; names(sv.data.hpTypeName, sizeof(sv.data.hpTypeName), "FIRE");
+            settle_summary(&so, &sv); so = sv; put(out, "21_summary_iv_ev"); summary_hits(&sv);
+            assert(CtrSummaryUi_Hit(&sv, 285, 85) == SUI_HIT_IVTOGGLE);
+            sv.pressed = SUI_HIT_IVTOGGLE; settle_summary(&so, &sv); so = sv;
+            sv.pressed = -1; sv.ivView = 0; settle_summary(&so, &sv); so = sv;
+            assert(CtrSummaryUi_Hit(&sv, 285, 85) == SUI_HIT_IVTOGGLE);
+            sv.data.page = SUI_PAGE_MOVES; settle_summary(&so, &sv); so = sv;
+            assert(CtrSummaryUi_Hit(&sv, 285, 85) != SUI_HIT_IVTOGGLE);
+        }
         sv.loading = 1; settle_summary(&so, &sv);
     }
 

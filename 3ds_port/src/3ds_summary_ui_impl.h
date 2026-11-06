@@ -9,6 +9,8 @@ static const CtrPokeTouchRect sSTab[SUI_TABS] = {{3, 45, 77, 24}, {82, 45, 77, 2
 static const CtrPokeTouchRect sSBody = {3, 72, 314, 138};
 static const CtrPokeTouchRect sSFooter = {3, 213, 230, 24};
 static const CtrPokeTouchRect sSBack = {236, 213, 81, 24};
+/* The switch in the corner of STATS' right card: EXP and the ability, or the IVs, EVs and Hidden Power. */
+static const CtrPokeTouchRect sSIvSwitch = {262, 79, 48, 14};
 static const char *const sSTabLabel[SUI_TABS] = {CTR_TR("INFO", "INFO", "Info"), CTR_TR("STATS", "STATS", "Status"), CTR_TR("MOVES", "ATAQUES", "Attacken"), CTR_TR("TRAINER", "ENTREN.", "Trainer")};
 
 /* The moves page's cards (2x2) and the details' rows (four moves, then CANCEL) and panel. */
@@ -60,6 +62,8 @@ int CtrSummaryUi_Hit(const CtrSummaryUiView *v, int x, int y)
     for (int i = 0; i < SUI_TABS; ++i)
         if (STabEnabled(v, i) && UiIn(&sSTab[i], x, y))
             return SUI_HIT_TAB + i;
+    if (d->page == SUI_PAGE_SKILLS && !d->egg && UiIn(&sSIvSwitch, x, y))
+        return SUI_HIT_IVTOGGLE;
     if (d->page == SUI_PAGE_MOVES)
         for (int i = 0; i < 4; ++i) {
             CtrPokeTouchRect r = SCard(i);
@@ -339,6 +343,39 @@ static void SInfo(const CtrSummaryUiView *v)
     }
 }
 
+/* The right card's other view: each stat's IV as a bar and a number, its EV as a number, and Hidden Power's type and power. */
+static void SIvEv(const CtrSummaryUiView *v)
+{
+    static const char *const sShort[6] = {CTR_TR("HP", "PS", "KP"), CTR_TR("ATK", "ATQ", "Ang"), CTR_TR("DEF", "DEF", "Ver"),
+                                          CTR_TR("SP.A", "A.ESP", "SpA"), CTR_TR("SP.D", "D.ESP", "SpV"), CTR_TR("SPE", "VEL", "Ini")};
+    const CtrSummaryView *d = &v->data;
+    char text[8];
+
+    UiText("IV / EV", 168, 82, S_LABEL, EM_DARK_SH, 1, 258);
+    UiTextRight("IV", 288, 96, S_LABEL, EM_DARK_SH, 1);
+    UiTextRight("EV", 307, 96, S_LABEL, EM_DARK_SH, 1);
+    for (int i = 0; i < 6; ++i) {
+        int y = 107 + 13 * i;
+        CtrPokeTouchRect bar = {206, (int16_t)(y + 3), 54, 4};
+
+        UiText(sShort[i], 168, y, S_INK, EM_DARK_SH, 1, 204);
+        UiHpBar(&bar, d->iv[i], 31);
+        snprintf(text, sizeof(text), "%u", d->iv[i]);
+        UiTextRight(text, 288, y, S_INK, EM_DARK_SH, 1);
+        snprintf(text, sizeof(text), "%u", d->ev[i]);
+        UiTextRight(text, 307, y, S_INK, EM_DARK_SH, 1);
+    }
+    SRule(168, 186, 139);
+    UiText(CTR_TR("HIDDEN POWER", "PODER OCULTO", "Kraftreserve"), 168, 191, S_LABEL, EM_DARK_SH, 1, 238);
+    snprintf(text, sizeof(text), "%u", d->hpPower);
+    UiTextRight(text, 307, 191, S_INK, EM_DARK_SH, 1);
+    {
+        CtrPokeTouchRect badge = {250, 190, 40, 13};
+
+        UiTypeBadge(&badge, d->hpType, d->hpTypeName);
+    }
+}
+
 static void SStats(const CtrSummaryUiView *v)
 {
     static const char *const sLabels[5] = {CTR_TR("ATTACK", "ATAQUE", "Angriff"), CTR_TR("DEFENSE", "DEFENSA", "Vert."), CTR_TR("SP. ATK", "AT. ESP.", "Sp. Ang."), CTR_TR("SP. DEF", "DEF. ESP.", "Sp. Ver."), CTR_TR("SPEED", "VELOCIDAD", "Init.")};
@@ -355,14 +392,26 @@ static void SStats(const CtrSummaryUiView *v)
     }
     for (int i = 0; i < 5; ++i)
         SRowText(13, 106 + 20 * i, 139, sLabels[i], d->stats[i], i < 4);
-    UiText(CTR_TR("EXP. POINTS", "PUNTOS EXP.", "Exp. Punkte"), 168, 82, S_LABEL, EM_DARK_SH, 1, 307);
-    UiTextRight(d->exp, 307, 96, S_INK, EM_DARK_SH, 1);
-    SRule(168, 109, 139);
-    UiText(CTR_TR("TO NEXT LV.", "PARA SUBIR", "N\xC3\xA4" "chst. Lv."), 168, 114, S_LABEL, EM_DARK_SH, 1, 307);
-    UiTextRight(d->nextExp, 307, 128, S_INK, EM_DARK_SH, 1);
-    SRule(168, 141, 139);
-    SRowText(168, 146, 139, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\xA4higkeit"), d->ability, 0);
-    BDescribeN(d->abilityDesc, 168, 162, 139, 4, S_LABEL);
+    if (!d->egg) {
+        const CtrPokeTouchRect *sw = &sSIvSwitch;
+        int pressed = v->pressed == SUI_HIT_IVTOGGLE;
+        int fy;
+
+        if (v->ivView) {
+            SIvEv(v);
+        } else {
+            UiText(CTR_TR("EXP. POINTS", "PUNTOS EXP.", "Exp. Punkte"), 168, 82, S_LABEL, EM_DARK_SH, 1, 260);
+            UiTextRight(d->exp, 307, 96, S_INK, EM_DARK_SH, 1);
+            SRule(168, 109, 139);
+            UiText(CTR_TR("TO NEXT LV.", "PARA SUBIR", "N\xC3\xA4" "chst. Lv."), 168, 114, S_LABEL, EM_DARK_SH, 1, 307);
+            UiTextRight(d->nextExp, 307, 128, S_INK, EM_DARK_SH, 1);
+            SRule(168, 141, 139);
+            SRowText(168, 146, 139, CTR_TR("ABILITY", "HABILIDAD", "F\xC3\xA4higkeit"), d->ability, 0);
+            BDescribeN(d->abilityDesc, 168, 162, 139, 4, S_LABEL);
+        }
+        fy = EmButton(sw->x, sw->y, sw->w, sw->h, &kEmAmber, 2, pressed);
+        EmLabel(v->ivView ? CTR_TR("EXP", "EXP", "EP") : "IV / EV", sw->x, sw->w, fy, sw->h - 2, &kEmAmber);
+    }
 }
 
 /* A move card of the moves page: a cream button with the type's colour as its edge, the name, the type, power,
@@ -553,8 +602,10 @@ static int SBodyChanged(const CtrSummaryUiView *a, const CtrSummaryUiView *b)
     int pa = a->pressed >= SUI_HIT_MOVE && a->pressed <= SUI_HIT_CANCEL ? a->pressed : -1;
     int pb = b->pressed >= SUI_HIT_MOVE && b->pressed <= SUI_HIT_CANCEL ? b->pressed : -1;
 
+    int ia = a->pressed == SUI_HIT_IVTOGGLE, ib = b->pressed == SUI_HIT_IVTOGGLE;
+
     return a->loading != b->loading || a->icon != b->icon || a->trainer != b->trainer || pa != pb
-        || memcmp(&a->data, &b->data, sizeof(a->data));
+        || a->ivView != b->ivView || ia != ib || memcmp(&a->data, &b->data, sizeof(a->data));
 }
 
 static int SFooterChanged(const CtrSummaryUiView *a, const CtrSummaryUiView *b)

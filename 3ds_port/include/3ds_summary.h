@@ -32,6 +32,10 @@ typedef struct {
     char nature[12];
     unsigned short hpCur, hpMax;
     unsigned char ribbons;
+    /* The IVs and EVs in the order HP, Atk, Def, Sp.Atk, Sp.Def, Speed, and Hidden Power's type and power (the STATS page's
+     * IV / EV view), all read from the Pokemon shown. */
+    unsigned char iv[6], ev[6], hpType, hpPower;
+    char hpTypeName[12];
 } CtrSummaryView;
 
 int CtrBottomSummary_IsActive(void);
