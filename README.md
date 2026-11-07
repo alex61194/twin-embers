@@ -18,11 +18,19 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0, Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game), or Pokémon Feuerrote Edition, Germany, Revision 0 (the German game). Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.5.1). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.5.2). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
+
+**In v0.5.2:**
+
+- **Choose who you are.** A new Builder option, *More characters to be*, adds 18 looks for you, for Leaf and for your rival (Ash in four versions, Gary, Silver, Gold, Brendan, May, Green, Kris), from [Emerald Lens](https://github.com/ElvieBlooms/emerald_lens) by its artists, used with its author's permission. In OPTIONS, page 3, RED LOOK, LEAF LOOK and RIVAL LOOK change the map sprite, your back in battle, the trainer card, the intro picture and the map icon at once, with a preview card (the walking picture, the name and the artists) under the rows. The default stays FireRed's Red and Leaf.
+- **EXP SHARE** in OPTIONS (OFF, HALF, FULL), **IV, EV and Hidden Power** on the Summary's STATS page, and **HEAL** in the party menu (heal the whole party anywhere for 250 per badge plus one).
+- **Accuracy on the battle move cards**, beside the PP (the PP pips are now five).
+- **HD battle scenes**, a new Builder option: painted scenes that fill the top screen, by Bentley734 ([HD Dynamic Battlefields](https://github.com/Bentley734/HD-Dynamic-Battlefields)), used with his permission and reduced for the 3DS (125 files, about 13 MB).
+- **German:** modern capitalisation in the game's text, by mcl5500, and the options page in Title Case.
 
 **In v0.5.1:**
 
