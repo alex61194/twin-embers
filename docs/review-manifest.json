@@ -6816,7 +6816,7 @@
   },
   {
    "path": "patches/pokefirered/0236-summary-no-tables.json",
-   "sha256": "a0bbde5ad520d97863c23f118907732a4cee4945cfb721d3cfd11283a5d97b77",
+   "sha256": "257c3c1bc033aed9027cc10696cab66ee2addc8bd0708de9e1b55d68a0f1bfb3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
