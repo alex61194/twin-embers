@@ -8570,6 +8570,16 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Retrospective review 2026-11-02 of this snapshot (b02f368): changed here without its manifest record being refreshed; same author, licence and scope as the current record."
+  },
+  {
+   "commit": "968a8306492230d6581c7df7f8b923e99c071a49",
+   "path": "3ds_port/tests/poketouch_render_test.c",
+   "sha256": "6615cc2853f6e098d5c381222b5698396fa1542848471d8757cb5a246b9a45e2",
+   "supersedes": "db2e839338ee548d9073cff5f90114529cb3b5098dcca0243af8b19d19a7632e",
+   "review_status": "reviewed",
+   "credit": "alex61194 with disclosed AI assistance",
+   "license": "MIT for original port/test contributions; external game rights unchanged",
+   "basis": "Retrospective review 2026-11-07 of this intermediate snapshot (968a830, the render test's look-preview dump, a local viewing aid driven by environment variables): the file changed in this commit before the manifest hash was refreshed by the merge that followed; same author, licence and scope as the current record; the audit still checks it for payloads, size and ROM fragments."
   }
  ],
  "historical_exclusions": [
