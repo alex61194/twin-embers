@@ -18,6 +18,16 @@ file's size and SHA-256 against the list pinned in `builder/firered3ds_builder/`
   there, with the same paths as in the pack (`tools/make_gen4_hd.py` writes that list).
 - **Credit:** shown in the Builder (desktop and web), in the README and in `CREDITS.md`.
 
-## Facets and Emerald Lens (ElvieBlooms)
+## Player looks (Emerald Lens, ElvieBlooms)
+
+- **Work:** the looks of Emerald Lens (https://github.com/ElvieBlooms/emerald_lens), each by the artists named in its
+  `meta.json` (listed in `builder/firered3ds_builder/gen4_looks.py` and in `CREDITS.md`).
+- **Permission:** the author, Elvie, gave alex61194 her permission to use them in Twin Embers (reported by alex61194,
+  2026-11-06). It is not a licence, and the looks' own artists are credited, not replaced.
+- **What the Builder does:** with `--alt-looks` it downloads each look's FireRed/LeafGreen sheets at the pinned commit,
+  checks them by size and SHA-256 and puts them in the user's own pack (`graphics/gen4/look/<look>/`), for the player to
+  pick in the game.
+
+## Facets (ElvieBlooms)
 
 Their authors' permission and each look's credit are in `CREDITS.md`.

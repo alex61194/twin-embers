@@ -51,7 +51,7 @@ build/%.o: src/%.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # The version this checkout builds, shown on the title screen as v$(TWIN_EMBERS_VERSION). Change it here when a release starts.
-TWIN_EMBERS_VERSION := 0.5.1
+TWIN_EMBERS_VERSION := 0.5.2
 .PHONY: force-git-version
 build/git_version.h: force-git-version ../tools/gen_git_version.py
 	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION)
@@ -75,7 +75,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/looks_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -100,6 +100,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/vram_track_test.exe
 	./build/fast_forward_test.exe
 	./build/settings_test.exe
+	./build/looks_test.exe
 	./build/palette_fade_test.exe
 	./build/day_night_test.exe
 	./build/data_error_text_test.exe
@@ -170,6 +171,9 @@ GAME_PLATFORM_OBJS += build/3ds_night_wild.o
 build/3ds_night_wild.o: CFLAGS += -iquote ../include
 build/3ds_night_wild.o: include/3ds_night_wild.h build/game_sources.stamp
 GAME_PLATFORM_OBJS += build/3ds_bottom.o build/3ds_bottom_screen.o build/3ds_poketouch.o build/3ds_poketouch_options.o
+# The alternative player looks the pack has, and the player's choice among them (OPTIONS).
+GAME_PLATFORM_OBJS += build/3ds_looks.o
+build/3ds_looks.o: include/3ds_looks.h include/3ds_data.h include/3ds_settings.h include/3ds_battle_gen4.h
 GAME_NATIVE_OBJS := build/main_game_native.o $(GAME_PLATFORM_OBJS)
 GAME_NATIVE_OBJS += build/3ds_assets.o build/3ds_asset_memory.o build/3ds_data.o build/3ds_pak.o build/3ds_data_error.o
 # HeartGold's battle sprites from the pack's optional entries, drawn by the compositor (battle_gfx_sfx_util.c).
@@ -425,6 +429,10 @@ build/dma_test.exe: tests/dma_test.c src/3ds_dma.c src/gba_shadow.c include/3ds_
 build/flash_test.exe: tests/flash_test.c src/3ds_flash.c include/3ds_flash.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -DPLATFORM_3DS -DMODERN=1 -DFIRERED -DENGLISH -DREVISION=0 -iquote include -iquote ../include -iquote .. tests/flash_test.c src/3ds_flash.c -o $@
+
+build/looks_test.exe: tests/looks_test.c src/3ds_looks.c src/3ds_settings.c include/3ds_looks.h include/3ds_settings.h include/3ds_data.h include/3ds_battle_gen4.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/looks_test.cfg"' -Iinclude tests/looks_test.c src/3ds_looks.c src/3ds_settings.c -o $@
 
 build/settings_test.exe: tests/settings_test.c src/3ds_settings.c include/3ds_settings.h
 	@mkdir -p build

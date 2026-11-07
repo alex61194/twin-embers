@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "3ds_poketouch_options.h"
+#include "3ds_looks.h"
 #include "3ds_settings.h"
 
 static int failures;
@@ -33,6 +34,24 @@ void CtrPokeTouch_OptionSet(int option, int value)
         sStored[option] = value;
 }
 
+/* The looks the pack has (src/3ds_looks.c): three, and the choice for Red, Leaf and the rival (-1: none). */
+static int sLookChoice[3] = {-1, -1, -1};
+int CtrLooks_Count(void) { return 3; }
+const char *CtrLooks_Id(int i) { static const char *const k[3] = {"ash", "gary_kanto", "green"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+const char *CtrLooks_Name(int i) { static const char *const k[3] = {"ASH", "GARY", "GREEN"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+int CtrLooks_Chosen(int slot) { return sLookChoice[slot]; }
+void CtrLooks_Choose(int slot, int index) { sLookChoice[slot] = index; }
+const char *CtrLooks_Credit(int i) { static const char *const k[3] = {"By Kalarie", "By Alan_Flygon", "By Poltergeist"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+int CtrLooks_Walk(int i, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[16])
+{
+    if (i == 1)
+        return 0;                                           /* this look has no picture in the pack */
+    memset(tiles, 0x11 * (i + 1), CTR_LOOK_WALK_BYTES);
+    for (int c = 0; c < 16; ++c)
+        palette[c] = (uint16_t)c;
+    return 1;
+}
+
 static void Text(int row, const char *expect)
 {
     char out[PT_OPT_VALUE_LEN];
@@ -51,8 +70,8 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 14, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
-    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 2, "more rows than two pages hold");
+    CHECK(CtrOptions_RowCount() == 18, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 3, "more rows than three pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
     CHECK(strcmp(CtrOptions_Row(8)->label, "MOVE DETAILS") == 0, "MOVE DETAILS is row 8");
@@ -152,6 +171,64 @@ int main(void)
     CtrOptions_Set(13, 2);
     CtrOptions_Set(13, 3);
     CHECK(CtrOptions_Companion() == 2, "a value that is not a level is refused");
+    /* EXP SHARE, alone on page 3: the game's own until chosen, then HALF, then FULL; levels, kept in the settings. */
+    Text(14, "OFF");
+    CHECK(CtrOptions_ExpShare() == 0 && CtrSettings_ExpShare() == 0, "EXP SHARE starts off");
+    CtrOptions_Step(14, 1);
+    Text(14, "HALF");
+    CHECK(CtrOptions_ExpShare() == 1 && CtrSettings_ExpShare() == 1, "EXP SHARE stepped to HALF");
+    CtrOptions_Step(14, 1);
+    Text(14, "FULL");
+    CHECK(CtrOptions_ExpShare() == 2, "EXP SHARE stepped to FULL");
+    CtrOptions_Set(14, 3);
+    CHECK(CtrOptions_ExpShare() == 2 && CtrOptions_IsLevels(14), "a value that is not a level is refused; a row of levels");
+    CtrOptions_Step(14, 1);
+    CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 14);
+    CHECK(view.optPage == 2 && view.optPageCount == 3 && view.optCount == 4, "page 3 holds EXP SHARE and the three looks");
+    /* The looks of Red, Leaf and the rival: DEFAULT, then the pack's (here three); the choice goes to the game's looks. */
+    Text(15, "DEFAULT");
+    CHECK(CtrOptions_Count(15) == 4 && CtrOptions_Count(17) == 4, "the look rows have DEFAULT and three looks");
+    CtrOptions_Step(15, 1);
+    Text(15, "ASH");
+    CtrOptions_Step(15, 1);
+    Text(15, "GARY");
+    CtrOptions_Set(15, 3);
+    Text(15, "GREEN");
+    CtrOptions_Step(15, 1);
+    Text(15, "DEFAULT");
+    CtrOptions_Step(15, -1);
+    Text(15, "GREEN");
+    CtrOptions_Set(16, 1);
+    CtrOptions_Set(17, 2);
+    CHECK(sLookChoice[CTR_LOOK_RED] == 2 && sLookChoice[CTR_LOOK_LEAF] == 0 && sLookChoice[CTR_LOOK_BLUE] == 1, "each row sets its own slot");
+    Text(16, "ASH");
+    Text(17, "GARY");
+    CtrOptions_Set(17, 9);
+    Text(17, "GARY");
+    CHECK(!CtrOptions_IsLevels(15), "a look row is a value between arrows");
+    /* The preview: on while a look row is selected, for the look chosen for that row (GREEN for Red here, ASH for Leaf, GARY for
+     * the rival), the default's name with no picture, and nothing on another row. */
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 15);
+    CHECK(view.optLook.on && view.optLook.has && strcmp(view.optLook.name, "GREEN") == 0
+          && strcmp(view.optLook.credit, "By Poltergeist") == 0 && view.optLook.tiles[0] == 0x33 && view.optLook.palette[5] == 5,
+          "the preview of the look chosen for Red");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 17);
+    CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "GARY") == 0
+          && strcmp(view.optLook.credit, "By Alan_Flygon") == 0, "a look without a picture: its name and artists only");
+    CtrOptions_Set(16, 0);
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 16);
+    CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "DEFAULT") == 0 && view.optLook.credit[0],
+          "the default: its name and no picture");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 14);
+    CHECK(!view.optLook.on && view.optLook.name[0] == 0, "no preview on another row");
+    CtrOptions_Fill(&view, 3);
+    CHECK(!view.optLook.on, "no preview on the first page");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 13);
     CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "FOLLOW") == 0
@@ -178,7 +255,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 2 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 3 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0

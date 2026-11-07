@@ -2774,6 +2774,7 @@ static void RunSumPlan(void)
 static struct {
     int down, inside, btn;          /* a touch that began on a control (SUI_HIT_*) and whether it is still on it */
     int trainer;
+    int ivView;                     /* STATS shows the IVs and EVs (the switch in its right card) */
     unsigned serial;                /* the Summary instance the state above belongs to */
     CtrSummaryView latch;           /* the last complete report */
 } sSum;
@@ -2798,6 +2799,7 @@ static void SummaryFill(CtrSummaryUiView *v)
     if (now.page != SUI_PAGE_INFO && sSumPlan.kind == SUMPLAN_NONE)
         sSum.trainer = 0;
     v->trainer = (uint8_t)(sSum.trainer && v->data.page == SUI_PAGE_INFO);
+    v->ivView = (uint8_t)sSum.ivView;
     v->icon = (uint16_t)(v->loading ? 0 : CtrBottomSummary_IconSpecies());
     v->pressed = (int16_t)(sSum.down && sSum.inside ? sSum.btn : -1);
 }
@@ -2822,7 +2824,9 @@ static void SummaryAct(int hit)
     } else if (hit == SUI_HIT_PREV || hit == SUI_HIT_NEXT) {
         if (page != SUI_PAGE_MOVES_INFO)
             SumPlanStart(SUMPLAN_PRESS, 0, 0, hit == SUI_HIT_PREV ? K_UP : K_DOWN);
-    } else if (hit == SUI_HIT_BACK)
+    } else if (hit == SUI_HIT_IVTOGGLE)
+        sSum.ivView = !sSum.ivView;                 /* the port's own view of STATS: FireRed is not asked */
+    else if (hit == SUI_HIT_BACK)
         SumPlanStart(SUMPLAN_PRESS, 0, 0, K_B);
     else if (hit >= SUI_HIT_MOVE && hit <= SUI_HIT_CANCEL) {
         int row = hit - SUI_HIT_MOVE;

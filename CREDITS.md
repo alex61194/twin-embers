@@ -44,6 +44,11 @@
   compiled from **virdiangrass** and Team Aqua's asset repo, with edits by **Elvie**; Ash's map icon from his Gen 3
   look, shared by **kalarie** on PokéCommunity. The characters belong to Nintendo,
   Game Freak and Creatures; credit is not a license grant.
+  The alternative looks (the Builder's `--alt-looks`, for the player to pick in the game: Ash, Gary, Silver, Gold, Brendan, May,
+  Green and Kris in their versions) are downloaded the same way; each is by the artists named in its credit in
+  `builder/firered3ds_builder/gen4_looks.py` (kalarie, PKMNTrainerRick, Alan_Flygon, lichenprincess, FourLeafSunny,
+  GregarLink10, DiegoWT, LouLilie, richardPT, eykav, ChromeValiant and others), and Team Aqua's Asset Repo for some. They
+  are used with Elvie's permission (see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)).
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

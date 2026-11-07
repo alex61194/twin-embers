@@ -44,6 +44,81 @@ typedef struct {
 static Back sBacks[BACKS];
 static int FireBottom(const uint8_t *pic);
 
+/* The alternative looks (the Builder's --alt-looks: graphics/gen4/look/<look>/<sheet>): the player chooses one for each of Red,
+ * Leaf and the rival Blue (settings.cfg, the OPTIONS' ASPECTO). A look that lacks a sheet, or none chosen, keeps the picture
+ * that was in use before (the Builder's Ash and Green, or FireRed's own). The pictures already read are dropped, when the
+ * choice changes, at the next time one is asked for. */
+enum { LOOK_RED, LOOK_LEAF, LOOK_BLUE };
+extern const char *CtrSettings_Look(int slot);
+static bool sLooksDirty;
+
+static const char *LookId(int slot)
+{
+    const char *id = CtrSettings_Look(slot);
+
+    return id && id[0] ? id : NULL;
+}
+
+/* The look's entry for `name` ("walk", "back.bin"...: the file's name in the look's folder) as the slot has it, when it is
+ * in the pack. */
+static bool LookPath(int slot, const char *name, char *path, size_t size)
+{
+    const char *id = LookId(slot);
+    uint32_t bytes;
+
+    if (!id)
+        return false;
+    snprintf(path, size, "graphics/gen4/look/%s/%s", id, name);
+    return CtrData_Size(path, &bytes);
+}
+
+/* The slot and sheet a person's graphics id draws: Red's 0-6 and Leaf's 7-13 (walk, bike, surf, field move, fishing, field move
+ * again, Vs. Seeker bike), the Fly birds 250 and 251, and Blue 72 (his first frames are the walking ones). */
+static bool LookNpcPath(unsigned gfx, char *path, size_t size)
+{
+    static const char *const kSheet[7] = {"walk.bin", "bike.bin", "surf.bin", "fieldMove.bin", "fishing.bin", "fieldMove.bin",
+                                          "vsSeekerBike.bin"};
+
+    if (gfx <= 6)
+        return LookPath(LOOK_RED, kSheet[gfx], path, size);
+    if (gfx <= 13)
+        return LookPath(LOOK_LEAF, kSheet[gfx - 7], path, size);
+    if (gfx == 250 || gfx == 251)
+        return LookPath(gfx == 250 ? LOOK_RED : LOOK_LEAF, "flyBird.bin", path, size);
+    if (gfx == 72)
+        return LookPath(LOOK_BLUE, "walk.bin", path, size);
+    return false;
+}
+
+/* The slot of a trainer picture (Red's 135, Leaf's 136, the rival's early, late and champion ones), or -1. */
+static int LookTrainerSlot(unsigned trainerPic)
+{
+    return trainerPic == 135 ? LOOK_RED : trainerPic == 136 ? LOOK_LEAF
+         : trainerPic == 106 || trainerPic == 124 || trainerPic == 125 ? LOOK_BLUE : -1;
+}
+
+static void NpcDropAll(void);
+static void SwapsDropAll(void);
+
+static void LooksFlush(void)
+{
+    if (!sLooksDirty)
+        return;
+    sLooksDirty = false;
+    NpcDropAll();
+    SwapsDropAll();
+    for (unsigned pic = 0; pic < BACKS; ++pic)
+    {
+        free(sBacks[pic].tiles);
+        sBacks[pic] = (Back){0};
+    }
+}
+
+void CtrGen4_LooksChanged(void)
+{
+    sLooksDirty = true;
+}
+
 /* A key's pack entry: graphics/gen4/battle/NNN.bin, or NNN_FF.bin for Unown's letters B to ? (form 1-27). */
 static bool KeyPath(unsigned key, char *path, size_t size)
 {
@@ -327,8 +402,11 @@ bool CtrGen4_LoadTrainer(unsigned battler, unsigned trainerPic, const void *fire
     trainer->active = false;
     if (trainerPic > 999 || tileNum > 1023 || paletteNum > 15)
         return false;
-    char path[40];
-    snprintf(path, sizeof(path), "graphics/gen4/trainer/%03u.bin", trainerPic);
+    char path[64];
+    int slot = LookTrainerSlot(trainerPic);
+    LooksFlush();
+    if (slot < 0 || !LookPath(slot, "front.bin", path, sizeof(path)))
+        snprintf(path, sizeof(path), "graphics/gen4/trainer/%03u.bin", trainerPic);
     uint32_t size = 0;
     uint8_t *entry = CtrData_Load(path, &size);
     if (!entry)
@@ -354,12 +432,14 @@ bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16])
 {
     if (backPic >= BACKS)
         return false;
+    LooksFlush();
     Back *back = &sBacks[backPic];
     if (!back->tried)
     {
         back->tried = true;
-        char path[40];
-        snprintf(path, sizeof(path), "graphics/gen4/back/%03u.bin", backPic);
+        char path[64];
+        if (!LookPath(backPic == 0 ? LOOK_RED : LOOK_LEAF, "back.bin", path, sizeof(path)))
+            snprintf(path, sizeof(path), "graphics/gen4/back/%03u.bin", backPic);
         uint32_t size = 0;
         uint8_t *entry = CtrData_Load(path, &size);
         if (!entry)
@@ -760,10 +840,11 @@ static uint32_t sNpcFailed[(CTR_NPC_FOLLOWER + 2 * CTR_NPC_FOLLOWER_FEMALE) / 32
 static Npc *NpcLoad(unsigned gfx)
 {
     unsigned i, slot = 0;
-    char path[40];
+    char path[64];
     uint32_t size = 0;
     uint8_t *entry;
 
+    LooksFlush();
     for (i = 0; i < CTR_GEN4_SLOTS; ++i)
         if (sNpcs[i].used && sNpcs[i].gfx == gfx)
             return &sNpcs[i];
@@ -778,7 +859,7 @@ static Npc *NpcLoad(unsigned gfx)
         dex -= female ? CTR_NPC_FOLLOWER_FEMALE : 0;
         snprintf(path, sizeof(path), "graphics/gen4/follower/%03u%s.bin", dex, female ? "_f" : "");
     }
-    else
+    else if (!LookNpcPath(gfx, path, sizeof(path)))
         snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
     entry = CtrData_Load(path, &size);
     if (!entry)
@@ -809,6 +890,16 @@ static Npc *NpcLoad(unsigned gfx)
         CtrVideo_SetNpcPalette(slot, palette);
     }
     return &sNpcs[slot];
+}
+
+static void NpcDropAll(void)
+{
+    for (unsigned i = 0; i < CTR_GEN4_SLOTS; ++i)
+    {
+        free(sNpcs[i].entry);
+        sNpcs[i] = (Npc){0};
+    }
+    memset(sNpcFailed, 0, sizeof(sNpcFailed));
 }
 
 /* A follower is in the pack when its entry is: a lookup of the pack's index, remembered (two bits a species). */
@@ -942,14 +1033,20 @@ static void SwapsRead(void)
             for (unsigned palette = 0; palette < 2; ++palette)
             {
                 const void *src = CtrPlayer_Asset(which, female, palette);
-                char path[48];
+                char path[64];
                 uint32_t size = 0;
                 uint8_t *data;
 
                 if (!src)
                     continue;
-                snprintf(path, sizeof(path), "graphics/gen4/player/%s_%s.%s", kNames[which], kGender[female],
-                         kKind[which][palette]);
+                {
+                    char name[24];
+
+                    snprintf(name, sizeof(name), "%s.%s", kNames[which], kKind[which][palette]);
+                    if (!LookPath(female ? LOOK_LEAF : LOOK_RED, name, path, sizeof(path)))
+                        snprintf(path, sizeof(path), "graphics/gen4/player/%s_%s.%s", kNames[which], kGender[female],
+                                 kKind[which][palette]);
+                }
                 data = CtrData_Load(path, &size);
                 if (!data)
                     continue;
@@ -960,8 +1057,17 @@ static void SwapsRead(void)
             }
 }
 
+static void SwapsDropAll(void)
+{
+    for (unsigned i = 0; i < sSwapCount; ++i)
+        free(sSwaps[i].data);
+    sSwapCount = 0;
+    sSwapsRead = false;
+}
+
 bool CtrPlayer_Swap(const void *src, void *dest, uint32_t size)
 {
+    LooksFlush();
     if (!sSwapsRead)
     {
         if (CtrData_GetBackend() == CTR_DATA_NONE)

@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 import zlib
 
-from firered3ds_builder import gen4_followers, gen4_hd, gen4_sprites, nsbtx
+from firered3ds_builder import gen4_followers, gen4_hd, gen4_looks, gen4_sprites, nsbtx
 
 
 def png(rows, palette, depth=4, filters=(0,)):
@@ -125,7 +125,8 @@ class DownloadTest(unittest.TestCase):
         for patcher in (patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows)),
                         patch.object(gen4_sprites, "BACK_FILES", ()), patch.object(gen4_sprites, "BG_FILES", ()),
                         patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ()),
-                        patch.object(gen4_sprites, "FOLLOWER_FILES", ()), patch.object(gen4_hd, "FILES", ())):
+                        patch.object(gen4_sprites, "FOLLOWER_FILES", ()), patch.object(gen4_hd, "FILES", ()),
+                        patch.object(gen4_looks, "FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -142,7 +143,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "backgrounds": 0, "npcs": 0, "followers": 0, "hd": 0, "player": 0, "downloaded": 8})
+                                "backgrounds": 0, "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -636,7 +637,7 @@ class PeopleTest(unittest.TestCase):
         self.assertEqual(len(gen4_sprites.all_files(())), 0)
         self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14
                          + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES)
-                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES))
+                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
         data = rgba_png(self.sheet())
         rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
         with patch.object(gen4_sprites, "NPC_FILES", rows):
@@ -974,6 +975,79 @@ class HdSceneTest(unittest.TestCase):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
                 None, get=lambda url: urls.append(url) or b""), groups=())
             self.assertEqual((files, urls, info["hd"]), ([], [], 0))
+
+
+class LookTest(unittest.TestCase):
+    @staticmethod
+    def sheet(width, frames, colour=(200, 40, 40, 255)):
+        rows = [[colour if x % 5 else (0, 0, 0, 0) for x in range(width)] for _ in range(32 * frames)]
+        return rgba_png(rows)
+
+    def test_the_pinned_list_is_looks_with_a_walking_sheet(self):
+        self.assertEqual(len({look[0] for look in gen4_looks.LOOKS}), len(gen4_looks.LOOKS))
+        for number, look in enumerate(gen4_looks.LOOKS):
+            sheets = [row[2].rsplit("/", 1)[1][:-4] for row in gen4_looks.FILES if row[0] == number]
+            self.assertIn("walk", sheets, look[0])
+            self.assertEqual(len(set(sheets)), len(sheets))
+            self.assertIn(look[3], ("boy", "girl"))
+        for row in gen4_looks.FILES:
+            self.assertEqual((row[1], len(row[4])), ("look", 64))
+        self.assertIn("raw.githubusercontent.com/" + gen4_looks.REPO + "/" + gen4_looks.COMMIT + "/assets/sprites/",
+                      gen4_sprites.file_url(gen4_looks.FILES[0]))
+        self.assertEqual(gen4_sprites.file_name(gen4_looks.FILES[0]), "look_00_" + gen4_looks.FILES[0][2].rsplit("/", 1)[1])
+
+    def test_a_gba_person_is_16_wide_and_goes_in_the_middle_of_32(self):
+        narrow = gen4_sprites.convert_npc(self.sheet(16, 20), 20)
+        wide = gen4_sprites.convert_npc(self.sheet(32, 20), 20)
+        self.assertEqual((narrow[:4], narrow[4], narrow[5], len(narrow)), (b"G4N1", 20, 32, len(wide)))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.convert_npc(self.sheet(24, 20), 20)
+
+    def test_the_entries_of_a_look(self):
+        files = dict(gen4_sprites.look_entries("test", {"walk": self.sheet(16, 20), "bike": self.sheet(32, 9),
+                                                         "surf": self.sheet(16, 12)}))
+        self.assertEqual(sorted(files), ["graphics/gen4/look/test/bike.bin", "graphics/gen4/look/test/surf.bin",
+                                         "graphics/gen4/look/test/walk.bin"])
+        self.assertEqual((files["graphics/gen4/look/test/walk.bin"][4], files["graphics/gen4/look/test/bike.bin"][4]), (20, 9))
+
+    def test_the_group_adds_each_look_that_has_a_walking_sheet(self):
+        walk, bike = self.sheet(16, 20), self.sheet(16, 9)
+        rows = ((0, "look", "assets/sprites/a/gen3/frlg/walk.png", len(walk), hashlib.sha256(walk).hexdigest()),
+                (0, "look", "assets/sprites/a/gen3/frlg/bike.png", len(bike), hashlib.sha256(bike).hexdigest()),
+                (1, "look", "assets/sprites/b/gen3/frlg/bike.png", len(bike), hashlib.sha256(bike).hexdigest()))
+        looks = (("a", "A", "A", "boy", "x"), ("b", "B", "B", "girl", "y"))
+        by_url = {gen4_sprites.file_url(rows[0]): walk, gen4_sprites.file_url(rows[1]): bike,
+                  gen4_sprites.file_url(rows[2]): bike}
+        with patch.object(gen4_looks, "FILES", rows), patch.object(gen4_looks, "LOOKS", looks):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("looks",))
+            self.assertEqual(sorted(path for path, _ in files),
+                             ["graphics/gen4/look/a/bike.bin", "graphics/gen4/look/a/walk.bin", "graphics/gen4/look/index.bin"])
+            self.assertEqual(dict(files)["graphics/gen4/look/index.bin"], b"G4L1\na\tA\tboy\tx\n")
+            self.assertEqual((info["looks"], info["player"], info["hd"]), (1, 0, 0))
+            urls = []
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
+                None, get=lambda url: urls.append(url) or b""), groups=())
+            self.assertEqual((files, urls, info["looks"]), ([], [], 0))
+
+    def test_an_hgss_look_without_a_sheet_wears_its_siblings(self):
+        walk, bike = self.sheet(16, 20), self.sheet(16, 9)
+        sha = lambda d: hashlib.sha256(d).hexdigest()
+        rows = ((0, "look", "assets/sprites/a/gen3/frlg/walk.png", len(walk), sha(walk)),
+                (0, "look", "assets/sprites/a/gen3/frlg/bike.png", len(bike), sha(bike)),
+                (1, "look", "assets/sprites/b/gen3/frlg/walk.png", len(walk), sha(walk)))
+        looks = (("a", "A", "A", "boy", "x"), ("b", "B", "B", "boy", "y"))
+        by_url = {gen4_sprites.file_url(rows[0]): walk, gen4_sprites.file_url(rows[1]): bike, gen4_sprites.file_url(rows[2]): walk}
+        with patch.object(gen4_looks, "FILES", rows), patch.object(gen4_looks, "LOOKS", looks),                 patch.dict(gen4_sprites.LOOK_SIBLINGS, {"b": "a"}, clear=True):
+            files, _ = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("looks",))
+        names = sorted(path for path, _ in files)
+        self.assertIn("graphics/gen4/look/b/bike.bin", names)          # taken from its sibling
+        self.assertEqual(dict(files)["graphics/gen4/look/b/bike.bin"], dict(files)["graphics/gen4/look/a/bike.bin"])
+
+    def test_every_sibling_is_a_look_of_the_list(self):
+        folders = {look[0] for look in gen4_looks.LOOKS}
+        for folder, sibling in gen4_sprites.LOOK_SIBLINGS.items():
+            self.assertIn(folder, folders)
+            self.assertIn(sibling, folders)
 
 
 class SourcesTest(unittest.TestCase):
