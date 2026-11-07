@@ -380,6 +380,7 @@ PLAYER_PREFIX = "graphics/gen4/player/"
 GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "bg", "player", "follower"
 GROUP_HD = "hd"     # the HD battle scenes (Bentley734's): graphics/gen4/hdn/ and hd/, each as it is in the pack
 GROUP_LOOKS = "looks"   # the alternative player looks (Emerald Lens'): graphics/gen4/look/<look>/<sheet>, for the player to pick in the game
+LOOK_SIBLINGS = {"gold_hgss": "gold", "brendan_hgss": "brendan_oras", "green_hgss": "green", "may_hgss": "may_oras"}
 GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)
 # The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
 # a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
@@ -1310,6 +1311,14 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     made = []
     for number, (folder, name, _character, gender, credit) in enumerate(gen4_looks.LOOKS):
         sheets = {row[2].rsplit("/", 1)[1][:-4]: got[row[:3]] for row in look_rows if row[0] == number and row[:3] in got}
+        # An HGSS look that draws no back, front, intro or Fly bird of its own wears its sibling's, not another character's.
+        sibling = LOOK_SIBLINGS.get(folder)
+        if sibling:
+            at = next(n for n, look in enumerate(gen4_looks.LOOKS) if look[0] == sibling)
+            for row in look_rows:
+                sheet = row[2].rsplit("/", 1)[1][:-4]
+                if row[0] == at and row[:3] in got and sheet not in sheets and sheet != "mapIcon":
+                    sheets[sheet] = got[row[:3]]
         if "walk" in sheets:
             look_files += look_entries(folder, sheets)
             looks_made += 1

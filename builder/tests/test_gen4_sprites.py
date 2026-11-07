@@ -1029,6 +1029,26 @@ class LookTest(unittest.TestCase):
                 None, get=lambda url: urls.append(url) or b""), groups=())
             self.assertEqual((files, urls, info["looks"]), ([], [], 0))
 
+    def test_an_hgss_look_without_a_sheet_wears_its_siblings(self):
+        walk, bike = self.sheet(16, 20), self.sheet(16, 9)
+        sha = lambda d: hashlib.sha256(d).hexdigest()
+        rows = ((0, "look", "assets/sprites/a/gen3/frlg/walk.png", len(walk), sha(walk)),
+                (0, "look", "assets/sprites/a/gen3/frlg/bike.png", len(bike), sha(bike)),
+                (1, "look", "assets/sprites/b/gen3/frlg/walk.png", len(walk), sha(walk)))
+        looks = (("a", "A", "A", "boy", "x"), ("b", "B", "B", "boy", "y"))
+        by_url = {gen4_sprites.file_url(rows[0]): walk, gen4_sprites.file_url(rows[1]): bike, gen4_sprites.file_url(rows[2]): walk}
+        with patch.object(gen4_looks, "FILES", rows), patch.object(gen4_looks, "LOOKS", looks),                 patch.dict(gen4_sprites.LOOK_SIBLINGS, {"b": "a"}, clear=True):
+            files, _ = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("looks",))
+        names = sorted(path for path, _ in files)
+        self.assertIn("graphics/gen4/look/b/bike.bin", names)          # taken from its sibling
+        self.assertEqual(dict(files)["graphics/gen4/look/b/bike.bin"], dict(files)["graphics/gen4/look/a/bike.bin"])
+
+    def test_every_sibling_is_a_look_of_the_list(self):
+        folders = {look[0] for look in gen4_looks.LOOKS}
+        for folder, sibling in gen4_sprites.LOOK_SIBLINGS.items():
+            self.assertIn(folder, folders)
+            self.assertIn(sibling, folders)
+
 
 class SourcesTest(unittest.TestCase):
     def test_pinned_list_covers_firered_species_only(self):
