@@ -37,7 +37,6 @@ class BuilderWindow(tk.Tk):
         self.gen4 = tk.BooleanVar(value=False)
         self.npcs = tk.BooleanVar(value=False)
         self.backgrounds = tk.BooleanVar(value=False)
-        self.player = tk.BooleanVar(value=False)
         self.followers = tk.BooleanVar(value=False)
         self.hd_backgrounds = tk.BooleanVar(value=False)
         self.alt_looks = tk.BooleanVar(value=False)
@@ -137,11 +136,6 @@ class BuilderWindow(tk.Tk):
             build_card, variable=self.backgrounds,
             text="New battle backgrounds: 14 scenes by LibertyTwins and others (optional, needs internet)")
         self.backgrounds_check.grid(row=8, column=0, sticky="w", pady=(4, 0))
-        self.player_check = ttk.Checkbutton(
-            build_card, variable=self.player,
-            text="You as Ash and Green: HGSS-style looks on the map and in battle, from Emerald Lens "
-                 "(optional, needs internet)")
-        self.player_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
         self.followers_check = ttk.Checkbutton(
             build_card, variable=self.followers,
             text="Pokémon that walk behind you: your first Pokémon follows you on the map, as in HeartGold "
@@ -215,8 +209,6 @@ class BuilderWindow(tk.Tk):
             lines.append("New people on the map: {0} of 74.".format(info["npcs"]))
         if info.get("backgrounds"):
             lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
-        if info.get("player"):
-            lines.append("You as Ash and Green: {0} pictures.".format(info["player"]))
         if info.get("followers"):
             lines.append("Pokémon that walk behind you: {0}.".format(info["followers"]))
         if info.get("hd"):
@@ -272,8 +264,7 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check,
-                       self.player_check):
+                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
         if busy:
@@ -298,7 +289,6 @@ class BuilderWindow(tk.Tk):
                     gen4=self.gen4.get(),
                     npcs=self.npcs.get(),
                     backgrounds=self.backgrounds.get(),
-                    player=self.player.get(),
                     followers=self.followers.get(),
                     hd_backgrounds=self.hd_backgrounds.get(),
                     alt_looks=self.alt_looks.get(),

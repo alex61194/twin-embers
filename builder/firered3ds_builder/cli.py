@@ -21,8 +21,6 @@ def main() -> None:
                       help="also download the field's people (Facets' sets; needs internet)")
     make.add_argument('--battle-backgrounds', action='store_true',
                       help='also download the battle backgrounds (LibertyTwins\' set through Facets; needs internet)')
-    make.add_argument('--player-sprites', action='store_true',
-                      help="also download the player as Ash and Green (Emerald Lens' HGSS-style looks; needs internet)")
     make.add_argument('--follower-sprites', action='store_true',
                       help="also download the Pokemon that walk behind you (HeartGold's; needs internet)")
     make.add_argument('--hd-backgrounds', action='store_true',
@@ -46,7 +44,6 @@ def main() -> None:
             groups = tuple(group for flag, group in ((args.gen4_sprites, gen4_sprites.GROUP_POKEMON),
                                                      (args.npc_sprites, gen4_sprites.GROUP_NPC),
                                                      (args.battle_backgrounds, gen4_sprites.GROUP_BG),
-                                                     (args.player_sprites, gen4_sprites.GROUP_PLAYER),
                                                      (args.follower_sprites, gen4_sprites.GROUP_FOLLOWER),
                                                      (args.hd_backgrounds, gen4_sprites.GROUP_HD),
                                                      (args.alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
@@ -60,8 +57,6 @@ def main() -> None:
                     print(f"People of the field: {info['npcs']} of {len(gen4_sprites.NPC_FILES)}")
                 if args.battle_backgrounds:
                     print(f"Battle backgrounds: {info['backgrounds']} of 20 terrains")
-                if args.player_sprites:
-                    print(f"The player as Ash and Green: {info['player']} pictures")
                 if args.follower_sprites:
                     print(f"Pokemon that walk behind you: {info['followers']} of {len(gen4_sprites.FOLLOWER_FILES)} files")
                 if args.hd_backgrounds:

@@ -82,7 +82,6 @@ def build_private_pack(
     gen4: bool = False,
     npcs: bool = False,
     backgrounds: bool = False,
-    player: bool = False,
     followers: bool = False,
     hd_backgrounds: bool = False,
     alt_looks: bool = False,
@@ -119,7 +118,6 @@ def build_private_pack(
         sprites = None
         groups = tuple(group for flag, group in ((gen4, gen4_sprites.GROUP_POKEMON), (npcs, gen4_sprites.GROUP_NPC),
                                                  (backgrounds, gen4_sprites.GROUP_BG),
-                                                 (player, gen4_sprites.GROUP_PLAYER),
                                                  (followers, gen4_sprites.GROUP_FOLLOWER),
                                                  (hd_backgrounds, gen4_sprites.GROUP_HD),
                                                  (alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
@@ -214,5 +212,5 @@ def build_private_pack(
             "bytes": output_path.stat().st_size,
             "rom_sha1": rom.sha1,
             "gen4": sprites,
-            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds, "player": player},
+            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds},
         }

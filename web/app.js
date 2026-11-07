@@ -23,7 +23,7 @@ const UNISTORE_URL = new URL('twinembers.unistore', location.href).href;
 const $ = (id) => document.getElementById(id);
 const ui = {
   romInput: $('rom-input'), romButton: $('rom-button'), romPill: $('rom-pill'),
-  gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'), player: $('player-toggle'),
+  gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'),
   followers: $('followers-toggle'), hd: $('hd-toggle'), looks: $('looks-toggle'),
   build: $('build-button'),
   progress: $('progress'), fill: $('progress-fill'), status: $('status'),
@@ -40,7 +40,7 @@ function setPill(text, kind) {
 function refresh() {
   ui.build.disabled = !(state.ready && state.romOk && !state.busy);
   ui.romInput.disabled = state.busy;
-  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.player.disabled = ui.followers.disabled = ui.hd.disabled = ui.looks.disabled = state.busy;
+  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.followers.disabled = ui.hd.disabled = ui.looks.disabled = state.busy;
   ui.romButton.setAttribute('aria-disabled', state.busy ? 'true' : 'false');
 }
 
@@ -175,8 +175,6 @@ function finish(pak, info) {
       `Neue Leute auf der Karte: ${info.gen4.npcs} von 74`));
     if (info.gen4.backgrounds) lines.push(L(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`,
       `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`, `Kampfhintergründe: ${info.gen4.backgrounds} der 20 aus Feuerrot`));
-    if (info.gen4.player) lines.push(L(`You as Ash and Green: ${info.gen4.player} pictures`, `Ash y Green: ${info.gen4.player} imágenes`,
-      `Du als Ash und Green: ${info.gen4.player} Bilder`));
     if (info.gen4.followers) lines.push(L(`Pokémon that walk behind you: ${info.gen4.followers}`, `Pokémon que andan tras de ti: ${info.gen4.followers}`,
       `Pokémon, die dir folgen: ${info.gen4.followers}`));
     if (info.gen4.hd) lines.push(L(`HD battle scenes: ${info.gen4.hd} files`, `Escenas de combate HD: ${info.gen4.hd} archivos`,
@@ -202,7 +200,7 @@ async function startBuild() {
   try {
     const rom = await state.rom.arrayBuffer();
     worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked, npcs: ui.npcs.checked,
-      backgrounds: ui.backgrounds.checked, player: ui.player.checked, followers: ui.followers.checked, hd: ui.hd.checked, looks: ui.looks.checked }, [rom]);
+      backgrounds: ui.backgrounds.checked, followers: ui.followers.checked, hd: ui.hd.checked, looks: ui.looks.checked }, [rom]);
   } catch (error) {
     state.busy = false;
     showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:', 'Das ROM konnte nicht erneut gelesen werden:')} ${error.message}`);
