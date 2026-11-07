@@ -6815,8 +6815,8 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0236-summary-ctr-names.json",
-   "sha256": "e6659f85d7e46f4de0b60f60343bca551c23db2f358c89d6891b61383374b4b1",
+   "path": "patches/pokefirered/0236-summary-no-tables.json",
+   "sha256": "a0bbde5ad520d97863c23f118907732a4cee4945cfb721d3cfd11283a5d97b77",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
