@@ -82,6 +82,8 @@ static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_
 static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
 static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
+static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
+static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
 static int GetEmbers(void) { return sPortEmbers; }
@@ -100,6 +102,7 @@ int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }
 int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
 int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
+int CtrOptions_ReusableTm(void) { return CtrSettings_TmReuse(); }
 
 void CtrOptions_EmbersInit(int isNew3ds)
 {
@@ -139,6 +142,8 @@ static const CtrOptionRow sRows[] = {
     /* Page 3. */
     {CTR_TR("EXP SHARE", "REPARTIR EXP", "EP-Teiler"), {CTR_TR("Share EXP with the whole", "Reparte la EXP con todo", "EP an das ganze Team:"), CTR_TR("team: HALF or FULL.", "el equipo: MITAD o TODA.", "Halb oder Voll.")}, 0, sExpShare, NULL,
      GetExpShare, ThreeCount, SetExpShare},
+    {CTR_TR("REUSABLE TMS", "MT INFINITAS", "TMs mehrfach"), {CTR_TR("A TM is not used up when", "Una MT no se gasta al", "Eine TM wird beim Lehren"), CTR_TR("it teaches a move.", "ense\xC3\xB1" "ar un ataque.", "nicht verbraucht.")}, 0, sFps, NULL,
+     GetTmReuse, TwoCount, SetTmReuse},
     {CTR_TR("RED LOOK", "ASPECTO ROJO", "Rot-Look"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de los", "Das Aussehen von Rot, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookRed, LookCount, SetLookRed},
     {CTR_TR("LEAF LOOK", "ASPECTO HOJA", "Blatt-Look"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de los", "Das Aussehen von Blatt, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,

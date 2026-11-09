@@ -23,6 +23,7 @@ static int sRepelAgain = 1;
 static int sCompanion;
 static char sLook[3][16];     /* look_red, look_leaf, look_blue */
 static int sExpShare;
+static int sTmReuse;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
@@ -90,6 +91,8 @@ static void Load(void)
             sCompanion = value <= 2 ? (int)value : 0;
         else if (sscanf(line, "expshare=%u", &value) == 1)
             sExpShare = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "tmreuse=%u", &value) == 1)
+            sTmReuse = value != 0;
         else if (LookLine(line))
             ;
         else if (sscanf(line, "ball=%u", &value) == 1)
@@ -126,6 +129,8 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
     if (sExpShare && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "expshare=%d\n", sExpShare);
+    if (sTmReuse && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "tmreuse=1\n");
     for (int slot = 0; slot < 3; ++slot)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
@@ -308,6 +313,22 @@ void CtrSettings_SetExpShare(int mode)
     if (mode < 0 || mode > 2 || mode == sExpShare)
         return;
     sExpShare = mode;
+    Save();
+}
+
+int CtrSettings_TmReuse(void)
+{
+    Load();
+    return sTmReuse;
+}
+
+void CtrSettings_SetTmReuse(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sTmReuse)
+        return;
+    sTmReuse = on;
     Save();
 }
 

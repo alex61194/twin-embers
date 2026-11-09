@@ -695,7 +695,8 @@ static void OptLookPanel(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchLook *l = &v->optLook;
     CtrPokeTouchRect r = OptLookRect(v);
-    int textX = r.x + 84;
+    int small = r.h < 62;                    /* five rows on the page leave 42: the picture at its own size, the words nearer */
+    int textX = r.x + (small ? 54 : 84);
 
     if (r.h < 40)
         return;
@@ -710,11 +711,14 @@ static void OptLookPanel(const CtrPokeTouchView *v)
                 pixels[py * 32 + px] = (uint8_t)((l->tiles[(py / 8 * 4 + px / 8) * 32 + py % 8 * 4 + px % 8 / 2] >> (px & 1) * 4) & 15);
         for (int i = 0; i < 16; ++i)
             pal[i] = GbaColor(l->palette[i]);
-        /* The first rows of a person are empty: the note's height holds the other 30 at twice the size. */
-        UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
+        /* The first rows of a person are empty: the note's height holds the other 30 at twice the size, or at its own. */
+        if (small)
+            UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 10, r.y + (r.h - 30) / 2, 1, 1);
+        else
+            UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
     }
-    UiText(l->name, textX, r.y + 8, EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
-    BDescribeN(l->credit, textX, r.y + 24, r.x + r.w - 6 - textX, 3, EM_DIM);
+    UiText(l->name, textX, r.y + (small ? 4 : 8), EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
+    BDescribeN(l->credit, textX, r.y + (small ? 17 : 24), r.x + r.w - 6 - textX, small ? 2 : 3, EM_DIM);
 }
 
 /* The SAVE screen: FireRed's save information in a card over the frame where the picture goes: a title band, the five

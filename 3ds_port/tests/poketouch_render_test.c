@@ -277,10 +277,13 @@ int main(int argc, char **argv)
                 for(int i=0;i<16;++i) v.optLook.palette[i]=(uint16_t)(entry[8+i*2]|entry[9+i*2]<<8);
                 snprintf(v.optLook.name,sizeof(v.optLook.name),"%s",getenv("PT_PREVIEW_NAME")?getenv("PT_PREVIEW_NAME"):"LOOK");
                 snprintf(v.optLook.credit,sizeof(v.optLook.credit),"%s",getenv("PT_PREVIEW_CREDIT")?getenv("PT_PREVIEW_CREDIT"):"");
+                int first=getenv("PT_PREVIEW_ROWS") && atoi(getenv("PT_PREVIEW_ROWS"))==5;   /* the page with REUSABLE TMS: five rows */
+                v.optCount=first?5:4; v.optSelected=first?2:1;
                 strcpy(v.optLabel[0],"EXP SHARE"); strcpy(v.optValue[0],"OFF");
-                strcpy(v.optLabel[1],"RED LOOK"); strcpy(v.optValue[1],v.optLook.name);
-                strcpy(v.optLabel[2],"LEAF LOOK"); strcpy(v.optValue[2],"DEFAULT");
-                strcpy(v.optLabel[3],"RIVAL LOOK"); strcpy(v.optValue[3],"DEFAULT");
+                if(first) { strcpy(v.optLabel[1],"REUSABLE TMS"); strcpy(v.optValue[1],"OFF"); }
+                strcpy(v.optLabel[first+1],"RED LOOK"); strcpy(v.optValue[first+1],v.optLook.name);
+                strcpy(v.optLabel[first+2],"LEAF LOOK"); strcpy(v.optValue[first+2],"DEFAULT");
+                strcpy(v.optLabel[first+3],"RIVAL LOOK"); strcpy(v.optValue[first+3],"DEFAULT");
                 update(&old,&v);
                 FILE *f=fopen(out,"wb"); assert(f);
                 fprintf(f,"P6\n320 240\n255\n");
@@ -294,6 +297,8 @@ int main(int argc, char **argv)
         strcpy(v.optLook.name,"GARY"); strcpy(v.optLook.credit,"Made by Alan_Flygon, a credit long enough to need a second and a third line of the note card");
         update(&old,&v);
         v.optLook.has=0; strcpy(v.optLook.name,"DEFAULT"); update(&old,&v);       /* the default: no picture */
+        v.optCount=5; v.optLook.has=1; strcpy(v.optLook.name,"ASH HGSS"); update(&old,&v);   /* five rows: the card is 42 high, the picture at its own size */
+        v.optCount=6; update(&old,&v);                                            /* six: no room for the card at all */
         v.optCount=7; update(&old,&v);                                            /* a page of seven rows has no room: no panel */
         v.optCount=4; v.optLook.on=0; update(&old,&v);                           /* another row selected: the panel goes */
         memset(&v.optLook,0,sizeof(v.optLook)); v.optCount=2; v.optSelected=0; v.options=0; v.home=1; update(&old,&v);

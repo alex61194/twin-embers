@@ -71,6 +71,23 @@ int main(void)
     fclose(file);
     assert(strstr(text, "expshare=2\n") != NULL && strstr(text, "ball=3\n") != NULL);
 
+    /* REUSABLE TMS: off until chosen, any non-zero is on, written only when on. */
+    assert(CtrSettings_TmReuse() == 0);
+    CtrSettings_SetTmReuse(7);
+    assert(CtrSettings_TmReuse() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "tmreuse=1\n") != NULL && strstr(text, "expshare=2\n") != NULL);
+    CtrSettings_SetTmReuse(0);
+    assert(CtrSettings_TmReuse() == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "tmreuse") == NULL);
+
     /* The look for Red, Leaf and Blue: none until chosen, kept after the others, only a folder's name ([a-z0-9_], 15). */
     assert(CtrSettings_Look(CTR_LOOK_RED)[0] == 0 && CtrSettings_Look(CTR_LOOK_BLUE)[0] == 0);
     CtrSettings_SetLook(CTR_LOOK_RED, "ash_hgss");
