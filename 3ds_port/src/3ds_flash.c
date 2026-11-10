@@ -213,7 +213,7 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
     return CtrFlash_Init(path);
 }
 
-/* A sector is clean only once fflush has confirmed every byte written: fwrite
+/* A sector is clean only once fflush and fsync have confirmed every byte written: fwrite
  * only fills the stdio buffer. A failed seek, write or flush leaves all of this
  * pass's sectors pending and clears the stream error, so a retry rewrites them
  * (each at its own fixed offset) and never reports a save it did not write. */
@@ -241,6 +241,14 @@ bool CtrFlash_Flush(void)
     {
         clearerr(sFile);
         HW_SAVE_TRACE("HW SAVE ERROR flushing the save");
+        return false;
+    }
+    /* fflush only hands the bytes to the file system: fsync commits them to the SD card (FSFILE_Flush), so a power cut or a crash
+     * right after a save does not lose it. The sectors stay pending when it fails, like any failed write. */
+    if (fsync(fileno(sFile)) != 0)
+    {
+        clearerr(sFile);
+        HW_SAVE_TRACE("HW SAVE ERROR committing the save");
         return false;
     }
     sDirtySectors &= ~pending;

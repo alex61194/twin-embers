@@ -2955,7 +2955,7 @@ static void CloseNative(void)
     if (sScreen == PT_SAVE && !sSession.active)
         CtrSave_End();                  /* the field was frozen and locked for it */
     sScreen = PT_NONE;
-    sOpt.down = sOpt.inside = 0;
+    sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
     sSave.down = sSave.inside = 0;
 }
 
@@ -3139,7 +3139,7 @@ static void OpenDestination(int target)
         sPendingScreen = PT_NONE;
         sScreen = target;
         sOpt.sel = 0;
-        sOpt.down = sOpt.inside = 0;
+        sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
         CtrLog_Write(CTR_LOG_VIDEO, "bottom: route reached the field: %s", RootName(target));
         return;
     }
@@ -3426,7 +3426,7 @@ static void PokeTouchActivate(int id)
         if (!menu && sScreen != id) {
             sScreen = id;
             sOpt.sel = 0;
-            sOpt.down = sOpt.inside = 0;
+            sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
             CtrLog_Write(CTR_LOG_VIDEO, "bottom: %s opened", RootName(id));
         }
         break;
@@ -3483,7 +3483,7 @@ static void ProcessOptionsTouch(const CtrInput *in)
     int pageCount = CtrOptions_PageCount();
     int pageRows = CtrOptions_PageRows(page);
     int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
-    int relRow, zone;
+    int relRow = 0, zone = PT_OPT_ZONE_NONE;
     int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
                                                        pageRows, &relRow, &zone);
     int globalRow = base + relRow;

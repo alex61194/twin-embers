@@ -190,6 +190,25 @@ int main(void)
     /* The pages: seven rows, seven, the five rules and the three looks. */
     CHECK(CtrOptions_PageCount() == 4 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
           && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "four pages");
+    /* The page API at its edges, and every row on exactly one page. */
+    CHECK(CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7, "page 2 is the second seven rows");
+    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(4) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(4) == 0,
+          "a page that does not exist has no rows");
+    {
+        int total = 0;
+
+        for (int page = 0; page < CtrOptions_PageCount(); ++page)
+        {
+            CHECK(CtrOptions_PageRows(page) >= 1 && CtrOptions_PageRows(page) <= PT_OPT_MAX, "page %d holds 1 to PT_OPT_MAX rows", page);
+            CHECK(CtrOptions_PageBase(page) == total, "page %d starts where the one before ends", page);
+            total += CtrOptions_PageRows(page);
+        }
+        CHECK(total == CtrOptions_RowCount(), "the pages hold every row once (%d of %d)", total, CtrOptions_RowCount());
+    }
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, CtrOptions_RowCount() - 2);
+    CHECK(view.optPage == 3 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
+          "the last page: its three rows, the second selected, no fourth");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(6) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
           && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(18) == 2 && CtrOptions_PageOf(19) == 3 && CtrOptions_PageOf(21) == 3
           && CtrOptions_PageOf(99) == 3, "a row's page");
