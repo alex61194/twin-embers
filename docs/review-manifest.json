@@ -655,7 +655,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "cd4ccf40ca58948b1c00c070663c4469435e52b687a562fc70d36328ceec2034",
+   "sha256": "4bd383a9831c71e4b0d4cb34af6ccc990c1914a501b9f63b63c9cbfe3d04d6d4",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -702,7 +702,7 @@
   },
   {
    "path": "3ds_port/include/3ds_settings.h",
-   "sha256": "cfa3e8072a6bba76f1db893d7fad6f107304996f9ae5536be598b18b3780598d",
+   "sha256": "023f89c5827ef499a6d874d53880502872854594423eceac21fc615f7a961c8a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1414,7 +1414,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "47effd6af17633593a9872aefc0fac81d4c94618dfc24ebacccfe8ce23f19b3a",
+   "sha256": "2ae618f33bdd3ac20c1468a6983b3295177b4422b27d859ff660452ebce6e7d4",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1470,7 +1470,7 @@
   },
   {
    "path": "3ds_port/src/3ds_settings.c",
-   "sha256": "84d00a27ec28b14a2e6bf0b0f8e3d68df961dc2ba32c4eb55bac954d77d163da",
+   "sha256": "500c5409e2faeabc68eaf1c980abc7a424f892ea17b7d749f21a88091a1d1bc5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1986,7 +1986,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "583b101098e0b4fba08903264e0a266116727332a69c91ee03f03a20e0d652c3",
+   "sha256": "2262e431b92cd7e63acbda6c347287fdc8b4e34b3352cbcd063c32f8b9213aef",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2045,7 +2045,7 @@
   },
   {
    "path": "3ds_port/tests/settings_test.c",
-   "sha256": "e74f3ec8c6f63177c2fe3eda25fc06fb233ce2712620bfec59dc118e341680f3",
+   "sha256": "d37643656c3f4a6f32fcfd498495170161084e76311ef13b7a3bc0a373fcaabd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6841,6 +6841,14 @@
   {
    "path": "patches/pokefirered/0239-nuzlocke.json",
    "sha256": "32b2f2a72522d44296690bd3d8c4805355572e55461cbe30e270ccb422afb035",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0241-randomlocke.json",
+   "sha256": "a27eada41a5159f0fa8bfe9a2818c0accf81d52546c401c8be0b22a9ffd91928",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

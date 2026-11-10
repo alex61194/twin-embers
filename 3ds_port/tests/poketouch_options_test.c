@@ -70,7 +70,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 20, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 21, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 3, "more rows than three pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
@@ -186,13 +186,43 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
-    CHECK(view.optPage == 2 && view.optPageCount == 4 && view.optCount == 3, "page 3 holds EXP SHARE, REUSABLE TMS and NUZLOCKE");
-    /* The pages: seven rows, seven, the three rules and the three looks. */
-    CHECK(CtrOptions_PageCount() == 4 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 17
-          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 3 && CtrOptions_PageRows(3) == 3, "four pages");
+    CHECK(view.optPage == 2 && view.optPageCount == 4 && view.optCount == 4, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE and RANDOMLOCKE");
+    /* The pages: seven rows, seven, the four rules and the three looks. */
+    CHECK(CtrOptions_PageCount() == 4 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 18
+          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 4 && CtrOptions_PageRows(3) == 3, "four pages");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(6) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
-          && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(16) == 2 && CtrOptions_PageOf(17) == 3 && CtrOptions_PageOf(19) == 3
+          && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(17) == 2 && CtrOptions_PageOf(18) == 3 && CtrOptions_PageOf(20) == 3
           && CtrOptions_PageOf(99) == 3, "a row's page");
+    /* RANDOMLOCKE: off by default, a switch that is kept in the settings. */
+    CHECK(CtrOptions_Randomlocke() == 0 && CtrSettings_Randomlocke() == 0 && CtrOptions_Count(17) == 2, "RANDOMLOCKE starts off");
+    Text(17, "OFF");
+    CtrOptions_Step(17, 1);
+    CHECK(CtrOptions_Randomlocke() == 1 && CtrSettings_Randomlocke() == 1, "RANDOMLOCKE on, kept in the settings");
+    Text(17, "ON");
+    CtrOptions_Step(17, 1);
+    CHECK(CtrOptions_Randomlocke() == 0, "RANDOMLOCKE back off");
+    /* Its species: a real one always, the same for the same seed, place and species, and not the same for every seed or place. */
+    {
+        unsigned seen[412] = {0}, kinds = 0, moved = 0, bad = 0;
+
+        for (unsigned place = 0; place < 400; ++place)
+            for (unsigned species = 1; species < 40; ++species)
+            {
+                unsigned made = CtrOptions_RandomSpecies(0x12345678u, place, species);
+
+                if (made < 1 || made > 411 || (made > 251 && made < 277))
+                    ++bad;
+                else if (!seen[made]++)
+                    ++kinds;
+                if (made != CtrOptions_RandomSpecies(0x12345678u, place, species))
+                    ++bad;
+                if (made != CtrOptions_RandomSpecies(0x12345679u, place, species))
+                    ++moved;
+            }
+        CHECK(bad == 0, "a random species is one of the 386 and repeats for the same seed, place and species");
+        CHECK(kinds == 386, "every species can come out (%u of 386)", kinds);
+        CHECK(moved > 15000, "another Trainer ID gives another game (%u of 15600 differ)", moved);
+    }
     /* NUZLOCKE: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_Nuzlocke() == 0 && CtrSettings_Nuzlocke() == 0 && CtrOptions_Count(16) == 2, "NUZLOCKE starts off");
     Text(16, "OFF");
@@ -212,40 +242,40 @@ int main(void)
     CtrOptions_Step(15, 1);
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0, "REUSABLE TMS back off");
     /* The looks of Red, Leaf and the rival: DEFAULT, then the pack's (here three); the choice goes to the game's looks. */
-    Text(17, "DEFAULT");
-    CHECK(CtrOptions_Count(17) == 4 && CtrOptions_Count(19) == 4, "the look rows have DEFAULT and three looks");
-    CtrOptions_Step(17, 1);
-    Text(17, "ASH");
-    CtrOptions_Step(17, 1);
-    Text(17, "GARY");
-    CtrOptions_Set(17, 3);
-    Text(17, "GREEN");
-    CtrOptions_Step(17, 1);
-    Text(17, "DEFAULT");
-    CtrOptions_Step(17, -1);
-    Text(17, "GREEN");
-    CtrOptions_Set(18, 1);
-    CtrOptions_Set(19, 2);
-    CHECK(sLookChoice[CTR_LOOK_RED] == 2 && sLookChoice[CTR_LOOK_LEAF] == 0 && sLookChoice[CTR_LOOK_BLUE] == 1, "each row sets its own slot");
+    Text(18, "DEFAULT");
+    CHECK(CtrOptions_Count(18) == 4 && CtrOptions_Count(20) == 4, "the look rows have DEFAULT and three looks");
+    CtrOptions_Step(18, 1);
     Text(18, "ASH");
-    Text(19, "GARY");
-    CtrOptions_Set(19, 9);
-    Text(19, "GARY");
-    CHECK(!CtrOptions_IsLevels(17), "a look row is a value between arrows");
+    CtrOptions_Step(18, 1);
+    Text(18, "GARY");
+    CtrOptions_Set(18, 3);
+    Text(18, "GREEN");
+    CtrOptions_Step(18, 1);
+    Text(18, "DEFAULT");
+    CtrOptions_Step(18, -1);
+    Text(18, "GREEN");
+    CtrOptions_Set(19, 1);
+    CtrOptions_Set(20, 2);
+    CHECK(sLookChoice[CTR_LOOK_RED] == 2 && sLookChoice[CTR_LOOK_LEAF] == 0 && sLookChoice[CTR_LOOK_BLUE] == 1, "each row sets its own slot");
+    Text(19, "ASH");
+    Text(20, "GARY");
+    CtrOptions_Set(20, 9);
+    Text(20, "GARY");
+    CHECK(!CtrOptions_IsLevels(18), "a look row is a value between arrows");
     /* The preview: on while a look row is selected, for the look chosen for that row (GREEN for Red here, ASH for Leaf, GARY for
      * the rival), the default's name with no picture, and nothing on another row. */
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 17);
+    CtrOptions_Fill(&view, 18);
     CHECK(view.optLook.on && view.optLook.has && strcmp(view.optLook.name, "GREEN") == 0
           && strcmp(view.optLook.credit, "By Poltergeist") == 0 && view.optLook.tiles[0] == 0x33 && view.optLook.palette[5] == 5,
           "the preview of the look chosen for Red");
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 19);
+    CtrOptions_Fill(&view, 20);
     CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "GARY") == 0
           && strcmp(view.optLook.credit, "By Alan_Flygon") == 0, "a look without a picture: its name and artists only");
-    CtrOptions_Set(18, 0);
+    CtrOptions_Set(19, 0);
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 18);
+    CtrOptions_Fill(&view, 19);
     CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "DEFAULT") == 0 && view.optLook.credit[0],
           "the default: its name and no picture");
     memset(&view, 0, sizeof(view));

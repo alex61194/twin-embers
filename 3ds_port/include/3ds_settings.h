@@ -38,6 +38,8 @@ int CtrSettings_TmReuse(void);               /* a TM is not used up when it teac
 void CtrSettings_SetTmReuse(int on);
 int CtrSettings_Nuzlocke(void);              /* the Nuzlocke rules are on (NUZLOCKE, off by default) */
 void CtrSettings_SetNuzlocke(int on);
+int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
+void CtrSettings_SetRandomlocke(int on);
 /* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the
  * Builder's --alt-looks), "" for none: the picture that was there before. Only [a-z0-9_] and 15 characters are kept. */
 enum { CTR_LOOK_RED, CTR_LOOK_LEAF, CTR_LOOK_BLUE, CTR_LOOK_SLOTS };

@@ -51,6 +51,11 @@ int CtrOptions_Embers(void);        /* on unless OFF */
 int CtrOptions_EmbersLow(void);
 int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
+int CtrOptions_Randomlocke(void);    /* RANDOMLOCKE: wild and trainer Pokemon are random species */
+/* The species (FireRed's internal number) that stands in for one of the game's: always the same for a seed (the save's Trainer ID),
+ * a place (a map, or a trainer's party slot) and the species it replaces, so an area keeps its Pokemon through a game. Never the
+ * unused numbers between Celebi and Treecko, the Egg or nothing. */
+unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species);
 int CtrOptions_Nuzlocke(void);       /* the Nuzlocke rules (NUZLOCKE): one wild encounter to catch in each area, a fainted Pokemon is released */
 /* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
 int CtrOptions_PageCount(void);

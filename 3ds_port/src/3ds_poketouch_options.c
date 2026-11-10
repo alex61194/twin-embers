@@ -82,6 +82,8 @@ static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_
 static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
 static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
+static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
+static void SetRandomlocke(int v) { CtrSettings_SetRandomlocke(!(v & 1)); }
 static int GetNuzlocke(void) { return !CtrSettings_Nuzlocke(); }
 static void SetNuzlocke(int v) { CtrSettings_SetNuzlocke(!(v & 1)); }
 static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
@@ -106,6 +108,20 @@ int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
 int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
 int CtrOptions_ReusableTm(void) { return CtrSettings_TmReuse(); }
 int CtrOptions_Nuzlocke(void) { return CtrSettings_Nuzlocke(); }
+int CtrOptions_Randomlocke(void) { return CtrSettings_Randomlocke(); }
+
+unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species)
+{
+    uint32_t h = (uint32_t)seed ^ ((uint32_t)place * 0x9E3779B1u) ^ ((uint32_t)species * 0x85EBCA6Bu);
+
+    h ^= h >> 16;
+    h *= 0x7FEB352Du;
+    h ^= h >> 15;
+    h *= 0x846CA68Bu;
+    h ^= h >> 16;
+    h %= 386;                                   /* 251 of Kanto and Johto (1-251), 135 of Hoenn (277-411) */
+    return h < 251 ? h + 1 : h - 251 + 277;
+}
 
 void CtrOptions_EmbersInit(int isNew3ds)
 {
@@ -149,6 +165,8 @@ static const CtrOptionRow sRows[] = {
      GetTmReuse, TwoCount, SetTmReuse},
     {CTR_TR("NUZLOCKE", "NUZLOCKE", "Nuzlocke"), {CTR_TR("One wild catch per area;", "Un salvaje por zona;", "Ein Fang pro Gebiet;"), CTR_TR("fainted ones are released.", "los debilitados se liberan.", "Besiegte werden entlassen.")}, 0, sFps, NULL,
      GetNuzlocke, TwoCount, SetNuzlocke},
+    {CTR_TR("RANDOMLOCKE", "RANDOMLOCKE", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und Trainer-Pok\xC3\xA9mon"), CTR_TR("are random species.", "con especies al azar.", "mit zuf\xC3\xA4lligen Arten.")}, 0, sFps, NULL,
+     GetRandomlocke, TwoCount, SetRandomlocke},
     {CTR_TR("RED LOOK", "ASPECTO ROJO", "Rot-Look"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de los", "Das Aussehen von Rot, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookRed, LookCount, SetLookRed},
     {CTR_TR("LEAF LOOK", "ASPECTO HOJA", "Blatt-Look"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de los", "Das Aussehen von Blatt, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
@@ -161,7 +179,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. Page 3 (the game's rules) and page 4 (the looks) are short on purpose: the look
  * preview is a card in the rows a page does not use. */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 17 };
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, ROWS};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
 _Static_assert(PAGE4 < ROWS, "the last page has rows");
