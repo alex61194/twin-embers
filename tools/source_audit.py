@@ -134,18 +134,15 @@ def check(files,modes=None,windows=None,supplements=()):
             raise ValueError(f'Exact ROM fragment: {name}')
     return len(files)
 
-BLOBS={}   # (repository, blob id) -> (size, bytes or None): a file that did not change is read once for the whole history
+BLOBS={}   # (repository, blob id) -> [size, bytes or None]: a file that did not change is read once for the whole history
 
 def blob_data(root,blob,name,excluded):
     key=(str(root),blob)
-    if key not in BLOBS:
-        size=int(git(root,'cat-file','-s',blob))
-        refused=size>size_limit(name) and name not in excluded
-        BLOBS[key]=(size,None if refused else git(root,'cat-file','blob',blob))   # an oversized blob is refused before it is read
-    size,data=BLOBS[key]
-    if data is None or (size>size_limit(name) and name not in excluded):
-        raise ValueError('Oversized historical blob')
-    return data
+    if key not in BLOBS: BLOBS[key]=[int(git(root,'cat-file','-s',blob)),None]
+    entry=BLOBS[key]
+    if entry[0]>size_limit(name) and name not in excluded: raise ValueError('Oversized historical blob')   # refused before it is read
+    if entry[1] is None: entry[1]=git(root,'cat-file','blob',blob)
+    return entry[1]
 
 def snapshot(root,commit=None,excluded=()):
     files,modes={},{}

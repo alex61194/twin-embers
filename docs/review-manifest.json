@@ -6372,7 +6372,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "268b07a078c6e0c4fcf4dcf23abd1bb105a23325fd82d532e985a983dd1e82cf",
+   "sha256": "fa0370eb5dc056a62b7be6973a608022e98ec00ceae809a4321ee0014b654d11",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
