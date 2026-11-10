@@ -2163,7 +2163,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->touch.backEnabled = (uint8_t)BackEnabled(mode);
             s->touch.backPressed = (uint8_t)(sBack.inside != 0);
             CtrOptions_Fill(&s->touch, sOpt.sel);
-            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row % PT_OPT_MAX) : -1);
+            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row - CtrOptions_PageBase(CtrOptions_PageOf(sOpt.row))) : -1);
             s->touch.optZone = (uint8_t)(sOpt.down && sOpt.inside ? sOpt.zone : PT_OPT_ZONE_NONE);
             s->touch.optPagePressed = (uint8_t)(sOpt.pageDown && sOpt.pageInside);
             return;
@@ -3478,11 +3478,10 @@ static int FieldEnabled(int id)
  * physical button cancels it too. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
-    int page = sOpt.sel / PT_OPT_MAX;
-    int base = page * PT_OPT_MAX;
-    int total = CtrOptions_RowCount();
-    int pageCount = (total + PT_OPT_MAX - 1) / PT_OPT_MAX;
-    int pageRows = total - base > PT_OPT_MAX ? PT_OPT_MAX : total - base;
+    int page = CtrOptions_PageOf(sOpt.sel);
+    int base = CtrOptions_PageBase(page);
+    int pageCount = CtrOptions_PageCount();
+    int pageRows = CtrOptions_PageRows(page);
     int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
     int relRow, zone;
     int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
@@ -3514,7 +3513,7 @@ static void ProcessOptionsTouch(const CtrInput *in)
         int pageInside = sOpt.pageInside;
         sOpt.pageDown = sOpt.pageInside = 0;
         if (pageInside) {
-            int next = ((page + 1) % pageCount) * PT_OPT_MAX;
+            int next = CtrOptions_PageBase((page + 1) % pageCount);
             sOpt.sel = next;
         }
         return;

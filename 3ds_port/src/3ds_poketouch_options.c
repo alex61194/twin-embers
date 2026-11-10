@@ -82,6 +82,8 @@ static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_
 static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
 static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
+static int GetNuzlocke(void) { return !CtrSettings_Nuzlocke(); }
+static void SetNuzlocke(int v) { CtrSettings_SetNuzlocke(!(v & 1)); }
 static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
@@ -103,6 +105,7 @@ int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }
 int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
 int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
 int CtrOptions_ReusableTm(void) { return CtrSettings_TmReuse(); }
+int CtrOptions_Nuzlocke(void) { return CtrSettings_Nuzlocke(); }
 
 void CtrOptions_EmbersInit(int isNew3ds)
 {
@@ -144,6 +147,8 @@ static const CtrOptionRow sRows[] = {
      GetExpShare, ThreeCount, SetExpShare},
     {CTR_TR("REUSABLE TMS", "MT INFINITAS", "TMs mehrfach"), {CTR_TR("A TM is not used up when", "Una MT no se gasta al", "Eine TM wird beim Lehren"), CTR_TR("it teaches a move.", "ense\xC3\xB1" "ar un ataque.", "nicht verbraucht.")}, 0, sFps, NULL,
      GetTmReuse, TwoCount, SetTmReuse},
+    {CTR_TR("NUZLOCKE", "NUZLOCKE", "Nuzlocke"), {CTR_TR("One wild catch per area;", "Un salvaje por zona;", "Ein Fang pro Gebiet;"), CTR_TR("fainted ones are released.", "los debilitados se liberan.", "Besiegte werden entlassen.")}, 0, sFps, NULL,
+     GetNuzlocke, TwoCount, SetNuzlocke},
     {CTR_TR("RED LOOK", "ASPECTO ROJO", "Rot-Look"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de los", "Das Aussehen von Rot, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookRed, LookCount, SetLookRed},
     {CTR_TR("LEAF LOOK", "ASPECTO HOJA", "Blatt-Look"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de los", "Das Aussehen von Blatt, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
@@ -153,7 +158,36 @@ static const CtrOptionRow sRows[] = {
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
-_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX * 3, "the OPTIONS screen holds up to three pages of PT_OPT_MAX rows");
+
+/* The pages: the first row of each, then the end. Page 3 (the game's rules) and page 4 (the looks) are short on purpose: the look
+ * preview is a card in the rows a page does not use. */
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 17 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, ROWS};
+#define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
+_Static_assert(PAGE4 < ROWS, "the last page has rows");
+_Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && ROWS - PAGE4 <= PT_OPT_MAX,
+               "a page holds up to PT_OPT_MAX rows");
+
+int CtrOptions_PageCount(void) { return PAGES; }
+
+int CtrOptions_PageOf(int row)
+{
+    int page = 0;
+
+    while (page + 1 < PAGES && row >= sPageStart[page + 1])
+        ++page;
+    return page;
+}
+
+int CtrOptions_PageBase(int page)
+{
+    return page < 0 || page >= PAGES ? 0 : sPageStart[page];
+}
+
+int CtrOptions_PageRows(int page)
+{
+    return page < 0 || page >= PAGES ? 0 : sPageStart[page + 1] - sPageStart[page];
+}
 
 int CtrOptions_RowCount(void)
 {
@@ -278,12 +312,12 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
         return;
     if (selected < 0 || selected >= ROWS)
         selected = 0;
-    page = selected / PT_OPT_MAX;
-    base = page * PT_OPT_MAX;
-    count = ROWS - base > PT_OPT_MAX ? PT_OPT_MAX : ROWS - base;
+    page = CtrOptions_PageOf(selected);
+    base = CtrOptions_PageBase(page);
+    count = CtrOptions_PageRows(page);
     v->options = 1;
     v->optPage = (uint8_t)page;
-    v->optPageCount = (uint8_t)((ROWS + PT_OPT_MAX - 1) / PT_OPT_MAX);
+    v->optPageCount = (uint8_t)PAGES;
     v->optCount = (uint8_t)count;
     v->optSelected = (uint8_t)(selected - base);
     for (int i = 0; i < PT_OPT_MAX; ++i) {

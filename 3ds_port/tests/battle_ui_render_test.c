@@ -349,6 +349,8 @@ int main(int argc, char **argv)
     v.ball = CTR_QUICK_BALL_EMPTY; v.ballCount = 0; settle(&old, &v); old = v; put(out, "02d_action_no_balls");
     assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* no arrows: the button only says so */
     v.ball = CTR_QUICK_BALL_FULL; v.ballCount = 4; settle(&old, &v); old = v;
+    v.ball = CTR_QUICK_BALL_AREA; v.ballCount = 4; settle(&old, &v); old = v;     /* NUZLOCKE: this area's catch was used: grey, with its words */
+    assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* no arrows either */
     v.ball = CTR_QUICK_BALL_READY; v.ballCount = 1; settle(&old, &v); old = v;
     assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* one kind of ball: no other to go to */
     v.ball = CTR_QUICK_BALL_NONE; v.cursor = 0; settle(&old, &v); old = v;

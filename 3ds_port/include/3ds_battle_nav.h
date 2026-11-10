@@ -45,7 +45,7 @@ static inline int CtrBattleActionStep(int cursor, int dir)
  * button: a trainer, the Safari Zone...), a ball ready, no balls, or the boxes full (shown, not usable).
  */
 #define CTR_ACTION_BALL 4
-enum { CTR_QUICK_BALL_NONE = 0, CTR_QUICK_BALL_READY, CTR_QUICK_BALL_EMPTY, CTR_QUICK_BALL_FULL };
+enum { CTR_QUICK_BALL_NONE = 0, CTR_QUICK_BALL_READY, CTR_QUICK_BALL_EMPTY, CTR_QUICK_BALL_FULL, CTR_QUICK_BALL_AREA };   /* AREA: the Nuzlocke catch of this area was used */
 
 static inline int CtrBattleActionStepBall(int cursor, int dir, int ball)
 {

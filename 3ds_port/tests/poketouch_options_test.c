@@ -70,7 +70,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 19, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 20, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 3, "more rows than three pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
@@ -186,7 +186,21 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
-    CHECK(view.optPage == 2 && view.optPageCount == 3 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS and the three looks");
+    CHECK(view.optPage == 2 && view.optPageCount == 4 && view.optCount == 3, "page 3 holds EXP SHARE, REUSABLE TMS and NUZLOCKE");
+    /* The pages: seven rows, seven, the three rules and the three looks. */
+    CHECK(CtrOptions_PageCount() == 4 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 17
+          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 3 && CtrOptions_PageRows(3) == 3, "four pages");
+    CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(6) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
+          && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(16) == 2 && CtrOptions_PageOf(17) == 3 && CtrOptions_PageOf(19) == 3
+          && CtrOptions_PageOf(99) == 3, "a row's page");
+    /* NUZLOCKE: off by default, a switch that is kept in the settings. */
+    CHECK(CtrOptions_Nuzlocke() == 0 && CtrSettings_Nuzlocke() == 0 && CtrOptions_Count(16) == 2, "NUZLOCKE starts off");
+    Text(16, "OFF");
+    CtrOptions_Step(16, 1);
+    CHECK(CtrOptions_Nuzlocke() == 1 && CtrSettings_Nuzlocke() == 1, "NUZLOCKE on, kept in the settings");
+    Text(16, "ON");
+    CtrOptions_Step(16, 1);
+    CHECK(CtrOptions_Nuzlocke() == 0, "NUZLOCKE back off");
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0 && CtrOptions_Count(15) == 2, "REUSABLE TMS starts off");
     Text(15, "OFF");
@@ -198,40 +212,40 @@ int main(void)
     CtrOptions_Step(15, 1);
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0, "REUSABLE TMS back off");
     /* The looks of Red, Leaf and the rival: DEFAULT, then the pack's (here three); the choice goes to the game's looks. */
-    Text(16, "DEFAULT");
-    CHECK(CtrOptions_Count(16) == 4 && CtrOptions_Count(18) == 4, "the look rows have DEFAULT and three looks");
-    CtrOptions_Step(16, 1);
-    Text(16, "ASH");
-    CtrOptions_Step(16, 1);
-    Text(16, "GARY");
-    CtrOptions_Set(16, 3);
-    Text(16, "GREEN");
-    CtrOptions_Step(16, 1);
-    Text(16, "DEFAULT");
-    CtrOptions_Step(16, -1);
-    Text(16, "GREEN");
-    CtrOptions_Set(17, 1);
-    CtrOptions_Set(18, 2);
-    CHECK(sLookChoice[CTR_LOOK_RED] == 2 && sLookChoice[CTR_LOOK_LEAF] == 0 && sLookChoice[CTR_LOOK_BLUE] == 1, "each row sets its own slot");
+    Text(17, "DEFAULT");
+    CHECK(CtrOptions_Count(17) == 4 && CtrOptions_Count(19) == 4, "the look rows have DEFAULT and three looks");
+    CtrOptions_Step(17, 1);
     Text(17, "ASH");
-    Text(18, "GARY");
-    CtrOptions_Set(18, 9);
-    Text(18, "GARY");
-    CHECK(!CtrOptions_IsLevels(16), "a look row is a value between arrows");
+    CtrOptions_Step(17, 1);
+    Text(17, "GARY");
+    CtrOptions_Set(17, 3);
+    Text(17, "GREEN");
+    CtrOptions_Step(17, 1);
+    Text(17, "DEFAULT");
+    CtrOptions_Step(17, -1);
+    Text(17, "GREEN");
+    CtrOptions_Set(18, 1);
+    CtrOptions_Set(19, 2);
+    CHECK(sLookChoice[CTR_LOOK_RED] == 2 && sLookChoice[CTR_LOOK_LEAF] == 0 && sLookChoice[CTR_LOOK_BLUE] == 1, "each row sets its own slot");
+    Text(18, "ASH");
+    Text(19, "GARY");
+    CtrOptions_Set(19, 9);
+    Text(19, "GARY");
+    CHECK(!CtrOptions_IsLevels(17), "a look row is a value between arrows");
     /* The preview: on while a look row is selected, for the look chosen for that row (GREEN for Red here, ASH for Leaf, GARY for
      * the rival), the default's name with no picture, and nothing on another row. */
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 16);
+    CtrOptions_Fill(&view, 17);
     CHECK(view.optLook.on && view.optLook.has && strcmp(view.optLook.name, "GREEN") == 0
           && strcmp(view.optLook.credit, "By Poltergeist") == 0 && view.optLook.tiles[0] == 0x33 && view.optLook.palette[5] == 5,
           "the preview of the look chosen for Red");
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 18);
+    CtrOptions_Fill(&view, 19);
     CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "GARY") == 0
           && strcmp(view.optLook.credit, "By Alan_Flygon") == 0, "a look without a picture: its name and artists only");
-    CtrOptions_Set(17, 0);
+    CtrOptions_Set(18, 0);
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, 17);
+    CtrOptions_Fill(&view, 18);
     CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "DEFAULT") == 0 && view.optLook.credit[0],
           "the default: its name and no picture");
     memset(&view, 0, sizeof(view));
@@ -265,7 +279,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 3 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 4 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0

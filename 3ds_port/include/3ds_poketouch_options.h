@@ -51,6 +51,12 @@ int CtrOptions_Embers(void);        /* on unless OFF */
 int CtrOptions_EmbersLow(void);
 int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
+int CtrOptions_Nuzlocke(void);       /* the Nuzlocke rules (NUZLOCKE): one wild encounter to catch in each area, a fainted Pokemon is released */
+/* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
+int CtrOptions_PageCount(void);
+int CtrOptions_PageOf(int row);
+int CtrOptions_PageBase(int page);   /* the first row of a page */
+int CtrOptions_PageRows(int page);
 int CtrOptions_ReusableTm(void);    /* a TM is not used up when it teaches a move (REUSABLE TMS) */
 int CtrOptions_ExpShare(void);      /* 0 the game's own, 1 the team shares by halves, 2 everyone gets the full share (EXP SHARE) */
 

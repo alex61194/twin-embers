@@ -24,6 +24,7 @@ static int sCompanion;
 static char sLook[3][16];     /* look_red, look_leaf, look_blue */
 static int sExpShare;
 static int sTmReuse;
+static int sNuzlocke;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
@@ -93,6 +94,8 @@ static void Load(void)
             sExpShare = value <= 2 ? (int)value : 0;
         else if (sscanf(line, "tmreuse=%u", &value) == 1)
             sTmReuse = value != 0;
+        else if (sscanf(line, "nuzlocke=%u", &value) == 1)
+            sNuzlocke = value != 0;
         else if (LookLine(line))
             ;
         else if (sscanf(line, "ball=%u", &value) == 1)
@@ -131,6 +134,8 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "expshare=%d\n", sExpShare);
     if (sTmReuse && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "tmreuse=1\n");
+    if (sNuzlocke && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "nuzlocke=1\n");
     for (int slot = 0; slot < 3; ++slot)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
@@ -329,6 +334,22 @@ void CtrSettings_SetTmReuse(int on)
     if (on == sTmReuse)
         return;
     sTmReuse = on;
+    Save();
+}
+
+int CtrSettings_Nuzlocke(void)
+{
+    Load();
+    return sNuzlocke;
+}
+
+void CtrSettings_SetNuzlocke(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sNuzlocke)
+        return;
+    sNuzlocke = on;
     Save();
 }
 

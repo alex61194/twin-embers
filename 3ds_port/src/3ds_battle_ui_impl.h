@@ -1031,14 +1031,15 @@ static void BBallCard(const CtrBattleView *v)
     int cx = r->x + r->w / 2;
 
     if (!ready) {
-        const char *why = v->ball == CTR_QUICK_BALL_FULL ? CTR_TR("BOX FULL", "CAJA LLENA", "Box voll") : CTR_TR("NO BALLS", "SIN BALLS", "Kein Ball");
+        const char *why = v->ball == CTR_QUICK_BALL_FULL ? CTR_TR("BOX FULL", "CAJA LLENA", "Box voll")
+                        : v->ball == CTR_QUICK_BALL_AREA ? CTR_TR("AREA USED", "ZONA USADA", "Gebiet belegt") : CTR_TR("NO BALLS", "SIN BALLS", "Kein Ball");
 
         char qty[8];
 
         BDiscIcon(BX_BALL, cx, fy + BACT_DISC_Y, BACT_DISC_R, p);
         BRowLabel(why, r, fy, p);
         /* The pill on the row's line as on the others: none left, or how many of the ball there would be. */
-        snprintf(qty, sizeof(qty), "x%u", v->ball == CTR_QUICK_BALL_FULL ? (unsigned)v->ballQty : 0u);
+        snprintf(qty, sizeof(qty), "x%u", v->ball == CTR_QUICK_BALL_FULL || v->ball == CTR_QUICK_BALL_AREA ? (unsigned)v->ballQty : 0u);
         BPill(cx - BPillW(qty) / 2, fy + BACT_PILL_Y, qty, p->lip, EM_WHITE, p->edge);
         return;
     }
