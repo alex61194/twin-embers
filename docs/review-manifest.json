@@ -6848,7 +6848,7 @@
   },
   {
    "path": "patches/pokefirered/0241-randomlocke.json",
-   "sha256": "a27eada41a5159f0fa8bfe9a2818c0accf81d52546c401c8be0b22a9ffd91928",
+   "sha256": "8a57ce3d35ba997174de7c662c982cdfd56049f3a8cf5fb38415923f5b8f4c62",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
