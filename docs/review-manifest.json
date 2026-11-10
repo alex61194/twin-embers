@@ -6824,7 +6824,7 @@
   },
   {
    "path": "patches/pokefirered/0240-evolution-plain-background.json",
-   "sha256": "ce2ff069af8e2bbc384f448e0cc563176e0938a570b5c67467847f4703ba3cd8",
+   "sha256": "cde14e5370cfbb017e40eba200d8a47fcd402ed03c4996ac19915cda884c464c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
