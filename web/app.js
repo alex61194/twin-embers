@@ -182,6 +182,23 @@ function finish(pak, info) {
     if (info.gen4.looks) lines.push(L(`More characters to be: ${info.gen4.looks} looks`, `Más personajes: ${info.gen4.looks} aspectos`,
       `Mehr Figuren: ${info.gen4.looks} Looks`));
   }
+  // A ticked set whose files could not be had (no network, or a file did not match) is not a success: say so, and that building
+  // again tries it again. The boxes are disabled while it builds, so they still show what was asked.
+  const g = info.gen4 || {};
+  for (const [box, count, en, es, de] of [
+    [ui.gen4, g.species, 'HeartGold battle sprites', 'Sprites de combate de HeartGold', 'HeartGold-Kampf-Sprites'],
+    [ui.npcs, g.npcs, 'New people on the map', 'Gente nueva en el mapa', 'Neue Leute auf der Karte'],
+    [ui.backgrounds, g.backgrounds, 'Battle backgrounds', 'Fondos de combate', 'Kampfhintergründe'],
+    [ui.followers, g.followers, 'Pokémon that walk behind you', 'Pokémon que andan tras de ti', 'Pokémon, die dir folgen'],
+    [ui.hd, g.hd, 'HD battle scenes', 'Escenas de combate HD', 'HD-Kampfszenen'],
+    [ui.looks, g.looks, 'More characters to be', 'Más personajes', 'Mehr Figuren'],
+  ]) {
+    if (box && box.checked && !count) {
+      lines.push(L(`${en}: nothing was added (no network, or a file did not match). Build again to retry.`,
+        `${es}: no se ha añadido nada (sin red, o un archivo no coincidía). Vuelve a crear el pack para reintentarlo.`,
+        `${de}: nichts hinzugefügt (kein Netz, oder eine Datei passte nicht). Erstelle das Paket erneut, um es zu wiederholen.`));
+    }
+  }
   ui.details.textContent = lines.join('\n');
   ui.details.style.whiteSpace = 'pre-line';
   ui.result.classList.remove('hidden');

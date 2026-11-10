@@ -135,8 +135,21 @@ class GuiWindowTest(unittest.TestCase):
             self.assertTrue(self.window.indicator.visible)
             self.assertTrue(self.window.indicator.running)
             self.assertEqual(self.window.rom_entry.options["state"], "disabled")
+            for switch in ("gen4_check", "npcs_check", "backgrounds_check", "followers_check", "hd_check", "looks_check"):
+                self.assertEqual(getattr(self.window, switch).options["state"], "disabled", switch)
             self.assertEqual(self.window.cancel_button.options["state"], "normal")
             self.window._set_busy(False)
+
+    def test_a_ticked_set_that_brought_nothing_is_said_not_reported_as_done(self):
+        none = {"species": 0, "missing": [], "trainers": 0, "backs": 0, "npcs": 0, "backgrounds": 0, "followers": 0, "hd": 0, "looks": 0}
+        text = self.window._gen4_summary(none, {"followers": True, "alt_looks": True, "npcs": False})
+        self.assertIn("Pokémon that walk behind you: nothing was added", text)
+        self.assertIn("More characters to be: nothing was added", text)
+        self.assertNotIn("New people on the map", text)
+        self.assertIn("Build again to retry", text)
+        got = self.window._gen4_summary(dict(none, followers=12), {"followers": True})
+        self.assertIn("Pokémon that walk behind you: 12.", got)
+        self.assertNotIn("nothing was added", got)
 
     def test_every_terminal_event_hides_progress_and_restores_controls(self):
         report = dict(entries=1, abi=0, sha256="synthetic", path="synthetic.pak")

@@ -28,9 +28,10 @@ class Gen4DownloadsTest(unittest.TestCase):
     def test_every_listed_file_once_from_the_pinned_commit(self):
         rows = browser.gen4_downloads()
         listed = gen4_sprites.all_files()
-        # Everything at once: the player's backs take the place of the fan-made ones.
-        self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.NPC_FILES) + len(gen4_sprites.BG_FILES)
-                         + len(gen4_sprites.PLAYER_FILES) + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
+        # Everything the switches offer at once (not the player's own group, which no switch asks for any more).
+        self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.BACK_FILES) + len(gen4_sprites.NPC_FILES)
+                         + len(gen4_sprites.BG_FILES) + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
+        self.assertFalse(any(row[1] == "player" for row in listed))
         self.assertEqual(len({name for _, name in rows}), len(rows))
         prefix = f"https://raw.githubusercontent.com/{gen4_sources.REPO}/{gen4_sources.COMMIT}/"
         backs = f"https://raw.githubusercontent.com/{gen4_sprites.BACK_REPO}/{gen4_sprites.BACK_COMMIT}/"
@@ -119,11 +120,19 @@ class SyntheticBuildTest(unittest.TestCase):
         self.assertEqual(info["entries"], 2)
 
     def test_never_uses_the_network(self):
-        with patch.object(gen4_sprites, "http_get", side_effect=AssertionError("network")), \
-             patch.object(gen4_sprites.urllib.request, "urlopen", side_effect=AssertionError("network")):
+        with patch.object(gen4_sprites, "http_get", side_effect=AssertionError("network")) as get, \
+             patch.object(gen4_sprites.urllib.request, "urlopen", side_effect=AssertionError("network")) as opened, \
+             patch.object(gen4_sprites.Downloader, "__init__", autospec=True,
+                          side_effect=gen4_sprites.Downloader.__init__) as made:
             (self.folder / "001_male_front.png").unlink()
             info = browser.build(str(self.root / "rom.gba"), str(self.root / "web.pak"), str(self.folder))
         self.assertEqual(info["gen4"]["missing"], [1])
+        # A guard that only raises is swallowed by the downloader (any failure leaves the species out): what must be true is that
+        # nothing was even tried, and that the downloader the web build uses has no way to fetch.
+        get.assert_not_called()
+        opened.assert_not_called()
+        self.assertTrue(made.called)
+        self.assertTrue(all(call.kwargs.get("get", "unset") is None for call in made.call_args_list))
 
 
 class WrongRomTest(unittest.TestCase):
