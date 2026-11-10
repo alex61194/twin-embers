@@ -105,6 +105,23 @@ int main(void)
     fclose(file);
     assert(strstr(text, "nuzlocke") == NULL);
 
+    /* FREE HMS: off until chosen, written only when on. */
+    assert(CtrSettings_FreeHm() == 0);
+    CtrSettings_SetFreeHm(1);
+    assert(CtrSettings_FreeHm() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "freehm=1\n") != NULL && strstr(text, "expshare=2\n") != NULL);
+    CtrSettings_SetFreeHm(0);
+    assert(CtrSettings_FreeHm() == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "freehm") == NULL);
+
     /* RANDOMLOCKE: off until chosen, written only when on. */
     assert(CtrSettings_Randomlocke() == 0);
     CtrSettings_SetRandomlocke(1);

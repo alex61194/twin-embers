@@ -40,6 +40,8 @@ int CtrSettings_Nuzlocke(void);              /* the Nuzlocke rules are on (NUZLO
 void CtrSettings_SetNuzlocke(int on);
 int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
 void CtrSettings_SetRandomlocke(int on);
+int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */
+void CtrSettings_SetFreeHm(int on);
 /* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the
  * Builder's --alt-looks), "" for none: the picture that was there before. Only [a-z0-9_] and 15 characters are kept. */
 enum { CTR_LOOK_RED, CTR_LOOK_LEAF, CTR_LOOK_BLUE, CTR_LOOK_SLOTS };

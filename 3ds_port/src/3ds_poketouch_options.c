@@ -82,6 +82,8 @@ static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_
 static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
 static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
+static int GetFreeHm(void) { return !CtrSettings_FreeHm(); }
+static void SetFreeHm(int v) { CtrSettings_SetFreeHm(!(v & 1)); }
 static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
 static void SetRandomlocke(int v) { CtrSettings_SetRandomlocke(!(v & 1)); }
 static int GetNuzlocke(void) { return !CtrSettings_Nuzlocke(); }
@@ -109,6 +111,7 @@ int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
 int CtrOptions_ReusableTm(void) { return CtrSettings_TmReuse(); }
 int CtrOptions_Nuzlocke(void) { return CtrSettings_Nuzlocke(); }
 int CtrOptions_Randomlocke(void) { return CtrSettings_Randomlocke(); }
+int CtrOptions_FreeHm(void) { return CtrSettings_FreeHm(); }
 
 unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species)
 {
@@ -167,6 +170,8 @@ static const CtrOptionRow sRows[] = {
      GetNuzlocke, TwoCount, SetNuzlocke},
     {CTR_TR("RANDOMLOCKE", "RANDOMLOCKE", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und Trainer-Pok\xC3\xA9mon"), CTR_TR("are random species.", "con especies al azar.", "mit zuf\xC3\xA4lligen Arten.")}, 0, sFps, NULL,
      GetRandomlocke, TwoCount, SetRandomlocke},
+    {CTR_TR("FREE HMS", "MO LIBRES", "VMs frei"), {CTR_TR("An HM in the Bag works in", "Una MO de la Mochila sirve", "Eine VM im Beutel wirkt im"), CTR_TR("the field: no move needed.", "en el campo sin ense\xC3\xB1" "arla.", "Feld, ohne sie zu lehren.")}, 0, sFps, NULL,
+     GetFreeHm, TwoCount, SetFreeHm},
     {CTR_TR("RED LOOK", "ASPECTO ROJO", "Rot-Look"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de los", "Das Aussehen von Rot, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookRed, LookCount, SetLookRed},
     {CTR_TR("LEAF LOOK", "ASPECTO HOJA", "Blatt-Look"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de los", "Das Aussehen von Blatt, aus"), CTR_TR("Builder's alternative looks.", "aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
@@ -179,7 +184,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. Page 3 (the game's rules) and page 4 (the looks) are short on purpose: the look
  * preview is a card in the rows a page does not use. */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18 };
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 19 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, ROWS};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
 _Static_assert(PAGE4 < ROWS, "the last page has rows");
