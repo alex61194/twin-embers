@@ -6840,7 +6840,7 @@
   },
   {
    "path": "patches/pokefirered/0239-nuzlocke.json",
-   "sha256": "476c3188cbdfe565f61e1832869c1bdc0b74fc044d6cc566f07b933fa422140f",
+   "sha256": "32b2f2a72522d44296690bd3d8c4805355572e55461cbe30e270ccb422afb035",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
