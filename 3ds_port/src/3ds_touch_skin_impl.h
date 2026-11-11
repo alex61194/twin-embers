@@ -51,15 +51,16 @@ static void EmBlend(int x, int y, uint16_t c, int a)
     Px(x, y, a >= 255 ? c : UiMix(TsGet(x, y), c, a * 8 / 255));
 }
 
-/* The palettes of the raised pieces (the mockup's Ascuas 2): the glass face, its upper band from g1 to top and the rest from f1 to
- * bottom (3ds_ember2_impl.h's Em2Face), the lip and the outline, the ink of a label and its shadow, the light along the top (hl) and the
- * shade along the bottom (sd) of the face. */
+/* The palettes of the raised pieces (the "Llama" mockup, llama2_mockup.html): the glass face, its upper band from g1 to top and the rest
+ * from f1 to bottom (3ds_ember2_impl.h's Em2Face), the lip and the outline, the ink of a label and its shadow, the light along the top
+ * (hl) and `sd`, the shade of a pressed face's top row. Every piece of the mockup shares one outline, LL_EDGE (its --o). */
 typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh, g1, f1, hl, sd; } EmPal;
 #define EM_PAL(g1, g2, f1, f2, lip, edge, hl, sd, ink, inkSh) {g2, f2, lip, edge, ink, inkSh, g1, f1, hl, sd}
 
-#define EM_DARK UI_RGB(98, 98, 98)                  /* FireRed's text grey and its shadow, on the light pieces */
-#define EM_DARK_SH UI_RGB(213, 213, 205)
-#define EM_DIM UI_RGB(120, 106, 98)                /* secondary text: the mockup raised its contrast */
+#define LL_EDGE UI_RGB(42, 34, 56)                  /* the outline of every raised piece of the Llama mockup (--o #2a2238) */
+#define EM_DARK UI_RGB(72, 72, 72)                  /* FireRed's text grey and its shadow, on the light pieces (the mockup's .t) */
+#define EM_DARK_SH UI_RGB(208, 208, 200)
+#define EM_DIM UI_RGB(128, 116, 104)                /* secondary text (the mockup's .d) */
 #define EM_WHITE UI_RGB(255, 255, 255)
 #define EM_STRIPE UI_RGB(232, 112, 28)
 #define EM_GLOW UI_RGB(255, 170, 60)
@@ -67,21 +68,32 @@ typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh, g1, f1, hl, sd; } 
 #define EM_VALUE UI_RGB(208, 48, 32)                /* a value on a light piece (the game's red) */
 static const EmPal kEmAmber = EM_PAL(UI_RGB(255, 233, 168), UI_RGB(255, 207, 106), UI_RGB(251, 170, 68), UI_RGB(236, 116, 32), UI_RGB(170, 70, 14),
                                     UI_RGB(110, 40, 6), UI_RGB(255, 244, 204), UI_RGB(214, 96, 26), EM_WHITE, UI_RGB(122, 44, 8));
-static const EmPal kEmCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 250, 241), UI_RGB(248, 241, 228), UI_RGB(232, 222, 203), UI_RGB(178, 158, 142),
-                                     UI_RGB(92, 78, 72), UI_RGB(255, 255, 255), UI_RGB(218, 205, 184), EM_DARK, EM_DARK_SH);
+static const EmPal kEmCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 253, 244), UI_RGB(250, 244, 226), UI_RGB(236, 226, 198), UI_RGB(184, 168, 136),
+                                     LL_EDGE, UI_RGB(255, 255, 255), UI_RGB(218, 205, 184), EM_DARK, EM_DARK_SH);
 static const EmPal kEmGrey = EM_PAL(UI_RGB(220, 214, 218), UI_RGB(203, 196, 201), UI_RGB(186, 178, 184), UI_RGB(151, 141, 149), UI_RGB(108, 98, 104),
                                     UI_RGB(70, 60, 68), UI_RGB(236, 230, 234), UI_RGB(138, 128, 136), UI_RGB(133, 122, 130), EM_DARK_SH);
 static const EmPal kEmViolet = EM_PAL(UI_RGB(180, 164, 212), UI_RGB(152, 134, 192), UI_RGB(128, 108, 176), UI_RGB(92, 72, 134), UI_RGB(58, 42, 92),
                                       UI_RGB(30, 22, 52), UI_RGB(212, 200, 236), UI_RGB(78, 60, 116), EM_WHITE, UI_RGB(30, 22, 52));
-/* The action colours of the battle menu (blue: the bag, gold: the balls, green: the team, purple: running) and teal (a window's title). */
+/* The action colours of the battle menu (blue: the bag, gold: the balls, green: the team, purple: running) and teal (a window's title);
+ * each is the mockup's palette of that name, outline LL_EDGE. */
 static const EmPal kEmBlue = EM_PAL(UI_RGB(188, 220, 255), UI_RGB(134, 184, 255), UI_RGB(92, 154, 244), UI_RGB(46, 104, 210), UI_RGB(26, 70, 160),
-                                    UI_RGB(14, 36, 96), UI_RGB(224, 240, 255), UI_RGB(42, 92, 188), EM_WHITE, UI_RGB(14, 36, 96));
+                                    LL_EDGE, UI_RGB(224, 240, 255), UI_RGB(42, 92, 188), EM_WHITE, UI_RGB(14, 36, 96));
 static const EmPal kEmGreen = EM_PAL(UI_RGB(204, 244, 184), UI_RGB(148, 222, 128), UI_RGB(102, 198, 96), UI_RGB(44, 154, 72), UI_RGB(26, 110, 46),
-                                     UI_RGB(12, 64, 24), UI_RGB(232, 255, 224), UI_RGB(42, 138, 64), EM_WHITE, UI_RGB(12, 64, 24));
+                                     LL_EDGE, UI_RGB(232, 255, 224), UI_RGB(42, 138, 64), EM_WHITE, UI_RGB(12, 64, 24));
 static const EmPal kEmGold = EM_PAL(UI_RGB(255, 242, 192), UI_RGB(255, 224, 124), UI_RGB(248, 198, 62), UI_RGB(224, 160, 24), UI_RGB(160, 108, 8),
-                                    UI_RGB(96, 60, 4), UI_RGB(255, 250, 224), UI_RGB(200, 142, 16), EM_WHITE, UI_RGB(96, 60, 4));
+                                    LL_EDGE, UI_RGB(255, 250, 224), UI_RGB(200, 142, 16), EM_WHITE, UI_RGB(96, 60, 4));
 static const EmPal kEmPurple = EM_PAL(UI_RGB(230, 216, 255), UI_RGB(198, 172, 255), UI_RGB(168, 136, 242), UI_RGB(122, 88, 222), UI_RGB(82, 56, 160),
-                                      UI_RGB(44, 28, 96), UI_RGB(242, 234, 255), UI_RGB(108, 76, 200), EM_WHITE, UI_RGB(44, 28, 96));
+                                      LL_EDGE, UI_RGB(242, 234, 255), UI_RGB(108, 76, 200), EM_WHITE, UI_RGB(44, 28, 96));
+/* The Llama palettes (the mockup's .fl, .sl, .pb, .pr). Flame is what a chosen piece wears now (kEmAmber stays for the screens not converted yet);
+ * slate is CANCEL / BACK / CLOSE; party blue is a party card, party red a fainted one. */
+static const EmPal kEmFlame = EM_PAL(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), UI_RGB(138, 22, 16),
+                                     LL_EDGE, UI_RGB(255, 233, 168), UI_RGB(176, 36, 22), EM_WHITE, UI_RGB(122, 20, 16));
+static const EmPal kEmSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 202), UI_RGB(112, 128, 182), UI_RGB(76, 90, 140), UI_RGB(44, 53, 88),
+                                     LL_EDGE, UI_RGB(208, 216, 240), UI_RGB(60, 72, 116), EM_WHITE, UI_RGB(32, 38, 63));
+static const EmPal kEmPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
+                                         LL_EDGE, UI_RGB(232, 248, 255), UI_RGB(46, 120, 196), EM_WHITE, UI_RGB(24, 74, 134));
+static const EmPal kEmPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
+                                        LL_EDGE, UI_RGB(255, 232, 228), UI_RGB(170, 62, 64), EM_WHITE, UI_RGB(106, 28, 34));
 static const EmPal kEmTeal = EM_PAL(UI_RGB(184, 240, 234), UI_RGB(124, 214, 204), UI_RGB(70, 184, 174), UI_RGB(34, 144, 138), UI_RGB(20, 102, 94),
                                     UI_RGB(10, 58, 54), UI_RGB(220, 255, 250), UI_RGB(30, 128, 120), EM_WHITE, UI_RGB(10, 58, 54));
 
@@ -142,9 +154,7 @@ static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int p
         return fy;
     }
     Em2Face(x + 1, fy + 1, w - 2, face - 2, 4, p->g1, p->top, p->f1, p->bottom);
-    Fill(x + 5, fy + 1, w - 10, 1, p->hl);                                              /* the light along the top */
-    if (face >= 12)
-        Fill(x + 4, fy + face - 2, w - 8, 1, p->sd);                                    /* and a shade along the bottom */
+    Fill(x + 5, fy + 1, w - 10, 1, p->hl);                                              /* the light along the top (the mockup has no shade below) */
     return fy;
 }
 

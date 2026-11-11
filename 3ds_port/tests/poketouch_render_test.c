@@ -136,6 +136,20 @@ static void ppm(const char *dir, const char *name)
     }
     fclose(f);
 }
+#ifndef PT_BASELINE
+/* The Llama pieces' test: how many pixels of (x, y, w, h) are not the marker colour; a pixel outside it grown by `grow` that is not is a failure. */
+static unsigned llChanged(int x,int y,int w,int h,int grow,const char *name)
+{
+    unsigned inside=0;
+    for(int cy=0;cy<H;++cy) for(int cx=0;cx<W;++cx) {
+        int in=cx>=x&&cx<x+w&&cy>=y&&cy<y+h, near=cx>=x-grow&&cx<x+w+grow&&cy>=y-grow&&cy<y+h+grow;
+        if(canvas[cx*H+H-1-cy]==0x1357) continue;
+        if(!near) { fprintf(stderr,"%s painted outside its rectangle, at %d,%d\n",name,cx,cy); assert(0); }
+        if(in) ++inside;
+    }
+    return inside;
+}
+#endif
 static void decoder(void)
 {
 #ifndef PT_BASELINE
@@ -382,6 +396,199 @@ int main(int argc, char **argv)
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
     v.backEnabled=1; update(&old,&v); v.backPressed=1; update(&old,&v);
+#ifndef PT_BASELINE
+    {
+        /* Llama (the owner's mockup, llama2_mockup.html): the shared pieces of 3ds_ember2_impl.h. Each is drawn on a canvas of a marker colour
+         * and must stay inside its rectangle plus the 2 px a piece owns (the canvas redraws only what changed); the ones that do not blend
+         * must draw the same twice; colours and shapes are spot-checked against the mockup's CSS. PT_PREVIEW_DIR gets a sheet of them. */
+        enum { MARK = 0x1357 };
+        const char *dir=getenv("PT_PREVIEW_DIR");
+        #define HEX(h) UI_RGB(((h)>>16)&255,((h)>>8)&255,(h)&255)
+        #define SENTINEL() do { sCanvas=canvas; for(int i=0;i<W*H;++i) canvas[i]=MARK; } while(0)
+        /* Everything outside (x, y, w, h) grown by `grow` is still the marker; returns how many pixels inside it changed. */
+        #define CHANGED(x,y,w,h,grow,name) llChanged(x,y,w,h,grow,name)
+        struct { const EmPal *p; const char *name; unsigned g1,g2,f1,f2,lip,hl,ts; } pals[] = {
+            {&kEmCream,"cream",0xffffff,0xfffdf4,0xfaf4e2,0xece2c6,0xb8a888,0xffffff,0},   /* ts of the cream is the text shadow EM_DARK_SH */
+            {&kEmFlame,"flame",0xffc45a,0xff9a38,0xf8642a,0xd8301e,0x8a1610,0xffe9a8,0x7a1410},
+            {&kEmBlue,"blue",0xbcdcff,0x86b8ff,0x5c9af4,0x2e68d2,0x1a46a0,0xe0f0ff,0x0e2460},
+            {&kEmGold,"gold",0xfff2c0,0xffe07c,0xf8c63e,0xe0a018,0xa06c08,0xfffae0,0x603c04},
+            {&kEmGreen,"green",0xccf4b8,0x94de80,0x66c660,0x2c9a48,0x1a6e2e,0xe8ffe0,0x0c4018},
+            {&kEmPurple,"purple",0xe6d8ff,0xc6acff,0xa888f2,0x7a58de,0x5238a0,0xf2eaff,0x2c1c60},
+            {&kEmSlate,"slate",0xaab6dc,0x8c9aca,0x7080b6,0x4c5a8c,0x2c3558,0xd0d8f0,0x20263f},
+            {&kEmPartyBlue,"party blue",0xc4ecff,0x8ed4fa,0x60b8f0,0x3c92dc,0x1e5ea6,0xe8f8ff,0x184a86},
+            {&kEmPartyRed,"party red",0xffd0c8,0xf8a498,0xe87c74,0xc85050,0x8a2c30,0xffe8e4,0x6a1c22},
+        };
+        /* The palettes are the mockup's .cr .fl .bl .go .gr .pu .sl .pb .pr, outline --o #2a2238 on every one. */
+        for(unsigned i=0;i<sizeof(pals)/sizeof(pals[0]);++i) {
+            const EmPal *p=pals[i].p;
+            if(pals[i].name[0]=='c' && pals[i].name[1]=='r') assert(p->inkSh==HEX(0xd0d0c8) && p->ink==HEX(0x484848));
+            else assert(p->inkSh==HEX(pals[i].ts) && p->ink==EM_WHITE);
+            assert(p->g1==HEX(pals[i].g1) && p->top==HEX(pals[i].g2) && p->f1==HEX(pals[i].f1) && p->bottom==HEX(pals[i].f2));
+            assert(p->lip==HEX(pals[i].lip) && p->hl==HEX(pals[i].hl) && p->edge==HEX(0x2a2238));
+        }
+        assert(EM_DIM==HEX(0x807468) && LlPick(1,&kEmCream)==&kEmFlame && LlPick(0,&kEmCream)==&kEmCream);
+        /* Pieces that must stay in their rectangle (+ the 2 px they own), and change something in it. */
+        #define PIECE(x,y,w,h,grow,name,call) do { SENTINEL(); call; assert(CHANGED(x,y,w,h,grow,name)>0); } while(0)
+        #define STILL(x,y,w,h,grow,name,call) do { PIECE(x,y,w,h,grow,name,call); memcpy(reference,canvas,sizeof(canvas)); call; \
+            assert(!memcmp(reference,canvas,sizeof(canvas)) && name " must draw the same twice"); } while(0)
+        STILL(20,20,100,60,2,"LlWindow",LlWindow(20,20,100,60));
+        STILL(20,20,100,60,0,"LlWindowPlain",LlWindowPlain(20,20,100,60));
+        STILL(30,40,50,1,0,"LlRule",LlRule(30,40,50));
+        STILL(82,32,216,36,0,"LlHpBox",LlHpBox(82,32,216,36));
+        STILL(10,10,136,9,0,"LlHpBar",LlHpBar(10,10,136,319,319));
+        STILL(10,10,136,9,0,"LlHpBar half",LlHpBar(10,10,136,100,319));
+        STILL(10,10,136,9,0,"LlHpBar low",LlHpBar(10,10,136,1,319));
+        STILL(10,10,136,9,0,"LlHpBar empty",LlHpBar(10,10,136,0,319));
+        { int w=0; PIECE(20,20,64,13,0,"LlRibbon",w=LlRibbon(20,20,"KANTO",LL_RIB_TOP,LL_RIB_BOT)); assert(w==UiTextWidth("KANTO",1)+18); }
+        STILL(20,20,40,11,0,"LlRibbonBox",LlRibbonBox(20,20,40,11,7,LL_TL,LL_BLUE_TOP,LL_BLUE_BOT,"X"));
+        STILL(20,20,40,11,2,"LlRibbonBox BL",LlRibbonBox(20,20,40,11,7,LL_BL,LL_RIB_TOP,LL_RIB_BOT,"1\xC2\xBA"));
+        { int w=0; PIECE(20,20,80,13,0,"LlTypeBadge",w=LlTypeBadge(20,20,"TIERRA",UI_RGB(200,160,72))); assert(w==UiTextWidth("TIERRA",1)+12); }
+        STILL(20,20,7,11,0,"LlCursor",LlCursor(20,20,LL_CURSOR));
+        STILL(20,20,8,5,0,"LlArrow up",LlArrow(20,20,8,5,0,EM_WHITE));
+        STILL(20,20,8,5,0,"LlArrow down",LlArrow(20,20,8,5,1,EM_WHITE));
+        STILL(62,5,196,25,0,"LlBallTray",LlBallTray(62,5,196,25));
+        STILL(150,150,24,24,0,"LlBackDisc",LlBackDisc(150,150));
+        STILL(150,150,18,4,0,"LlTrayBar",LlTrayBar(150,150,18,10,100));
+        STILL(150,150,15,14,0,"LlNub",LlNub(150,150,15,14,-1,0));
+        STILL(150,150,15,14,0,"LlNub pressed",LlNub(150,150,15,14,1,1));
+        STILL(150,150,40,14,0,"LlFlameFace",LlFlameFace(150,150,40,14,3,0));
+        STILL(150,150,10,68,0,"LlScrollRail",LlScrollRail(150,150,10,68,3,28));
+        { static const char *const names[3]={"OFF","LOW","HIGH"}; STILL(150,150,118,14,0,"LlSegments",LlSegments(150,150,118,14,names,3,2,1)); }
+        STILL(150,150,30,30,1,"LlPlate",LlPlate(150,150,30,UI_RGB(64,72,104),0,0));
+        PIECE(146,146,38,38,0,"LlPlate ring",LlPlate(150,150,30,UI_RGB(24,74,134),UI_RGB(232,248,255),1));   /* a px of edge, one of band, a px of edge: 3 px out */
+        PIECE(146,146,50,50,0,"LlPlate ring 2",LlPlate(150,150,42,UI_RGB(138,22,16),UI_RGB(255,216,144),2));
+        PIECE(150,150,9,5,0,"LlMiniText",assert(LlMiniText("PS",150,150,EM_WHITE)==9));
+        /* Pieces that tint what is there (the marker colour here): inside their rectangle (+ the light row under them), no more. */
+        PIECE(150,150,22,23,0,"LlLeadFrame",LlLeadFrame(150,150,22,23));
+        PIECE(150,150,14,14,0,"LlTraySlot",LlTraySlot(150,150));
+        PIECE(150,150,100,16,0,"LlWell",LlWell(150,150,100,15));
+        PIECE(150,150,59,16,0,"LlSubPill",LlSubPill(150,150,59,15));
+        /* The ring of a chosen card: round it only (nothing inside its rectangle), 2 px thick, the two colours in order, on any size. */
+        {
+            static const int sizes[][2]={{304,73},{150,50},{72,34},{31,39},{20,18}};
+            for(unsigned i=0;i<sizeof(sizes)/sizeof(sizes[0]);++i) {
+                int w=sizes[i][0], h=sizes[i][1], x=6, y=6, ring=0;
+                SENTINEL(); LlSelectRing(x,y,w,h);
+                for(int cy=0;cy<H;++cy) for(int cx=0;cx<W;++cx) {
+                    int inside=cx>=x&&cx<x+w&&cy>=y&&cy<y+h, near=cx>=x-2&&cx<x+w+2&&cy>=y-2&&cy<y+h+2;
+                    /* inside the card's box the rounded corners leave a few pixels empty: the ring follows the curve there, so only the shape itself must be untouched */
+                    if((inside&&Em2In(cx-x,cy-y,w,h,5))||!near) assert(at(cx,cy)==MARK);
+                    else if(at(cx,cy)!=MARK) { ++ring; assert(at(cx,cy)==LL_RING_IN||at(cx,cy)==LL_RING_OUT); }
+                }
+                assert(ring>0);
+                assert(at(x-1,y+h/2)==LL_RING_IN && at(x-2,y+h/2)==LL_RING_OUT && at(x+w,y+h/2)==LL_RING_IN && at(x+w+1,y+h/2)==LL_RING_OUT);
+                assert(at(x+w/2,y-1)==LL_RING_IN && at(x+w/2,y-2)==LL_RING_OUT && at(x+w/2,y+h)==LL_RING_IN && at(x+w/2,y+h+1)==LL_RING_OUT);
+                assert(at(x-1,y-1)==MARK && at(x-2,y-2)==MARK);                   /* the corners are rounded: nothing in the very corner */
+                memcpy(reference,canvas,sizeof(canvas)); LlSelectRing(x,y,w,h); assert(!memcmp(reference,canvas,sizeof(canvas)));
+            }
+        }
+        /* The shapes: the HP box's left edge leans (its top row starts 9 px in, its bottom row at 0), the ribbon's right edge leans 7 px,
+         * the tray's two ends lean 9 px; the outline is the slate, the bar's fill widths follow the HP. */
+        SENTINEL(); LlHpBox(40,40,216,36);
+        assert(at(40+8,40)==MARK && at(40+9,40)==LL_SLATE && at(40,40+35)==LL_SLATE && at(40+215,40)==LL_SLATE && at(40+215,40+35)==LL_SLATE);
+        assert(at(40,40)==MARK && at(40+4,40+18)!=MARK && at(40+9,40+18)!=LL_SLATE && at(40+108,40+18)!=MARK && at(40+108,40+18)!=LL_SLATE);
+        SENTINEL(); LlRibbon(40,40,"STAB",LL_RIB_TOP,LL_RIB_BOT);
+        { int w=UiTextWidth("STAB",1)+18; assert(at(40+w-1,40)!=MARK && at(40+w-1,40+12)==MARK && at(40+w-8,40+12)!=MARK && at(40+w-7,40+12)==MARK && at(40,40)!=MARK && at(40,40+12)!=MARK); }
+        SENTINEL(); LlRibbonBox(40,40,40,11,7,LL_TL|LL_BL,LL_RIB_TOP,LL_RIB_BOT,"");
+        assert(at(40,40)==MARK && at(40,40+10)==MARK && at(40+4,40)!=MARK && at(40,40+5)!=MARK);   /* the rounded corners are cut */
+        SENTINEL(); LlBallTray(62,5,196,25);
+        assert(at(62+9,5)==LL_SLATE_DK && at(62+8,5)==MARK && at(62,5+24)==LL_SLATE_DK && at(62+195,5)==LL_SLATE_DK && at(62+195-9,5+24)==LL_SLATE_DK && at(62+195-8,5+24)==MARK);
+        assert(at(62+98,5+12)!=MARK && at(62+98,5+12)!=LL_SLATE_DK);
+        /* The window: outline, white, two px of sky blue, a px of light blue, then the paper. */
+        SENTINEL(); LlWindow(20,20,100,60);
+        assert(at(20+50,20)==LL_SLATE && at(20+50,21)==EM_WHITE && at(20+50,22)==HEX(0x7ab4d8) && at(20+50,23)==HEX(0x7ab4d8) && at(20+50,24)==HEX(0xc8e4f0));
+        assert(at(20,20+30)==LL_SLATE && at(21,20+30)==EM_WHITE && at(22,20+30)==HEX(0x7ab4d8) && at(24,20+30)==HEX(0xc8e4f0) && at(20+50,25)==EM_WHITE);
+        assert(at(20+50,20+60+0)!=MARK && at(20+50,20+60+1)!=MARK && at(20+50,20+60+2)==MARK);         /* its shadow: two rows */
+        /* The HP bar: the fill's width follows the HP (green over half, yellow over a fifth, red below) and is clipped by the track's ends. */
+        {
+            int tx=10+15, ty=12, tw=136-17;
+            SENTINEL(); LlHpBar(10,10,136,319,319);
+            assert(at(tx+5,ty+3)==HEX(0x30c848) && at(tx+5,ty)==HEX(0xa8f8b8) && at(tx+tw-1,ty+4)==LL_SLATE && at(tx+tw-1,ty+3)==HEX(0x30c848) && at(tx,ty)==LL_SLATE);
+            SENTINEL(); LlHpBar(10,10,136,100,319);                         /* 31 percent: yellow, 37 px of a 119 px track */
+            assert(at(tx+36,ty+3)==HEX(0xe8b820) && at(tx+37,ty+3)==HEX(0x586080) && at(tx+5,ty)==HEX(0xf8e890));
+            SENTINEL(); LlHpBar(10,10,136,1,319);                           /* a sliver is one pixel, red */
+            assert(at(tx,ty+3)==HEX(0xe03828) && at(tx+1,ty+3)==HEX(0x586080));
+            SENTINEL(); LlHpBar(10,10,136,0,319);
+            assert(at(tx,ty+3)==HEX(0x586080) && at(tx+5,ty+3)==HEX(0x586080));
+            assert(at(10+3,10+2)==HEX(0xf8b020) || at(10+4,10+2)==HEX(0xf8b020));   /* the orange label */
+        }
+        /* Text that does not fit ends in "..." (Em2Fit): the ribbon never paints past its slant. */
+        SENTINEL(); LlRibbonBox(40,40,30,13,7,0,LL_RIB_TOP,LL_RIB_BOT,"A VERY LONG RIBBON");
+        for(int cy=0;cy<H;++cy) for(int cx=70;cx<W;++cx) assert(at(cx,cy)==MARK);
+        /* The cursor: red, with the shadow one px right and below; white on a chosen row. */
+        SENTINEL(); LlCursor(40,40,EM_WHITE);
+        assert(at(40,45)==EM_WHITE && at(40,41)==EM_WHITE && at(40,50)==LL_CURSOR_SH && at(46,45)==LL_CURSOR_SH);
+        if(dir) {
+            /* A sheet of the pieces, laid out as the mockup lays them (panels 1, 2 and 4), for a look next to the mockup's pictures. */
+            static const char *const types[]={"TIERRA","FUEGO","DRAGON","NORMAL"};
+            const uint16_t tcol[4]={UI_RGB(200,160,72),UI_RGB(240,128,48),UI_RGB(112,56,248),UI_RGB(168,168,120)};
+            memset(sPtFontReady,0,sizeof(sPtFontReady));
+            sCanvas=canvas; TsBackdrop();
+            /* panel 1: the tray, the FIGHT card, four action cards */
+            LlBallTray(62,5,196,25);
+            LlLeadFrame(62+13,5+1,22,23);
+            for(int i=0;i<5;++i) { LlTrayBar(62+15+28*i,5+18,18,i==3?0:i==2?44:i==1?82:100,100); if(i==4) LlTraySlot(62+157,5+5); }
+            EmButton(8,36,304,73+2,&kEmFlame,3,0); LlSelectRing(8,36,304,75);
+            LlPlate(8+9+1,36+4+1,63,kEmFlame.lip,UI_RGB(255,216,144),2);
+            UiText("LUCHAR",8+88,36+7,EM_WHITE,kEmFlame.inkSh,1,300);
+            LlTypeBadge(8+170,36+8,"TIERRA",UI_RGB(200,160,72));
+            LlHpBox(8+82,36+32,216,36);
+            UiText("Groudon",8+82+16,36+32+4,EM_DARK,EM_DARK_SH,1,300);
+            UiText("Nv100",8+82+164,36+32+4,EM_DARK,EM_DARK_SH,1,300);
+            LlHpBar(8+82+13,36+32+20,136,319,319);
+            UiText("319/319",8+82+156,36+32+18,EM_DARK,EM_DARK_SH,1,300);
+            { const EmPal *ps[4]={&kEmBlue,&kEmGold,&kEmGreen,&kEmPurple}; const char *nm[4]={"MOCHILA","POKE BALL","POKEMON","HUIR"};
+              for(int i=0;i<4;++i) { int x=8+77*i; EmButton(x,120,73,108,ps[i],3,0); EmLabel(nm[i],x,73,120+61-3+3,9,ps[i]); LlSubPill(x+7,120+85,59,15); UiText("OBJETOS",x+13,120+88,EM_WHITE,ps[i]->inkSh,1,x+66); } }
+            ppm(dir,"llama_battle");
+            TsBackdrop();
+            /* panel 2: the tray, four move cards (the first chosen), a window with a rule and a ribbon, CANCEL with the back disc */
+            LlBallTray(62,5,196,25); LlLeadFrame(62+13,5+1,22,23);
+            for(int i=0;i<4;++i) {
+                int x=i%2?162:8, y=i<2?36:93;
+                EmButton(x,y,150,50+3,&kEmCream,3,0);
+                if(i==0) LlSelectRing(x,y,150,53);
+                UiRoundFill(x+1,y+1,6,49,5,tcol[i]);
+                UiText(i==0?"TERREMOTO":i==1?"LANZALLAMAS":i==2?"GARRA DRAGON":"DANZA ESPADA",x+(i==0?21:13),y+5,EM_DARK,EM_DARK_SH,1,x+110);
+                if(i==0) LlCursor(x+11,y+6,LL_CURSOR);
+                LlTypeBadge(x+150-6-UiTextWidth(types[i],1)-12,y+5,types[i],tcol[i]);
+                UiText("POT 100  PRE 100",x+13,y+20,EM_DIM,EM_DARK_SH,1,x+140);
+            }
+            LlWindow(7,153,228,80);
+            UiText("TERREMOTO",8+12,154+9,EM_DARK,EM_DARK_SH,1,200);
+            LlRibbon(8+160,154+8,"STAB",LL_RIB_TOP,LL_RIB_BOT);
+            LlRule(8+12,154+25,202);
+            UiText("Un terremoto que golpea a",8+12,154+31,EM_DIM,EM_DARK_SH,1,230);
+            EmButton(240,154,72,75+3,&kEmSlate,3,0); LlBackDisc(240+24,154+14-1);
+            EmLabel("CANCELAR",240,72,154+46,9,&kEmSlate);
+            ppm(dir,"llama_moves");
+            TsBackdrop();
+            /* panel 4: the party's six cards (blue, the last fainted, one empty), the note and CANCEL */
+            for(int i=0;i<6;++i) {
+                int x=i%2?162:8, y=6+53*(i/2), dead=i==3;
+                const EmPal *p=dead?&kEmPartyRed:&kEmPartyBlue;
+                if(i==5) { UiRoundFill(x,y,150,51,5,UI_RGB(34,6,6)); continue; }
+                EmButton(x,y,150,48+3,p,3,0);
+                if(i==0) LlSelectRing(x,y,150,51);
+                LlPlate(x+5+1,y+4+1,38,p->inkSh,EM_WHITE,1);
+                UiText(i==0?"GROUDON":i==1?"CHARIZARD":i==2?"PIKACHU":"ONIX",x+52,y+4,EM_WHITE,p->inkSh,1,x+100);
+                LlHpBar(x+52,y+19,92,dead?0:i==2?31:100,i==2?70:100);
+                if(i==0) LlRibbonBox(x+1,y+37,UiTextWidth("1\xC2\xBA",1)+18,11,7,LL_BL,LL_RIB_TOP,LL_RIB_BOT,"1\xC2\xBA");
+                if(i==2) LlTypeBadge(x+52,y+31,"PAR",UI_RGB(216,168,24));
+            }
+            LlWindow(7,169,228,65);
+            UiText("Elige un POKEMON.",8+12,170+9,EM_DARK,EM_DARK_SH,1,220);
+            LlRule(8+12,170+25,202);
+            EmButton(240,170,72,60+3,&kEmSlate,3,0); LlBackDisc(240+24,170+8-1);
+            EmLabel("CANCELAR",240,72,170+36,9,&kEmSlate);
+            ppm(dir,"llama_party");
+        }
+        #undef PIECE
+        #undef STILL
+        #undef SENTINEL
+        #undef CHANGED
+        #undef HEX
+    }
+#endif
     if(viewports) fclose(viewports);
     if(realPack) fclose(realPack);
     free(realIndex);

@@ -1020,7 +1020,7 @@ static void BActCard(int i, const CtrBattleView *v)
 }
 
 /* The quick ball: grey and still when there is no ball to throw (none left, or the boxes full). */
-static const EmPal kEmSlate = EM_PAL(UI_RGB(216, 212, 222), UI_RGB(200, 196, 206), UI_RGB(176, 172, 184), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116),
+static const EmPal kEmBallOff = EM_PAL(UI_RGB(216, 212, 222), UI_RGB(200, 196, 206), UI_RGB(176, 172, 184), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116),
                                      UI_RGB(60, 58, 72), UI_RGB(232, 230, 238), UI_RGB(120, 116, 134), EM_WHITE, UI_RGB(60, 58, 72));
 /* Its colour: gold (kEmGold), apart from FIGHT's orange and the cursor's glow. */
 
@@ -1056,7 +1056,7 @@ static void BBallCard(const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = BActRect(v, CTR_ACTION_BALL);
     int ready = v->ball == CTR_QUICK_BALL_READY;
-    const EmPal *p = ready ? &kEmGold : &kEmSlate;
+    const EmPal *p = ready ? &kEmGold : &kEmBallOff;
     int fy = BEmCard(r, p, v->showCursor && v->cursor == CTR_ACTION_BALL, ready && v->pressed == BUI_ACT_BALL);
     int cx = r->x + r->w / 2;
 
