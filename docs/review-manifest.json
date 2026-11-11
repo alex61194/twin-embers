@@ -1504,7 +1504,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "22b6c02183605728808bb7d163de99ff5f2145c70d2cb30c30a3ff90aaf6c433",
+   "sha256": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
