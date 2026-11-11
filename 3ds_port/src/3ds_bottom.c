@@ -2162,8 +2162,11 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->touch.backVisible = (uint8_t)BackVisible(mode);
             s->touch.backEnabled = (uint8_t)BackEnabled(mode);
             s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+            int base;
+
+            CtrOptions_PageOf(sOpt.row, NULL, &base, NULL);
             CtrOptions_Fill(&s->touch, sOpt.sel);
-            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row % PT_OPT_MAX) : -1);
+            s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row - base) : -1);
             s->touch.optZone = (uint8_t)(sOpt.down && sOpt.inside ? sOpt.zone : PT_OPT_ZONE_NONE);
             s->touch.optPagePressed = (uint8_t)(sOpt.pageDown && sOpt.pageInside);
             return;
@@ -3478,16 +3481,15 @@ static int FieldEnabled(int id)
  * physical button cancels it too. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
-    int page = sOpt.sel / PT_OPT_MAX;
-    int base = page * PT_OPT_MAX;
-    int total = CtrOptions_RowCount();
-    int pageCount = (total + PT_OPT_MAX - 1) / PT_OPT_MAX;
-    int pageRows = total - base > PT_OPT_MAX ? PT_OPT_MAX : total - base;
-    int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
-    int relRow, zone;
-    int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
-                                                       pageRows, &relRow, &zone);
-    int globalRow = base + relRow;
+    int page, base, pageRows;
+    int pageCount = CtrOptions_PageCount();
+    int hitPage, relRow, zone, on, globalRow;
+
+    CtrOptions_PageOf(sOpt.sel, &page, &base, &pageRows);
+    hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
+    on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
+                                                   pageRows, &relRow, &zone);
+    globalRow = base + relRow;
 
     if (on && CtrOptions_IsLevels(globalRow) && zone != PT_OPT_ZONE_LABEL)
         zone = PT_OPT_ZONE_SEG + CtrPokeTouch_OptionSegment((int)in->touchX, CtrOptions_Count(globalRow));
@@ -3513,10 +3515,8 @@ static void ProcessOptionsTouch(const CtrInput *in)
         }
         int pageInside = sOpt.pageInside;
         sOpt.pageDown = sOpt.pageInside = 0;
-        if (pageInside) {
-            int next = ((page + 1) % pageCount) * PT_OPT_MAX;
-            sOpt.sel = next;
-        }
+        if (pageInside)
+            sOpt.sel = CtrOptions_PageFirst((page + 1) % pageCount);
         return;
     }
     if (!sOpt.down)

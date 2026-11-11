@@ -19,7 +19,7 @@ static char sAsked[64];
 static uint8_t sIconsEntry[200 + 4 + 3 * 1024];
 
 /* The game's object events and the compositor's palettes, as the NPC tests need them. */
-static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF;
+static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF, sNpcSilhouette;
 static uint16_t sNpcUnfaded[512];
 static uint16_t sNpcPalette[16][16];
 static unsigned sNpcPaletteSets;
@@ -34,7 +34,7 @@ int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned
     *graphicsId = sNpcGfx;
     *frame = sNpcFrame;
     *unfaded = sNpcUnfaded;
-    return paletteNum == 9 ? 2 + 3 : 1;
+    return (paletteNum == 9 ? 2 + 3 : 1) | (sNpcSilhouette ? CTR_NPC_SILHOUETTE : 0);
 }
 
 void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
@@ -661,8 +661,12 @@ int main(void)
         sEntry[4] = 9;
         sEntrySize = 40 + 9 * 512;
         sNpcGfx = CTR_NPC_FOLLOWER + 4;
-        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && !person.silhouette);
         assert(strcmp(sAsked, "graphics/gen4/follower/004.bin") == 0 && person.side == 4);
+        /* Silhouette flag passed from CtrNpc_Sprite is preserved on CtrGen4Obj without changing slot/side. */
+        sNpcSilhouette = 1;
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && person.silhouette && person.side == 4);
+        sNpcSilhouette = 0;
         /* The player running as the Pokemon: the running images are the walking ones (south, north, west). */
         sNpcGfx = CTR_NPC_FOLLOWER + 4;
         for (unsigned f = 9, want = 0; f < 18; ++f, ++want)

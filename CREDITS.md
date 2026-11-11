@@ -59,6 +59,13 @@
 - **Pyodide contributors** (MPL-2.0) and **Kazuhiko Arase**, qrcode-generator
   (MIT) — external libraries the web Builder page loads from public CDNs at
   pinned versions; neither is copied into this repository.
+- **Sh3ld0r/mcl5500** — overworld wild Pokémon feature (spawn controller, GPU
+  silhouette tinting, OPTIONS page 4 settings and `patch 0237`), contributed
+  under MIT with disclosed AI assistance. Concept inspired by **Wilds of Kanto
+  Revival** by **poooooby** (https://github.com/poooooby/wilds-of-kanto-gen-3, a
+  fork of **Wilds of Kanto** by **YoDrehDenSwagAuf** and collaborators for
+  `Gen1Recomp`); original implementation, with no code or assets reused from
+  that mod.
 - **Nintendo, Game Freak, Creatures and The Pokémon Company** — relevant game
   and trademark rightsholders; no affiliation or authorization is asserted.
 

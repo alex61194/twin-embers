@@ -93,6 +93,24 @@ int main(void)
                && strstr(big, "look_leaf") == NULL && strstr(big, "expshare=2\n") != NULL && strstr(big, "ball=3\n") != NULL);
     }
 
+    /* Overworld wild Pokemon density, silhouettes and aggression: off until chosen, kept in settings.cfg. */
+    assert(CtrSettings_WildDensity() == 0 && CtrSettings_WildSilhouette() == 0 && CtrSettings_WildAggro() == 0);
+    CtrSettings_SetWildDensity(2);
+    CtrSettings_SetWildDensity(9);
+    CtrSettings_SetWildSilhouette(1);
+    CtrSettings_SetWildAggro(3);
+    CtrSettings_SetWildAggro(8);
+    assert(CtrSettings_WildDensity() == 2 && CtrSettings_WildSilhouette() == 1 && CtrSettings_WildAggro() == 3);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    {
+        char big[256 + 1] = {0};
+
+        assert(file != NULL && fread(big, 1, 256, file) == 256);
+        fclose(file);
+        assert(strstr(big, "wild=2\n") != NULL && strstr(big, "wildsil=1\n") != NULL
+               && strstr(big, "wildaggro=3\n") != NULL);
+    }
+
     remove(CTR_SETTINGS_PATH);
     puts("settings_test ok");
     return 0;

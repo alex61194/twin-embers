@@ -42,5 +42,14 @@ void CtrSettings_SetLook(int slot, const char *id);
 /* The ball the battle's ball button last threw (an item number, 0 for none yet): the button starts on it. */
 unsigned CtrSettings_LastBall(void);
 void CtrSettings_SetLastBall(unsigned item);
+/* Overworld wild Pokemon (the OPTIONS screen): 0 off (standard random encounters), 1 few, 2 normal, 3 many. */
+int CtrSettings_WildDensity(void);
+void CtrSettings_SetWildDensity(int density);
+/* Overworld wild Pokemon display (when active): 0 full Pokemon sprites, 1 dark silhouettes. */
+int CtrSettings_WildSilhouette(void);
+void CtrSettings_SetWildSilhouette(int mode);
+/* Overworld wild Pokemon aggression: 0 off, 1 rare (10%), 2 low (20%), 3 moderate (30%), 4 frequent (40%). */
+int CtrSettings_WildAggro(void);
+void CtrSettings_SetWildAggro(int mode);
 
 #endif

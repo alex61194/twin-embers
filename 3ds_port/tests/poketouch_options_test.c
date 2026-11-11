@@ -70,8 +70,9 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 18, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
-    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 3, "more rows than three pages hold");
+    CHECK(CtrOptions_RowCount() == 21, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * 4, "more rows than four pages hold");
+    CHECK(CtrOptions_PageCount() == 4, "four option pages");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
     CHECK(strcmp(CtrOptions_Row(8)->label, "MOVE DETAILS") == 0, "MOVE DETAILS is row 8");
@@ -186,7 +187,47 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
-    CHECK(view.optPage == 2 && view.optPageCount == 3 && view.optCount == 4, "page 3 holds EXP SHARE and the three looks");
+    CHECK(view.optPage == 2 && view.optPageCount == 4 && view.optCount == 4, "page 3 holds EXP SHARE and the three looks");
+    /* WILD POKEMON and WILD DISPLAY on page 4. */
+    Text(18, "OFF");
+    Text(19, "POKEMON");
+    CHECK(CtrOptions_WildDensity() == 0 && CtrOptions_WildSilhouette() == 0, "wild options start off");
+    CtrOptions_Step(18, 1);
+    Text(18, "FEW");
+    CtrOptions_Step(18, 1);
+    Text(18, "NORMAL");
+    CtrOptions_Step(18, 1);
+    Text(18, "MANY");
+    CtrOptions_Step(18, 1);
+    Text(18, "OFF");
+    CtrOptions_Set(18, 2);
+    CtrOptions_Set(19, 1);
+    Text(18, "NORMAL");
+    Text(19, "SILHOUETTE");
+    CHECK(CtrOptions_WildDensity() == 2 && CtrOptions_WildSilhouette() == 1, "wild options set and kept");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 18);
+    CHECK(view.optPage == 3 && view.optPageCount == 4 && view.optCount == 3 && view.optSelected == 0,
+          "page 4 holds WILD POKEMON, WILD DISPLAY and AGGRESSIVE");
+    Text(20, "OFF");
+    CHECK(CtrOptions_WildAggro() == 0, "AGGRESSIVE starts off");
+    CtrOptions_Step(20, 1);
+    Text(20, "RARE");
+    CtrOptions_Step(20, 1);
+    Text(20, "LOW");
+    CtrOptions_Step(20, 1);
+    Text(20, "MODERATE");
+    CtrOptions_Step(20, 1);
+    Text(20, "HIGH");
+    CtrOptions_Step(20, 1);
+    Text(20, "OFF");
+    CtrOptions_Set(20, 3);
+    Text(20, "MODERATE");
+    CHECK(CtrOptions_WildAggro() == 3, "AGGRESSIVE set to 30%%");
+    CtrOptions_Set(20, 0);
+    CHECK(CtrOptions_WildAggro() == 0, "AGGRESSIVE turned off");
+    CtrOptions_Set(18, 0);
+    CtrOptions_Set(19, 0);
     /* The looks of Red, Leaf and the rival: DEFAULT, then the pack's (here three); the choice goes to the game's looks. */
     Text(15, "DEFAULT");
     CHECK(CtrOptions_Count(15) == 4 && CtrOptions_Count(17) == 4, "the look rows have DEFAULT and three looks");
@@ -255,7 +296,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 3 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 4 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0

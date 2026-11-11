@@ -22,7 +22,7 @@ def main() -> None:
     make.add_argument('--battle-backgrounds', action='store_true',
                       help='also download the battle backgrounds (LibertyTwins\' set through Facets; needs internet)')
     make.add_argument('--follower-sprites', action='store_true',
-                      help="also download the Pokemon that walk behind you (HeartGold's; needs internet)")
+                      help="also download HeartGold overworld sprites for followers and visible wild Pokemon (needs internet)")
     make.add_argument('--hd-backgrounds', action='store_true',
                       help="also download the HD battle scenes (Bentley734's HD Dynamic Battlefields; needs internet)")
     make.add_argument('--alt-looks', action='store_true',
@@ -58,7 +58,7 @@ def main() -> None:
                 if args.battle_backgrounds:
                     print(f"Battle backgrounds: {info['backgrounds']} of 20 terrains")
                 if args.follower_sprites:
-                    print(f"Pokemon that walk behind you: {info['followers']} of {len(gen4_sprites.FOLLOWER_FILES)} files")
+                    print(f"HeartGold overworld sprites (followers & wild): {info['followers']} of {len(gen4_sprites.FOLLOWER_FILES)} files")
                 if args.hd_backgrounds:
                     print(f"HD battle scenes: {info['hd']} of {len(gen4_hd.FILES)} files")
                 if args.alt_looks:

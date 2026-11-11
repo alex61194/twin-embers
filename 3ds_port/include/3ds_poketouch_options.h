@@ -35,7 +35,12 @@ void CtrOptions_ValueText(int row, char *out, int size);
 /* The view's rows, their values and the bar for the selected row. */
 void CtrOptions_Fill(CtrPokeTouchView *view, int selected);
 
-/* 3DS port QoL options (Page 2 of OPTIONS). */
+/* The value's page, its first row index, and how many rows are on that page; total page count. */
+int CtrOptions_PageCount(void);
+void CtrOptions_PageOf(int row, int *page, int *base, int *count);
+int CtrOptions_PageFirst(int page);
+
+/* 3DS port QoL options (Pages 2..4 of OPTIONS). */
 int CtrOptions_TypeMatchup(void);
 int CtrOptions_MoveDetails(void);
 /* The day/night tint of the outdoor field (3ds_day_night.h): on unless set to OFF. */
@@ -52,6 +57,9 @@ int CtrOptions_EmbersLow(void);
 int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
 int CtrOptions_ExpShare(void);      /* 0 the game's own, 1 the team shares by halves, 2 everyone gets the full share (EXP SHARE) */
+int CtrOptions_WildDensity(void);   /* 0 off (classic random encounters), 1 few, 2 normal, 3 many visible wild Pokemon */
+int CtrOptions_WildSilhouette(void); /* 0 Pokemon sprites, 1 silhouettes when overworld wilds are active */
+int CtrOptions_WildAggro(void);     /* 0 off, 1 rare (10%), 2 low (20%), 3 moderate (30%), 4 frequent (40%) */
 
 /* The game bridge (patches/pokefirered/0068): FireRed's own option fields. */
 extern int CtrPokeTouch_OptionCount(int option);

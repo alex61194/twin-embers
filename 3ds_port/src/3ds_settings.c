@@ -24,6 +24,9 @@ static int sCompanion;
 static char sLook[3][16];     /* look_red, look_leaf, look_blue */
 static int sExpShare;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
+static int sWildDensity;        /* 0 off, 1 few, 2 normal, 3 many */
+static int sWildSilhouette;     /* 0 sprites, 1 silhouettes */
+static int sWildAggro;          /* 0 off, 1 rare (10%), 2 low (20%), 3 moderate (30%), 4 frequent (40%) */
 static int sLoaded;
 
 /* The file stays open from the first read to the exit and is rewritten in place, padded to a fixed size: creating or
@@ -94,6 +97,12 @@ static void Load(void)
             ;
         else if (sscanf(line, "ball=%u", &value) == 1)
             sBall = value <= 0xffff ? value : 0;
+        else if (sscanf(line, "wild=%u", &value) == 1)
+            sWildDensity = value <= 3 ? (int)value : 0;
+        else if (sscanf(line, "wildsil=%u", &value) == 1)
+            sWildSilhouette = value != 0;
+        else if (sscanf(line, "wildaggro=%u", &value) == 1)
+            sWildAggro = value <= 4 ? (int)value : 0;
     }
 }
 
@@ -130,7 +139,13 @@ static void Format(char *text, size_t size)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
     if (sBall && length > 0 && (size_t)length < size)
-        snprintf(text + length, size - (size_t)length, "ball=%u\n", sBall);
+        length += snprintf(text + length, size - (size_t)length, "ball=%u\n", sBall);
+    if (sWildDensity && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "wild=%d\n", sWildDensity);
+    if (sWildSilhouette && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "wildsil=%d\n", sWildSilhouette);
+    if (sWildAggro && length > 0 && (size_t)length < size)
+        snprintf(text + length, size - (size_t)length, "wildaggro=%d\n", sWildAggro);
 }
 
 #ifdef __arm__
@@ -351,5 +366,51 @@ void CtrSettings_SetLastBall(unsigned item)
     if (item == sBall || item > 0xffff)
         return;
     sBall = item;
+    Save();
+}
+
+int CtrSettings_WildDensity(void)
+{
+    Load();
+    return sWildDensity;
+}
+
+void CtrSettings_SetWildDensity(int density)
+{
+    Load();
+    if (density < 0 || density > 3 || density == sWildDensity)
+        return;
+    sWildDensity = density;
+    Save();
+}
+
+int CtrSettings_WildSilhouette(void)
+{
+    Load();
+    return sWildSilhouette;
+}
+
+void CtrSettings_SetWildSilhouette(int mode)
+{
+    Load();
+    mode = mode != 0;
+    if (mode == sWildSilhouette)
+        return;
+    sWildSilhouette = mode;
+    Save();
+}
+
+int CtrSettings_WildAggro(void)
+{
+    Load();
+    return sWildAggro;
+}
+
+void CtrSettings_SetWildAggro(int mode)
+{
+    Load();
+    if (mode < 0 || mode > 4 || mode == sWildAggro)
+        return;
+    sWildAggro = mode;
     Save();
 }

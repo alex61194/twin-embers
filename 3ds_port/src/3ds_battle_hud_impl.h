@@ -44,6 +44,32 @@ static void HudTint(const CtrHudImage *image, unsigned palette, C2D_ImageTint *t
         C2D_PlainImageTint(tint, C2D_Color32(255, 255, 255, 255), (float)(sd - ud) / (float)(93 - ud));
 }
 
+static void HudNpcTint(const CtrHudImage *image, unsigned palette, bool silhouette, C2D_ImageTint *tint)
+{
+    if (!silhouette)
+    {
+        HudTint(image, palette, tint);
+        return;
+    }
+    float dim = 1.0f;
+
+    if (image->unfaded && sMemory.palette)
+    {
+        const uint16_t *u = image->unfaded + 256 + palette * 16;
+        const uint16_t *s = sMemory.palette + 256 + palette * 16;
+        unsigned ub = 0, sb = 0;
+
+        for (unsigned i = 1; i < 16; ++i)
+        {
+            unsigned ul = HudLuma(u[i]);
+            if (ul > ub) { ub = ul; sb = HudLuma(s[i]); }
+        }
+        if (ub && sb < ub)
+            dim = (float)sb / (float)ub;
+    }
+    C2D_PlainImageTint(tint, C2D_Color32((uint8_t)(16 * dim), (uint8_t)(16 * dim), (uint8_t)(24 * dim), 255), 1.0f);
+}
+
 static void DrawHud(unsigned battler, int x, int y, unsigned palette)
 {
     const CtrHudImage *image = sHudImage ? sHudImage(battler) : NULL;

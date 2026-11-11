@@ -207,6 +207,34 @@ duplicates, no Mart roof tile, and only General's non-house buildings public); `
 (the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
 a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
 
+## Overworld wild Pokémon
+
+Optional visible wild Pokémon roam grass and water tiles in the overworld (`patch 0237`, contributed by
+**Sh3ld0r/mcl5500** under MIT with disclosed AI assistance). The feature is inspired by **Wilds of Kanto Revival**
+by **poooooby** (`https://github.com/poooooby/wilds-of-kanto-gen-3`, a fork of **Wilds of Kanto** by
+**YoDrehDenSwagAuf** and collaborators for `Gen1Recomp`) as design inspiration only; no upstream mod code or
+assets were copied.
+
+- OPTIONS page 4 adds three settings kept in `sdmc:/3ds/twinembers/settings.cfg` (`3ds_settings.c`, not in the
+  game save; `SaveBlock1`/`SaveBlock2` are unchanged): **WILD POKEMON** (`OFF` / `FEW` 2 / `NORMAL` 4 / `MANY` 6;
+  `wild=0..3`), **WILD DISPLAY** (`POKEMON` / `SILHOUETTE`; `wildsil=0..1`) and **AGGRESSIVE** (`OFF` / `RARE`
+  / `LOW` / `MODERATE` / `HIGH` — 0% to 40% alert chance; `wildaggro=0..4`). All default to off/normal sprites so classic
+  step-based random encounters stay unchanged until enabled.
+- Sprites come from the player's own `twinembers.pak` follower set at run time (`CtrFollower_Has`, species 1–386
+  where present); dark silhouettes are drawn via GPU combiner tinting (`3ds_battle_hud_impl.h`, `CTR_NPC_SILHOUETTE`,
+  also forced in Pokémon Tower without the Silph Scope) with no extra assets or sprites stored in the repository.
+- Spawns roll from FireRed's current map encounter tables (respecting Repel levels, shiny odds with overworld
+  `FLDEFF_SPARKLE`, Unown chamber letter slots, and roaming slots). Walking into a spawn or pressing A starts
+  the battle with that exact species, level, personality and shiny flag. With **AGGRESSIVE** enabled, the
+  configured share of spawns alert with `!` and `SE_PIN` within 4 tiles and step toward the player within 6 tiles.
+- Not changed or covered: Safari Zone, Rock Smash, fishing and Sweet Scent keep standard encounters; species
+  without a follower sprite in the pack are skipped; paused during Quest Log playback, Union Room and locked controls.
+
+Checked: `3ds_port/tests/settings_test.c`, `3ds_port/tests/poketouch_options_test.c` and
+`3ds_port/tests/battle_gen4_test.c` (in `verify-host`); `tools/source_audit.py`; `CLEAN_RELEASE=1 verify-game-3dsx`
+and `tools/audit_clean_release.py` (0 embedded FireRed payload bytes, unchanged pack entries 6,734 and engine ABI
+`0072be2a`); fresh `tools/bootstrap.py` and hardware testing on 3DS by `Sh3ld0r/mcl5500`.
+
 ## Not added, and why
 
 - ZL/ZR for the turbo: the port removed it on purpose (`3ds_fast_forward.h`).

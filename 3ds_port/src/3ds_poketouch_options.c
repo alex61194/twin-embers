@@ -35,6 +35,18 @@ static const char *const sEmbers[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("LOW", 
 static const char *const sExpShare[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("HALF", "MITAD", "Halb"), CTR_TR("FULL", "TODA", "Voll")};
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
 static const char *const sCompanion[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("FOLLOW", "SIGUE", "Folgt"), CTR_TR("BE IT", "SER", "Spielen")};
+/* WILD POKEMON: overworld spawns on the map (OFF restores classic step-based random encounters). */
+static const char *const sWildDensity[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("FEW", "POCOS", "Wenig"), CTR_TR("NORMAL", "NORMAL", "Normal"), CTR_TR("MANY", "MUCHOS", "Viele")};
+/* WILD DISPLAY: draw real overworld Pokemon sprites or dark silhouettes when overworld wilds are active. */
+static const char *const sWildDisplay[] = {CTR_TR("POKEMON", "POK\xC3\x89MON", "Pok\xC3\xA9mon"), CTR_TR("SILHOUETTE", "SILUETA", "Silhouetten")};
+/* AGGRESSIVE: chance a spawned wild Pokemon chases the player when nearby (0%, 10%, 20%, 30%, 40%). */
+static const char *const sWildAggro[] = {
+    CTR_TR("OFF", "NO", "Aus"),
+    CTR_TR("RARE", "RARO", "Selten"),
+    CTR_TR("LOW", "POCO", "Wenig"),
+    CTR_TR("MODERATE", "MODERADO", "Moderat"),
+    CTR_TR("HIGH", "ALTO", "H\xC3\xA4ufig"),
+};
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
@@ -84,6 +96,14 @@ static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
+static int FourCount(void) { return 4; }
+static int GetWildDensity(void) { return CtrSettings_WildDensity(); }
+static void SetWildDensity(int v) { CtrSettings_SetWildDensity(v); }
+static int GetWildSilhouette(void) { return CtrSettings_WildSilhouette(); }
+static void SetWildSilhouette(int v) { CtrSettings_SetWildSilhouette(v); }
+static int FiveCount(void) { return 5; }
+static int GetWildAggro(void) { return CtrSettings_WildAggro(); }
+static void SetWildAggro(int v) { CtrSettings_SetWildAggro(v); }
 static int GetEmbers(void) { return sPortEmbers; }
 static void SetEmbers(int v)
 {
@@ -100,6 +120,9 @@ int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }
 int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
 int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
+int CtrOptions_WildDensity(void) { return CtrSettings_WildDensity(); }
+int CtrOptions_WildSilhouette(void) { return CtrSettings_WildSilhouette(); }
+int CtrOptions_WildAggro(void) { return CtrSettings_WildAggro(); }
 
 void CtrOptions_EmbersInit(int isNew3ds)
 {
@@ -145,10 +168,50 @@ static const CtrOptionRow sRows[] = {
      GetLookLeaf, LookCount, SetLookLeaf},
     {CTR_TR("RIVAL LOOK", "ASPECTO RIVAL", "Rivalen-Look"), {CTR_TR("The look of Blue, your rival,", "El aspecto de Azul, tu rival,", "Das Aussehen von Blau, dem Rivalen,"), CTR_TR("from the alternative looks.", "de los aspectos del Builder.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
+    /* Page 4: Overworld wild Pokemon. */
+    {CTR_TR("WILD POKEMON", "POKEMON MAPA", "Wilde Pok\xC3\xA9mon"), {CTR_TR("Visible wild Pokemon on", "Pokemon salvajes visibles", "Wilde Pok\xC3\xA9mon auf der Karte"), CTR_TR("the map, or classic random.", "en el mapa, o aleatorios.", "anzeigen oder Zufallsk\xC3\xA4mpfe.")}, 0, sWildDensity, NULL,
+     GetWildDensity, FourCount, SetWildDensity},
+    {CTR_TR("WILD DISPLAY", "VER SALVAJES", "Wild-Anzeige"), {CTR_TR("Show wilds as Pokemon or", "Muestra salvajes normales o", "Wilde als Pok\xC3\xA9mon oder"), CTR_TR("as dark silhouettes.", "como siluetas oscuras.", "als Silhouetten zeigen.")}, 0, sWildDisplay, NULL,
+     GetWildSilhouette, TwoCount, SetWildSilhouette},
+    {CTR_TR("AGGRESSIVE", "AGRESIVOS", "Aggressiv"), {CTR_TR("Chance a wild Pokemon", "Probabilidad de que un", "Chance, dass wilde Pok\xC3\xA9mon"), CTR_TR("spots and chases you.", "salvaje te persiga.", "dich zuf\xC3\xA4llig verfolgen.")}, 0, sWildAggro, NULL,
+     GetWildAggro, FiveCount, SetWildAggro},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
-_Static_assert(sizeof(sRows) / sizeof(sRows[0]) <= PT_OPT_MAX * 3, "the OPTIONS screen holds up to three pages of PT_OPT_MAX rows");
+/* Page 3 keeps rows 14..17 so the look preview card fits cleanly below RIVAL LOOK; Page 4 holds rows 18..19. */
+static const uint8_t sPageBases[] = {0, 7, 14, 18, ROWS};
+#define OPT_PAGES ((int)(sizeof(sPageBases) / sizeof(sPageBases[0]) - 1))
+
+int CtrOptions_PageCount(void)
+{
+    return OPT_PAGES;
+}
+
+void CtrOptions_PageOf(int row, int *page, int *base, int *count)
+{
+    int p = 0;
+
+    if (row < 0 || row >= ROWS)
+        row = 0;
+    for (int i = 0; i < OPT_PAGES; ++i)
+        if (row >= sPageBases[i] && row < sPageBases[i + 1]) {
+            p = i;
+            break;
+        }
+    if (page)
+        *page = p;
+    if (base)
+        *base = sPageBases[p];
+    if (count)
+        *count = sPageBases[p + 1] - sPageBases[p];
+}
+
+int CtrOptions_PageFirst(int page)
+{
+    if (page < 0 || page >= OPT_PAGES)
+        page = 0;
+    return sPageBases[page];
+}
 
 int CtrOptions_RowCount(void)
 {
@@ -273,12 +336,10 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
         return;
     if (selected < 0 || selected >= ROWS)
         selected = 0;
-    page = selected / PT_OPT_MAX;
-    base = page * PT_OPT_MAX;
-    count = ROWS - base > PT_OPT_MAX ? PT_OPT_MAX : ROWS - base;
+    CtrOptions_PageOf(selected, &page, &base, &count);
     v->options = 1;
     v->optPage = (uint8_t)page;
-    v->optPageCount = (uint8_t)((ROWS + PT_OPT_MAX - 1) / PT_OPT_MAX);
+    v->optPageCount = (uint8_t)CtrOptions_PageCount();
     v->optCount = (uint8_t)count;
     v->optSelected = (uint8_t)(selected - base);
     for (int i = 0; i < PT_OPT_MAX; ++i) {

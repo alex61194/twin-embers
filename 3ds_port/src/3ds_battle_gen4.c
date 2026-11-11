@@ -975,7 +975,9 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
     const uint16_t *unfaded = NULL;
     Npc *npc;
     int shows = CtrNpc_Sprite(attr2 & 1023, attr2 >> 12, attr1 & 511, attr0 & 255, &gfx, &frame, &unfaded);
+    bool sil = (shows & CTR_NPC_SILHOUETTE) != 0;
 
+    shows &= ~CTR_NPC_SILHOUETTE;
     if (!shows)
         return false;
     npc = NpcLoad(gfx);
@@ -1005,6 +1007,7 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
     out->pivotY = (float)side * 8.0f - (float)height / 2.0f;
     out->scale = 1.0f;
     out->unfaded = unfaded;
+    out->silhouette = sil ? 1 : 0;
     return true;
 }
 
