@@ -153,6 +153,20 @@ UI_FN void Em2Text(const char *s, int x, int top, uint16_t fg, uint16_t shadow, 
     UiText(buf, x, top, fg, shadow, 1, limit);
 }
 
+/* `a`, a space and `b` into `out` (`cap` bytes), cut where it does not fit; no space when `a` is empty. */
+UI_FN void Em2Join(char *out, size_t cap, const char *a, const char *b)
+{
+    size_t n = 0;
+
+    for (; *a && n + 1 < cap; ++a)
+        out[n++] = *a;
+    if (n && *b && n + 1 < cap)
+        out[n++] = ' ';
+    for (; *b && n + 1 < cap; ++b)
+        out[n++] = *b;
+    out[n] = 0;
+}
+
 /* Running text in lines `pitch` apart, `width` wide, at most `maxLines`: it breaks at spaces and, if there is more than the
  * lines hold, the last line ends in "...". */
 UI_FN void Em2Wrap(const char *text, int x, int y, int width, int maxLines, int pitch, uint16_t colour, uint16_t shadow)
@@ -174,16 +188,16 @@ UI_FN void Em2Wrap(const char *text, int x, int y, int width, int maxLines, int 
         while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
             word[w++] = *p++;
         word[w] = 0;
-        snprintf(joined, sizeof(joined), line[0] ? "%s %s" : "%s%s", line, word);
+        Em2Join(joined, sizeof(joined), line, word);
         if (line[0] && UiTextWidth(joined, 1) > width) {
             if (lines + 1 >= maxLines) {                       /* the last line and more to say: the rest, cut */
-                snprintf(rest, sizeof(rest), "%s %s", line, start);
+                Em2Join(rest, sizeof(rest), line, start);
                 Em2Text(rest, x, y + lines * pitch, colour, shadow, x + width);
                 return;
             }
             Em2Text(line, x, y + lines * pitch, colour, shadow, x + width);
             ++lines;
-            snprintf(line, sizeof(line), "%s", word);
+            Em2Join(line, sizeof(line), "", word);
         } else
             memcpy(line, joined, sizeof(line));
     }
@@ -494,6 +508,16 @@ UI_FN void Em2Tint(int section, int chosen, uint16_t *top, uint16_t *bottom)
         *top = UI_RGB(236, 235, 242);
         *bottom = UI_RGB(216, 214, 226);
     }
+}
+
+/* The shadow under a raised piece that sits on the backdrop: the two rows right under its lip, the backdrop's own pixels darkened (computed
+ * from the backdrop, not blended onto the canvas, so drawing it again changes nothing). Only the 2 px a piece owns. */
+UI_FN void Em2CardShadow(int x, int y, int w, int h)
+{
+    for (int i = 0; i < 2; ++i)
+        for (int cx = x + 3; cx < x + w - 3; ++cx)
+            if ((unsigned)cx < W && (unsigned)(y + h + i) < H)
+                Px(cx, y + h + i, UiMix(EMBER_BG(cx, y + h + i), UI_RGB(14, 0, 0), i == 0 ? 5 : 3));
 }
 
 /* A banner: a raised band with a short word at its left (the title of a window), in a palette's face. */

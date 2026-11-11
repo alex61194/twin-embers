@@ -189,6 +189,21 @@ static void decoder(void)
         memset(fixtureTiles,0,sizeof(fixtureTiles)); assert(!PokeTouch_SoftIcon("fame_checker",&soft));   /* nothing drawn */
         fixtureFail=1; assert(!PokeTouch_SoftIcon("fame_checker",&soft)); fixtureFail=0;
     }
+    {
+        /* Ascuas 2's text: a line that does not fit ends in "..." (never a glyph cut in half), and fits; one that fits is untouched; a UTF-8
+         * letter is not split. (Every glyph is 5 wide in this test.) */
+        char out[64];
+        assert(!Em2Fit("HELLO",25,out,sizeof(out)) && !strcmp(out,"HELLO"));
+        assert(Em2Fit("HELLO WORLD ABC",40,out,sizeof(out)) && !strcmp(out,"HELLO..."));
+        assert(UiTextWidth(out,1)<=40);
+        assert(Em2Fit("ABCD EFGH",30,out,sizeof(out)) && !strcmp(out,"ABC..."));          /* no space before the dots */
+        assert(Em2Fit("AB\303\201" "CDEFG",30,out,sizeof(out)) && !strcmp(out,"AB\303\201..."));
+        assert(Em2Fit("ABCDEFGHIJ",12,out,sizeof(out)) && !strcmp(out,"..."));            /* too narrow for any letter: only the dots */
+        assert(Em2Fit("ABCDEFGHIJ",50,out,6) && strlen(out)<6);                           /* a small buffer is respected */
+        Em2Join(out,sizeof(out),"ONE","TWO"); assert(!strcmp(out,"ONE TWO"));
+        Em2Join(out,sizeof(out),"","TWO"); assert(!strcmp(out,"TWO"));
+        Em2Join(out,5,"ONE","TWO"); assert(!strcmp(out,"ONE "));
+    }
     fixtureSize=287; assert(!CtrPokeTouch_PackMenuIcon(0,pixels,pal));
     fixtureSize=288; memset(fixtureTiles,0,sizeof(fixtureTiles));
     assert(!CtrPokeTouch_PackMenuIcon(0,pixels,pal));

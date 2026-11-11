@@ -16,7 +16,8 @@
 
 static uint8_t font[256 * 64];
 const uint8_t *CtrTwinFontData(void) { return font; }
-unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 6; }
+static uint8_t fontWidths[256];   /* the game font's widths with BATTLE_UI_WIDTHS (a viewing aid); else a fixed 6 */
+unsigned CtrTwinFontWidth(unsigned code) { return code < 256 && fontWidths[code] ? fontWidths[code] : 6; }
 const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]) { (void)code; memset(out, 0, 64); return out; }
 unsigned CtrTwinJapaneseFontWidth(unsigned code) { (void)code; return 8; }
 static uint8_t smallFont[256 * 32], smallWidth[256];
@@ -288,6 +289,11 @@ int main(int argc, char **argv)
 
         assert(f && fread(font, 1, sizeof(font), f) == sizeof(font));
         fclose(f);
+        if (getenv("BATTLE_UI_WIDTHS") && (f = fopen(getenv("BATTLE_UI_WIDTHS"), "rb")) != NULL) {
+            assert(fread(fontWidths, 1, sizeof(fontWidths), f) == sizeof(fontWidths));
+            fclose(f);
+            memset(sPtFontReady, 0, sizeof(sPtFontReady));
+        }
         if (smallPath && (f = fopen(smallPath, "rb")) != NULL) {     /* the game's small font: blank unless named */
             assert(fread(smallFont, 1, sizeof(smallFont), f) == sizeof(smallFont));
             fclose(f);

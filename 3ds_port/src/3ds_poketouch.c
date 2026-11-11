@@ -1008,7 +1008,7 @@ static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
     int fy, dots = v->optPageCount > 6 ? 6 : v->optPageCount, x0;
-    char label[16];
+    char label[40];
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
@@ -1062,7 +1062,7 @@ static int FrameSample(int type, int x, int y)
 
     if (loaded != type) {
         uint8_t tiles[9 * 32], colors[32];
-        char base[8];
+        char base[16];
         uint16_t pal[16];
 
         loaded = type;

@@ -13,6 +13,7 @@
 
 /* The party's balls, on their pill. */
 static const CtrPokeTouchRect sBStrip = {70, 3, 180, 28};
+static const Em2Tray sBStripTray = {69, 2, 182, 30, 5};     /* the party strip's sunk tray: its box with its outline (the light row is y = 32) */
 /* The action menu, FireRed's cursors 0-3: FIGHT across the top, BAG, POKeMON and RUN below; in a wild battle the quick
  * ball (CTR_ACTION_BALL) between BAG and POKeMON, the four a row of equal buttons (3ds_battle_nav.h walks the D-pad over
  * them the same way). FIGHT is lower than the row: the row's buttons hold an icon, a name and a pill each, and the
@@ -651,13 +652,23 @@ static int BPillW(const char *text)
     return UiTextWidth(text, 1) + 14;
 }
 
+/* A sunk pill (the mockup's ipill): outline, a flat fill, a shade under its top edge and a light line under it. */
 static void BPill(int x, int y, const char *text, uint16_t bg, uint16_t ink, uint16_t shadow)
 {
     int w = BPillW(text);
 
-    UiRoundFill(x, y, w, 15, 5, UiMix(bg, UI_RGB(0, 0, 0), 3));
+    UiRoundFill(x, y, w, 15, 5, shadow);
     UiRoundFill(x + 1, y + 1, w - 2, 13, 4, bg);
+    Fill(x + 3, y + 1, w - 6, 1, UiMix(bg, UI_RGB(0, 0, 0), 3));
+    for (int cx = x + 4; cx < x + w - 4; ++cx)
+        EmBlend(cx, y + 15, EM_WHITE, 56);
     UiText(text, x + 7, y + 3, ink, shadow, 1, x + w);
+}
+
+/* A raised pill of a colour (a move's type, the foe's matchup): the glass of Em2Pill from a lighter top to the colour, its outline darker. */
+static void BGlassPill(int x, int y, const char *text, uint16_t colour)
+{
+    Em2Pill(x, y, text, UiMix(colour, EM_WHITE, 2), colour, UiMix(colour, UI_RGB(0, 0, 0), 5));
 }
 
 /* The menu's icons: FIGHT, the Poke Ball and the shoe drawn flat by tools/make_battle_icons.py, the game's own bag
@@ -755,8 +766,13 @@ static void BFlat(const uint16_t *px, int w, int h, int x, int y)
 /* A light disc of the piece's colour, `r` its radius, centred at (cx, cy). */
 static void BDisc(int cx, int cy, int r, const EmPal *p)
 {
-    UiDisc(cx, cy, r + 1, UiMix(p->bottom, p->lip, 3));
-    UiDisc(cx, cy, r, UiMix(p->top, EM_WHITE, 4));
+    /* The mockup's disc: a light rim of the piece's colour, a lighter middle and a white glint at the top (a plate, warmer, on the amber). */
+    uint16_t rim = p == &kEmAmber ? UI_RGB(248, 184, 96) : p->top, mid = p == &kEmAmber ? UI_RGB(255, 216, 144) : p->g1;
+
+    UiDisc(cx, cy, r + 1, p == &kEmAmber ? UI_RGB(184, 90, 20) : p->lip);
+    UiDisc(cx, cy, r, rim);
+    UiDisc(cx, cy - r / 8, r * 7 / 10 + 1, mid);
+    UiDisc(cx, cy - r / 4, r / 2, p == &kEmAmber ? UI_RGB(255, 246, 220) : UiMix(p->g1, EM_WHITE, 4));
 }
 
 /* Icon `icon` (BX_*) centred at (cx, cy) on a light disc of the piece's colour, `r` its radius. */
@@ -791,6 +807,8 @@ static int BEmCard(const CtrPokeTouchRect *r, const EmPal *p, int focused, int p
     TsBgRect(r->x - 2, r->y - 2, r->w + 4, r->h + 4);
     if (focused)
         EmGlowRing(r->x, r->y, r->w, r->h);
+    else if (!pressed)
+        Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, p, B_DEPTH, pressed);
     if (pressed && face >= 12) {    /* sunk: the face lifts a little lighter than the plain sink, with a 1 px highlight inside its top */
         EmGradFill(r->x + 1, fy + 1, r->w - 2, face - 2, 4, UiMix(p->top, EM_WHITE, 2), UiMix(p->top, p->bottom, 5));
@@ -814,6 +832,17 @@ static void BEmCancel(const CtrPokeTouchRect *r, int pressed)
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmViolet, B_DEPTH, pressed);
+    if (r->h >= 40) {
+        /* A tall CANCEL has the mockup's back icon above its word: a dark round well with a white arrow. */
+        int dx = r->x + r->w / 2 - 8;
+
+        Em2Disc(dx, fy + 6, 16, UI_RGB(30, 22, 52));
+        Em2Disc(dx + 1, fy + 7, 14, UI_RGB(58, 42, 92));
+        UiArrow(dx + 6, fy + 11, -1, UI_RGB(30, 22, 52));
+        UiArrow(dx + 5, fy + 10, -1, EM_WHITE);
+        EmLabel(CTR_TR("CANCEL", "CANCELAR", "Zur\xC3\xBC" "ck"), r->x, r->w, fy + 24, 13, &kEmViolet);
+        return;
+    }
     EmLabel(CTR_TR("CANCEL", "CANCELAR", "Zur\xC3\xBC" "ck"), r->x, r->w, fy, r->h - B_DEPTH, &kEmViolet);
 }
 
@@ -879,9 +908,7 @@ static void BStrip(const CtrBattleView *v)
 {
     const CtrPokeTouchRect *s = &sBStrip;
 
-    TsBgRect(s->x, s->y, s->w, s->h);
-    UiRoundFill(s->x, s->y, s->w, s->h, 5, UI_RGB(24, 8, 10));
-    EmGradFill(s->x + 1, s->y + 1, s->w - 2, s->h - 2, 4, UI_RGB(72, 26, 26), UI_RGB(44, 14, 16));
+    Em2TrayDraw(&sBStripTray);
     for (int i = 0; i < 6; ++i) {
         int cx = s->x + 15 + 30 * i, kind = v->party[i];
 
@@ -896,8 +923,11 @@ static void BStrip(const CtrBattleView *v)
 
             if (hp && fill < 1)
                 fill = 1;
-            UiRoundFill(cx - 10, s->y + 20, 20, 5, 2, UI_RGB(24, 8, 10));
-            Fill(cx - 9, s->y + 21, fill, 3, hp > 50 ? UI_RGB(72, 200, 96) : hp > 20 ? UI_RGB(240, 200, 40) : UI_RGB(230, 60, 40));
+            /* The bar of the mockup: a slate outline, a dark track, the fill with a lighter top row (a gloss). */
+            UiRoundFill(cx - 10, s->y + 20, 20, 5, 2, EM2_SLATE);
+            Fill(cx - 9, s->y + 21, 18, 3, UI_RGB(42, 48, 72));
+            Fill(cx - 9, s->y + 21, fill, 1, hp > 50 ? UI_RGB(156, 240, 168) : hp > 20 ? UI_RGB(255, 232, 144) : UI_RGB(255, 160, 144));
+            Fill(cx - 9, s->y + 22, fill, 2, hp > 50 ? UI_RGB(72, 200, 96) : hp > 20 ? UI_RGB(242, 194, 48) : UI_RGB(234, 72, 56));
         }
     }
 }
@@ -931,6 +961,9 @@ static void BActCard(int i, const CtrBattleView *v)
         int left = r->x + 100, w = r->w - 108, tw = UiTextWidth(label[0], 2);
         char text[32];
 
+        for (int k = 0; k < fh - 12; ++k)        /* a soft line between the picture and the words: strongest in the middle */
+            for (int d = 0; d < 2; ++d)
+                EmBlend(r->x + 96 + d, fy + 6 + k, UI_RGB(170, 70, 14), 90 - (k * 2 - (fh - 13) < 0 ? (fh - 13) - k * 2 : k * 2 - (fh - 13)) * 90 / (fh - 13));
         if (v->activeIcon && BPartyIcon(v->activeSlot, v->activeIcon)) { /* the Pokemon's own party icon at twice its size, bouncing */
             int cx = r->x + 52, cy = fy + fh / 2, x0 = cx - 32, y0 = cy - 30 - 2 * v->activeFrame;
 
@@ -963,8 +996,7 @@ static void BActCard(int i, const CtrBattleView *v)
             x = left + (w - tw2) / 2;
             for (int k = 0; k < 2; ++k)
                 if (v->activeType[k] >= 0 && v->activeTypeName[k][0]) {
-                    BPill(x, y0 + 40, v->activeTypeName[k], UiTypeColor(v->activeType[k]), EM_WHITE,
-                          UiMix(UiTypeColor(v->activeType[k]), UI_RGB(0, 0, 0), 4));
+                    BGlassPill(x, y0 + 40, v->activeTypeName[k], UiTypeColor(v->activeType[k]));
                     x += BPillW(v->activeTypeName[k]) + 4;
                 }
         }
@@ -1139,8 +1171,9 @@ static void BMatchupPill(uint8_t matchup, int right, int y)
     w = BPillW(kText[matchup]) + (markW ? markW + 2 : 0);
     x = right - w;
     shadow = UiMix(kColor[matchup], UI_RGB(0, 0, 0), 4);
-    UiRoundFill(x, y, w, 15, 5, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 3));
-    UiRoundFill(x + 1, y + 1, w - 2, 13, 4, kColor[matchup]);
+    UiRoundFill(x, y, w, 15, 5, UiMix(kColor[matchup], UI_RGB(0, 0, 0), 5));
+    EmGradFill(x + 1, y + 1, w - 2, 13, 4, UiMix(kColor[matchup], EM_WHITE, 2), kColor[matchup]);
+    Fill(x + 4, y + 1, w - 8, 1, UiMix(kColor[matchup], EM_WHITE, 4));
     if (markW)
         BFxMark(kMark[matchup], x + 6, y + 4, EM_WHITE, shadow);
     UiText(kText[matchup], x + 7 + (markW ? markW + 2 : 0), y + 3, EM_WHITE, shadow, 1, x + w);
@@ -1160,10 +1193,15 @@ static void BMoveCard(int i, const CtrBattleView *v)
         return;
     }
     fy = BEmCard(r, p, focused, v->pressed == i);
-    Fill(r->x + 3, fy + 4, 4, fh - 8, UiTypeColor(m->type));
-    UiText(m->name, r->x + 12, fy + 7, p->ink, p->inkSh, 1, r->x + r->w - 58);
-    BPill(r->x + r->w - 6 - BPillW(m->typeName), fy + 4, m->typeName, UiTypeColor(m->type), EM_WHITE,
-          UiMix(UiTypeColor(m->type), UI_RGB(0, 0, 0), 4));
+    for (int k = 0; k < 6; ++k) {       /* the ribbon of the move's type, six wide, lighter on its left and darker on its right (the mockup's) */
+        uint16_t c = UiTypeColor(m->type), colour = k < 3 ? Em2Lerp(UiMix(c, EM_WHITE, 3), c, k, 3) : Em2Lerp(c, UiMix(c, UI_RGB(0, 0, 0), 3), k - 3, 3);
+
+        Fill(r->x + 3 + k, fy + 5, 1, fh - 10, colour);
+        if (k == 0 || k == 5)
+            Fill(r->x + 3 + k, fy + 4, 1, fh - 8, colour);
+    }
+    Em2Text(m->name, r->x + 12, fy + 7, p->ink, p->inkSh, r->x + r->w - 10 - BPillW(m->typeName));
+    BGlassPill(r->x + r->w - 6 - BPillW(m->typeName), fy + 4, m->typeName, UiTypeColor(m->type));
     UiText(CTR_TR("POW", "POT", "St\xC3\xA4"), r->x + 12, fy + 25, label, p->inkSh, 1, r->x + 40);
     UiText(m->power[0] ? m->power : "-", r->x + 40, fy + 25, p->ink, p->inkSh, 1, r->x + 72);
     if (m->matchup != CTR_FX_NONE)
@@ -1226,9 +1264,10 @@ static void BMoveNote(const CtrBattleView *v)
             UiText(val, x + 116, n->y + 7, EM_DARK, EM_DARK_SH, 1, n->x + n->w);
         }
         if (m->stab)
-            BPill(n->x + n->w - 8 - BPillW(CTR_TR("STAB", "STAB", "STAB")), n->y + 4, CTR_TR("STAB", "STAB", "STAB"), EM_STRIPE, EM_WHITE, UI_RGB(110, 40, 6));
+            Em2Pill(n->x + n->w - 8 - BPillW(CTR_TR("STAB", "STAB", "STAB")), n->y + 4, CTR_TR("STAB", "STAB", "STAB"), UI_RGB(255, 184, 96), EM_STRIPE, UI_RGB(122, 44, 8));
     }
-    BDescribeN(m->desc[0] ? m->desc : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff") : CTR_TR("Special move", "Ataque especial", "Spezialangriff"), n->x + 12, n->y + 24,
+    Em2Rule(n->x + 12, n->y + 21, n->w - 24);
+    BDescribeN(m->desc[0] ? m->desc : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff") : CTR_TR("Special move", "Ataque especial", "Spezialangriff"), n->x + 12, n->y + 26,
                n->w - 18, 3, EM_DARK);
 }
 
