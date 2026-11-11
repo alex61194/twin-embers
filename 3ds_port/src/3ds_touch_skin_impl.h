@@ -70,22 +70,11 @@ static const EmPal kEmGrey = {UI_RGB(200, 192, 196), UI_RGB(150, 140, 146), UI_R
 static const EmPal kEmViolet = {UI_RGB(120, 112, 128), UI_RGB(70, 62, 82), UI_RGB(46, 38, 58), UI_RGB(30, 24, 40),
                                 EM_WHITE, UI_RGB(30, 24, 40)};
 
-/* Rows [y, y + h) of a rounded rectangle, each row a blend from `top` to `bottom`. */
-static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uint16_t bottom)
+/* Rows [y, y + h) of a rounded rectangle, each row the colour `colour[row - r0]` gives (r0 the first row on the canvas). */
+static void EmFillRows(int x, int y, int w, int h, int radius, const uint16_t *colour, int r0, int r1)
 {
-    if (w <= 0 || h <= 0)
-        return;
-    if (radius > 5)
-        radius = 5;
-    if (radius * 2 > h)
-        radius = h / 2;
     /* Column by column, the canvas' own order: a row at a time would step a whole column of memory per pixel. A pixel
      * is drawn where its row's corner cut does not reach its column. */
-    uint16_t colour[H];
-    int r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
-
-    for (int row = r0; row < r1; ++row)
-        colour[row - r0] = UiMix(top, bottom, h > 1 ? row * 8 / (h - 1) : 0);
     for (int col = 0; col < w; ++col) {
         int cx = x + col, edgeX = col < w - 1 - col ? col : w - 1 - col, first = r0, last = r1;
 
@@ -102,6 +91,47 @@ static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uin
     }
 }
 
+/* Rows [y, y + h) of a rounded rectangle, each row a blend from `top` to `bottom`. */
+static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uint16_t bottom)
+{
+    if (w <= 0 || h <= 0)
+        return;
+    if (radius > 5)
+        radius = 5;
+    if (radius * 2 > h)
+        radius = h / 2;
+    uint16_t colour[H];
+    int r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
+
+    for (int row = r0; row < r1; ++row)
+        colour[row - r0] = UiMix(top, bottom, h > 1 ? row * 8 / (h - 1) : 0);
+    EmFillRows(x, y, w, h, radius, colour, r0, r1);
+}
+
+/* The glass face of a raised piece: the upper two fifths a lighter band (from a whitened `top` down to `top`), then a cut, and the rest a
+ * darker band down to `bottom`. Drawn in the same rectangle as EmGradFill: nothing outside the piece, so the repaint of a neighbour 2 px away
+ * never meets it. */
+static void EmGlossFill(int x, int y, int w, int h, int radius, uint16_t top, uint16_t bottom)
+{
+    int split = h * 2 / 5, r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
+    uint16_t colour[H], light = UiMix(top, EM_WHITE, 3), start = UiMix(top, bottom, 3);
+
+    if (w <= 0 || h <= 0)
+        return;
+    if (radius > 5)
+        radius = 5;
+    if (radius * 2 > h)
+        radius = h / 2;
+    if (split < 2 || h - split < 2) {
+        EmGradFill(x, y, w, h, radius, top, bottom);
+        return;
+    }
+    for (int row = r0; row < r1; ++row)
+        colour[row - r0] = row < split ? UiMix(light, top, row * 8 / (split - 1))
+                                       : UiMix(start, bottom, (row - split) * 8 / (h - split - 1));
+    EmFillRows(x, y, w, h, radius, colour, r0, r1);
+}
+
 /* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
  * caller has put the backdrop back under it. Returns where the face starts (for its label). */
 static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
@@ -113,8 +143,15 @@ static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int p
         UiRoundFill(x + 1, y + depth + 1, w - 2, face - 2, 4, p->lip);
     }
     UiRoundFill(x, fy, w, face, 5, p->edge);
-    EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, pressed ? UiMix(p->top, p->bottom, 4) : p->top, p->bottom);
-    Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 4));
+    if (pressed) {
+        EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, UiMix(p->top, p->bottom, 4), p->bottom);
+        Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 4));
+        return fy;
+    }
+    EmGlossFill(x + 1, fy + 1, w - 2, face - 2, 4, p->top, p->bottom);
+    Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 5));                         /* the light along the top */
+    if (face >= 12)
+        Fill(x + 4, fy + face - 2, w - 8, 1, UiMix(p->bottom, p->lip, 3));              /* and a shade along the bottom */
     return fy;
 }
 
