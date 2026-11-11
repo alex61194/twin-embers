@@ -67,12 +67,19 @@ bool CtrFastCells_Room(unsigned count)
 
 /* One cell's square: corners top-left, top-right, bottom-left, bottom-right, with the texcoords Citro2D gives an
  * atlas slot (DrawSlotTinted in 3ds_video.c). */
-static void Quad(FastVertex *v, int x, int y, int slot, bool flipX, bool flipY, unsigned atlasSize)
+/* The atlas is a power of two (a texture is): its slots per row are a mask and a shift, and 1/atlasSize is exact, so a multiplication gives
+ * the same texcoords as the division did (the ARM11 has no divider: each one was a call). */
+typedef struct
 {
-    unsigned perRow = atlasSize / 8;
-    unsigned tileX = ((unsigned)slot % perRow) * 8, tileY = ((unsigned)slot / perRow) * 8;
-    float s0 = tileX / (float)atlasSize, s1 = (tileX + 8) / (float)atlasSize;
-    float t0 = 1.0f - tileY / (float)atlasSize, t1 = 1.0f - (tileY + 8) / (float)atlasSize;
+    unsigned mask, shift;
+    float inv;
+} Atlas;
+
+static void Quad(FastVertex *v, int x, int y, int slot, bool flipX, bool flipY, const Atlas *atlas)
+{
+    unsigned tileX = ((unsigned)slot & atlas->mask) * 8, tileY = ((unsigned)slot >> atlas->shift) * 8;
+    float s0 = tileX * atlas->inv, s1 = (tileX + 8) * atlas->inv;
+    float t0 = 1.0f - tileY * atlas->inv, t1 = 1.0f - (tileY + 8) * atlas->inv;
 
     if (flipX) { float swap = s0; s0 = s1; s1 = swap; }
     if (flipY) { float swap = t0; t0 = t1; t1 = swap; }
@@ -92,12 +99,14 @@ void CtrFastCells_Draw(const uint16_t *cells, unsigned count, const int16_t *slo
                        unsigned columns, unsigned atlasSize)
 {
     unsigned tiles = 0, first = sUsed, shift = (unsigned)__builtin_ctz(columns);
+    unsigned perRow = atlasSize / 8;
+    Atlas atlas = {perRow - 1, (unsigned)__builtin_ctz(perRow), 1.0f / (float)atlasSize};
     C3D_AttrInfo savedAttr, *attr;
     C3D_BufInfo savedBuf, *buf;
     C3D_TexEnv savedEnv, *env;
 
-    if (!CtrFastCells_Room(count) || count == 0)
-        return;
+    if (!CtrFastCells_Room(count) || count == 0 || (atlasSize & (atlasSize - 1)) != 0 || atlasSize < 8)
+        return;     /* an atlas that is not a power of two cannot come out of the GPU's texture sizes */
     /* Tiles first, then the empty cells after them. columns is 32 or 64: a mask and a shift, no division (the ARM11
      * has no divider). */
     for (unsigned i = 0; i < count; ++i)
@@ -108,9 +117,9 @@ void CtrFastCells_Draw(const uint16_t *cells, unsigned count, const int16_t *slo
         int x = (int)(cell & (columns - 1)) * 8, y = (int)(cell >> shift) * 8;
 
         if (slot[cell] >= 0)
-            Quad(sVertices + (first + t++) * 4, x, y, slot[cell], entry[cell] & 1024, entry[cell] & 2048, atlasSize);
+            Quad(sVertices + (first + t++) * 4, x, y, slot[cell], entry[cell] & 1024, entry[cell] & 2048, &atlas);
         else
-            Quad(sVertices + (first + e++) * 4, x, y, 0, false, false, atlasSize);
+            Quad(sVertices + (first + e++) * 4, x, y, 0, false, false, &atlas);
     }
     sUsed += count;
 
