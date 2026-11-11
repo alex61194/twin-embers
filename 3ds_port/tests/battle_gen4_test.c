@@ -683,7 +683,11 @@ int main(void)
         assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
         sNpcGfx = 700;                                              /* between people and followers */
         assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
-        /* Whether the pack has one: asked once, remembered, and only for the national dex. */
+        /* Whether the pack has one: asked once, remembered, and only for the national dex. Before a pack is open the answer is no, and
+         * it is not remembered (the asks below find follower 4 once the pack is). */
+        sBackend = CTR_DATA_NONE;
+        assert(!CtrFollower_Has(4, false));
+        sBackend = CTR_DATA_PAK;
         assert(CtrFollower_Has(4, false) && !CtrFollower_Has(4, true));
         assert(CtrFollower_Has(12, true) && !CtrFollower_Has(12, false));
         assert(!CtrFollower_Has(5, false) && !CtrFollower_Has(0, false) && !CtrFollower_Has(387, false));
@@ -693,6 +697,7 @@ int main(void)
             assert(CtrFollower_Has(4, false) && !CtrFollower_Has(5, false) && CtrFollower_Has(12, true));
             assert(sSizeAsked == asked);
         }
+        sBackend = CTR_DATA_NONE;       /* as it was: the checks after this one start with no pack open */
         /* More people than slots: the least recently shown goes, and comes back when it is shown again. */
         for (unsigned g = 40; g < 40 + 12; ++g)
         {
