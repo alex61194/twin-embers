@@ -1323,8 +1323,9 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     for number, (folder, name, _character, gender, credit) in enumerate(gen4_looks.LOOKS):
         sheets = {row[2].rsplit("/", 1)[1][:-4]: got[row[:3]] for row in look_rows if row[0] == number and row[:3] in got}
         # An HGSS look that draws no back, front, intro or Fly bird of its own wears its sibling's, not another character's.
+        # Only a look whose own walk sheet came: one that failed to download is left out, not made out of its sibling's.
         sibling = LOOK_SIBLINGS.get(folder)
-        if sibling:
+        if sibling and "walk" in sheets:
             at = next(n for n, look in enumerate(gen4_looks.LOOKS) if look[0] == sibling)
             for row in look_rows:
                 sheet = row[2].rsplit("/", 1)[1][:-4]
