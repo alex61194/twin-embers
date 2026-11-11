@@ -126,6 +126,9 @@ extern int CtrBottomStorage_PCMessage(char *out, int size);
 extern int CtrBottomView_FameChecker(void);
 extern int CtrBottomView_TeachyTv(void);
 extern int CtrBottomView_Mail(void);
+/* The mail being read: its stationery's name and who wrote it, as lower-screen text (mail.c, recipe 0243). */
+extern int CtrBottomView_MailName(char *out, int size);
+extern int CtrBottomView_MailFrom(char *out, int size);
 extern int CtrBottomView_EasyChat(void);
 extern int CtrBottomView_HallOfFame(void);
 /* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
@@ -2053,6 +2056,16 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.backVisible = 1;
         s->touch.backEnabled = (uint8_t)BackEnabled(mode);
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
+        if (CtrBottomView_Mail()) {
+            /* A letter: its stationery's name, who wrote it, and that a tap on it closes it (any of the game's A or B does). */
+            char name[PT_BAR_LEN], from[PT_BAR_LEN];
+
+            snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrBottomView_MailName(name, sizeof(name)) ? name : title);
+            if (CtrBottomView_MailFrom(from, sizeof(from)))
+                snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("From: %s", "De: %s", "Von: %s"), from);
+            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap the letter to close.", "Toca la carta: cerrar.", "Tippe auf den Brief."));
+            return;
+        }
         snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
         snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung."));
         snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("BACK is the B button.", "ATR\xc3\x81S es el bot\xc3\xb3n B.", "Zur\xC3\x9c""ck entspricht Taste B."));
@@ -4953,6 +4966,11 @@ static int ProcessTouch(int mode)
         sPoke.inside = 0;
         sTouch.active = 0;
         ProcessBack(mode, in);
+        /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
+        if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)
+            && in->touchX >= PT_VIEW_X && in->touchX < PT_VIEW_X + PT_VIEW_W
+            && in->touchY >= PT_VIEW_Y && in->touchY < PT_VIEW_Y + PT_VIEW_H)
+            BackPress(mode);
         return HIT_NONE;
     }
     if (mode == MODE_CHOICE) {
