@@ -5561,6 +5561,18 @@ void CtrVideo_SetFastForward(unsigned speed)
     sFastForward = speed;
 }
 
+/* A 3x5 glyph: one rectangle per run of pixels in a row, not one per pixel (same picture). */
+static void DrawGlyphRuns(const char *b, float x, float y, float p)
+{
+    for (unsigned r = 0, c; r < 5; ++r)
+        for (c = 0; c < 3; ) {
+            unsigned n = 0;
+            while (c + n < 3 && b[r * 3 + c + n] == '1') ++n;
+            if (n) C2D_DrawRectSolid(x + c * p, y + r * p, 0, n * p, p, C2D_Color32(255, 255, 255, 255));
+            c += n ? n : 1;
+        }
+}
+
 static void DrawFastForward(C3D_RenderTarget *target)
 {
     static const char *const glyphs[] = {
@@ -5584,11 +5596,7 @@ static void DrawFastForward(C3D_RenderTarget *target)
     for (unsigned i = 0; i < 3; ++i)
     {
         const char *bits = glyphs[shown[i]];
-        float x = x0 + pixel * 2 + i * advance, y = y0 + pixel * 2;
-        for (unsigned p = 0; p < 15; ++p)
-            if (bits[p] == '1')
-                C2D_DrawRectSolid(x + (p % 3) * pixel, y + (p / 3) * pixel, 0,
-                                  pixel, pixel, C2D_Color32(255, 255, 255, 255));
+        DrawGlyphRuns(bits, x0 + pixel * 2 + i * advance, y0 + pixel * 2, pixel);
     }
     C2D_Flush();
 }
@@ -5655,11 +5663,7 @@ static void DrawFps(C3D_RenderTarget *target)
     {
         if (glyphs[i] == ~0u) continue;
         const char *bits = sFpsGlyphs[glyphs[i]];
-        float x = origin + FPS_PIXEL * 2 + i * FPS_ADVANCE, y = 2 + FPS_PIXEL * 2;
-        for (unsigned p = 0; p < 15; ++p)
-            if (bits[p] == '1')
-                C2D_DrawRectSolid(x + (p % 3) * FPS_PIXEL, y + (p / 3) * FPS_PIXEL, 0,
-                                  FPS_PIXEL, FPS_PIXEL, C2D_Color32(255, 255, 255, 255));
+        DrawGlyphRuns(bits, origin + FPS_PIXEL * 2 + i * FPS_ADVANCE, 2 + FPS_PIXEL * 2, FPS_PIXEL);
     }
     C2D_Flush();
 }
