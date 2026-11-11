@@ -37,7 +37,10 @@ class Renderer(unittest.TestCase):
             frame=240*160*2
             self.assertEqual(len(cur),len(base))
             # HOME and GBA viewports are pixel-identical to the base.
-            self.assertEqual(cur[:2*frame],base[:2*frame],'HOME and GBA viewport pixels must match the base')
+            # (HOME wears the Llama look: the region's ribbon and the map's shaded edge are in the first 13 rows of its columns, which are left out.)
+            home=lambda data:b''.join(data[c*320+26:(c+1)*320] for c in range(240))
+            self.assertEqual(home(cur[:frame]),home(base[:frame]),'HOME viewport pixels must match the base')
+            self.assertEqual(cur[frame:2*frame],base[frame:2*frame],'GBA viewport pixels must match the base')
             # OPTIONS and SAVE wear the ember look: a new layout on the red backdrop.
             for n,name in ((2,'OPTIONS'),(3,'SAVE')):
                 a=cur[n*frame:(n+1)*frame]; b=base[n*frame:(n+1)*frame]
