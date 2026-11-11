@@ -61,10 +61,12 @@ static void DrawHud(unsigned battler, int x, int y, unsigned palette)
     if (sHudVersion[battler] != image->version)
     {
         uint32_t *texels = (uint32_t *)sHudTex.data;
-        for (unsigned ty = 0; ty < HUD_BAND; ++ty)
-            for (unsigned tx = 0; tx < HUD_TEX; ++tx)
-                texels[CtrVideo_Texel(tx, top + ty, HUD_TEX)] =
-                    tx < image->width && ty < image->height ? image->pixels[ty * CTR_HUD_IMAGE_W + tx] : 0;
+        /* Only what is shown (the sub-texture is width x height, sampled with NEAREST): the rest of the band is never read, so it is
+         * not written (a band is 256x64 texels, a box 168x60 at most). A smaller picture over an older one leaves its old texels
+         * outside the sub-texture, where nothing looks. */
+        for (unsigned ty = 0; ty < image->height; ++ty)
+            for (unsigned tx = 0; tx < image->width; ++tx)
+                texels[CtrVideo_Texel(tx, top + ty, HUD_TEX)] = image->pixels[ty * CTR_HUD_IMAGE_W + tx];
         C3D_TexFlush(&sHudTex);
         sHudVersion[battler] = image->version;
     }
