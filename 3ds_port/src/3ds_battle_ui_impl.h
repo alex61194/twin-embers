@@ -225,49 +225,11 @@ static int BLooksChanged(const CtrBattleView *a, const CtrBattleView *b, int i)
         || (b->state == BUI_ACTION && i == 0 && a->activeFrame != b->activeFrame);   /* the lead's icon bounces */
 }
 
-/* Appends `word` to `line` (a space first when it is not empty), within `size`. */
-static void BAppend(char *line, size_t size, const char *word)
-{
-    size_t n = strlen(line);
-
-    if (n && n + 1 < size)
-        line[n++] = ' ';
-    for (; *word && n + 1 < size; ++word)
-        line[n++] = *word;
-    line[n] = 0;
-}
-
-/* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here). */
+/* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here): the last line ends in "..." when
+ * there is more (Em2Wrap). */
 static void BDescribeSh(const char *text, int x, int y, int width, int maxLines, uint16_t color, uint16_t shadow)
 {
-    char word[24], line[80], joined[80];
-    int lines = 0;
-    const char *p = text;
-
-    line[0] = 0;
-    while (*p && lines < maxLines) {
-        int w = 0;
-
-        while (*p == ' ' || *p == '\n')
-            ++p;
-        while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
-            word[w++] = *p++;
-        word[w] = 0;
-        if (!w)
-            break;
-        memcpy(joined, line, sizeof(joined));
-        BAppend(joined, sizeof(joined), word);
-        if (line[0] && UiTextWidth(joined, 1) > width) {
-            UiText(line, x, y + lines * UI_LINE_H, color, shadow, 1, x + width);
-            line[0] = 0;
-            if (++lines >= maxLines)
-                return;
-            BAppend(line, sizeof(line), word);
-        } else
-            memcpy(line, joined, sizeof(line));
-    }
-    if (line[0] && lines < maxLines)
-        UiText(line, x, y + lines * UI_LINE_H, color, shadow, 1, x + width);
+    Em2Wrap(text, x, y, width, maxLines, UI_LINE_H, color, shadow);
 }
 
 static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color)
@@ -318,37 +280,10 @@ static int BPartyIcon(int slot, unsigned icon)
     return 1;
 }
 
-/* Text wrapped into `maxLines` lines of `width`, in `ink` over `shadow`. */
+/* Text wrapped into `maxLines` lines of `width`, in `ink` over `shadow`, 16 apart; the last ends in "..." when there is more. */
 static void BPWrap(const char *text, int x, int y, int width, int maxLines, uint16_t ink, uint16_t shadow)
 {
-    char word[24], line[80], joined[80];
-    int lines = 0;
-    const char *p = text;
-
-    line[0] = 0;
-    while (*p && lines < maxLines) {
-        int w = 0;
-
-        while (*p == ' ' || *p == '\n')
-            ++p;
-        while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
-            word[w++] = *p++;
-        word[w] = 0;
-        if (!w)
-            break;
-        memcpy(joined, line, sizeof(joined));
-        BAppend(joined, sizeof(joined), word);
-        if (line[0] && UiTextWidth(joined, 1) > width) {
-            UiText(line, x, y + lines * 16, ink, shadow, 1, x + width);
-            line[0] = 0;
-            if (++lines >= maxLines)
-                return;
-            BAppend(line, sizeof(line), word);
-        } else
-            memcpy(line, joined, sizeof(line));
-    }
-    if (line[0] && lines < maxLines)
-        UiText(line, x, y + lines * 16, ink, shadow, 1, x + width);
+    Em2Wrap(text, x, y, width, maxLines, 16, ink, shadow);
 }
 
 /* The selected slot's icon hops with its frames, as FireRed's Party does: up on the first, down on the second. */
@@ -708,13 +643,7 @@ static void EmSurface(void)
     sUiS = &sUiEmber;
 }
 
-/* The action menu's other colours: BAG blue, POKeMON green, RUN purple. */
-static const EmPal kEmBlue = {UI_RGB(130, 188, 255), UI_RGB(44, 112, 224), UI_RGB(26, 70, 160), UI_RGB(14, 36, 96),
-                              EM_WHITE, UI_RGB(14, 36, 96)};
-static const EmPal kEmGreen = {UI_RGB(140, 224, 124), UI_RGB(44, 160, 72), UI_RGB(26, 110, 46), UI_RGB(12, 64, 24),
-                               EM_WHITE, UI_RGB(12, 64, 24)};
-static const EmPal kEmPurple = {UI_RGB(196, 168, 255), UI_RGB(122, 88, 222), UI_RGB(82, 56, 160), UI_RGB(44, 28, 96),
-                                EM_WHITE, UI_RGB(44, 28, 96)};
+/* The action menu's other colours (BAG blue, POKeMON green, RUN purple, the quick ball's gold) are the skin's. */
 
 /* A pill with `text` on it, 15 pixels tall; BPillW is its width, x its left edge. */
 static int BPillW(const char *text)
@@ -1059,11 +988,9 @@ static void BActCard(int i, const CtrBattleView *v)
 }
 
 /* The quick ball: grey and still when there is no ball to throw (none left, or the boxes full). */
-static const EmPal kEmSlate = {UI_RGB(200, 196, 206), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116), UI_RGB(60, 58, 72),
-                               EM_WHITE, UI_RGB(60, 58, 72)};
-/* Its colour: gold, apart from FIGHT's orange and the cursor's glow. */
-static const EmPal kEmGold = {UI_RGB(255, 228, 120), UI_RGB(226, 166, 24), UI_RGB(160, 108, 8), UI_RGB(96, 60, 4),
-                              EM_WHITE, UI_RGB(96, 60, 4)};
+static const EmPal kEmSlate = EM_PAL(UI_RGB(216, 212, 222), UI_RGB(200, 196, 206), UI_RGB(176, 172, 184), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116),
+                                     UI_RGB(60, 58, 72), UI_RGB(232, 230, 238), UI_RGB(120, 116, 134), EM_WHITE, UI_RGB(60, 58, 72));
+/* Its colour: gold (kEmGold), apart from FIGHT's orange and the cursor's glow. */
 
 /* An arrow of the quick ball: a small raised piece with a chevron, lit while there is another ball that way. */
 static void BBallArrowDraw(const CtrBattleView *v, int next, const EmPal *p, int face)

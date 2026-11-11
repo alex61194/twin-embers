@@ -13,7 +13,8 @@ static FILE *realPack;
 static CtrPakHeader realHeader;
 static CtrPakEntry *realIndex;
 const uint8_t *CtrTwinFontData(void) { return font; }
-unsigned CtrTwinFontWidth(unsigned code) { (void)code; return 5; }
+static uint8_t fontWidths[256];   /* the game font's widths with PT_PREVIEW_WIDTHS (a viewing aid); else a fixed 5 */
+unsigned CtrTwinFontWidth(unsigned code) { return code < 256 && fontWidths[code] ? fontWidths[code] : 5; }
 const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]) { (void)code; memset(out, 0, 64); return out; }
 unsigned CtrTwinJapaneseFontWidth(unsigned code) { (void)code; return 8; }
 static uint8_t smallFont[256 * 32];
@@ -113,14 +114,27 @@ static void update(CtrPokeTouchView *old, const CtrPokeTouchView *v)
         for(int x=0;x<W;++x) for(int y=0;y<H;++y) {
             unsigned n=x*H+H-1-y;
             if(reference[n]!=canvas[n]) {
-                fprintf(stderr,"redraw mismatch at %d,%d selected=%u pressed=%u save=%u/%u back=%u\n",
-                        x,y,v->selected,v->pressed,v->save,v->saveState,v->backVisible);
+                fprintf(stderr,"redraw mismatch (opt sel %u pressed %d zone %u page %u cnt %u options %u) at %d,%d selected=%u pressed=%u save=%u/%u back=%u\n",
+                        v->optSelected,v->optPressed,v->optZone,v->optPage,v->optCount,v->options,x,y,v->selected,v->pressed,v->save,v->saveState,v->backVisible);
                 assert(reference[n]==canvas[n]);
             }
         }
     }
 #endif
     *old = *v;
+}
+/* The canvas as a PPM named dir/name.ppm. */
+static void ppm(const char *dir, const char *name)
+{
+    char path[512];
+    snprintf(path,sizeof(path),"%s/%s.ppm",dir,name);
+    FILE *f=fopen(path,"wb"); assert(f);
+    fprintf(f,"P6\n320 240\n255\n");
+    for(int y=0;y<H;++y) for(int x=0;x<W;++x) {
+        uint16_t c=at(x,y); uint8_t p[3]={(uint8_t)((c>>11)*255/31),(uint8_t)(((c>>5)&63)*255/63),(uint8_t)((c&31)*255/31)};
+        fwrite(p,1,3,f);
+    }
+    fclose(f);
 }
 static void decoder(void)
 {
@@ -305,6 +319,51 @@ int main(int argc, char **argv)
         memset(&v.optLook,0,sizeof(v.optLook)); v.optCount=2; v.optSelected=0; v.options=0; v.home=1; update(&old,&v);
     }
 #endif
+    /* Ascuas 2: the screens the owner's mockup draws, each through the incremental path first (every press, selection and value
+     * change must equal a full redraw) and then, with PT_PREVIEW_DIR, written as a PPM (PT_PREVIEW_FONT and PT_PREVIEW_WIDTHS: the
+     * game's glyphs and widths, local viewing aids). */
+    {
+        const char *dir=getenv("PT_PREVIEW_DIR"), *fp=getenv("PT_PREVIEW_FONT"), *wp=getenv("PT_PREVIEW_WIDTHS");
+        if(dir && fp) { FILE *ff=fopen(fp,"rb"); assert(ff); assert(fread(font,1,sizeof(font),ff)==sizeof(font)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
+        if(dir && wp) { FILE *ff=fopen(wp,"rb"); assert(ff); assert(fread(fontWidths,1,sizeof(fontWidths),ff)==sizeof(fontWidths)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
+        CtrPokeTouchView s={0}; CtrPokeTouchView before; s.selected=s.pressed=PT_NONE; s.optPressed=-1;
+        for(int i=0;i<PT_COUNT;++i) s.enabled[i]=1;
+        s.registeredItem=1; s.bikeItem=2; strcpy(s.playerName,"Rick"); s.playerX=s.playerY=-1;
+        #define SHOT(name) do { update(&old,&s); if(dir) ppm(dir,name); } while(0)
+        /* HOME with a destination chosen on the map: the name, the region and the hint. */
+        memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+        s.home=1; s.mapGroup=0; s.cursorX=10; s.cursorY=8; strcpy(s.bar[0],"VERMILION CITY"); strcpy(s.bar[1],"Fly available"); strcpy(s.bar[2],"Tap again to Fly");
+        SHOT("home");
+        s.selected=PT_OPTIONS; s.pressed=PT_BAG; SHOT("home_pressed"); s.pressed=PT_NONE; s.selected=PT_NONE; s.running=1; SHOT("home_running"); s.running=0;
+        /* OPTIONS, page 2: switches, values, levels; then each press and selection moves. */
+        s.home=0; s.options=1; s.optCount=7; s.optPage=1; s.optPageCount=4; strcpy(s.optPageName,"EXTRAS");
+        static const char *const labels[7]={"TYPE CHART","MOVE DATA","DAY/NIGHT","TIME","EMBERS","REPELLENT","COMPANION"};
+        for(int i=0;i<7;++i) strcpy(s.optLabel[i],labels[i]);
+        s.optSwitch[0]=2; s.optSwitch[1]=2; strcpy(s.optValue[2],"CLOCK"); strcpy(s.optValue[3],"12:00");
+        s.optSegCount[4]=3; s.optSegValue[4]=2; strcpy(s.optSegName[4][0],"OFF"); strcpy(s.optSegName[4][1],"LOW"); strcpy(s.optSegName[4][2],"HIGH");
+        s.optSwitch[5]=1; s.optSegCount[6]=3; s.optSegValue[6]=2; strcpy(s.optSegName[6][0],"OFF"); strcpy(s.optSegName[6][1],"FOLLOW"); strcpy(s.optSegName[6][2],"BE");
+        s.optSelected=6; strcpy(s.bar[0],"COMPANION"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
+        s.backVisible=1; s.backEnabled=1;
+        SHOT("options2");
+        before=s;
+        for(int row=0;row<7;++row) for(int zone=PT_OPT_ZONE_LABEL;zone<=PT_OPT_ZONE_NEXT;++zone) { s.optSelected=(uint8_t)row; s.optPressed=(int8_t)row; s.optZone=(uint8_t)zone; update(&old,&s); s.optPressed=-1; update(&old,&s); }
+        for(int k=0;k<3;++k) { s.optPressed=4; s.optZone=(uint8_t)(PT_OPT_ZONE_SEG+k); update(&old,&s); s.optPressed=-1; s.optSegValue[4]=(uint8_t)k; update(&old,&s); }
+        s.optPagePressed=1; update(&old,&s); s.optPagePressed=0; s.optPage=2; update(&old,&s); s.optPage=1;
+        strcpy(s.optValue[3],"13:45"); update(&old,&s);
+        s=before; SHOT("options2_again");
+        s.optPage=0; strcpy(s.optPageName,"GAME"); s.optSelected=0; strcpy(s.bar[0],"TYPE CHART"); strcpy(s.bar[1],"Shows how effective a move"); strcpy(s.bar[2],"will be on the foe.");
+        SHOT("options1");
+        /* The look page: three look rows and the preview card. */
+        s.optPage=3; strcpy(s.optPageName,"LOOKS"); s.optCount=4; memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount));
+        strcpy(s.optLabel[0],"EXP SHARE"); s.optSegCount[0]=3; s.optSegValue[0]=1; strcpy(s.optSegName[0][0],"OFF"); strcpy(s.optSegName[0][1],"HALF"); strcpy(s.optSegName[0][2],"ALL");
+        strcpy(s.optLabel[1],"RED LOOK"); strcpy(s.optValue[1],"GOLD HGSS"); strcpy(s.optLabel[2],"LEAF LOOK"); strcpy(s.optValue[2],"MAY HGSS"); strcpy(s.optLabel[3],"RIVAL LOOK"); strcpy(s.optValue[3],"SILVER");
+        s.optSelected=2; s.optLook.on=1; s.optLook.has=1; strcpy(s.optLook.name,"MAY HGSS"); strcpy(s.optLook.credit,"Made by DiegoWT");
+        for(int i=0;i<512;++i) s.optLook.tiles[i]=(uint8_t)(i*7);
+        for(int i=1;i<16;++i) s.optLook.palette[i]=(uint16_t)(i*0x0421);
+        strcpy(s.bar[0],"LEAF LOOK"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
+        SHOT("options_look");
+        (void)before;
+    }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
     v.backEnabled=1; update(&old,&v); v.backPressed=1; update(&old,&v);
     if(viewports) fclose(viewports);

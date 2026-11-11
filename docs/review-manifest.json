@@ -995,7 +995,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "4d3ce2905322822d788bac71d8e3149361fcbf73f9fcd6327fe5bde41161c85f",
+   "sha256": "714e62392e4b5815867a082125524e08ee48b94e388043d60c26f1cbe09075a1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1400,7 +1400,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "2da40650398354eba7affd2011689f9dd7be157b9b3592b7cdac4d8ae8aade1a",
+   "sha256": "855051275decb7804760a318b6555c0226b5e4e78205ffbdacd0bac622de5719",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1414,7 +1414,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "ad41d109e4ab853bf0e3880453b26299fbcd32f348d6e8b3840ea607e8178979",
+   "sha256": "db880c9042df71008fcf10da7f77fcc24166a6f9e6ee9c137897e37a2226336b",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1504,12 +1504,20 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "68faf2f26a88bcbb9cb2236070ba9567895fbc437fc28829e8d3c67ed8316524",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
    "old_3ds_perf_review": "Reviewed EMBERS LOW (the default on an Old 3DS, now one of the OFF / LOW / HIGH levels): 7 of 22 sparks, moved once in 3 frames by 3 steps so the speed is unchanged; the screen is touched a third as often. HIGH and OFF behave as before."
+  },
+  {
+   "path": "3ds_port/src/3ds_ember2_impl.h",
+   "sha256": "d824823c550b71d8ccaf0ac9bcddc0d89ac7d6c2a260bff72b6b776e546b8609",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/src/3ds_touch_text.c",
@@ -1998,7 +2006,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "25bc8fd5c9615776cda4dfc761f2f1eba2242edc47a1100f5814e5767aee5428"
+   "sha256": "ad69e0c55e3b9e4eaa8ef40de8cb1b1e44d318a48f27e963b2c75731ff4b533d"
   },
   {
    "path": "3ds_port/tests/rex_test.c",

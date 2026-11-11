@@ -51,24 +51,39 @@ static void EmBlend(int x, int y, uint16_t c, int a)
     Px(x, y, a >= 255 ? c : UiMix(TsGet(x, y), c, a * 8 / 255));
 }
 
-/* The palettes of the raised pieces: the face from `top` to `bottom`, its lip and outline, and the ink of a label. */
-typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh; } EmPal;
+/* The palettes of the raised pieces (the mockup's Ascuas 2): the glass face, its upper band from g1 to top and the rest from f1 to
+ * bottom (3ds_ember2_impl.h's Em2Face), the lip and the outline, the ink of a label and its shadow, the light along the top (hl) and the
+ * shade along the bottom (sd) of the face. */
+typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh, g1, f1, hl, sd; } EmPal;
+#define EM_PAL(g1, g2, f1, f2, lip, edge, hl, sd, ink, inkSh) {g2, f2, lip, edge, ink, inkSh, g1, f1, hl, sd}
 
 #define EM_DARK UI_RGB(98, 98, 98)                  /* FireRed's text grey and its shadow, on the light pieces */
 #define EM_DARK_SH UI_RGB(213, 213, 205)
-#define EM_DIM UI_RGB(136, 120, 112)
+#define EM_DIM UI_RGB(120, 106, 98)                /* secondary text: the mockup raised its contrast */
 #define EM_WHITE UI_RGB(255, 255, 255)
 #define EM_STRIPE UI_RGB(232, 112, 28)
 #define EM_GLOW UI_RGB(255, 170, 60)
+#define EM2_GLOW UI_RGB(255, 196, 90)               /* the ring round a chosen piece (the mockup's) */
 #define EM_VALUE UI_RGB(208, 48, 32)                /* a value on a light piece (the game's red) */
-static const EmPal kEmAmber = {UI_RGB(255, 206, 96), UI_RGB(236, 108, 28), UI_RGB(170, 70, 14), UI_RGB(110, 40, 6),
-                               EM_WHITE, UI_RGB(110, 40, 6)};
-static const EmPal kEmCream = {UI_RGB(255, 252, 244), UI_RGB(232, 226, 214), UI_RGB(150, 136, 126), UI_RGB(96, 80, 72),
-                               EM_DARK, EM_DARK_SH};
-static const EmPal kEmGrey = {UI_RGB(200, 192, 196), UI_RGB(150, 140, 146), UI_RGB(108, 98, 104), UI_RGB(70, 60, 66),
-                              UI_RGB(120, 112, 116), UI_RGB(206, 200, 202)};
-static const EmPal kEmViolet = {UI_RGB(120, 112, 128), UI_RGB(70, 62, 82), UI_RGB(46, 38, 58), UI_RGB(30, 24, 40),
-                                EM_WHITE, UI_RGB(30, 24, 40)};
+static const EmPal kEmAmber = EM_PAL(UI_RGB(255, 233, 168), UI_RGB(255, 207, 106), UI_RGB(251, 170, 68), UI_RGB(236, 116, 32), UI_RGB(170, 70, 14),
+                                    UI_RGB(110, 40, 6), UI_RGB(255, 244, 204), UI_RGB(214, 96, 26), EM_WHITE, UI_RGB(122, 44, 8));
+static const EmPal kEmCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 250, 241), UI_RGB(248, 241, 228), UI_RGB(232, 222, 203), UI_RGB(178, 158, 142),
+                                     UI_RGB(92, 78, 72), UI_RGB(255, 255, 255), UI_RGB(218, 205, 184), EM_DARK, EM_DARK_SH);
+static const EmPal kEmGrey = EM_PAL(UI_RGB(220, 214, 218), UI_RGB(203, 196, 201), UI_RGB(186, 178, 184), UI_RGB(151, 141, 149), UI_RGB(108, 98, 104),
+                                    UI_RGB(70, 60, 68), UI_RGB(236, 230, 234), UI_RGB(138, 128, 136), UI_RGB(133, 122, 130), EM_DARK_SH);
+static const EmPal kEmViolet = EM_PAL(UI_RGB(180, 164, 212), UI_RGB(152, 134, 192), UI_RGB(128, 108, 176), UI_RGB(92, 72, 134), UI_RGB(58, 42, 92),
+                                      UI_RGB(30, 22, 52), UI_RGB(212, 200, 236), UI_RGB(78, 60, 116), EM_WHITE, UI_RGB(30, 22, 52));
+/* The action colours of the battle menu (blue: the bag, gold: the balls, green: the team, purple: running) and teal (a window's title). */
+static const EmPal kEmBlue = EM_PAL(UI_RGB(188, 220, 255), UI_RGB(134, 184, 255), UI_RGB(92, 154, 244), UI_RGB(46, 104, 210), UI_RGB(26, 70, 160),
+                                    UI_RGB(14, 36, 96), UI_RGB(224, 240, 255), UI_RGB(42, 92, 188), EM_WHITE, UI_RGB(14, 36, 96));
+static const EmPal kEmGreen = EM_PAL(UI_RGB(204, 244, 184), UI_RGB(148, 222, 128), UI_RGB(102, 198, 96), UI_RGB(44, 154, 72), UI_RGB(26, 110, 46),
+                                     UI_RGB(12, 64, 24), UI_RGB(232, 255, 224), UI_RGB(42, 138, 64), EM_WHITE, UI_RGB(12, 64, 24));
+static const EmPal kEmGold = EM_PAL(UI_RGB(255, 242, 192), UI_RGB(255, 224, 124), UI_RGB(248, 198, 62), UI_RGB(224, 160, 24), UI_RGB(160, 108, 8),
+                                    UI_RGB(96, 60, 4), UI_RGB(255, 250, 224), UI_RGB(200, 142, 16), EM_WHITE, UI_RGB(96, 60, 4));
+static const EmPal kEmPurple = EM_PAL(UI_RGB(230, 216, 255), UI_RGB(198, 172, 255), UI_RGB(168, 136, 242), UI_RGB(122, 88, 222), UI_RGB(82, 56, 160),
+                                      UI_RGB(44, 28, 96), UI_RGB(242, 234, 255), UI_RGB(108, 76, 200), EM_WHITE, UI_RGB(44, 28, 96));
+static const EmPal kEmTeal = EM_PAL(UI_RGB(184, 240, 234), UI_RGB(124, 214, 204), UI_RGB(70, 184, 174), UI_RGB(34, 144, 138), UI_RGB(20, 102, 94),
+                                    UI_RGB(10, 58, 54), UI_RGB(220, 255, 250), UI_RGB(30, 128, 120), EM_WHITE, UI_RGB(10, 58, 54));
 
 /* Rows [y, y + h) of a rounded rectangle, each row the colour `colour[row - r0]` gives (r0 the first row on the canvas). */
 static void EmFillRows(int x, int y, int w, int h, int radius, const uint16_t *colour, int r0, int r1)
@@ -108,29 +123,7 @@ static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uin
     EmFillRows(x, y, w, h, radius, colour, r0, r1);
 }
 
-/* The glass face of a raised piece: the upper two fifths a lighter band (from a whitened `top` down to `top`), then a cut, and the rest a
- * darker band down to `bottom`. Drawn in the same rectangle as EmGradFill: nothing outside the piece, so the repaint of a neighbour 2 px away
- * never meets it. */
-static void EmGlossFill(int x, int y, int w, int h, int radius, uint16_t top, uint16_t bottom)
-{
-    int split = h * 2 / 5, r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
-    uint16_t colour[H], light = UiMix(top, EM_WHITE, 3), start = UiMix(top, bottom, 3);
-
-    if (w <= 0 || h <= 0)
-        return;
-    if (radius > 5)
-        radius = 5;
-    if (radius * 2 > h)
-        radius = h / 2;
-    if (split < 2 || h - split < 2) {
-        EmGradFill(x, y, w, h, radius, top, bottom);
-        return;
-    }
-    for (int row = r0; row < r1; ++row)
-        colour[row - r0] = row < split ? UiMix(light, top, row * 8 / (split - 1))
-                                       : UiMix(start, bottom, (row - split) * 8 / (h - split - 1));
-    EmFillRows(x, y, w, h, radius, colour, r0, r1);
-}
+#include "3ds_ember2_impl.h"
 
 /* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
  * caller has put the backdrop back under it. Returns where the face starts (for its label). */
@@ -144,35 +137,35 @@ static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int p
     }
     UiRoundFill(x, fy, w, face, 5, p->edge);
     if (pressed) {
-        EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, UiMix(p->top, p->bottom, 4), p->bottom);
-        Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 4));
+        EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, p->f1, p->bottom);              /* a pressed face is the lower band only */
+        Fill(x + 5, fy + 1, w - 10, 1, p->sd);
         return fy;
     }
-    EmGlossFill(x + 1, fy + 1, w - 2, face - 2, 4, p->top, p->bottom);
-    Fill(x + 5, fy + 1, w - 10, 1, UiMix(p->top, EM_WHITE, 5));                         /* the light along the top */
+    Em2Face(x + 1, fy + 1, w - 2, face - 2, 4, p->g1, p->top, p->f1, p->bottom);
+    Fill(x + 5, fy + 1, w - 10, 1, p->hl);                                              /* the light along the top */
     if (face >= 12)
-        Fill(x + 4, fy + face - 2, w - 8, 1, UiMix(p->bottom, p->lip, 3));              /* and a shade along the bottom */
+        Fill(x + 4, fy + face - 2, w - 8, 1, p->sd);                                    /* and a shade along the bottom */
     return fy;
 }
 
-/* The glow round a chosen piece: two soft rings outside it. */
+/* The glow round a chosen piece: two rings outside it (the mockup's solid amber ring; its soft halo would leave the 2 px a piece owns). */
 static void EmGlowRing(int x, int y, int w, int h)
 {
     for (int i = 1; i <= 2; ++i) {
-        int a = i == 1 ? 150 : 70;
+        int a = i == 1 ? 205 : 110;
 
         for (int cx = x + 3; cx < x + w - 3; ++cx) {
-            EmBlend(cx, y - i, EM_GLOW, a);
-            EmBlend(cx, y + h - 1 + i, EM_GLOW, a);
+            EmBlend(cx, y - i, EM2_GLOW, a);
+            EmBlend(cx, y + h - 1 + i, EM2_GLOW, a);
         }
         for (int cy = y + 3; cy < y + h - 3; ++cy) {
-            EmBlend(x - i, cy, EM_GLOW, a);
-            EmBlend(x + w - 1 + i, cy, EM_GLOW, a);
+            EmBlend(x - i, cy, EM2_GLOW, a);
+            EmBlend(x + w - 1 + i, cy, EM2_GLOW, a);
         }
-        EmBlend(x - i + 2, y - i + 2, EM_GLOW, a / 2);
-        EmBlend(x + w - 3 + i, y - i + 2, EM_GLOW, a / 2);
-        EmBlend(x - i + 2, y + h - 3 + i, EM_GLOW, a / 2);
-        EmBlend(x + w - 3 + i, y + h - 3 + i, EM_GLOW, a / 2);
+        EmBlend(x - i + 2, y - i + 2, EM2_GLOW, a / 2);
+        EmBlend(x + w - 3 + i, y - i + 2, EM2_GLOW, a / 2);
+        EmBlend(x - i + 2, y + h - 3 + i, EM2_GLOW, a / 2);
+        EmBlend(x + w - 3 + i, y + h - 3 + i, EM2_GLOW, a / 2);
     }
 }
 
@@ -186,12 +179,10 @@ static void EmLabel(const char *s, int x, int w, int fy, int fh, const EmPal *p)
     UiText(s, left, fy + (fh - UI_TEXT_H) / 2, p->ink, p->inkSh, 1, x + w);
 }
 
-/* The note card: a light card with an ember stripe on its left; the text is the caller's. */
+/* The note card (Em2Note): warm paper with an ember stripe on its left; the text is the caller's. */
 static void EmNote(int x, int y, int w, int h)
 {
-    UiRoundFill(x, y, w, h, 5, UI_RGB(60, 64, 92));
-    EmGradFill(x + 1, y + 1, w - 2, h - 2, 4, UI_RGB(255, 255, 255), UI_RGB(226, 230, 238));
-    Fill(x + 4, y + 6, 3, h - 12, EM_STRIPE);
+    Em2Note(x, y, w, h);
 }
 
 /* The frame round the GBA picture (w x h at x, y): three pixels of dark slate outside it. */
@@ -205,13 +196,10 @@ static void EmBezel(int x, int y, int w, int h)
     UiRing(&inner, 4, 1, UI_RGB(96, 86, 104));
 }
 
-/* A switch: a 26x12 track, green and the knob on the right when on, grey with the knob on the left when off. */
+/* A switch (Em2Switch): a 28x14 track, green and the knob on the right when on, grey with the knob on the left when off. */
 static void EmSwitch(int x, int y, int on)
 {
-    UiRoundFill(x, y, 26, 12, 5, UI_RGB(70, 60, 66));
-    UiRoundFill(x + 1, y + 1, 24, 10, 4, on ? UI_RGB(72, 196, 96) : UI_RGB(176, 172, 180));
-    UiDisc(on ? x + 19 : x + 6, y + 6, 6, UI_RGB(70, 60, 66));
-    UiDisc(on ? x + 19 : x + 6, y + 6, 5, UI_RGB(250, 250, 252));
+    Em2Switch(x, y, on);
 }
 
 /* A shortcut's key: its button's letter on a small blue pill, centred at the top of the tile (cx its centre). */

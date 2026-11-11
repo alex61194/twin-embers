@@ -619,31 +619,6 @@ int CtrPokeTouch_OptionSegment(int x, int count)
     return k >= count ? count - 1 : k;
 }
 
-/* The levels side by side in the pill: the chosen one an amber face with white ink, the others the game's grey on the
- * pill, split by thin lines; the one under a held touch darkens. */
-static void OptSegments(int row, const CtrPokeTouchView *v, int boxX, int fy, int h, int zone)
-{
-    int count = v->optSegCount[row], chosen = v->optSegValue[row], x0 = OPT_SEG_X(boxX);
-
-    for (int k = 0; k < count; ++k) {
-        int sx = x0 + k * OPT_SEG_W / count, sw = x0 + (k + 1) * OPT_SEG_W / count - sx;
-        const char *name = v->optSegName[row][k];
-        int tx = sx + (sw - TextWidth(name)) / 2;
-
-        if (k == chosen) {
-            UiRoundFill(sx, fy + 3, sw, h, 4, kEmAmber.lip);
-            EmGradFill(sx + 1, fy + 3, sw - 2, h - 1, 3, kEmAmber.top, kEmAmber.bottom);
-            UiText(name, tx, fy + 4, EM_WHITE, kEmAmber.inkSh, 1, sx + sw);
-            continue;
-        }
-        if (zone == PT_OPT_ZONE_SEG + k)
-            UiRoundFill(sx + 1, fy + 3, sw - 2, h, 4, UI_RGB(255, 214, 160));
-        if (k > 0 && k - 1 != chosen)
-            Fill(sx, fy + 5, 1, h - 4, kEmCream.bottom);
-        UiText(name, tx, fy + 4, EM_DIM, EM_DARK_SH, 1, sx + sw);
-    }
-}
-
 /* The colour of a page's left edge on its rows (the chosen row has a white one): the four pages are told apart at a glance, as the dots of the PAGE button
  * count them. An if-chain keeps it away from the audit's tables. */
 static uint16_t OptPageColor(int page)
@@ -657,45 +632,47 @@ static uint16_t OptPageColor(int page)
     return UI_RGB(216, 90, 80);
 }
 
-/* One row: a raised cream row with the label (amber, glowing, when selected) and on its right the value in a light pill
- * between "<" and ">" (a switch for ON and OFF, all the levels for a row of levels); the zone under a held touch
- * darkens. */
+/* The OPTIONS tray (the mockup's): where the seven rows stand, the same rectangle as the HOME map's frame, so going from HOME to OPTIONS does not move
+ * the frame. Its box is (4, 3, 240, 162); with its outline and the radius the sunk dark area holds the rows 6 px from its edge. */
+static const Em2Tray sOptTray = {3, 2, 242, 164, 5};
+
+/* One row: a raised cream row (amber, glowing, when selected) with its page's colour on the left edge and the label, and on its right a sunk
+ * well with the value: "<" value ">" between two amber nubs, a switch for ON and OFF, or all the levels of a row of levels, the chosen one
+ * amber. The zone under a held touch is tinted or sunk. Everything stays inside the row and its 2 px margin, where the tray is put back. */
 static void OptRow(int row, const CtrPokeTouchView *v)
 {
     CtrPokeTouchRect r = OptRect(row);
     int selected = v->optSelected == row, pressed = v->optPressed == row;
     int boxX = r.x + r.w - OPT_BOX_W, zone = pressed ? v->optZone : PT_OPT_ZONE_NONE;
     const EmPal *pal = selected ? &kEmAmber : &kEmCream;
-    int fy, mid = boxX + OPT_BOX_W / 2;
-    const char *value = v->optValue[row];
+    int fy, wx = boxX + 2, ww = OPT_BOX_W - 6, wh = r.h - COL_DEPTH - 4;
 
-    TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+    Em2TrayRestore(&sOptTray, r.x - 2, r.y - 2, r.w + 4, r.h + 4);
     if (selected)
         EmGlowRing(r.x, r.y, r.w, r.h);
     fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, zone == PT_OPT_ZONE_LABEL);
-    UiRoundFill(r.x + 2, fy + 3, 3, r.h - COL_DEPTH - 6, 1, selected ? EM_WHITE : OptPageColor(v->optPage));
-    UiText(v->optLabel[row], r.x + 8, fy + 4, pal->ink, pal->inkSh, 1, boxX - 2);
-    UiRoundFill(boxX + 2, fy + 2, OPT_BOX_W - 6, r.h - COL_DEPTH - 4, 5, kEmAmber.lip);
-    UiRoundFill(boxX + 3, fy + 3, OPT_BOX_W - 8, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 248, 236));
+    UiRoundFill(r.x + 3, fy + 3, 3, r.h - COL_DEPTH - 6, 1, selected ? EM_WHITE : OptPageColor(v->optPage));
+    Em2Text(v->optLabel[row], r.x + 10, fy + 4, pal->ink, pal->inkSh, boxX);
     if (v->optSegCount[row]) {
-        OptSegments(row, v, boxX, fy, r.h - COL_DEPTH - 6, zone);
+        const char *names[PT_OPT_SEGS];
+        int count = v->optSegCount[row] > PT_OPT_SEGS ? PT_OPT_SEGS : v->optSegCount[row];
+
+        for (int k = 0; k < count; ++k)
+            names[k] = v->optSegName[row][k];
+        Em2Well(wx, fy + 2, ww, wh, selected);
+        Em2Segments(OPT_SEG_X(boxX), fy + 3, OPT_SEG_W, wh - 2, names, count, v->optSegValue[row],
+                    zone >= PT_OPT_ZONE_SEG ? zone - PT_OPT_ZONE_SEG : -1);
         return;
     }
     if (v->optSwitch[row]) {
         /* A switch has two places and no arrows: the whole box toggles (PREV and NEXT both do), so the whole box darkens when held. */
+        Em2Well(wx, fy + 2, ww, wh, selected);
         if (zone == PT_OPT_ZONE_PREV || zone == PT_OPT_ZONE_NEXT)
-            UiRoundFill(boxX + 3, fy + 3, OPT_BOX_W - 8, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 214, 160));
-        EmSwitch(mid - 13, fy + 3, v->optSwitch[row] == 2);
+            UiRoundFill(wx + 1, fy + 3, ww - 2, wh - 2, 4, UI_RGB(255, 214, 160));
+        Em2Switch(wx + (ww - 28) / 2, fy + 3, v->optSwitch[row] == 2);
         return;
     }
-    if (zone == PT_OPT_ZONE_PREV)
-        UiRoundFill(boxX + 3, fy + 3, OPT_ARROW_W - 3, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 214, 160));
-    if (zone == PT_OPT_ZONE_NEXT)
-        UiRoundFill(mid + OPT_BOX_W / 2 - OPT_ARROW_W, fy + 3, OPT_ARROW_W - 5, r.h - COL_DEPTH - 6, 4,
-                    UI_RGB(255, 214, 160));
-    UiArrow(boxX + 10, fy + 4, -1, EM_STRIPE);
-    UiArrow(boxX + OPT_BOX_W - 15, fy + 4, 1, EM_STRIPE);
-    UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
+    Em2ValueBox(wx, fy + 2, ww, wh, v->optValue[row], zone == PT_OPT_ZONE_PREV ? 1 : zone == PT_OPT_ZONE_NEXT ? 2 : 0);
 }
 
 static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color);
@@ -716,14 +693,22 @@ static void OptLookPanel(const CtrPokeTouchView *v)
     const CtrPokeTouchLook *l = &v->optLook;
     CtrPokeTouchRect r = OptLookRect(v);
     int small = r.h < 62;                    /* five rows on the page leave 42: the picture at its own size, the words nearer */
-    int textX = r.x + (small ? 54 : 84);
+    int textX = r.x + (small ? 54 : 84), right = r.x + r.w - 8;
 
     if (r.h < 40)
         return;
-    TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+    Em2TrayRestore(&sOptTray, r.x - 2, r.y - 2, r.w + 4, r.h + 4);
     EmNote(r.x, r.y, r.w, r.h);
-    if (!small && r.h >= 68)         /* the picture on a plate of its own */
-        UiRoundFill(r.x + 10, r.y + (r.h - 68) / 2, 68, 68, 6, UI_RGB(240, 232, 216));
+    if (!small) {
+        /* The mockup's stage: a warm plate for the picture with the shadow of its feet on it. */
+        int px = r.x + 11, py = r.y + 2, ps = r.h - 4;
+
+        UiRoundFill(px, py, ps, ps, 5, UI_RGB(192, 154, 116));
+        Em2Fill3(px + 1, py + 1, ps - 2, ps - 2, 4, UI_RGB(255, 248, 230), UI_RGB(248, 220, 180), (ps - 2) * 62 / 100, UI_RGB(236, 194, 142));
+        Fill(px + ps / 2 - 10, py + ps - 12, 20, 1, UI_RGB(226, 190, 148));
+        Fill(px + ps / 2 - 14, py + ps - 11, 28, 2, UI_RGB(218, 180, 136));
+        Fill(px + ps / 2 - 10, py + ps - 9, 20, 1, UI_RGB(226, 190, 148));
+    }
     if (l->has) {
         static uint8_t pixels[32 * 32];
         uint16_t pal[16];
@@ -737,18 +722,17 @@ static void OptLookPanel(const CtrPokeTouchView *v)
         if (small)
             UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 10, r.y + (r.h - 30) / 2, 1, 1);
         else
-            UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
+            UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 11 + (r.h - 4 - 64) / 2, r.y + (r.h - 60) / 2, 2, 1);
     }
-    UiText(l->name, textX, r.y + (small ? 4 : 8), EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
-    if (!small)
-        Fill(textX, r.y + 20, r.x + r.w - 8 - textX, 1, kEmCream.bottom);   /* name, then the artists below a line */
+    Em2Text(l->name, textX, r.y + (small ? 5 : 8), EM_DARK, EM_DARK_SH, right);
+    Em2Rule(textX, r.y + (small ? 17 : 22), right - textX);
     {
-        /* The artists' credit in the name's own shadow (the bolder look it had was the dark one of the battle texts), as many lines as the
-         * card holds, up to five. */
-        int lines = small ? 2 : (r.h - 36) / UI_LINE_H + 1;
+        /* The artists behind an ART pill, as many lines as the card holds, up to three. */
+        const char *tag = CTR_TR("ART", "ARTE", "Kunst");
+        int y = r.y + (small ? 21 : 26), pw = UiTextWidth(tag, 1) + 14, lines = small ? 1 : 3;
 
-        BDescribeSh(l->credit, textX, r.y + (small ? 17 : 25), r.x + r.w - 6 - textX, lines < 1 ? 1 : lines > 5 ? 5 : lines, EM_DIM,
-                    EM_DARK_SH);
+        Em2Pill(textX, y, tag, UI_RGB(255, 216, 144), UI_RGB(240, 160, 64), UI_RGB(138, 74, 12));
+        Em2Wrap(l->credit, textX + pw + 4, y + 3, right - textX - pw - 4, lines, UI_LINE_H, EM_DIM, EM_DARK_SH);
     }
 }
 
@@ -967,8 +951,11 @@ static void MenuFrame(const CtrPokeTouchView *v)
         return;
     }
     if (v->options && !v->viewport) {
-        for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
-            OptRow(i, v);
+        Em2TrayDraw(&sOptTray);
+        for (int pass = 0; pass < 2; ++pass)            /* the chosen row last: its glow lies in the gaps its neighbours' redraws clear */
+            for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
+                if ((pass == 1) == (v->optSelected == i))
+                    OptRow(i, v);
         if (v->optLook.on)
             OptLookPanel(v);
         return;
@@ -994,22 +981,26 @@ static void Back(const CtrPokeTouchView *v)
     UiText(CTR_TR("BACK", "ATR\xC3\x81S", "Zur\xC3\xBC" "ck"), x + 9, fy + (r->h - BTN_DEPTH - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w);
 }
 
-/* PAGE: switches between OPTIONS pages (PAGE 1/2, PAGE 2/2) right above BACK. */
+/* PAGE: switches between OPTIONS pages (PAGE 2/4) right above BACK: a dot for each page in that page's colour, the shown one larger with a ring. */
 static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-    int fy, dots = v->optPageCount, x0;
+    int fy, dots = v->optPageCount > 6 ? 6 : v->optPageCount, x0;
+    char label[16];
 
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
-    /* A dot for each page (the current one amber) over the page's name: where you are in the pages, and what is on this one. */
-    x0 = r->x + (r->w - (dots * 6 + (dots - 1) * 4)) / 2;
+    x0 = r->x + (r->w - ((dots - 1) * 10 + 7)) / 2;
     for (int i = 0; i < dots; ++i) {
-        UiRoundFill(x0 + i * 10, fy + 3, 6, 6, 3, i == v->optPage ? kEmAmber.lip : kEmCream.lip);
+        uint16_t colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
+
         if (i == v->optPage)
-            UiRoundFill(x0 + i * 10 + 1, fy + 4, 4, 4, 2, kEmAmber.top);
+            Em2Dot(x0 + i * 10, fy + 4, colour, 1);
+        else
+            Em2Dot(x0 + i * 10 + 1, fy + 5, colour, 0);
     }
-    EmLabel(v->optPageName, r->x, r->w, fy + 10, 13, &kEmCream);
+    snprintf(label, sizeof(label), CTR_TR("PAGE %d/%d", "PAG. %d/%d", "Seite %d/%d"), v->optPage + 1, v->optPageCount);
+    EmLabel(label, r->x, r->w, fy + 11, 11, &kEmCream);
 }
 
 /* The bar: the note card with up to three lines, 15 pixels apart and centred on it; the first line is the subject,
@@ -1095,6 +1086,7 @@ static void Bar(const CtrPokeTouchView *v)
     int w = side ? NOTE_W_SIDE : NOTE_W_FULL;
 
     TsBgRect(r->x, r->y, r->w, r->h);
+    Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
@@ -1113,16 +1105,21 @@ static void Bar(const CtrPokeTouchView *v)
     else if (v->bag.on && !v->viewport)
         FBagNote(v, w);
     else {
-        int pitch = 16, top = NOTE_Y + (NOTE_H - (lines - 1) * pitch - UI_TEXT_H) / 2;
-
         int right = NOTE_X + w - 4;
 
         EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
         if (v->options && v->optFrameShow && FrameSample(v->optFrameType, NOTE_X + w - FRAME_W - 8,
                                                          NOTE_Y + (NOTE_H - FRAME_H) / 2 - 1))
             right -= FRAME_W + 4;
-        for (int i = 0; i < lines; ++i)
-            UiText(v->bar[i], NOTE_X + 12, top + i * pitch, i == 0 ? EM_DARK : EM_DIM, EM_DARK_SH, 1, right);
+        if (lines == 1) {
+            Em2Text(v->bar[0], NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, right);
+        } else {
+            /* The mockup's note: the subject, a rule under it, then the lines that say more, 15 apart, dimmer. */
+            Em2Text(v->bar[0], NOTE_X + 12, NOTE_Y + 8, EM_DARK, EM_DARK_SH, right);
+            Em2Rule(NOTE_X + 12, NOTE_Y + 22, right - NOTE_X - 12);
+            for (int i = 1; i < lines; ++i)
+                Em2Text(v->bar[i], NOTE_X + 12, NOTE_Y + 28 + (i - 1) * 15, EM_DIM, EM_DARK_SH, right);
+        }
     }
     if (hasPage)
         OptPageButton(v);
@@ -1327,17 +1324,30 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
             Mark(dirty, &sSavePanel);
         }
     } else if (v->options && !v->viewport) {
-        /* A row whose value, selection or press changed: only its rectangle. */
-        for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i) {
-            if (strcmp(old->optLabel[i], v->optLabel[i]) || strcmp(old->optValue[i], v->optValue[i])
-                || (old->optSelected == i) != (v->optSelected == i) || (old->optPressed == i) != (v->optPressed == i)
-                || (v->optPressed == i && old->optZone != v->optZone)) {
-                CtrPokeTouchRect r = OptRect(i);
+        /* A row whose value, selection or press changed: only its rectangle and the 2 px round it. The chosen row is drawn last, and
+         * also when a neighbour was (the redraw of a row puts the tray back over the glow its neighbour has in the gap between them). */
+        uint8_t redraw[PT_OPT_MAX] = {0};
+        int sel = v->optSelected;
 
-                OptRow(i, v);
-                Mark(dirty, &r);
-            }
-        }
+        for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
+            redraw[i] = strcmp(old->optLabel[i], v->optLabel[i]) || strcmp(old->optValue[i], v->optValue[i])
+                        || old->optSwitch[i] != v->optSwitch[i] || old->optSegValue[i] != v->optSegValue[i] || old->optPage != v->optPage
+                        || (old->optSelected == i) != (v->optSelected == i) || (old->optPressed == i) != (v->optPressed == i)
+                        || (v->optPressed == i && old->optZone != v->optZone);
+        if (sel < v->optCount && sel < PT_OPT_MAX && ((sel > 0 && redraw[sel - 1]) || (sel + 1 < PT_OPT_MAX && redraw[sel + 1])))
+            redraw[sel] = 1;
+        for (int pass = 0; pass < 2; ++pass)
+            for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
+                if (redraw[i] && (pass == 1) == (sel == i)) {
+                    CtrPokeTouchRect r = OptRect(i);
+
+                    OptRow(i, v);
+                    r.x -= 2;
+                    r.y -= 2;
+                    r.w += 4;
+                    r.h += 4;
+                    Mark(dirty, &r);
+                }
         /* The preview: its look (or the one chosen for another slot) changed. */
         if (v->optLook.on && memcmp(&old->optLook, &v->optLook, sizeof(v->optLook))) {
             CtrPokeTouchRect r = OptLookRect(v);
