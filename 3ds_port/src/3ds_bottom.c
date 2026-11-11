@@ -128,6 +128,7 @@ extern int CtrBottomView_TeachyTv(void);
 extern int CtrBottomView_Mail(void);
 extern int CtrBottomView_EasyChat(void);
 extern int CtrBottomView_HallOfFame(void);
+extern int CtrBottomView_Relearner(void);     /* the move relearner (learn_move.c, recipe 0244) */
 /* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
 extern int CtrBottomHof_HoldsTop(void);
 /* The item PC back from DEPOSIT ITEM's Bag or WITHDRAW ITEM's list to its menu (player_pc.c, recipe 0186). */
@@ -762,6 +763,8 @@ static const char *GbaViewTitle(void)
         return CTR_TR("EASY CHAT", "CHAT F\xC3\x81" "CIL", "Leichter Chat");
     if (CtrBottomView_HallOfFame())
         return CTR_TR("HALL OF FAME", "HALL DE LA FAMA", "Ruhmeshalle");
+    if (CtrBottomView_Relearner())
+        return CTR_TR("REMEMBER", "RECORDAR", "Erinnern");
     return NULL;
 }
 
@@ -815,7 +818,7 @@ static int CurrentMode(void)
         return MODE_CHOICE;
     /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
-        || CtrBottomView_HallOfFame())
+        || CtrBottomView_HallOfFame() || CtrBottomView_Relearner())
         return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;

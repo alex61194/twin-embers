@@ -1034,7 +1034,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "01fc3d0ca02f7782aa58f889b796b967bd3b9c7b8dc34270d20ef8db22ddf91d",
+   "sha256": "edd692eb55858ab70a599d767815ca30d75c9b08958c15a5ad8cf337f21ab6f3",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -6833,6 +6833,14 @@
   {
    "path": "patches/pokefirered/0238-remember-in-party-menu.json",
    "sha256": "8a3547634be7a2bac48615f4bdf612093608fac8e2717af4232ee1dbd184e4bd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0244-relearner-in-viewport.json",
+   "sha256": "2baebbbc15c106142a6d56aaa602b67092fe17326bc38f707e50e791fcc0f710",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
