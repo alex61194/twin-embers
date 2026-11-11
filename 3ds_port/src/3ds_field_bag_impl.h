@@ -125,7 +125,7 @@ static void FBLlButton(const CtrPokeTouchRect *r, const EmPal *p, const char *la
     int face = r->h - FB_DEPTH, fy;
 
     if (chosen)
-        LlSelectRing(r->x, r->y, r->w, face);
+        LlSelectRing(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, pressed);
     if (chosen)
         LlCursor(r->x + 9, fy + (face - 10) / 2, EM_WHITE);
@@ -183,7 +183,7 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
     if (index == b->count) {                            /* CLOSE BAG (a case's own CLOSE): slate, with BACK's arrow */
         p = LlPick(selected, &kEmSlate);
         if (selected)
-            LlSelectRing(r.x, r.y, r.w, FB_FACE);
+            LlSelectRing(r.x, r.y, r.w, FB_FACE + FB_DEPTH);
         fy = EmButton(r.x, r.y, r.w, FB_FACE + FB_DEPTH, p, FB_DEPTH, press);
         LlArrow(r.x + 10, fy + (FB_FACE - 10) / 2, 6, 10, 2, EM_WHITE);
         EmLabel(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(UIS_BAG_CLOSE), r.x, r.w, fy, FB_FACE, p);
@@ -191,7 +191,7 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
     }
     p = LlPick(selected, &kEmCream);
     if (selected)
-        LlSelectRing(r.x, r.y, r.w, FB_FACE);
+        LlSelectRing(r.x, r.y, r.w, FB_FACE + FB_DEPTH);
     fy = EmButton(r.x, r.y, r.w, FB_FACE + FB_DEPTH, p, FB_DEPTH, press);
     LlWell(r.x + 2, fy + 2, 26, 18);
     BItemDraw(b->row[i].item, r.x + 3, fy - 1, 1);
@@ -388,6 +388,8 @@ static void FBPosition(const CtrPokeTouchBag *b)
     if (first > last)
         first = last;
     snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d"), first, last, b->count);
+    if (UiTextWidth(text, 1) > gCtrPokeTouchOptPage.w - 10)     /* "54-58 von 58" is wider than the card: the short form, never cut */
+        snprintf(text, sizeof(text), "%d-%d/%d", first, last, b->count);
     fy = EmButton(gCtrPokeTouchOptPage.x, gCtrPokeTouchOptPage.y, gCtrPokeTouchOptPage.w, FB_FACE + FB_DEPTH, &kEmCream, FB_DEPTH, 0);
     EmLabel(text, gCtrPokeTouchOptPage.x, gCtrPokeTouchOptPage.w, fy, FB_FACE, &kEmCream);
 }
