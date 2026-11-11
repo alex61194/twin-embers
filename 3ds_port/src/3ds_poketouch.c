@@ -740,34 +740,50 @@ static void OptLookPanel(const CtrPokeTouchView *v)
     }
 }
 
-/* The SAVE screen: FireRed's save information in a card over the frame where the picture goes: a title band, the five
- * lines (label on the left, value on the right) and the player's own map icon, enlarged by 3, on a plate. Each value
- * has its own rectangle, filled with the card's colour before its text, so one that changes (the play clock) is
- * redrawn alone. The dialogue is the bar: the text in the note card, YES over NO (or a lone OK) on its right. */
+/* The SAVE screen (Llama): FireRed's text window over the frame where the picture goes: a flame title band, the five
+ * lines (label on the left, blue value on the right, a rule under each) and the player's own map icon, enlarged by 3, in a
+ * sunk well. Each value has its own rectangle, filled with the window's paper before its text, so one that changes (the
+ * play clock) is redrawn alone. The dialogue is the bar: the text in a second window (title, rule, dimmer lines), YES over
+ * NO (or a lone OK) on its right. */
 enum { SF_NAME, SF_BADGES, SF_DEX, SF_TIME, SF_MONEY, SF_COUNT };
-static const CtrPokeTouchRect sSavePanel = {14, 10, 220, 150};
+static const CtrPokeTouchRect sSavePanel = {3, 3, 244, 160};     /* the window (5, 5, 240 x 154) and 2 px round it, its shadow too */
 static const CtrPokeTouchRect sSaveButtons = {170, 170, 76, 70};   /* right of the note card, glow included */
 static const CtrPokeTouchRect sSaveYes = {172, 172, 72, 30};
 static const CtrPokeTouchRect sSaveNo = {172, 206, 72, 30};
-#define SAVE_CARD UI_RGB(255, 252, 244)
-#define SAVE_LINE_Y 42
-#define SAVE_LINE_STEP 22
-#define SAVE_VALUE_RIGHT 150
+#define SAVE_WIN_X 5
+#define SAVE_WIN_Y 5
+#define SAVE_WIN_W 240
+#define SAVE_WIN_H 154
+#define SAVE_LINE_Y 34
+#define SAVE_LINE_STEP 24
+#define SAVE_LABEL_X 18
+#define SAVE_VALUE_RIGHT 146
+#define SAVE_NOTE_X 5
+#define SAVE_NOTE_Y 166
+#define SAVE_NOTE_W 162
+#define SAVE_NOTE_H 70
 static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("PLAYER", "JUGADOR", "Spieler"), CTR_TR("BADGES", "MEDALLAS", "Orden"), CTR_TR("POK\xc3\xa9" "DEX", "POK\xc3\xa9" "DEX", "Pok\xc3\xa9" "dex"), CTR_TR("TIME", "TIEMPO", "Zeit"), CTR_TR("MONEY", "DINERO", "Geld")};
 
 static CtrPokeTouchRect SaveField(int f)
 {
-    CtrPokeTouchRect r = {84, (int16_t)(SAVE_LINE_Y + f * SAVE_LINE_STEP - 3), SAVE_VALUE_RIGHT + 2 - 84, 16};
+    CtrPokeTouchRect r = {84, (int16_t)(SAVE_LINE_Y + f * SAVE_LINE_STEP - 2), SAVE_VALUE_RIGHT + 2 - 84, 16};
 
     return r;
+}
+
+/* The window's paper (white to #f8f8f0 over its inside, as LlWindow lays it) on row y. */
+static uint16_t SavePaper(int y)
+{
+    return Em2Lerp(EM_WHITE, UI_RGB(248, 248, 240), y - (SAVE_WIN_Y + 5), SAVE_WIN_H - 10 - 1);
 }
 
 static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
 {
     CtrPokeTouchRect r = SaveField(f);
-    char text[24];
+    char text[24], fit[32];
 
-    Fill(r.x, r.y, r.w, r.h, SAVE_CARD);
+    for (int row = 0; row < r.h; ++row)
+        Fill(r.x, r.y + row, r.w, 1, SavePaper(r.y + row));
     switch (f) {
     case SF_NAME:   snprintf(text, sizeof(text), "%s", v->playerName); break;
     case SF_BADGES: snprintf(text, sizeof(text), "%u", (unsigned)v->saveBadges); break;
@@ -786,7 +802,8 @@ static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
         if (*c >= 'a' && *c <= 'z')
             *c = (char)(*c - ('a' - 'A'));
 #endif
-    UiText(text, SAVE_VALUE_RIGHT - TextWidth(text), r.y + 3, UI_RGB(48, 80, 200), UI_RGB(176, 196, 240), 1,
+    Em2Fit(text, SAVE_VALUE_RIGHT - 84, fit, sizeof(fit));
+    UiText(fit, SAVE_VALUE_RIGHT - UiTextWidth(fit, 1), r.y + 2, UI_RGB(48, 104, 216), UI_RGB(192, 208, 240), 1,
            SAVE_VALUE_RIGHT + 1);
 }
 
@@ -795,7 +812,8 @@ static void SaveSprite(const CtrPokeTouchView *v)
 {
     const int scale = 3, x = 166, y = 62;
 
-    UiRoundFill(x - 6, y - 6, MARKER * scale + 12, MARKER * scale + 12, 5, UI_RGB(255, 226, 190));
+    LlWell(x - 14, y - 24, 76, 96);                         /* the sunk box of the mockup, the icon in its middle */
+    UiRoundFill(x, y, MARKER * scale, MARKER * scale, 6, UI_RGB(250, 242, 222));   /* the plate under it */
     if (sPlayer.key != v->playerFemale)
         IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
     if (!sPlayer.ok)
@@ -810,20 +828,46 @@ static void SaveSprite(const CtrPokeTouchView *v)
 
 static void SaveDraw(const CtrPokeTouchView *v)
 {
-    const CtrPokeTouchRect *p = &sSavePanel;
+    uint16_t band[20];
+    int split = 20 * 42 / 100;
 
-    UiRoundFill(p->x, p->y, p->w, p->h, 5, UI_RGB(60, 64, 92));
-    UiRoundFill(p->x + 1, p->y + 1, p->w - 2, p->h - 2, 4, SAVE_CARD);
-    EmGradFill(p->x + 1, p->y + 1, p->w - 2, 22, 4, kEmAmber.top, kEmAmber.bottom);
-    Fill(p->x + 1, p->y + 23, p->w - 2, 1, kEmAmber.edge);
-    UiText(CTR_TR("SAVE", "GUARDAR", "Sichern"), p->x + 10, p->y + 7, EM_WHITE, kEmAmber.inkSh, 1, p->x + p->w - 4);
+    LlWindow(SAVE_WIN_X, SAVE_WIN_Y, SAVE_WIN_W, SAVE_WIN_H);
+    /* The flame band across the top of the window (the mockup's .fl, 20 tall, no outline: it covers the window's rings). */
+    for (int row = 0; row < 20; ++row)
+        band[row] = row < split ? Em2Lerp(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), row, split - 1)
+                                : Em2Lerp(UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), row - split, 20 - split - 1);
+    EmFillRows(SAVE_WIN_X + 1, SAVE_WIN_Y + 1, SAVE_WIN_W - 2, 20, 4, band, 0, 10);
+    for (int row = 10; row < 20; ++row)
+        Fill(SAVE_WIN_X + 1, SAVE_WIN_Y + 1 + row, SAVE_WIN_W - 2, 1, band[row]);
+    Em2Text(CTR_TR("SAVE", "GUARDAR", "Sichern"), SAVE_WIN_X + 11, SAVE_WIN_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh,
+            SAVE_WIN_X + SAVE_WIN_W - 6);
     for (int f = 0; f < SF_COUNT; ++f) {
-        UiText(sSaveLabel[f], p->x + 12, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 1, 84);
-        if (f + 1 < SF_COUNT)
-            Fill(p->x + 10, SAVE_LINE_Y + f * SAVE_LINE_STEP + 15, SAVE_VALUE_RIGHT - p->x - 8, 1, UI_RGB(226, 220, 210));
+        Em2Text(sSaveLabel[f], SAVE_LABEL_X, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 84);
+        LlRule(SAVE_LABEL_X, SAVE_LINE_Y + f * SAVE_LINE_STEP + 17, 130);
         SaveFieldDraw(f, v);
     }
     SaveSprite(v);
+}
+
+/* The dialogue's text: a second window under the picture, the subject (what is asked or said), a rule, then the lines
+ * that say more, dimmer. One line alone is centred. */
+static void SaveNote(const CtrPokeTouchView *v)
+{
+    const char *shown[PT_BAR_LINES];
+    int count = 0, right = SAVE_NOTE_X + SAVE_NOTE_W - 5;
+
+    LlWindow(SAVE_NOTE_X, SAVE_NOTE_Y, SAVE_NOTE_W, SAVE_NOTE_H);
+    for (int i = 0; i < PT_BAR_LINES; ++i)
+        if (v->bar[i][0])
+            shown[count++] = v->bar[i];
+    if (count == 1) {
+        Em2Text(shown[0], SAVE_LABEL_X, SAVE_NOTE_Y + (SAVE_NOTE_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, right);
+    } else if (count > 1) {
+        Em2Text(shown[0], SAVE_LABEL_X, SAVE_NOTE_Y + 10, EM_DARK, EM_DARK_SH, right);
+        LlRule(SAVE_LABEL_X, SAVE_NOTE_Y + 27, right - SAVE_LABEL_X);
+        for (int i = 1; i < count; ++i)
+            Em2Text(shown[i], SAVE_LABEL_X, SAVE_NOTE_Y + 33 + (i - 1) * 15, EM_DIM, EM_DARK_SH, right);
+    }
 }
 
 static int SaveFieldChanged(int f, const CtrPokeTouchView *a, const CtrPokeTouchView *b)
@@ -856,8 +900,8 @@ int CtrPokeTouch_SaveHit(int x, int y, int state)
     return PT_SAVE_NONE;
 }
 
-/* YES amber (glowing when selected), NO violet (amber when selected), a lone OK amber; the one under a touch sinks.
- * While writing, three dots instead. */
+/* YES cream, NO cream too until chosen; the chosen one is flame with the 2 px ring, a lone OK is flame; the one under a
+ * touch sinks. While writing, three flame dots instead. */
 static void SaveButtons(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *b = &sSaveButtons;
@@ -865,20 +909,28 @@ static void SaveButtons(const CtrPokeTouchView *v)
 
     TsBgRect(b->x, b->y, b->w, b->h);
     if (v->saveState == SAVE_WRITING) {
-        for (int i = 0; i < 3; ++i)
-            UiDisc(b->x + 26 + 12 * i, b->y + 34, 3, i == 1 ? EM_GLOW : UI_RGB(255, 236, 170));
+        static const int8_t dy[3] = {0, -3, 0};
+
+        for (int i = 0; i < 3; ++i) {
+            int cx = b->x + 14 + 14 * i, cy = b->y + 30 + dy[i];
+
+            UiDisc(cx, cy, 5, UI_RGB(138, 22, 16));
+            UiDisc(cx, cy, 4, i == 1 ? UI_RGB(255, 176, 72) : UI_RGB(240, 128, 40));
+            UiDisc(cx - 1, cy - 1, 2, UI_RGB(255, 226, 170));
+            UiDisc(cx - 1, cy - 1, 1, EM_WHITE);
+        }
         return;
     }
     for (int which = PT_SAVE_FIRST; which <= (confirm ? PT_SAVE_SECOND : PT_SAVE_FIRST); ++which) {
         CtrPokeTouchRect r = SaveButtonRect(which, v->saveState);
         int sel = !confirm || v->saveSel == which - PT_SAVE_FIRST, press = v->savePressed == which;
-        const EmPal *pal = sel ? &kEmAmber : &kEmViolet;
+        const EmPal *pal = LlPick(sel, &kEmCream);
         int fy;
 
         if (sel)
-            EmGlowRing(r.x, r.y, r.w, r.h);
-        fy = EmButton(r.x, r.y, r.w, r.h, pal, BTN_DEPTH, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D", "Ja") : CTR_TR("NO", "NO", "Nein"), r.x, r.w, fy, r.h - BTN_DEPTH, pal);
+            LlSelectRing(r.x, r.y, r.w, r.h);
+        fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, press);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D", "Ja") : CTR_TR("NO", "NO", "Nein"), r.x, r.w, fy, r.h - 2, pal);
     }
 }
 
@@ -1109,11 +1161,14 @@ static void Bar(const CtrPokeTouchView *v)
 
     TsBgRect(r->x, r->y, r->w, r->h);
     ColStrip(r->y, r->h);
-    Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);
+    if (!(v->save && !v->viewport))
+        Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    if (v->dex.on && !v->viewport)
+    if (v->save && !v->viewport)
+        SaveNote(v);
+    else if (v->dex.on && !v->viewport)
         FDexNote(v, w);
     else if (v->card.on && !v->viewport)
         FCardNote(v, w);

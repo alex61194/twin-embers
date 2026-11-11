@@ -392,6 +392,18 @@ int main(int argc, char **argv)
         for(int i=1;i<16;++i) s.optLook.palette[i]=(uint16_t)(i*0x0421);
         strcpy(s.bar[0],"LEAF LOOK"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
         SHOT("options_look");
+        /* SAVE: the four states of the mockup (the incremental path first: each must equal a full redraw). */
+        memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+        s.options=0; s.optCount=0; s.optPage=0; s.optPageCount=0; s.optSelected=0; s.optLook.on=0; s.backVisible=0; s.backEnabled=0;
+        memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount)); memset(s.optLabel,0,sizeof(s.optLabel)); memset(s.optValue,0,sizeof(s.optValue));
+        s.save=1; s.saveBadges=5; s.saveDex=87; s.saveHasDex=1; s.saveHours=42; s.saveMinutes=7; s.saveMoney=123456; s.saveSel=1; s.savePressed=PT_SAVE_NONE;
+        s.playerFemale=0; s.saveState=SAVE_CONFIRM; strcpy(s.bar[0],"Save your adventure?"); strcpy(s.bar[1],"Your progress will be written."); s.bar[2][0]=0;
+        SHOT("save_confirm");
+        s.saveSel=0; SHOT("save_confirm_yes"); s.savePressed=PT_SAVE_FIRST; SHOT("save_confirm_yes_pressed"); s.savePressed=PT_SAVE_NONE; s.saveSel=1;
+        s.saveState=SAVE_WRITING; strcpy(s.bar[0],"Saving..."); strcpy(s.bar[1],"Do not turn off the console."); SHOT("save_writing");
+        s.saveState=SAVE_SUCCESS; strcpy(s.bar[0],"Your game has been saved!"); s.bar[1][0]=0; SHOT("save_saved");
+        s.saveState=SAVE_ERROR; strcpy(s.bar[0],"The game could not be saved."); strcpy(s.bar[1],"Try again."); SHOT("save_error");
+        s.saveMinutes=8; s.saveMoney=999999; s.saveBadges=8; s.playerFemale=1; strcpy(s.playerName,"Leaf"); update(&old,&s); SHOT("save_error_changed");
         (void)before;
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
