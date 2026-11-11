@@ -1207,7 +1207,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "d48fa0ce90322768cbb95ef77ea4936986b3f2fac089101b22feab8540c5ca52",
+   "sha256": "2a89f82c12a3318bf0c95438caf78b085d96e54c6484613d47a5c8f84e84cac3",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
