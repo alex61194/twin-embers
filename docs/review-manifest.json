@@ -2465,11 +2465,12 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-18a3758c/event_scripts-01.json",
-   "sha256": "e7f6298f409a0fc31bb27fa1e13fce35bb9c3e2c46fa32e0f86494806c8b4104",
+   "sha256": "d692825e5eb8e37cbab07f87a99e2e2f31d6b8de72bc4ec67b5779bcf5ae4008",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_de); no ROM/game payloads"
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_de); no ROM/game payloads",
+   "viridian_mart_align_review": "Fix 1-byte .align 2 offset for ViridianCity_Mart_Items (43247 -> 43248) and ViridianCity_Mart_EventScript_SayHiToOak (43259 -> 43260) in DE event_scripts-01.json (Sh3ld0r/mcl5500, disclosed AI assistance); verified all 9,954 event_scripts pointers against German 18a3758c ROM."
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-18a3758c/event_scripts-02.json",
