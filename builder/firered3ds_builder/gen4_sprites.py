@@ -381,7 +381,7 @@ GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "n
 GROUP_HD = "hd"     # the HD battle scenes (Bentley734's): graphics/gen4/hdn/ and hd/, each as it is in the pack
 GROUP_LOOKS = "looks"   # the alternative player looks (Emerald Lens'): graphics/gen4/look/<look>/<sheet>, for the player to pick in the game
 LOOK_SIBLINGS = {"gold_hgss": "gold", "brendan_hgss": "brendan_oras", "green_hgss": "green", "may_hgss": "may_oras"}
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)   # not GROUP_PLAYER: no switch asks for it now
 # The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
 # a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
 # nine 32x32 frames), the game flipping the west frames for the east. Rows: (dex, or 1000 + dex for the female one,
@@ -1226,21 +1226,32 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
                 row = todo.get_nowait()
             except queue.Empty:
                 return
-            results.put((row, downloader.fetch(row)))
+            try:
+                result = downloader.fetch(row)
+            except Exception:  # noqa: BLE001 - a worker that died would leave the loop below waiting for its row for ever
+                result = (None, False)
+            results.put((row, result))
 
     workers = [threading.Thread(target=work, daemon=True) for _ in range(downloader.threads)]
     for worker in workers:
         worker.start()
     if not workers:
         work()
-    for _ in rows:
-        row, (data, fresh) = results.get()
-        done += 1
-        downloaded += fresh
-        if data is not None:
-            got[row[:3]] = data
-        if progress is not None:
-            progress(done, len(rows))
+    try:
+        for _ in rows:
+            row, (data, fresh) = results.get()
+            done += 1
+            downloaded += fresh
+            if data is not None:
+                got[row[:3]] = data
+            if progress is not None:
+                progress(done, len(rows))     # it may raise (a cancelled build): the workers are told to stop below
+    finally:
+        while True:                           # nothing left for the workers to take: each ends after the file it has
+            try:
+                todo.get_nowait()
+            except queue.Empty:
+                break
     for worker in workers:
         worker.join()
     files, missing = [], []

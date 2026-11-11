@@ -1,4 +1,5 @@
 """Synthetic-only tests for the Windows GUI's safe builder workflow."""
+import errno
 import hashlib
 import ast
 from pathlib import Path
@@ -94,6 +95,39 @@ class GuiWorkflowTest(unittest.TestCase):
                 gui_service.build_private_pack(self.rom, self.target, cancel=flag, on_progress=notify)
         self.assertFalse(self.target.exists())
         self.assertEqual(list(self.root.glob(".fire3ds-*")), [])
+
+    def test_cancel_during_the_download_stops_it(self):
+        flag = threading.Event()
+        reached = []
+
+        def fake_pack(downloader, progress, groups):
+            reached.append("downloading")
+            flag.set()
+            progress(1, 10)               # the next file: the cancel is seen here, not after all ten
+            reached.append("past the cancel")
+            return [], {}
+
+        with patch.object(gui_service, "load_rom", return_value=SimpleNamespace(sha1=SUPPORTED_SHA1)),              patch.object(gui_service.gen4_sprites, "pack_files", side_effect=fake_pack),              patch.object(gui_service, "build", side_effect=self.fake_build):
+            with self.assertRaises(gui_service.BuildCancelled):
+                gui_service.build_private_pack(self.rom, self.target, cancel=flag, followers=True, downloader=object())
+        self.assertEqual(reached, ["downloading"])
+        self.assertEqual((self.build_calls, self.target.exists()), (0, False))
+        self.assertEqual(list(self.root.glob(".fire3ds-*")), [])
+
+    def test_not_enough_room_for_the_built_pack_is_refused_before_publishing(self):
+        free = iter((10 ** 9, 100))      # the early floor passes; after the build there is no room for the copy
+        with patch.object(gui_service.shutil, "disk_usage", side_effect=lambda _: SimpleNamespace(free=next(free))):
+            with self.assertRaises(OSError) as raised:
+                self.run_build()
+        self.assertEqual(raised.exception.errno, errno.ENOSPC)
+        self.assertIn("drive is full", gui_service.describe_error(raised.exception))
+        self.assertFalse(self.target.exists())
+        self.assertEqual(list(self.root.glob(".fire3ds-*")), [])
+
+    def test_the_report_names_every_option_asked(self):
+        result = self.run_build()
+        self.assertEqual(set(result["options"]),
+                         {"heartgold", "npcs", "backgrounds", "followers", "hd_backgrounds", "alt_looks"})
 
     def test_copy_failure_removes_incomplete_new_output(self):
         with patch.object(gui_service, "shutil") as mocked:

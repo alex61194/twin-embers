@@ -191,8 +191,8 @@ class BuilderWindow(tk.Tk):
             self.bind(key, lambda event, action=button: action.invoke())
 
     @staticmethod
-    def _gen4_summary(info: dict | None) -> str:
-        """The optional sprites' line in the final report."""
+    def _gen4_summary(info: dict | None, options: dict | None = None) -> str:
+        """The optional sprites' lines in the final report, and a line for each ticked set that brought nothing."""
         if not info:
             return ""
         lines = []
@@ -215,6 +215,17 @@ class BuilderWindow(tk.Tk):
             lines.append("HD battle scenes: {0} files.".format(info["hd"]))
         if info.get("looks"):
             lines.append("More characters to be: {0} looks.".format(info["looks"]))
+        # A ticked set whose files could not be had (no network, or a file did not match) is not a success: say so, and that
+        # building again tries it again.
+        for key, count_keys, name in (("heartgold", ("species",), "HeartGold battle sprites"),
+                                      ("npcs", ("npcs",), "New people on the map"),
+                                      ("backgrounds", ("backgrounds",), "Battle backgrounds"),
+                                      ("followers", ("followers",), "Pokémon that walk behind you"),
+                                      ("hd_backgrounds", ("hd",), "HD battle scenes"),
+                                      ("alt_looks", ("looks",), "More characters to be")):
+            if options and options.get(key) and not any(info.get(k) for k in count_keys):
+                lines.append("{0}: nothing was added (no network, or a file did not match). "
+                             "Build again to retry.".format(name))
         return "\n\n" + "\n".join(lines) if lines else ""
 
     def _card(self, parent: tk.Frame, row: int) -> ttk.Frame:
@@ -264,7 +275,8 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check):
+                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check,
+                       self.followers_check, self.hd_check, self.looks_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
         if busy:
@@ -280,18 +292,18 @@ class BuilderWindow(tk.Tk):
         self._set_busy(True)
         self.status.set("Preparing local operation…")
         self.details.set("Do not remove the destination drive while writing the pack.")
+        # Tk variables belong to the window's thread: read here, not in the worker.
+        create_directories = self._create_dirs
+        choices = dict(gen4=self.gen4.get(), npcs=self.npcs.get(), backgrounds=self.backgrounds.get(),
+                       followers=self.followers.get(), hd_backgrounds=self.hd_backgrounds.get(),
+                       alt_looks=self.alt_looks.get())
 
         def worker() -> None:
             try:
                 report = build_private_pack(
                     rom, target, overwrite=overwrite,
-                    create_directories=self._create_dirs,
-                    gen4=self.gen4.get(),
-                    npcs=self.npcs.get(),
-                    backgrounds=self.backgrounds.get(),
-                    followers=self.followers.get(),
-                    hd_backgrounds=self.hd_backgrounds.get(),
-                    alt_looks=self.alt_looks.get(),
+                    create_directories=create_directories,
+                    **choices,
                     on_progress=lambda step, msg: self._events.put(("progress", step, msg)),
                     cancel=self._cancel)
                 self._events.put(("ok_build", report))
@@ -363,7 +375,7 @@ class BuilderWindow(tk.Tk):
                                             + report["path"] + "\n\n"
                                             + "Entries: {0:,}\nSHA-256: {1}".format(
                                                 report["entries"], report["sha256"])
-                                            + self._gen4_summary(report.get("gen4"))
+                                            + self._gen4_summary(report.get("gen4"), report.get("options"))
                                             + "\n\nNext: copy twinembers.3dsx into the same folder.",
                                             parent=self)
                     elif kind == "cancelled":

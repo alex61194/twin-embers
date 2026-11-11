@@ -2202,7 +2202,7 @@
   },
   {
    "path": "builder/README.md",
-   "sha256": "76836518f09f3d782a388aa0c225201edc739b81f564f33f71433d1296fbea86",
+   "sha256": "c1436ebbb54abb1d7b5a23c020b5eee6f45101e6f3b85edb23a8f3dabc921ebf",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2319,7 +2319,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "1e674cad701149753e70fb1b0e2b9d55a167db04b79aeb00887d6b39343787b0",
+   "sha256": "0f383938c76d86127f10f5b977c5059150cfd17b6ce87bb3ba4739ff9dcc1a17",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2331,7 +2331,7 @@
    "credit": "alex61194 (original source-only offline GUI with disclosed AI assistance)",
    "license": "MIT for owned GUI contributions only; inherited game content and dependencies excluded",
    "basis": "Reviewed original Tk/ttk presentation, synthetic GUI regressions and Windows builder-only packaging; no game assets, ROM, pak or game binary; CLI, SHA-1, ABI, file safety and binary release gate unchanged.",
-   "sha256": "6a15fec8a2330b5c08d66d0a031b4716f92f958107c9fd53dacb15580a2b2378",
+   "sha256": "4baae344924bc73793db4c1e9e8dfa830e81fc157b825054b4e8e50adf1883b8",
    "modified_for_distribution": true,
    "gui_review": "Remove the standalone Verify ROM GUI action and shortcut; automatic ROM validation, CLI, pack safety and data/ABI remain unchanged",
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
@@ -2339,7 +2339,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gui_service.py",
-   "sha256": "6fae8de740de6adf2f75c16476ac3e81450e08c798a4be9d182209f8007b2f2c",
+   "sha256": "d0faf0acac6aa5e50be9b2630ea2ec65c3cdc9d1f58d72b89b4f7a4d883a6f4f",
    "review_status": "reviewed",
    "credit": "alex61194 (original GUI-only source code with disclosed AI assistance)",
    "license": "MIT for original GUI workflow only; original game and external dependencies excluded",
@@ -2886,7 +2886,7 @@
   },
   {
    "path": "builder/tests/test_browser.py",
-   "sha256": "5a523ebe82c6525a606bcaa8f843dcb1faca7176d425aeabec73a03ca996f1be",
+   "sha256": "7c2ef8e3b88af5ed2e6615e5924cc75d875c24fdeaa635e6381f7e6975671626",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2907,7 +2907,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "d3b12d57067c8eb759361834aba38cfbcd59bc221d4c318222834fba41a64958",
+   "sha256": "d047c55cbd4a96a86d1946e41cb023502e58d35dc45b2159a10aa96ceb502aab",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2915,7 +2915,7 @@
   },
   {
    "path": "builder/tests/test_gui_service.py",
-   "sha256": "aba7a7464f351839f263af21cfc17348982f9b63d194da46475a6c66a01c09c5",
+   "sha256": "a1e7555163f539c69657974a71dbde7434de41a487568db8609c70b932cecfa4",
    "review_status": "reviewed",
    "credit": "alex61194 (original GUI-only source code with disclosed AI assistance)",
    "license": "MIT for original GUI workflow only; original game and external dependencies excluded",
@@ -2929,7 +2929,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original builder UI and synthetic tests with AI assistance)",
    "license": "MIT for owned contributions; external game and runtime rights unchanged",
-   "sha256": "97219bd624b7b9ea3ff1169baf4ca511cd83d5482f351c32d599a6c53b1140ac",
+   "sha256": "7467d2afd0ec3c797ccb11901e4e9c4de61a6c05b4d63b4cf3ddecc4747a65d8",
    "basis": "Reviewed original Tk/ttk presentation, synthetic GUI regressions and Windows builder-only packaging; no game assets, ROM, pak or game binary; CLI, SHA-1, ABI, file safety and binary release gate unchanged.",
    "gui_review": "Remove the standalone Verify ROM GUI action and shortcut; automatic ROM validation, CLI, pack safety and data/ABI remain unchanged",
    "modified_for_distribution": true,
@@ -6372,7 +6372,7 @@
   },
   {
    "path": "tools/source_audit.py",
-   "sha256": "8a84715c06304e45219e3a8f7c2b8294c206d1f23b0dc23a0d4b7a2255cd08be",
+   "sha256": "fa0370eb5dc056a62b7be6973a608022e98ec00ceae809a4321ee0014b654d11",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6760,7 +6760,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "843d706b567e30b335a1d1a5fb2ca75454676ee5b4ef21b79da54caced73e387",
+   "sha256": "4c8a71fa0ef5d65a19df6d41cde20600c8c70e95c1faddbaac00ab2995e9b246",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

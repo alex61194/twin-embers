@@ -42,7 +42,7 @@ def describe_error(exc: BaseException) -> str:
     """Plain-language text for common file errors; other messages are kept as they are."""
     if isinstance(exc, OSError) and exc.errno == errno.ENOSPC:
         return ("The destination drive is full. Free at least 32 MiB on the SD card "
-                "and try again. Existing files were not changed.")
+                "(about 64 MiB with the optional pictures) and try again. Existing files were not changed.")
     if isinstance(exc, PermissionError) or (isinstance(exc, OSError) and exc.errno == errno.EROFS):
         return ("Windows could not write to that folder. If it is an SD card, check that "
                 "its lock switch is not set to LOCK, then try again. Existing files were "
@@ -123,11 +123,12 @@ def build_private_pack(
                                                  (alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
         if groups:
             _stage(on_progress, "sprites", "Downloading the optional pictures...")
+            def downloading(done: int, total: int) -> None:
+                _cancel(cancel)       # Cancel and closing the window stop the download, not only the stage after it
+                _stage(on_progress, "sprites", f"Downloading the optional pictures... {done}/{total}")
+
             extra, sprites = gen4_sprites.pack_files(
-                downloader or gen4_sprites.Downloader(gen4_sprites.cache_dir()),
-                lambda done, total: _stage(on_progress, "sprites",
-                                           f"Downloading the optional pictures... {done}/{total}"),
-                groups)
+                downloader or gen4_sprites.Downloader(gen4_sprites.cache_dir()), downloading, groups)
             _cancel(cancel)
         _stage(on_progress, "build", "Reconstructing the pack from your ROM...")
         result = build(rom_path, None, candidate, extra) if groups else build(rom_path, None, candidate)
@@ -141,6 +142,12 @@ def build_private_pack(
         _check_target(rom_path, output_path, overwrite)
         digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
         candidate_size = candidate.stat().st_size
+        # The pack is copied to the destination, and a pack it replaces is kept beside it until the copy is verified: the room
+        # that takes is known now (the early 32 MiB floor cannot know it, with the optional pictures the pack is about 28 MiB).
+        previous_size = output_path.stat().st_size if output_path.is_file() else 0
+        if shutil.disk_usage(output_path.parent).free < candidate_size + previous_size + 4 * 1024 * 1024:
+            raise OSError(errno.ENOSPC, "Not enough free space for the pack",
+                          str(output_path.parent))
         _stage(on_progress, "publish", "Saving the verified pack locally...")
         _cancel(cancel)
         # Keep a durable same-volume backup when replacing a user's pack.
@@ -212,5 +219,6 @@ def build_private_pack(
             "bytes": output_path.stat().st_size,
             "rom_sha1": rom.sha1,
             "gen4": sprites,
-            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds},
+            "options": {"heartgold": gen4, "npcs": npcs, "backgrounds": backgrounds, "followers": followers,
+                        "hd_backgrounds": hd_backgrounds, "alt_looks": alt_looks},
         }

@@ -3,6 +3,7 @@ import hashlib
 import re
 import struct
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -164,6 +165,27 @@ class DownloadTest(unittest.TestCase):
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/001.bin", "graphics/gen4/battle/003.bin"])
         self.assertEqual(info["missing"], [2])
         self.assertFalse(any("002_female" in p.name for p in (self.root / "cache").iterdir()))
+
+    def test_a_fetch_that_raises_leaves_its_species_out_and_does_not_hang(self):
+        class Broken(gen4_sprites.Downloader):
+            def fetch(self, row):
+                raise RuntimeError("a locked cache file, say")
+
+        outcome = []
+        worker = threading.Thread(target=lambda: outcome.append(
+            gen4_sprites.pack_files(Broken(None, get=self.get, threads=3))), daemon=True)
+        worker.start()
+        worker.join(10)
+        self.assertFalse(worker.is_alive(), "pack_files waits for a row that no worker will ever answer")
+        files, info = outcome[0]
+        self.assertEqual((files, info["species"], info["missing"]), ([], 0, [1, 2, 3]))
+
+    def test_a_progress_that_raises_stops_the_download(self):
+        def progress(done, total):
+            raise KeyboardInterrupt("cancelled")
+
+        with self.assertRaises(KeyboardInterrupt):
+            gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=self.get, threads=2), progress)
 
     def test_offline_gives_nothing_without_failing(self):
         def offline(url):
@@ -636,7 +658,7 @@ class PeopleTest(unittest.TestCase):
         self.assertEqual(len(gen4_sprites.all_files(("follower",))), len(gen4_sprites.FOLLOWER_FILES))
         self.assertEqual(len(gen4_sprites.all_files(())), 0)
         self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74 + 14
-                         + len(gen4_sprites.PLAYER_FILES) - len(gen4_sprites.BACK_FILES)
+
                          + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
         data = rgba_png(self.sheet())
         rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
