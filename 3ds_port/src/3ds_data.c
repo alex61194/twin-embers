@@ -99,6 +99,8 @@ static bool PakReadRaw(uint64_t offset, void *buffer, uint32_t size)
 static bool PakReadAt(uint64_t offset, void *buffer, uint32_t size)
 {
     bool ok = true;
+    if (size == 0)
+        return true;      /* an empty last entry sits at the end of the file: nothing to read */
     LightLock_Lock(&sPakLock);
     CTR_PERF_COUNT(PERF_PAK_READS, 1);
     /* Larger requests (and anything past a sector-aligned window) go direct. */
