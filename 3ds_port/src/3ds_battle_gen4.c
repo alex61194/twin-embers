@@ -445,7 +445,7 @@ bool CtrGen4_BackPalette(unsigned backPic, uint16_t palette[16])
         if (!entry)
             return false;
         unsigned frames = size >= 8 ? entry[4] : 0;
-        if (memcmp(entry, "G4K2", 4) || !frames || frames > BACK_FRAMES_MAX || entry[5] != CTR_GEN4_BACK_SIZE
+        if (size < 8 || memcmp(entry, "G4K2", 4) || !frames || frames > BACK_FRAMES_MAX || entry[5] != CTR_GEN4_BACK_SIZE
             || size != TRAINER_HEADER + frames * CTR_GEN4_BACK_PICTURE)
         {
             CtrLog_Write(CTR_LOG_GAME, "GEN4 %s: wrong size or kind", path);
@@ -910,8 +910,8 @@ bool CtrFollower_Has(unsigned dex, bool female)
     char path[40];
     uint32_t size;
 
-    if (dex < 1 || dex > CTR_FOLLOWER_SPECIES)
-        return false;
+    if (dex < 1 || dex > CTR_FOLLOWER_SPECIES || CtrData_GetBackend() == CTR_DATA_NONE)
+        return false;     /* no pack open yet: not an answer to remember */
     if (!(known[bit / 8] >> (bit % 8) & 1))
     {
         snprintf(path, sizeof(path), "graphics/gen4/follower/%03u%s.bin", dex, female ? "_f" : "");
