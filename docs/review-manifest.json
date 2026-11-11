@@ -6831,6 +6831,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0244-relearner-in-viewport.json",
+   "sha256": "2baebbbc15c106142a6d56aaa602b67092fe17326bc38f707e50e791fcc0f710",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0240-evolution-plain-background.json",
    "sha256": "cde14e5370cfbb017e40eba200d8a47fcd402ed03c4996ac19915cda884c464c",
    "review_status": "reviewed",
