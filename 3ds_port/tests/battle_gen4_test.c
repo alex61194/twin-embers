@@ -585,6 +585,16 @@ int main(void)
             picture = CtrBattleBackdrop(&generation);
             assert(picture && (picture[0] & 255) == 4);           /* the day picture stands in for the night's */
             sMissing = NULL;
+            /* The evolution scene: its background is FireRed's plain one (no scene, no picture behind the layers), and the next
+             * battle's scene is loaded again. */
+            sNight = true;
+            assert(CtrBattleBg_Load(0, 3, NULL) && CtrBattleBackdrop(&generation));
+            CtrBattleBg_NoScenery(1);
+            assert(!CtrBattleBackdrop(&generation));
+            assert(!CtrBattleBg_Load(0, 0, empty) && !CtrBattleBg_Load(0, 3, NULL));
+            CtrBattleBg_NoScenery(0);
+            assert(!CtrBattleBackdrop(&generation));               /* nothing loaded yet: still none ... */
+            assert(CtrBattleBg_Load(0, 3, NULL) && CtrBattleBackdrop(&generation));   /* ... and the battle's own again */
             sHdnFileSize = 100;                                    /* a wrong size is not a picture */
             sNight = false;
             assert(CtrBattleBg_Load(0, 3, NULL) && strcmp(sAsked, "graphics/gen4/hd/004.bin") == 0);

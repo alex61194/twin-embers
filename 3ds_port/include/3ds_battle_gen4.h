@@ -129,6 +129,10 @@ bool CtrBattleBg_IsNight(void);
 #define CTR_BACKDROP_HEADER 8
 const uint16_t *CtrBattleBackdrop(unsigned *generation);
 
+/* The evolution scene (recipe 0240) loads its plain background with the pack's scenes switched off, so the moving light is not
+ * drawn over a painting; the scenes come back for the next battle. */
+void CtrBattleBg_NoScenery(int on);
+
 /* The field's people (3ds_video.c's OAM loop, recipe 0211): graphics/gen4/npc/NNN.bin, NNN being FireRed's
  * OBJ_EVENT_GFX_* of a person, nine 32x32 frames in FireRed's order (down, up, left, then the walking ones) and their
  * 16 colours (the Builder's convert_npc). Match gives the picture an OBJ with this attr2 and size stands for: drawn

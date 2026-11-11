@@ -793,9 +793,23 @@ static const uint8_t *BgEntry(unsigned terrain)
     return sBg.entry;
 }
 
+/* The evolution scene loads FireRed's plain background (its moving light shows over it): while it does, no scene of the pack stands in,
+ * and the next battle loads its own again. */
+static bool sNoScenery;
+
+void CtrBattleBg_NoScenery(int on)
+{
+    sNoScenery = on != 0;
+    if (on)
+    {
+        sBackdrop.active = false;
+        sBg.tried = false;
+    }
+}
+
 int CtrBattleBg_Load(unsigned terrain, unsigned part, void *dest)
 {
-    const uint8_t *entry = BgEntry(terrain);
+    const uint8_t *entry = sNoScenery ? NULL : BgEntry(terrain);
     if (!entry)
         return 0;
     switch (part)
