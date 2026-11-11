@@ -995,7 +995,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "656a1518c91d53a272c365c6a2d149f412e96d4ae5d60c13cfb4c605b14c35cb",
+   "sha256": "d70b3463a3c85970f71b104fade815aba662587a23aa5c7dec3a693caf432327",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
