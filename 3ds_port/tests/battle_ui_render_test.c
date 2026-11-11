@@ -310,7 +310,7 @@ int main(int argc, char **argv)
     v.pressed = -1;
     v.party[0] = v.party[1] = v.party[2] = v.party[4] = 1; v.party[3] = 2;
     v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
-    names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeHp = 158; v.activeMaxHp = 158;
+    names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeIcon = 6; v.activeSlot = 0; v.activeHp = 158; v.activeMaxHp = 158;
     v.activeType[0] = 10; v.activeType[1] = 2; names(v.activeTypeName[0], 12, "FIRE"); names(v.activeTypeName[1], 12, "FLYING");
     CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
