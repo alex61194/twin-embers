@@ -450,6 +450,10 @@ static void MapBuild(int group, int version)
             int sx = PT_HOME_SRC_X + dx * 4 / 5, sy = PT_HOME_SRC_Y + dy * 4 / 5;
             sMap.cols[dx][PT_VIEW_H - 1 - dy] =
                 pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, sx, sy)];
+    /* The map sits in its frame: the first three rows are shaded (the mockup's inset shadow), baked into what is cached. */
+    for (int dx = 0; dx < PT_VIEW_W; ++dx)
+        for (int dy = 0; dy < 3; ++dy)
+            sMap.cols[dx][PT_VIEW_H - 1 - dy] = Em2Lerp(sMap.cols[dx][PT_VIEW_H - 1 - dy], UI_RGB(0, 0, 0), 64 >> dy, 255);
         }
 }
 
@@ -912,42 +916,60 @@ static void FNameNote(const CtrPokeTouchView *v, int w);
 static void FBoxFrame(const CtrPokeTouchView *v);
 static void FBoxNote(const CtrPokeTouchView *v, int w);
 
+/* The column's tray (the mockup's): the sunk dark area the six buttons, the shortcuts and RUN stand in, from x = 245 (its outline) to the screen's
+ * edge, the whole height. Frame and Bar wipe x < 248, so they put its first three columns back (ColStrip). */
+static const Em2Tray sColTray = {245, -1, 77, 242, 5};
+
+static void ColStrip(int y, int h)
+{
+    Em2TrayRestore(&sColTray, 245, y, 3, h);
+}
+
 /* The frame's area: the bezel round the GBA picture or the map, OPTIONS' rows, the save card, or the Bag, on the embers. */
 static void MenuFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sMenuFrame;
 
     TsBgRect(r->x, r->y, r->w, r->h);
+    ColStrip(0, r->h);
     if (v->dex.on && !v->viewport) {
         FDexFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->card.on && !v->viewport) {
         FCardFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->learn.on && !v->viewport) {
         FLearnFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->choice.on && !v->viewport) {
         FChoiceFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->name.on && !v->viewport) {
         FNameFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->box.on && !v->viewport) {
         FBoxFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->bag.on && !v->viewport) {
         FBagFrame(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->save && !v->viewport) {
         SaveDraw(v);
+        ColStrip(0, r->h);
         return;
     }
     if (v->options && !v->viewport) {
@@ -1086,6 +1108,7 @@ static void Bar(const CtrPokeTouchView *v)
     int w = side ? NOTE_W_SIDE : NOTE_W_FULL;
 
     TsBgRect(r->x, r->y, r->w, r->h);
+    ColStrip(r->y, r->h);
     Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
@@ -1111,14 +1134,24 @@ static void Bar(const CtrPokeTouchView *v)
         if (v->options && v->optFrameShow && FrameSample(v->optFrameType, NOTE_X + w - FRAME_W - 8,
                                                          NOTE_Y + (NOTE_H - FRAME_H) / 2 - 1))
             right -= FRAME_W + 4;
-        if (lines == 1) {
-            Em2Text(v->bar[0], NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, right);
-        } else {
+        /* HOME with a destination that can be Flown to: a FLY pill beside the name says so, and the line that said the same goes. */
+        const char *fly = v->home && !v->viewport && !v->options && v->flyOk ? CTR_TR("FLY", "VOLAR", "Fliegen") : NULL;
+        const char *shown[PT_BAR_LINES] = {NULL};
+        int count = 0, titleRight = right;
+
+        for (int i = 0; i < lines; ++i)
+            if (!(fly && i == 1))
+                shown[count++] = v->bar[i];
+        if (fly)
+            titleRight = right - Em2Pill(right - UiTextWidth(fly, 1) - 14, NOTE_Y + 5, fly, UI_RGB(255, 184, 96), UI_RGB(232, 112, 28), UI_RGB(122, 44, 8)) - 4;
+        if (count == 1) {
+            Em2Text(shown[0], NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
+        } else if (count > 1) {
             /* The mockup's note: the subject, a rule under it, then the lines that say more, 15 apart, dimmer. */
-            Em2Text(v->bar[0], NOTE_X + 12, NOTE_Y + 8, EM_DARK, EM_DARK_SH, right);
+            Em2Text(shown[0], NOTE_X + 12, NOTE_Y + 8, EM_DARK, EM_DARK_SH, titleRight);
             Em2Rule(NOTE_X + 12, NOTE_Y + 22, right - NOTE_X - 12);
-            for (int i = 1; i < lines; ++i)
-                Em2Text(v->bar[i], NOTE_X + 12, NOTE_Y + 28 + (i - 1) * 15, EM_DIM, EM_DARK_SH, right);
+            for (int i = 1; i < count; ++i)
+                Em2Text(shown[i], NOTE_X + 12, NOTE_Y + 28 + (i - 1) * 15, EM_DIM, EM_DARK_SH, right);
         }
     }
     if (hasPage)
@@ -1154,7 +1187,7 @@ static void Button(int id, const CtrPokeTouchView *v)
     const EmPal *pal = !on ? &kEmGrey : selected && id != PT_RUN ? &kEmAmber : &kEmCream;
     int fy, fh = r->h - COL_DEPTH;
 
-    TsBgRect(area.x, area.y, area.w, area.h);
+    Em2TrayRestore(&sColTray, area.x, area.y, area.w, area.h);
     if (selected && id != PT_RUN && on)
         EmGlowRing(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, COL_DEPTH, pressed);
@@ -1197,6 +1230,17 @@ static void Button(int id, const CtrPokeTouchView *v)
 #endif
             }
             name[n] = 0;
+        }
+        {
+            uint16_t c1, c2;
+
+            Em2Tint(ColumnIcon(id), selected && on, &c1, &c2);      /* the icon's well, tinted by its section */
+            if (!on) {
+                c1 = UiMix(c1, UI_RGB(200, 196, 200), 4);
+                c2 = UiMix(c2, UI_RGB(200, 196, 200), 4);
+            }
+            EmGradFill(r->x + 3, fy + 1, 19, fh - 2, 4, c1, c2);
+            Fill(r->x + 6, fy + 1, 13, 1, UiMix(c1, UI_RGB(0, 0, 0), 1));
         }
         EmIcon(ColumnIcon(id), r->x + 4, fy + (fh - EMBER_ICON) / 2, on);
         UiText(label, r->x + 23, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 2);
@@ -1245,6 +1289,7 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
     Frame();
+    Em2TrayDraw(&sColTray);
     MenuFrame(v);
     Bar(v);
     for (int i = 0; i < PT_COUNT; ++i)
@@ -1360,7 +1405,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
             Mark(dirty, &r);
         }
     }
-    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->optFrameShow != v->optFrameShow
+    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk || old->optFrameShow != v->optFrameShow
         || old->optFrameType != v->optFrameType || old->backVisible != v->backVisible || old->save != v->save
         || oldHasPage != newHasPage) {
         Bar(v);

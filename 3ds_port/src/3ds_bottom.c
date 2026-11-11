@@ -1546,6 +1546,7 @@ static void HomeSelectionBar(CtrPokeTouchView *v)
 
     CtrPokeTouch_MapSectionName((unsigned)(sHome.mapsec != MAPSEC_NONE_VALUE ? sHome.mapsec : sHome.dungeon),
                                 v->bar[0], PT_BAR_LEN);
+    v->flyOk = status == PT_FLY_OK;
     if (status == PT_FLY_OK) {
         snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly available", "Puedes volar", "Fliegen m\xC3\xB6glich"));
         snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Tap again to Fly", "Toca otra vez para volar", "Nochmal tippen zum Fliegen"));

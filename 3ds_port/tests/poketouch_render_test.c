@@ -235,7 +235,8 @@ int main(int argc, char **argv)
     strcpy(v.playerName,"Trades"); strcpy(v.bar[0],"TEST MAP");
     for(int i=0;i<PT_COUNT;++i) v.enabled[i]=1;
     CtrPokeTouch_Draw(canvas,&v);
-    for(int x=4;x<244;++x) for(int y=4;y<164;++y) assert(at(x,y)==Gba(0x5ab3));
+    for(int x=4;x<244;++x) for(int y=7;y<164;++y) assert(at(x,y)==Gba(0x5ab3));     /* the first three rows are shaded: the map sits in its frame */
+    for(int x=4;x<244;++x) for(int y=4;y<7;++y) assert(at(x,y)!=Gba(0x5ab3));
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
         FILE *f=fopen(argv[1],"wb"); assert(f);
         fprintf(f,"P6\n320 240\n255\n");
@@ -332,7 +333,7 @@ int main(int argc, char **argv)
         #define SHOT(name) do { update(&old,&s); if(dir) ppm(dir,name); } while(0)
         /* HOME with a destination chosen on the map: the name, the region and the hint. */
         memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
-        s.home=1; s.mapGroup=0; s.cursorX=10; s.cursorY=8; strcpy(s.bar[0],"VERMILION CITY"); strcpy(s.bar[1],"Fly available"); strcpy(s.bar[2],"Tap again to Fly");
+        s.home=1; s.mapGroup=0; s.cursorX=10; s.cursorY=8; s.flyOk=1; strcpy(s.bar[0],"VERMILION CITY"); strcpy(s.bar[1],"Fly available"); strcpy(s.bar[2],"Tap again to Fly");
         SHOT("home");
         s.selected=PT_OPTIONS; s.pressed=PT_BAG; SHOT("home_pressed"); s.pressed=PT_NONE; s.selected=PT_NONE; s.running=1; SHOT("home_running"); s.running=0;
         /* OPTIONS, page 2: switches, values, levels; then each press and selection moves. */

@@ -185,15 +185,10 @@ static void EmNote(int x, int y, int w, int h)
     Em2Note(x, y, w, h);
 }
 
-/* The frame round the GBA picture (w x h at x, y): three pixels of dark slate outside it. */
+/* The frame round the GBA picture (w x h at x, y): three pixels outside it (Em2Bezel). */
 static void EmBezel(int x, int y, int w, int h)
 {
-    CtrPokeTouchRect outer = {(int16_t)(x - 3), (int16_t)(y - 3), (int16_t)(w + 6), (int16_t)(h + 6)};
-    CtrPokeTouchRect inner = UiInset(&outer, 1);
-
-    UiRoundRect(&outer, 5, UI_RGB(24, 18, 28));
-    UiRoundFill(inner.x, inner.y, inner.w, inner.h, 4, UI_RGB(52, 44, 60));
-    UiRing(&inner, 4, 1, UI_RGB(96, 86, 104));
+    Em2Bezel(x, y, w, h);
 }
 
 /* A switch (Em2Switch): a 28x14 track, green and the knob on the right when on, grey with the knob on the left when off. */
@@ -205,18 +200,14 @@ static void EmSwitch(int x, int y, int on)
 /* A shortcut's key: its button's letter on a small blue pill, centred at the top of the tile (cx its centre). */
 static void EmKeyTab(int cx, int y, const char *letter)
 {
-    UiRoundFill(cx - 10, y, 20, 11, 5, UI_RGB(30, 40, 96));
-    EmGradFill(cx - 9, y + 1, 18, 9, 4, UI_RGB(96, 132, 236), UI_RGB(52, 80, 200));
-    UiText(letter, cx - UiTextWidth(letter, 1) / 2, y + 1, EM_WHITE, UI_RGB(30, 40, 96), 1, cx + 9);
+    Em2KeyTab(cx, y, letter);
 }
 
-/* The soft well a shortcut's item sits in: the face's own colour, a little deeper, with a shade along its top. */
+/* The sunk well a shortcut's item sits in (the cream well of the mockup; a tile that is off keeps it, the item is greyed). */
 static void EmWell(int x, int y, int w, int h, const EmPal *p)
 {
-    uint16_t deep = UiMix(p->bottom, p->edge, 2);
-
-    UiRoundFill(x, y, w, h, 4, deep);
-    EmGradFill(x + 1, y + 2, w - 2, h - 3, 3, UiMix(deep, p->bottom, 5), UiMix(p->top, p->bottom, 4));
+    (void)p;
+    Em2Well(x, y, w, h, 0);
 }
 
 /* One of the column's icons (ember_skin.h), blended onto what is there; dim, it is toned grey. */

@@ -321,6 +321,7 @@ typedef struct {
     int8_t playerX, playerY;    /* the player's cell on the map (22x15), -1: none */
     int8_t cursorX, cursorY;    /* the selected cell (FireRed's cursor icon), -1: none */
     uint8_t cursorFrame;        /* which of the cursor's two blink frames (0 with none) */
+    uint8_t flyOk;              /* the selected destination can be Flown to now: the note says so on a pill */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */

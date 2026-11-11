@@ -451,6 +451,51 @@ UI_FN void Em2Dot(int x, int y, uint16_t colour, int on)
     Em2Disc(x, y, 5, colour);
 }
 
+/* The frame round the GBA picture or the HOME map (x, y, w, h the picture): three rings outside it, a light slate edge, a copper line and a dark
+ * one, like the mockup's bezel; nothing outside it (its drop shadow would be under the bar's rectangle). */
+UI_FN void Em2Bezel(int x, int y, int w, int h)
+{
+    UiRoundFill(x - 3, y - 3, w + 6, h + 6, 5, UI_RGB(60, 46, 54));
+    UiRoundFill(x - 2, y - 2, w + 4, h + 4, 4, UI_RGB(184, 96, 42));
+    UiRoundFill(x - 1, y - 1, w + 2, h + 2, 3, UI_RGB(42, 28, 34));
+}
+
+/* A key's tab: the button's letter on a small sunk blue pill, centred on cx at the top of a tile. */
+UI_FN void Em2KeyTab(int cx, int y, const char *letter)
+{
+    UiRoundFill(cx - 10, y, 20, 11, 5, UI_RGB(14, 36, 96));
+    UiRoundFill(cx - 9, y + 1, 18, 9, 4, UI_RGB(58, 110, 224));
+    Fill(cx - 6, y + 1, 12, 1, UI_RGB(34, 76, 168));
+    UiText(letter, cx - UiTextWidth(letter, 1) / 2, y + 1, EM_WHITE, UI_RGB(14, 36, 96), 1, cx + 9);
+}
+
+/* The tint of the well an icon of the column sits in, by section (0 DEX, 1 POKEMON, 2 BAG, 3 CARD, 4 SAVE, 5 OPTIONS); chosen, the amber one. */
+UI_FN void Em2Tint(int section, int chosen, uint16_t *top, uint16_t *bottom)
+{
+    if (chosen) {
+        *top = UI_RGB(255, 242, 204);
+        *bottom = UI_RGB(255, 216, 144);
+    } else if (section == 0) {
+        *top = UI_RGB(251, 224, 218);
+        *bottom = UI_RGB(244, 200, 190);
+    } else if (section == 1) {
+        *top = UI_RGB(224, 246, 226);
+        *bottom = UI_RGB(196, 232, 200);
+    } else if (section == 2) {
+        *top = UI_RGB(224, 236, 255);
+        *bottom = UI_RGB(198, 216, 250);
+    } else if (section == 3) {
+        *top = UI_RGB(255, 242, 204);
+        *bottom = UI_RGB(248, 222, 160);
+    } else if (section == 4) {
+        *top = UI_RGB(216, 244, 242);
+        *bottom = UI_RGB(188, 228, 224);
+    } else {
+        *top = UI_RGB(236, 235, 242);
+        *bottom = UI_RGB(216, 214, 226);
+    }
+}
+
 /* A banner: a raised band with a short word at its left (the title of a window), in a palette's face. */
 UI_FN void Em2Banner(int x, int y, int w, int h, const EmPal *p, const char *text)
 {
