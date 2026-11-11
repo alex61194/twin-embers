@@ -1196,8 +1196,8 @@ static void BMoveCard(int i, const CtrBattleView *v)
         if (accStart >= pipsEnd + 5) {
             UiText(accLabel, accStart, fy + 43, label, p->inkSh, 1, accRight);
             UiTextRight(acc, accRight, fy + 43, p->ink, p->inkSh, 1);
-        } else {
-            UiTextRight(acc, accRight, fy + 43, p->ink, p->inkSh, 1);
+        } else if (accRight - UiTextWidth(acc, 1) >= pipsEnd + 2) {
+            UiTextRight(acc, accRight, fy + 43, p->ink, p->inkSh, 1);   /* not over the pips: a long PP leaves no room for it */
         }
     }
 }

@@ -504,10 +504,27 @@ bool CtrAudio_Kick(void)
     return true;
 }
 
+/* A wait on the sound lock longer than this is logged (the first SLOW_LOCK_LOGS of them): on an Old 3DS the mixer runs on the system core,
+ * limited to half of it, and a door's several song and effect calls could wait behind it with nothing in port.log to say so. */
+#define SLOW_LOCK_TICKS ((u64)SYSCLOCK_ARM11 / 200)      /* 5 ms */
+#define SLOW_LOCK_LOGS 40
+
 void CtrAudio_LockSound(void)
 {
-    if (sWorker != NULL)
-        RecursiveLock_Lock(&sSoundLock);
+    static unsigned slow;
+    u64 start;
+
+    if (sWorker == NULL)
+        return;
+    start = svcGetSystemTick();
+    RecursiveLock_Lock(&sSoundLock);
+    start = svcGetSystemTick() - start;
+    if (start > SLOW_LOCK_TICKS && slow < SLOW_LOCK_LOGS)
+    {
+        ++slow;
+        CtrLog_Write(CTR_LOG_AUDIO, "sound lock: the game thread waited %u us for the mixer",
+                     (unsigned)(start * 1000000ull / SYSCLOCK_ARM11));
+    }
 }
 
 void CtrAudio_UnlockSound(void)

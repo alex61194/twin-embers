@@ -714,7 +714,13 @@ static void OptLookPanel(const CtrPokeTouchView *v)
         UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
     }
     UiText(l->name, textX, r.y + 8, EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
-    BDescribeN(l->credit, textX, r.y + 24, r.x + r.w - 6 - textX, 3, EM_DIM);
+    /* As many lines of the artists' credit as the card holds (a long one is up to 107 characters, five lines here): each line's
+     * bottom (top + 9) stays 2 px inside the card. */
+    {
+        int lines = (r.h - 35) / UI_LINE_H + 1;
+
+        BDescribeN(l->credit, textX, r.y + 24, r.x + r.w - 6 - textX, lines < 1 ? 1 : lines > 5 ? 5 : lines, EM_DIM);
+    }
 }
 
 /* The SAVE screen: FireRed's save information in a card over the frame where the picture goes: a title band, the five
