@@ -883,6 +883,24 @@ static void BEmCancel(const CtrPokeTouchRect *r, int pressed)
 
 /* A Poke Ball of the party strip, 15 pixels across: red and white for a Pokemon that can fight, grey for one that
  * fainted (kind 2), a hollow ring for no Pokemon (kind 0); an amber dot for a status condition. */
+/* The colour of a condition's dot on its ball: an if-chain, not a table (the clean-release audit counts tables as game data). */
+static uint16_t BStatusColor(int status)
+{
+    if (status == 1)
+        return UI_RGB(176, 96, 208);        /* PSN */
+    if (status == 2)
+        return UI_RGB(248, 216, 48);        /* PAR */
+    if (status == 3)
+        return UI_RGB(170, 180, 200);       /* SLP */
+    if (status == 4)
+        return UI_RGB(120, 220, 240);       /* FRZ */
+    if (status == 5)
+        return UI_RGB(240, 96, 40);         /* BRN */
+    if (status == 6)
+        return UI_RGB(248, 140, 190);       /* PKRS */
+    return UI_RGB(255, 200, 60);
+}
+
 static void BBall(int cx, int cy, int kind, int status)
 {
     for (int dy = -7; dy <= 7; ++dy)
@@ -907,9 +925,16 @@ static void BBall(int cx, int cy, int kind, int status)
                 c = kind == 2 ? UI_RGB(196, 192, 200) : UI_RGB(244, 242, 248);
             Px(cx + dx, cy + dy, c);
         }
+    if (kind == 2)
+        for (int k = -5; k <= 5; ++k) {      /* fainted: a cross over the grey ball, two pixels thick */
+            Px(cx + k, cy + k, UI_RGB(52, 40, 52));
+            Px(cx + k + 1, cy + k, UI_RGB(52, 40, 52));
+            Px(cx + k, cy - k, UI_RGB(52, 40, 52));
+            Px(cx + k + 1, cy - k, UI_RGB(52, 40, 52));
+        }
     if (kind && kind != 2 && status) {
         UiDisc(cx + 6, cy - 6, 3, UI_RGB(110, 40, 6));
-        UiDisc(cx + 6, cy - 6, 2, UI_RGB(255, 200, 60));
+        UiDisc(cx + 6, cy - 6, 2, BStatusColor(status));
     }
 }
 
@@ -924,7 +949,11 @@ static void BStrip(const CtrBattleView *v)
     for (int i = 0; i < 6; ++i) {
         int cx = s->x + 15 + 30 * i, kind = v->party[i];
 
-        BBall(cx, s->y + 10, kind, kind == 3 || (v->partyStatus[i] >= 1 && v->partyStatus[i] <= 6));
+        if (kind && i == v->activeSlot) {    /* the Pokemon in the lead: a gold frame round its slot, the six balls are not alike */
+            UiRoundFill(cx - 14, s->y + 1, 28, 26, 6, UI_RGB(255, 200, 60));
+            UiRoundFill(cx - 13, s->y + 2, 26, 24, 5, UI_RGB(60, 22, 22));
+        }
+        BBall(cx, s->y + 10, kind, kind == 3 ? (v->partyStatus[i] ? v->partyStatus[i] : 7) : v->partyStatus[i]);
         if (kind) {
             unsigned hp = kind == 2 ? 0 : v->partyHp[i];
             int fill = (int)(hp * 18 / 100);
@@ -989,6 +1018,18 @@ static void BActCard(int i, const CtrBattleView *v)
     }
     BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
     BRowLabel(label[i], r, fy, p);
+    if (i == 2) {    /* POKEMON: how many are still able, not the word the card already says */
+        char able[16];
+        unsigned here = 0, left = 0;
+
+        for (int k = 0; k < 6; ++k) {
+            here += v->party[k] != 0;
+            left += v->party[k] == 1 || v->party[k] == 3;
+        }
+        snprintf(able, sizeof(able), CTR_TR("%u/%u ABLE", "%u/%u VIVOS", "%u/%u fit"), left, here);
+        BPill(r->x + (r->w - BPillW(able)) / 2, fy + BACT_PILL_Y, able, p->lip, EM_WHITE, p->edge);
+        return;
+    }
     BPill(r->x + (r->w - BPillW(sub[i])) / 2, fy + BACT_PILL_Y, sub[i], p->lip, EM_WHITE, p->edge);
 }
 
