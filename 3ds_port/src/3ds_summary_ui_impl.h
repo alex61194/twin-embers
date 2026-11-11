@@ -366,7 +366,7 @@ static void SIvEv(const CtrSummaryUiView *v)
         UiTextRight(text, 307, y, S_INK, EM_DARK_SH, 1);
     }
     SRule(168, 186, 139);
-    UiText(CTR_TR("HIDDEN POWER", "PODER OCULTO", "Kraftreserve"), 168, 191, S_LABEL, EM_DARK_SH, 1, 238);
+    UiText(CTR_TR("HIDDEN POWER", "PODER OCULTO", "Kraftreserve"), 168, 191, S_LABEL, EM_DARK_SH, 1, 250);
     snprintf(text, sizeof(text), "%u", d->hpPower);
     UiTextRight(text, 307, 191, S_INK, EM_DARK_SH, 1);
     {

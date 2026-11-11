@@ -4401,8 +4401,8 @@ static void ProcessFieldDexTouch(const CtrInput *in)
             int target = sFieldDex.cursor0 - (dy + (dy < 0 ? -LIST_DRAG_ROW / 2 : LIST_DRAG_ROW / 2)) / LIST_DRAG_ROW;
 
             sFieldDex.scrolling = 1;
-            target = target < 0 ? 0 : target > d->listCount - 1 ? d->listCount - 1 : target;
-            if (target != CtrBottomDex_Cursor() && !sDexPlan.active)
+            target = target < 0 || d->listCount <= 0 ? 0 : target > d->listCount - 1 ? d->listCount - 1 : target;
+            if (d->listCount > 0 && target != CtrBottomDex_Cursor() && !sDexPlan.active)
                 DexPlanTo(DEXPLAN_LIST, target, DEX_LIST);
         } else if (state == DEX_MENU && sFieldDex.code >= PT_DEX_HIT_ITEM && !sFieldDex.scrolling
                    && (dy >= 3 * LIST_DRAG_SLOP || -dy >= 3 * LIST_DRAG_SLOP)) {
@@ -4451,7 +4451,7 @@ static void ProcessFieldDexTouch(const CtrInput *in)
                     row = 0;
                 if (row > d->listCount - 1)
                     row = d->listCount - 1;
-                if (row != d->listCursor)
+                if (row >= 0 && row != d->listCursor)
                     DexPlanTo(DEXPLAN_LIST, row, DEX_LIST);
             }
         } else if (state == DEX_CATEGORY) {
@@ -4862,6 +4862,21 @@ static void RunStoragePlan(int mode)
 static int ProcessTouch(int mode)
 {
     const CtrInput *in = CtrInput_Get();
+
+    /* A screen's touch state belongs to that screen. One left by a screen that closed in the middle of a touch (a physical B) would act on
+     * the next: the Bag opening by itself on the pocket a tab had asked for, a half-made drag in the Pokedex. */
+    if (FieldListFor(mode) == NULL) {
+        sFieldBag.down = sFieldBag.inside = sFieldBag.scrolling = 0;
+        sFieldBag.code = sFieldBag.pocketTarget = -1;
+    }
+    if (mode != MODE_DEX) {
+        sFieldDex.down = sFieldDex.inside = sFieldDex.scrolling = 0;
+        sFieldDex.code = -1;
+    }
+    if (mode != MODE_NAMING) {
+        sNameTap.down = sNameTap.inside = 0;
+        sNameTap.code = -1;
+    }
 
     /* The picture kept between two screens belongs to neither: a tap on it would act on the screen that is gone. */
     if (sBridging) {
