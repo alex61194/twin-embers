@@ -140,6 +140,18 @@ static unsigned sCameraBad;
 
 /* How many sampled in-map metatiles the buffers disagree with at this offset
  * (stops past limit); *samples counts the ones looked at. */
+#define CAMERA_OFFSETS 512u         /* 16 rows of 32: every second tile of the 64x32 tile map */
+#define CAMERA_PER_FRAME 32u        /* ~3 ms on the Old 3DS: a search takes 16 frames instead of one 47 ms one */
+struct CameraSearch
+{
+    bool active;
+    unsigned next, best;
+    int kx, ky;
+    int px, py;
+    unsigned map;
+};
+static struct CameraSearch sSearch;
+
 static unsigned CameraMisses(int tileX, int tileY, unsigned limit, unsigned *samples)
 {
     const struct MapLayout *layout = gMapHeader.mapLayout;
@@ -206,19 +218,36 @@ static bool UpdateCamera(void)
         CtrLog_Write(CTR_LOG_VIDEO, "DAYNIGHT camera lost map=%04x pos=%d,%d", map, px, py);
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
-    for (int ty = 0; ty < 32 && best; ty += 2)
-        for (int tx = 0; tx < 64 && best; tx += 2)
-        {
-            unsigned misses = CameraMisses(tx, ty, best < 3 ? best : 3, &samples);
+    /* The search is 512 offsets (~47 ms on the Old 3DS: the stall of a door). It is spread over frames, CAMERA_PER_FRAME offsets each, and
+     * starts again if the player or the map changed meanwhile (what was looked at no longer agrees). Nothing is taken until it ends,
+     * so the best offset wins as it did when it ran in one frame; the windows light a few frames after the map instead. */
+    if (sSearch.active && (sSearch.px != px || sSearch.py != py || sSearch.map != map))
+        sSearch.active = false;
+    if (!sSearch.active)
+        sSearch = (struct CameraSearch){true, 0, ~0u, 0, 0, px, py, map};
+    best = sSearch.best;
+    for (unsigned n = 0; n < CAMERA_PER_FRAME && sSearch.next < CAMERA_OFFSETS && best; ++n, ++sSearch.next)
+    {
+        int ty = (int)(sSearch.next / 32) * 2, tx = (int)(sSearch.next % 32) * 2;
+        unsigned misses = CameraMisses(tx, ty, best < 3 ? best : 3, &samples);
 
-            if (misses < best && misses <= 2 && samples >= 24)
-            {
-                best = misses;
-                sCameraKX = (px * 2 - tx) & 63;
-                sCameraKY = (py * 2 - ty) & 31;
-                sCameraKnown = true;
-            }
+        if (misses < best && misses <= 2 && samples >= 24)
+        {
+            best = misses;
+            sSearch.kx = (px * 2 - tx) & 63;
+            sSearch.ky = (py * 2 - ty) & 31;
         }
+    }
+    sSearch.best = best;
+    if (best && sSearch.next < CAMERA_OFFSETS)
+        return false;                                    /* still searching: next frame goes on */
+    sSearch.active = false;
+    if (best != ~0u)
+    {
+        sCameraKX = sSearch.kx;
+        sCameraKY = sSearch.ky;
+        sCameraKnown = true;
+    }
     if (!sCameraKnown)
     {
         sCameraWait = 8u << (sCameraFails < 3 ? sCameraFails : 3);
