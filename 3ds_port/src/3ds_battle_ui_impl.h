@@ -238,7 +238,7 @@ static void BAppend(char *line, size_t size, const char *word)
 }
 
 /* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here). */
-static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color)
+static void BDescribeSh(const char *text, int x, int y, int width, int maxLines, uint16_t color, uint16_t shadow)
 {
     char word[24], line[80], joined[80];
     int lines = 0;
@@ -258,7 +258,7 @@ static void BDescribeN(const char *text, int x, int y, int width, int maxLines, 
         memcpy(joined, line, sizeof(joined));
         BAppend(joined, sizeof(joined), word);
         if (line[0] && UiTextWidth(joined, 1) > width) {
-            UiText(line, x, y + lines * UI_LINE_H, color, UIS_TEXT_SH, 1, x + width);
+            UiText(line, x, y + lines * UI_LINE_H, color, shadow, 1, x + width);
             line[0] = 0;
             if (++lines >= maxLines)
                 return;
@@ -267,7 +267,12 @@ static void BDescribeN(const char *text, int x, int y, int width, int maxLines, 
             memcpy(line, joined, sizeof(line));
     }
     if (line[0] && lines < maxLines)
-        UiText(line, x, y + lines * UI_LINE_H, color, UIS_TEXT_SH, 1, x + width);
+        UiText(line, x, y + lines * UI_LINE_H, color, shadow, 1, x + width);
+}
+
+static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color)
+{
+    BDescribeSh(text, x, y, width, maxLines, color, UIS_TEXT_SH);
 }
 
 

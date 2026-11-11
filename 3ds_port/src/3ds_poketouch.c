@@ -644,6 +644,19 @@ static void OptSegments(int row, const CtrPokeTouchView *v, int boxX, int fy, in
     }
 }
 
+/* The colour of a page's left edge on its rows (the chosen row has a white one): the four pages are told apart at a glance, as the dots of the PAGE button
+ * count them. An if-chain keeps it away from the audit's tables. */
+static uint16_t OptPageColor(int page)
+{
+    if (page == 0)
+        return UI_RGB(74, 120, 216);
+    if (page == 1)
+        return UI_RGB(56, 168, 104);
+    if (page == 2)
+        return UI_RGB(168, 112, 208);
+    return UI_RGB(216, 90, 80);
+}
+
 /* One row: a raised cream row with the label (amber, glowing, when selected) and on its right the value in a light pill
  * between "<" and ">" (a switch for ON and OFF, all the levels for a row of levels); the zone under a held touch
  * darkens. */
@@ -660,11 +673,19 @@ static void OptRow(int row, const CtrPokeTouchView *v)
     if (selected)
         EmGlowRing(r.x, r.y, r.w, r.h);
     fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, zone == PT_OPT_ZONE_LABEL);
+    UiRoundFill(r.x + 2, fy + 3, 3, r.h - COL_DEPTH - 6, 1, selected ? EM_WHITE : OptPageColor(v->optPage));
     UiText(v->optLabel[row], r.x + 8, fy + 4, pal->ink, pal->inkSh, 1, boxX - 2);
     UiRoundFill(boxX + 2, fy + 2, OPT_BOX_W - 6, r.h - COL_DEPTH - 4, 5, kEmAmber.lip);
     UiRoundFill(boxX + 3, fy + 3, OPT_BOX_W - 8, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 248, 236));
     if (v->optSegCount[row]) {
         OptSegments(row, v, boxX, fy, r.h - COL_DEPTH - 6, zone);
+        return;
+    }
+    if (v->optSwitch[row]) {
+        /* A switch has two places and no arrows: the whole box toggles (PREV and NEXT both do), so the whole box darkens when held. */
+        if (zone == PT_OPT_ZONE_PREV || zone == PT_OPT_ZONE_NEXT)
+            UiRoundFill(boxX + 3, fy + 3, OPT_BOX_W - 8, r.h - COL_DEPTH - 6, 4, UI_RGB(255, 214, 160));
+        EmSwitch(mid - 13, fy + 3, v->optSwitch[row] == 2);
         return;
     }
     if (zone == PT_OPT_ZONE_PREV)
@@ -674,13 +695,11 @@ static void OptRow(int row, const CtrPokeTouchView *v)
                     UI_RGB(255, 214, 160));
     UiArrow(boxX + 10, fy + 4, -1, EM_STRIPE);
     UiArrow(boxX + OPT_BOX_W - 15, fy + 4, 1, EM_STRIPE);
-    if (v->optSwitch[row])
-        EmSwitch(mid - 13, fy + 3, v->optSwitch[row] == 2);
-    else
-        UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
+    UiText(value, mid - TextWidth(value) / 2, fy + 4, EM_VALUE, UI_RGB(255, 206, 180), 1, boxX + OPT_BOX_W - 18);
 }
 
 static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color);
+static void BDescribeSh(const char *text, int x, int y, int width, int maxLines, uint16_t color, uint16_t shadow);
 
 /* The preview under the look rows of OPTIONS (3ds_poketouch.h CtrPokeTouchLook): in the rows the page does not use, a note card
  * with the look's walking picture facing down, twice as large (as it walks in the field), its name and its artists. */
@@ -703,6 +722,8 @@ static void OptLookPanel(const CtrPokeTouchView *v)
         return;
     TsBgRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
     EmNote(r.x, r.y, r.w, r.h);
+    if (!small && r.h >= 68)         /* the picture on a plate of its own */
+        UiRoundFill(r.x + 10, r.y + (r.h - 68) / 2, 68, 68, 6, UI_RGB(240, 232, 216));
     if (l->has) {
         static uint8_t pixels[32 * 32];
         uint16_t pal[16];
@@ -719,7 +740,16 @@ static void OptLookPanel(const CtrPokeTouchView *v)
             UiImage(pixels + 2 * 32, pal, 32, 32, 30, r.x + 14, r.y + (r.h - 60) / 2, 2, 1);
     }
     UiText(l->name, textX, r.y + (small ? 4 : 8), EM_DARK, EM_DARK_SH, 1, r.x + r.w - 6);
-    BDescribeN(l->credit, textX, r.y + (small ? 17 : 24), r.x + r.w - 6 - textX, small ? 2 : 3, EM_DIM);
+    if (!small)
+        Fill(textX, r.y + 20, r.x + r.w - 8 - textX, 1, kEmCream.bottom);   /* name, then the artists below a line */
+    {
+        /* The artists' credit in the name's own shadow (the bolder look it had was the dark one of the battle texts), as many lines as the
+         * card holds, up to five. */
+        int lines = small ? 2 : (r.h - 36) / UI_LINE_H + 1;
+
+        BDescribeSh(l->credit, textX, r.y + (small ? 17 : 25), r.x + r.w - 6 - textX, lines < 1 ? 1 : lines > 5 ? 5 : lines, EM_DIM,
+                    EM_DARK_SH);
+    }
 }
 
 /* The SAVE screen: FireRed's save information in a card over the frame where the picture goes: a title band, the five
@@ -968,13 +998,18 @@ static void Back(const CtrPokeTouchView *v)
 static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-    char label[16];
-    int fy;
+    int fy, dots = v->optPageCount, x0;
 
-    snprintf(label, sizeof(label), CTR_TR("PAGE %u/%u", "P\xC3\x81G. %u/%u", "Seite %u/%u"), (unsigned)(v->optPage + 1), (unsigned)v->optPageCount);
     TsBgRect(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
-    EmLabel(label, r->x, r->w, fy, r->h - COL_DEPTH, &kEmCream);
+    /* A dot for each page (the current one amber) over the page's name: where you are in the pages, and what is on this one. */
+    x0 = r->x + (r->w - (dots * 6 + (dots - 1) * 4)) / 2;
+    for (int i = 0; i < dots; ++i) {
+        UiRoundFill(x0 + i * 10, fy + 3, 6, 6, 3, i == v->optPage ? kEmAmber.lip : kEmCream.lip);
+        if (i == v->optPage)
+            UiRoundFill(x0 + i * 10 + 1, fy + 4, 4, 4, 2, kEmAmber.top);
+    }
+    EmLabel(v->optPageName, r->x, r->w, fy + 10, 13, &kEmCream);
 }
 
 /* The bar: the note card with up to three lines, 15 pixels apart and centred on it; the first line is the subject,

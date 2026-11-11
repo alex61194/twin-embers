@@ -192,6 +192,12 @@ int main(void)
           && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "four pages");
     /* The page API at its edges, and every row on exactly one page. */
     CHECK(CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7, "page 2 is the second seven rows");
+    CHECK(CtrOptions_PageName(0)[0] && CtrOptions_PageName(3)[0] && strcmp(CtrOptions_PageName(0), CtrOptions_PageName(3)) != 0
+          && strcmp(CtrOptions_PageName(2), "RULES") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(4)[0] == 0,
+          "each page has its name, none past the last");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 16);
+    CHECK(strcmp(view.optPageName, "RULES") == 0 && view.optPage == 2, "the view carries the page's name");
     CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(4) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(4) == 0,
           "a page that does not exist has no rows");
     {

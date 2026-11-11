@@ -261,6 +261,7 @@ int main(int argc, char **argv)
     {
         v.home=0; v.viewport=0; v.options=1; v.save=0; v.optCount=4; v.optSelected=1;
         v.optLook.on=1; v.optLook.has=1;
+        v.optPageCount=4; v.optPage=3; strcpy(v.optPageName,"LOOKS"); v.optSwitch[0]=2; v.optSwitch[1]=1;   /* the PAGE button's dots, the switches */
         strcpy(v.optLook.name,"ASH HGSS"); strcpy(v.optLook.credit,"Made by PKMNTrainerRick");
         for(int i=0;i<512;++i) v.optLook.tiles[i]=(uint8_t)(i*7);
         for(int i=1;i<16;++i) v.optLook.palette[i]=(uint16_t)(i*0x0421);

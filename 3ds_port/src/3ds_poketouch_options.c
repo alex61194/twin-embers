@@ -193,6 +193,15 @@ _Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAG
 
 int CtrOptions_PageCount(void) { return PAGES; }
 
+const char *CtrOptions_PageName(int page)
+{
+    static const char *const names[] = {CTR_TR("GAME", "JUEGO", "Spiel"), CTR_TR("EXTRAS", "EXTRAS", "Extras"),
+                                        CTR_TR("RULES", "REGLAS", "Regeln"), CTR_TR("LOOKS", "ASPECTOS", "Looks")};
+
+    _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
+    return page >= 0 && page < PAGES ? names[page] : "";
+}
+
 int CtrOptions_PageOf(int row)
 {
     int page = 0;
@@ -341,6 +350,7 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     v->options = 1;
     v->optPage = (uint8_t)page;
     v->optPageCount = (uint8_t)PAGES;
+    snprintf(v->optPageName, sizeof(v->optPageName), "%s", CtrOptions_PageName(page));
     v->optCount = (uint8_t)count;
     v->optSelected = (uint8_t)(selected - base);
     for (int i = 0; i < PT_OPT_MAX; ++i) {

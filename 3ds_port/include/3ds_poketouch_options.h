@@ -59,6 +59,7 @@ int CtrOptions_Randomlocke(void);    /* RANDOMLOCKE: wild and trainer Pokemon ar
 unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species);
 int CtrOptions_Nuzlocke(void);       /* the Nuzlocke rules (NUZLOCKE): one wild encounter to catch in each area, a fainted Pokemon is released */
 /* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
+const char *CtrOptions_PageName(int page);   /* a page's short name in the game's language, "" past the last */
 int CtrOptions_PageCount(void);
 int CtrOptions_PageOf(int row);
 int CtrOptions_PageBase(int page);   /* the first row of a page */
