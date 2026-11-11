@@ -385,10 +385,17 @@ int main(int argc, char **argv)
     v.move[3].present = 0;
     settle(&old, &v); old = v; put(out, "03_moves"); hits(&v);
 #ifndef BATTLE_UI_BEFORE
+    /* Llama: the move cards are 150 x 53 at x 8 and 162, y 36 and 93; CANCEL is the tall slate button right of the text window (an empty slot answers nothing). */
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 36 + 25) == 0 && CtrBattleUi_Hit(&v, 162 + 75, 36 + 25) == 1 && CtrBattleUi_Hit(&v, 8 + 75, 93 + 25) == 2);
+    assert(CtrBattleUi_Hit(&v, 162 + 75, 93 + 25) == -1 && CtrBattleUi_Hit(&v, 159, 60) == -1 && CtrBattleUi_Hit(&v, 100, 200) == -1);
+    assert(CtrBattleUi_Hit(&v, 240 + 36, 154 + 40) == BUI_CANCEL && CtrBattleUi_Hit(&v, 240 + 36, 154 + 77) == BUI_CANCEL && CtrBattleUi_Hit(&v, 240 + 36, 153) == -1);
+#endif
+#ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MATCHUPS")) {
-        /* The matchup pills (opt-in: the baseline comparison above does not draw them). On the second row of each move
-         * card, right of POW, a pill in the colour of its meaning (x2 and x4 green, x1/2 orange, x0 grey): that colour
-         * is counted over the row, and the other three must not appear in it. */
+        /* The matchup badges (opt-in: the baseline comparison above does not draw them). On the last row of each move
+         * card, at its left under POW, a badge in the colour of its meaning (x2 and x4 green, x1/2 orange, x0 grey): that colour
+         * is counted over the row, and the other three must not appear in it. (Llama: the badge moved from the second row, right of POW,
+         * to the third, under it, as the mockup draws it.) */
         static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
         const uint16_t fill[4] = {kBFxColor[CTR_FX_DOUBLE], kBFxColor[CTR_FX_HALF], kBFxColor[CTR_FX_IMMUNE], kBFxColor[CTR_FX_QUADRUPLE]};
         CtrBattleView w = v;
@@ -404,16 +411,16 @@ int main(int argc, char **argv)
             const CtrPokeTouchRect *r = &sBCard[k];
             int found = 0;
 
-            for (int y = r->y + 20; y < r->y + 38; ++y)
-                for (int x = r->x + 57; x < r->x + r->w; ++x)
+            for (int y = r->y + 34; y < r->y + 47; ++y)
+                for (int x = r->x + 13; x < r->x + 86; ++x)
                     found += at(x, y) == fill[k];
             assert(found >= 12);           /* the mark is there, in the colour of its meaning */
             for (int c = 0; c < 4; ++c)
                 if (c != k) {
                     int other = 0;
 
-                    for (int y = r->y + 20; y < r->y + 38; ++y)
-                        for (int x = r->x + 57; x < r->x + r->w; ++x)
+                    for (int y = r->y + 34; y < r->y + 47; ++y)
+                        for (int x = r->x + 13; x < r->x + 86; ++x)
                             other += at(x, y) == fill[c];
                     assert(other == 0);    /* and in no other */
                 }
@@ -425,8 +432,8 @@ int main(int argc, char **argv)
 
             w.move[0].matchup = CTR_FX_NONE;
             settle(&old, &w); old = w;
-            for (int y = r->y + 20; y < r->y + 38; ++y)
-                for (int x = r->x + 57; x < r->x + r->w; ++x)
+            for (int y = r->y + 34; y < r->y + 47; ++y)
+                for (int x = r->x + 13; x < r->x + 86; ++x)
                     left += at(x, y) == fill[0];
             assert(left == 0);
         }
@@ -472,11 +479,13 @@ int main(int argc, char **argv)
 #endif
 #ifndef BATTLE_UI_BEFORE
     if (getenv("BATTLE_UI_MOCK")) {
-        /* The reference mockup's data (opt-in): drawn as "99_mock" for a pixel comparison with the design. */
-        static const char *const nm[4] = {"FLAMETHROWER", "EARTHQUAKE", "SURF", "SOLARBEAM"};
-        static const char *const tn[4] = {"FIRE", "GROUND", "WATER", "GRASS"};
-        static const int ty[4] = {10, 4, 11, 12}, pp[4] = {10, 8, 3, 4}, mp[4] = {15, 10, 15, 10};
-        static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_IMMUNE, CTR_FX_QUADRUPLE};
+        /* The reference mockup's data (opt-in): drawn as "99_mock" for a pixel comparison with the design (llama2_mockup.html, panel 2:
+         * the moves; the tray of panel 1: five balls, the fourth fainted, one empty slot). */
+        static const char *const nm[4] = {"EARTHQUAKE", "FLAMETHROWER", "DRAGON CLAW", "SWORDS DANCE"};
+        static const char *const tn[4] = {"GROUND", "FIRE", "DRAGON", "NORMAL"};
+        static const int ty[4] = {4, 10, 16, 0}, pp[4] = {10, 15, 2, 20}, mp[4] = {10, 15, 15, 20};
+        static const uint8_t fx[4] = {CTR_FX_DOUBLE, CTR_FX_HALF, CTR_FX_NONE, CTR_FX_NONE};
+        static const char *const pw[4] = {"100", "90", "80", "-"};
         CtrBattleView w = v;
 
         for (k = 0; k < 4; ++k) {
@@ -485,17 +494,36 @@ int main(int argc, char **argv)
             memset(m, 0, sizeof(*m));
             m->present = 1; m->type = (uint8_t)ty[k]; m->pp = (uint8_t)pp[k]; m->maxPp = (uint8_t)mp[k]; m->matchup = fx[k];
             names(m->name, sizeof(m->name), nm[k]); names(m->typeName, sizeof(m->typeName), tn[k]);
-            names(m->power, sizeof(m->power), "90");
+            names(m->power, sizeof(m->power), pw[k]);
+            names(m->accuracy, sizeof(m->accuracy), k == 3 ? "-" : "100");
         }
-        names(w.move[0].accuracy, sizeof(w.move[0].accuracy), "100");
-        w.move[0].effectChance = 10; w.move[0].stab = 1;
-        names(w.move[0].desc, sizeof(w.move[0].desc), "A powerful fire attack that may inflict a burn.");
+        w.move[0].stab = 1;
+        names(w.move[0].desc, sizeof(w.move[0].desc), "A quake that hits everyone in the battle.");
         w.cursor = 0; w.showCursor = 1; w.pressed = -1;
         for (k = 0; k < 6; ++k) { w.party[k] = 1; w.partyHp[k] = 100; w.partyStatus[k] = 0; }
-        w.party[1] = 3; w.partyHp[1] = 50; w.partyStatus[1] = 2; w.party[3] = 2; w.partyHp[3] = 0;
+        w.party[5] = 0; w.partyHp[1] = 82; w.partyHp[2] = 44; w.party[3] = 2; w.partyHp[3] = 0; w.activeSlot = 0;
         settle(&old, &w); old = w; put(out, "99_mock");
         w.showCursor = 0; w.pressed = 1; settle(&old, &w); old = w; put(out, "99_mock_card");
         w.pressed = BUI_CANCEL; settle(&old, &w); old = w; put(out, "99_mock_cancel");
+        w.pressed = -1; w.showCursor = 1; w.cursor = 1; settle(&old, &w); old = w; put(out, "99_mock_second");
+        {
+            /* panel 4 of the mockup: the Party's six cards, the first chosen, one with a status, one fainted, one slot empty */
+            static const char *const pn[5] = {"GROUDON", "CHARIZARD", "PIKACHU", "ONIX", "GYARADOS"};
+            static const uint8_t lv[5] = {100, 36, 30, 25, 28};
+            static const uint16_t hp[5] = {319, 98, 31, 0, 90}, mx[5] = {319, 120, 70, 80, 90};
+            CtrBattleView q = w;
+
+            q.state = BUI_PARTY; q.cursor = 0; q.showCursor = 1;
+            memset(&q.pty, 0, sizeof(q.pty));
+            for (k = 0; k < 5; ++k) {
+                q.pty.present[k] = 1; q.pty.level[k] = lv[k]; q.pty.hp[k] = hp[k]; q.pty.maxHp[k] = mx[k]; q.pty.icon[k] = (uint16_t)(k + 1);
+                names(q.pty.name[k], sizeof(q.pty.name[k]), pn[k]);
+            }
+            q.pty.status[2] = 2; q.pty.cursor = 0; q.pty.mode = BUI_PTY_SWITCH;
+            settle(&old, &q); old = q; put(out, "99_mock_party");
+            q.pty.cursor = 3; settle(&old, &q); old = q; put(out, "99_mock_party_fainted_chosen");
+            settle(&old, &w); old = w;
+        }
         settle(&old, &v); old = v;
     }
 #endif
@@ -515,6 +543,10 @@ int main(int argc, char **argv)
     }
     v.target[1].present = 0;
     settle(&old, &v); old = v; put(out, "05_targets"); hits(&v);
+#ifndef BATTLE_UI_BEFORE
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 36 + 25) == 0 && CtrBattleUi_Hit(&v, 162 + 75, 36 + 25) == -1);
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 93 + 25) == 2 && CtrBattleUi_Hit(&v, 162 + 75, 93 + 25) == 3 && CtrBattleUi_Hit(&v, 240 + 36, 154 + 40) == BUI_CANCEL);
+#endif
     v.pressed = 0; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
 
     /* SAFARI */
@@ -559,6 +591,13 @@ int main(int argc, char **argv)
         p->status[1] = 2; p->status[4] = 5; p->hp[3] = 0; p->cursor = 2; p->mode = BUI_PTY_SWITCH;
     }
     settle(&old, &v); old = v; put(out, "11_party"); hits(&v);
+#ifndef BATTLE_UI_BEFORE
+    /* Llama: the six cards are 150 x 51 at x 8 and 162, y 6, 59 and 112, two px apart down the columns; the text window answers nothing. */
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 6 + 25) == BUI_PTY_SLOT && CtrBattleUi_Hit(&v, 162 + 75, 6 + 25) == BUI_PTY_SLOT + 1);
+    assert(CtrBattleUi_Hit(&v, 162 + 75, 59 + 25) == BUI_PTY_SLOT + 3 && CtrBattleUi_Hit(&v, 8 + 75, 112 + 25) == BUI_PTY_SLOT + 4);
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 57 + 1) == -1 && CtrBattleUi_Hit(&v, 160, 30) == -1 && CtrBattleUi_Hit(&v, 100, 200) == -1);
+    assert(CtrBattleUi_Hit(&v, 240 + 36, 170 + 30) == BUI_PTY_CANCEL && CtrBattleUi_Hit(&v, 240 + 36, 169) == -1);
+#endif
     v.pressed = BUI_PTY_SLOT + 1; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
     v.pressed = BUI_PTY_CANCEL; settle(&old, &v); old = v; put(out, "12_party_cancel_pressed"); v.pressed = -1; settle(&old, &v); old = v;
     v.pty.panel = BUI_PTY_ACTIONS; v.pty.menuCount = 3; v.pty.menuCursor = 0;
@@ -572,6 +611,24 @@ int main(int argc, char **argv)
     v.pty.tag[3] = BUI_PTY_TAG_NO_USE; v.pty.tag[4] = BUI_PTY_TAG_ABLE; settle(&old, &v); old = v; put(out, "12b_party_teach");
     memset(v.pty.tag, 0, sizeof(v.pty.tag)); settle(&old, &v); old = v;
     v.pty.mode = BUI_PTY_FORCED; settle(&old, &v); old = v; put(out, "15_party_forced"); hits(&v);
+#ifndef BATTLE_UI_BEFORE
+    /* A Rare Candy's level up: the card over the slots with the new stats, OK in CANCEL's place; pressed and not. */
+    v.pty.mode = BUI_PTY_SWITCH; v.pty.panel = BUI_PTY_LEVELUP; v.pty.lvSlot = 0; v.pty.lvLevel = 51;
+    for (k = 0; k < 6; ++k) { v.pty.lvStat[k] = (uint16_t)(120 + 9 * k); v.pty.lvGain[k] = (int16_t)(1 + k % 3); }
+    names(v.pty.message, sizeof(v.pty.message), "CHARIZARD grew to Lv. 51!");
+    settle(&old, &v); old = v; put(out, "15b_party_levelup");
+    v.pressed = BUI_PTY_MESSAGE; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
+    v.pty.panel = BUI_PTY_NONE; v.pty.mode = BUI_PTY_FORCED; settle(&old, &v); old = v;
+    /* Picking several (a link battle): CONFIRM over CANCEL, the order on the picked cards; the cursor on each button in turn. */
+    v.pty.mode = BUI_PTY_MULTI; v.pty.button = 0;
+    for (k = 0; k < 6; ++k) v.pty.entry[k] = BUI_PTY_ABLE;
+    v.pty.entry[1] = BUI_PTY_FIRST; v.pty.entry[2] = BUI_PTY_FIRST + 1; v.pty.entry[3] = BUI_PTY_NOT_ABLE;
+    settle(&old, &v); old = v; put(out, "15c_party_multi");
+    v.pty.button = 1; settle(&old, &v); old = v;
+    v.pressed = BUI_PTY_CONFIRM; settle(&old, &v); old = v; v.pressed = BUI_PTY_CANCEL; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 270, 185) == BUI_PTY_CONFIRM && CtrBattleUi_Hit(&v, 270, 220) == BUI_PTY_CANCEL);
+    v.pty.mode = BUI_PTY_FORCED; v.pty.button = -1; memset(v.pty.entry, 0, sizeof(v.pty.entry)); settle(&old, &v); old = v;
+#endif
     v.state = BUI_ACTION; settle(&old, &v); old = v;
     v.state = BUI_IDLE; settle(&old, &v);
 
@@ -640,9 +697,9 @@ int main(int argc, char **argv)
     /* The red of PokeTouch: nothing of the shared navy theme may remain on any state. */
 #ifndef BATTLE_UI_BEFORE
     {
-        static const uint16_t navy[] = {UI_BG, UI_BG_TOP, UI_OUTLINE, UI_PANEL_LO, UI_PANEL, UI_PANEL_HI, UI_BORDER,
-                                        UI_BORDER_LIT, UI_SEPARATOR, UI_TEXT_SH, UI_TEXT_DIM, UI_HP_TRACK,
-                                        UI_RGB(34, 56, 100)};
+        static const uint16_t navy[] = {UI_BG, UI_BG_TOP, UI_OUTLINE, UI_PANEL, UI_PANEL_HI, UI_BORDER,
+                                        UI_BORDER_LIT, UI_SEPARATOR, UI_TEXT_SH, UI_TEXT_DIM,
+                                        UI_RGB(34, 56, 100)};      /* (UI_PANEL_LO and UI_HP_TRACK are left out: the Llama slate pieces, #14182c and #20263f, squeeze to them) */
         CtrBattleView s = v;
         int states[] = {BUI_IDLE, BUI_ACTION, BUI_MOVE, BUI_TARGET, BUI_SAFARI, BUI_BAG, BUI_PARTY};
 
@@ -653,7 +710,11 @@ int main(int argc, char **argv)
                 continue;                  /* these screens are their artwork, whatever colours it holds */
             for (int n = 0; n < W * H; ++n)
                 for (size_t j = 0; j < sizeof(navy) / sizeof(navy[0]); ++j)
-                    if (canvas[n] == navy[j]) {
+                    /* The Llama ball tray (on the screens with the balls on top) and the Bag's scroll rail are slate gradients whose steps, squeezed
+                     * to RGB565, land on a navy colour or two: their boxes are not looked at. */
+                    if (canvas[n] == navy[j]
+                        && !(states[i] != BUI_BAG && states[i] != BUI_PARTY && n / H >= 62 && n / H < 62 + 196 && H - 1 - n % H >= 5 && H - 1 - n % H < 30)
+                        && !(states[i] == BUI_BAG && n / H >= 181 && n / H < 191 && H - 1 - n % H >= 58 && H - 1 - n % H < 152)) {
                         fprintf(stderr, "state %d keeps the navy theme colour %04x at %d\n", states[i], navy[j], n);
                         assert(0);
                     }
