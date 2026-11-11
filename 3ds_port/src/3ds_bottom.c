@@ -2058,7 +2058,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
         if (CtrBottomView_Mail()) {
             /* A letter: its stationery's name, who wrote it, and that a tap on it closes it (any of the game's A or B does). */
-            char name[PT_BAR_LEN], from[PT_BAR_LEN];
+            char name[PT_BAR_LEN], from[24];
 
             snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrBottomView_MailName(name, sizeof(name)) ? name : title);
             if (CtrBottomView_MailFrom(from, sizeof(from)))
