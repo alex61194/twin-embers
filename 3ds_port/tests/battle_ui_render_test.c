@@ -305,6 +305,7 @@ int main(int argc, char **argv)
     v.party[0] = v.party[1] = v.party[2] = v.party[4] = 1; v.party[3] = 2;
     v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
     names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeHp = 158; v.activeMaxHp = 158;
+    v.activeType[0] = 10; v.activeType[1] = 2; names(v.activeTypeName[0], 12, "FIRE"); names(v.activeTypeName[1], 12, "FLYING");
     CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
     old = v;
@@ -312,6 +313,9 @@ int main(int argc, char **argv)
     /* ACTION */
     v.state = BUI_ACTION; v.showCursor = 1; v.cursor = BUI_ACT_FIGHT;
     settle(&old, &v); old = v; put(out, "01_action"); hits(&v);
+    v.pressed = BUI_ACT_FIGHT; settle(&old, &v); old = v; put(out, "01b_action_pressed_fight"); v.pressed = -1; settle(&old, &v); old = v;
+    v.activeType[1] = -1; v.activeTypeName[1][0] = 0; settle(&old, &v); old = v; put(out, "01c_action_one_type");
+    v.activeType[1] = 2; names(v.activeTypeName[1], 12, "FLYING"); settle(&old, &v); old = v;
     for (k = 0; k < 4; ++k) {
         v.cursor = (int8_t)k; settle(&old, &v); old = v;
         v.pressed = (int16_t)k; settle(&old, &v); old = v;

@@ -565,6 +565,8 @@ typedef struct {
     uint8_t activeLevel;
     uint8_t activeSlot;             /* its slot in the party */
     uint16_t activeIcon;            /* its party icon (a species number, as CtrBottomParty_IconSpecies gives it) */
+    int8_t activeType[2];           /* its types (FireRed's numbers), -1 for none: the badges of the FIGHT banner */
+    char activeTypeName[2][12];
     uint8_t activeFrame;            /* 0 or 1, the icon's bounce: it flips about four times a second */
     uint16_t activeHp, activeMaxHp;
     uint8_t ball;                   /* the quick ball: CTR_QUICK_BALL_* (3ds_battle_nav.h), NONE for no button */

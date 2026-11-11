@@ -1672,6 +1672,15 @@ static void BattleCommon(CtrBattleView *v)
             v->activeIcon = (uint16_t)CtrBottomParty_IconSpecies(slot);
             v->activeFrame = (uint8_t)((sBatAnim++ / 15) & 1);
             v->activeHp = (uint16_t)CtrBottomParty_HP(slot);
+            {
+                int ty[2];
+
+                if (CtrBottomDex_Types(CtrBottomParty_Species(slot), ty, v->activeTypeName[0], v->activeTypeName[1], 12)) {
+                    v->activeType[0] = (int8_t)ty[0];
+                    v->activeType[1] = (int8_t)ty[1];
+                } else
+                    v->activeType[0] = v->activeType[1] = -1;
+            }
             v->activeMaxHp = (uint16_t)CtrBottomParty_MaxHP(slot);
         }
     }

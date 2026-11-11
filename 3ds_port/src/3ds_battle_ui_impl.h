@@ -857,10 +857,17 @@ static void BDiscIcon(int icon, int cx, int cy, int r, const EmPal *p)
 /* A raised card of the battle: the backdrop back round it, the glow while FireRed's cursor is on it. */
 static int BEmCard(const CtrPokeTouchRect *r, const EmPal *p, int focused, int pressed)
 {
+    int fy, face = r->h - B_DEPTH;
+
     TsBgRect(r->x - 2, r->y - 2, r->w + 4, r->h + 4);
     if (focused)
         EmGlowRing(r->x, r->y, r->w, r->h);
-    return EmButton(r->x, r->y, r->w, r->h, p, B_DEPTH, pressed);
+    fy = EmButton(r->x, r->y, r->w, r->h, p, B_DEPTH, pressed);
+    if (pressed && face >= 12) {    /* sunk: the face lifts a little lighter than the plain sink, with a 1 px highlight inside its top */
+        EmGradFill(r->x + 1, fy + 1, r->w - 2, face - 2, 4, UiMix(p->top, EM_WHITE, 2), UiMix(p->top, p->bottom, 5));
+        Fill(r->x + 5, fy + 2, r->w - 10, 1, UiMix(p->top, EM_WHITE, 4));
+    }
+    return fy;
 }
 
 /* An empty slot: a hollow in the backdrop. */
@@ -1008,11 +1015,29 @@ static void BActCard(int i, const CtrBattleView *v)
                 }
         } else
             BDiscIcon(icon[0], r->x + 52, fy + fh / 2, 33, p);
-        /* The word and the pill as one block, centred on the face (FIGHT is 2x: 18 pixels tall). */
-        UiText(label[0], left + (w - tw) / 2, fy + (fh - 51) / 2, p->ink, p->inkSh, 2, r->x + r->w);
+        /* The word, the pill and (when the species' types are known) their badges as one block, centred on the face
+         * (FIGHT is 2x: 18 pixels tall); the pill is 14 px higher than it is without the badges. */
+        int nt = (v->activeType[0] >= 0 && v->activeTypeName[0][0]) + (v->activeType[1] >= 0 && v->activeTypeName[1][0]);
+        int y0 = fy + (fh - (nt ? 55 : 51)) / 2;
+
+        UiText(label[0], left + (w - tw) / 2, y0, p->ink, p->inkSh, 2, r->x + r->w);
         if (v->activeName[0]) {
             snprintf(text, sizeof(text), "%s Lv%u", v->activeName, (unsigned)v->activeLevel);
-            BPill(left + (w - BPillW(text)) / 2, fy + (fh - 51) / 2 + 36, text, p->lip, EM_WHITE, p->edge);
+            BPill(left + (w - BPillW(text)) / 2, y0 + (nt ? 22 : 36), text, p->lip, EM_WHITE, p->edge);
+        }
+        if (nt) {
+            int tw2 = 0, x;
+
+            for (int k = 0; k < 2; ++k)
+                if (v->activeType[k] >= 0 && v->activeTypeName[k][0])
+                    tw2 += BPillW(v->activeTypeName[k]) + (tw2 ? 4 : 0);
+            x = left + (w - tw2) / 2;
+            for (int k = 0; k < 2; ++k)
+                if (v->activeType[k] >= 0 && v->activeTypeName[k][0]) {
+                    BPill(x, y0 + 40, v->activeTypeName[k], UiTypeColor(v->activeType[k]), EM_WHITE,
+                          UiMix(UiTypeColor(v->activeType[k]), UI_RGB(0, 0, 0), 4));
+                    x += BPillW(v->activeTypeName[k]) + 4;
+                }
         }
         return;
     }
@@ -1549,6 +1574,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         return 1;
     if (b->state == BUI_ACTION)
         return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon
+            || memcmp(a->activeType, b->activeType, sizeof(b->activeType)) || memcmp(a->activeTypeName, b->activeTypeName, sizeof(b->activeTypeName))
             || a->activeSlot != b->activeSlot || a->ball != b->ball || a->ballItem != b->ballItem
             || a->ballQty != b->ballQty || a->ballPlace != b->ballPlace || a->ballCount != b->ballCount
             || strcmp(a->ballName, b->ballName);
