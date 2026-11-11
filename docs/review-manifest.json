@@ -6824,7 +6824,7 @@
   },
   {
    "path": "patches/pokefirered/0243-mail-view-note.json",
-   "sha256": "a2e9a3e9f5f956803181374aac6b46ac903bc5bda610b1f689fccabd6b81e793",
+   "sha256": "654389e9a33c13b4877aa67bceb0fda9c60f23963ec2216aeeced91d9ca8c94d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
