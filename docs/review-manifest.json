@@ -955,7 +955,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_backdrop_impl.h",
-   "sha256": "d934cb0e57251d6e9e7ec851619f2db3b85a3f47868bac3c5166b49d9aedbf8e",
+   "sha256": "ff862dd8270abca915ecc36e292f54906dd35811c3246be2e9dde68e7bd34827",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
