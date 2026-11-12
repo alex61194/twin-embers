@@ -724,6 +724,13 @@ int main(int argc, char **argv)
             sv.pressed = SUI_HIT_IVTOGGLE; settle_summary(&so, &sv); so = sv;
             sv.pressed = -1; sv.ivView = 0; settle_summary(&so, &sv); so = sv;
             assert(CtrSummaryUi_Hit(&sv, 285, 85) == SUI_HIT_IVTOGGLE);
+            sv.data.page = SUI_PAGE_SKILLS; names(sv.data.exp, 12, "128000"); names(sv.data.nextExp, 12, "4651");   /* Medium Fast, level 50: 125000 -> 132651, 42% */
+            settle_summary(&so, &sv); so = sv; put(out, "21b_summary_exp");
+            names(sv.data.level, 8, "5"); names(sv.data.exp, 12, "135"); names(sv.data.nextExp, 12, "10");   /* Medium Fast: 125 -> 216 */
+            settle_summary(&so, &sv); so = sv;
+            names(sv.data.level, 8, "100"); names(sv.data.exp, 12, "1000000"); names(sv.data.nextExp, 12, "0");   /* full bar, no next */
+            settle_summary(&so, &sv); so = sv; put(out, "21c_summary_exp_100");
+            names(sv.data.level, 8, "50"); names(sv.data.exp, 12, "125000"); names(sv.data.nextExp, 12, "4200");
             sv.data.page = SUI_PAGE_MOVES; settle_summary(&so, &sv); so = sv;
             assert(CtrSummaryUi_Hit(&sv, 285, 85) != SUI_HIT_IVTOGGLE);
         }

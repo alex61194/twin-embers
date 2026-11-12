@@ -13,7 +13,7 @@ static const CtrPokeTouchRect sFDListHead = {4, 4, 150, 24};
 static const CtrPokeTouchRect sFDListUp = {135, 34, 20, 63}, sFDListDown = {135, 101, 20, 63};
 static const CtrPokeTouchRect sFDSide = {158, 4, 86, 160};
 static const CtrPokeTouchRect sFDPrev = {220, 4, 24, 80}, sFDNext = {220, 86, 24, 80};
-static const CtrPokeTouchRect sFDArea = {4, 174, 80, 62}, sFDCry = {88, 174, 80, 62};
+static const CtrPokeTouchRect sFDArea = {156, 124, 38, 18}, sFDCry = {200, 124, 38, 18};   /* on the card, lower right: face + depth */
 #define FD_GRID_PAGE 6
 
 /* ---- Pictures (decoded once, kept by species or row id) ---- */
@@ -614,33 +614,37 @@ static void FDCategory(const CtrPokeTouchDex *d, int pressed)
 static void FDPage(const CtrPokeTouchDex *d)
 {
     char no[12], text[32];
+    int x = 88;
 
-    LlWindow(4, 4, 96, 110);
+    LlWindow(4, 4, 240, 146);
     FDNumber(d->sel.number, no, sizeof(no));
     LlRibbon(5, 5, no, LL_RIB_TOP, LL_RIB_BOT);
-    LlPlate(20, 34, 64, EM2_SLATE, 0, 0);
-    FDPicDrawBig(d->sel.species, 20, 34);
-    LlWindow(104, 4, 140, 110);
-    Em2Text(d->sel.name, 114, 12, EM_DARK, EM_DARK_SH, 212);
-    Em2Text(d->sel.flags & 2 ? d->kind : "?????", 114, 26, EM_DIM, EM_DARK_SH, 212);
+    LlPlate(14, 26, 64, EM2_SLATE, 0, 0);
+    FDPicDrawBig(d->sel.species, 14, 26);
+    Em2Text(d->sel.name, x, 12, EM_DARK, EM_DARK_SH, 212);
+    Em2Text(d->sel.flags & 2 ? d->kind : "?????", x, 26, EM_DIM, EM_DARK_SH, 212);
     FDFootprint(d->sel.species, 218, 10);
-    LlRule(114, 41, 120);
-    Em2Text(CtrUiText(UIS_DEX_HT), 114, 48, EM_DIM, EM_DARK_SH, 170);
-    FDHeight(d, text, sizeof(text));
-    UiTextRight(text, 234, 48, EM_DARK, EM_DARK_SH, 1);
-    Em2Text(CtrUiText(UIS_DEX_WT), 114, 62, EM_DIM, EM_DARK_SH, 170);
-    FDWeight(d, text, sizeof(text));
-    UiTextRight(text, 234, 62, EM_DARK, EM_DARK_SH, 1);
-    LlRule(114, 77, 120);
     if (d->type[0] >= 0) {
-        int x = 114 + LlTypeBadge(114, 85, d->typeName[0], UiTypeColor(d->type[0])) + 4;
+        int tx = x + LlTypeBadge(x, 48, d->typeName[0], UiTypeColor(d->type[0])) + 4;
 
         if (d->type[1] >= 0)
-            LlTypeBadge(x, 85, d->typeName[1], UiTypeColor(d->type[1]));
+            LlTypeBadge(tx, 48, d->typeName[1], UiTypeColor(d->type[1]));
     }
-    LlWindow(4, 118, 240, 46);
-    if (d->desc[0])
-        BDescribeN(d->desc, 12, 123, 226, 3, EM_DIM);
+    LlRule(14, 98, 224);
+    Em2Text(CtrUiText(UIS_DEX_HT), 14, 106, EM_DIM, EM_DARK_SH, 60);
+    FDHeight(d, text, sizeof(text));
+    UiTextRight(text, 140, 106, EM_DARK, EM_DARK_SH, 1);
+    Em2Text(CtrUiText(UIS_DEX_WT), 14, 124, EM_DIM, EM_DARK_SH, 60);
+    FDWeight(d, text, sizeof(text));
+    UiTextRight(text, 140, 124, EM_DARK, EM_DARK_SH, 1);
+    if (!d->added) {
+        const EmPal *pa = &kEmFlame, *pc = &kEmCream;
+        int fa = EmButton(sFDArea.x, sFDArea.y, sFDArea.w, sFDArea.h, pa, FB_DEPTH, d->pressed == PT_DEX_HIT_AREA);
+        int fc = EmButton(sFDCry.x, sFDCry.y, sFDCry.w, sFDCry.h, pc, FB_DEPTH, d->pressed == PT_DEX_HIT_CRY);
+
+        EmLabel(CtrUiText(UIS_DEX_AREA), sFDArea.x, sFDArea.w, fa, sFDArea.h - FB_DEPTH, pa);
+        EmLabel(CtrUiText(UIS_DEX_CRY), sFDCry.x, sFDCry.w, fc, sFDCry.h - FB_DEPTH, pc);
+    }
 }
 
 /* The viewport's area: the screen the Pokedex shows. */
@@ -669,12 +673,9 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
 
     EmSurface();
     if (d->state == PT_DEX_STATE_PAGE && !d->added) {
-        const EmPal *pa = &kEmFlame, *pc = &kEmCream;
-        int fa = EmButton(sFDArea.x, sFDArea.y, sFDArea.w, sFDArea.h, pa, FB_DEPTH, d->pressed == PT_DEX_HIT_AREA);
-        int fc = EmButton(sFDCry.x, sFDCry.y, sFDCry.w, sFDCry.h, pc, FB_DEPTH, d->pressed == PT_DEX_HIT_CRY);
-
-        EmLabel(CtrUiText(UIS_DEX_AREA), sFDArea.x, sFDArea.w, fa, sFDArea.h - FB_DEPTH, pa);
-        EmLabel(CtrUiText(UIS_DEX_CRY), sFDCry.x, sFDCry.w, fc, sFDCry.h - FB_DEPTH, pc);
+        /* The entry in FireRed's text window (the buttons are on the card); BDescribeN ends it with "..." if it runs on. */
+        LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+        BDescribeN(d->desc[0] ? d->desc : "", NOTE_X + 13, NOTE_Y + 9, w - 26, 3, EM_DIM);
         sUiS = &sUiNavy;
         return;
     }

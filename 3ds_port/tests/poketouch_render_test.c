@@ -564,7 +564,10 @@ int main(int argc, char **argv)
             SHOT("dex_category"); d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
             d->state=PT_DEX_STATE_PAGE; d->sel=d->row[4]; d->sel.flags=3; d->height=17; d->weight=905; strcpy(d->kind,"FLAME POK\xC3\xA9MON");
             strcpy(d->desc,"Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.");
-            SHOT("dex_page"); d->pressed=PT_DEX_HIT_AREA; update(&old,&s); d->pressed=-1; d->added=1; update(&old,&s); d->added=0;
+            SHOT("dex_page");
+            assert(CtrPokeTouch_DexHit(&s,170,132)==PT_DEX_HIT_AREA && CtrPokeTouch_DexHit(&s,215,132)==PT_DEX_HIT_CRY);
+            assert(CtrPokeTouch_DexHit(&s,170,150)==-1 && CtrPokeTouch_DexHit(&s,100,132)==-1 && CtrPokeTouch_DexHit(&s,170,176)==-1);
+            d->pressed=PT_DEX_HIT_CRY; update(&old,&s); d->pressed=PT_DEX_HIT_AREA; update(&old,&s); d->pressed=-1; d->added=1; update(&old,&s); d->added=0;
         }
         s.dex.on=0;
         {

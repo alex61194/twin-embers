@@ -384,6 +384,73 @@ static void SIvEv(const CtrSummaryUiView *v)
     Em2Text(CTR_TR("Hidden power", "Poder oculto", "Kraftreserve"), 172, 187, S_LABEL, EM_DARK_SH, 303 - UiTextWidth(text, 1) - 10 - bw);
 }
 
+/* ---- The EXP bar of STATS (the battle HUD's look: a dark track, a glossy blue fill) ---- */
+/* FireRed's six growth curves, to find which one the shown Pokemon follows from its level, its EXP and the EXP of the next level. */
+static long SExpAt(int rate, long n)
+{
+    long c = n * n * n;
+
+    switch (rate) {
+    case 0: return c;
+    case 1: return c * 4 / 5;
+    case 2: return c * 5 / 4;
+    case 3: return c * 6 / 5 - 15 * n * n + 100 * n - 140;
+    case 4: return n <= 50 ? c * (100 - n) / 50 : n <= 68 ? c * (150 - n) / 100
+                 : n <= 98 ? c * ((1911 - 10 * n) / 3) / 500 : c * (160 - n) / 100;
+    default: return n < 15 ? c * ((n + 1) / 3 + 24) / 50 : n < 36 ? c * (n + 14) / 50 : c * (n / 2 + 32) / 50;
+    }
+}
+
+static long SDigits(const char *s)
+{
+    long v = 0;
+
+    for (; *s; ++s)
+        if (*s >= '0' && *s <= '9')
+            v = v * 10 + (*s - '0');
+    return v;
+}
+
+/* Progress to the next level, 0..100: level 100 (or no EXP left to take) is full. */
+static int SExpPercent(const CtrSummaryView *d)
+{
+    long lv = SDigits(d->level), e = SDigits(d->exp), n = SDigits(d->nextExp), best = -1, bestDiff = 0, base, span;
+
+    if (lv >= 100 || lv < 1)
+        return 100;
+    for (int r = 0; r < 6; ++r) {
+        long diff = SExpAt(r, lv + 1) - (e + n);
+
+        if (diff < 0)
+            diff = -diff;
+        if (best < 0 || diff < bestDiff) {
+            best = r;
+            bestDiff = diff;
+        }
+    }
+    base = SExpAt((int)best, lv);
+    span = e + n - base;
+    if (span <= 0 || e <= base)
+        return 0;
+    return (int)((e - base) * 100 / span);
+}
+
+static void SExpBar(int x, int y, int w, int pct)
+{
+    int lw = 24, tx = x + lw, tw = w - lw, fw = tw * pct / 100;
+
+    Em2Text("EXP", x, y - 3, S_LABEL, EM_DARK_SH, tx);
+    UiRoundFill(tx, y, tw, 7, 3, UI_RGB(24, 28, 48));
+    UiRoundFill(tx + 1, y + 1, tw - 2, 5, 2, UI_RGB(32, 38, 63));
+    if (pct > 0 && fw < 4)
+        fw = 4;
+    if (fw >= 4) {
+        UiRoundFill(tx + 1, y + 1, fw - 2, 5, 2, UI_RGB(52, 124, 212));
+        UiRoundFill(tx + 1, y + 1, fw - 2, 3, 1, UI_RGB(64, 152, 240));
+        UiRoundFill(tx + 2, y + 1, fw - 4, 1, 0, UI_RGB(168, 224, 255));
+    }
+}
+
 static void SStats(const CtrSummaryUiView *v)
 {
     static const char *const sLabels[5] = {CTR_TR("Attack", "Ataque", "Angriff"), CTR_TR("Defense", "Defensa", "Vert."), CTR_TR("Sp. atk", "At. esp.", "Sp. Ang."), CTR_TR("Sp. def", "Def. esp.", "Sp. Ver."), CTR_TR("Speed", "Velocidad", "Init.")};
@@ -414,7 +481,8 @@ static void SStats(const CtrSummaryUiView *v)
             UiTextRight(d->exp, 303, 99, S_INK, EM_DARK_SH, 1);
             SRule(172, 116, 131);
             Em2Text(CTR_TR("To next Lv.", "Para subir", "N\xC3\xA4" "chst. Lv."), 172, 122, S_LABEL, EM_DARK_SH, 303);
-            UiTextRight(d->nextExp, 303, 137, EM2_COUNT_INK, EM2_COUNT_SH, 1);
+            UiTextRight(SDigits(d->level) >= 100 ? "-" : d->nextExp, 303, 122, EM2_COUNT_INK, EM2_COUNT_SH, 1);
+            SExpBar(172, 144, 131, SExpPercent(d));
             SRule(172, 156, 131);
             SRowText(172, 162, 131, CTR_TR("Ability", "Habilidad", "F\xC3\xA4higkeit"), d->ability, 0);
         }
