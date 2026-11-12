@@ -354,7 +354,8 @@ typedef struct {
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */
-    char optPageName[12];       /* the current page's name (GAME, EXTRAS, RULES, LOOKS), for the PAGE button */
+    uint8_t optSection, optSectionCount;   /* the section the page is in (Settings, Graphics, QoL, Nuzlocke) and how many there are */
+    char optPageName[20];       /* the section's name, "Graphics 1/2" when it has two pages, for the PAGE button */
     uint8_t optPagePressed;     /* the PAGE button is under a held touch */
     uint8_t optCount;           /* its rows on the current page */
     uint8_t optSelected;        /* the row the bar describes (within the current page) */

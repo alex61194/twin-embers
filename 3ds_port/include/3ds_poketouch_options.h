@@ -65,6 +65,9 @@ int CtrOptions_NuzLevelCap(void);     /* NUZLOCKE level caps: no experience at o
 /* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
 const char *CtrOptions_PageName(int page);   /* a page's short name in the game's language, "" past the last */
 int CtrOptions_PageCount(void);
+int CtrOptions_SectionCount(void);
+int CtrOptions_SectionOf(int page);                 /* the section a page belongs to */
+int CtrOptions_SectionPage(int page, int *of);      /* a page's place (1 based) in its section, and the section's pages */
 int CtrOptions_PageOf(int row);
 int CtrOptions_PageBase(int page);   /* the first row of a page */
 int CtrOptions_PageRows(int page);

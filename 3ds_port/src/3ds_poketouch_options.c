@@ -145,84 +145,109 @@ void CtrOptions_EmbersInit(int isNew3ds)
     sPortEmbers = stored >= 0 && stored < CTR_EMBERS_COUNT ? stored : isNew3ds ? CTR_EMBERS_HIGH : CTR_EMBERS_LOW;
 }
 
-/* FireRed's menu order (Page 1), followed by 3DS port QoL options (Page 2). */
+/* The rows by section: Settings, Graphics, QoL, Nuzlocke. */
 static const CtrOptionRow sRows[] = {
+    /* Settings: how the game plays and sounds. */
     {CTR_TR("Text speed", "Vel. texto", "Texttempo"), {CTR_TR("How fast dialogue", "La velocidad a la que", "Geschwindigkeit der"), CTR_TR("text is printed.", "aparece el texto.", "Textanzeige.")}, PT_OPT_TEXT_SPEED, sTextSpeed, NULL, NULL, NULL, NULL},
-    {CTR_TR("Battle scene", "Animaci\xC3\xB3n", "Kampfanimation"), {CTR_TR("Show or skip the move", "Ver o saltar las", "Kampfanimationen im Kampf"), CTR_TR("animations in battle.", "animaciones de ataques.", "anzeigen oder nicht.")}, PT_OPT_BATTLE_SCENE, sBattleScene, NULL,
+    {CTR_TR("Battle scene", "Animaci\xC3\xB3n", "Kampfanimation"), {CTR_TR("Show or skip the move", "Ver o saltar las", "Attackenanimationen im"), CTR_TR("animations in battle.", "animaciones de ataques.", "Kampf zeigen oder nicht.")}, PT_OPT_BATTLE_SCENE, sBattleScene, NULL,
      NULL, NULL, NULL},
     {CTR_TR("Battle style", "Estilo combate", "Kampfstil"), {CTR_TR("Shift offers a switch", "Cambio te deja cambiar", "Wechsel erlaubt Tausch"), CTR_TR("after a foe faints.", "si el rival se debilita.", "nach besiegtem Gegner.")}, PT_OPT_BATTLE_STYLE, sBattleStyle, NULL,
      NULL, NULL, NULL},
-    {CTR_TR("Sound", "Sonido", "Ton"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo.", "Mono- oder Stereo-Klang."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
-    {CTR_TR("Button mode", "Modo botones", "Tastenmodus"), {CTR_TR("What the L and R buttons", "Qu\xC3\xA9 hacen L y R:", "Funktion von L und R:"), CTR_TR("do: Help, LR or L=A.", "Ayuda, LR o L=A.", "Hilfe, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
+    {CTR_TR("Sound", "Sonido", "Ton"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo.", "Mono oder Stereo."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
+    {CTR_TR("Button mode", "Modo botones", "Tastenmodus"), {CTR_TR("What L and R do:", "Qu\xC3\xA9 hacen L y R:", "Funktion von L und R:"), CTR_TR("Help, LR or L=A.", "Ayuda, LR o L=A.", "Hilfe, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
+    /* Graphics, page 1: the screen and what moves on it. */
     {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menu and Yes/No", "Marco de men\xC3\xBAs", "Rahmen der"), CTR_TR("box frame.", "y cajas S\xC3\xAD/No.", "Men\xC3\xBCs, JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
-    /* The 3DS's own: the counter in the top-right corner of the top screen (stored in the save's spare bit). */
-    {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second on the top screen.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
-    /* Page 2: 3DS Port QoL options. */
-    {CTR_TR("Type matchup", "Eficacia tipos", "Typ-Effekt."), {CTR_TR("Show type effectiveness", "Muestra la eficacia de", "Typenvor-/nachteile bei"), CTR_TR("on battle move cards.", "tipos en los ataques.", "Attacken im Kampf zeigen.")}, 0, sFps, NULL,
+    {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
+    {CTR_TR("Day/Night", "D\xC3\xAD" "a/Noche", "Tag/Nacht"), {CTR_TR("The 3DS clock, the Hour", "Hora de la 3DS, la Hora", "3DS-Uhrzeit, die Stunde"), CTR_TR("below, or Off.", "de abajo, u Off.", "unten, oder Aus.")}, 0, sDayNight, NULL,
+     GetDayNight, DayNightCount, SetDayNight},
+    {CTR_TR("Hour", "Hora", "Stunde"), {CTR_TR("The hour outdoors when", "La hora fuera si", "Uhrzeit in der Oberwelt,"), CTR_TR("Day/Night is Fixed.", "D\xC3\xAD" "a/Noche est\xC3\xA1 en Fija.", "bei TAG/NACHT FEST.")}, 0, sHourName, NULL,
+     GetHour, HourCount, SetHour},
+    {CTR_TR("Embers", "Ascuas", "Funken"), {CTR_TR("Sparks behind the menus.", "Chispas tras los men\xC3\xBAs.", "Funken hinter den Men\xC3\xBCs."), CTR_TR("Low suits an Old 3DS.", "Bajo sirve en Old 3DS.", "Wenig passt f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
+     GetEmbers, ThreeCount, SetEmbers},
+    {CTR_TR("Companion", "Acompa\xC3\xB1" "ante", "Begleiter"), {CTR_TR("A Pokemon follows you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you become one.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist es selbst.")}, 0, sCompanion, NULL,
+     GetCompanion, ThreeCount, SetCompanion},
+    {CTR_TR("Visible wilds", "Salvajes vistos", "Sichtbare Wilde"), {CTR_TR("Wild Pokemon walk in the", "Los salvajes andan por", "Wilde Pok\xC3\xA9mon laufen im"), CTR_TR("grass; touch one.", "la hierba; t\xC3\xB3" "calos.", "Gras; ber\xC3\xBChre eins.")}, 0, sFps, NULL,
+     GetVisibleWilds, TwoCount, SetVisibleWilds},
+    /* Graphics, page 2: the looks (a preview card takes the rows it does not use). */
+    {CTR_TR("Red look", "Aspecto rojo", "Rot-Look"), {CTR_TR("Red's look, from the", "El aspecto de Rojo, de", "Rots Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookRed, LookCount, SetLookRed},
+    {CTR_TR("Leaf look", "Aspecto hoja", "Blatt-Look"), {CTR_TR("Leaf's look, from the", "El aspecto de Hoja, de", "Aussehen von Blatt, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookLeaf, LookCount, SetLookLeaf},
+    {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
+     GetLookBlue, LookCount, SetLookBlue},
+    /* QoL: conveniences. */
+    {CTR_TR("Type matchup", "Eficacia tipos", "Typ-Effekt."), {CTR_TR("Show type effectiveness", "Muestra la eficacia de", "Typenvor-/nachteile bei"), CTR_TR("on battle move cards.", "tipos en los ataques.", "Attacken zeigen.")}, 0, sFps, NULL,
      GetTypeMatchup, TwoCount, SetTypeMatchup},
     {CTR_TR("Move details", "Datos ataques", "Attacken-Infos"), {CTR_TR("Show live move details", "Muestra datos y clase", "Werte und Schadensklasse"), CTR_TR("and category in battle.", "de los ataques.", "der Attacken anzeigen.")}, 0, sFps, NULL,
      GetMoveDetails, TwoCount, SetMoveDetails},
-    {CTR_TR("Day/Night", "D\xC3\xAD" "a/Noche", "Tag/Nacht"), {CTR_TR("The 3DS clock's hour, the", "Hora de la 3DS, la Hora", "3DS-Uhrzeit, die Stunde"), CTR_TR("Hour below, or Off.", "de abajo, u Off.", "unten, oder Aus.")}, 0, sDayNight, NULL,
-     GetDayNight, DayNightCount, SetDayNight},
-    {CTR_TR("Hour", "Hora", "Stunde"), {CTR_TR("The hour outdoors when", "La hora en el exterior si", "Uhrzeit in der Oberwelt,"), CTR_TR("Day/Night is Fixed.", "D\xC3\xAD" "a/Noche est\xC3\xA1 en Fija.", "wenn TAG/NACHT FEST ist.")}, 0, sHourName, NULL,
-     GetHour, HourCount, SetHour},
-    {CTR_TR("Embers", "Ascuas", "Funken"), {CTR_TR("Sparks behind the menus.", "Chispas que suben tras los", "Funken hinter den Men\xC3\xBCs."), CTR_TR("Low suits an Old 3DS.", "men\xC3\xBAs. Bajo para Old 3DS.", "Wenig passt f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
-     GetEmbers, ThreeCount, SetEmbers},
-    {CTR_TR("Repel again", "Repelente", "Schutz erneut"), {CTR_TR("When a repel wears off,", "Al acabarse un repelente,", "Wenn ein Schutz endet,"), CTR_TR("offer to use another.", "pregunta si usar otro.", "einen weiteren anbieten.")}, 0, sFps, NULL,
+    {CTR_TR("Repel again", "Repelente", "Schutz erneut"), {CTR_TR("When a repel wears off,", "Al acabar un repelente,", "Wenn ein Schutz endet,"), CTR_TR("offer to use another.", "pregunta si usar otro.", "einen weiteren anbieten.")}, 0, sFps, NULL,
      GetRepelAgain, TwoCount, SetRepelAgain},
-    {CTR_TR("Companion", "Acompa\xC3\xB1" "ante", "Begleiter"), {CTR_TR("A Pokemon follows you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you are that Pokemon.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist das Pok\xC3\xA9mon.")}, 0, sCompanion, NULL,
-     GetCompanion, ThreeCount, SetCompanion},
-    /* Page 3. */
-    {CTR_TR("EXP share", "Repartir EXP", "EP-Teiler"), {CTR_TR("Share EXP with the whole", "Reparte la EXP con todo", "EP an das ganze Team:"), CTR_TR("team: Half or Full.", "el equipo: Mitad o Toda.", "Halb oder Voll.")}, 0, sExpShare, NULL,
+    {CTR_TR("EXP share", "Repartir EXP", "EP-Teiler"), {CTR_TR("Share EXP with your", "Reparte la EXP con el", "EP an das ganze Team:"), CTR_TR("team: Half or Full.", "equipo: Mitad o Toda.", "Halb oder Voll.")}, 0, sExpShare, NULL,
      GetExpShare, ThreeCount, SetExpShare},
-    {CTR_TR("Reusable TMs", "MT infinitas", "TMs mehrfach"), {CTR_TR("A TM is not used up when", "Una MT no se gasta al", "Eine TM wird beim Lehren"), CTR_TR("it teaches a move.", "ense\xC3\xB1" "ar un ataque.", "nicht verbraucht.")}, 0, sFps, NULL,
+    {CTR_TR("Reusable TMs", "MT infinitas", "TMs mehrfach"), {CTR_TR("A TM is not used up", "Una MT no se gasta al", "Eine TM wird beim Lehren"), CTR_TR("by teaching a move.", "ense\xC3\xB1" "ar un ataque.", "nicht verbraucht.")}, 0, sFps, NULL,
      GetTmReuse, TwoCount, SetTmReuse},
-    {CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), {CTR_TR("One wild catch per area;", "Un salvaje por zona;", "Ein Fang pro Gebiet;"), CTR_TR("fainted ones are released.", "los debilitados se liberan.", "Besiegte werden entlassen.")}, 0, sFps, NULL,
-     GetNuzlocke, TwoCount, SetNuzlocke},
-    {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und Trainer-Pok\xC3\xA9mon"), CTR_TR("are random species.", "con especies al azar.", "mit zuf\xC3\xA4lligen Arten.")}, 0, sFps, NULL,
-     GetRandomlocke, TwoCount, SetRandomlocke},
-    {CTR_TR("Free HMs", "MO libres", "VMs frei"), {CTR_TR("An HM in the Bag works in", "Una MO de la Mochila sirve", "Eine VM im Beutel wirkt im"), CTR_TR("the field: no move needed.", "en el campo sin ense\xC3\xB1" "arla.", "Feld, ohne sie zu lehren.")}, 0, sFps, NULL,
+    {CTR_TR("Free HMs", "MO libres", "VMs frei"), {CTR_TR("An HM in the Bag works", "Las MO de la Mochila", "Eine VM im Beutel wirkt"), CTR_TR("in the field, no move.", "sirven sin ense\xC3\xB1" "arlas.", "ohne sie zu lehren.")}, 0, sFps, NULL,
      GetFreeHm, TwoCount, SetFreeHm},
-    {CTR_TR("Red look", "Aspecto rojo", "Rot-Look"), {CTR_TR("The look of Red, from the", "El aspecto de Rojo, de", "Das Aussehen von Rot, aus"), CTR_TR("alternative looks.", "los aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
-     GetLookRed, LookCount, SetLookRed},
-    {CTR_TR("Leaf look", "Aspecto hoja", "Blatt-Look"), {CTR_TR("The look of Leaf, from the", "El aspecto de Hoja, de", "Aussehen von Blatt, aus"), CTR_TR("alternative looks.", "los aspectos del Builder.", "den Builder-Looks.")}, 0, sLookNames, NULL,
-     GetLookLeaf, LookCount, SetLookLeaf},
-    {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos del Builder.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
-     GetLookBlue, LookCount, SetLookBlue},
-    /* Page 5: the optional rules of the NUZLOCKE row (they count only while it is on). */
-    {CTR_TR("Duplicates", "Repetidos", "Duplikate"), {CTR_TR("A species you already caught", "Una especie ya capturada", "Eine schon gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+    /* Nuzlocke: the mode and its optional rules (they count only while it is on). */
+    {CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), {CTR_TR("One catch per area;", "Un salvaje por zona;", "Ein Fang pro Gebiet;"), CTR_TR("fainted ones go free.", "los ca\xC3\xAD" "dos se liberan.", "Besiegte werden frei.")}, 0, sFps, NULL,
+     GetNuzlocke, TwoCount, SetNuzlocke},
+    {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und gegnerische"), CTR_TR("are random species.", "con especies al azar.", "Pok\xC3\xA9mon sind zuf\xC3\xA4llig.")}, 0, sFps, NULL,
+     GetRandomlocke, TwoCount, SetRandomlocke},
+    {CTR_TR("Duplicates", "Repetidos", "Duplikate"), {CTR_TR("A species you caught", "Una especie capturada", "Eine gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCrs Gebiet.")}, 0, sFps, NULL,
      GetNuzDupes, TwoCount, SetNuzDupes},
-    {CTR_TR("Shiny clause", "Cl\xC3\xA1usula shiny", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no gasta", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+    {CTR_TR("Shiny clause", "Cl\xC3\xA1usula shiny", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "gasta la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
      GetNuzShiny, TwoCount, SetNuzShiny},
-    {CTR_TR("Level caps", "Nivel m\xC3\xA1ximo", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
+    {CTR_TR("Level caps", "Nivel m\xC3\xA1ximo", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al nivel del", "Keine EP ab dem Level"), CTR_TR("next Gym Leader's level.", "pr\xC3\xB3ximo l\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Leiters.")}, 0, sFps, NULL,
      GetNuzCap, TwoCount, SetNuzCap},
-    /* Page 6: the experiments. */
-    {CTR_TR("Visible wilds", "Salvajes vistos", "Sichtbare Wilde"), {CTR_TR("Wild Pokemon walk in the", "Los Pok\xC3\xA9mon salvajes andan", "Wilde Pok\xC3\xA9mon laufen im"), CTR_TR("grass; touch one.", "por la hierba; t\xC3\xB3" "calos.", "Gras; ber\xC3\xBChre eins.")}, 0, sFps, NULL,
-     GetVisibleWilds, TwoCount, SetVisibleWilds},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
 
-/* The pages: the first row of each, then the end. Page 3 (the game's rules) and page 4 (the looks) are short on purpose: the look
- * preview is a card in the rows a page does not use. */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 19, PAGE5 = 22, PAGE6 = 25 };
-static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, ROWS};
+/* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
+ * does not use. Four sections hold them: Settings, Graphics (two pages: the screen, then the looks), QoL and Nuzlocke. */
+enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 12, PAGE4 = 15, PAGE5 = 21 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, ROWS};
+static const uint8_t sPageSection[] = {0, 1, 1, 2, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
-_Static_assert(PAGE6 < ROWS, "the last page has rows");
-_Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX && PAGE6 - PAGE5 <= PT_OPT_MAX && ROWS - PAGE6 <= PT_OPT_MAX,
+#define SECTIONS 4
+_Static_assert(PAGE5 < ROWS, "the last page has rows");
+_Static_assert(sizeof(sPageSection) == PAGES, "a section for each page");
+_Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX && ROWS - PAGE5 <= PT_OPT_MAX,
                "a page holds up to PT_OPT_MAX rows");
 
 int CtrOptions_PageCount(void) { return PAGES; }
 
 const char *CtrOptions_PageName(int page)
 {
-    static const char *const names[] = {CTR_TR("Game", "Juego", "Spiel"), CTR_TR("Extras", "Extras", "Extras"),
-                                        CTR_TR("Rules", "Reglas", "Regeln"), CTR_TR("Looks", "Aspectos", "Looks"),
-                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Wilds", "Salvajes", "Wilde")};
+    static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Einstellungen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
+                                        CTR_TR("QoL", "QoL", "QoL"), CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke")};
 
-    _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
-    return page >= 0 && page < PAGES ? names[page] : "";
+    _Static_assert(sizeof(names) / sizeof(names[0]) == SECTIONS, "one name for each section");
+    return page >= 0 && page < PAGES ? names[sPageSection[page]] : "";
+}
+
+int CtrOptions_SectionCount(void) { return SECTIONS; }
+
+int CtrOptions_SectionOf(int page)
+{
+    return page < 0 || page >= PAGES ? 0 : sPageSection[page];
+}
+
+/* A section's page `page` is in (1 based) and how many pages the section has: "Graphics 1/2". */
+int CtrOptions_SectionPage(int page, int *of)
+{
+    int n = 0, at = 0, sec = CtrOptions_SectionOf(page);
+
+    for (int i = 0; i < PAGES; ++i)
+        if (sPageSection[i] == sec) {
+            ++n;
+            if (i <= page)
+                at = n;
+        }
+    if (of)
+        *of = n;
+    return at;
 }
 
 int CtrOptions_PageOf(int row)
@@ -373,7 +398,16 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     v->options = 1;
     v->optPage = (uint8_t)page;
     v->optPageCount = (uint8_t)PAGES;
-    snprintf(v->optPageName, sizeof(v->optPageName), "%s", CtrOptions_PageName(page));
+    {
+        int of, at = CtrOptions_SectionPage(page, &of);
+
+        v->optSection = (uint8_t)CtrOptions_SectionOf(page);
+        v->optSectionCount = SECTIONS;
+        if (of > 1)
+            snprintf(v->optPageName, sizeof(v->optPageName), "%s %d/%d", CtrOptions_PageName(page), at, of);
+        else
+            snprintf(v->optPageName, sizeof(v->optPageName), "%s", CtrOptions_PageName(page));
+    }
     v->optCount = (uint8_t)count;
     v->optSelected = (uint8_t)(selected - base);
     for (int i = 0; i < PT_OPT_MAX; ++i) {

@@ -815,7 +815,7 @@ static void OptRow(int row, const CtrPokeTouchView *v)
         LlSelectRing(r.x, r.y, r.w, r.h);
     fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, zone == PT_OPT_ZONE_LABEL);
     wy = fy + 2;
-    UiRoundFill(r.x + 4, fy + 4, 3, 12, 1, selected ? EM_WHITE : OptPageColor(v->optPage));
+    UiRoundFill(r.x + 4, fy + 4, 3, 12, 1, selected ? EM_WHITE : OptPageColor(v->optSection));
     if (selected)
         LlCursor(r.x + 10, fy + 5, EM_WHITE);
     Em2Text(v->optLabel[row], r.x + (selected ? 19 : 12), fy + 5, pal->ink, pal->inkSh, boxX - 2);
@@ -1203,7 +1203,7 @@ static void Back(const CtrPokeTouchView *v)
 static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-    int fy, dots = v->optPageCount > 6 ? 6 : v->optPageCount, x0;
+    int fy, dots = v->optSectionCount > 6 ? 6 : v->optSectionCount, x0;
     char label[40];
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
@@ -1213,12 +1213,12 @@ static void OptPageButton(const CtrPokeTouchView *v)
     for (int i = 0; i < dots; ++i) {
         uint16_t colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
 
-        if (i == v->optPage)
+        if (i == v->optSection)
             Em2Dot(x0 + i * 10, fy + 3, colour, 1);
         else
             Em2Dot(x0 + i * 10 + 1, fy + 4, colour, 0);
     }
-    snprintf(label, sizeof(label), CTR_TR("Page %d/%d", "Pag. %d/%d", "Seite %d/%d"), v->optPage + 1, v->optPageCount);
+    snprintf(label, sizeof(label), "%s", v->optPageName);
     EmLabel(label, r->x, r->w, fy + 12, 11, &kEmCream);
 }
 
@@ -1647,7 +1647,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
         Bar(v);
         Mark(dirty, &sBar);
     } else {
-        if (newHasPage && (old->optPage != v->optPage || old->optPageCount != v->optPageCount
+        if (newHasPage && (old->optPage != v->optPage || old->optSection != v->optSection || old->optPageCount != v->optPageCount
                            || old->optPagePressed != v->optPagePressed)) {
             CtrPokeTouchRect page = Under(&gCtrPokeTouchOptPage);
 

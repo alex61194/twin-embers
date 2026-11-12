@@ -7,6 +7,22 @@
 #include PT_SOURCE
 #include "3ds_text_case_views.h"   /* the game names in proper case, as 3ds_bottom.c gives them */
 #include "3ds_pak.h"
+#ifdef PT_WITH_OPTIONS
+#include "3ds_poketouch_options.h"
+#include "3ds_looks.h"
+/* A stub game bridge for the real OPTIONS rows (a viewing aid, with -DPT_WITH_OPTIONS): the defaults, and three looks. */
+int CtrPokeTouch_OptionCount(int option) { static const int c[PT_OPT_GAME_COUNT] = {3, 2, 2, 2, 3, 10, 2}; return option >= 0 && option < PT_OPT_GAME_COUNT ? c[option] : 0; }
+int CtrPokeTouch_OptionGet(int option) { (void)option; return 0; }
+void CtrPokeTouch_OptionSet(int option, int value) { (void)option; (void)value; }
+static int sLookChoiceStub[3] = {-1, -1, -1};
+int CtrLooks_Count(void) { return 3; }
+const char *CtrLooks_Id(int i) { static const char *const k[3] = {"ash", "gary_kanto", "green"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+const char *CtrLooks_Name(int i) { static const char *const k[3] = {"ASH", "GARY", "GREEN"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+int CtrLooks_Chosen(int slot) { return sLookChoiceStub[slot]; }
+void CtrLooks_Choose(int slot, int index) { sLookChoiceStub[slot] = index; }
+const char *CtrLooks_Credit(int i) { static const char *const k[3] = {"By Kalarie", "By Alan_Flygon", "By Poltergeist"}; return i >= 0 && i < 3 ? k[i] : NULL; }
+int CtrLooks_Walk(int i, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[16]) { memset(tiles, 0x11 * (i + 1), CTR_LOOK_WALK_BYTES); for (int c = 0; c < 16; ++c) palette[c] = (uint16_t)c; return 1; }
+#endif
 
 static uint8_t fixtureTiles[512], fixtureColors[32];
 static int fixtureSize = 288, fixtureFail;
@@ -453,6 +469,15 @@ int main(int argc, char **argv)
         s.optSelected=6; strcpy(s.bar[0],"Companion"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
         s.backVisible=1; s.backEnabled=1;
         SHOT("options2");
+#ifdef PT_WITH_OPTIONS
+        /* The real OPTIONS pages (3ds_poketouch_options.c), for a look at the sections: each through the incremental path first. */
+        for(int page=0;page<CtrOptions_PageCount();++page) {
+            CtrPokeTouchView t=s; char name[32];
+            CtrOptions_Fill(&t,CtrOptions_PageBase(page)+(page==1?1:0)); t.optPressed=-1; t.optPagePressed=0;
+            update(&old,&t); snprintf(name,sizeof(name),"opt_page%d",page+1); if(dir) ppm(dir,name);
+        }
+        update(&old,&s);
+#endif
         before=s;
         for(int row=0;row<7;++row) for(int zone=PT_OPT_ZONE_LABEL;zone<=PT_OPT_ZONE_NEXT;++zone) { s.optSelected=(uint8_t)row; s.optPressed=(int8_t)row; s.optZone=(uint8_t)zone; update(&old,&s); s.optPressed=-1; update(&old,&s); }
         for(int k=0;k<3;++k) { s.optPressed=4; s.optZone=(uint8_t)(PT_OPT_ZONE_SEG+k); update(&old,&s); s.optPressed=-1; s.optSegValue[4]=(uint8_t)k; update(&old,&s); }
