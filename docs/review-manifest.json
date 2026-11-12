@@ -6960,7 +6960,7 @@
   },
   {
    "path": "patches/pokefirered/0247-nuzlocke-clauses-levelcap.json",
-   "sha256": "5c88f159d603b767066181a22fb6bc24f6cce6110f0e2bedf9cd3ef6693555a5",
+   "sha256": "876e31c596ee7fc50acb0dd126e59e4245527d5ca9197ed52194712aca2c7cbe",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
