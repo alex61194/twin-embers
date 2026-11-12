@@ -108,9 +108,17 @@ static bool BoxInit(void)
     C3D_TexSetFilter(&sBoxTex, GPU_NEAREST, GPU_NEAREST);
     uint32_t *texels = (uint32_t *)sBoxTex.data;
     memset(texels, 0, BOX_TEX_W * BOX_TEX_H * 4);
+    /* From x = BOX_FACE_X + BOX_FACE_R to BOX_W - that, outside the flame's rows (1 to 3), a row is one colour (the face's corners,
+     * fillet and edge all end by then; BoxFace's corner tests are the only x-dependent part): one pixel a row, copied. */
     for (int y = 0; y < BOX_H; ++y)
+    {
+        const bool flat = y < 1 || y > 3;
+        const int from = BOX_FACE_X + BOX_FACE_R, to = BOX_W - BOX_FACE_X - BOX_FACE_R;
+        const uint32_t middle = flat ? BoxPanelPixel(from, y) : 0;
+
         for (int x = 0; x < BOX_W; ++x)
-            texels[CtrVideo_Texel((unsigned)x, (unsigned)y, BOX_TEX_W)] = BoxPanelPixel(x, y);
+            texels[CtrVideo_Texel((unsigned)x, (unsigned)y, BOX_TEX_W)] = flat && x >= from && x < to ? middle : BoxPanelPixel(x, y);
+    }
     C3D_TexFlush(&sBoxTex);
     sBoxTextHash = 0;
     sBoxReady = true;
