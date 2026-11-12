@@ -157,7 +157,7 @@ static const CtrOptionRow sRows[] = {
     {CTR_TR("Button mode", "Modo botones", "Tastenmodus"), {CTR_TR("What L and R do:", "Qu\xC3\xA9 hacen L y R:", "Funktion von L und R:"), CTR_TR("Help, LR or L=A.", "Ayuda, LR o L=A.", "Hilfe, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
     /* Graphics, page 1: the screen and what moves on it. */
-    {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menu and Yes/No", "Marco de men\xC3\xBAs", "Rahmen der"), CTR_TR("box frame.", "y cajas S\xC3\xAD/No.", "Men\xC3\xBCs, JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
+    {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menus, Yes/No", "Men\xC3\xBAs y S\xC3\xAD/No", "Men\xC3\xBC-Rahmen"), CTR_TR("box frame.", "su marco.", "und JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
     {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
     {CTR_TR("Day/Night", "D\xC3\xAD" "a/Noche", "Tag/Nacht"), {CTR_TR("The 3DS clock, the Hour", "Hora de la 3DS, la Hora", "3DS-Uhrzeit, die Stunde"), CTR_TR("below, or Off.", "de abajo, u Off.", "unten, oder Aus.")}, 0, sDayNight, NULL,
      GetDayNight, DayNightCount, SetDayNight},
@@ -220,11 +220,13 @@ int CtrOptions_PageCount(void) { return PAGES; }
 
 const char *CtrOptions_PageName(int page)
 {
-    static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Einstellungen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
-                                        CTR_TR("QoL", "QoL", "QoL"), CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke")};
+    /* A page's own short name (it has to fit the PAGE button's 64 px): the looks page is a page of the Graphics section, and says so with its dot. */
+    static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Optionen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
+                                        CTR_TR("Looks", "Aspectos", "Looks"), CTR_TR("QoL", "QoL", "QoL"),
+                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke")};
 
-    _Static_assert(sizeof(names) / sizeof(names[0]) == SECTIONS, "one name for each section");
-    return page >= 0 && page < PAGES ? names[sPageSection[page]] : "";
+    _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
+    return page >= 0 && page < PAGES ? names[page] : "";
 }
 
 int CtrOptions_SectionCount(void) { return SECTIONS; }
@@ -399,14 +401,9 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     v->optPage = (uint8_t)page;
     v->optPageCount = (uint8_t)PAGES;
     {
-        int of, at = CtrOptions_SectionPage(page, &of);
-
         v->optSection = (uint8_t)CtrOptions_SectionOf(page);
         v->optSectionCount = SECTIONS;
-        if (of > 1)
-            snprintf(v->optPageName, sizeof(v->optPageName), "%.12s %c/%c", CtrOptions_PageName(page), (char)(0x30 + at % 10), (char)(0x30 + of % 10));
-        else
-            snprintf(v->optPageName, sizeof(v->optPageName), "%s", CtrOptions_PageName(page));
+        snprintf(v->optPageName, sizeof(v->optPageName), "%.19s", CtrOptions_PageName(page));
     }
     v->optCount = (uint8_t)count;
     v->optSelected = (uint8_t)(selected - base);

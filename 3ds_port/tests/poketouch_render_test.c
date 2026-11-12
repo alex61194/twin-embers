@@ -12,8 +12,9 @@
 #include "3ds_looks.h"
 /* A stub game bridge for the real OPTIONS rows (a viewing aid, with -DPT_WITH_OPTIONS): the defaults, and three looks. */
 int CtrPokeTouch_OptionCount(int option) { static const int c[PT_OPT_GAME_COUNT] = {3, 2, 2, 2, 3, 10, 2}; return option >= 0 && option < PT_OPT_GAME_COUNT ? c[option] : 0; }
-int CtrPokeTouch_OptionGet(int option) { (void)option; return 0; }
-void CtrPokeTouch_OptionSet(int option, int value) { (void)option; (void)value; }
+static int sOptStub[PT_OPT_GAME_COUNT];
+int CtrPokeTouch_OptionGet(int option) { return option >= 0 && option < PT_OPT_GAME_COUNT ? sOptStub[option] : 0; }
+void CtrPokeTouch_OptionSet(int option, int value) { if (option >= 0 && option < PT_OPT_GAME_COUNT) sOptStub[option] = value; }
 static int sLookChoiceStub[3] = {-1, -1, -1};
 int CtrLooks_Count(void) { return 3; }
 const char *CtrLooks_Id(int i) { static const char *const k[3] = {"ash", "gary_kanto", "green"}; return i >= 0 && i < 3 ? k[i] : NULL; }
@@ -505,6 +506,30 @@ int main(int argc, char **argv)
             update(&old,&t); snprintf(name,sizeof(name),"opt_page%d",page+1); if(dir) ppm(dir,name);
         }
         update(&old,&s);
+        if(wp) {
+            /* Every text of OPTIONS against the room it has, with the game's real widths (PT_PREVIEW_WIDTHS): the label (the chosen row starts
+             * 7 px further right), every value of every row (in the well between its nubs, 84 px; the levels of a row share the well), the
+             * two note lines (the frame sample takes 60 px of them on its row) and the PAGE button's name. */
+            int bad=0, selX=OPT_X+19, plainX=OPT_X+12, labelRight=OPT_X+OPT_W-OPT_BOX_W-2, noteW=NOTE_W_SIDE-12-13, frameNoteW=noteW-(FRAME_W+4);
+            for(int row=0;row<CtrOptions_RowCount();++row) {
+                const CtrOptionRow *r=CtrOptions_Row(row); char val[PT_OPT_VALUE_LEN];
+                int lw=UiTextWidth(r->label,1), n=CtrOptions_Count(row);
+                if(lw>labelRight-selX) { printf("FIT label '%s' %dpx > %d (chosen row)\n",r->label,lw,labelRight-selX); ++bad; }
+                for(int k=0;k<(n>0?n:0)&&k<64;++k) {
+                    int w;
+                    CtrOptions_Set(row,k); CtrOptions_ValueText(row,val,(int)sizeof(val)); w=UiTextWidth(val,1);
+                    if(CtrOptions_IsLevels(row)) { int seg=(OPT_BOX_W-9)/(n>PT_OPT_SEGS?PT_OPT_SEGS:n)-2; if(w>seg) { printf("FIT level '%s' of '%s' %dpx > %d\n",val,r->label,w,seg); ++bad; } }
+                    else if(w>84) { printf("FIT value '%s' of '%s' %dpx > 84\n",val,r->label,w); ++bad; }
+                }
+                for(int d=0;d<2;++d) { int w=UiTextWidth(r->description[d],1), lim=(r->game==PT_OPT_FRAME&&!r->get)?frameNoteW:noteW;
+                    if(w>lim) { printf("FIT note '%s' of '%s' %dpx > %d\n",r->description[d],r->label,w,lim); ++bad; } }
+            }
+            for(int page=0;page<CtrOptions_PageCount();++page) {
+                CtrPokeTouchView t=s; int w; CtrOptions_Fill(&t,CtrOptions_PageBase(page)); w=UiTextWidth(t.optPageName,1);
+                if(w>gCtrPokeTouchOptPage.w-8) { printf("FIT page button '%s' %dpx > %d\n",t.optPageName,w,gCtrPokeTouchOptPage.w-8); ++bad; }
+            }
+            (void)plainX; printf("FIT total %d\n",bad); assert(bad==0);
+        }
 #endif
         before=s;
         for(int row=0;row<7;++row) for(int zone=PT_OPT_ZONE_LABEL;zone<=PT_OPT_ZONE_NEXT;++zone) { s.optSelected=(uint8_t)row; s.optPressed=(int8_t)row; s.optZone=(uint8_t)zone; update(&old,&s); s.optPressed=-1; update(&old,&s); }

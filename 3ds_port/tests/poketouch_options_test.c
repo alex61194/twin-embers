@@ -203,9 +203,9 @@ int main(void)
           && CtrOptions_PageBase(2) == 12 && CtrOptions_PageRows(2) == 3 && CtrOptions_PageBase(3) == 15 && CtrOptions_PageRows(3) == 6
           && CtrOptions_PageBase(4) == 21 && CtrOptions_PageRows(4) == 5, "five pages in four sections");
     CHECK(strcmp(CtrOptions_PageName(0), "Settings") == 0 && strcmp(CtrOptions_PageName(1), "Graphics") == 0
-          && strcmp(CtrOptions_PageName(2), "Graphics") == 0 && strcmp(CtrOptions_PageName(3), "QoL") == 0
+          && strcmp(CtrOptions_PageName(2), "Looks") == 0 && strcmp(CtrOptions_PageName(3), "QoL") == 0
           && strcmp(CtrOptions_PageName(4), "Nuzlocke") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(5)[0] == 0,
-          "each page carries its section's name, none past the last");
+          "each page has its own short name (the PAGE button is 64 px of text), none past the last");
     {
         int of = 0;
 
@@ -216,9 +216,9 @@ int main(void)
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 12);
-    CHECK(strcmp(view.optPageName, "Graphics 2/2") == 0 && view.optPage == 2 && view.optSection == 1, "the view carries the section's name and its page");
+    CHECK(strcmp(view.optPageName, "Looks") == 0 && view.optPage == 2 && view.optSection == 1, "the looks page is named Looks and is in the Graphics section");
     CtrOptions_Fill(&view, 21);
-    CHECK(strcmp(view.optPageName, "Nuzlocke") == 0 && view.optPage == 4 && view.optSection == 3, "a one-page section is named alone");
+    CHECK(strcmp(view.optPageName, "Nuzlocke") == 0 && view.optPage == 4 && view.optSection == 3, "the Nuzlocke page is named alone");
     CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(5) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(5) == 0,
           "a page that does not exist has no rows");
     {
