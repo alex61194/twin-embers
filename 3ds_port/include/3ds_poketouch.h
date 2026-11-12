@@ -598,6 +598,7 @@ typedef struct {
     uint8_t ball;                   /* the quick ball: CTR_QUICK_BALL_* (3ds_battle_nav.h), NONE for no button */
     uint8_t ballPlace, ballCount;   /* the ball shown among the Bag's balls (the dots) */
     uint16_t ballItem, ballQty;
+    uint8_t runBlocked;             /* BUI_ACTION: fleeing is impossible now (a trainer, a trapping ability or move): RUN is grey and takes no tap */
     char ballName[BUI_ITEM_LEN];
     CtrBattleMove move[4];
     CtrBattleBag bag;

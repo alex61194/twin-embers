@@ -366,6 +366,15 @@ int main(int argc, char **argv)
     v.ball = CTR_QUICK_BALL_NONE; v.cursor = 0; settle(&old, &v); old = v;
     assert(CtrBattleUi_Hit(&v, 8 + 30, 120 + 30) == BUI_ACT_BAG && CtrBattleUi_Hit(&v, 111 + 30, 120 + 30) == BUI_ACT_POKEMON
            && CtrBattleUi_Hit(&v, 214 + 30, 120 + 30) == BUI_ACT_RUN);
+    /* RUN when fleeing is impossible (a trainer, a trap): grey, with its words, and a tap on it is nothing; the rest still answers. */
+    v.runBlocked = 1; settle(&old, &v); old = v; put(out, "02e_action_run_blocked");
+    assert(CtrBattleUi_Hit(&v, 214 + 30, 120 + 30) == -1);
+    assert(CtrBattleUi_Hit(&v, 111 + 30, 120 + 30) == BUI_ACT_POKEMON && CtrBattleUi_Hit(&v, 8 + 30, 120 + 30) == BUI_ACT_BAG);
+    v.ball = CTR_QUICK_BALL_READY; v.ballCount = 2; v.ballQty = 7; v.ballItem = 1; names(v.ballName, BUI_ITEM_LEN, "POKE BALL");
+    settle(&old, &v); old = v; put(out, "02f_action_ball_run_blocked");       /* the ball's xN beside the grey RUN */
+    assert(CtrBattleUi_Hit(&v, 239 + 36, 120 + 30) == -1 && CtrBattleUi_Hit(&v, 85 + 36, 120 + 30) == BUI_ACT_BALL);
+    v.runBlocked = 0; v.ball = CTR_QUICK_BALL_NONE; settle(&old, &v); old = v;
+    assert(CtrBattleUi_Hit(&v, 214 + 30, 120 + 30) == BUI_ACT_RUN);
     v.showCursor = 0; settle(&old, &v); old = v;
 #endif
 

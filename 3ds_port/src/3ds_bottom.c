@@ -105,6 +105,7 @@ extern int CtrBattle_ActionCursor(void);
 extern int CtrBattle_QuickBall(unsigned *item, unsigned *quantity, int *place, int *count);
 extern void CtrBattle_QuickBallStep(int dir);
 extern unsigned CtrBattle_BerryPouch(void);
+extern int CtrBattle_CanRun(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
@@ -1910,6 +1911,7 @@ static void BattleFill(CtrBattleView *v)
         v->cursor = (int8_t)CtrBattle_ActionCursor();
         v->showCursor = !sBatTouchLast;
         v->ball = (uint8_t)CtrBattle_QuickBall(&item, &qty, &place, &count);
+        v->runBlocked = (uint8_t)!CtrBattle_CanRun();
         if (v->ball != CTR_QUICK_BALL_NONE) {
             v->ballItem = (uint16_t)item;
             v->ballQty = (uint16_t)(qty > 999 ? 999 : qty);
@@ -3767,6 +3769,8 @@ static void RunBatPlan(void)
 }
 
 extern int CtrText_WaitsForButton(void);
+#define BAT_RUN_HOLD 30             /* frames a finger stays on RUN before it keeps trying to flee */
+static int sRunHold;
 static int sBatIdleTap;             /* a touch that began while the battle offered no choice */
 
 static void ProcessBattleTouch(const CtrInput *in)
@@ -3797,6 +3801,22 @@ static void ProcessBattleTouch(const CtrInput *in)
             sBatPlan.press = K_A;
         }
     }
+    /* Holding RUN keeps trying to flee: once the finger has stayed BAT_RUN_HOLD frames on the card, RUN is chosen (and the
+     * release then chooses nothing more); a failed try brings the action menu back, and a finger still on RUN chooses it again
+     * after the same wait. A trainer or a trap greys RUN, so nothing is held on it. */
+    if (in->touchActive && !(in->held & 0x3ffu) && ready && state == BATTLE_ACTION && !sBatPlan.active
+        && btn == BUI_ACT_RUN && !sShown.battle.runBlocked) {
+        if (++sRunHold >= BAT_RUN_HOLD) {
+            sRunHold = 0;
+            BatPlanClear();
+            sBatPlan.active = 1;
+            sBatPlan.state = state;
+            sBatPlan.target = BUI_ACT_RUN;
+            sBat.swiped = 1;
+            sBat.inside = 0;
+        }
+    } else if (!sBatPlan.active)
+        sRunHold = 0;
     if ((in->held & 0x3ffu) || !ready || (sBat.down && sBat.state != state)) {
         sBat.down = sBat.inside = 0;
         return;
