@@ -73,7 +73,8 @@
 #define EM2_OPT UI_RGB(124, 120, 148)
 
 /* A colour part of the way (n of d) from `a` to `b`. */
-UI_FN uint16_t Em2Lerp(uint16_t a, uint16_t b, int n, int d)
+/* Always inlined: with a constant d (255 in most calls) the divisions become multiplications (ARMv6k has no hardware divide). */
+static inline __attribute__((always_inline, unused)) uint16_t Em2Lerp(uint16_t a, uint16_t b, int n, int d)
 {
     if (d <= 0 || n <= 0)
         return a;
@@ -1270,9 +1271,13 @@ UI_FN void LlScrollRail(int x, int y, int w, int h, int thumbY, int thumbH)
         int px = x + (part ? 1 : 0), py = y + (part ? thumbY : 0), pw = w - (part ? 2 : 0), ph = part ? thumbH : h;
         int r = pw / 2 < 5 ? pw / 2 : 5;
         uint16_t edge = part ? kEmFlame.lip : UI_RGB(20, 24, 44);
+        uint16_t grad[32];                  /* the gradient across: one colour a column, not three divisions a pixel */
+        const uint16_t c0 = part ? UI_RGB(255, 196, 90) : UI_RGB(32, 38, 63), c1 = part ? UI_RGB(248, 100, 42) : UI_RGB(52, 60, 98);
 
         if (part && thumbH < 6)
             break;
+        for (int dx = 0; dx < pw && dx < 32; ++dx)
+            grad[dx] = Em2Lerp(c0, c1, dx - 1, pw - 3);
         for (int dy = 0; dy < ph; ++dy)
             for (int dx = 0; dx < pw; ++dx) {
                 if (!Em2In(dx, dy, pw, ph, r))
@@ -1280,7 +1285,7 @@ UI_FN void LlScrollRail(int x, int y, int w, int h, int thumbY, int thumbH)
                 if (!Em2In(dx - 1, dy - 1, pw - 2, ph - 2, r > 0 ? r - 1 : 0))
                     Px(px + dx, py + dy, edge);
                 else
-                    Px(px + dx, py + dy, part ? Em2Lerp(UI_RGB(255, 196, 90), UI_RGB(248, 100, 42), dx - 1, pw - 3) : Em2Lerp(UI_RGB(32, 38, 63), UI_RGB(52, 60, 98), dx - 1, pw - 3));
+                    Px(px + dx, py + dy, dx < 32 ? grad[dx] : Em2Lerp(c0, c1, dx - 1, pw - 3));
             }
     }
 }

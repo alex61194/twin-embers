@@ -387,7 +387,20 @@ extern int CtrBottomDex_Types(unsigned species, int *types, char *first, char *s
 /* Game names in proper case (3ds_text_case.h): the Bag's items and a case's moves as they are read (a mailbox shares the list), the Summary as it is reported. */
 #define CtrBottomBag_ItemName(i, o, n) (CtrBottomBag_ItemName((i), (o), (n)), CtrTextCase(o))
 #define CtrBottomTMCase_MoveName(i, o, n) (CtrBottomTMCase_MoveName((i), (o), (n)), CtrTextCase(o))
-#define CtrBottomSummary_GetView(o) (CtrBottomSummary_GetView(o), CtrTextCase_Summary(o))
+/* The Summary's view is read at most once a frame (the session-ready check and the snapshot both ask, with nothing of the game
+ * running between them): the first read is cased and kept, CtrBottom_Frame forgets it at its start. */
+static int sSumViewValid;
+static CtrSummaryView sSumViewMemo;
+static void SummaryViewNow(CtrSummaryView *o)
+{
+    if (!sSumViewValid) {
+        CtrBottomSummary_GetView(&sSumViewMemo);
+        CtrTextCase_Summary(&sSumViewMemo);
+        sSumViewValid = 1;
+    }
+    *o = sSumViewMemo;
+}
+#define CtrBottomSummary_GetView(o) SummaryViewNow(o)
 
 /* CtrBottomDex_State (pokedex_screen.c): the real Pokedex is not taking input (set up, fading, flipping,
  * closing), or takes it on its top menu or a list (rows to choose), a category page or a Pokemon's page. B
@@ -897,7 +910,7 @@ static void SummaryBar(const CtrSummaryView *v, CtrPokeTouchView *t)
     snprintf(t->bar[0], PT_BAR_LEN, "%s  Lv%s", v->nickname, level);
     snprintf(t->bar[1], PT_BAR_LEN, "No.%s %s", v->dex, v->species);
     for (unsigned i = 0; i < sizeof(sCodes) / sizeof(sCodes[0]); ++i)
-        if (!strcmp(v->status, sCodes[i]))
+        if (CtrTextCase_Eq(v->status, sCodes[i]))
             snprintf(t->bar[2], PT_BAR_LEN, "%s", sNames[i]);
 }
 
@@ -1682,9 +1695,25 @@ static void BattleCommon(CtrBattleView *v)
             v->activeFrame = (uint8_t)((sBatAnim++ / 15) & 1);
             v->activeHp = (uint16_t)CtrBottomParty_HP(slot);
             {
+                /* The types of the species in the field: kept while the species stays (the lookup is two Pokedex flag reads and two
+                 * text conversions); only a found result is kept, so a species not yet in the Pokedex is asked again. */
+                static unsigned sTypesSpecies;
+                static int sTypes[2];
+                static char sTypeName[2][12];
+                unsigned species = CtrBottomParty_Species(slot);
                 int ty[2];
 
-                if (CtrBottomDex_Types(CtrBottomParty_Species(slot), ty, v->activeTypeName[0], v->activeTypeName[1], 12)) {
+                if (species != 0 && species == sTypesSpecies) {
+                    ty[0] = sTypes[0];
+                    ty[1] = sTypes[1];
+                    memcpy(v->activeTypeName, sTypeName, sizeof(sTypeName));
+                    v->activeType[0] = (int8_t)ty[0];
+                    v->activeType[1] = (int8_t)ty[1];
+                } else if (CtrBottomDex_Types(species, ty, v->activeTypeName[0], v->activeTypeName[1], 12)) {
+                    sTypesSpecies = species;
+                    sTypes[0] = ty[0];
+                    sTypes[1] = ty[1];
+                    memcpy(sTypeName, v->activeTypeName, sizeof(sTypeName));
                     v->activeType[0] = (int8_t)ty[0];
                     v->activeType[1] = (int8_t)ty[1];
                 } else
@@ -1775,13 +1804,14 @@ static uint8_t PartyTag(const char *text)
 {
     static const char kNoUse[] = CTR_TR("No use", "No se usa", "Nutzlos");
 
-    if (!strcmp(text, CTR_TR("Able", "Puede", "O.K.")) || !strcmp(text, CTR_TR("Able!", "Puede!", "O.K.")))
+    /* The text is the game's raw ALL CAPS (CtrBottomParty_Description does not case it), so compare without case. */
+    if (CtrTextCase_Eq(text, CTR_TR("Able", "Puede", "O.K.")) || CtrTextCase_Eq(text, CTR_TR("Able!", "Puede!", "O.K.")))
         return BUI_PTY_TAG_ABLE;
-    if (!strcmp(text, CTR_TR("Not able", "No puede", "NEIN")) || !strcmp(text, CTR_TR("Not able!", "No puede!", "NEIN")))
+    if (CtrTextCase_Eq(text, CTR_TR("Not able", "No puede", "NEIN")) || CtrTextCase_Eq(text, CTR_TR("Not able!", "No puede!", "NEIN")))
         return BUI_PTY_TAG_NOT_ABLE;
-    if (!strcmp(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.")))
+    if (CtrTextCase_Eq(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.")))
         return BUI_PTY_TAG_LEARNED;
-    if (!strncmp(text, kNoUse, sizeof(kNoUse) - 1))
+    if (CtrTextCase_EqN(text, kNoUse, sizeof(kNoUse) - 1))
         return BUI_PTY_TAG_NO_USE;
     return BUI_PTY_TAG_NONE;
 }
@@ -5435,6 +5465,7 @@ void CtrBottom_Frame(void)
     uint64_t profT = 0;
     Snapshot state;
 
+    sSumViewValid = 0;
     if (!sInitDone)
         return;
     /* Physical Y and X: the Bicycle and registered-item shortcuts, the same
@@ -5599,8 +5630,14 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
-    CtrTextCase_Touch(&state.touch);
-    CtrTextCase_Battle(&state.battle);
+    /* Only the view that is drawn is cased (Render draws the battle's or the touch view, never both), and a held picture
+     * (nav: state is sShown) was cased when it was first built. */
+    if (!nav) {
+        if (state.battleUi)
+            CtrTextCase_Battle(&state.battle);
+        else
+            CtrTextCase_Touch(&state.touch);
+    }
     /* The logo only once nothing has been shown for a while: a screen's few frames of change show the backdrop. */
     sIdleFrames = state.mode == MODE_OFF && !sSession.active ? (sIdleFrames < IDLE_LOGO_FRAMES ? sIdleFrames + 1
                                                                                                  : sIdleFrames) : 0;

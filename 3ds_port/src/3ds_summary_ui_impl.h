@@ -130,7 +130,7 @@ static uint16_t SStatusColor(const char *status)
     };
 
     for (unsigned i = 0; i < sizeof(sColors) / sizeof(sColors[0]); ++i)
-        if (!strcmp(status, sColors[i].code))
+        if (CtrTextCase_Eq(status, sColors[i].code))
             return sColors[i].color;
     return 0;
 }

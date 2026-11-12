@@ -8,7 +8,7 @@
  * top). A fixed small list per frame, no allocation. Shared by the PokeTouch
  * drawing, the CPU blit and the GPU chrome upload (and their host tests). */
 enum {
-    CTR_DIRTY_MAX = 8,
+    CTR_DIRTY_MAX = 24,
     CTR_DIRTY_W = 320,
     CTR_DIRTY_H = 240,
 };

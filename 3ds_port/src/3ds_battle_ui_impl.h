@@ -9,6 +9,7 @@
  * use (the canvas redraws only what changed). */
 
 #include "3ds_icons.h"
+#include "3ds_text_case.h"
 #include "3ds_ui_strings.h"
 #include "3ds_type_chart.h"
 #include "3ds_battle_nav.h"
@@ -1109,7 +1110,7 @@ static void BBallCard(const CtrBattleView *v)
         snprintf(name, sizeof(name), "%s", v->ballName);
         n = strlen(name);
         /* "BALL" left off too when it is joined to the name, as in German (MEISTERBALL). */
-        if (UiTextWidth(name, 1) > r->w - 8 && n > 6 && strcmp(name + n - 4, "BALL") == 0)
+        if (UiTextWidth(name, 1) > r->w - 8 && n > 6 && CtrTextCase_Eq(name + n - 4, "BALL"))
             name[n - (name[n - 5] == ' ' ? 5 : 4)] = 0;
         BRowLabel(name, r, fy, p);
     }

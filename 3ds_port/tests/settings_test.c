@@ -191,12 +191,47 @@ int main(void)
     assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0);
     file = fopen(CTR_SETTINGS_PATH, "rb");
     {
-        char big[256 + 1] = {0};
+        char big[512 + 1] = {0};
 
-        assert(file != NULL && fread(big, 1, 256, file) == 256);
+        assert(file != NULL && fread(big, 1, 512, file) == 512);
         fclose(file);
         assert(strstr(big, "look_red=ash_hgss\n") != NULL && strstr(big, "look_blue=gary_kanto\n") != NULL
                && strstr(big, "look_leaf") == NULL && strstr(big, "expshare=2\n") != NULL && strstr(big, "ball=3\n") != NULL);
+    }
+
+    /* The worst case (every key written, the longest values) must fit the fixed block with room to spare: Format stops
+     * silently at the block's end, which would drop the last keys. The block is 512 bytes; keep the text under 320. */
+    CtrSettings_SetTurbo(4);
+    CtrSettings_SetAutoRun(1);
+    CtrSettings_SetEmbers(2);
+    CtrSettings_SetRepelAgain(1);
+    CtrSettings_SetCompanion(2);
+    CtrSettings_SetExpShare(2);
+    CtrSettings_SetTmReuse(1);
+    CtrSettings_SetNuzlocke(1);
+    CtrSettings_SetRandomlocke(1);
+    CtrSettings_SetNuzDuplicates(1);
+    CtrSettings_SetNuzShiny(1);
+    CtrSettings_SetNuzLevelCap(1);
+    CtrSettings_SetFreeHm(1);
+    CtrSettings_SetVisibleWilds(1);
+    CtrSettings_SetLook(CTR_LOOK_RED, "abcdefghijklmno");
+    CtrSettings_SetLook(CTR_LOOK_LEAF, "abcdefghijklmno");
+    CtrSettings_SetLook(CTR_LOOK_BLUE, "abcdefghijklmno");
+    CtrSettings_SetLastBall(65535);
+    {
+        static char worst[4096];
+        size_t n;
+
+        file = fopen(CTR_SETTINGS_PATH, "rb");
+        assert(file != NULL);
+        n = fread(worst, 1, sizeof(worst) - 1, file);
+        fclose(file);
+        while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
+            --n;                                                    /* the blank padding */
+        printf("settings worst case: %u bytes of text\n", (unsigned)n);
+        assert(n < 320);
+        assert(strstr(worst, "visiblewilds=1\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }
 
     remove(CTR_SETTINGS_PATH);
