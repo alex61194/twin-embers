@@ -202,6 +202,13 @@ typedef struct {
     char desc[160];
 } CtrPokeTouchRelearn;
 
+/* The letter being read (3ds_field_mail_impl.h): the paper's item (its icon), its name and who wrote it. */
+typedef struct {
+    uint8_t on;
+    uint16_t item;                  /* 0: no icon */
+    char name[32], from[24];        /* from: as typed, "" when unknown */
+} CtrPokeTouchMail;
+
 /* A choice of the field (a script's multichoice, YES/NO or grid, the PC's menus) drawn by the port
  * (3ds_field_choice_impl.h), a remote for FireRed's menu: its rows as buttons (cols > 0: a grid of that many columns),
  * the cursor's, and the question of the message box. A row is asked of the menu and taken with its A; BACK is its B. */
@@ -384,6 +391,7 @@ typedef struct {
     CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
     CtrPokeTouchRelearn relearn;/* the move relearner's list, when relearn.on */
+    CtrPokeTouchMail mail;      /* the letter being read, when mail.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
     CtrPokeTouchBox box;        /* a PC box, when box.on */
     CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */

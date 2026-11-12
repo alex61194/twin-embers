@@ -496,6 +496,16 @@ int main(int argc, char **argv)
             r->first=7; r->cursor=7; update(&old,&s); assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
             r->on=0; s.backVisible=0;
         }
+        /* The letter being read (Llama): the paper, its name and the writer; a long name and writer end in "...", no writer, no icon; each through the incremental path. */
+        {
+            CtrPokeTouchMail *m=&s.mail;
+            s.options=0; s.backVisible=1; memset(m,0,sizeof(*m)); m->on=1; m->item=121; strcpy(m->name,"Orange Mail"); strcpy(m->from,"ASH");
+            update(&old,&s); SHOT("mail");
+            s.backEnabled=0; update(&old,&s); s.backEnabled=1; s.backPressed=1; update(&old,&s); s.backPressed=0; update(&old,&s);
+            strcpy(m->name,"Glitter Mail Of The Long Name"); strcpy(m->from,"ABCDEFGHIJKLMNOPQRSTUVW"); update(&old,&s); SHOT("mail_long");
+            m->item=0; m->from[0]=0; strcpy(m->name,"Mail"); update(&old,&s); SHOT("mail_bare");
+            m->on=0; s.backVisible=0;
+        }
         CtrPokeTouchView keepOpt=s;
         /* Llama: the Pokedex (menu, list, habitats, category, page) and the Trainer Card note; each through the incremental path (a cursor
          * move, a press, a page turn) and then written. */

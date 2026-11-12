@@ -1222,6 +1222,7 @@ static void LearnSnapshot(Snapshot *s, int mode)
 }
 
 #include "3ds_bottom_relearn_impl.h"
+#include "3ds_bottom_mail_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -2106,20 +2107,14 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
 
         if (CtrBottomView_Relearner() && RelearnSnapshot(s, mode))
             return;                 /* its list drawn here (3ds_bottom_relearn_impl.h) */
+        if (CtrBottomView_Mail()) {
+            MailSnapshot(s, mode);  /* a letter: drawn here (3ds_bottom_mail_impl.h); a touch of it closes it, as BACK does */
+            return;
+        }
         s->touch.viewport = 1;
         s->touch.backVisible = 1;
         s->touch.backEnabled = (uint8_t)BackEnabled(mode);
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
-        if (CtrBottomView_Mail()) {
-            /* A letter: its stationery's name, who wrote it, and that a tap on it closes it (any of the game's A or B does). */
-            char name[PT_BAR_LEN], from[24];
-
-            snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrBottomView_MailName(name, sizeof(name)) ? name : title);
-            if (CtrBottomView_MailFrom(from, sizeof(from)))
-                snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("From: %s", "De: %s", "Von: %s"), from);
-            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap the letter to close.", "Toca la carta: cerrar.", "Tippe auf den Brief."));
-            return;
-        }
         snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
         snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung."));
         snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back is the B button.", "Atr\xC3\xA1s es el bot\xC3\xB3n B.", "Zur\xC3\x9c""ck entspricht Taste B."));

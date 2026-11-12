@@ -51,6 +51,7 @@ static inline void CtrTextCase_Touch(CtrPokeTouchView *v)
         CTR_CASE(v->learn.row[i].typeName);
     }
     /* The move relearner: its moves (and CANCEL), their types, the question and the description; the Pokemon is a nickname. */
+    CTR_CASE(v->mail.name);                                  /* the writer (mail.from) stays as typed */
     CTR_CASE(v->relearn.question);
     CTR_CASE(v->relearn.desc);
     for (int i = 0; i < PT_RL_ROWS; ++i) {

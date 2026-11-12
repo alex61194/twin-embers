@@ -419,7 +419,7 @@ static CtrPokeTouchRect Under(const CtrPokeTouchRect *r)
 
 /* Shortcut item icons from FireRed's icon table, decoded once per item and
  * shown as the 20x20 around their drawn part. */
-enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_COUNT };
+enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_MAIL, ICON_COUNT };
 
 static struct {
     unsigned item;
@@ -1109,6 +1109,9 @@ static void FLearnNote(const CtrPokeTouchView *v, int w);
 /* The move relearner's list the port draws (3ds_field_relearn_impl.h, included at the end). */
 static void FRelearnFrame(const CtrPokeTouchView *v);
 static void FRelearnNote(const CtrPokeTouchView *v, int w);
+/* The letter being read the port draws (3ds_field_mail_impl.h, included at the end). */
+static void FMailFrame(const CtrPokeTouchView *v);
+static void FMailNote(const CtrPokeTouchView *v, int w);
 /* The field's choice the port draws (3ds_field_choice_impl.h, included at the end). */
 static void FChoiceFrame(const CtrPokeTouchView *v);
 static void FChoiceNote(const CtrPokeTouchView *v, int w);
@@ -1139,6 +1142,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->relearn.on && !v->viewport) {
         FRelearnFrame(v);
+        return;
+    }
+    if (v->mail.on && !v->viewport) {
+        FMailFrame(v);
         return;
     }
     if (v->choice.on && !v->viewport) {
@@ -1301,7 +1308,7 @@ static void Bar(const CtrPokeTouchView *v)
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    if (!v->viewport && !v->save && (v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->choice.on || v->name.on || v->box.on || v->bag.on))
+    if (!v->viewport && !v->save && (v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on || v->name.on || v->box.on || v->bag.on))
         Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);           /* the screens that draw their own note (each puts the shadow its note throws) */
     if (v->save && !v->viewport)
         SaveNote(v);
@@ -1313,6 +1320,8 @@ static void Bar(const CtrPokeTouchView *v)
         FLearnNote(v, w);
     else if (v->relearn.on && !v->viewport)
         FRelearnNote(v, w);
+    else if (v->mail.on && !v->viewport)
+        FMailNote(v, w);
     else if (v->choice.on && !v->viewport)
         FChoiceNote(v, w);
     else if (v->name.on && !v->viewport)
@@ -1524,7 +1533,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     sCanvas = canvas;
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
         || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
-        || memcmp(&old->relearn, &v->relearn, sizeof(v->relearn))
+        || memcmp(&old->relearn, &v->relearn, sizeof(v->relearn)) || memcmp(&old->mail, &v->mail, sizeof(v->mail))
         || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))
         || memcmp(&old->choice, &v->choice, sizeof(v->choice))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
@@ -1698,6 +1707,7 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_card_impl.h"
 #include "3ds_field_learn_impl.h"
 #include "3ds_field_relearn_impl.h"
+#include "3ds_field_mail_impl.h"
 #include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
 #include "3ds_field_box_impl.h"
