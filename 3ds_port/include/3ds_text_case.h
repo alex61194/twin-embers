@@ -16,6 +16,30 @@
  * The text keeps its length: the change is in place and never writes past the terminating NUL.
  */
 
+/* ASCII case-insensitive equality of two NUL-terminated strings (EqN: of the first n bytes). Status words, tags and the "BALL" tail
+ * come either as the game's raw ALL CAPS or already cased by CtrTextCase, so they are compared without caring which. */
+static inline int CtrTextCase_EqN(const char *a, const char *b, size_t n)
+{
+    for (; n; --n, ++a, ++b) {
+        unsigned char x = (unsigned char)*a, y = (unsigned char)*b;
+
+        if (x >= 'A' && x <= 'Z')
+            x = (unsigned char)(x + 0x20);
+        if (y >= 'A' && y <= 'Z')
+            y = (unsigned char)(y + 0x20);
+        if (x != y)
+            return 0;
+        if (!x)
+            return 1;
+    }
+    return 1;
+}
+
+static inline int CtrTextCase_Eq(const char *a, const char *b)
+{
+    return CtrTextCase_EqN(a, b, (size_t)-1);
+}
+
 /* 1 upper, -1 lower, 0 neither (digits, marks, a lower letter that is not cased such as the sharp s is lower). */
 static inline int CtrTextCase_Kind(unsigned char c)
 {

@@ -897,7 +897,7 @@ static void SummaryBar(const CtrSummaryView *v, CtrPokeTouchView *t)
     snprintf(t->bar[0], PT_BAR_LEN, "%s  Lv%s", v->nickname, level);
     snprintf(t->bar[1], PT_BAR_LEN, "No.%s %s", v->dex, v->species);
     for (unsigned i = 0; i < sizeof(sCodes) / sizeof(sCodes[0]); ++i)
-        if (!strcmp(v->status, sCodes[i]))
+        if (CtrTextCase_Eq(v->status, sCodes[i]))
             snprintf(t->bar[2], PT_BAR_LEN, "%s", sNames[i]);
 }
 
@@ -1775,13 +1775,14 @@ static uint8_t PartyTag(const char *text)
 {
     static const char kNoUse[] = CTR_TR("No use", "No se usa", "Nutzlos");
 
-    if (!strcmp(text, CTR_TR("Able", "Puede", "O.K.")) || !strcmp(text, CTR_TR("Able!", "Puede!", "O.K.")))
+    /* The text is the game's raw ALL CAPS (CtrBottomParty_Description does not case it), so compare without case. */
+    if (CtrTextCase_Eq(text, CTR_TR("Able", "Puede", "O.K.")) || CtrTextCase_Eq(text, CTR_TR("Able!", "Puede!", "O.K.")))
         return BUI_PTY_TAG_ABLE;
-    if (!strcmp(text, CTR_TR("Not able", "No puede", "NEIN")) || !strcmp(text, CTR_TR("Not able!", "No puede!", "NEIN")))
+    if (CtrTextCase_Eq(text, CTR_TR("Not able", "No puede", "NEIN")) || CtrTextCase_Eq(text, CTR_TR("Not able!", "No puede!", "NEIN")))
         return BUI_PTY_TAG_NOT_ABLE;
-    if (!strcmp(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.")))
+    if (CtrTextCase_Eq(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.")))
         return BUI_PTY_TAG_LEARNED;
-    if (!strncmp(text, kNoUse, sizeof(kNoUse) - 1))
+    if (CtrTextCase_EqN(text, kNoUse, sizeof(kNoUse) - 1))
         return BUI_PTY_TAG_NO_USE;
     return BUI_PTY_TAG_NONE;
 }
