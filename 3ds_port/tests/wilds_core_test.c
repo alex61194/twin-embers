@@ -678,6 +678,59 @@ static void TestStall(void)
     CHECK(c.spawnTimer >= 180 && c.spawnTimer < 300, "M1: stalled retries wait 180 to 299 frames (%d)", c.spawnTimer);
 }
 
+/* The saved game: wilds the table does not own. */
+static void TestOrphans(void)
+{
+    CtrWildsCore c;
+    const int marked = 1;
+
+    CtrWildsCore_Init(&c, 81);
+    /* after a load the table is empty: every marked wild object is an orphan; the others are not */
+    for (int s = 0; s < CTRW_SLOTS; ++s)
+        CHECK(CtrWildsCore_IsOrphan(&c, 2 + s, CTRW_LOCALID + s, marked), "M2: marked wild %d with an empty table is an orphan", s);
+    CHECK(!CtrWildsCore_IsOrphan(&c, 3, CTRW_LOCALID, 0), "M2: the Berry Blender's local id 0xF0 without the mark is not touched");
+    for (int id = 0; id < 0xF0; ++id)
+        if (CtrWildsCore_IsOrphan(&c, 5, id, marked) || CtrWildsCore_IsOrphan(&c, 5, id, 0))
+        {
+            CHECK(0, "M2: a map's local id %d is not a wild", id);
+            break;
+        }
+    CHECK(!CtrWildsCore_IsOrphan(&c, 4, 0xF7, marked) && !CtrWildsCore_IsOrphan(&c, 4, 0xF7, 0), "M2: the companion (0xF7) is never touched");
+    CHECK(!CtrWildsCore_IsOrphan(&c, 4, 0xF6, marked) && !CtrWildsCore_IsOrphan(&c, 4, 0xFF, marked), "M2: ids beside the wilds' are not touched");
+    for (int id = 0xEC; id <= 0xF0; ++id)
+        CHECK(!CtrWildsCore_IsOrphan(&c, 7, id, 0), "M2: the Berry Blender's local id %d unmarked is not touched", id);
+    /* a wild the table owns (same slot, same object event index) is kept; one at another index, or in a free slot, is an orphan */
+    CtrWildsCore_MapChanged(&c, 5);
+    {
+        CtrWildMon mon = {16, 5, 0, 0, 12345, 100};
+
+        CtrWildsCore_Commit(&c, 2, &mon, 0, 0, 1);
+        CtrWildsCore_SetObject(&c, 2, 9);
+    }
+    CHECK(!CtrWildsCore_IsOrphan(&c, 9, CTRW_LOCALID + 2, marked), "M2: the table's own wild is kept");
+    CHECK(CtrWildsCore_IsOrphan(&c, 4, CTRW_LOCALID + 2, marked), "M2: the same local id at another object event is an orphan");
+    CHECK(CtrWildsCore_IsOrphan(&c, 9, CTRW_LOCALID + 3, marked), "M2: a free slot's local id is an orphan");
+    CHECK(!CtrWildsCore_IsOrphan(&c, 9, CTRW_LOCALID + 2, 0), "M2: unmarked is never touched, even at the table's own slot");
+    /* a sweep as the glue does it over the object events: NPCs, the companion, a Berry Blender object and wilds (one of them kept) */
+    {
+        struct { int id, mark; } obj[10] = {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {0xF7, 1}, {0xF0, 0}, {0xF1, 1}, {0xEC, 0}, {9, 0}, {0xF0 + 2, 1}};
+        int swept = 0, sweptAt = -1, kept = 0;
+
+        for (int i = 0; i < 10; ++i)
+        {
+            if (CtrWildsCore_IsOrphan(&c, i, obj[i].id, obj[i].mark))
+                ++swept, sweptAt = i;
+            else if (i == 9)
+                ++kept;
+        }
+        CHECK(swept == 1 && sweptAt == 6 && kept == 1, "M2: only the orphan at 6 is swept (%d at %d, %d)", swept, sweptAt, kept);
+    }
+    /* the table's own wild sits at index 9 here, so the one at 8 (same slot) is an orphan too: a stale table never owns by slot alone */
+    CHECK(CtrWildsCore_IsOrphan(&c, 8, CTRW_LOCALID + 2, marked), "M2: ownership is by slot and index together");
+    CtrWildsCore_Clear(&c);
+    CHECK(CtrWildsCore_IsOrphan(&c, 9, CTRW_LOCALID + 2, marked), "M2: a cleared table owns nothing");
+}
+
 static void TestRepel(void)
 {
     CHECK(!CtrWildsCore_RepelBlocks(0, 3, 50), "no Repel: nothing blocked");
@@ -1194,6 +1247,7 @@ int main(void)
     TestSuppression();
     TestIdleReleases();
     TestStall();
+    TestOrphans();
     TestRepel();
     TestAi();
     TestData();

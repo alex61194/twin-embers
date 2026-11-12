@@ -132,6 +132,15 @@ int CtrWildsCore_Unsupported(CtrWildsCore *c)
     return 1;
 }
 
+int CtrWildsCore_IsOrphan(const CtrWildsCore *c, int index, int localId, int marked)
+{
+    int slot = localId - CTRW_LOCALID;
+
+    if (!marked || slot < 0 || slot >= CTRW_SLOTS)
+        return 0;       /* a map's own object, a companion or anything not made by this system is never touched */
+    return !(c->wild[slot].state != CTRW_S_FREE && c->wild[slot].obj == index);
+}
+
 int CtrWildsCore_HasRoamer(const CtrWildsCore *c)
 {
     for (int i = 0; i < CTRW_SLOTS; ++i)

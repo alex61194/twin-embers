@@ -824,7 +824,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wilds_core.h",
-   "sha256": "b7aca5ea101b55f10a303a5dc6a3edc107a199018aff4ad7f51672d83d35de9e",
+   "sha256": "eb70e0490ece0221ceeaeec41bb176e036a01bee85536419674481605e9f2dac",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1664,7 +1664,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wilds_core.c",
-   "sha256": "f5ef808e1984d75f0fb013076382c006282f2a81edbb3c5275c2676b3e314fa3",
+   "sha256": "1798b08b060f1e9db1cbdc3bbfee914233a7c4048ca0c460a5051138cf03dc5e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2250,7 +2250,7 @@
   },
   {
    "path": "3ds_port/tests/wilds_core_test.c",
-   "sha256": "c9e860f854c0fd2bb10a48e04e0ef0f0b5ca13dc50308fd361c38cb782aa1308",
+   "sha256": "84b3574ddc761b5b4ceeecc570d8dbc5dd81aa7ce15daa101f28e8a931081a34",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6111,7 +6111,7 @@
   },
   {
    "path": "patches/pokefirered/0249-visible-wilds.json",
-   "sha256": "e563342757c1810f38143801b3526ee7f3948d0ac29f8c3c283719e50454ec52",
+   "sha256": "a675f393eb366f24f67130e8333fd01ee172cb25b47d928c85c17652d7071f60",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6970,6 +6970,14 @@
   {
    "path": "tools/test_web_builder.py",
    "sha256": "702b0871669cb3507cb85692a4cd87f11f48599cb2c64575240948e55eeeb273",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_wilds_recipe.py",
+   "sha256": "eff42dec1a52c9fc0fe8d6aea9d68bd076703e4b42b4f2ea55f132d396592491",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

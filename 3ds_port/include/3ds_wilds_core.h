@@ -18,6 +18,8 @@
 #define CTRW_SLOTS 6            /* the most wild Pokemon at once (New 3DS, density MANY) */
 #define CTRW_OBJECTS 16         /* FireRed's OBJECT_EVENTS_COUNT */
 #define CTRW_RESERVE 4          /* object events that stay free, always */
+#define CTRW_LOCALID 0xF0       /* the local id of slot 0 (CTR_WILD_LOCALID); slot n is CTRW_LOCALID + n */
+#define CTRW_MARK 0xD7          /* the mark a wild's object event carries (trainerRange_berryTreeId, unused by it): the save keeps it */
 #define CTRW_STALL_FAILS 6      /* spawn attempts that fail in a row, with nothing out, before the game's step encounters come back */
 #define CTRW_NONE 0xFF          /* no object event / no slot */
 #define CTRW_TICK 30            /* frames between two checks of the free object events */
@@ -174,6 +176,11 @@ int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env);
 
 /* TRUE when this map was probed and neither a land nor a water table of it can show a Pokemon, and no wild is out: nothing to do. */
 int CtrWildsCore_Unsupported(CtrWildsCore *c);      /* ... and, like Idle, it stops the system working then */
+
+/* An object event of the saved game that a wild left behind: it carries the mark and a wild's local id but the table does not own it
+ * (the table is empty after a load, or kept the state of before it). index: its place in the object events. marked: it is the Boy,
+ * has no movement type and carries CTRW_MARK. Anything else, a map's NPC included, is never an orphan. */
+int CtrWildsCore_IsOrphan(const CtrWildsCore *c, int index, int localId, int marked);
 
 /* The budget. */
 int CtrWildsCore_Target(int density, int consoleCap, int freeObjects, int active);
