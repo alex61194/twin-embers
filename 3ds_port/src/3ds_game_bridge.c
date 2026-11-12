@@ -219,9 +219,12 @@ static bool UpdateCamera(void)
     sCameraKnown = false;
     if (sCameraWait) { --sCameraWait; return false; }
     /* The search is 512 offsets (~47 ms on the Old 3DS: the stall of a door). It is spread over frames, CAMERA_PER_FRAME offsets each, and
-     * starts again if the player or the map changed meanwhile (what was looked at no longer agrees). Nothing is taken until it ends,
-     * so the best offset wins as it did when it ran in one frame; the windows light a few frames after the map instead. */
-    if (sSearch.active && (sSearch.px != px || sSearch.py != py || sSearch.map != map))
+     * starts again only if the map changed meanwhile. A step of the player does not restart it: what is kept is the offset
+     * (kx, ky) between the map and the tilemap, which a step does not change, worked out at the position of the frame it was
+     * looked at; the end checks the result again at the position then. (Restarting on every step meant a player walking,
+     * running or on the bike never finished it.) Nothing is taken until it ends, so the best offset wins as it did when it
+     * ran in one frame; the windows light a few frames after the map instead. */
+    if (sSearch.active && sSearch.map != map)
         sSearch.active = false;
     if (!sSearch.active)
         sSearch = (struct CameraSearch){true, 0, ~0u, 0, 0, px, py, map};
@@ -242,6 +245,9 @@ static bool UpdateCamera(void)
     if (best && sSearch.next < CAMERA_OFFSETS)
         return false;                                    /* still searching: next frame goes on */
     sSearch.active = false;
+    /* The tilemap can lag a step behind the position while the player moves: take the offset only if it still agrees now. */
+    if (best != ~0u && CameraMisses((px * 2 - sSearch.kx) & 63, (py * 2 - sSearch.ky) & 31, 8, &samples) > 8)
+        best = ~0u;
     if (best != ~0u)
     {
         sCameraKX = sSearch.kx;
