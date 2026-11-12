@@ -971,7 +971,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_hud.c",
-   "sha256": "c51d93c10af5d6181127e430c89cda4b64a59b54395b5f726ee00d0bb08504c3",
+   "sha256": "9549d03abc9633bd1e5341e5e3cb186a7004219cbc8458d20b82f99832d6fe83",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
