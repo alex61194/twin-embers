@@ -12,6 +12,7 @@
 #define PT_SOURCE "3ds_poketouch.c"
 #endif
 #include PT_SOURCE
+#include "3ds_text_case_views.h"   /* the game names in proper case, as 3ds_bottom.c gives them */
 #include <math.h>
 
 static uint8_t font[256 * 64];
@@ -111,9 +112,13 @@ static uint16_t at(int x, int y) { return canvas[x * H + H - 1 - y]; }
  * is checked by the assertions on them below, not against the renderer before the restyle. */
 static int sState;
 
-static void settle(const CtrBattleView *old, const CtrBattleView *v)
+static void settle(const CtrBattleView *oldRaw, const CtrBattleView *vRaw)
 {
     CtrDirtyList dirty;
+    static CtrBattleView oc, vc;
+    const CtrBattleView *old = &oc, *v = &vc;
+
+    oc = *oldRaw; vc = *vRaw; CtrTextCase_Battle(&oc); CtrTextCase_Battle(&vc);
 
     sState = v->state;
 
@@ -227,9 +232,13 @@ static void hits(const CtrBattleView *v)
         }
 }
 
-static void settle_summary(const CtrSummaryUiView *old, const CtrSummaryUiView *v)
+static void settle_summary(const CtrSummaryUiView *oldRaw, const CtrSummaryUiView *vRaw)
 {
     CtrDirtyList dirty;
+    static CtrSummaryUiView oc, vc;
+    const CtrSummaryUiView *old = &oc, *v = &vc;
+
+    oc = *oldRaw; vc = *vRaw; CtrTextCase_Summary(&oc.data); CtrTextCase_Summary(&vc.data);
 
     CtrDirty_Clear(&dirty);
     CtrSummaryUi_Update(canvas, old, v, &dirty);
@@ -253,6 +262,8 @@ static void summary_hits(const CtrSummaryUiView *v)
 }
 
 static void names(char *dst, size_t n, const char *s) { snprintf(dst, n, "%s", s); }
+/* A name of the game's text: proper case, as the Bag's reader gives it (3ds_bottom.c CtrBottomBag_ItemName). */
+static void gnames(char *dst, size_t n, const char *s) { names(dst, n, s); CtrTextCase(dst); }
 
 int main(int argc, char **argv)
 {
@@ -312,7 +323,7 @@ int main(int argc, char **argv)
     v.partyHp[0] = 100; v.partyHp[1] = 62; v.partyHp[2] = 35; v.partyHp[4] = 9; v.party[1] = 3; v.partyStatus[1] = 2;
     names(v.activeName, sizeof(v.activeName), "Charizard"); v.activeLevel = 52; v.activeIcon = 6; v.activeSlot = 0; v.activeHp = 158; v.activeMaxHp = 158;
     v.activeType[0] = 10; v.activeType[1] = 2; names(v.activeTypeName[0], 12, "FIRE"); names(v.activeTypeName[1], 12, "FLYING");
-    CtrBattleUi_Draw(canvas, &v);   /* BUI_IDLE: the backdrop and the strip */
+    { static CtrBattleView c_; c_ = v; CtrTextCase_Battle(&c_); CtrBattleUi_Draw(canvas, &c_); }   /* BUI_IDLE: the backdrop and the strip */
     put(out, "00_idle");
     old = v;
 
@@ -334,7 +345,7 @@ int main(int argc, char **argv)
      * arrows in its lower corners; the cursor on it and off it, its presses, another ball, none left, the boxes full,
      * one kind only (no arrows), and back to three buttons (a trainer). */
     v.ball = CTR_QUICK_BALL_READY; v.ballCount = 4; v.ballPlace = 1; v.ballItem = 2; v.ballQty = 21;
-    names(v.ballName, BUI_ITEM_LEN, "GREAT BALL");
+    gnames(v.ballName, BUI_ITEM_LEN, "GREAT BALL");
     settle(&old, &v); old = v; put(out, "02b_action_ball");
     assert(CtrBattleUi_Hit(&v, 8 + 30, 120 + 30) == BUI_ACT_BAG);
     assert(CtrBattleUi_Hit(&v, 85 + 36, 120 + 30) == BUI_ACT_BALL);
@@ -354,7 +365,7 @@ int main(int argc, char **argv)
         v.pressed = -1; settle(&old, &v); old = v;
     }
     v.pressed = 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
-    v.ballPlace = 2; v.ballItem = 3; v.ballQty = 8; names(v.ballName, BUI_ITEM_LEN, "ULTRA BALL");
+    v.ballPlace = 2; v.ballItem = 3; v.ballQty = 8; gnames(v.ballName, BUI_ITEM_LEN, "ULTRA BALL");
     settle(&old, &v); old = v;
     v.ball = CTR_QUICK_BALL_EMPTY; v.ballCount = 0; settle(&old, &v); old = v; put(out, "02d_action_no_balls");
     assert(CtrBattleUi_Hit(&v, 85 + 13, 120 + 95) == BUI_ACT_BALL);    /* no arrows: the button only says so */
@@ -561,8 +572,8 @@ int main(int argc, char **argv)
         static const char *const nm[5] = {"POTION", "SUPER POTION", "ANTIDOTE", "REVIVE", "FULL HEAL"};
 
         b->pocket = 0; b->count = 9; b->cursor = 1; b->first = 0;
-        for (k = 0; k < 5; ++k) { b->row[k].item = (uint16_t)(k + 1); b->row[k].qty = (uint16_t)(20 - 3 * k); names(b->row[k].name, BUI_ITEM_LEN, nm[k]); }
-        b->selItem = 2; names(b->selName, BUI_ITEM_LEN, "SUPER POTION");
+        for (k = 0; k < 5; ++k) { b->row[k].item = (uint16_t)(k + 1); b->row[k].qty = (uint16_t)(20 - 3 * k); gnames(b->row[k].name, BUI_ITEM_LEN, nm[k]); }
+        b->selItem = 2; gnames(b->selName, BUI_ITEM_LEN, "SUPER POTION");
         names(b->selDesc, BUI_DESC_LEN, "Restores the HP of one POKeMON by 50 points.");
     }
     settle(&old, &v); old = v; put(out, "07_bag"); hits(&v);
@@ -662,7 +673,7 @@ int main(int argc, char **argv)
         }
         names(sv.data.moveDesc, 256, "A powerful fire attack that may burn the target.");
         so = sv;
-        CtrSummaryUi_Draw(canvas, &so);   /* the screen opens drawn in full; updates follow */
+        { CtrSummaryUiView c_ = so; CtrTextCase_Summary(&c_.data); CtrSummaryUi_Draw(canvas, &c_); }   /* the screen opens drawn in full; updates follow */
         for (tab = 0; tab < 5; ++tab) {
             static const char *const nm[5] = {"16_summary_info", "17_summary_stats", "18_summary_moves", "19_summary_move_details",
                                               "20_summary_trainer"};
@@ -705,7 +716,7 @@ int main(int argc, char **argv)
 
         for (size_t i = 0; i < sizeof(states) / sizeof(states[0]); ++i) {
             s.state = (uint8_t)states[i];
-            CtrBattleUi_Draw(canvas, &s);
+            { static CtrBattleView c_; c_ = s; CtrTextCase_Battle(&c_); CtrBattleUi_Draw(canvas, &c_); }
             if (states[i] == BUI_MOVE || states[i] == BUI_IDLE || states[i] == BUI_ACTION)
                 continue;                  /* these screens are their artwork, whatever colours it holds */
             for (int n = 0; n < W * H; ++n)
@@ -727,7 +738,7 @@ int main(int argc, char **argv)
             sv.pressed = -1; sv.data.ready = 1; sv.data.typeIds[0] = 10; sv.data.typeIds[1] = 2; sv.data.hpCur = 90; sv.data.hpMax = 150;
             for (int page = 0; page < 4; ++page) {
                 sv.data.page = page;
-                CtrSummaryUi_Draw(canvas, &sv);
+                { CtrSummaryUiView c_ = sv; CtrTextCase_Summary(&c_.data); CtrSummaryUi_Draw(canvas, &c_); }
                 for (int n = 0; n < W * H; ++n)
                     for (size_t j = 0; j < sizeof(navy) / sizeof(navy[0]); ++j)
                         if (canvas[n] == navy[j]) {

@@ -43,6 +43,7 @@
 #include "3ds_log.h"
 #include "3ds_summary.h"
 #include "3ds_poketouch.h"
+#include "3ds_text_case_views.h"
 #include "3ds_poketouch_options.h"
 #include "3ds_ui_strings.h"
 #include "3ds_perf.h"
@@ -382,6 +383,10 @@ extern unsigned CtrBottomDex_Height(unsigned species);
 extern unsigned CtrBottomDex_Weight(unsigned species);
 extern void CtrBottomDex_Description(unsigned species, char *out, int size);
 extern int CtrBottomDex_Types(unsigned species, int *types, char *first, char *second, int size);
+/* Game names in proper case (3ds_text_case.h): the Bag's items and a case's moves as they are read (a mailbox shares the list), the Summary as it is reported. */
+#define CtrBottomBag_ItemName(i, o, n) (CtrBottomBag_ItemName((i), (o), (n)), CtrTextCase(o))
+#define CtrBottomTMCase_MoveName(i, o, n) (CtrBottomTMCase_MoveName((i), (o), (n)), CtrTextCase(o))
+#define CtrBottomSummary_GetView(o) (CtrBottomSummary_GetView(o), CtrTextCase_Summary(o))
 
 /* CtrBottomDex_State (pokedex_screen.c): the real Pokedex is not taking input (set up, fading, flipping,
  * closing), or takes it on its top menu or a list (rows to choose), a category page or a Pokemon's page. B
@@ -5568,6 +5573,8 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
+    CtrTextCase_Touch(&state.touch);
+    CtrTextCase_Battle(&state.battle);
     /* The logo only once nothing has been shown for a while: a screen's few frames of change show the backdrop. */
     sIdleFrames = state.mode == MODE_OFF && !sSession.active ? (sIdleFrames < IDLE_LOGO_FRAMES ? sIdleFrames + 1
                                                                                                  : sIdleFrames) : 0;

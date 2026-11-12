@@ -7,6 +7,7 @@
  * BoxFill) but for the buttons' labels (3ds_ui_strings.h). MOVE ITEMS is the same box: an amber tag on every Pokemon
  * that holds an item, the item in hand on the plate under the buttons, and in the note the item under the cursor. */
 #include "3ds_storage_touch.h"
+#include "3ds_text_case.h"
 
 #define EM_SLATE_ARROW UI_RGB(76, 90, 140)
 #define FX_SLOT_TOP UI_RGB(62, 14, 14)              /* the mockup slot: the dark sunk place of the cells and the hand */
@@ -185,11 +186,14 @@ static void FXItemTag(int cx, int cy)
     UiRoundFill(cx - 1, cy - 2, 3, 5, 1, EM_WHITE);
 }
 
-static void FXText(const uint8_t *raw, int n, int x, int y, uint16_t ink, uint16_t sh, int right)
+/* `game`: a name of the game's text (an item, a species), in proper case; a nickname or a box name stays as typed. */
+static void FXText(const uint8_t *raw, int n, int x, int y, uint16_t ink, uint16_t sh, int right, int game)
 {
     char text[64];
 
     FNText(raw, n, text, (int)sizeof(text));
+    if (game)
+        CtrTextCase(text);
     UiText(text, x, y, ink, sh, 1, right);
 }
 
@@ -311,7 +315,7 @@ static void FXParty(const CtrPokeTouchBox *b)
             FXIcon(&b->party[0], r.x + r.w / 2, fy + 24);
             if (b->items && b->partyItem[0])
                 FXItemTag(r.x + r.w - 10, fy + 32);
-            FXText(b->partyName[0], (int)sizeof(b->partyName[0]), r.x + 6, fy + 44, p->ink, p->inkSh, r.x + r.w - 4);
+            FXText(b->partyName[0], (int)sizeof(b->partyName[0]), r.x + 6, fy + 44, p->ink, p->inkSh, r.x + r.w - 4, 0);
             if (!b->party[0].egg) {
                 snprintf(level, sizeof(level), "Lv%u", (unsigned)b->partyLevel[0]);
                 UiText(level, r.x + 6, fy + 57, p->ink, p->inkSh, 1, r.x + r.w - 4);
@@ -321,7 +325,7 @@ static void FXParty(const CtrPokeTouchBox *b)
         FXIcon(&b->party[i], r.x + 14, fy + 11);
         if (b->items && b->partyItem[i])
             FXItemTag(r.x + 24, fy + 15);
-        FXText(b->partyName[i], (int)sizeof(b->partyName[i]), r.x + 30, fy + 6, p->ink, p->inkSh, r.x + r.w - 4);
+        FXText(b->partyName[i], (int)sizeof(b->partyName[i]), r.x + 30, fy + 6, p->ink, p->inkSh, r.x + r.w - 4, 0);
     }
     FXButton(&sFXCancel, CtrUiText(UIS_CANCEL), LlPick(b->pos == 6, &kEmSlate), b->pressed == ST_HIT_PARTY_BASE + 6);
     /* The chosen piece's ring, after the others so that no neighbour covers it. */
@@ -344,6 +348,7 @@ static void FXMenu(const CtrPokeTouchBox *b)
         const EmPal *p = LlPick(b->menuCursor == i, i == b->menuCount - 1 ? &kEmSlate : &kEmCream);
 
         FNText(b->menu[i], (int)sizeof(b->menu[i]), text, (int)sizeof(text));
+        CtrTextCase(text);
         FXButton(&r, text, p, b->pressed == ST_HIT_MENU_BASE + i);
     }
     if (b->menuCursor >= 0 && b->menuCursor < b->menuCount) {
@@ -494,7 +499,7 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
 
             /* Three lines of description: FireRed's are up to three (the note beside BACK is narrow). */
             ItemArt(ICON_BOX_NOTE, b->monItem, NOTE_X + 10, NOTE_Y + 1, 1);
-            FXText(b->itemName, (int)sizeof(b->itemName), NOTE_X + 36, NOTE_Y + 5, EM_DARK, EM_DARK_SH, nameX - 6);
+            FXText(b->itemName, (int)sizeof(b->itemName), NOTE_X + 36, NOTE_Y + 5, EM_DARK, EM_DARK_SH, nameX - 6, 1);
             UiText(name, nameX, NOTE_Y + 5, EM_DIM, EM_DARK_SH, 1, NOTE_X + w);
             FNText(b->itemDesc, (int)sizeof(b->itemDesc), desc, (int)sizeof(desc));
             BPWrap(desc, NOTE_X + 12, NOTE_Y + 21, w - 22, 3, EM_DIM, EM_DARK_SH);
@@ -505,15 +510,15 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
     } else if (b->mon.species) {
         int right = NOTE_X + w - (b->mon.egg ? 8 : 72);
 
-        FXText(b->monText[0], (int)sizeof(b->monText[0]), NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, right);
+        FXText(b->monText[0], (int)sizeof(b->monText[0]), NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, right, 0);
         FXGenderLevel(b->monText[2], (int)sizeof(b->monText[2]), NOTE_X + 12, NOTE_Y + 21, right);
-        FXText(b->monText[1], (int)sizeof(b->monText[1]), NOTE_X + 12, NOTE_Y + 36, EM_DIM, EM_DARK_SH, right);
-        FXText(b->monText[3], (int)sizeof(b->monText[3]), NOTE_X + 12, NOTE_Y + 49, EM_VALUE, EM_DARK_SH, right);
+        FXText(b->monText[1], (int)sizeof(b->monText[1]), NOTE_X + 12, NOTE_Y + 36, EM_DIM, EM_DARK_SH, right, 1);
+        FXText(b->monText[3], (int)sizeof(b->monText[3]), NOTE_X + 12, NOTE_Y + 49, EM_VALUE, EM_DARK_SH, right, 1);
         if (!b->mon.egg)
             FDPicDraw(b->mon.species, NOTE_X + w - 68, NOTE_Y, 0);
     } else {
         FXText(b->boxName, (int)sizeof(b->boxName), NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH,
-               NOTE_X + w - 4);
+               NOTE_X + w - 4, 0);
     }
     sUiS = &sUiNavy;
 }

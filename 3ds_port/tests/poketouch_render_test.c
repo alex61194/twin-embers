@@ -4,6 +4,7 @@
 #define PT_SOURCE "3ds_poketouch.c"
 #endif
 #include PT_SOURCE
+#include "3ds_text_case_views.h"   /* the game names in proper case, as 3ds_bottom.c gives them */
 #include "3ds_pak.h"
 
 static uint8_t fixtureTiles[512], fixtureColors[32];
@@ -111,10 +112,14 @@ int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes)
 
 static uint16_t canvas[W * H], reference[W * H];
 static uint16_t at(int x, int y) { return canvas[x * H + H - 1 - y]; }
-static void update(CtrPokeTouchView *old, const CtrPokeTouchView *v)
+static void update(CtrPokeTouchView *old, const CtrPokeTouchView *vRaw)
 {
     CtrDirtyList dirty; CtrDirty_Clear(&dirty);
-    CtrPokeTouch_Update(canvas, old, v, &dirty);
+    static CtrPokeTouchView vc, oc;
+    const CtrPokeTouchView *v = &vc;
+    vc = *vRaw; CtrTextCase_Touch(&vc);
+    oc = *old; CtrTextCase_Touch(&oc);
+    CtrPokeTouch_Update(canvas, &oc, v, &dirty);
     memcpy(reference, canvas, sizeof(canvas));
     CtrPokeTouch_Draw(canvas, v);
 #ifndef PT_BASELINE
@@ -388,8 +393,8 @@ int main(int argc, char **argv)
         {
             CtrPokeTouchView b3=s; CtrPokeTouchView o3; memset(&o3,0,sizeof(o3)); o3.selected=o3.pressed=PT_NONE;
             b3.home=0; b3.bag.on=1; b3.bag.pocket=0; b3.bag.state=PT_BAG_STATE_LIST; b3.bag.count=9; b3.bag.cursor=1; b3.bag.pressed=-1;
-            for(int i=0;i<PT_BAG_ROWS;++i) { b3.bag.row[i].item=13+i; b3.bag.row[i].qty=(uint16_t)(3+i*20); strcpy(b3.bag.row[i].name,"POTION"); }
-            strcpy(b3.bag.selName,"POTION"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
+            for(int i=0;i<PT_BAG_ROWS;++i) { b3.bag.row[i].item=13+i; b3.bag.row[i].qty=(uint16_t)(3+i*20); strcpy(b3.bag.row[i].name,"Potion"); }
+            strcpy(b3.bag.selName,"Potion"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
             update(&o3,&b3); if(dir) ppm(dir,"bag_list");
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
