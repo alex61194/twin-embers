@@ -642,7 +642,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "121052ee8c6eda868c45c94466c63dfb8dd7dcd5e962ed96833f6e114c57375c",
+   "sha256": "0bc5617cef38cfcaa8b79a8f631cdad3aa876b35ac2f86acbddbc208d77ab1bf",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1050,7 +1050,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "48e67df98481b2c942476b62ec005b381118211ba9174df690e9e38706c3c47a",
+   "sha256": "16bad833eeef28b9166b81cfce127d2fb2c1aff4503dd867ddff6a65733cfa52",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1064,6 +1064,14 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_easychat_impl.h",
+   "sha256": "3ae0042c4eb6f5409965d53a6addec9efd26575c15f47215fe4630bad39e3533",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/src/3ds_bottom_mail_impl.h",
@@ -1201,6 +1209,14 @@
   {
    "path": "3ds_port/src/3ds_field_dex_impl.h",
    "sha256": "758d5e939c3a818328ce8dff90f99f5f7a4ecaa40c74b9c8baf39071815a974b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_field_easychat_impl.h",
+   "sha256": "dce6ee434cb89b4a659533a885ed32ad35a74739a8e54ae7eed9d58bf5af3d73",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1465,7 +1481,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "be4281f933d11d1351e13d230219b6a1ef12bc494b5f99624c86e87418f1dd9e",
+   "sha256": "15e67905faa1cd745f5ec080bd669396997503f44c1eb2b8b3d6c8c9b8582277",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1898,6 +1914,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/tests/easychat_plan_test.c",
+   "sha256": "e303cb7d2b317ecfb2b892d20d9a649493dca1ad873a1a2df87e8cef708431e0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/fast_forward_test.c",
    "sha256": "abce37bd8247d8b035f045d12d358cb0e9d1ff16e213db7168f1f0a90d658125",
    "review_status": "reviewed",
@@ -2079,7 +2103,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "1c5d2863ab1d73d6c9b6eda7e0b7ea6ec4849f78670e3bf05277328e557dcf87"
+   "sha256": "9f9d61a4b2841625c4b209d58b329a6b819eeb413b03b40ab20ce1880f46380a"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -6079,6 +6103,14 @@
    "source_blob": "65831b12403931db5fd882cb82b97e5744834a3e"
   },
   {
+   "path": "patches/pokefirered/0255-easychat-native-bridge.json",
+   "sha256": "9ae38bb8811dac5c5f999bfcf5afbb2f2266660f77edce24eb9d4707ffba6dcd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -6701,6 +6733,14 @@
    "source_sha256": "2987511f47d27b6b330cefae2cbd77089542b3e6dde915b589cf9bb586ec350a",
    "modified_for_distribution": true,
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage"
+  },
+  {
+   "path": "tools/test_easychat_plan.py",
+   "sha256": "ce2e1fa36662c13b1640883a9e31310b05262e0e28497a99ad648c84c59bc8f2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "tools/test_field_presentation.py",

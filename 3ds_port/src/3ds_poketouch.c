@@ -1274,6 +1274,9 @@ static void FRelearnNote(const CtrPokeTouchView *v, int w);
 /* The letter being read the port draws (3ds_field_mail_impl.h, included at the end). */
 static void FMailFrame(const CtrPokeTouchView *v);
 static void FMailNote(const CtrPokeTouchView *v, int w);
+/* Easy Chat, over the whole screen (3ds_field_easychat_impl.h, included at the end). */
+static void FEasyDraw(const CtrPokeTouchView *v);
+static void FEasyUpdate(uint16_t *canvas, const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty);
 /* The field's choice the port draws (3ds_field_choice_impl.h, included at the end). */
 static void FChoiceFrame(const CtrPokeTouchView *v);
 static void FChoiceNote(const CtrPokeTouchView *v, int w);
@@ -1665,6 +1668,10 @@ bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy)
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
+    if (v->ec.on) {
+        FEasyDraw(v);
+        return;
+    }
     Frame();
     MenuFrame(v);
     Bar(v);
@@ -1709,6 +1716,10 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
+    if (v->ec.on || old->ec.on) {
+        FEasyUpdate(canvas, old, v, dirty);
+        return;
+    }
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
         || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
         || memcmp(&old->relearn, &v->relearn, sizeof(v->relearn)) || memcmp(&old->mail, &v->mail, sizeof(v->mail))
@@ -1886,3 +1897,4 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
 #include "3ds_field_box_impl.h"
+#include "3ds_field_easychat_impl.h"

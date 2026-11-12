@@ -1224,6 +1224,7 @@ static void LearnSnapshot(Snapshot *s, int mode)
 
 #include "3ds_bottom_relearn_impl.h"
 #include "3ds_bottom_mail_impl.h"
+#include "3ds_bottom_easychat_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -2176,6 +2177,8 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         /* FireRed's own screen, as it draws it, in the viewport; BACK is its B. */
         const char *title = GbaViewTitle();
 
+        if (CtrBottomView_EasyChat() && EasySnapshot(s))
+            return;                 /* Easy Chat drawn here (3ds_bottom_easychat_impl.h) */
         if (CtrBottomView_Relearner() && RelearnSnapshot(s, mode))
             return;                 /* its list drawn here (3ds_bottom_relearn_impl.h) */
         if (CtrBottomView_Mail()) {
@@ -5091,6 +5094,8 @@ static int ProcessTouch(int mode)
         sNameTap.down = sNameTap.inside = 0;
         sNameTap.code = -1;
     }
+    if (mode != MODE_GBAVIEW || !CtrBottomView_EasyChat())
+        sEcTap.down = sEcTap.inside = sEcTap.scrub = 0;
 
     /* The picture kept between two screens belongs to neither: a tap on it would act on the screen that is gone. */
     if (sBridging) {
@@ -5180,6 +5185,11 @@ static int ProcessTouch(int mode)
         sPoke.id = PT_NONE;
         sPoke.inside = 0;
         sTouch.active = 0;
+        if (CtrBottomView_EasyChat() && CtrBottomEasyChat_IsOpen()) {
+            sBack.down = sBack.inside = 0;     /* Easy Chat has its own buttons over the whole screen: no BACK */
+            ProcessEasyTouch(in);
+            return HIT_NONE;
+        }
         ProcessBack(mode, in);
         ProcessRelearnTouch(in);
         /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
@@ -5506,6 +5516,7 @@ void CtrBottom_Init(void)
     memset(&sNamePlan, 0, sizeof(sNamePlan));
     memset(&sNameTap, 0, sizeof(sNameTap));
     sNameTap.code = -1;
+    EasyReset();
     BatPlanClear();
     memset(&sOpt, 0, sizeof(sOpt));
     memset(&sSave, 0, sizeof(sSave));
@@ -5653,6 +5664,7 @@ void CtrBottom_Frame(void)
     else
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
     RunRelearnPlan(mode == MODE_GBAVIEW && CtrBottomView_Relearner());
+    RunEasyPlan(mode == MODE_GBAVIEW && CtrBottomView_EasyChat());
     if (mode == MODE_NAMING)
         RunNamePlan();
     else
