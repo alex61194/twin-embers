@@ -33,7 +33,7 @@ static void MailSnapshot(Snapshot *s, int mode)
     memset(m, 0, sizeof(*m));
     m->on = 1;
     if (CtrBottomView_MailName(name, sizeof(name))) {
-        snprintf(m->name, sizeof(m->name), "%s", name);
+        snprintf(m->name, sizeof(m->name), "%.31s", name);
         m->item = (uint16_t)MailItemOf(name);
     } else
         snprintf(m->name, sizeof(m->name), "%s", GbaViewTitle());
