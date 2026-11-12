@@ -30,6 +30,7 @@ static int sNuzDupes;       /* NUZLOCKE clauses: a species already caught does n
 static int sNuzShiny;       /* a shiny does not use it either */
 static int sNuzCap;         /* LEVEL CAPS: no experience at or above the badge's cap */
 static int sFreeHm;
+static int sVisibleWilds;   /* VISIBLE WILDS (prototype): wild Pokemon walk about on one route */
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
@@ -111,6 +112,8 @@ static void Load(void)
             sNuzCap = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
+        else if (sscanf(line, "visiblewilds=%u", &value) == 1)
+            sVisibleWilds = value != 0;
         else if (LookLine(line))
             ;
         else if (sscanf(line, "ball=%u", &value) == 1)
@@ -161,6 +164,8 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "nuzcap=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
+    if (sVisibleWilds && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "visiblewilds=1\n");
     for (int slot = 0; slot < 3; ++slot)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
@@ -439,6 +444,22 @@ void CtrSettings_SetNuzShiny(int on)
     if (on == sNuzShiny)
         return;
     sNuzShiny = on;
+    Save();
+}
+
+int CtrSettings_VisibleWilds(void)
+{
+    Load();
+    return sVisibleWilds;
+}
+
+void CtrSettings_SetVisibleWilds(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sVisibleWilds)
+        return;
+    sVisibleWilds = on;
     Save();
 }
 

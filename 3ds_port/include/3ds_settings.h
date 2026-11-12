@@ -44,6 +44,8 @@ int CtrSettings_NuzShiny(void);               /* Nuzlocke clause: a shiny does n
 void CtrSettings_SetNuzShiny(int on);
 int CtrSettings_NuzLevelCap(void);            /* Nuzlocke level caps: no experience at or above the badge's cap (off by default) */
 void CtrSettings_SetNuzLevelCap(int on);
+int CtrSettings_VisibleWilds(void);            /* wild Pokemon walk about on the prototype route and a touch starts the battle (off by default) */
+void CtrSettings_SetVisibleWilds(int on);
 int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
 void CtrSettings_SetRandomlocke(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */

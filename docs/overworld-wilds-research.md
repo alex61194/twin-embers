@@ -130,3 +130,50 @@ Defer Full features until the prototype proves the slot/palette budget.
 - Is a sprite generated from battle art acceptable visually?
 - Option default: Off, or On for New 3DS only?
 - Keep step encounters alongside visible mons (recommended: yes)?
+
+## 8. Step 1 prototype: what was built, how to test, known gaps
+
+Branch `agent/wilds`, recipe `patches/pokefirered/0249-visible-wilds.json`. Nothing was compiled for a console.
+
+### What exists
+- Setting `visiblewilds=1` in `settings.cfg` (default off, written only when on): `CtrSettings_VisibleWilds`.
+- OPTIONS: a sixth page "Wilds" (ES "Salvajes", DE "Wilde") with one row, "Visible wilds" (On/Off, EN/ES/DE with a
+  two-line description). Page 2 is full (7 rows) and page 3 would have shifted every later row index, so a new last
+  page was used; the PAGE button already draws up to 6 dots.
+- Game side (all functions; the only new data are `sCtrWild*` statics, so the clean-release rule holds):
+  - `wild_encounter.c`: `CtrWilds_Pick` (species and level from the map's land table through the game's own
+    `ChooseWildMonIndex_Land`, `CtrWild_VersionSlot` and `ChooseWildMonLevel`; so the LeafGreen/night variants and
+    levels match a grass step; the game's Repel test is applied), `CtrWilds_Start` (`GenerateWildMon` +
+    `StartWildBattle`, the ordinary wild battle path, so Nuzlocke and the rest see it as a normal encounter),
+    `CtrWilds_EncountersOn` (honours `DisableWildEncounters`).
+  - `event_object_movement.c`: up to 2 object events (local ids 0xF0-0xF1) on Route 1 only, spawned on tall grass 4+
+    tiles from the player inside the view, wander movement (range 2), removed by the game when out of view. Called
+    from `CtrFollower_Update` each field frame. Own LCG, so `Random()` is not drawn on for spawn choices (the game's
+    wander movement still uses it, as every NPC does). Graphics: the object is the Boy's (his palette, no new OBJ
+    palette), and the existing companion compositor draws the pack's Pokemon picture (`CTR_NPC_FOLLOWER + dex`) when the
+    pack has it; otherwise the Boy stays visible (placeholder). No new sprites were generated (that is step 2).
+  - `field_control_avatar.c`: in `ProcessPlayerFieldInput`, walking into the tile in front (held direction) or pressing
+    A there calls `CtrWilds_TryBattle`; it starts the battle and removes the object.
+- Guards: never in quest log playback or the Union Room, never while surfing/diving, never with Randomlocke on (its
+  species swap would not match the picture), never when fewer than 5 object events are free, none while field controls
+  are locked (scripts/cutscenes), trainers' sight is checked before the hook. With a Repel active, a Pokemon the Repel
+  would block is neither picked at spawn nor started on touch (it stays and blocks the way).
+- Nothing is persisted: they are removed on any other map, with the option off, and any one a save kept (object events
+  are saved) is removed on the next frame because its slot has no species.
+- Tests updated: `poketouch_options_test` (26 rows, 6 pages, the new row), `settings_test` (key written only when on).
+
+### How to test (console or Azahar)
+1. OPTIONS, last page ("Wilds"), "Visible wilds" On. 2. Go to Route 1 (Pallet Town north exit) and walk in the tall
+grass. After a few seconds up to 2 Pokemon (Pidgey/Rattata at levels 2-5) appear in the grass near you and wander.
+3. Walk into one or press A facing it: the normal wild battle starts. 4. Use a Repel with a lead Pokemon of a higher
+level than 5: no wilds appear. 5. Leave the route or switch the option off: they vanish. Step encounters are unchanged.
+
+### Known gaps and risks (unverified: needs a console)
+- Only syntax-checked (`-fsyntax-only`, ARM flags) and the recipe chain applies (246 recipes); no run-time test.
+- Pop-in: they appear inside the view (4+ tiles away), because the game culls object events outside it.
+- Placeholder look: without a pack picture (Pidgey/Rattata normally have one) the Boy is drawn.
+- The wander movement can step off the grass (range 2). No flee/behaviour, shiny preview, gender, or bottom screen info.
+- Cap is 2 on every console (the doc's Old 3DS cap); a New 3DS cap of 3-4 is a one-line change (`CTR_WILD_MAX`, the
+  local-id range 0xF0-0xF1 and the override share it).
+- A wild standing in front of a door/ledge path can block the player until it wanders off.
+- Step 2 would replace the single-route check with a table-driven map list and the density rule.

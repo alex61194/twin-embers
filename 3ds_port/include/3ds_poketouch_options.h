@@ -60,6 +60,7 @@ unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned specie
 int CtrOptions_Nuzlocke(void);       /* the Nuzlocke rules (NUZLOCKE): one wild encounter to catch in each area, a fainted Pokemon is released */
 int CtrOptions_NuzDuplicates(void);   /* NUZLOCKE clause (with NUZLOCKE on): a species already caught does not use the area's catch */
 int CtrOptions_NuzShiny(void);        /* NUZLOCKE clause: a shiny does not use the area's catch */
+int CtrOptions_VisibleWilds(void);    /* VISIBLE WILDS (prototype, Route 1): wild Pokemon are seen in the grass; walking into one starts its battle */
 int CtrOptions_NuzLevelCap(void);     /* NUZLOCKE level caps: no experience at or above the next Gym Leader's level (by badges) */
 /* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
 const char *CtrOptions_PageName(int page);   /* a page's short name in the game's language, "" past the last */

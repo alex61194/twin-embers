@@ -70,7 +70,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 25, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 26, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * CtrOptions_PageCount(), "more rows than the pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS counter") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "Type matchup") == 0, "TYPE MATCHUP is row 7");
@@ -186,19 +186,19 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
-    CHECK(view.optPage == 2 && view.optPageCount == 5 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE, RANDOMLOCKE and FREE HMS");
+    CHECK(view.optPage == 2 && view.optPageCount == 6 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE, RANDOMLOCKE and FREE HMS");
     /* The pages: seven rows, seven, the five rules, the three looks and the three NUZLOCKE options. */
-    CHECK(CtrOptions_PageCount() == 5 && CtrOptions_PageBase(4) == 22 && CtrOptions_PageRows(4) == 3 && strcmp(CtrOptions_PageName(4), "Nuzlocke") == 0 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
-          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "five pages");
+    CHECK(CtrOptions_PageCount() == 6 && CtrOptions_PageBase(5) == 25 && CtrOptions_PageRows(5) == 1 && strcmp(CtrOptions_PageName(5), "Wilds") == 0 && CtrOptions_PageBase(4) == 22 && CtrOptions_PageRows(4) == 3 && strcmp(CtrOptions_PageName(4), "Nuzlocke") == 0 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
+          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "six pages");
     /* The page API at its edges, and every row on exactly one page. */
     CHECK(CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7, "page 2 is the second seven rows");
     CHECK(CtrOptions_PageName(0)[0] && CtrOptions_PageName(3)[0] && strcmp(CtrOptions_PageName(0), CtrOptions_PageName(3)) != 0
-          && strcmp(CtrOptions_PageName(2), "Rules") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(5)[0] == 0,
+          && strcmp(CtrOptions_PageName(2), "Rules") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(6)[0] == 0,
           "each page has its name, none past the last");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 16);
     CHECK(strcmp(view.optPageName, "Rules") == 0 && view.optPage == 2, "the view carries the page's name");
-    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(5) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(5) == 0,
+    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(6) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(6) == 0,
           "a page that does not exist has no rows");
     {
         int total = 0;
@@ -212,12 +212,12 @@ int main(void)
         CHECK(total == CtrOptions_RowCount(), "the pages hold every row once (%d of %d)", total, CtrOptions_RowCount());
     }
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, CtrOptions_RowCount() - 2);
+    CtrOptions_Fill(&view, CtrOptions_RowCount() - 3);
     CHECK(view.optPage == 4 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
           "the last page: its three rows, the second selected, no fourth");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(6) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
           && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(18) == 2 && CtrOptions_PageOf(19) == 3 && CtrOptions_PageOf(21) == 3
-          && CtrOptions_PageOf(22) == 4 && CtrOptions_PageOf(24) == 4 && CtrOptions_PageOf(99) == 4, "a row's page");
+          && CtrOptions_PageOf(22) == 4 && CtrOptions_PageOf(24) == 4 && CtrOptions_PageOf(25) == 5 && CtrOptions_PageOf(99) == 5, "a row's page");
     /* FREE HMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_FreeHm() == 0 && CtrSettings_FreeHm() == 0 && CtrOptions_Count(18) == 2, "FREE HMS starts off");
     Text(18, "Off");
@@ -282,6 +282,15 @@ int main(void)
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 22);
     CHECK(view.optPage == 4 && view.optCount == 3 && view.optLabel[0][0] && view.optLabel[1][0] && view.optLabel[2][0], "page 5 holds three rows");
+    /* VISIBLE WILDS (page 6, row 25): off by default, a switch kept in the settings. */
+    CHECK(CtrOptions_VisibleWilds() == 0 && CtrSettings_VisibleWilds() == 0 && CtrOptions_Count(25) == 2, "VISIBLE WILDS starts off");
+    Text(25, "Off");
+    CtrOptions_Step(25, 1);
+    Text(25, "On");
+    CHECK(CtrOptions_VisibleWilds() == 1 && CtrSettings_VisibleWilds() == 1, "VISIBLE WILDS on, kept in the settings");
+    CtrOptions_Step(25, 1);
+    CHECK(CtrOptions_VisibleWilds() == 0, "VISIBLE WILDS back off");
+    CHECK(strcmp(CtrOptions_Row(25)->label, "Visible wilds") == 0, "the row's label");
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0 && CtrOptions_Count(15) == 2, "REUSABLE TMS starts off");
     Text(15, "Off");
@@ -360,7 +369,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 5 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 6 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "Move details") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0

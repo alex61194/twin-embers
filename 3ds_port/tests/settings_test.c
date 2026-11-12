@@ -127,6 +127,22 @@ int main(void)
     assert(strstr(big, "nuz") == NULL || strstr(big, "nuzlocke") != NULL);
     assert(strstr(big, "nuzdupes") == NULL && strstr(big, "nuzshiny") == NULL && strstr(big, "nuzcap") == NULL);
 
+    /* VISIBLE WILDS: off until chosen, written only when on. */
+    assert(CtrSettings_VisibleWilds() == 0);
+    CtrSettings_SetVisibleWilds(1);
+    assert(CtrSettings_VisibleWilds() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "visiblewilds=1\n") != NULL);
+    CtrSettings_SetVisibleWilds(0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(text, 0, sizeof(text));
+    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(text, "visiblewilds") == NULL);
+
     /* FREE HMS: off until chosen, written only when on. */
     assert(CtrSettings_FreeHm() == 0);
     CtrSettings_SetFreeHm(1);
