@@ -710,13 +710,13 @@ static void EmSurface(void)
 /* The action menu's other colours (BAG blue, POKeMON green, RUN purple, the quick ball's gold) are the skin's. */
 
 /* A pill with `text` on it, 15 pixels tall; BPillW is its width, x its left edge. */
-static int BPillW(const char *text)
+UI_FN int BPillW(const char *text)
 {
     return UiTextWidth(text, 1) + 14;
 }
 
 /* A sunk pill (the mockup's ipill): outline, a flat fill, a shade under its top edge and a light line under it. */
-static void BPill(int x, int y, const char *text, uint16_t bg, uint16_t ink, uint16_t shadow)
+UI_FN void BPill(int x, int y, const char *text, uint16_t bg, uint16_t ink, uint16_t shadow)
 {
     int w = BPillW(text);
 

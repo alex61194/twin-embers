@@ -143,8 +143,9 @@ static void FCardNote(const CtrPokeTouchView *v, int w)
 {
     (void)v;
     EmSurface();
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
-    UiText(CtrUiText(UIS_CARD_TITLE), NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, NOTE_X + w - 4);
-    BPWrap(CtrUiText(UIS_CARD_TURN), NOTE_X + 12, NOTE_Y + 21, w - 18, 3, EM_DIM, EM_DARK_SH);
+    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+    Em2Text(CtrUiText(UIS_CARD_TITLE), NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
+    LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
+    BPWrap(CtrUiText(UIS_CARD_TURN), NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM, EM_DARK_SH);
     sUiS = &sUiNavy;
 }
