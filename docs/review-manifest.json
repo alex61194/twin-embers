@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "b02d423c57bc7db187b6958017dbdbcb9639f0e50096278056cb1b40ec770b72",
+   "sha256": "ed7bc0a7597452eabb4e0e5b6d734080fdd3de0c7a58e34da7b0a4ed5655057e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2151,6 +2151,14 @@
   {
    "path": "3ds_port/tests/settings_test.c",
    "sha256": "0a94e5fd497eee70d324fff8ce0959c5529612939e1b05ed67ee58d7a83802dd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/shake_pointer_test.c",
+   "sha256": "9f3230b33d745b58c6fcd3be53cde491c20192bde301f3dbca7e9f89f6087215",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6105,6 +6113,14 @@
   {
    "path": "patches/pokefirered/0255-easychat-native-bridge.json",
    "sha256": "9ae38bb8811dac5c5f999bfcf5afbb2f2266660f77edce24eb9d4707ffba6dcd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0256-shake-mon-terrain-pointer.json",
+   "sha256": "dc6dec1e61ff5688afe04aca284feda98a82dd5b84cd594d3661b11a22bb086d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
