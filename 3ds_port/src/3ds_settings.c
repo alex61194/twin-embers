@@ -26,6 +26,9 @@ static int sExpShare;
 static int sTmReuse;
 static int sNuzlocke;
 static int sRandomlocke;
+static int sNuzDupes;       /* NUZLOCKE clauses: a species already caught does not use the area's catch */
+static int sNuzShiny;       /* a shiny does not use it either */
+static int sNuzCap;         /* LEVEL CAPS: no experience at or above the badge's cap */
 static int sFreeHm;
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
@@ -100,6 +103,12 @@ static void Load(void)
             sNuzlocke = value != 0;
         else if (sscanf(line, "randomlocke=%u", &value) == 1)
             sRandomlocke = value != 0;
+        else if (sscanf(line, "nuzdupes=%u", &value) == 1)
+            sNuzDupes = value != 0;
+        else if (sscanf(line, "nuzshiny=%u", &value) == 1)
+            sNuzShiny = value != 0;
+        else if (sscanf(line, "nuzcap=%u", &value) == 1)
+            sNuzCap = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
         else if (LookLine(line))
@@ -144,6 +153,12 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "nuzlocke=1\n");
     if (sRandomlocke && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "randomlocke=1\n");
+    if (sNuzDupes && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "nuzdupes=1\n");
+    if (sNuzShiny && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "nuzshiny=1\n");
+    if (sNuzCap && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "nuzcap=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
     for (int slot = 0; slot < 3; ++slot)
@@ -392,6 +407,54 @@ void CtrSettings_SetNuzlocke(int on)
     if (on == sNuzlocke)
         return;
     sNuzlocke = on;
+    Save();
+}
+
+int CtrSettings_NuzDuplicates(void)
+{
+    Load();
+    return sNuzDupes;
+}
+
+void CtrSettings_SetNuzDuplicates(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sNuzDupes)
+        return;
+    sNuzDupes = on;
+    Save();
+}
+
+int CtrSettings_NuzShiny(void)
+{
+    Load();
+    return sNuzShiny;
+}
+
+void CtrSettings_SetNuzShiny(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sNuzShiny)
+        return;
+    sNuzShiny = on;
+    Save();
+}
+
+int CtrSettings_NuzLevelCap(void)
+{
+    Load();
+    return sNuzCap;
+}
+
+void CtrSettings_SetNuzLevelCap(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sNuzCap)
+        return;
+    sNuzCap = on;
     Save();
 }
 

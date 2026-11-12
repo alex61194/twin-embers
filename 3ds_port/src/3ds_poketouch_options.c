@@ -88,6 +88,12 @@ static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
 static void SetRandomlocke(int v) { CtrSettings_SetRandomlocke(!(v & 1)); }
 static int GetNuzlocke(void) { return !CtrSettings_Nuzlocke(); }
 static void SetNuzlocke(int v) { CtrSettings_SetNuzlocke(!(v & 1)); }
+static int GetNuzDupes(void) { return !CtrSettings_NuzDuplicates(); }
+static void SetNuzDupes(int v) { CtrSettings_SetNuzDuplicates(!(v & 1)); }
+static int GetNuzShiny(void) { return !CtrSettings_NuzShiny(); }
+static void SetNuzShiny(int v) { CtrSettings_SetNuzShiny(!(v & 1)); }
+static int GetNuzCap(void) { return !CtrSettings_NuzLevelCap(); }
+static void SetNuzCap(int v) { CtrSettings_SetNuzLevelCap(!(v & 1)); }
 static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
@@ -110,6 +116,9 @@ int CtrOptions_Companion(void) { return CtrSettings_Companion(); }
 int CtrOptions_ExpShare(void) { return CtrSettings_ExpShare(); }
 int CtrOptions_ReusableTm(void) { return CtrSettings_TmReuse(); }
 int CtrOptions_Nuzlocke(void) { return CtrSettings_Nuzlocke(); }
+int CtrOptions_NuzDuplicates(void) { return CtrSettings_NuzDuplicates(); }
+int CtrOptions_NuzShiny(void) { return CtrSettings_NuzShiny(); }
+int CtrOptions_NuzLevelCap(void) { return CtrSettings_NuzLevelCap(); }
 int CtrOptions_Randomlocke(void) { return CtrSettings_Randomlocke(); }
 int CtrOptions_FreeHm(void) { return CtrSettings_FreeHm(); }
 
@@ -178,17 +187,24 @@ static const CtrOptionRow sRows[] = {
      GetLookLeaf, LookCount, SetLookLeaf},
     {CTR_TR("RIVAL LOOK", "ASPECTO RIVAL", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos del Builder.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
+    /* Page 5: the optional rules of the NUZLOCKE row (they count only while it is on). */
+    {CTR_TR("DUPLICATES", "REPETIDOS", "Duplikate"), {CTR_TR("A species you already caught", "Una especie ya capturada", "Eine schon gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+     GetNuzDupes, TwoCount, SetNuzDupes},
+    {CTR_TR("SHINY CLAUSE", "CL\xC3\x81USULA SHINY", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no gasta", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+     GetNuzShiny, TwoCount, SetNuzShiny},
+    {CTR_TR("LEVEL CAPS", "NIVEL M\xC3\x81XIMO", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xADder.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
+     GetNuzCap, TwoCount, SetNuzCap},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
 
 /* The pages: the first row of each, then the end. Page 3 (the game's rules) and page 4 (the looks) are short on purpose: the look
  * preview is a card in the rows a page does not use. */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 19 };
-static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, ROWS};
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 19, PAGE5 = 22 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, ROWS};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
-_Static_assert(PAGE4 < ROWS, "the last page has rows");
-_Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && ROWS - PAGE4 <= PT_OPT_MAX,
+_Static_assert(PAGE5 < ROWS, "the last page has rows");
+_Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX && ROWS - PAGE5 <= PT_OPT_MAX,
                "a page holds up to PT_OPT_MAX rows");
 
 int CtrOptions_PageCount(void) { return PAGES; }
@@ -196,7 +212,8 @@ int CtrOptions_PageCount(void) { return PAGES; }
 const char *CtrOptions_PageName(int page)
 {
     static const char *const names[] = {CTR_TR("GAME", "JUEGO", "Spiel"), CTR_TR("EXTRAS", "EXTRAS", "Extras"),
-                                        CTR_TR("RULES", "REGLAS", "Regeln"), CTR_TR("LOOKS", "ASPECTOS", "Looks")};
+                                        CTR_TR("RULES", "REGLAS", "Regeln"), CTR_TR("LOOKS", "ASPECTOS", "Looks"),
+                                        CTR_TR("NUZLOCKE", "NUZLOCKE", "Nuzlocke")};
 
     _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
     return page >= 0 && page < PAGES ? names[page] : "";

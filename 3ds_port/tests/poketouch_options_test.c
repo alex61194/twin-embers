@@ -70,7 +70,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 22, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 25, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * CtrOptions_PageCount(), "more rows than the pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS COUNTER") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(7)->label, "TYPE MATCHUP") == 0, "TYPE MATCHUP is row 7");
@@ -186,19 +186,19 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
-    CHECK(view.optPage == 2 && view.optPageCount == 4 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE, RANDOMLOCKE and FREE HMS");
-    /* The pages: seven rows, seven, the five rules and the three looks. */
-    CHECK(CtrOptions_PageCount() == 4 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
-          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "four pages");
+    CHECK(view.optPage == 2 && view.optPageCount == 5 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE, RANDOMLOCKE and FREE HMS");
+    /* The pages: seven rows, seven, the five rules, the three looks and the three NUZLOCKE options. */
+    CHECK(CtrOptions_PageCount() == 5 && CtrOptions_PageBase(4) == 22 && CtrOptions_PageRows(4) == 3 && strcmp(CtrOptions_PageName(4), "NUZLOCKE") == 0 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
+          && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "five pages");
     /* The page API at its edges, and every row on exactly one page. */
     CHECK(CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7, "page 2 is the second seven rows");
     CHECK(CtrOptions_PageName(0)[0] && CtrOptions_PageName(3)[0] && strcmp(CtrOptions_PageName(0), CtrOptions_PageName(3)) != 0
-          && strcmp(CtrOptions_PageName(2), "RULES") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(4)[0] == 0,
+          && strcmp(CtrOptions_PageName(2), "RULES") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(5)[0] == 0,
           "each page has its name, none past the last");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 16);
     CHECK(strcmp(view.optPageName, "RULES") == 0 && view.optPage == 2, "the view carries the page's name");
-    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(4) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(4) == 0,
+    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(5) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(5) == 0,
           "a page that does not exist has no rows");
     {
         int total = 0;
@@ -213,11 +213,11 @@ int main(void)
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, CtrOptions_RowCount() - 2);
-    CHECK(view.optPage == 3 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
+    CHECK(view.optPage == 4 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
           "the last page: its three rows, the second selected, no fourth");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(6) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
           && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(18) == 2 && CtrOptions_PageOf(19) == 3 && CtrOptions_PageOf(21) == 3
-          && CtrOptions_PageOf(99) == 3, "a row's page");
+          && CtrOptions_PageOf(22) == 4 && CtrOptions_PageOf(24) == 4 && CtrOptions_PageOf(99) == 4, "a row's page");
     /* FREE HMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_FreeHm() == 0 && CtrSettings_FreeHm() == 0 && CtrOptions_Count(18) == 2, "FREE HMS starts off");
     Text(18, "OFF");
@@ -264,6 +264,24 @@ int main(void)
     Text(16, "ON");
     CtrOptions_Step(16, 1);
     CHECK(CtrOptions_Nuzlocke() == 0, "NUZLOCKE back off");
+    /* The three optional rules (page 5, rows 22 to 24): off by default, each its own switch kept in the settings. */
+    CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0
+          && CtrOptions_Count(22) == 2 && CtrOptions_Count(23) == 2 && CtrOptions_Count(24) == 2, "the NUZLOCKE options start off");
+    Text(22, "OFF");
+    CtrOptions_Step(22, 1);
+    CtrOptions_Step(24, 1);
+    CHECK(CtrOptions_NuzDuplicates() == 1 && CtrSettings_NuzDuplicates() == 1 && CtrOptions_NuzShiny() == 0
+          && CtrOptions_NuzLevelCap() == 1 && CtrSettings_NuzLevelCap() == 1, "DUPLICATES and LEVEL CAPS on, SHINY CLAUSE still off");
+    Text(22, "ON");
+    CtrOptions_Step(23, 1);
+    CHECK(CtrOptions_NuzShiny() == 1 && CtrSettings_NuzShiny() == 1, "SHINY CLAUSE on, kept in the settings");
+    CtrOptions_Step(22, 1);
+    CtrOptions_Step(23, 1);
+    CtrOptions_Step(24, 1);
+    CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0, "the NUZLOCKE options back off");
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 22);
+    CHECK(view.optPage == 4 && view.optCount == 3 && view.optLabel[0][0] && view.optLabel[1][0] && view.optLabel[2][0], "page 5 holds three rows");
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0 && CtrOptions_Count(15) == 2, "REUSABLE TMS starts off");
     Text(15, "OFF");
@@ -342,7 +360,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 8);
-    CHECK(view.optPage == 1 && view.optPageCount == 4 && view.optCount == 7 && view.optSelected == 1
+    CHECK(view.optPage == 1 && view.optPageCount == 5 && view.optCount == 7 && view.optSelected == 1
           && strcmp(view.optLabel[1], "MOVE DETAILS") == 0, "Page 2 Fill");
     /* ON/OFF rows are switches (on, off), the others text: DAY/NIGHT's OFF is a word, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 0 && view.optSwitch[3] == 0
