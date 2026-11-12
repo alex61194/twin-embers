@@ -209,6 +209,50 @@ typedef struct {
     char name[32], from[24];        /* from: as typed, "" when unknown */
 } CtrPokeTouchMail;
 
+/* Easy Chat (3ds_field_easychat_impl.h), drawn by the port over the whole lower screen (the upper one keeps FireRed's own): a remote
+ * for the game's screen. The phrase as chips, the group menu (or the letters of the A-Z order), a group's word list with its rail and
+ * a letter strip, and the game's Yes/No questions over the dimmed phrase. Everything is the game's state (CtrBottomEasyChat_*); the
+ * touches are walked to with its own keys (3ds_bottom_easychat_impl.h). */
+#define PT_EC_WORDS 9
+#define PT_EC_WORD_LEN 28
+#define PT_EC_GROUPS 21
+#define PT_EC_GROUP_LEN 20
+#define PT_EC_ROWS 6                /* the list's rows shown, two words each */
+#define PT_EC_LETTERS 26
+#define PT_EC_ASK_LEN 48
+enum { PT_EC_EDIT, PT_EC_GROUP, PT_EC_LETTER, PT_EC_LIST };         /* the screen: the phrase, the groups, the letters, a list */
+enum { PT_EC_ASK_NONE, PT_EC_ASK_QUIT, PT_EC_ASK_DELETE, PT_EC_ASK_CONFIRM };
+#define PT_EC_CELL_TOGGLE 24        /* the group and letter screens' A-Z / groups button and BACK, as cells */
+#define PT_EC_CELL_BACK 25
+/* Hit codes (CtrPokeTouch_EasyHit). */
+enum { PT_EC_HIT_CHIP = 100, PT_EC_HIT_MODE_GROUPS = 120, PT_EC_HIT_MODE_ALPHA, PT_EC_HIT_DELETE = 130, PT_EC_HIT_CANCEL,
+       PT_EC_HIT_CONFIRM, PT_EC_HIT_CELL = 200, PT_EC_HIT_ROW = 300, PT_EC_HIT_UP = 320, PT_EC_HIT_DOWN, PT_EC_HIT_RAIL,
+       PT_EC_HIT_STRIP, PT_EC_HIT_BACK, PT_EC_HIT_TOGGLE, PT_EC_HIT_PLACE, PT_EC_HIT_YES = 340, PT_EC_HIT_NO };
+typedef struct {
+    uint8_t on;
+    uint8_t screen;                 /* PT_EC_* */
+    uint8_t ask;                    /* PT_EC_ASK_*: a question is open over the phrase */
+    uint8_t askCursor;              /* 0 YES, 1 NO: the game's cursor on it */
+    uint8_t alpha;                  /* the A-Z order is on */
+    uint8_t wantAlpha;              /* the editor's mode buttons: the order the next word is picked in */
+    uint8_t numWords;               /* the phrase's slots */
+    int8_t cursor;                  /* the editor's selected chip, -1 none */
+    int8_t footer;                  /* the editor's selected button (0 DELETE ALL, 1 QUIT, 2 OK), -1 none */
+    int8_t cell;                    /* the group / letter screen's selected cell (PT_EC_CELL_*), -1 none */
+    uint8_t groupCount;
+    uint8_t letter;                 /* the strip's lit letter 0..25, 255 none */
+    uint16_t listCount;             /* the list: its words, the first row shown, the selected word */
+    uint16_t first;
+    int16_t word;
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    char title[PT_EC_ASK_LEN];      /* the game's title of the screen */
+    char listTitle[PT_EC_GROUP_LEN];/* the open group, or the letter */
+    char ask1[PT_EC_ASK_LEN], ask2[PT_EC_ASK_LEN];
+    char chip[PT_EC_WORDS][PT_EC_WORD_LEN];
+    char group[PT_EC_GROUPS][PT_EC_GROUP_LEN];
+    char list[2 * PT_EC_ROWS][PT_EC_WORD_LEN];
+} CtrPokeTouchEasy;
+
 /* A choice of the field (a script's multichoice, YES/NO or grid, the PC's menus) drawn by the port
  * (3ds_field_choice_impl.h), a remote for FireRed's menu: its rows as buttons (cols > 0: a grid of that many columns),
  * the cursor's, and the question of the message box. A row is asked of the menu and taken with its A; BACK is its B. */
@@ -393,6 +437,7 @@ typedef struct {
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
     CtrPokeTouchRelearn relearn;/* the move relearner's list, when relearn.on */
     CtrPokeTouchMail mail;      /* the letter being read, when mail.on */
+    CtrPokeTouchEasy ec;        /* Easy Chat over the whole screen, when ec.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
     CtrPokeTouchBox box;        /* a PC box, when box.on */
     CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
@@ -435,6 +480,11 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
 int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
 /* The row (or scroll arrow) of the relearner's list (view->relearn.on) under (x, y): PT_RL_HIT_*, or -1. */
 int CtrPokeTouch_RelearnHit(const CtrPokeTouchView *view, int x, int y);
+/* What Easy Chat (view->ec.on) shows under lower-screen point (x, y): a PT_EC_HIT_* code (a chip's is PT_EC_HIT_CHIP + slot, a cell's
+ * PT_EC_HIT_CELL + cell, a list row's PT_EC_HIT_ROW + its place among the rows shown), or -1. */
+int CtrPokeTouch_EasyHit(const CtrPokeTouchView *view, int x, int y);
+int CtrPokeTouch_EasyRailTarget(const CtrPokeTouchEasy *ec, int y);   /* the first row the rail's thumb at y stands for (-1: no rail) */
+int CtrPokeTouch_EasyStripLetter(int x, int y);                       /* the letter 0..25 under the strip at (x, y), or -1 */
 /* The row of the field's choice (view->choice.on) under lower-screen point (x, y): PT_CHOICE_HIT_ROW + row, or -1. */
 int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *view, int x, int y);
 /* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code
