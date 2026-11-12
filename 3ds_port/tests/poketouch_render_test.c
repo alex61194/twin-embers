@@ -498,6 +498,14 @@ int main(int argc, char **argv)
         s.saveState=SAVE_SUCCESS; strcpy(s.bar[0],"Your game has been saved!"); s.bar[1][0]=0; SHOT("save_saved");
         s.saveState=SAVE_ERROR; strcpy(s.bar[0],"The game could not be saved."); strcpy(s.bar[1],"Try again."); SHOT("save_error");
         s.saveMinutes=8; s.saveMoney=999999; s.saveBadges=8; s.playerFemale=1; strcpy(s.playerName,"Leaf"); update(&old,&s); SHOT("save_error_changed");
+        /* A choice of the field (3ds_field_choice_impl.h): flame row with the ring and cursor, the question in the window; the cursor moves incrementally. */
+        memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+        s.save=0; s.saveState=0; s.viewport=0; s.backVisible=0; s.choice.on=1; s.choice.count=2; s.choice.cols=0; s.choice.cursor=0; s.choice.pressed=-1;
+        strcpy(s.choice.label[0],"YES"); strcpy(s.choice.label[1],"NO"); strcpy(s.choice.prompt,"Would you like to buy this?");
+        strcpy(s.bar[0],""); s.bar[1][0]=0;
+        update(&old,&s); SHOT("choice_yesno"); s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
+        s.choice.count=6; for(int k=0;k<6;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"CHOICE %d",k+1);
+        s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s); s.choice.on=0;
         (void)before;
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
