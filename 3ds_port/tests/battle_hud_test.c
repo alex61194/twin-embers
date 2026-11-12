@@ -83,7 +83,8 @@ int main(void)
      * red at the right end, and the EXP bar's dark slate base from row 39 down. */
     assert(Rgb(Pixel(player, 60, 2)) == 0xFEFEFE);
     assert((Pixel(player, 40, 14) >> 24) >= 248 && ((Pixel(player, 40, 14) >> 16) & 255) < 200);
-    assert(Rgb(Pixel(player, 122, 20)) == 0x8A1610);
+    assert(Rgb(Pixel(player, 128, 20)) == 0x8A1610);
+    assert(Rgb(Pixel(player, 131, 18)) != 0xE8382C);                     /* no Poke Ball on the player's cap */
     assert(Rgb(Pixel(player, 5, 39)) == 0x4C547C);
 
     /* A full HP bar is green to its end; a fifth is red. The capsule is at (16, 17); its track starts 16 past its left and

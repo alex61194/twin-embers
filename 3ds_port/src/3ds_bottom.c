@@ -1571,7 +1571,7 @@ static void HomeSelectionBar(CtrPokeTouchView *v)
     v->flyOk = status == PT_FLY_OK;
     if (status == PT_FLY_OK) {
         snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly available", "Puedes volar", "Fliegen m\xC3\xB6glich"));
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Tap again to Fly", "Toca otra vez para volar", "Nochmal tippen zum Fliegen"));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Tap Fly, or the place again", "Toca Volar o el lugar otra vez", "Fliegen oder Ort erneut tippen"));
     } else if (status != PT_FLY_NONE) {
         snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly unavailable", "No puedes volar", "Fliegen nicht m\xC3\xB6glich"));
         snprintf(v->bar[2], PT_BAR_LEN, "%s", sWhy[status]);
@@ -3706,6 +3706,17 @@ static void ProcessPokeTouch(const CtrInput *in)
         ProcessSaveInput(in);
     if (in->touchDown) {
         int id = CtrPokeTouch_HitTest((int)in->touchX, (int)in->touchY), gx, gy;
+        /* HOME's FLY button: the selected place, asked of the game now (the same as tapping the place again). */
+        if (!NativeActive() && sHome.valid && sHome.mapsec != MAPSEC_NONE_VALUE
+            && CtrPokeTouch_FlyHit((int)in->touchX, (int)in->touchY)) {
+            if (CtrPokeTouch_FlyStatus((unsigned)sHome.mapsec) == PT_FLY_OK) {
+                CtrPokeTouch_RequestFly((unsigned)sHome.mapsec);
+                sHome.valid = 0;
+                sFlyPick = 0;
+            }
+            sPoke.id = PT_NONE;
+            return;
+        }
         sPoke.id = (uint8_t)(id != PT_NONE && FieldEnabled(id) ? id : PT_NONE);
         sPoke.inside = sPoke.id != PT_NONE;
         /* A touch on the map (the viewport): a tap when released near where it began.

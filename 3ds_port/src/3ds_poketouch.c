@@ -624,7 +624,7 @@ static void IconDraw(const struct Icon *icon, int frame, int cx, int cy)
 
 static const char *RegionName(int group)
 {
-    return group == PT_MAP_KANTO ? "KANTO" : "SEVII";
+    return group == PT_MAP_KANTO ? "Kanto" : "Sevii";
 }
 
 /* The destination's ring: the cursor icon's rectangle and 2 px round it; false when nothing is chosen or its cell is off the map. */
@@ -1296,6 +1296,16 @@ static int FrameSample(int type, int x, int y)
     return 1;
 }
 
+/* HOME's FLY button as last drawn (w 0: not there), so a touch on it can be told. */
+static CtrPokeTouchRect sFlyButton;
+
+bool CtrPokeTouch_FlyHit(int x, int y)
+{
+    const CtrPokeTouchRect *r = &sFlyButton;
+
+    return r->w && x >= r->x - 4 && y >= r->y - 4 && x < r->x + r->w + 4 && y < r->y + r->h + 4;
+}
+
 static void Bar(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sBar;
@@ -1304,6 +1314,7 @@ static void Bar(const CtrPokeTouchView *v)
     int side = v->backVisible || hasPage || v->save;
     int w = side ? NOTE_W_SIDE : NOTE_W_FULL;
 
+    sFlyButton.w = 0;
     TsBgRect(r->x, r->y, r->w, r->h);
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
@@ -1355,6 +1366,7 @@ static void Bar(const CtrPokeTouchView *v)
                 px = right - pw;
             }
             fy = EmButton(px, NOTE_Y + 7, pw, 17, &kEmFlame, 1, 0);
+            sFlyButton = (CtrPokeTouchRect){(int16_t)px, NOTE_Y + 7, (int16_t)pw, 17};
             EmLabel(fly, px, pw, fy, 16, &kEmFlame);
             titleRight = px - 4;
         }

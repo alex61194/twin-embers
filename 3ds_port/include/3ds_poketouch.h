@@ -417,6 +417,7 @@ int CtrPokeTouch_SaveHit(int x, int y, int state);
 
 /* PT_* under a bottom-screen pixel, or PT_NONE. */
 int CtrPokeTouch_HitTest(int x, int y);
+bool CtrPokeTouch_FlyHit(int x, int y);          /* HOME's FLY button, while it is drawn */
 /* What the field Bag (view->bag.on) shows under lower-screen point (x, y): a PT_BAG_HIT_* code, or -1. */
 int CtrPokeTouch_BagHit(const CtrPokeTouchView *view, int x, int y);
 /* What the Pokedex (view->dex.on) shows under lower-screen point (x, y): a PT_DEX_HIT_* code, or -1. */

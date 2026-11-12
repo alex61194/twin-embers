@@ -273,16 +273,16 @@ static void Plate(Canvas *c, int x, int y, int w, int h, int left, int right, in
     Shape(&m, w, h, left, right, 2, slant);
     Shadow(c, x, y, &m);
     Inset(&m, &in);
-    cap = in;
+    cap = m;
     for (int j = 0; j < h; ++j)
         for (int i = 0; i < w; ++i)
         {
             if (!m.m[j][i]) continue;
             Put(c, x + i, y + j, SLATE);
+            if (capSide == CAP_LEFT ? i >= capW : i < w - capW) cap.m[j][i] = 0;
             if (!in.m[j][i]) continue;
             Put(c, x + i, y + j, j <= glass ? Gradient(top, 2, j) : Gradient(low, 2, j));
             if (strip && j >= strip) Put(c, x + i, y + j, Gradient(base, 2, j));
-            if (capSide == CAP_LEFT ? i >= capW : i < w - capW) cap.m[j][i] = 0;
         }
     Inset(&cap, &capIn);
     for (int j = 0; j < h; ++j)
@@ -515,7 +515,7 @@ static void Numbers(const CtrHudState *s, char *out)
 #define LOW_H 36                           /* the Safari Zone's box */
 /* The player's boxes in a double battle: one row for the name and one for the bar, so both fit under the foe's ground. */
 #define DOUBLE_H 26
-#define PLAYER_CAP 14                      /* the player's cap holds a Poke Ball (10 wide) between its two rings */
+#define PLAYER_CAP 8                       /* the player's cap is a plain flame end: no Poke Ball */
 
 /* The cap's Poke Ball: always there on the foe's side, in a wild battle red once the species is caught. */
 static void CapBall(Canvas *c, int x, int h, bool caught)
@@ -530,12 +530,12 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
     if (!s->noBall)
         CapBall(c, 4, h, s->caught);
     int nx = cap + 5;
-    FlameLine(c, nx, w - 16, 17, 2);
+    FlameLine(c, nx, w - 20, 17, 2);
     Name(c, nx, 12, s);
-    Level(c, w - 14, 12, s->level);
+    Level(c, w - 20, 12, s->level);
     int hx = nx;
     if (HasStatus(s)) hx += Status(c, hx, 19, s->status) + 3;
-    HpBar(c, hx, 21, w - 23 - hx, s->hpPixels);
+    HpBar(c, hx, 21, w - 20 - hx, s->hpPixels);
 }
 
 static void PlayerBox(Canvas *c, const CtrHudState *s)
@@ -545,7 +545,6 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
     int end = w - cap - 4;
 
     Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, CAP_RIGHT, cap, 3, strip);
-    CapBall(c, w - cap + 2, h - 9, true);
     int nx = 20;
     FlameLine(c, nx, end, 14, 2);
     Name(c, nx, 10, s);
@@ -567,7 +566,6 @@ static void PlayerDoubleBox(Canvas *c, const CtrHudState *s)
     int end = w - cap - 4;
 
     Plate(c, 0, 0, w, h, END_SLANT, END_ROUND, CAP_RIGHT, cap, 3, 0);
-    CapBall(c, w - cap + 2, h, true);
     FlameLine(c, 20, end, 13, 1);
     Name(c, 20, 10, s);
     Level(c, end - 2, 10, s->level);

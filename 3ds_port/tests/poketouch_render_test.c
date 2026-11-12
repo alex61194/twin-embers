@@ -300,7 +300,7 @@ int main(int argc, char **argv)
     for(int i=0;i<PT_COUNT;++i) v.enabled[i]=1;
     CtrPokeTouch_Draw(canvas,&v);
     {   /* HOME: the map fills the viewport, but for the region's red ribbon at its corner (the Llama mockup's KANTO); the first three rows are shaded: the map sits in its frame */
-        int rib=UiTextWidth("KANTO",1)+18;
+        int rib=UiTextWidth("Kanto",1)+18;
         for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
             int onRibbon=x<4+rib&&y<4+13;
             if(onRibbon) continue;
