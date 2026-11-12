@@ -946,7 +946,7 @@ static void Bench(void)
     CtrWildsCore c;
     CtrWildSense s;
     CtrWildAct a;
-    volatile int sink = 0;
+    volatile uint32_t sink = 0;
     double t0, t1;
     const int N = 20000000;
 
@@ -954,7 +954,7 @@ static void Bench(void)
     CtrWildsCore_Init(&c, 81);
     t0 = Now();
     for (int i = 0; i < N; ++i)
-        sink += CtrWildsCore_Idle(&c, i & 0);
+        sink += (uint32_t)CtrWildsCore_Idle(&c, i & 0);
     t1 = Now();
     printf("bench: option OFF, nothing out (early out): %.2f ns per frame\n", (t1 - t0) / N);
     /* option ON: six wilds thinking + the periodic check + the spawn due test */
@@ -975,7 +975,7 @@ static void Bench(void)
         CtrWildsCore_SpawnDue(&c);
         for (int k = 0; k < 6; ++k)
             CtrWildsCore_Think(&c, k, &s, &a);
-        sink += a.kind;
+        sink += (uint32_t)a.kind;
     }
     t1 = Now();
     printf("bench: option ON, six wilds out, at target (frame + tick + 6 thinks): %.1f ns per frame\n", (t1 - t0) / (N / 10));
@@ -989,7 +989,7 @@ static void Bench(void)
         for (int i = 0; i < N / 10; ++i)
         {
             ok += CtrWildsCore_PickCell(&c, &ring, AlwaysLand, NULL, 1, 0, 0, &x, &y, &kind);
-            sink += (int)CtrWildsCore_Personality(&c, i % 25);
+            sink += CtrWildsCore_Personality(&c, i % 25);
         }
         t1 = Now();
         printf("bench: one spawn attempt (cell + personality): %.1f ns each\n", (t1 - t0) / (N / 10));
