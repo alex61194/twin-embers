@@ -157,12 +157,12 @@ int main(void)
     CtrOptions_Fill(&view, 11);
     CHECK(view.optSegCount[4] == 3 && view.optSegValue[4] == CTR_EMBERS_HIGH && strcmp(view.optSegName[4][0], "OFF") == 0
           && strcmp(view.optSegName[4][2], "HIGH") == 0 && view.optSegCount[3] == 0, "EMBERS shown as levels");
-    /* COMPANION: none until chosen, then FOLLOW, then BE IT; a row of levels, kept in the settings. */
+    /* COMPANION: none until chosen, then TRAIL, then BE IT; a row of levels, kept in the settings. */
     Text(13, "OFF");
     CHECK(CtrOptions_Companion() == 0 && CtrSettings_Companion() == 0, "COMPANION starts off");
     CtrOptions_Step(13, 1);
-    Text(13, "FOLLOW");
-    CHECK(CtrOptions_Companion() == 1 && CtrSettings_Companion() == 1, "COMPANION stepped to FOLLOW");
+    Text(13, "TRAIL");
+    CHECK(CtrOptions_Companion() == 1 && CtrSettings_Companion() == 1, "COMPANION stepped to TRAIL");
     CtrOptions_Step(13, 1);
     Text(13, "BE IT");
     CHECK(CtrOptions_Companion() == 2 && CtrSettings_Companion() == 2, "COMPANION stepped to BE IT");
@@ -318,7 +318,7 @@ int main(void)
     CHECK(!view.optLook.on, "no preview on the first page");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 13);
-    CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "FOLLOW") == 0
+    CHECK(view.optSegCount[6] == 3 && view.optSegValue[6] == 2 && strcmp(view.optSegName[6][1], "TRAIL") == 0
           && strcmp(view.optSegName[6][2], "BE IT") == 0, "COMPANION shown as levels");
     CtrOptions_Set(13, 0);
     /* The choice outlives the session (settings.cfg); without one the console decides. */

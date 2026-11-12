@@ -146,10 +146,17 @@ static void FBLlButton(const CtrPokeTouchRect *r, const EmPal *p, const char *la
 }
 
 /* A count (or a price) in the sunk pill the mockup gives it, blue; (x, y) its left and top, `w` its width. */
-static void FBPill(int x, int y, int w, const char *text)
+static void FBPillOn(int x, int y, int w, const char *text, int onFlame)
 {
     LlWell(x, y, w, FB_PILL_H);
+    if (onFlame)                                        /* on the chosen (orange) row the well's light row under it reads as a gap in the outline: a dark one closes it */
+        Fill(x + 3, y + FB_PILL_H, w - 6, 1, UI_RGB(150, 60, 20));
     UiText(text, x + (w - UiTextWidth(text, 1)) / 2, y + (FB_PILL_H - UI_TEXT_H) / 2, FB_QTY_INK, FB_QTY_SH, 1, x + w - 1);
+}
+
+static void FBPill(int x, int y, int w, const char *text)
+{
+    FBPillOn(x, y, w, text, 0);
 }
 
 static void FBTabs(const CtrPokeTouchBag *b)
@@ -234,7 +241,7 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
         char qty[8];
 
         snprintf(qty, sizeof(qty), "x%u", b->row[i].qty > 999 ? 999 : b->row[i].qty);
-        FBPill(r.x + r.w - 4 - FB_PILL_W, fy + 3, FB_PILL_W, qty);
+        FBPillOn(r.x + r.w - 4 - FB_PILL_W, fy + 3, FB_PILL_W, qty, selected);
         nameRight = r.x + r.w - 4 - FB_PILL_W - 4;
     }
     Em2Text(b->row[i].name, nameX, fy + (FB_FACE - UI_TEXT_H) / 2, p->ink, p->inkSh, nameRight);

@@ -84,7 +84,7 @@ static int FCBand(const char *title)
 static void FCRow(const char *label, const char *value, int x, int right, int y)
 {
     UiText(label, x, y, EM_DARK, EM_DARK_SH, 1, right - UiTextWidth(value, 1) - 6);
-    UiTextRight(value, right, y, EM_VALUE, EM_DARK_SH, 1);
+    UiTextRight(value, right, y, UI_RGB(48, 104, 216), UI_RGB(192, 208, 240), 1);
     LlRule(x - 2, y + 15, right - x + 4);
 }
 

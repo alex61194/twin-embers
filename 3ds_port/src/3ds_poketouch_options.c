@@ -33,8 +33,8 @@ static const char *const sEmbers[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("LOW", 
 /* EXP SHARE: who gets experience (HALF: the whole team shares as if each held an EXP. SHARE; FULL: every Pokemon that can
  * still fight gets the share of one that fought). */
 static const char *const sExpShare[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("HALF", "MITAD", "Halb"), CTR_TR("FULL", "TODA", "Voll")};
-/* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
-static const char *const sCompanion[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("FOLLOW", "SIGUE", "Folgt"), CTR_TR("BE IT", "SER", "Selbst")};
+/* COMPANION: the first Pokemon walks behind the player (TRAIL), or the player is that Pokemon (BE IT). */
+static const char *const sCompanion[] = {CTR_TR("OFF", "NO", "Aus"), CTR_TR("TRAIL", "SIGUE", "Folgt"), CTR_TR("BE IT", "SER", "Selbst")};
 
 static int sPortTypeMatchup;
 static int sPortMoveDetails;

@@ -385,6 +385,13 @@ int main(int argc, char **argv)
             b2.box.pos=8; update(&old,&b2); b2.box.area=ST_AREA_TITLE; update(&old,&b2);
             b2.box.area=ST_AREA_BUTTONS; b2.box.pos=1; update(&old,&b2); b2.box.pos=0; b2.box.pressed=ST_HIT_BUTTON_PARTY; update(&old,&b2); b2.box.pressed=-1;
             b2.box.area=ST_AREA_PARTY; b2.box.pos=2; for(int i=0;i<6;++i) b2.box.party[i].species=1+i; update(&old,&b2); if(dir) ppm(dir,"box_party");
+        {
+            CtrPokeTouchView b3=s; CtrPokeTouchView o3; memset(&o3,0,sizeof(o3)); o3.selected=o3.pressed=PT_NONE;
+            b3.home=0; b3.bag.on=1; b3.bag.pocket=0; b3.bag.state=PT_BAG_STATE_LIST; b3.bag.count=9; b3.bag.cursor=1; b3.bag.pressed=-1;
+            for(int i=0;i<PT_BAG_ROWS;++i) { b3.bag.row[i].item=13+i; b3.bag.row[i].qty=(uint16_t)(3+i*20); strcpy(b3.bag.row[i].name,"POTION"); }
+            strcpy(b3.bag.selName,"POTION"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
+            update(&o3,&b3); if(dir) ppm(dir,"bag_list");
+        }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
             b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
             b2.box.menuCursor=3; update(&old,&b2);
@@ -410,7 +417,7 @@ int main(int argc, char **argv)
         for(int i=0;i<7;++i) strcpy(s.optLabel[i],labels[i]);
         s.optSwitch[0]=2; s.optSwitch[1]=2; strcpy(s.optValue[2],"CLOCK"); strcpy(s.optValue[3],"12:00");
         s.optSegCount[4]=3; s.optSegValue[4]=2; strcpy(s.optSegName[4][0],"OFF"); strcpy(s.optSegName[4][1],"LOW"); strcpy(s.optSegName[4][2],"HIGH");
-        s.optSwitch[5]=1; s.optSegCount[6]=3; s.optSegValue[6]=2; strcpy(s.optSegName[6][0],"OFF"); strcpy(s.optSegName[6][1],"FOLLOW"); strcpy(s.optSegName[6][2],"BE");
+        s.optSwitch[5]=1; s.optSegCount[6]=3; s.optSegValue[6]=2; strcpy(s.optSegName[6][0],"OFF"); strcpy(s.optSegName[6][1],"TRAIL"); strcpy(s.optSegName[6][2],"BE");
         s.optSelected=6; strcpy(s.bar[0],"COMPANION"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
         s.backVisible=1; s.backEnabled=1;
         SHOT("options2");

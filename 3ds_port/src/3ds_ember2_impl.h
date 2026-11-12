@@ -492,13 +492,12 @@ UI_FN int Em2Count(int x, int y, const char *text)
     return w;
 }
 
-/* A page dot: 5 x 5 with a dark ring in its place, 7 x 7 with a white ring and a slate one when it is the page shown.
+/* A page dot: 5 x 5 with a dark ring in its place, 7 x 7 with a slate ring (9 x 9, so the pill keeps air above and below it) when it is the page shown.
  * (x, y) is the top-left of the dot's own box. */
 UI_FN void Em2Dot(int x, int y, uint16_t colour, int on)
 {
     if (on) {
-        Em2Disc(x - 2, y - 2, 11, EM2_SLATE);
-        Em2Disc(x - 1, y - 1, 9, EM_WHITE);
+        Em2Disc(x - 1, y - 1, 9, EM2_SLATE);
         Em2Disc(x, y, 7, colour);
         return;
     }
