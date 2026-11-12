@@ -190,7 +190,20 @@ module's own generator and puts the game's `Random()` state back as it was, so s
 They are not switched off globally. A step on a land (or water) tile gives way to the visible wilds only where the system works
 (option on, not blocked, a table with a pictured species for that kind of tile) and a wild is out or one can appear (free object
 events, a cap above zero). A map where nothing can be shown, or where the free object events run out, keeps FireRed's encounters;
-fishing, Rock Smash and Sweet Scent are untouched.
+fishing, Rock Smash and Sweet Scent are untouched. Surfing and caves keep their visible wilds whenever the system can operate there.
+
+Three cases give the game's encounters back (`wilds_core_test`: `TestIdleReleases`, `TestStall`):
+- **Option off**: FireRed's step encounters are back at the very next step, even if no wild had appeared yet. The per-frame early out
+  (`CtrWildsCore_Idle`, `CtrWildsCore_Unsupported`) clears `operative` and `spawnable` itself, as it never reaches the frame setting.
+- **Nowhere to appear** (a map smaller than the screen, a narrow route, the player at an edge, nothing the table can use): after
+  `CTRW_STALL_FAILS` (6) spawn attempts in a row that fail, with no wild out, the step encounters come back (`CtrWildsCore_Stalled`).
+  Nothing is switched off for good: the attempts go on at 3 to 5 seconds instead of 1 to 2, a success hides the step encounters again,
+  a new map or the option going off starts the count over. No work is added per frame.
+- **A saved game**: object events are saved with the game, and the table is not. A wild's object event carries a mark (the Boy, no
+  movement type, `trainerRange_berryTreeId` = `CTRW_MARK`, a byte the Boy does not use). When the field is rebuilt from a save
+  (`SpawnObjectEventsOnReturnToField`, before the sprites are made) every object event with a wild's local id (0xF0 to 0xF5), the mark
+  and no matching table entry is deactivated (`CtrWildsCore_IsOrphan`); a map's own object events, the companion (0xF7) and anything
+  without the mark are never touched. A new map does the same sweep (it already removed them all).
 
 ### Cost per frame
 With the option off and nothing out the per-frame update compares the map id and returns (a few instructions, 1 to 2 ns on a host). With
@@ -201,7 +214,8 @@ Repel are read once per 30 frames. Host micro-benchmarks (`wilds_core_test`) pri
 ### Tests
 `wilds_core_test` (budget, density and console cap, the 16 object events with the reserve, almost-full maps, spawn rate and ring,
 Repel, the state machine and its ranges, the Pokemon's round trip, water and land, roamer, guards, map changes, fallback to the game's
-encounters), `wilds_settings_test` (old, new, unknown, truncated at every byte, longer than the file), `settings_test`,
+encounters, the option turned off before any wild appeared, spawn failures in small and narrow maps with the recovery, the orphans of a
+loaded game against NPCs, the companion and the Berry Blender's local ids), `tools/test_wilds_recipe.py` (the glue's text), `wilds_settings_test` (old, new, unknown, truncated at every byte, longer than the file), `settings_test`,
 `poketouch_options_test`, `battle_gen4_test` (the silhouette flag), the render test's measured fit check for the three rows, and
 `tools/test_option_labels.py`.
 
@@ -212,7 +226,9 @@ player; (4) frame time on an Old 3DS with 2 wilds and a New 3DS with 6; (5) cave
 tall grass); (6) the picture's gender, nature and shininess match the battle; (7) a map with many NPCs (Celadon, Saffron): the NPCs
 all appear and no wild takes the last 4 object events; (8) water wilds while surfing and on foot at a shore, and silhouettes in the
 Pokemon Tower; (9) a roamer on its map; (10) Repel on and off; (11) step encounters come back in a Safari Zone, with Randomlocke and on a map
-with a table of Unown only.
+with a table of Unown only; (12) option Normal then Off before any wild appears: the grass encounters are the game's at once;
+(13) a place with no room for a wild (a small indoor grass patch): encounters come back after some seconds; (14) save with a wild on
+screen, reload in the same session and from a cold start: no leftover Boy-looking object, no blocked tile.
 
 ### Credit
 Design after Wilds of Hoenn by poooooby (MIT; `NOTICE.md`), and the ideas of PR #83 by mcl5500/Sh3ld0r (MIT): silhouettes, the "!" alert

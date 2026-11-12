@@ -3259,7 +3259,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "a883c5959f09dadb0f43c6c3291c36830ada7d79d166411c3101eb3e03ca2f1a",
+   "sha256": "e7acdcf96444582587236e52f1134436647a3d17e9f08a207bbcf6dc529f82df",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3568,7 +3568,7 @@
   },
   {
    "path": "docs/overworld-wilds-research.md",
-   "sha256": "143155694e03df7ab6108c1b2449b1ae7fc495602a55e408788581a558da5873",
+   "sha256": "9803cdfe577545bc6c995f7a7eb90818f2417c7b961e3155a332f753058ff158",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
