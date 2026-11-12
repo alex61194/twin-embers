@@ -537,6 +537,145 @@ static void TestIdleReleases(void)
     c.operative = c.spawnable = 1;
     c.mapLand = 0;
     CHECK(GlueIdle(&c, 2) && !c.operative && !c.spawnable && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "A1: unsupported map: released");
+    /* the failure count goes with it */
+    CtrWildsCore_Init(&c, 65);
+    MapOn(&c, 24, 1, 0);
+    c.fails = 4;
+    CHECK(CtrWildsCore_Idle(&c, 0) && c.fails == 0, "A1: idle forgets the failures");
+}
+
+/* A world with land only in a small patch around the player: the ring outside the screen has no valid cell. */
+static void WorldPatch(World *w, int half)
+{
+    WorldInit(w, CTRW_TILE_NONE);
+    for (int y = w->py - half; y <= w->py + half; ++y)
+        for (int x = w->px - half; x <= w->px + half; ++x)
+            w->tile[y][x] = CTRW_TILE_LAND;
+}
+
+static void WorldAllLand(World *w)
+{
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x)
+            w->tile[y][x] = CTRW_TILE_LAND;
+}
+
+static int FramesToStall(CtrWildsCore *c, World *w, int limit)
+{
+    for (int i = 0; i < limit; ++i)
+    {
+        Frame(c, w, 2, 6, 0);
+        if (CtrWildsCore_Stalled(c))
+            return i;
+    }
+    return -1;
+}
+
+static void TestStall(void)
+{
+    CtrWildsCore c;
+    World w;
+    int n, supp = 0, frames;
+
+    /* a map smaller than the screen: nowhere to appear. Suppressed while it still tries, then the game's encounters come back. */
+    CtrWildsCore_Init(&c, 71);
+    WorldPatch(&w, 3);
+    MapOn(&c, 30, 1, 0);
+    for (int i = 0; i < 100; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    CHECK(c.active == 0 && c.operative && c.spawnable && c.fails < CTRW_STALL_FAILS && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND),
+          "M1: the first failures still suppress (%d)", c.fails);
+    n = FramesToStall(&c, &w, 20000);
+    CHECK(n > 0 && n < 20000, "M1: it stalls after %d more frames", n);
+    CHECK(c.fails == CTRW_STALL_FAILS && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND) && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_WATER),
+          "M1: stalled: the game's encounters are back");
+    CHECK(c.operative && c.spawnable, "M1: the system is still operative (nothing switched off)");
+    /* a long time stalled: still not suppressing, still trying (the counter saturates, never wraps) */
+    for (int i = 0; i < 100000; ++i)
+    {
+        Frame(&c, &w, 2, 6, 0);
+        supp += CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND);
+    }
+    CHECK(supp == 0 && c.fails >= CTRW_STALL_FAILS && CtrWildsCore_Stalled(&c), "M1: 100000 frames of failures: never suppresses again (fails %d)", c.fails);
+    /* the player walks to a place with room: the next attempt succeeds and it hides the encounters again */
+    WorldAllLand(&w);
+    frames = 0;
+    while (c.active == 0 && frames < 2000)
+    {
+        Frame(&c, &w, 2, 6, 0);
+        ++frames;
+    }
+    CHECK(c.active > 0 && c.fails == 0 && !CtrWildsCore_Stalled(&c), "M1: recovered by itself in %d frames", frames);
+    CHECK(frames <= 330 && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "M1: the retry came within 300 frames and the step encounters give way again");
+    /* the wild goes: the count is 0, so it hides the encounters while it tries again */
+    Shed(&c, &w, c.active);
+    CHECK(c.active == 0 && c.fails == 0 && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "M1: a success resets the count");
+    /* failures below the threshold that end in a success never release */
+    CtrWildsCore_Init(&c, 72);
+    WorldPatch(&w, 3);
+    MapOn(&c, 31, 1, 0);
+    for (int i = 0; i < 3000 && c.fails < 3; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    CHECK(c.fails >= 3 && c.fails < CTRW_STALL_FAILS, "M1 setup: a few failures (%d)", c.fails);
+    WorldAllLand(&w);
+    for (int i = 0; i < 400; ++i)
+    {
+        Frame(&c, &w, 2, 6, 0);
+        supp += !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND) && c.spawnable;
+    }
+    CHECK(c.active > 0 && supp == 0, "M1: a short run of failures then a success: always hidden (%d)", supp);
+    /* a new map and the option going off both reset the count */
+    CtrWildsCore_Init(&c, 73);
+    WorldPatch(&w, 3);
+    MapOn(&c, 32, 1, 0);
+    CHECK(FramesToStall(&c, &w, 20000) > 0, "M1: stalls");
+    MapOn(&c, 33, 1, 0);
+    CHECK(c.fails == 0 && !CtrWildsCore_Stalled(&c), "M1: a new map starts over");
+    CHECK(FramesToStall(&c, &w, 20000) > 0, "M1: stalls again");
+    CHECK(GlueIdle(&c, 0) && c.fails == 0, "M1: the option off resets it");
+    /* a narrow route, 1 tile wide: where it goes on below the screen a wild appears on it; a dead end inside the screen has no room */
+    CtrWildsCore_Init(&c, 74);
+    WorldInit(&w, CTRW_TILE_NONE);
+    for (int y = 0; y < H; ++y)
+        w.tile[y][w.px] = CTRW_TILE_LAND;
+    MapOn(&c, 34, 1, 0);
+    for (int i = 0; i < 3000; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    CHECK(c.active > 0 && !CtrWildsCore_Stalled(&c), "M1: a long narrow route: a wild appears on it");
+    CtrWildsCore_Init(&c, 78);
+    WorldInit(&w, CTRW_TILE_NONE);
+    for (int y = 0; y <= w.py + 3; ++y)
+        w.tile[y][w.px] = CTRW_TILE_LAND;
+    MapOn(&c, 38, 1, 0);
+    CHECK(FramesToStall(&c, &w, 20000) > 0, "M1: a narrow dead end inside the screen: stalls");
+    /* the player in a corner of a map */
+    CtrWildsCore_Init(&c, 75);
+    WorldInit(&w, CTRW_TILE_LAND);
+    w.px = 1;
+    w.py = 1;
+    MapOn(&c, 35, 1, 0);
+    for (int i = 0; i < 3000; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    CHECK(c.active > 0 || CtrWildsCore_Stalled(&c), "M1: a corner of a map: a wild or a stall, never a lock");
+    /* a land table on water cells */
+    CtrWildsCore_Init(&c, 76);
+    WorldInit(&w, CTRW_TILE_WATER);
+    MapOn(&c, 36, 1, 0);
+    CHECK(FramesToStall(&c, &w, 20000) > 0, "M1: a land table on water cells: stalls");
+    /* any failed attempt counts (no cell, no species, no object event) */
+    CtrWildsCore_Init(&c, 77);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 37, 1, 0);
+    Frame(&c, &w, 2, 6, 0);
+    for (int i = 0; i < CTRW_STALL_FAILS; ++i)
+        CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(CtrWildsCore_Stalled(&c) && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "M1: failures of any kind count");
+    c.active = 1;
+    CHECK(!CtrWildsCore_Stalled(&c), "M1: a wild out is not a stall");
+    c.active = 0;
+    /* the retry goes on at a lower rate while stalled */
+    CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(c.spawnTimer >= 180 && c.spawnTimer < 300, "M1: stalled retries wait 180 to 299 frames (%d)", c.spawnTimer);
 }
 
 static void TestRepel(void)
@@ -1054,6 +1193,7 @@ int main(void)
     TestMapsAndWater();
     TestSuppression();
     TestIdleReleases();
+    TestStall();
     TestRepel();
     TestAi();
     TestData();

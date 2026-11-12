@@ -18,6 +18,7 @@
 #define CTRW_SLOTS 6            /* the most wild Pokemon at once (New 3DS, density MANY) */
 #define CTRW_OBJECTS 16         /* FireRed's OBJECT_EVENTS_COUNT */
 #define CTRW_RESERVE 4          /* object events that stay free, always */
+#define CTRW_STALL_FAILS 6      /* spawn attempts that fail in a row, with nothing out, before the game's step encounters come back */
 #define CTRW_NONE 0xFF          /* no object event / no slot */
 #define CTRW_TICK 30            /* frames between two checks of the free object events */
 #define CTRW_DENSITIES 4        /* OFF, FEW, NORMAL, MANY */
@@ -73,6 +74,7 @@ typedef struct CtrWildsCore
     uint8_t operative;          /* the system works on this map right now: it may hide the step encounters */
     uint8_t spawnable;          /* ... and a wild is out or one could appear (free object events, a cap) */
     uint8_t target;             /* how many wilds the budget allows */
+    uint8_t fails;              /* spawn attempts that found nowhere to appear, in a row (0 at a success, a new map, off) */
     uint8_t aggro;              /* the AGGRESSIVE setting, 0 to 4 */
     uint32_t leadPower;         /* the lead Pokemon's level x base stats */
 } CtrWildsCore;
@@ -165,7 +167,7 @@ void CtrWildsCore_Clear(CtrWildsCore *c);
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot);
 
 /* Every frame, before anything else: TRUE when the option is off and nothing is out (nothing to do at all). It also stops the system
- * working (operative, spawnable), so the game's step encounters are back at once, with no Frame needed. */
+ * working (operative, spawnable, fails), so the game's step encounters are back at once, with no Frame needed. */
 int CtrWildsCore_Idle(CtrWildsCore *c, int density);
 /* The frame's setting: sets whether the system works here. Returns TRUE when every wild must be removed (it stopped working). */
 int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env);
@@ -184,6 +186,10 @@ int CtrWildsCore_Tick(CtrWildsCore *c, int density, int consoleCap, CtrWildFreeF
 /* Whether the normal step encounter of a kind (CTRW_TILE_LAND or WATER) gives way: only where the system works and a wild is out or
  * can appear, so a zone that cannot show wilds keeps the game's encounters. */
 int CtrWildsCore_SuppressStep(const CtrWildsCore *c, int tileKind);
+/* TRUE when nothing is out and CTRW_STALL_FAILS attempts in a row found nowhere to appear (a map too small, a narrow route, the player
+ * at its edge): the game's step encounters come back, and the system goes on trying with its timer until one succeeds (it then
+ * hides them again), the map changes or the option goes off. Nothing is switched off for good. */
+int CtrWildsCore_Stalled(const CtrWildsCore *c);
 
 /* Spawning. */
 int CtrWildsCore_SpawnDue(CtrWildsCore *c);                    /* TRUE when it is time for an attempt and one is wanted */

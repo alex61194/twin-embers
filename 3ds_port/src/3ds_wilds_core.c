@@ -70,6 +70,7 @@ void CtrWildsCore_Clear(CtrWildsCore *c)
         c->wild[i].obj = CTRW_NONE;
     }
     c->active = 0;
+    c->fails = 0;
 }
 
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot)
@@ -96,6 +97,7 @@ int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map)
     c->probed = 0;
     c->operative = c->spawnable = 0;
     c->target = 0;
+    c->fails = 0;
     c->tick = 0;            /* the first frame counts the free object events */
     c->spawnTimer = 60;     /* and the first wild comes after a second */
     return had;
@@ -107,6 +109,7 @@ int CtrWildsCore_Idle(CtrWildsCore *c, int density)
         return 0;
     /* Off and nothing out: the game's step encounters are back at once. The frame that would clear these never runs from here. */
     c->operative = c->spawnable = 0;
+    c->fails = 0;
     return 1;
 }
 
@@ -125,6 +128,7 @@ int CtrWildsCore_Unsupported(CtrWildsCore *c)
     if (!c->probed || c->mapLand || c->mapWater || c->active != 0)
         return 0;
     c->operative = c->spawnable = 0;
+    c->fails = 0;
     return 1;
 }
 
@@ -194,9 +198,14 @@ int CtrWildsCore_Tick(CtrWildsCore *c, int density, int consoleCap, CtrWildFreeF
     return Max(0, Min(shed, c->active));
 }
 
+int CtrWildsCore_Stalled(const CtrWildsCore *c)
+{
+    return c->active == 0 && c->fails >= CTRW_STALL_FAILS;
+}
+
 int CtrWildsCore_SuppressStep(const CtrWildsCore *c, int tileKind)
 {
-    if (!c->operative || !c->spawnable)
+    if (!c->operative || !c->spawnable || CtrWildsCore_Stalled(c))
         return 0;
     return (tileKind == CTRW_TILE_LAND && c->mapLand) || (tileKind == CTRW_TILE_WATER && c->mapWater);
 }
@@ -276,7 +285,16 @@ int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *r, CtrWildTileFn t
 
 void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success)
 {
-    c->spawnTimer = (uint16_t)(success ? 90 + CtrWildsCore_Rand(c) % 150 : 60 + CtrWildsCore_Rand(c) % 60);
+    if (success)
+        c->fails = 0;
+    else if (c->fails < 255)
+        ++c->fails;
+    if (success)
+        c->spawnTimer = (uint16_t)(90 + CtrWildsCore_Rand(c) % 150);
+    else if (CtrWildsCore_Stalled(c))
+        c->spawnTimer = (uint16_t)(180 + CtrWildsCore_Rand(c) % 120);    /* nowhere to appear: it goes on trying, less often */
+    else
+        c->spawnTimer = (uint16_t)(60 + CtrWildsCore_Rand(c) % 60);
 }
 
 int CtrWildsCore_Commit(CtrWildsCore *c, int slot, const CtrWildMon *mon, int gender, int shiny, int gfx)
