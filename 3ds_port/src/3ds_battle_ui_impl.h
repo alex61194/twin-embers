@@ -1000,7 +1000,24 @@ static void BFightFace(const CtrPokeTouchRect *r, int fy, const CtrBattleView *v
                 Px(r->x + 21 + dx, fy + 57 + dy, Em2Lerp(TsGet(r->x + 21 + dx, fy + 57 + dy), UI_RGB(140, 80, 20), 77, 255));
         }
     if (v->activeIcon && BPartyIcon(v->activeSlot, v->activeIcon)) {       /* the Pokemon's own party icon at twice its size, bouncing */
-        int x0 = r->x + 10, y0 = fy + 8 - 2 * v->activeFrame;
+        /* Centred on the plate: the icon's drawn pixels (not its 32 x 32 cell, which most Pokemon do not fill evenly) are put on the plate's centre
+         * (r->x + 41, fy + 36), then the bounce moves it up. */
+        int minX = 32, maxX = -1, minY = 32, maxY = -1, x0, y0;
+
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px)
+                if (sBPIcon[v->activeSlot].pixels[y * 32 + px]) {
+                    minX = px < minX ? px : minX;
+                    maxX = px > maxX ? px : maxX;
+                    minY = y < minY ? y : minY;
+                    maxY = y > maxY ? y : maxY;
+                }
+        if (maxX < 0) {
+            minX = minY = 0;
+            maxX = maxY = 31;
+        }
+        x0 = r->x + 41 - (minX + maxX + 1);
+        y0 = fy + 36 - (minY + maxY + 1) - 2 * v->activeFrame;
 
         for (int y = 0; y < 32; ++y)
             for (int px = 0; px < 32; ++px) {
