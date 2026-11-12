@@ -101,9 +101,13 @@ int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map)
     return had;
 }
 
-int CtrWildsCore_Idle(const CtrWildsCore *c, int density)
+int CtrWildsCore_Idle(CtrWildsCore *c, int density)
 {
-    return density <= 0 && c->active == 0;
+    if (density > 0 || c->active != 0)
+        return 0;
+    /* Off and nothing out: the game's step encounters are back at once. The frame that would clear these never runs from here. */
+    c->operative = c->spawnable = 0;
+    return 1;
 }
 
 int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env)
@@ -116,9 +120,12 @@ int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env)
     return !c->operative && c->active > 0;
 }
 
-int CtrWildsCore_Unsupported(const CtrWildsCore *c)
+int CtrWildsCore_Unsupported(CtrWildsCore *c)
 {
-    return c->probed && !c->mapLand && !c->mapWater && c->active == 0;
+    if (!c->probed || c->mapLand || c->mapWater || c->active != 0)
+        return 0;
+    c->operative = c->spawnable = 0;
+    return 1;
 }
 
 int CtrWildsCore_HasRoamer(const CtrWildsCore *c)

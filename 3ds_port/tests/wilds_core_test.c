@@ -492,6 +492,53 @@ static void TestSuppression(void)
     CHECK(!CtrWildsCore_Idle(&c, 0), "OFF with wilds out: they have to be removed");
 }
 
+/* The glue's Idle path: the option is off and nothing is out, so it returns at once (no Frame). */
+static int GlueIdle(CtrWildsCore *c, int density)
+{
+    return CtrWildsCore_Idle(c, density) || CtrWildsCore_Unsupported(c);
+}
+
+static void TestIdleReleases(void)
+{
+    CtrWildsCore c;
+    World w;
+
+    /* The audit's sequence: NORMAL on a route, no wild out yet (operative, spawnable), then OFF: the original encounters are back
+     * at once, without a Frame that would clear the flags. */
+    CtrWildsCore_Init(&c, 61);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 20, 1, 0);
+    Frame(&c, &w, 2, 6, 0);
+    CHECK(c.active == 0 && c.operative && c.spawnable, "A1 setup: nothing out, operative, spawnable");
+    CHECK(CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "A1 setup: the step encounters give way");
+    CHECK(GlueIdle(&c, 0), "A1: OFF with nothing out takes the idle path");
+    CHECK(!CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND) && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_WATER), "A1: OFF: the game's encounters at once");
+    CHECK(!c.operative && !c.spawnable, "A1: operative and spawnable cleared by the idle path");
+    /* ... and turning it back on works again */
+    Run(&c, &w, 2, 6, 40);
+    CHECK(c.operative && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "A1: back ON: it hides them again");
+    /* water too */
+    CtrWildsCore_Init(&c, 62);
+    MapOn(&c, 21, 1, 1);
+    Frame(&c, &w, 2, 6, 0);
+    CHECK(GlueIdle(&c, 0) && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_WATER), "A1: water as well");
+    /* with a wild out the idle path is not taken: the Frame removes it first */
+    CtrWildsCore_Init(&c, 63);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 22, 1, 0);
+    Run(&c, &w, 1, 6, 1500);
+    CHECK(c.active > 0 && !GlueIdle(&c, 0), "A1: wilds out: no idle path");
+    Frame(&c, &w, 0, 6, 0);
+    CHECK(c.active == 0 && !c.operative && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "A1: OFF with wilds out: removed, the game's encounters");
+    /* a map that was probed with nothing to show: the unsupported path releases too */
+    CtrWildsCore_Init(&c, 64);
+    MapOn(&c, 23, 1, 0);
+    c.probed = 1;
+    c.operative = c.spawnable = 1;
+    c.mapLand = 0;
+    CHECK(GlueIdle(&c, 2) && !c.operative && !c.spawnable && !CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "A1: unsupported map: released");
+}
+
 static void TestRepel(void)
 {
     CHECK(!CtrWildsCore_RepelBlocks(0, 3, 50), "no Repel: nothing blocked");
@@ -1006,6 +1053,7 @@ int main(void)
     TestSpawn();
     TestMapsAndWater();
     TestSuppression();
+    TestIdleReleases();
     TestRepel();
     TestAi();
     TestData();

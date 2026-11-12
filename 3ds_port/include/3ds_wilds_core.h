@@ -164,13 +164,14 @@ int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map);
 void CtrWildsCore_Clear(CtrWildsCore *c);
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot);
 
-/* Every frame, before anything else: TRUE when the option is off and nothing is out (nothing to do at all). */
-int CtrWildsCore_Idle(const CtrWildsCore *c, int density);
+/* Every frame, before anything else: TRUE when the option is off and nothing is out (nothing to do at all). It also stops the system
+ * working (operative, spawnable), so the game's step encounters are back at once, with no Frame needed. */
+int CtrWildsCore_Idle(CtrWildsCore *c, int density);
 /* The frame's setting: sets whether the system works here. Returns TRUE when every wild must be removed (it stopped working). */
 int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env);
 
 /* TRUE when this map was probed and neither a land nor a water table of it can show a Pokemon, and no wild is out: nothing to do. */
-int CtrWildsCore_Unsupported(const CtrWildsCore *c);
+int CtrWildsCore_Unsupported(CtrWildsCore *c);      /* ... and, like Idle, it stops the system working then */
 
 /* The budget. */
 int CtrWildsCore_Target(int density, int consoleCap, int freeObjects, int active);
