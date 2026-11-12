@@ -177,3 +177,93 @@ level than 5: no wilds appear. 5. Leave the route or switch the option off: they
   local-id range 0xF0-0xF1 and the override share it).
 - A wild standing in front of a door/ledge path can block the player until it wanders off.
 - Step 2 would replace the single-route check with a table-driven map list and the density rule.
+
+## 9. Design adopted from Wilds of Hoenn
+
+Source studied: https://github.com/poooooby/wilds-of-hoenn (MIT; README, `lib/spawn_manager.lua`, `wild_reactions.lua`,
+`behavior.lua`, `config.lua`, `spawn_filters.lua`, `shiny.lua`). It is a Lua mod that runs inside a recompiled Gen 3 game and
+draws its own actors, so no code is reused; only the design is. Recipe `patches/pokefirered/0250-visible-wilds-everywhere.json`
+(plus `CtrWilds_Max` in `3ds_port/src/3ds_game_bridge.c`) implements it.
+
+### What the mod does (own words)
+- Spawning: reads the map's own encounter tables at run time (no tables of its own); land species only where the player can
+  walk, water species on every water tile. Count per terrain = 1 + one per 20 eligible tiles, capped (Spawn Amount: low 4,
+  normal 8, high 12). They arrive by rising out of grass, surfacing from water, or fading in; they leave the same way.
+- Movement: a 50/50 mix of idle and roam, an action every 1-2 s, one tile per step, legality through the engine's own
+  collision; the wild stays on its terrain unless chasing.
+- Reactions (option "Wild Reacts"): only when the player runs or bikes close (radius 2 tiles, 4 on a bike); walking calmly
+  disturbs nobody. The wild is judged by level x base-stat total against the lead Pokemon: under 0.7 it is startled ("!"),
+  hops and flees 1-3 steps at running pace (30% vanish into the grass; small birds take off); over 1.3 it gets angry and
+  chases a bit faster than a runner, with a leash of 2-4 tiles and 1.2 s per tile, then gives up ("?") and walks home; an even
+  match ignores the player. Whether it reacts at all is one roll when the player comes in range (10% just past the limit,
+  rising to 50% at 0.4 / 2.0); a miss rests 5 s, a reaction 10-15 s. Nothing reacts during cutscenes, trainers, messages,
+  battles or the Safari Zone.
+- Encounter: walking into a wild starts the normal wild battle (a chaser that reaches the player does too); the classic step
+  encounters can stay on or be turned off; Sweet Scent calls 2-3 wilds for about a minute; the Safari Zone uses its own battle.
+- Shiny/gender/level: species and level come from the game's roll; the shiny chain builds a "constructed personality" that
+  keeps nature and gender (needs its modern-spawns bridge). The mod does not show gender itself.
+- Out of scope for us: partner roles (Follow, Forage, Battler), water life, sky flyers, local scenes, silhouettes, portraits,
+  five languages, a 15-row options menu, HD sprite sets.
+- Performance: no hard limits stated; only the count caps above and culling of what is outside the view.
+
+### Adopted (built in 0250)
+- Run-time tables only: the game's land table of whatever map the player is on (`CtrWilds_Pick`), through the game's own slot,
+  version and level routines; Repel test kept; not in the Safari Zone; no Unown (their letter depends on the chamber slot).
+- Spawn outside the screen: the game only keeps object events inside its view (`OBJECT_EVENT_VIEW_*`, a band a little larger than
+  the screen on the left, right and bottom, none above), so a wild appears in that band, 1+ tile past the screen edge. The
+  pop-in of step 1 is gone for left, right and bottom; they walk in (wander range 3) or the player walks up to them.
+- Pacing: one new wild every 1.5-4 s while a slot is free; one nobody can see is retired after 25-45 s (by slot); the game
+  removes any that leave its view.
+- Per-console cap (`CtrWilds_Max`, via `CtrPlatform_IsNew3DS`, which already honours `force_old3ds`/CTR_FORCE_OLD3DS): Old 3DS
+  2, New 3DS 4 (local ids 0xF0-0xF3; 4 object events always left free so the 16-object limit holds; 1 sprite per wild).
+- Reaction rule: the mod's level x base stats ratio against the lead, same thresholds (0.7 / 1.3) and chances (10-50%), one roll
+  when it comes in range (2 tiles on foot, 4 running or biking), rest 5 s after a miss, 10 s after a flight, 15 s after a chase.
+  Weaker: runs 2-4 grass tiles at running pace; 30% vanish when 6+ tiles from the player. Stronger: walks up (normal speed, 6-9
+  steps, so a runner escapes) and starts the ordinary wild battle when next to a player who has stopped. Even: ignores the
+  player. Every step uses the game's own collision and stays on grass.
+- Gender consistent with the battle: rolled at spawn with the game's ratio, the female picture is used when the pack has it, and
+  the battle regenerates the Pokemon with the game's own generator until the gender matches.
+- Guards kept: Repel, disabled encounters, quest log, Union Room, surfing, Randomlocke, locked field controls.
+
+### Adapted
+- Walking disturbs a wild from 2 tiles (the mod needs running); no "!" or "?" icon (step 3), the wild just turns and goes.
+- Chasers stay on grass (the mod lets them leave it): safe for doors, warps and ledges without being able to run the game.
+- Spawn count is slot based (the cap), not tile-count based: counting eligible tiles would need a per-map scan.
+
+### Skipped, with reasons
+- Partner/follower/Battler: out of scope (owner decision); the companion option already exists.
+- Water wilds, flyers, whales, local scenes, Sweet Scent lure, shiny chain/modern spawns, silhouettes, portraits: more object
+  events/sprites than the 16/64 limits and the Old 3DS frame budget allow, and not game-faithful.
+- Fade/rise/ring effects and shiny sparkle: need new sprites or OAM effects (step 3).
+- Shiny preview: the pack has no shiny pictures; the shiny roll stays the game's personality roll at battle time.
+- PMDCollab art: CC BY-NC 4.0, non-commercial. Not shipped, not referenced, not needed (the pack's own pictures are used).
+
+### Credit wording (MIT)
+Added to `NOTICE.md` ("Design reference: Wilds of Hoenn", with the MIT permission notice and "Copyright (c) 2026 poooooby") and a
+bullet in `CREDITS.md` (design reference, MIT, no code or assets copied, PMDCollab art not used). Repeat it in the release notes.
+
+### Not verified (needs a console or Azahar)
+Nothing was run: the recipe chain applies (247 recipes), the three game files pass an ARM `-fsyntax-only`, and the clean-release
+and source-audit tests pass. To check: (1) the spawn band is really off screen on the top screen (it assumes the camera is 7
+tiles left of / above the player; if wilds appear on screen or vanish at once adjust `halfW/halfH` in `CtrWild_RingCell`);
+(2) a held flight/chase movement does not wedge the game's wander state (a wild that stops moving afterwards); (3) a chaser starts
+the battle without a double step of the player; (4) Old 3DS frame time with 2 wilds, New 3DS with 4; (5) caves and Viridian Forest
+(land encounter tiles that are not tall grass; the object is still the Boy or the Pokemon picture); (6) the picture's gender
+matches the battle.
+
+### Step 3 (not built)
+"!" and "?" emotes (a field-effect sprite tied to the object event), fade/rustle effect on spawn and vanish, Surf wilds on water
+tiles, a density rule from the number of eligible tiles, birds taking off, Sweet Scent luring visible wilds, a bottom-screen line
+with the wild's name and level, a shiny preview if the pack ever gets shiny pictures.
+
+### Review fixes folded into 0250 (against the step 1 recipe 0249)
+- A (high): pressing A on a visible wild that did not start a battle (Repel, disabled encounters) reached the NPC script lookup, which
+  has no script for it. `GetInteractedObjectEventScript` now treats the wild local ids (`CTR_IS_WILD_LOCALID`, in
+  `event_object_movement.h`) like the companion, also in the counter branch, and returns NULL; its callers already accept NULL.
+- B: the claim "the game's random numbers are not drawn on" was false: `CtrWilds_Pick` drew `Random()` on every attempt. The spawn
+  now looks for a free grass cell first and picks the species only when it found one; the comment says what is true.
+- C: `CtrWilds_Update` ran every frame from `CtrFollower_Update` with the option off. It now returns at once when the option is off,
+  no slot is in use and the map did not change (one pass per new map removes anything a save kept); slots that are empty are not
+  searched for.
+- Spanish option label "Salvajes visibles" was cut to 15 bytes; it is "Salvajes vistos" now, the row text no longer says "Route 1
+  only", and `tools/test_option_labels.py` checks every row label in EN/ES/DE against `PT_OPT_LABEL_LEN`.

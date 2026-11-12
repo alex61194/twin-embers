@@ -198,7 +198,7 @@ static const CtrOptionRow sRows[] = {
     {CTR_TR("Level caps", "Nivel m\xC3\xA1ximo", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
      GetNuzCap, TwoCount, SetNuzCap},
     /* Page 6: the experiments. */
-    {CTR_TR("Visible wilds", "Salvajes visibles", "Sichtbare Wilde"), {CTR_TR("Route 1 only: wild Pokemon", "Solo Ruta 1: los Pok\xC3\xA9mon", "Nur Route 1: wilde Pok\xC3\xA9mon"), CTR_TR("walk in the grass; touch one.", "salvajes andan; t\xC3\xB3" "calos.", "laufen im Gras; ber\xC3\xBChre eins.")}, 0, sFps, NULL,
+    {CTR_TR("Visible wilds", "Salvajes vistos", "Sichtbare Wilde"), {CTR_TR("Wild Pokemon walk in the", "Los Pok\xC3\xA9mon salvajes andan", "Wilde Pok\xC3\xA9mon laufen im"), CTR_TR("grass; touch one.", "por la hierba; t\xC3\xB3" "calos.", "Gras; ber\xC3\xBChre eins.")}, 0, sFps, NULL,
      GetVisibleWilds, TwoCount, SetVisibleWilds},
 };
 

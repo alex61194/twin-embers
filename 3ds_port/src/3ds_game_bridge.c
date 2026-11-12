@@ -893,3 +893,10 @@ void VBlankIntrWait(void)
                      perfVideo->stereo, perfVideo->planes, perfVideo->gpuMs,
                      perfVideo->commandUsage);
 }
+
+/* VISIBLE WILDS (event_object_movement.c): how many wild Pokemon may be out at once. An Old 3DS keeps 2 (the same object event
+ * and sprite budget as everything else on a slow console), a New 3DS 4 (local ids 0xF0 to 0xF3). */
+int CtrWilds_Max(void)
+{
+    return CtrPlatform_IsNew3DS() ? 4 : 2;
+}

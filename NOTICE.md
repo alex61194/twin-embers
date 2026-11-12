@@ -77,6 +77,33 @@ The gradenGnostic pokeemerald-multiplatform voxel code and the MPL-2.0 devkitARM
 linker template mentioned by Zallax are not imported. Voxel source is absent and
 disabled. Credits do not imply that a component is included.
 
+## Design reference: Wilds of Hoenn
+
+The visible wild Pokémon option (OPTIONS, page "Wilds") follows the design of
+**Wilds of Hoenn** by poooooby (https://github.com/poooooby/wilds-of-hoenn), a Lua
+mod for Gen1Recomp's Generation 3 games released under the MIT License:
+how wild Pokémon appear outside the screen, how many are out, how long they stay
+and how they react to a player who comes close (the weaker one runs, the stronger
+one approaches, an even match ignores the player). The behavior is re-implemented in
+original C against the game's own tables; no Lua code, data table, sprite or other
+asset of that project is copied, and none is shipped. Copyright (c) 2026 poooooby.
+The MIT permission notice is reproduced here as the license asks:
+
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions: The above copyright
+> notice and this permission notice shall be included in all copies or
+> substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
+> WITHOUT WARRANTY OF ANY KIND (the full MIT terms are in that project's
+> `LICENSE`).
+
+That project's art is not covered by its MIT license. In particular the PMDCollab
+sprites and portraits (CC BY-NC 4.0, non-commercial) are not used, shipped or
+referenced by Twin Embers.
+
 ## Game and branding
 
 Pokémon FireRed and its game content remain the property of their respective

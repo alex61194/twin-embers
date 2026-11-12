@@ -75,3 +75,7 @@ distribution tools, the pack-backed font accessor/decoder, neutral geometric
 icons and the asset-free intro fallback are owned port contributions with
 disclosed AI assistance. These changes preserve third-party authorship and
 do not expand the license on external game code.
+
+- **poooooby (Wilds of Hoenn)** — design reference for the visible wild Pokémon
+  option (spawning outside the screen, pacing, and fleeing/approaching reactions).
+  MIT; no code or assets copied. See NOTICE.md. Its PMDCollab art (CC BY-NC) is not used.
