@@ -600,10 +600,10 @@ static void FDCategory(const CtrPokeTouchDex *d, int pressed)
         if (m->flags & 1)
             FDPicDrawBig(m->species, r.x + (r.w - 64) / 2, fy + 5);
         snprintf(label, sizeof(label), "%03u %s", m->number > 999 ? 999 : m->number, m->flags & 1 ? m->name : "-----");
-        Em2Fit(label, r.w - 20, cut, sizeof(cut));
-        lw = UiTextWidth(cut, 1) + 12;
-        LlWindowPlain(r.x + (r.w - lw) / 2, fy + 60, lw, 17);
-        Em2Text(cut, r.x + (r.w - lw) / 2 + 6, fy + 60 + (17 - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, r.x + r.w - 6);
+        Em2Fit(label, r.w - 14, cut, sizeof(cut));
+        lw = UiTextWidth(cut, 1) + 14;   /* the window's frame takes 4 px a side: 3 more of air round the text */
+        LlWindowPlain(r.x + (r.w - lw) / 2, fy + 58, lw, 19);
+        Em2Text(cut, r.x + (r.w - lw) / 2 + 7, fy + 58 + (19 - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, r.x + r.w - 6);
         if (m->flags & 2)
             FDCaughtDraw(r.x + 6, fy + 6);
     }

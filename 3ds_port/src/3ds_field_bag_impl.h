@@ -129,6 +129,19 @@ static void FBLlButton(const CtrPokeTouchRect *r, const EmPal *p, const char *la
     fy = EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, pressed);
     if (chosen)
         LlCursor(r->x + 9, fy + (face - 10) / 2, EM_WHITE);
+    if (UiTextWidth(label, 1) > r->w - 8 && strchr(label, ' ')) {   /* a label that would touch both edges: two lines (CLOSE / BOX) */
+        char first[40];
+        const char *rest = strchr(label, ' ');
+        int n = (int)(rest - label), top = fy + (face - (2 * UI_TEXT_H + 2)) / 2;
+
+        if (n > (int)sizeof(first) - 1)
+            n = (int)sizeof(first) - 1;
+        memcpy(first, label, (size_t)n);
+        first[n] = 0;
+        EmLabel(first, r->x, r->w, top, UI_TEXT_H, p);
+        EmLabel(rest + 1, r->x, r->w, top + UI_TEXT_H + 2, UI_TEXT_H, p);
+        return;
+    }
     EmLabel(label, r->x, r->w, fy, face, p);
 }
 

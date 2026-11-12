@@ -641,8 +641,8 @@ int main(int argc, char **argv)
         sv.pressed = -1;
         sv.icon = 1;
         sv.data.ready = 1; sv.data.mon = 0; sv.data.cursor = 0; sv.data.level[0] = 0;
-        names(sv.data.nickname, 12, "CHARIZARD"); names(sv.data.species, 12, "CHARIZARD"); names(sv.data.level, 8, "Lv50");
-        names(sv.data.gender, 2, "M"); names(sv.data.dex, 8, "No.006"); names(sv.data.ot, 16, "RED"); names(sv.data.id, 8, "12345");
+        names(sv.data.nickname, 12, "CHARIZARD"); names(sv.data.species, 12, "CHARIZARD"); names(sv.data.level, 8, "50");
+        names(sv.data.gender, 2, "M"); names(sv.data.dex, 8, "006"); names(sv.data.ot, 16, "RED"); names(sv.data.id, 8, "12345");
         names(sv.data.item, 20, "LEFTOVERS"); names(sv.data.types[0], 12, "FIRE"); names(sv.data.types[1], 12, "FLYING");
         sv.data.typeIds[0] = 10; sv.data.typeIds[1] = 2;
         names(sv.data.hp, 12, "120/150"); sv.data.hpCur = 120; sv.data.hpMax = 150;

@@ -491,12 +491,12 @@ int main(int argc, char **argv)
         s.options=0; s.optCount=0; s.optPage=0; s.optPageCount=0; s.optSelected=0; s.optLook.on=0; s.backVisible=0; s.backEnabled=0;
         memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount)); memset(s.optLabel,0,sizeof(s.optLabel)); memset(s.optValue,0,sizeof(s.optValue));
         s.save=1; s.saveBadges=5; s.saveDex=87; s.saveHasDex=1; s.saveHours=42; s.saveMinutes=7; s.saveMoney=123456; s.saveSel=1; s.savePressed=PT_SAVE_NONE;
-        s.playerFemale=0; s.saveState=SAVE_CONFIRM; strcpy(s.bar[0],"Save your adventure?"); strcpy(s.bar[1],"Your progress will be written."); s.bar[2][0]=0;
+        s.playerFemale=0; s.saveState=SAVE_CONFIRM; strcpy(s.bar[0],"Save your game?"); s.bar[1][0]=0; s.bar[2][0]=0;
         SHOT("save_confirm");
         s.saveSel=0; SHOT("save_confirm_yes"); s.savePressed=PT_SAVE_FIRST; SHOT("save_confirm_yes_pressed"); s.savePressed=PT_SAVE_NONE; s.saveSel=1;
-        s.saveState=SAVE_WRITING; strcpy(s.bar[0],"Saving..."); strcpy(s.bar[1],"Do not turn off the console."); SHOT("save_writing");
-        s.saveState=SAVE_SUCCESS; strcpy(s.bar[0],"Your game has been saved!"); s.bar[1][0]=0; SHOT("save_saved");
-        s.saveState=SAVE_ERROR; strcpy(s.bar[0],"The game could not be saved."); strcpy(s.bar[1],"Try again."); SHOT("save_error");
+        s.saveState=SAVE_WRITING; strcpy(s.bar[0],"Saving..."); strcpy(s.bar[1],"Don't turn off the power."); SHOT("save_writing");
+        s.saveState=SAVE_SUCCESS; strcpy(s.bar[0],"Game saved!"); s.bar[1][0]=0; SHOT("save_saved");
+        s.saveState=SAVE_ERROR; strcpy(s.bar[0],"Could not save."); strcpy(s.bar[1],"Try again."); SHOT("save_error");
         s.saveMinutes=8; s.saveMoney=999999; s.saveBadges=8; s.playerFemale=1; strcpy(s.playerName,"Leaf"); update(&old,&s); SHOT("save_error_changed");
         /* A choice of the field (3ds_field_choice_impl.h): flame row with the ring and cursor, the question in the window; the cursor moves incrementally. */
         memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;

@@ -45,11 +45,11 @@ static void FLSidePanel(const CtrPokeTouchLearn *l)
     LlPlate(s->x + 16, s->y + 8, 64, LL_SLATE, EM_WHITE, 1);
     FDPicDraw(l->species, s->x + (s->w - 64) / 2, s->y + 8, 0);
     LlRibbonBox(s->x, s->y, UiTextWidth(l->level, 1) + 18, 11, 7, LL_TL, LL_RIB_TOP, LL_RIB_BOT, l->level);
-    UiTextCentered(l->nickname, &name, s->y + 83, EM_DARK, EM_DARK_SH, 1);
-    LlRule(s->x + 8, s->y + 97, s->w - 16);
+    UiTextCentered(l->nickname, &name, s->y + 80, EM_DARK, EM_DARK_SH, 1);
+    LlRule(s->x + 8, s->y + 92, s->w - 16);
     if (l->row[c].move) {
-        FLSideRow(CtrUiText(UIS_MOVE_PP), l->row[c].pp, s->y + 100);
-        FLSideRow(CtrUiText(UIS_MOVE_POWER), l->row[c].power, s->y + 110);
+        FLSideRow(CtrUiText(UIS_MOVE_PP), l->row[c].pp, s->y + 96);
+        FLSideRow(CtrUiText(UIS_MOVE_POWER), l->row[c].power, s->y + 108);
         FLSideRow(CtrUiText(UIS_MOVE_ACCURACY), l->row[c].accuracy, s->y + 120);
     }
 }

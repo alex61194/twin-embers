@@ -1,5 +1,5 @@
 /* The player's Trainer Card in the viewport (3ds_poketouch.h CtrPokeTouchCard), included at the end of 3ds_poketouch.c
- * after the Pokedex, whose picture helpers it shares. A remote for FireRed's own card: a light card with an amber band,
+ * after the Pokedex, whose picture helpers it shares. A remote for FireRed's own card: a light card with an flame band,
  * its front (FireRed's labels and numbers, the trainer's front picture, the stars and the eight badge slots) or its back
  * (FireRed's records). Every word, number and picture is the card's (CtrBottomCard_*, CtrPokeTouch_Card*), but for the
  * port's title and hint (3ds_ui_strings.h). */
@@ -62,15 +62,22 @@ static void FCBadges(const CtrPokeTouchCard *c, int x, int y)
     }
 }
 
-/* The amber band at the top of the card, with `title` on it. */
+/* The flame band across the top of the card's window, with `title` on it (the SAVE window's: 20 tall, no outline, white ink). */
+#define FC_BAND_H 20
 static int FCBand(const char *title)
 {
     const CtrPokeTouchRect *r = &sFCCard;
+    uint16_t band[FC_BAND_H];
+    int split = FC_BAND_H * 42 / 100;
 
-    EmGradFill(r->x + 1, r->y + 1, r->w - 2, 26, 4, kEmAmber.top, kEmAmber.bottom);
-    Fill(r->x + 1, r->y + 27, r->w - 2, 1, kEmAmber.lip);
-    UiText(title, r->x + 12, r->y + 8, kEmAmber.ink, kEmAmber.inkSh, 1, r->x + r->w - 8);
-    return r->x + 12 + UiTextWidth(title, 1);
+    for (int row = 0; row < FC_BAND_H; ++row)
+        band[row] = row < split ? Em2Lerp(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), row, split - 1)
+                                : Em2Lerp(UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), row - split, FC_BAND_H - split - 1);
+    EmFillRows(r->x + 1, r->y + 1, r->w - 2, FC_BAND_H, 4, band, 0, 10);
+    for (int row = 10; row < FC_BAND_H; ++row)
+        Fill(r->x + 1, r->y + 1 + row, r->w - 2, 1, band[row]);
+    Em2Text(title, r->x + 11, r->y + 1 + (FC_BAND_H - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh, r->x + r->w - 8);
+    return r->x + 11 + UiTextWidth(title, 1);
 }
 
 /* A labelled row: the label on the left, the value right-aligned at `right`, a hairline under it. */
@@ -78,7 +85,7 @@ static void FCRow(const char *label, const char *value, int x, int right, int y)
 {
     UiText(label, x, y, EM_DARK, EM_DARK_SH, 1, right - UiTextWidth(value, 1) - 6);
     UiTextRight(value, right, y, EM_VALUE, EM_DARK_SH, 1);
-    Fill(x - 2, y + 15, right - x + 4, 1, UI_RGB(214, 204, 192));
+    LlRule(x - 2, y + 15, right - x + 4);
 }
 
 static void FCFront(const CtrPokeTouchCard *c)
@@ -95,8 +102,8 @@ static void FCFront(const CtrPokeTouchCard *c)
     int x = FCBand(title) + 8;
 
     for (int i = 0; i < stars; ++i)
-        FCStar(x + i * 13, sFCCard.y + 7, UI_RGB(255, 236, 140), kEmAmber.lip);
-    UiTextRight(text, sFCCard.x + sFCCard.w - 12, sFCCard.y + 8, kEmAmber.ink, kEmAmber.inkSh, 1);
+        FCStar(x + i * 13, sFCCard.y + 5, UI_RGB(255, 236, 140), kEmFlame.lip);
+    UiTextRight(text, sFCCard.x + sFCCard.w - 12, sFCCard.y + 1 + (FC_BAND_H - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh, 1);
     /* NAME: FireRed's label ends in ": " */
     snprintf(label, sizeof(label), "%s", c->label[0]);
     for (int n = (int)strlen(label); n > 0 && (label[n - 1] == ' ' || label[n - 1] == ':'); --n)
@@ -110,8 +117,7 @@ static void FCFront(const CtrPokeTouchCard *c)
     }
     snprintf(text, sizeof(text), "%u:%02u", (unsigned)c->hours, (unsigned)c->minutes);
     FCRow(c->label[5], text, 16, 156, c->hasDex ? 103 : 82);
-    UiRoundFill(166, 36, 72, 84, 5, UI_RGB(214, 204, 192));
-    EmGradFill(167, 37, 70, 82, 4, UI_RGB(255, 246, 226), UI_RGB(246, 222, 186));
+    LlWell(166, 36, 72, 84);
     FCTrainer(170, 48);
     FCBadges(c, 12, 130);
 }
@@ -130,8 +136,13 @@ static void FCardFrame(const CtrPokeTouchView *v)
 
     EmSurface();
     TsBgRect(r->x - 4, r->y - 4, r->w + 8, r->h + 8);
-    UiRoundFill(r->x, r->y, r->w, r->h, 6, c->pressed ? EM_STRIPE : kEmCream.edge);   /* held: an amber edge */
-    EmGradFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, 5, kEmCream.top, kEmCream.bottom);
+    LlWindow(r->x, r->y, r->w, r->h);
+    if (c->pressed) {   /* held: an amber edge */
+        Fill(r->x + 3, r->y, r->w - 6, 1, EM_STRIPE);
+        Fill(r->x + 3, r->y + r->h - 1, r->w - 6, 1, EM_STRIPE);
+        Fill(r->x, r->y + 3, 1, r->h - 6, EM_STRIPE);
+        Fill(r->x + r->w - 1, r->y + 3, 1, r->h - 6, EM_STRIPE);
+    }
     if (c->back)
         FCBack(c);
     else
