@@ -82,10 +82,18 @@ int CtrPokeTouch_MapArt(int group, uint16_t *map, uint8_t *tiles, uint16_t *pal,
     memset(pal, 0, MAP_COLORS * 2); pal[1] = 0x5ab3;
     return 1;
 }
+/* The map's two icons: none, unless a test asks for synthetic art (a red square for the player, a blue one for the cursor, whose second frame is half of it). */
+static int iconArt;
 int CtrPokeTouch_MapPlayerIcon(uint8_t *tiles, uint16_t *pal)
-{ (void)tiles; (void)pal; return 0; }
+{
+    if(!iconArt) return 0;
+    memset(tiles,0x11,4*32); memset(pal,0,32); pal[1]=0x001f; return 1;
+}
 int CtrPokeTouch_MapCursorIcon(uint8_t *tiles, uint16_t *pal)
-{ (void)tiles; (void)pal; return 0; }
+{
+    if(!iconArt) return 0;
+    memset(tiles,0x22,4*32); memset(tiles+4*32,0x20,4*32); memset(pal,0,32); pal[2]=0x7c00; return 1;
+}
 int CtrBottomParty_Icon(int slot, unsigned char *tiles, unsigned short *pal)
 { (void)slot; (void)tiles; (void)pal; return 0; }
 
@@ -264,8 +272,15 @@ int main(int argc, char **argv)
     strcpy(v.playerName,"Trades"); strcpy(v.bar[0],"TEST MAP");
     for(int i=0;i<PT_COUNT;++i) v.enabled[i]=1;
     CtrPokeTouch_Draw(canvas,&v);
-    for(int x=4;x<244;++x) for(int y=7;y<164;++y) assert(at(x,y)==Gba(0x5ab3));     /* the first three rows are shaded: the map sits in its frame */
-    for(int x=4;x<244;++x) for(int y=4;y<7;++y) assert(at(x,y)!=Gba(0x5ab3));
+    {   /* HOME: the map fills the viewport, but for the region's red ribbon at its corner (the Llama mockup's KANTO); the first three rows are shaded: the map sits in its frame */
+        int rib=UiTextWidth("KANTO",1)+18;
+        for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
+            int onRibbon=x<4+rib&&y<4+13;
+            if(onRibbon) continue;
+            if(y<7) assert(at(x,y)!=Gba(0x5ab3)); else assert(at(x,y)==Gba(0x5ab3));
+        }
+        assert(at(4,4)==LL_RIB_TOP && at(4+3,4+6)!=Gba(0x5ab3) && at(4,4+13)==Gba(0x5ab3));      /* the ribbon: red from its top, 13 rows */
+    }
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
         FILE *f=fopen(argv[1],"wb"); assert(f);
         fprintf(f,"P6\n320 240\n255\n");
@@ -392,10 +407,57 @@ int main(int argc, char **argv)
         for(int i=1;i<16;++i) s.optLook.palette[i]=(uint16_t)(i*0x0421);
         strcpy(s.bar[0],"LEAF LOOK"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
         SHOT("options_look");
+        /* The chosen row moves over the rows above the window (its ring lies on its neighbours, and on the 2 px gap above the window). */
+        for(int row=0;row<4;++row) { s.optSelected=(uint8_t)row; update(&old,&s); s.optPressed=(int8_t)row; s.optZone=PT_OPT_ZONE_NEXT; update(&old,&s); s.optPressed=-1; update(&old,&s); }
+        s.optSelected=3; update(&old,&s); s.optSelected=0; update(&old,&s); s.optSelected=2; update(&old,&s);
+        /* SAVE: the window with its ribbon, the lines and the player's plate; YES chosen (flame, ringed) over NO (slate). */
+        s.options=0; s.save=1; s.saveState=SAVE_CONFIRM; s.saveSel=0; s.savePressed=PT_SAVE_NONE; s.optLook.on=0; s.backVisible=0; s.optPageCount=0;
+        s.saveBadges=3; s.saveHasDex=1; s.saveDex=42; s.saveHours=12; s.saveMinutes=34; s.saveMoney=12345;
+        strcpy(s.bar[0],"SAVE"); strcpy(s.bar[1],"Save the game now?"); s.bar[2][0]=0; s.flyOk=0;
+        SHOT("save");
+        s.saveMinutes=35; s.saveMoney=99999; update(&old,&s);                        /* a value that changed: its own rectangle (on the window's paper) */
+        s.saveSel=1; s.savePressed=PT_SAVE_SECOND; SHOT("save_no");
         (void)before;
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
     v.backEnabled=1; update(&old,&v); v.backPressed=1; update(&old,&v);
+#ifndef PT_BASELINE
+    {
+        /* HOME's pieces over the map (the Llama mockup's): the region ribbon, the player's icon, the chosen destination's ring and its name on a window.
+         * Every move, blink and rename goes through the incremental path, which update() compares with a full redraw. */
+        CtrPokeTouchView h={0}; CtrPokeTouchRect ring, label;
+        int cells[][2]={{10,8},{11,8},{11,5},{0,0},{21,14},{21,0},{0,14},{5,7}};
+        iconArt=1; sPlayer.key=sCursor.key=-1; sMap.group=-1;
+        h.selected=h.pressed=PT_NONE; h.optPressed=-1; h.home=1; h.playerX=h.playerY=h.cursorX=h.cursorY=-1;
+        for(int i=0;i<PT_COUNT;++i) h.enabled[i]=1;
+        strcpy(h.playerName,"Rick"); strcpy(h.bar[0],"TEST MAP");
+        memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; old.optPressed=-1;
+        update(&old,&h);
+        h.playerX=5; h.playerY=5; update(&old,&h);                                      /* the player appears */
+        h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h);    /* a destination: ring, icon, name */
+        assert(RingRect(&h,&ring) && ring.w==24 && ring.h==24 && LabelRect(&h,&label) && label.h==21 && label.w==UiTextWidth("VERMILION CITY",1)+18);
+        assert(label.y+label.h+3==ring.y);                                               /* 3 px above the ring */
+        assert(at(ring.x+12,ring.y)==LL_CURSOR || at(ring.x+11,ring.y)==LL_CURSOR);        /* the ring's red, at its top */
+        assert(at(ring.x+12,ring.y+12)==Gba(0x7c00));                                    /* the cursor's icon in it */
+        if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_cursor");
+        h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the cursor blinks */
+        for(unsigned i=0;i<sizeof(cells)/sizeof(cells[0]);++i) {
+            h.cursorX=(int8_t)cells[i][0]; h.cursorY=(int8_t)cells[i][1]; update(&old,&h);
+            h.playerX=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][0]; h.playerY=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][1]; update(&old,&h);
+            if(LabelRect(&h,&label)) { /* the name's window stays inside the map */
+                assert(label.x>=PT_VIEW_X && label.y>=PT_VIEW_Y && label.x+label.w<=PT_VIEW_X+PT_VIEW_W && label.y+label.h<=PT_VIEW_Y+PT_VIEW_H);
+            }
+        }
+        h.cursorX=3; h.cursorY=3; update(&old,&h);
+        h.playerX=3; h.playerY=2; update(&old,&h);                                       /* the player under the name's window and the ring */
+        strcpy(h.bar[0],"CELADON CITY, A NAME TOO LONG TO FIT ON THE MAP'S WINDOW"); update(&old,&h);
+        strcpy(h.bar[0],"SAFFRON CITY"); update(&old,&h);                                 /* renamed: the old window goes, the new one comes */
+        h.playerFemale=1; update(&old,&h);
+        h.cursorX=h.cursorY=-1; update(&old,&h);                                         /* the destination goes: ring and window with it */
+        h.mapGroup=PT_MAP_SEVII123; h.cursorX=4; h.cursorY=4; update(&old,&h);          /* another map: SEVII on the ribbon */
+        iconArt=0; sPlayer.key=sCursor.key=-1; sMap.group=-1;
+    }
+#endif
 #ifndef PT_BASELINE
     {
         /* Llama (the owner's mockup, llama2_mockup.html): the shared pieces of 3ds_ember2_impl.h. Each is drawn on a canvas of a marker colour
@@ -454,6 +516,16 @@ int main(int argc, char **argv)
         STILL(150,150,40,14,0,"LlFlameFace",LlFlameFace(150,150,40,14,3,0));
         STILL(150,150,10,68,0,"LlScrollRail",LlScrollRail(150,150,10,68,3,28));
         { static const char *const names[3]={"OFF","LOW","HIGH"}; STILL(150,150,118,14,0,"LlSegments",LlSegments(150,150,118,14,names,3,2,1)); }
+        /* HOME / OPTIONS' own pieces (3ds_poketouch.c): the mockup's switch, 30 x 15 with the knob at the right when on and at the left when off; the value box. */
+        STILL(150,150,30,15,0,"LhSwitch on",LhSwitch(150,150,1));
+        { uint16_t k=0, g; SENTINEL(); LhSwitch(150,150,1); g=at(150+6,150+11); k=at(150+22,150+7);
+          assert(((g>>5)&63)*4>(g>>11)*8+40 && (k>>11)>26 && (k&31)>26);   /* green track on the left, the pale knob on the right */
+          SENTINEL(); LhSwitch(150,150,0); g=at(150+22,150+11); k=at(150+7,150+7);
+          assert(abs((int)(g>>11)*8-(int)(g&31)*8)<24 && (k>>11)>26 && (k&31)>26); }   /* grey track on the right, the knob on the left */
+        STILL(150,150,30,15,0,"LhSwitch off",LhSwitch(150,150,0));
+        PIECE(150,150,120,17,0,"LhValue",LhValue(150,150,120,16,"RELOJ",0));
+        PIECE(150,150,120,17,0,"LhValue long",LhValue(150,150,120,16,"A VALUE FAR TOO LONG TO FIT BETWEEN THE NUBS",2));
+        PIECE(150,150,150,26,0,"LhPill",LhPill(150,150,150,26,(uint16_t[26]){0}));
         STILL(150,150,30,30,1,"LlPlate",LlPlate(150,150,30,UI_RGB(64,72,104),0,0));
         PIECE(146,146,38,38,0,"LlPlate ring",LlPlate(150,150,30,UI_RGB(24,74,134),UI_RGB(232,248,255),1));   /* a px of edge, one of band, a px of edge: 3 px out */
         PIECE(146,146,50,50,0,"LlPlate ring 2",LlPlate(150,150,42,UI_RGB(138,22,16),UI_RGB(255,216,144),2));
