@@ -880,7 +880,7 @@ static void OptLookPanel(const CtrPokeTouchView *v)
     LlRule(textX, r.y + (r.h >= 56 ? 26 : 19), right - textX);
     {
         /* The artists behind an ART ribbon, as many lines as the window holds, up to three. */
-        const char *tag = CTR_TR("ART", "ARTE", "Kunst");
+        const char *tag = CTR_TR("Art", "Arte", "Kunst");
         int y = r.y + (r.h >= 56 ? 31 : 22), pw, lines = big ? 3 : r.h >= 56 ? 2 : 1;
 
         pw = LlRibbon(textX, y, tag, LL_RIB_TOP, LL_RIB_BOT);
@@ -910,7 +910,7 @@ static const CtrPokeTouchRect sSaveNo = {172, 206, 72, 30};
 #define SAVE_NOTE_Y 166
 #define SAVE_NOTE_W 162
 #define SAVE_NOTE_H 70
-static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("PLAYER", "JUGADOR", "Spieler"), CTR_TR("BADGES", "MEDALLAS", "Orden"), CTR_TR("POK\xc3\xa9" "DEX", "POK\xc3\xa9" "DEX", "Pok\xc3\xa9" "dex"), CTR_TR("TIME", "TIEMPO", "Zeit"), CTR_TR("MONEY", "DINERO", "Geld")};
+static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler"), CTR_TR("Badges", "Medallas", "Orden"), CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9" "dex"), CTR_TR("Time", "Tiempo", "Zeit"), CTR_TR("Money", "Dinero", "Geld")};
 
 static CtrPokeTouchRect SaveField(int f)
 {
@@ -945,11 +945,6 @@ static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
                              (unsigned)(v->saveMinutes > 59 ? 59 : v->saveMinutes)); break;
     default:        snprintf(text, sizeof(text), "\xc2\xa5%u", (unsigned)(v->saveMoney > 999999u ? 999999u : v->saveMoney)); break;
     }
-#if !CTR_LANG_DE
-    for (char *c = text; f == SF_NAME && *c; ++c)
-        if (*c >= 'a' && *c <= 'z')
-            *c = (char)(*c - ('a' - 'A'));
-#endif
     Em2Fit(text, SAVE_VALUE_RIGHT - 84, fit, sizeof(fit));
     UiText(fit, SAVE_VALUE_RIGHT - UiTextWidth(fit, 1), r.y + 2, UI_RGB(48, 104, 216), UI_RGB(192, 208, 240), 1,
            SAVE_VALUE_RIGHT + 1);
@@ -987,7 +982,7 @@ static void SaveDraw(const CtrPokeTouchView *v)
     EmFillRows(SAVE_WIN_X + 1, SAVE_WIN_Y + 1, SAVE_WIN_W - 2, 20, 4, band, 0, 10);
     for (int row = 10; row < 20; ++row)
         Fill(SAVE_WIN_X + 1, SAVE_WIN_Y + 1 + row, SAVE_WIN_W - 2, 1, band[row]);
-    Em2Text(CTR_TR("SAVE", "GUARDAR", "Sichern"), SAVE_WIN_X + 11, SAVE_WIN_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh,
+    Em2Text(CTR_TR("Save", "Guardar", "Sichern"), SAVE_WIN_X + 11, SAVE_WIN_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh,
             SAVE_WIN_X + SAVE_WIN_W - 6);
     for (int f = 0; f < SF_COUNT; ++f) {
         Em2Text(sSaveLabel[f], SAVE_LABEL_X, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 84);
@@ -1078,7 +1073,7 @@ static void SaveButtons(const CtrPokeTouchView *v)
         if (sel)
             LlSelectRing(r.x, r.y, r.w, r.h);
         fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("YES", "S\xC3\x8D", "Ja") : CTR_TR("NO", "NO", "Nein"), r.x, r.w, fy, r.h - 2, pal);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein"), r.x, r.w, fy, r.h - 2, pal);
     }
 }
 
@@ -1182,7 +1177,7 @@ static void Back(const CtrPokeTouchView *v)
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     LlArrow(r->x + 12, fy + (fh - 10) / 2, 6, 10, 2, EM_WHITE);
-    UiText(CTR_TR("BACK", "ATR\xc3\x81S", "Zur\xc3\xbc" "ck"), r->x + 24, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 3);
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck"), r->x + 24, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 3);
 }
 
 /* PAGE: switches between OPTIONS pages (PAGE 2/4) right above BACK: a dot for each page in that page's colour, the shown one larger with a ring. */
@@ -1204,7 +1199,7 @@ static void OptPageButton(const CtrPokeTouchView *v)
         else
             Em2Dot(x0 + i * 10 + 1, fy + 4, colour, 0);
     }
-    snprintf(label, sizeof(label), CTR_TR("PAGE %d/%d", "PAG. %d/%d", "Seite %d/%d"), v->optPage + 1, v->optPageCount);
+    snprintf(label, sizeof(label), CTR_TR("Page %d/%d", "Pag. %d/%d", "Seite %d/%d"), v->optPage + 1, v->optPageCount);
     EmLabel(label, r->x, r->w, fy + 12, 11, &kEmCream);
 }
 
@@ -1277,8 +1272,8 @@ static int FrameSample(int type, int x, int y)
 
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
-    UiText(CTR_TR("YES", "S\xC3\x8D", "Ja"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
-    UiText(CTR_TR("NO", "NO", "Nein"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("No", "No", "Nein"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
 }
 
@@ -1322,7 +1317,7 @@ static void Bar(const CtrPokeTouchView *v)
                                                          NOTE_Y + (NOTE_H - FRAME_H) / 2 - 1))
             right -= FRAME_W + 4;
         /* HOME with a destination that can be Flown to: a FLY button beside the name says so, and the line that said the same goes. */
-        const char *fly = v->home && !v->viewport && !v->options && v->flyOk ? CTR_TR("FLY", "VOLAR", "Fliegen") : NULL;
+        const char *fly = v->home && !v->viewport && !v->options && v->flyOk ? CTR_TR("Fly", "Volar", "Fliegen") : NULL;
         const char *shown[PT_BAR_LINES] = {NULL};
         int count = 0, titleRight = right;
 
@@ -1409,22 +1404,17 @@ static void Button(int id, const CtrPokeTouchView *v)
         break;
     default: {
         char name[16] = {0};
-        const char *label = id == PT_POKEDEX ? CTR_TR("POK\xc3\xa9" "DEX", "POK\xc3\xa9" "DEX", "Pok\xc3\xa9" "dex")
-                          : id == PT_POKEMON ? CTR_TR("POK\xc3\xa9" "MON", "POK\xc3\xa9" "MON", "Pok\xc3\xa9" "mon")
-                          : id == PT_BAG ? CTR_TR("BAG", "MOCHILA", "Beutel")
-                          : id == PT_SAVE ? CTR_TR("SAVE", "GUARDAR", "Sichern") : id == PT_OPTIONS ? CTR_TR("OPTION", "AJUSTES", "Option") : name;
+        const char *label = id == PT_POKEDEX ? CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9" "dex")
+                          : id == PT_POKEMON ? CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xc3\xa9" "mon")
+                          : id == PT_BAG ? CTR_TR("Bag", "Mochila", "Beutel")
+                          : id == PT_SAVE ? CTR_TR("Save", "Guardar", "Sichern") : id == PT_OPTIONS ? CTR_TR("Option", "Ajustes", "Option") : name;
 
         if (id == PT_CARD) {
-            /* The player's name (in original case for modern Title Case, or uppercase otherwise). */
+            /* The player's name, as typed. */
             int n = 0;
 
             for (; n < (int)sizeof(name) - 1 && v->playerName[n]; ++n) {
-                char ch = v->playerName[n];
-#if CTR_LANG_DE
-                name[n] = ch;
-#else
-                name[n] = (char)(ch >= 'a' && ch <= 'z' ? ch - ('a' - 'A') : ch);
-#endif
+                name[n] = v->playerName[n];
             }
             name[n] = 0;
         }

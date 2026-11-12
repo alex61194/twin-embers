@@ -300,7 +300,7 @@ int main(int argc, char **argv)
     strcpy(v.playerName,"Alex"); update(&old,&v);
     for(int screen=0;screen<4;++screen) {
         v.home=screen==0; v.viewport=screen==1; v.options=screen==2; v.save=screen==3;
-        v.optCount=2; strcpy(v.optLabel[0],"SOUND"); strcpy(v.optValue[0],"MONO");
+        v.optCount=2; strcpy(v.optLabel[0],"Sound"); strcpy(v.optValue[0],"Mono");
         v.savePressed=PT_SAVE_NONE;
         update(&old,&v);
         if(viewports) for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
     {
         v.home=0; v.viewport=0; v.options=1; v.save=0; v.optCount=4; v.optSelected=1;
         v.optLook.on=1; v.optLook.has=1;
-        v.optPageCount=4; v.optPage=3; strcpy(v.optPageName,"LOOKS"); v.optSwitch[0]=2; v.optSwitch[1]=1;   /* the PAGE button's dots, the switches */
+        v.optPageCount=4; v.optPage=3; strcpy(v.optPageName,"Looks"); v.optSwitch[0]=2; v.optSwitch[1]=1;   /* the PAGE button's dots, the switches */
         strcpy(v.optLook.name,"ASH HGSS"); strcpy(v.optLook.credit,"Made by PKMNTrainerRick");
         for(int i=0;i<512;++i) v.optLook.tiles[i]=(uint8_t)(i*7);
         for(int i=1;i<16;++i) v.optLook.palette[i]=(uint16_t)(i*0x0421);
@@ -339,11 +339,11 @@ int main(int argc, char **argv)
                 snprintf(v.optLook.credit,sizeof(v.optLook.credit),"%s",getenv("PT_PREVIEW_CREDIT")?getenv("PT_PREVIEW_CREDIT"):"");
                 int first=getenv("PT_PREVIEW_ROWS") && atoi(getenv("PT_PREVIEW_ROWS"))==5;   /* the page with REUSABLE TMS: five rows */
                 v.optCount=first?5:4; v.optSelected=first?2:1;
-                strcpy(v.optLabel[0],"EXP SHARE"); strcpy(v.optValue[0],"OFF");
-                if(first) { strcpy(v.optLabel[1],"REUSABLE TMS"); strcpy(v.optValue[1],"OFF"); }
-                strcpy(v.optLabel[first+1],"RED LOOK"); strcpy(v.optValue[first+1],v.optLook.name);
-                strcpy(v.optLabel[first+2],"LEAF LOOK"); strcpy(v.optValue[first+2],"DEFAULT");
-                strcpy(v.optLabel[first+3],"RIVAL LOOK"); strcpy(v.optValue[first+3],"DEFAULT");
+                strcpy(v.optLabel[0],"EXP share"); strcpy(v.optValue[0],"Off");
+                if(first) { strcpy(v.optLabel[1],"Reusable TMs"); strcpy(v.optValue[1],"Off"); }
+                strcpy(v.optLabel[first+1],"Red look"); strcpy(v.optValue[first+1],v.optLook.name);
+                strcpy(v.optLabel[first+2],"Leaf look"); strcpy(v.optValue[first+2],"Default");
+                strcpy(v.optLabel[first+3],"Rival look"); strcpy(v.optValue[first+3],"Default");
                 update(&old,&v);
                 FILE *f=fopen(out,"wb"); assert(f);
                 fprintf(f,"P6\n320 240\n255\n");
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
         }
         strcpy(v.optLook.name,"GARY"); strcpy(v.optLook.credit,"Made by Alan_Flygon, a credit long enough to need a second and a third line of the note card");
         update(&old,&v);
-        v.optLook.has=0; strcpy(v.optLook.name,"DEFAULT"); update(&old,&v);       /* the default: no picture */
+        v.optLook.has=0; strcpy(v.optLook.name,"Default"); update(&old,&v);       /* the default: no picture */
         v.optCount=5; v.optLook.has=1; strcpy(v.optLook.name,"ASH HGSS"); update(&old,&v);   /* five rows: the card is 42 high, the picture at its own size */
         v.optCount=6; update(&old,&v);                                            /* six: no room for the card at all */
         v.optCount=7; update(&old,&v);                                            /* a page of seven rows has no room: no panel */
@@ -412,13 +412,13 @@ int main(int argc, char **argv)
         SHOT("home");
         s.selected=PT_OPTIONS; s.pressed=PT_BAG; SHOT("home_pressed"); s.pressed=PT_NONE; s.selected=PT_NONE; s.running=1; SHOT("home_running"); s.running=0;
         /* OPTIONS, page 2: switches, values, levels; then each press and selection moves. */
-        s.home=0; s.options=1; s.optCount=7; s.optPage=1; s.optPageCount=4; strcpy(s.optPageName,"EXTRAS");
-        static const char *const labels[7]={"TYPE CHART","MOVE DATA","DAY/NIGHT","TIME","EMBERS","REPELLENT","COMPANION"};
+        s.home=0; s.options=1; s.optCount=7; s.optPage=1; s.optPageCount=4; strcpy(s.optPageName,"Extras");
+        static const char *const labels[7]={"Type matchup","Move details","Day/Night","Hour","Embers","Repel again","Companion"};
         for(int i=0;i<7;++i) strcpy(s.optLabel[i],labels[i]);
-        s.optSwitch[0]=2; s.optSwitch[1]=2; strcpy(s.optValue[2],"CLOCK"); strcpy(s.optValue[3],"12:00");
-        s.optSegCount[4]=3; s.optSegValue[4]=2; strcpy(s.optSegName[4][0],"OFF"); strcpy(s.optSegName[4][1],"LOW"); strcpy(s.optSegName[4][2],"HIGH");
-        s.optSwitch[5]=1; s.optSegCount[6]=3; s.optSegValue[6]=2; strcpy(s.optSegName[6][0],"OFF"); strcpy(s.optSegName[6][1],"TRAIL"); strcpy(s.optSegName[6][2],"BE");
-        s.optSelected=6; strcpy(s.bar[0],"COMPANION"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
+        s.optSwitch[0]=2; s.optSwitch[1]=2; strcpy(s.optValue[2],"Clock"); strcpy(s.optValue[3],"12:00");
+        s.optSegCount[4]=3; s.optSegValue[4]=2; strcpy(s.optSegName[4][0],"Off"); strcpy(s.optSegName[4][1],"Low"); strcpy(s.optSegName[4][2],"High");
+        s.optSwitch[5]=1; s.optSegCount[6]=3; s.optSegValue[6]=2; strcpy(s.optSegName[6][0],"Off"); strcpy(s.optSegName[6][1],"Follow"); strcpy(s.optSegName[6][2],"Be it");
+        s.optSelected=6; strcpy(s.bar[0],"Companion"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
         s.backVisible=1; s.backEnabled=1;
         SHOT("options2");
         before=s;
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
         s.optPagePressed=1; update(&old,&s); s.optPagePressed=0; s.optPage=2; update(&old,&s); s.optPage=1;
         strcpy(s.optValue[3],"13:45"); update(&old,&s);
         s=before; SHOT("options2_again");
-        s.optPage=0; strcpy(s.optPageName,"GAME"); s.optSelected=0; strcpy(s.bar[0],"TYPE CHART"); strcpy(s.bar[1],"Shows how effective a move"); strcpy(s.bar[2],"will be on the foe.");
+        s.optPage=0; strcpy(s.optPageName,"Game"); s.optSelected=0; strcpy(s.bar[0],"Type matchup"); strcpy(s.bar[1],"Shows how effective a move"); strcpy(s.bar[2],"will be on the foe.");
         SHOT("options1");
         /* The move to forget for a new one (Llama look): its rows, the cursor and a press move nothing but themselves. */
         {
@@ -450,11 +450,11 @@ int main(int argc, char **argv)
             CtrPokeTouchDex *d=&s.dex; memset(d,0,sizeof(*d)); d->on=1; d->state=PT_DEX_STATE_MENU; d->pressed=-1; d->national=1;
             d->seen[0]=142; d->owned[0]=118; d->seen[1]=251; d->owned[1]=203;
             d->menuCount=8; d->menuCursor=1;
-            d->menu[0].id=PT_DEX_ID_HEADER; d->menu[1].id=PT_DEX_ID_KANTO; strcpy(d->menu[1].name,"KANTO");
-            d->menu[2].id=PT_DEX_ID_NATIONAL; strcpy(d->menu[2].name,"NATIONAL"); d->menu[3].id=PT_DEX_ID_CANCEL; strcpy(d->menu[3].name,"CLOSE POKEDEX");
+            d->menu[0].id=PT_DEX_ID_HEADER; d->menu[1].id=PT_DEX_ID_KANTO; strcpy(d->menu[1].name,"Kanto");
+            d->menu[2].id=PT_DEX_ID_NATIONAL; strcpy(d->menu[2].name,"National"); d->menu[3].id=PT_DEX_ID_CANCEL; strcpy(d->menu[3].name,"CLOSE POKEDEX");
             d->menu[4].id=PT_DEX_ID_HEADER; d->menu[5].id=0; strcpy(d->menu[5].name,"GRASSLAND POK\xC3\xA9MON"); d->menu[6].id=1; strcpy(d->menu[6].name,"FOREST POK\xC3\xA9MON");
             d->menu[7].id=2; d->menu[7].locked=1; strcpy(d->menu[7].name,"WATER'S EDGE POK\xC3\xA9MON");
-            strcpy(s.bar[0],"KANTO"); strcpy(s.bar[1],"Your POKEMON by number");
+            strcpy(s.bar[0],"Kanto"); strcpy(s.bar[1],"Your Pokemon by number");
             SHOT("dex_menu");
             d->menuCursor=2; update(&old,&s); d->pressed=PT_DEX_HIT_ITEM+2; update(&old,&s); d->pressed=-1; d->menuCursor=3; update(&old,&s); SHOT("dex_menu_close");
             d->menuCursor=5; SHOT("dex_habitats"); d->menuCursor=7; update(&old,&s); d->menuCursor=6; update(&old,&s);
@@ -484,11 +484,11 @@ int main(int argc, char **argv)
         /* The look page: three look rows and the preview card. */
         s.optPage=3; strcpy(s.optPageName,"LOOKS"); s.optCount=4; memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount));
         strcpy(s.optLabel[0],"EXP SHARE"); s.optSegCount[0]=3; s.optSegValue[0]=1; strcpy(s.optSegName[0][0],"OFF"); strcpy(s.optSegName[0][1],"HALF"); strcpy(s.optSegName[0][2],"ALL");
-        strcpy(s.optLabel[1],"RED LOOK"); strcpy(s.optValue[1],"GOLD HGSS"); strcpy(s.optLabel[2],"LEAF LOOK"); strcpy(s.optValue[2],"MAY HGSS"); strcpy(s.optLabel[3],"RIVAL LOOK"); strcpy(s.optValue[3],"SILVER");
+        strcpy(s.optLabel[1],"Red look"); strcpy(s.optValue[1],"GOLD HGSS"); strcpy(s.optLabel[2],"Leaf look"); strcpy(s.optValue[2],"MAY HGSS"); strcpy(s.optLabel[3],"Rival look"); strcpy(s.optValue[3],"SILVER");
         s.optSelected=2; s.optLook.on=1; s.optLook.has=1; strcpy(s.optLook.name,"MAY HGSS"); strcpy(s.optLook.credit,"Made by DiegoWT");
         for(int i=0;i<512;++i) s.optLook.tiles[i]=(uint8_t)(i*7);
         for(int i=1;i<16;++i) s.optLook.palette[i]=(uint16_t)(i*0x0421);
-        strcpy(s.bar[0],"LEAF LOOK"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
+        strcpy(s.bar[0],"Leaf look"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
         SHOT("options_look");
         /* The chosen row moves over the rows above the window (its ring lies on its neighbours, and on the 2 px gap above the window). */
         for(int row=0;row<4;++row) { s.optSelected=(uint8_t)row; update(&old,&s); s.optPressed=(int8_t)row; s.optZone=PT_OPT_ZONE_NEXT; update(&old,&s); s.optPressed=-1; update(&old,&s); }
