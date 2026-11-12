@@ -3568,7 +3568,7 @@
   },
   {
    "path": "docs/overworld-wilds-research.md",
-   "sha256": "9798a6ed71d5b0605648c5cd5015dd99b3c6143d72ef76aa430227607340ca65",
+   "sha256": "143155694e03df7ab6108c1b2449b1ae7fc495602a55e408788581a558da5873",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6111,7 +6111,7 @@
   },
   {
    "path": "patches/pokefirered/0249-visible-wilds.json",
-   "sha256": "d3023bd4e036401ffefee091454f395ff9c219c72b495b67c4314809cec81698",
+   "sha256": "e563342757c1810f38143801b3526ee7f3948d0ac29f8c3c283719e50454ec52",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6887,7 +6887,7 @@
   },
   {
    "path": "tools/test_option_labels.py",
-   "sha256": "ae1430ca5bdedd0082caa1a760f211b86c49b94a585011fbc88bf853c04f1f80",
+   "sha256": "449c86f14a2186ab86f24607a6b02adcb9b8d537bc8f0f0ca092fa54d44452d0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

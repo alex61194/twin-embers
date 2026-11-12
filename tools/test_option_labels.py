@@ -31,7 +31,11 @@ def decode(lits):
 class OptionLabels(unittest.TestCase):
     def test_labels_fit(self):
         rows = ROW.findall(SRC)
-        self.assertGreaterEqual(len(rows), 26)
+        self.assertGreaterEqual(len(rows), 28)
+        labels = {decode(names[0]) for names in rows}
+        for label in ('Wild Pokemon', 'Wild display', 'Aggressive'):      # the Wilds page: three rows in all three languages
+            self.assertIn(label, labels)
+        self.assertNotIn('Visible wilds', labels)
         for names in rows:
             for lang, lit in zip(('en', 'es', 'de'), names):
                 label = decode(lit)

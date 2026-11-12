@@ -174,7 +174,8 @@ the lead Pokemon is much stronger than the wild (level x base stats under 70%) t
 A calm wild never chases; it only flees from a much stronger lead, with a chance of 10% just under the limit to 50% at 30%, when the
 player is within 2 tiles (4 running or biking). A runner far away (6+ tiles) is gone with a 30% chance. Rest times after a miss, a
 flight or a chase are 5, 10 and 15 seconds. Steps use the game's collision on land and a free sea tile on the water, and stay on what
-the wild is made for.
+the wild is made for. A water wild is at the sea's height, below a player on the shore, so it ignores the height difference (it can
+notice, be walked into or be pressed with A from the shore); a land wild needs the same height as the player.
 
 ### One Pokemon, rolled once
 The picker (`CtrWilds_Roll`, wild_encounter.c) rolls the whole Pokemon from the map's land or water table with the game's own routines
