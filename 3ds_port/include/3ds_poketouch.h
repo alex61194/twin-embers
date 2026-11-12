@@ -42,16 +42,17 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
  * REGIONMAP_* values. */
 enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COUNT };
-/* HOME shows the Region Map's 192x128 at (24, 28) of its 240x160 screen (the 22x15 grid of 8x8
- * cells at (32, 32) and the 16x16 icons around it) enlarged by exactly 5/4, nearest neighbour,
- * into the viewport: cells are 10x10 from (10, 5), icons 20x20. Only HOME uses this; the other
- * screens keep the viewport 1:1 with the GBA picture. */
-#define PT_HOME_SRC_X 24
-#define PT_HOME_SRC_Y 28
-#define PT_HOME_X 10                    /* viewport pixel of cell (0, 0) */
-#define PT_HOME_Y 5
-#define PT_HOME_CELL 10
-#define PT_HOME_ICON 20
+/* The map is redrawn at 4x from that art by 3ds_home_map_impl.h: an image of 768x576 pixels that the viewport shows at one of three zooms (0: the
+ * whole width, 1: about 0.8, 2: about 1.45) round a centre in the image's own pixels. A tap picks the town whose orb is near it, else the cell
+ * (22x15) it is in. */
+bool CtrPokeTouch_MapPrepare(int group, int version);                  /* a frame's work on a map's image; true once it is there */
+bool CtrPokeTouch_HomeCellWorld(int cx, int cy, int *wx, int *wy);     /* a cell's centre in the image */
+void CtrPokeTouch_HomeClamp(int zoom, int *cx, int *cy);               /* a centre kept so the image covers the viewport */
+bool CtrPokeTouch_HomePick(int zoom, int cx, int cy, int vx, int vy, int *gx, int *gy);   /* the cell under a viewport pixel */
+int CtrPokeTouch_HomeScale(int zoom);                                  /* a zoom's scale in 1/256 */
+void CtrPokeTouch_HomeReveal(int zoom, int *cx, int *cy, int gx, int gy);   /* scroll to a cell only if it is out of the window */
+bool CtrPokeTouch_HomeRibbonHit(int x, int y);                         /* the region ribbon, when it leads to another map */
+int CtrPokeTouch_HomeZoomHit(int x, int y);                            /* +1: the "+" button, -1: "-", else 0 */
 /* The native OPTIONS screen (3ds_poketouch_options.c holds the rows): it fills the viewport with up
  * to PT_OPT_MAX rows, each a label on the left and, on the right, "<" value ">". A row is 228x20 at
  * (PT_VIEW_X + 6, PT_VIEW_Y + 4 + 22 row). On a row, the label selects it (its description goes to
@@ -346,6 +347,10 @@ typedef struct {
     uint8_t home;               /* the HOME map fills the viewport (no GBA picture) */
     uint8_t mapGroup;           /* which map: PT_MAP_KANTO..PT_MAP_SEVII67 */
     uint8_t mapVersion;         /* what else its art depends on (CtrPokeTouch_MapVersion) */
+    uint8_t mapZoom;            /* the zoom (0..2) the viewport shows the image at, and the point of the image at its centre */
+    int16_t mapCX, mapCY;
+    uint8_t mapReady;           /* the image of the map has been built (CtrPokeTouch_MapPrepare) */
+    uint8_t mapOpen;            /* the maps the ribbon leads to, a bit each (PT_MAP_*): with more than one, the ribbon says so */
     uint8_t playerFemale;       /* Leaf's map icon rather than Red's */
     int8_t playerX, playerY;    /* the player's cell on the map (22x15), -1: none */
     int8_t cursorX, cursorY;    /* the selected cell (FireRed's cursor icon), -1: none */
