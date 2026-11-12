@@ -2117,7 +2117,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
         snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
         snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung."));
-        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back is the B button.", "Atr\xC3\xA1s es el bot\xC3\xB3n B.", "Zur\xC3\x9c""ck entspricht Taste B."));
+        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back is the B button.", "Atr\xC3\xA1s es el bot\xC3\xB3n B.", "Zur\xC3\xBC" "ck entspricht Taste B."));
         return;
     }
     if (mode == MODE_BATTLE) {

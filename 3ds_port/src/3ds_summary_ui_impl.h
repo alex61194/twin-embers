@@ -570,7 +570,7 @@ static const char *SHint(const CtrSummaryUiView *v)
 static void SFooter(const CtrSummaryUiView *v)
 {
     const char *hint = SHint(v);
-    int pressed = v->pressed == SUI_HIT_BACK, w = UiTextWidth(CTR_TR("Back", "Atr\xC3\xA1s", "ZurÃ¼" "ck"), 1), fy, x;
+    int pressed = v->pressed == SUI_HIT_BACK, w = UiTextWidth(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), 1), fy, x;
 
     TsBgRect(sSFooter.x, sSFooter.y, sSBack.x + sSBack.w - sSFooter.x, sSFooter.h);
     LlWindow(sSFooter.x, sSFooter.y, sSFooter.w, sSFooter.h);
@@ -578,7 +578,7 @@ static void SFooter(const CtrSummaryUiView *v)
     fy = EmButton(sSBack.x, sSBack.y, sSBack.w, sSBack.h, &kEmSlate, 2, pressed);
     x = sSBack.x + (sSBack.w - w - 12) / 2;
     LlArrow(x, fy + (sSBack.h - 2 - 10) / 2, 6, 10, 2, EM_WHITE);
-    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "ZurÃ¼" "ck"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
 }
 
 void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)
