@@ -404,7 +404,7 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
         v->optSection = (uint8_t)CtrOptions_SectionOf(page);
         v->optSectionCount = SECTIONS;
         if (of > 1)
-            snprintf(v->optPageName, sizeof(v->optPageName), "%s %d/%d", CtrOptions_PageName(page), at, of);
+            snprintf(v->optPageName, sizeof(v->optPageName), "%.12s %c/%c", CtrOptions_PageName(page), (char)(0x30 + at % 10), (char)(0x30 + of % 10));
         else
             snprintf(v->optPageName, sizeof(v->optPageName), "%s", CtrOptions_PageName(page));
     }
