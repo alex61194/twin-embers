@@ -192,7 +192,7 @@ static const CtrOptionRow sRows[] = {
      GetNuzDupes, TwoCount, SetNuzDupes},
     {CTR_TR("SHINY CLAUSE", "CL\xC3\x81USULA SHINY", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no gasta", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
      GetNuzShiny, TwoCount, SetNuzShiny},
-    {CTR_TR("LEVEL CAPS", "NIVEL M\xC3\x81XIMO", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xADder.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
+    {CTR_TR("LEVEL CAPS", "NIVEL M\xC3\x81XIMO", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
      GetNuzCap, TwoCount, SetNuzCap},
 };
 
