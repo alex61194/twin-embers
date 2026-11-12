@@ -375,6 +375,30 @@ int main(int argc, char **argv)
         for(int i=0;i<PT_COUNT;++i) s.enabled[i]=1;
         s.registeredItem=1; s.bikeItem=2; strcpy(s.playerName,"Rick"); s.playerX=s.playerY=-1;
         #define SHOT(name) do { update(&old,&s); if(dir) ppm(dir,name); } while(0)
+        /* The PC box and the naming keyboard (Llama, mockup panels 8 and 10): each state through the incremental path. */
+        {
+            CtrPokeTouchView b2=s; memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+            b2.home=0; b2.box.on=1; b2.box.state=PT_BOX_STATE_BOX; b2.box.area=ST_AREA_BOX; b2.box.pos=7; b2.box.pressed=-1; b2.box.message[0]=0xff;
+            for(int i=0;i<PT_BOX_SLOTS;i+=3) b2.box.slot[i].species=1+i;
+            memset(b2.box.boxName,0xff,sizeof(b2.box.boxName)); memcpy(b2.box.boxName,"»¼½",3);
+            update(&old,&b2); if(dir) ppm(dir,"box_cursor");
+            b2.box.pos=8; update(&old,&b2); b2.box.area=ST_AREA_TITLE; update(&old,&b2);
+            b2.box.area=ST_AREA_BUTTONS; b2.box.pos=1; update(&old,&b2); b2.box.pos=0; b2.box.pressed=ST_HIT_BUTTON_PARTY; update(&old,&b2); b2.box.pressed=-1;
+            b2.box.area=ST_AREA_PARTY; b2.box.pos=2; for(int i=0;i<6;++i) b2.box.party[i].species=1+i; update(&old,&b2); if(dir) ppm(dir,"box_party");
+            b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
+            b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
+            b2.box.menuCursor=3; update(&old,&b2);
+            b2.box.state=PT_BOX_STATE_YESNO; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_yesno");
+            b2.box.state=PT_BOX_STATE_CHOOSE; b2.box.chooseCount=12; update(&old,&b2); if(dir) ppm(dir,"box_choose");
+            b2.box.state=PT_BOX_STATE_MARKS; b2.box.marks=5; b2.box.menuCursor=1; update(&old,&b2); b2.box.menuCursor=5; update(&old,&b2); if(dir) ppm(dir,"box_marks");
+            b2.box.state=PT_BOX_STATE_BOX; b2.box.on=0; b2.name.on=1; b2.name.page=1; b2.name.cols=8; b2.name.maxChars=7; b2.name.len=3; b2.name.curCol=4; b2.name.curRow=1; b2.name.pressed=-1;
+            memset(b2.name.key,0xff,sizeof(b2.name.key)); memset(b2.name.text,0xff,sizeof(b2.name.text));
+            for(int r=0;r<3;++r) for(int c=0;c<8;++c) b2.name.key[r][c]=(uint8_t)(0xbb+r*8+c);
+            b2.name.text[0]=0xbb; b2.name.text[1]=0xc5; b2.name.text[2]=0xbf; memset(b2.name.title,0xff,sizeof(b2.name.title));
+            update(&old,&b2); if(dir) ppm(dir,"naming");
+            b2.name.curCol=8; b2.name.curRow=0; update(&old,&b2); b2.name.curRow=2; update(&old,&b2); b2.name.pressed=PT_NAME_HIT_KEY; update(&old,&b2);
+            b2.name.on=0; update(&old,&b2);
+        }
         /* HOME with a destination chosen on the map: the name, the region and the hint. */
         memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
         s.home=1; s.mapGroup=0; s.cursorX=10; s.cursorY=8; s.flyOk=1; strcpy(s.bar[0],"VERMILION CITY"); strcpy(s.bar[1],"Fly available"); strcpy(s.bar[2],"Tap again to Fly");

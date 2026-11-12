@@ -4,6 +4,10 @@
  * own characters) on light keys, FireRed's cursor amber. The question and, for a Pokemon, its picture are in the note.
  * Every character is FireRed's (CtrBottomNaming_*), but for the tabs' and buttons' labels (3ds_ui_strings.h). */
 
+#define FN_SLOT_TOP UI_RGB(62, 14, 14)
+#define FN_SLOT_BOT UI_RGB(42, 8, 9)
+#define FN_SLOT_EDGE UI_RGB(20, 3, 4)
+
 static const CtrPokeTouchRect sFNBand = {4, 4, 240, 34};
 static const CtrPokeTouchRect sFNDelete = {142, 42, 50, 22};
 static const CtrPokeTouchRect sFNOk = {194, 42, 50, 22};
@@ -140,27 +144,36 @@ static void FNSpaceMark(int cx, int y, uint16_t c)
 static void FNEntry(const CtrPokeTouchName *n)
 {
     const CtrPokeTouchRect *b = &sFNBand;
-    int slots = n->maxChars ? n->maxChars : 1, pitch = 16, x0 = b->x + (b->w - pitch * slots) / 2;
+    int slots = n->maxChars ? n->maxChars : 1, pitch = (b->w - 16) / slots, x0, sw, sy = b->y + 6, sh = 22;
     char g[3];
 
-    UiRoundFill(b->x, b->y, b->w, b->h, 5, kEmAmber.lip);
-    EmGradFill(b->x + 1, b->y + 1, b->w - 2, b->h - 2, 4, kEmAmber.top, kEmAmber.bottom);
+    if (pitch > 31)
+        pitch = 31;
+    x0 = b->x + (b->w - pitch * slots + 4) / 2;
+    sw = pitch - 4;
+    /* The mockup's dark slot, a light letter box for each letter written, a ring on the one the next letter takes. */
+    UiRoundFill(b->x, b->y, b->w, b->h, 5, FN_SLOT_EDGE);
+    EmGradFill(b->x + 1, b->y + 1, b->w - 2, b->h - 2, 4, FN_SLOT_TOP, FN_SLOT_BOT);
     for (int i = 0; i < slots; ++i) {
         int sx = x0 + i * pitch;
+        int written = i < n->len && n->text[i];
 
-        if (i < n->len && n->text[i]) {
+        UiRoundFill(sx, sy, sw, sh, 3, written || i != n->len ? LL_SLATE : LL_RING_IN);
+        if (written)
+            EmGradFill(sx + 1, sy + 1, sw - 2, sh - 2, 2, EM_WHITE, UI_RGB(240, 230, 204));
+        else
+            EmGradFill(sx + 1, sy + 1, sw - 2, sh - 2, 2, UI_RGB(92, 44, 44), UI_RGB(84, 38, 40));
+        if (written) {
             FNChar(n->text[i], g);
-            UiText(g, sx + (pitch - UiTextWidth(g, 2)) / 2, b->y + 7, kEmAmber.ink, kEmAmber.inkSh, 2, sx + pitch);
+            UiText(g, sx + (sw - UiTextWidth(g, 1)) / 2, sy + (sh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, sx + sw);
         }
-        /* The slot the next letter takes is the brighter one. */
-        Fill(sx + 2, b->y + 27, pitch - 4, 2, i == n->len ? EM_WHITE : kEmAmber.lip);
     }
     if (n->gender) {
         char sign[3];
 
         FNChar(n->gender == 2 ? 0xb6 : 0xb5, sign);
-        UiText(sign, x0 + slots * pitch + 4, b->y + 10, n->gender == 2 ? UI_RGB(255, 214, 214) : UI_RGB(210, 232, 255),
-               kEmAmber.inkSh, 1, b->x + b->w - 4);
+        UiText(sign, x0 + slots * pitch + 2, b->y + 10, n->gender == 2 ? UI_RGB(255, 214, 214) : UI_RGB(210, 232, 255),
+               FN_SLOT_EDGE, 1, b->x + b->w - 2);
     }
 }
 
@@ -179,15 +192,18 @@ static void FNTabs(const CtrPokeTouchName *n)
     for (int p = 0; p < 3; ++p) {
         CtrPokeTouchRect r = FNTab(p);
         /* The cursor on the page button (FireRed's first button): the tab its A turns to is the one it marks. */
-        const EmPal *pal = onButtons && n->curRow == 0 && p == (n->page + 1) % 3 ? &kEmViolet
-                         : n->page == p ? &kEmAmber : &kEmCream;
+        const EmPal *pal = LlPick(n->page == p, &kEmCream);
 
+        if (onButtons && n->curRow == 0 && p == (n->page + 1) % 3)
+            LlSelectRing(r.x, r.y, r.w, r.h);
         FNButton(&r, CtrUiText(kLabel[p]), pal, n->pressed == PT_NAME_HIT_TAB + p);
     }
-    FNButton(&sFNDelete, CtrUiText(UIS_NAME_DELETE), onButtons && n->curRow == 1 ? &kEmAmber : &kEmCream,
-             n->pressed == PT_NAME_HIT_DELETE);
-    FNButton(&sFNOk, CtrUiText(UIS_NAME_OK), onButtons && n->curRow == 2 ? &kEmAmber : &kEmViolet,
-             n->pressed == PT_NAME_HIT_OK);
+    if (onButtons && n->curRow == 1)
+        LlSelectRing(sFNDelete.x, sFNDelete.y, sFNDelete.w, sFNDelete.h);
+    if (onButtons && n->curRow == 2)
+        LlSelectRing(sFNOk.x, sFNOk.y, sFNOk.w, sFNOk.h);
+    FNButton(&sFNDelete, CtrUiText(UIS_NAME_DELETE), LlPick(onButtons && n->curRow == 1, &kEmGold), n->pressed == PT_NAME_HIT_DELETE);
+    FNButton(&sFNOk, CtrUiText(UIS_NAME_OK), &kEmFlame, n->pressed == PT_NAME_HIT_OK);
 }
 
 static void FNKeys(const CtrPokeTouchName *n)
@@ -198,7 +214,7 @@ static void FNKeys(const CtrPokeTouchName *n)
         for (int col = 0; col < n->cols && col < PT_NAME_COLS; ++col) {
             CtrPokeTouchRect r = FNKey(n, row, col);
             uint8_t code = n->key[row][col];
-            const EmPal *p = n->curCol == col && n->curRow == row ? &kEmAmber : &kEmCream;
+            const EmPal *p = LlPick(n->curCol == col && n->curRow == row, &kEmCream);
             int fy;
 
             if (code == 0xff)
@@ -209,6 +225,12 @@ static void FNKeys(const CtrPokeTouchName *n)
             else
                 EmLabel(FNChar(code, g), r.x, r.w, fy, r.h - FB_DEPTH, p);
         }
+    /* The chosen key's ring last: its neighbours are 2 px away and would cover it. */
+    if (n->curCol < n->cols && n->curCol < PT_NAME_COLS && n->curRow < PT_NAME_ROWS && n->key[n->curRow][n->curCol] != 0xff) {
+        CtrPokeTouchRect r = FNKey(n, n->curRow, n->curCol);
+
+        LlSelectRing(r.x, r.y, r.w, r.h);
+    }
 }
 
 static void FNameFrame(const CtrPokeTouchView *v)
@@ -230,7 +252,7 @@ static void FNameNote(const CtrPokeTouchView *v, int w)
     int textW = n->species ? w - 76 : w - 18;
 
     EmSurface();
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
+    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
     FNText(n->title, (int)sizeof(n->title), title, (int)sizeof(title));
     UiText(title, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, NOTE_X + 12 + textW);
     BPWrap(CtrUiText(UIS_NAME_HINT), NOTE_X + 12, NOTE_Y + 21, textW, 3, EM_DIM, EM_DARK_SH);
