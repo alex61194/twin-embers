@@ -995,7 +995,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1136,7 +1136,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "51db33a32b2aaf4337bab6f5401e1cbccd7e40a5f8a558e669a48cc8dc09a992",
+   "sha256": "29ebe4122576167a2410a7527255611369dcbd83f698a5be6afb1afb65dd89ef",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1144,7 +1144,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
-   "sha256": "06f4f648834cf3f65121ed07e7211e9f555feafd5a1cf4c3ff32e931d7e895b0",
+   "sha256": "82eee2ed831896917694652d5b8daf95c60999ccb92d80da42b3d420a08788db",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1152,7 +1152,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_choice_impl.h",
-   "sha256": "a4d2fdaa7085020a72cc3318f641fa33e84bb272bc86b4a9978870bf3bdbdb20",
+   "sha256": "a1562efa7e64bc341e19330ad0debf524cbf14976a607b3ad8ff43fd6030f8c7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1160,7 +1160,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_dex_impl.h",
-   "sha256": "bc7402ea29361d448467e7a324c563f5903ab34e2eaa0739e67689dbddd9a054",
+   "sha256": "9ed68282c0e9298dd0c5961b03749eadc952870ca36fdf839a565e2cd7b58648",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1168,7 +1168,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_learn_impl.h",
-   "sha256": "6b1002b94e8755eeb75546043adcf78a71552df14513bdd6b17d5cfad12c190d",
+   "sha256": "4d0dacb8586181e127f48f8b6dd62987482480f3cc52f09bfcfc0d7c29213285",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1176,7 +1176,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_naming_impl.h",
-   "sha256": "b5d51f0246995a50b8cac189a7a94ebdca527bc37ef0accf051bf4690c2c4a7c",
+   "sha256": "384265e190aab0f7c837328c2b50fb761a33355cb57f54cc45082b937293bd6d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1491,7 +1491,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "e4698fc268a02eb7910e5e818a6de5a21cdedc10a52cd68731b75596b0b2123d",
+   "sha256": "db7e9f35b6ac049ae11dc8caf91cf762e250ef21caf72f2780971e6f711792d0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2006,7 +2006,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "5677b3fc309c9d01809a0a0816a42d2fe7fd1556c80680b7ed2d8202ab6da19d"
+   "sha256": "3515e4cca58de83aa956798753cfd64cdafc6a16189213f5947406dbc4b7f5a8"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
