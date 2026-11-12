@@ -518,24 +518,66 @@ static struct {
     int ok;                             /* it was usable */
 } sMap = {-1, 0, 0};
 
-/* The picture's 192x144 part, pixel by pixel, to the image's builder. */
-static int MapFeed(int group)
-{
-    static uint16_t tilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
-    static uint8_t tiles[MAP_TILES * 32];
-    static uint16_t bgTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
-    static uint8_t bgTiles[MAP_TILES * 32];
-    static uint16_t gba[MAP_COLORS];
+static uint16_t sMapTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
+static uint8_t sMapTiles[MAP_TILES * 32];
+static uint16_t sMapBgTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
+static uint8_t sMapBgTiles[MAP_TILES * 32];
+static uint16_t sMapGba[MAP_COLORS];
 
-    if (group < 0 || group >= PT_MAP_COUNT || !CtrPokeTouch_MapArt(group, tilemap, tiles, gba, bgTilemap, bgTiles))
-        return 0;
-    HmBegin();
+/* The picture's 192x144 part, pixel by pixel, to the image's builder (from the copies of the game's art above). */
+static void MapFeedPixels(void)
+{
     for (int y = 0; y < HM_SH; ++y)
         for (int x = 0; x < HM_SW; ++x) {
-            unsigned c = gba[MapColor(tilemap, tiles, bgTilemap, bgTiles, HM_X0 + x, HM_Y0 + y)], r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31;
+            unsigned c = sMapGba[MapColor(sMapTilemap, sMapTiles, sMapBgTilemap, sMapBgTiles, HM_X0 + x, HM_Y0 + y)], r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31;
 
             HmFeed(x, y, (int)(r << 3 | r >> 2), (int)(g << 3 | g >> 2), (int)(b << 3 | b >> 2));
         }
+}
+
+/* On the console the whole build (the feed, then every step) runs on a worker of the lowest priority: the game's thread has idle time in every
+ * frame (it waits for the screen), and a step of the build is far more than one frame's budget on an Old 3DS, so doing the steps in the game's
+ * frames slowed the whole game for as long as a map took (a second or two) each time the region changed. The host tests build in the frames,
+ * one step each, as before. */
+#if defined(__3DS__)
+#include <3ds/thread.h>
+static Thread sMapThread;
+static volatile int sMapAbort;
+
+static void MapJoin(void)
+{
+    if (sMapThread) {
+        sMapAbort = 1;                      /* the worker stops after the step it is in */
+        threadJoin(sMapThread, U64_MAX);
+        threadFree(sMapThread);
+        sMapThread = NULL;
+    }
+    sMapAbort = 0;
+}
+
+static void MapWorker(void *arg)
+{
+    (void)arg;
+    MapFeedPixels();
+    while (!sMapAbort && !HmDone() && __atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) != HMS_FAILED)
+        HmStep();
+}
+#else
+#define MapJoin() ((void)0)
+#endif
+
+static int MapFeed(int group)
+{
+    if (group < 0 || group >= PT_MAP_COUNT || !CtrPokeTouch_MapArt(group, sMapTilemap, sMapTiles, sMapGba, sMapBgTilemap, sMapBgTiles))
+        return 0;
+    MapJoin();
+    HmBegin();
+#if defined(__3DS__)
+    sMapThread = threadCreate(MapWorker, NULL, 64 * 1024, 0x3F, -2, false);
+    if (sMapThread)
+        return 1;                           /* no worker (out of memory): the frames do it, as on the host */
+#endif
+    MapFeedPixels();
     return 1;
 }
 
@@ -549,11 +591,14 @@ bool CtrPokeTouch_MapPrepare(int group, int version)
     }
     if (!sMap.ok)
         return false;
-    if (sHm.stage == HMS_FAILED) {
+    if (__atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) == HMS_FAILED) {
         sMap.ok = 0;
         return false;
     }
-    HmStep();
+#if defined(__3DS__)
+    if (!sMapThread)
+#endif
+        HmStep();                           /* with a worker, the worker steps; this only asks whether it is done */
     return HmDone() != 0;
 }
 

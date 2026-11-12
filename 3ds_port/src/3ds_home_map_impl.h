@@ -55,7 +55,7 @@ static struct {
 
 static int HmDone(void)
 {
-    return sHm.stage == HMS_DONE;
+    return __atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) == HMS_DONE;
 }
 
 static void HmRelease(void)
@@ -571,7 +571,7 @@ static void HmStep(void)
                 sHm.lut = (free(sHm.lut), NULL);
         if (!sHm.lut) {
             HmRelease();
-            sHm.stage = HMS_FAILED;
+            __atomic_store_n(&sHm.stage, HMS_FAILED, __ATOMIC_RELEASE);
             return;
         }
         memset(sHmWorld, 0, sizeof(sHmWorld));
@@ -593,7 +593,7 @@ static void HmStep(void)
     for (int i = 0; i < sHmOrbN; ++i)
         HmOrbDraw(sHmOrb[i][0], sHmOrb[i][1]);
     HmRelease();
-    sHm.stage = HMS_DONE;
+    __atomic_store_n(&sHm.stage, HMS_DONE, __ATOMIC_RELEASE);   /* the image is complete before anyone can see it is */
 }
 
 /* ---- the picture's cells and the viewport ---- */
