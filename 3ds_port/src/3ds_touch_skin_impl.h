@@ -135,6 +135,61 @@ static void EmGradFill(int x, int y, int w, int h, int radius, uint16_t top, uin
     EmFillRows(x, y, w, h, radius, colour, r0, r1);
 }
 
+/* An outlined piece in one pass: the rounded shape (x, y, w, h) of `radius` in `edge` with, inside it, the shape one pixel in (corners of
+ * `inner`) painted row by row from colour[0 .. h - 3] (the inner shape's rows). The same pixels as a UiRoundFill of the outline and then
+ * a fill of the inside over it, each painted once, a column at a time. */
+static void EmFramedRows(int x, int y, int w, int h, int radius, int inner, uint16_t edge, const uint16_t *colour)
+{
+    if (w < 3 || h < 3)
+        return;
+    if (radius > 5)
+        radius = 5;
+    if (radius * 2 > h)
+        radius = h / 2;
+    if (radius * 2 > w)
+        radius = w / 2;
+    if (inner > 5)
+        inner = 5;
+    if (inner * 2 > h - 2)
+        inner = (h - 2) / 2;
+    for (int c = 0; c < w; ++c) {
+        int cx = x + c, oe = c < w - 1 - c ? c : w - 1 - c, n = 0, ot, ob, ft, fb, lo, hi;
+        uint16_t *p;
+
+        if ((unsigned)cx >= W)
+            continue;
+        while (n < 4 && sUiCut[radius][n] > oe)
+            ++n;
+        ot = n;
+        ob = h - n;
+        if (c >= 1 && c <= w - 2) {
+            int lx = c - 1, ie = lx < w - 2 - 1 - lx ? lx : w - 2 - 1 - lx;
+
+            n = 0;
+            while (n < 4 && sUiCut[inner][n] > ie)
+                ++n;
+            ft = 1 + n;
+            fb = h - 1 - n;
+        } else
+            ft = fb = ot;
+        lo = ot < -y ? -y : ot;
+        hi = ob > H - y ? H - y : ob;
+        if (hi <= lo)
+            continue;
+        p = sCanvas + (size_t)cx * H + (H - 1 - (size_t)(y + lo));
+        {
+            int a = ft < lo ? lo : ft > hi ? hi : ft, b = fb < a ? a : fb > hi ? hi : fb, r = lo;
+
+            for (; r < a; ++r)                      /* the outline above the inside, the inside's rows, the outline below it */
+                *p-- = edge;
+            for (; r < b; ++r)
+                *p-- = colour[r - 1];
+            for (; r < hi; ++r)
+                *p-- = edge;
+        }
+    }
+}
+
 #include "3ds_ember2_impl.h"
 
 /* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
@@ -144,16 +199,31 @@ static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int p
     int face = h - depth, fy = pressed ? y + depth : y;
 
     if (!pressed) {
-        UiRoundFill(x, y + depth, w, face, 5, p->edge);
-        UiRoundFill(x + 1, y + depth + 1, w - 2, face - 2, 4, p->lip);
+        /* The lip is seen only below the face and in its two bottom corners (and the top rows of its own corners, left of the face's); the
+         * rows of the face's edge from its fourth to its fifth from last cover the rest, so they are not painted twice. */
+        int s0 = depth > 4 ? depth : 4, s1 = face - 4;
+
+        if (s1 - s0 < 1)
+            s0 = s1 = 0;
+        UiRoundFillSkip(x, y + depth, w, face, 5, p->edge, s0 - depth, s1 - depth);
+        UiRoundFillSkip(x + 1, y + depth + 1, w - 2, face - 2, 4, p->lip, s0 - depth - 1, s1 - depth - 1);
     }
-    UiRoundFill(x, fy, w, face, 5, p->edge);
     if (pressed) {
+        UiRoundFill(x, fy, w, face, 5, p->edge);
         EmGradFill(x + 1, fy + 1, w - 2, face - 2, 4, p->f1, p->bottom);              /* a pressed face is the lower band only */
         Fill(x + 5, fy + 1, w - 10, 1, p->sd);
         return fy;
     }
-    Em2Face(x + 1, fy + 1, w - 2, face - 2, 4, p->g1, p->top, p->f1, p->bottom);
+    {
+        const uint16_t *colour = w >= 3 && face >= 3 ? Em2FaceColours(face - 2, p->g1, p->top, p->f1, p->bottom) : 0;
+
+        if (colour)
+            EmFramedRows(x, fy, w, face, 5, 4, p->edge, colour);                        /* the outline and the face, each pixel once */
+        else {
+            UiRoundFill(x, fy, w, face, 5, p->edge);
+            Em2Face(x + 1, fy + 1, w - 2, face - 2, 4, p->g1, p->top, p->f1, p->bottom);
+        }
+    }
     Fill(x + 5, fy + 1, w - 10, 1, p->hl);                                              /* the light along the top (the mockup has no shade below) */
     return fy;
 }
@@ -223,13 +293,20 @@ static void EmWell(int x, int y, int w, int h, const EmPal *p)
 /* One of the column's icons (ember_skin.h), blended onto what is there; dim, it is toned grey. */
 static void EmIcon(int icon, int x, int y, int on)
 {
-    for (int v = 0; v < EMBER_ICON; ++v)
-        for (int u = 0; u < EMBER_ICON; ++u) {
+    for (int u = 0; u < EMBER_ICON; ++u) {
+        if ((unsigned)(x + u) >= W)
+            continue;
+        for (int v = 0; v < EMBER_ICON; ++v) {
             int a = kEmberIconA[icon][v * EMBER_ICON + u];
+            uint16_t c, *p;
 
-            if (a)
-                EmBlend(x + u, y + v, Tone(kEmberIcon[icon][v * EMBER_ICON + u], on), a);
+            if (!a || (unsigned)(y + v) >= H)
+                continue;
+            c = Tone(kEmberIcon[icon][v * EMBER_ICON + u], on);
+            p = &sCanvas[(size_t)(x + u) * H + (H - 1 - (size_t)(y + v))];
+            *p = a >= 255 ? c : UiMix(*p, c, a * 8 / 255);       /* EmBlend, without the checks and the call a pixel */
         }
+    }
 }
 
 /* The embers: a couple of dozen sparks rising slowly over the backdrop, drawn only on pixels that show it (so they

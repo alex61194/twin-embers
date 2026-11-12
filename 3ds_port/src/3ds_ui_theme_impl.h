@@ -90,10 +90,25 @@ UI_FN uint16_t UiMix(uint16_t a, uint16_t b, int n)
 /* How many pixels a rounded corner cuts from each end of its first rows, by radius. */
 static const uint8_t sUiCut[6][4] = {{0}, {1}, {1}, {2, 1}, {3, 2, 1}, {4, 2, 1, 1}};
 
-/* A filled rectangle with rounded corners: the corner rows as spans, the rest one fill. */
-UI_FN void UiRoundFill(int x, int y, int w, int h, int radius, uint16_t c)
+/* Rows [a, b) of the w wide column block at x, below y, except rows [s0, s1) (none when s1 <= s0). */
+UI_FN void UiFillSkip(int x, int y, int w, int a, int b, int s0, int s1, uint16_t c)
 {
-    int rows;
+    if (s1 > s0) {
+        int e = s0 < b ? s0 : b;
+
+        if (e > a)
+            Fill(x, y + a, w, e - a, c);
+        if (s1 > a)
+            a = s1;
+    }
+    if (b > a)
+        Fill(x, y + a, w, b - a, c);
+}
+
+/* A filled rectangle with rounded corners (each pixel painted once), leaving rows [skipFrom, skipTo) of it alone when that is not empty. */
+UI_FN void UiRoundFillSkip(int x, int y, int w, int h, int radius, uint16_t c, int skipFrom, int skipTo)
+{
+    int mid;
 
     if (w <= 0 || h <= 0)
         return;
@@ -103,13 +118,24 @@ UI_FN void UiRoundFill(int x, int y, int w, int h, int radius, uint16_t c)
         radius = h / 2;
     if (radius * 2 > w)
         radius = w / 2;
-    for (rows = 0; rows < 4 && sUiCut[radius][rows]; ++rows) {
-        int cut = sUiCut[radius][rows];
+    /* Column by column, the canvas' order: the columns the corner cuts reach are a shorter fill, every other one a single fill of the
+     * full height (a row of spans would step a whole column of memory a pixel). Rows [skipFrom, skipTo) are left as they are. */
+    mid = sUiCut[radius][0];
+    for (int col = 0; col < mid; ++col) {
+        int t = 0;
 
-        Fill(x + cut, y + rows, w - 2 * cut, 1, c);
-        Fill(x + cut, y + h - 1 - rows, w - 2 * cut, 1, c);
+        while (t < 4 && sUiCut[radius][t] > col)
+            ++t;
+        UiFillSkip(x + col, y, 1, t, h - t, skipFrom, skipTo, c);
+        UiFillSkip(x + w - 1 - col, y, 1, t, h - t, skipFrom, skipTo, c);
     }
-    Fill(x, y + rows, w, h - 2 * rows, c);
+    UiFillSkip(x + mid, y, w - 2 * mid, 0, h, skipFrom, skipTo, c);
+}
+
+/* A filled rectangle with rounded corners. */
+UI_FN void UiRoundFill(int x, int y, int w, int h, int radius, uint16_t c)
+{
+    UiRoundFillSkip(x, y, w, h, radius, c, 0, 0);
 }
 
 /* Rows [y, y + h) of a rounded shape whose corners are cut only at the top (`top`) and/or the bottom (`bottom`): the

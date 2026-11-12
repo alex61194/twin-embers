@@ -1,4 +1,5 @@
 /* Real renderer with synthetic pack/game bridges; no ROM-derived fixtures. */
+#include <time.h>
 #include <assert.h>
 #ifndef PT_SOURCE
 #define PT_SOURCE "3ds_poketouch.c"
@@ -111,9 +112,29 @@ int CtrPokeTouch_MarkShape(int mark, unsigned char *indexes)
 
 static uint16_t canvas[W * H], reference[W * H];
 static uint16_t at(int x, int y) { return canvas[x * H + H - 1 - y]; }
-static void update(CtrPokeTouchView *old, const CtrPokeTouchView *v)
+/* PT_TIMING=n: each state's incremental Update and full Draw are timed over n runs (microseconds each) and the canvas hashed, so that an
+ * optimisation can be shown to cost less and draw the same. */
+static int callLine;
+static void timing(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
+{
+    static int shot; const char *e=getenv("PT_TIMING"); int n=e?atoi(e):0;
+    static uint16_t keep[W*H]; CtrDirtyList dirty; struct timespec a,b; double up,dr; uint32_t h=2166136261u;
+    if(n<=0) return;
+    memcpy(keep,canvas,sizeof(keep));
+    clock_gettime(CLOCK_MONOTONIC,&a);
+    for(int i=0;i<n;++i) { CtrPokeTouchView o=*old; CtrDirty_Clear(&dirty); memcpy(canvas,keep,sizeof(keep)); CtrPokeTouch_Update(canvas,&o,v,&dirty); }
+    clock_gettime(CLOCK_MONOTONIC,&b); up=((b.tv_sec-a.tv_sec)*1e9+(b.tv_nsec-a.tv_nsec))/1e3/n;
+    clock_gettime(CLOCK_MONOTONIC,&a);
+    for(int i=0;i<n;++i) CtrPokeTouch_Draw(canvas,v);
+    clock_gettime(CLOCK_MONOTONIC,&b); dr=((b.tv_sec-a.tv_sec)*1e9+(b.tv_nsec-a.tv_nsec))/1e3/n;
+    for(int i=0;i<W*H;++i) h=(h^canvas[i])*16777619u;
+    fprintf(stderr,"TIMING %03d line %d update %8.1f draw %8.1f hash %08x\n",shot++,callLine,up,dr,h);
+    memcpy(canvas,keep,sizeof(keep));
+}
+static void update_at(int line, CtrPokeTouchView *old, const CtrPokeTouchView *v)
 {
     CtrDirtyList dirty; CtrDirty_Clear(&dirty);
+    callLine=line; timing(old,v);
     CtrPokeTouch_Update(canvas, old, v, &dirty);
     memcpy(reference, canvas, sizeof(canvas));
     CtrPokeTouch_Draw(canvas, v);
@@ -131,6 +152,7 @@ static void update(CtrPokeTouchView *old, const CtrPokeTouchView *v)
 #endif
     *old = *v;
 }
+#define update(o,v) update_at(__LINE__,o,v)
 /* The canvas as a PPM named dir/name.ppm. */
 static void ppm(const char *dir, const char *name)
 {
@@ -679,6 +701,97 @@ int main(int argc, char **argv)
         /* The cursor: red, with the shadow one px right and below; white on a chosen row. */
         SENTINEL(); LlCursor(40,40,EM_WHITE);
         assert(at(40,45)==EM_WHITE && at(40,41)==EM_WHITE && at(40,50)==LL_CURSOR_SH && at(46,45)==LL_CURSOR_SH);
+#ifndef PT_OLDSRC
+        {
+            /* The faster drawing of the shapes (a column at a time, kept colours) draws what the plain per-pixel / per-row code of before did,
+             * on the screen and over its edges. */
+            static const uint8_t cut[6][4]={{0},{1},{1},{2,1},{3,2,1},{4,2,1,1}};
+            static uint16_t mine[W*H];
+            const int pos[][2]={{20,20},{-7,-5},{300,215},{-30,100},{310,-20}};
+            for(int d=1;d<=70;++d) for(unsigned k=0;k<5;++k) {
+                int x=pos[k][0], y=pos[k][1];
+                SENTINEL(); Em2Disc(x,y,d,0x2222); memcpy(mine,canvas,sizeof(mine));
+                SENTINEL();
+                for(int row=0;row<d;++row) { int dy=2*row+1-d,left=d; for(int col=0;col<d;++col) { int dx=2*col+1-d; if(dx*dx+dy*dy<=d*d) { left=col; break; } }
+                    if(left<d) Fill(x+left,y+row,d-2*left,1,0x2222); }
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "Em2Disc as the per-row disc");
+                if(d<14 || d%9) continue;
+                SENTINEL(); LlPlate(x,y,d,0x1111,0,0); memcpy(mine,canvas,sizeof(mine));
+                SENTINEL(); Em2Disc(x-1,y-1,d+2,0x1111);
+                for(int row=0;row<d;++row) for(int col=0;col<d;++col) { uint16_t c; if(LlPlateColour(d,col,row,&c)) Px(x+col,y+row,c); }
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "LlPlate as the per-pixel plate");
+            }
+            for(int w=14;w<=60;w+=(w<24?1:7)) for(int h=14;h<=60;h+=(h<24?1:7)) for(unsigned k=0;k<5;++k) {
+                int x=pos[k][0], y=pos[k][1];
+                SENTINEL(); LlWindowPlain(x,y,w,h); memcpy(mine,canvas,sizeof(mine));
+                SENTINEL();
+                UiRoundFill(x,y,w,h,5,LL_SLATE); UiRoundFill(x+1,y+1,w-2,h-2,5,EM_WHITE); UiRoundFill(x+2,y+2,w-4,h-4,4,UI_RGB(122,180,216));
+                UiRoundFill(x+4,y+4,w-8,h-8,3,UI_RGB(200,228,240)); LlGrad(x+5,y+5,w-10,h-10,2,EM_WHITE,UI_RGB(248,248,240));
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "LlWindowPlain as its five fills of before");
+            }
+            for(int w=3;w<=64;w+=(w<20?1:9)) for(int h=3;h<=64;h+=(h<20?1:9)) for(unsigned k=0;k<5;++k) {
+                int x=pos[k][0], y=pos[k][1];
+                SENTINEL(); EmButton(x,y,w,h+3,&kEmGold,3,0); memcpy(mine,canvas,sizeof(mine));      /* the lip, the outline and the face in one go */
+                SENTINEL();
+                { int face=h, fy=y; UiRoundFill(x,y+3,w,face,5,kEmGold.edge); UiRoundFill(x+1,y+4,w-2,face-2,4,kEmGold.lip);
+                  UiRoundFill(x,fy,w,face,5,kEmGold.edge); Em2Face(x+1,fy+1,w-2,face-2,4,kEmGold.g1,kEmGold.top,kEmGold.f1,kEmGold.bottom);
+                  Fill(x+5,fy+1,w-10,1,kEmGold.hl); }
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "EmButton as its fills of before");
+                if(w<12||h<14) continue;
+                SENTINEL(); Em2Note(x,y,w,h); memcpy(mine,canvas,sizeof(mine));
+                SENTINEL();
+                UiRoundFill(x,y,w,h,5,EM2_SLATE); Em2Fill3(x+1,y+1,w-2,h-2,4,UI_RGB(255,253,248),UI_RGB(251,245,234),(h-2)*55/100,UI_RGB(242,232,214));
+                Fill(x+4,y+1,w-8,1,EM_WHITE); Fill(x+3,y+h-3,w-6,2,UI_RGB(232,220,198));
+                UiRoundFill(x+4,y+6,4,h-12,2,EM2_STRIPE_TOP); Em2Fill3(x+4,y+6,4,h-12,2,EM2_STRIPE_TOP,EM2_STRIPE_BOT,(h-12)/2,EM2_STRIPE_BOT);
+                Fill(x+8,y+7,1,h-14,EM_WHITE);
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "Em2Note as its fills of before");
+            }
+            for(int radius=0;radius<=5;++radius) for(int w=1;w<=24;w+=(w<14?1:5)) for(int h=1;h<=24;h+=(h<14?1:5)) for(unsigned k=0;k<5;++k) {
+                int x=pos[k][0], y=pos[k][1], r=radius>h/2?h/2:radius, rows;
+                if(r*2>w) r=w/2;
+                SENTINEL(); UiRoundFill(x,y,w,h,radius,0x3333); memcpy(mine,canvas,sizeof(mine));
+                SENTINEL();
+                for(rows=0;rows<4&&cut[r][rows];++rows) { int c=cut[r][rows]; Fill(x+c,y+rows,w-2*c,1,0x3333); Fill(x+c,y+h-1-rows,w-2*c,1,0x3333); }
+                Fill(x,y+rows,w,h-2*rows,0x3333);
+                assert(!memcmp(mine,canvas,sizeof(mine)) && "UiRoundFill as the rows of before");
+                for(int s0=0;s0<h;s0+=3) for(int s1=s0+1;s1<=h+1;s1+=4) {      /* the same with rows s0..s1 left out */
+                    SENTINEL(); UiRoundFillSkip(x,y,w,h,radius,0x3333,s0,s1); memcpy(mine,canvas,sizeof(mine));
+                    SENTINEL(); UiRoundFill(x,y,w,h,radius,0x3333);
+                    for(int row=s0;row<s1&&row<h;++row) for(int cx=x;cx<x+w;++cx) if((unsigned)cx<W&&(unsigned)(y+row)<H) canvas[cx*H+H-1-(y+row)]=MARK;
+                    assert(!memcmp(mine,canvas,sizeof(mine)) && "UiRoundFillSkip leaves its rows alone");
+                }
+            }
+        }
+#endif
+        if(getenv("PT_BENCH")) {
+            /* PT_BENCH=n: what each Llama piece costs to draw (microseconds, n draws each), for comparing a change of how they draw. */
+            int n=atoi(getenv("PT_BENCH")); struct timespec a,b; double us;
+            #define BENCH(name,call) do { SENTINEL(); clock_gettime(CLOCK_MONOTONIC,&a); for(int i_=0;i_<n;++i_) { call; } clock_gettime(CLOCK_MONOTONIC,&b); \
+                us=((b.tv_sec-a.tv_sec)*1e9+(b.tv_nsec-a.tv_nsec))/1e3/n; fprintf(stderr,"BENCH %-22s %8.2f\n",name,us); } while(0)
+            BENCH("LlWindow 228x80",LlWindow(7,153,228,80));
+            BENCH("LlHpBox 216x36",LlHpBox(82,32,216,36));
+            BENCH("LlHpBar 136",LlHpBar(10,10,136,100,319));
+            BENCH("LlRibbon",LlRibbon(20,20,"KANTO",LL_RIB_TOP,LL_RIB_BOT));
+            BENCH("LlTypeBadge",LlTypeBadge(20,20,"TIERRA",UI_RGB(200,160,72)));
+            BENCH("EmButton cream 150x53",EmButton(8,36,150,53,&kEmCream,3,0));
+            BENCH("EmButton flame 304x75",EmButton(8,36,304,75,&kEmFlame,3,0));
+            BENCH("EmButton pressed",EmButton(8,36,150,53,&kEmCream,3,1));
+            BENCH("LlPlate 63 ring2",LlPlate(18,41,63,kEmFlame.lip,UI_RGB(255,216,144),2));
+            BENCH("LlPlate 38 ring1",LlPlate(18,41,38,kEmFlame.lip,EM_WHITE,1));
+            BENCH("LlPlate 19",LlPlate(7,34,19,EM2_SLATE,0,0));
+            BENCH("LlBackDisc",LlBackDisc(240+24,154+14-1));
+            BENCH("Em2CardShadow",Em2CardShadow(8,36,150,50));
+            BENCH("EmIcon",EmIcon(0,10,10,1));
+            BENCH("LlWell",LlWell(20,20,80,20));
+            BENCH("Em2Note 240x64",Em2Note(4,172,240,64));
+            BENCH("LlSelectRing",LlSelectRing(8,36,150,53));
+            BENCH("LlBallTray",LlBallTray(62,5,196,25));
+            BENCH("UiRoundFill 150x50",UiRoundFill(8,36,150,50,5,0x1234));
+            BENCH("TsBackdrop",TsBackdrop());
+            BENCH("Text TERREMOTO",Em2Text("TERREMOTO",20,20,EM_DARK,EM_DARK_SH,120));
+            BENCH("Text long (cut)",Em2Text("UN TERREMOTO QUE GOLPEA A TODOS",20,20,EM_DARK,EM_DARK_SH,120));
+            #undef BENCH
+        }
         if(dir) {
             /* A sheet of the pieces, laid out as the mockup lays them (panels 1, 2 and 4), for a look next to the mockup's pictures. */
             static const char *const types[]={"TIERRA","FUEGO","DRAGON","NORMAL"};

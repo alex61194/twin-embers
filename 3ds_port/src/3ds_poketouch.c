@@ -313,12 +313,17 @@ static uint16_t Tone(uint16_t c, int on)
 static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, int y0, int w, int h,
                 int x, int y, int on)
 {
-    for (int py = 0; py < h; ++py)
-        for (int px = 0; px < w; ++px) {
+    int px0 = x < 0 ? -x : 0, px1 = x + w > W ? W - x : w, py0 = y < 0 ? -y : 0, py1 = y + h > H ? H - y : h;
+
+    for (int px = px0; px < px1; ++px) {                       /* a column at a time, the canvas' order, clipped once */
+        uint16_t *p = sCanvas + (size_t)(x + px) * H + (H - 1 - (size_t)(y + py0));
+
+        for (int py = py0; py < py1; ++py, --p) {
             uint8_t v = pixels[(y0 + py) * stride + x0 + px];
             if (v)
-                Px(x + px, y + py, Tone(pal[v], on));
+                *p = Tone(pal[v], on);
         }
+    }
 }
 
 #include "3ds_ui_theme_impl.h"
