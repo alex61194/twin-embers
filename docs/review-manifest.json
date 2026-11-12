@@ -1128,7 +1128,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "9aa197151dd3e3b46e78be0c88ddbc9c181b4ed2e514340ff41104b493ea0d0f",
+   "sha256": "09e929401770551afd9d0b2a7f276cdc6b3cf83dc7a51c81a88b9193c83c269e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1144,7 +1144,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
-   "sha256": "82eee2ed831896917694652d5b8daf95c60999ccb92d80da42b3d420a08788db",
+   "sha256": "e26c5cd3eef02ac3a24ef23c1073621119af7dbbbf496d256ea4bf369e74277f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1160,7 +1160,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_dex_impl.h",
-   "sha256": "9ed68282c0e9298dd0c5961b03749eadc952870ca36fdf839a565e2cd7b58648",
+   "sha256": "dc9408a82b34936c598af2a0bfa11d3fa7df899c465450996e13c782ec44412d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1168,7 +1168,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_learn_impl.h",
-   "sha256": "4d0dacb8586181e127f48f8b6dd62987482480f3cc52f09bfcfc0d7c29213285",
+   "sha256": "cf3289106c7db53a4a0d7f47af8711d2fdf1f5c51b15abc495fb93171446800b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1709,7 +1709,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "aba4e6f22989086cc2553a2e796d8fb79e19e2cce116737a7556cdd173aaa1fb",
+   "sha256": "a38dcf40b2cb2ea0a4dde235c7ba297176216a6318df9f5647af183f66d4b6b4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2006,7 +2006,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "3515e4cca58de83aa956798753cfd64cdafc6a16189213f5947406dbc4b7f5a8"
+   "sha256": "934e4049f5d545ddf55a1ef00be0af9b2e3828f46b8fb93897d5a131ad4f1da9"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
