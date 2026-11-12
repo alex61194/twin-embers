@@ -75,6 +75,9 @@ int CtrPokeTouch_ItemIcon(unsigned item, unsigned char *tiles, unsigned short *p
     palette[1] = item == 1 ? 31 : 31 << 10;
     return item != 0;
 }
+/* The map's art: a flat colour, or (richArt) a small synthetic Kanto: sea, a land of greens in three heights with a road across it, a pale path
+ * and some towns (orbs), drawn in the colours the HOME map tells apart (each tile is one colour: tile n has palette entry n). */
+static int richArt;
 int CtrPokeTouch_MapArt(int group, uint16_t *map, uint8_t *tiles, uint16_t *pal,
                       uint16_t *bgMap, uint8_t *bgTiles)
 {
@@ -82,6 +85,26 @@ int CtrPokeTouch_MapArt(int group, uint16_t *map, uint8_t *tiles, uint16_t *pal,
     memset(map, 0, 30 * 20 * 2); memset(bgMap, 0, 30 * 20 * 2);
     memset(tiles, 0x11, MAP_TILES * 32); memset(bgTiles, 0, MAP_TILES * 32);
     memset(pal, 0, MAP_COLORS * 2); pal[1] = 0x5ab3;
+    if (richArt) {
+        /* 1 green, 2 road, 3 orb, 4 sea, 5 pale path, 6 the lowest green, 7 a high green */
+        static const unsigned short col[] = {0, 1703, 7933, 2303, 27210, 0, 0, 0};
+        for (int n = 1; n < 8; ++n) { memset(tiles + n * 32, n * 0x11, 32); pal[n] = col[n]; }
+        pal[0] = 32468;
+        pal[5] = (unsigned short)(25 | 25 << 5 | 18 << 10);
+        pal[6] = (unsigned short)(3 | 16 << 5 | 1 << 10);
+        pal[7] = (unsigned short)(21 | 30 << 5 | 7 << 10);
+        for (int ty = 2; ty < 18; ++ty)
+            for (int tx = 3; tx < 26; ++tx) {
+                int t = 1;
+                if (tx < 8) t = 6; else if (tx > 19) t = 7;
+                if (ty == 8 && tx > 5 && tx < 22) t = 2;
+                if (tx == 14 && ty > 4 && ty < 15) t = 2;
+                if (ty == 12 && tx > 6 && tx < 14) t = 5;
+                if (t == 2 && (tx == 6 || tx == 14 || tx == 21) && ty == 8) t = 3;
+                if (tx == 14 && (ty == 5 || ty == 14)) t = 3;
+                map[ty * 30 + tx] = (uint16_t)t;
+            }
+    }
     return 1;
 }
 /* The map's two icons: none, unless a test asks for synthetic art (a red square for the player, a blue one for the cursor, whose second frame is half of it). */
@@ -298,15 +321,20 @@ int main(int argc, char **argv)
     v.registeredItem=1; v.bikeItem=2;
     strcpy(v.playerName,"Trades"); strcpy(v.bar[0],"TEST MAP");
     for(int i=0;i<PT_COUNT;++i) v.enabled[i]=1;
-    CtrPokeTouch_Draw(canvas,&v);
-    {   /* HOME: the map fills the viewport, but for the region's red ribbon at its corner (the Llama mockup's KANTO); the first three rows are shaded: the map sits in its frame */
+    CtrPokeTouch_Draw(canvas,&v);                       /* HOME with no map built yet: the viewport is empty, nothing else */
+    {   /* HOME: the map (a flat synthetic art: its colour is no class, so the image is sea and its stripes) fills the viewport, but for the region's red ribbon at its corner (the Llama mockup's KANTO) and the two zoom buttons */
         int rib=UiTextWidth("Kanto",1)+18;
+        int steps=0;
+        while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200);
+        v.mapReady=1; v.mapZoom=HM_ZOOMS-1; v.mapCX=384; v.mapCY=288; v.mapOpen=1;
+        CtrPokeTouch_Draw(canvas,&v);
         for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
             int onRibbon=x<4+rib&&y<4+13;
-            if(onRibbon) continue;
-            if(y<7) assert(at(x,y)!=Gba(0x5ab3)); else assert(at(x,y)==Gba(0x5ab3));
+            if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_VIEW_X+PT_VIEW_W-26,PT_VIEW_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
+            assert(at(x,y)==UI_RGB(164,180,255) || at(x,y)==UI_RGB(156,213,255));
         }
-        assert(at(4,4)==LL_RIB_TOP && at(4+3,4+6)!=Gba(0x5ab3) && at(4,4+13)==Gba(0x5ab3));      /* the ribbon: red from its top, 13 rows */
+        assert(at(4,4)==LL_RIB_TOP && at(4,4+13)!=LL_RIB_TOP);      /* the ribbon: red from its top, 13 rows */
+        v.mapReady=0; v.mapZoom=0; sMap.group=-1; CtrPokeTouch_Draw(canvas,&v);
     }
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
         FILE *f=fopen(argv[1],"wb"); assert(f);
@@ -592,35 +620,73 @@ int main(int argc, char **argv)
          * Every move, blink and rename goes through the incremental path, which update() compares with a full redraw. */
         CtrPokeTouchView h={0}; CtrPokeTouchRect ring, label;
         int cells[][2]={{10,8},{11,8},{11,5},{0,0},{21,14},{21,0},{0,14},{5,7}};
-        iconArt=1; sPlayer.key=sCursor.key=-1; sMap.group=-1;
+        richArt=1; iconArt=1; sPlayer.key=-1; sMap.group=-1;
         h.selected=h.pressed=PT_NONE; h.optPressed=-1; h.home=1; h.playerX=h.playerY=h.cursorX=h.cursorY=-1;
         for(int i=0;i<PT_COUNT;++i) h.enabled[i]=1;
         strcpy(h.playerName,"Rick"); strcpy(h.bar[0],"TEST MAP");
         memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; old.optPressed=-1;
-        update(&old,&h);
+        h.mapOpen=3; h.mapZoom=0; h.mapCX=384; h.mapCY=288;
+        update(&old,&h);                                                                 /* the map is not built: the sea's blue and the ribbon */
+        { int steps=0;  while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200); assert(steps>5 && HmDone() && sHmOrbN==5 && sHmPalN>20 && sHmPalN<=255); }
+        h.mapReady=1; update(&old,&h);                                                   /* built: the picture appears */
+        assert(at(PT_VIEW_X+100,PT_VIEW_Y+80)!=C_MAP_WAIT);
         h.playerX=5; h.playerY=5; update(&old,&h);                                      /* the player appears */
-        h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h);    /* a destination: ring, icon, name */
-        assert(RingRect(&h,&ring) && ring.w==24 && ring.h==24 && LabelRect(&h,&label) && label.h==21 && label.w==UiTextWidth("VERMILION CITY",1)+18);
-        assert(label.y+label.h+3==ring.y);                                               /* 3 px above the ring */
-        assert(at(ring.x+12,ring.y)==LL_CURSOR || at(ring.x+11,ring.y)==LL_CURSOR);        /* the ring's red, at its top */
-        assert(at(ring.x+12,ring.y+12)==Gba(0x7c00));                                    /* the cursor's icon in it */
+        h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h);    /* a destination: ring, name */
+        assert(RingRect(&h,&ring) && ring.w==ring.h && ring.w>=24 && (ring.w&1)==0 && LabelRect(&h,&label) && label.h==21 && label.w==UiTextWidth("VERMILION CITY",1)+18);
+        assert(label.y+label.h+3==ring.y || label.y==ring.y+ring.h+3 || label.y>=PT_VIEW_Y+3);
+        assert(at(ring.x+ring.w/2,ring.y)==UI_RGB(138,22,16) || at(ring.x+ring.w/2-1,ring.y)==UI_RGB(138,22,16));   /* the ring's dark edge at its top */
         if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_cursor");
-        h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the cursor blinks */
-        for(unsigned i=0;i<sizeof(cells)/sizeof(cells[0]);++i) {
-            h.cursorX=(int8_t)cells[i][0]; h.cursorY=(int8_t)cells[i][1]; update(&old,&h);
-            h.playerX=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][0]; h.playerY=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][1]; update(&old,&h);
-            if(LabelRect(&h,&label)) { /* the name's window stays inside the map */
-                assert(label.x>=PT_VIEW_X && label.y>=PT_VIEW_Y && label.x+label.w<=PT_VIEW_X+PT_VIEW_W && label.y+label.h<=PT_VIEW_Y+PT_VIEW_H);
+        h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the ring blinks */
+        for(int zoom=0; zoom<HM_ZOOMS; ++zoom) {                                          /* every zoom, at a few centres: pieces move with the map */
+            int centres[][2]={{384,288},{100,100},{700,500},{240,380}};
+            for(unsigned c=0;c<sizeof(centres)/sizeof(centres[0]);++c) {
+                int cx=centres[c][0], cy=centres[c][1];
+                CtrPokeTouch_HomeClamp(zoom,&cx,&cy);
+                h.mapZoom=(uint8_t)zoom; h.mapCX=(int16_t)cx; h.mapCY=(int16_t)cy; update(&old,&h);
+                if(getenv("PT_PREVIEW_DIR") && c==0) { char nm[32]; snprintf(nm,sizeof(nm),"home_zoom%d",zoom); ppm(getenv("PT_PREVIEW_DIR"),nm); }
+                for(unsigned i=0;i<sizeof(cells)/sizeof(cells[0]);++i) {
+                    h.cursorX=(int8_t)cells[i][0]; h.cursorY=(int8_t)cells[i][1]; update(&old,&h);
+                    h.playerX=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][0]; h.playerY=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][1]; update(&old,&h);
+                    if(LabelRect(&h,&label)) { /* the name's window stays inside the map */
+                        assert(label.x>=PT_VIEW_X && label.y>=PT_VIEW_Y && label.x+label.w<=PT_VIEW_X+PT_VIEW_W && label.y+label.h<=PT_VIEW_Y+PT_VIEW_H);
+                    }
+                }
             }
         }
-        h.cursorX=3; h.cursorY=3; update(&old,&h);
+        h.mapZoom=1; h.mapCX=384; h.mapCY=288; h.cursorX=3; h.cursorY=3; update(&old,&h);
         h.playerX=3; h.playerY=2; update(&old,&h);                                       /* the player under the name's window and the ring */
         strcpy(h.bar[0],"CELADON CITY, A NAME TOO LONG TO FIT ON THE MAP'S WINDOW"); update(&old,&h);
         strcpy(h.bar[0],"SAFFRON CITY"); update(&old,&h);                                 /* renamed: the old window goes, the new one comes */
         h.playerFemale=1; update(&old,&h);
         h.cursorX=h.cursorY=-1; update(&old,&h);                                         /* the destination goes: ring and window with it */
-        h.mapGroup=PT_MAP_SEVII123; h.cursorX=4; h.cursorY=4; update(&old,&h);          /* another map: SEVII on the ribbon */
-        iconArt=0; sPlayer.key=sCursor.key=-1; sMap.group=-1;
+        /* The zoom buttons and the ribbon: where a touch means them, and that each paints inside its rectangle (2 px more at most). */
+        {
+            CtrPokeTouchRect plus=ZoomRect(1), minus=ZoomRect(0);
+            assert(CtrPokeTouch_HomeZoomHit(plus.x+10,plus.y+10)==1 && CtrPokeTouch_HomeZoomHit(minus.x+10,minus.y+10)==-1);
+            assert(CtrPokeTouch_HomeZoomHit(PT_VIEW_X+10,PT_VIEW_Y+PT_VIEW_H/2)==0 && !(plus.y+plus.h>minus.y));
+            assert(plus.x+plus.w<=PT_VIEW_X+PT_VIEW_W && minus.y+minus.h<=PT_VIEW_Y+PT_VIEW_H);
+            assert(CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6) && !CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+100,PT_VIEW_Y+60));
+            for(int on=0; on<2; ++on) for(int p=0;p<2;++p) {
+                CtrPokeTouchRect r=ZoomRect(p);
+                sCanvas=canvas; for(int i=0;i<W*H;++i) canvas[i]=0x1357;
+                ZoomButton(p,on);
+                { unsigned n=0; for(int x=0;x<W;++x) for(int y=0;y<H;++y) if(at(x,y)!=0x1357) { ++n; assert(x>=r.x-2&&y>=r.y-2&&x<r.x+r.w+2&&y<r.y+r.h+2); } assert(n>100); }
+            }
+        }
+        CtrPokeTouch_Draw(canvas,&old);                                                  /* the canvas was a marker sheet above */
+        h.mapZoom=HM_ZOOMS-1; update(&old,&h); h.mapZoom=0; update(&old,&h);              /* "+" greyed at the nearest zoom, "-" at the overview */
+        { int steps=0; while(!CtrPokeTouch_MapPrepare(1,0)) assert(++steps<200); }
+        h.mapGroup=PT_MAP_SEVII123; h.mapReady=1; h.cursorX=4; h.cursorY=4; update(&old,&h);   /* another map: SEVII on the ribbon */
+        h.mapOpen=1; update(&old,&h);                                                    /* no other map: no arrow on the ribbon */
+        assert(!CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6));
+        /* A pick: the town whose orb is near the touch, else the cell it is in. */
+        {
+            int gx, gy, wx = 0, wy = 0, vx, vy;
+            assert(CtrPokeTouch_HomeCellWorld(10,8,&wx,&wy));
+            HmWorldToView(1,384,288,wx,wy,&vx,&vy);
+            assert(CtrPokeTouch_HomePick(1,384,288,vx,vy,&gx,&gy) && gx==10 && gy==8);
+        }
+        richArt=0; iconArt=0; sPlayer.key=-1; sMap.group=-1;
     }
 #endif
 #ifndef PT_BASELINE

@@ -470,11 +470,9 @@ static void ItemArt(int slot, unsigned item, int x, int y, int on)
         Art(sIcons[slot].pixels, sIcons[slot].pal, 24, sIcons[slot].x0, sIcons[slot].y0, 20, 20, x, y, on);
 }
 
-/* The HOME map: the 240x160 screen of FireRed's Region Map (its tilemap,
- * tiles and palette, decoded by the game bridge) composed once per map into
- * a cache laid out like the canvas: column-major, each column bottom-to-top,
- * so showing it is one copy per column. Nothing is read from the game while
- * the player walks; only the cache is. */
+/* The HOME map: the 240x160 screen of FireRed's Region Map (its tilemap, tiles and palette, decoded by the game bridge) is read once per map
+ * and redrawn at 4x (3ds_home_map_impl.h builds the image over a few frames; the bridge is read no more once it has been). The viewport then
+ * shows that image at one of its zooms round a centre; nothing is read from the game while the player walks. */
 extern int CtrPokeTouch_MapArt(int group, uint16_t *tilemap, uint8_t *tiles, uint16_t *palette, uint16_t *bgTilemap,
                                uint8_t *bgTiles);
 
@@ -482,13 +480,6 @@ extern int CtrPokeTouch_MapArt(int group, uint16_t *tilemap, uint8_t *tiles, uin
 #define MAP_TILEMAP_H 20
 #define MAP_TILES 320
 #define MAP_COLORS 80
-
-static struct {
-    int group;                          /* the map cached, -1 none */
-    int version;                        /* and the version of its art */
-    int ok;                             /* it was usable */
-    uint16_t cols[PT_VIEW_W][PT_VIEW_H];
-} sMap = {-1, 0, 0, {{0}}};
 
 /* A GBA colour (15 bits, red lowest) as RGB565. */
 static uint16_t Gba(uint16_t c)
@@ -519,34 +510,155 @@ static unsigned MapColor(const uint16_t *tilemap, const uint8_t *tiles, const ui
     return 0;
 }
 
-static void MapBuild(int group, int version)
+#include "3ds_home_map_impl.h"
+
+static struct {
+    int group;                          /* the map being built or built, -1 none */
+    int version;                        /* and the version of its art */
+    int ok;                             /* it was usable */
+} sMap = {-1, 0, 0};
+
+/* The picture's 192x144 part, pixel by pixel, to the image's builder. */
+static int MapFeed(int group)
 {
     static uint16_t tilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
     static uint8_t tiles[MAP_TILES * 32];
     static uint16_t bgTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
     static uint8_t bgTiles[MAP_TILES * 32];
     static uint16_t gba[MAP_COLORS];
-    uint16_t pal[MAP_COLORS];
 
-    sMap.group = group;
-    sMap.version = version;
-    sMap.ok = group >= 0 && group < PT_MAP_COUNT && CtrPokeTouch_MapArt(group, tilemap, tiles, gba, bgTilemap, bgTiles);
-    if (!sMap.ok)
-        return;
-    for (int i = 0; i < MAP_COLORS; ++i)
-        pal[i] = Gba(gba[i]);
-    /* The Region Map's 240x160 picture is sampled, nearest neighbour, over its 192x128 at (24, 28) into the
-     * viewport (exactly 5/4), once, here: what is cached is what is shown. */
-    for (int dx = 0; dx < PT_VIEW_W; ++dx)
-        for (int dy = 0; dy < PT_VIEW_H; ++dy) {
-            int sx = PT_HOME_SRC_X + dx * 4 / 5, sy = PT_HOME_SRC_Y + dy * 4 / 5;
-            sMap.cols[dx][PT_VIEW_H - 1 - dy] =
-                pal[MapColor(tilemap, tiles, bgTilemap, bgTiles, sx, sy)];
+    if (group < 0 || group >= PT_MAP_COUNT || !CtrPokeTouch_MapArt(group, tilemap, tiles, gba, bgTilemap, bgTiles))
+        return 0;
+    HmBegin();
+    for (int y = 0; y < HM_SH; ++y)
+        for (int x = 0; x < HM_SW; ++x) {
+            unsigned c = gba[MapColor(tilemap, tiles, bgTilemap, bgTiles, HM_X0 + x, HM_Y0 + y)], r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31;
+
+            HmFeed(x, y, (int)(r << 3 | r >> 2), (int)(g << 3 | g >> 2), (int)(b << 3 | b >> 2));
         }
-    /* The map sits in its frame: the first three rows are shaded (the mockup's inset shadow), once, baked into what is cached. */
-    for (int dx = 0; dx < PT_VIEW_W; ++dx)
-        for (int dy = 0; dy < 3; ++dy)
-            sMap.cols[dx][PT_VIEW_H - 1 - dy] = Em2Lerp(sMap.cols[dx][PT_VIEW_H - 1 - dy], UI_RGB(0, 0, 0), 64 >> dy, 255);
+    return 1;
+}
+
+/* One frame's work on the map's image; true once it is there (HOME calls it for the map it shows, every frame). */
+bool CtrPokeTouch_MapPrepare(int group, int version)
+{
+    if (sMap.group != group || sMap.version != version) {
+        sMap.group = group;
+        sMap.version = version;
+        sMap.ok = MapFeed(group);
+    }
+    if (!sMap.ok)
+        return false;
+    if (sHm.stage == HMS_FAILED) {
+        sMap.ok = 0;
+        return false;
+    }
+    HmStep();
+    return HmDone() != 0;
+}
+
+static int MapReady(const CtrPokeTouchView *v)
+{
+    return v->mapReady && sMap.ok && sMap.group == v->mapGroup && sMap.version == v->mapVersion && HmDone();
+}
+
+/* The view being drawn (HOME's zoom and centre), so that a rectangle can be put back from the image. */
+static int sViewZoom, sViewCX, sViewCY, sViewReady;
+
+static void HomeSetView(const CtrPokeTouchView *v)
+{
+    sViewZoom = v->mapZoom;
+    sViewCX = v->mapCX;
+    sViewCY = v->mapCY;
+    sViewReady = MapReady(v);
+}
+
+#define C_MAP_WAIT UI_RGB(156, 213, 255)
+
+/* The map's own pixels over a rectangle of the viewport (its own coordinates): the image, or the sea's blue while it is built. */
+static void MapRestore(int x, int y, int w, int h)
+{
+    int x1 = x + w > PT_VIEW_W ? PT_VIEW_W : x + w, y1 = y + h > PT_VIEW_H ? PT_VIEW_H : y + h;
+
+    x = x < 0 ? 0 : x;
+    y = y < 0 ? 0 : y;
+    if (x1 <= x || y1 <= y)
+        return;
+    if (sViewReady)
+        HmDrawRect(sViewZoom, sViewCX, sViewCY, x, y, x1 - x, y1 - y);
+    else
+        Fill(PT_VIEW_X + x, PT_VIEW_Y + y, x1 - x, y1 - y, C_MAP_WAIT);
+}
+
+/* The centre of a cell in the viewport (its own pixels); false when the cell is off the map or the image is not built. */
+static int CellView(const CtrPokeTouchView *v, int cx, int cy, int *x, int *y)
+{
+    int wx, wy;
+
+    if (cx < 0 || cy < 0 || cx >= 22 || cy >= 15 || !MapReady(v))
+        return 0;
+    HmCellWorld(cx, cy, &wx, &wy);
+    HmWorldToView(v->mapZoom, v->mapCX, v->mapCY, wx, wy, x, y);
+    return 1;
+}
+
+/* A cell's centre in the image (its town's orb where there is one); false when the cell is off the map or the image is not built. */
+bool CtrPokeTouch_HomeCellWorld(int cx, int cy, int *wx, int *wy)
+{
+    if (cx < 0 || cy < 0 || cx >= 22 || cy >= 15 || !HmDone())
+        return false;
+    HmCellWorld(cx, cy, wx, wy);
+    return true;
+}
+
+void CtrPokeTouch_HomeClamp(int zoom, int *cx, int *cy)
+{
+    HmClamp(zoom, cx, cy);
+}
+
+/* The zoom's scale in 1/256 (screen pixels per image pixel). */
+int CtrPokeTouch_HomeScale(int zoom)
+{
+    return HmScale(zoom);
+}
+
+/* A selected cell that is out of the window (16 pixels in from its edges, for the ring and the name) is brought to the centre; else nothing moves. */
+void CtrPokeTouch_HomeReveal(int zoom, int *cx, int *cy, int gx, int gy)
+{
+    int wx, wy, vx, vy;
+
+    if (!CtrPokeTouch_HomeCellWorld(gx, gy, &wx, &wy))
+        return;
+    HmWorldToView(zoom, *cx, *cy, wx, wy, &vx, &vy);
+    if (vx < 16 || vy < 16 || vx >= PT_VIEW_W - 16 || vy >= PT_VIEW_H - 16) {
+        *cx = wx;
+        *cy = wy;
+        HmClamp(zoom, cx, cy);
+    }
+}
+
+/* The cell under a viewport pixel (its own coordinates): the town whose orb is within 14 pixels, else the cell the pixel is in. */
+bool CtrPokeTouch_HomePick(int zoom, int cx, int cy, int vx, int vy, int *gx, int *gy)
+{
+    int wx, wy, s = HmScale(zoom), best = -1;
+    long bestD = 14L * 14L;
+
+    if (!HmDone())
+        return false;
+    HmViewToWorld(zoom, cx, cy, vx, vy, &wx, &wy);
+    for (int i = 0; i < sHmOrbN; ++i) {
+        long dx = (long)(sHmOrb[i][0] - wx) * s / 256, dy = (long)(sHmOrb[i][1] - wy) * s / 256;
+
+        if (dx * dx + dy * dy <= bestD) {
+            bestD = dx * dx + dy * dy;
+            best = i;
+        }
+    }
+    if (best >= 0) {
+        wx = sHmOrb[best][0];
+        wy = sHmOrb[best][1];
+    }
+    return HmWorldCell(wx, wy, gx, gy) != 0;
 }
 
 /* The map's two icons, FireRed's own 16x16 sprites (four 4bpp tiles in sprite
@@ -568,7 +680,7 @@ static struct Icon {
     int frames;
     uint8_t pixels[2][MARKER * MARKER]; /* palette index per frame */
     uint16_t pal[16];
-} sPlayer = {-1, 0, 1, {{0}}, {0}}, sCursor = {-1, 0, 2, {{0}}, {0}};
+} sPlayer = {-1, 0, 1, {{0}}, {0}};
 
 static void IconBuild(struct Icon *icon, int key, int (*art)(uint8_t *, uint16_t *))
 {
@@ -591,52 +703,116 @@ static void IconBuild(struct Icon *icon, int key, int (*art)(uint8_t *, uint16_t
             }
 }
 
-/* An icon's rectangle in the viewport; false when the cell is not on the map. */
-static int MarkerRect(int cx, int cy, int *x, int *y)
-{
-    if (cx < 0 || cy < 0 || cx >= MAP_CELLS_X || cy >= MAP_CELLS_Y)
-        return 0;
-    /* The same transform as the map: source (8 cx + 28, 8 cy + 28) minus the crop, times 5/4. */
-    *x = (8 * cx + 28 - PT_HOME_SRC_X) * 5 / 4;
-    *y = (8 * cy + 28 - PT_HOME_SRC_Y) * 5 / 4;
-    return 1;
-}
-
+/* An icon (16x16) centred at (cx, cy) of the viewport, clipped to it. */
 static void IconDraw(const struct Icon *icon, int frame, int cx, int cy)
 {
-    int x, y;
-
-    if (!icon->ok || !MarkerRect(cx, cy, &x, &y))
+    if (!icon->ok)
         return;
-    for (int py = 0; py < PT_HOME_ICON; ++py)
-        for (int px = 0; px < PT_HOME_ICON; ++px) {
-            uint8_t index = icon->pixels[frame % icon->frames][(py * 4 / 5) * MARKER + px * 4 / 5];
-            if (index)
-                Px(PT_VIEW_X + x + px, PT_VIEW_Y + y + py, icon->pal[index]);
+    for (int py = 0; py < MARKER; ++py)
+        for (int px = 0; px < MARKER; ++px) {
+            int x = cx - MARKER / 2 + px, y = cy - MARKER / 2 + py;
+            uint8_t index = icon->pixels[frame % icon->frames][py * MARKER + px];
+
+            if (index && x >= 0 && y >= 0 && x < PT_VIEW_W && y < PT_VIEW_H)
+                Px(PT_VIEW_X + x, PT_VIEW_Y + y, icon->pal[index]);
         }
 }
 
-/* The pieces over the HOME map, in the order they are drawn: the region's red ribbon at the map's corner (the mockup's KANTO), the player's
- * icon and, for the destination chosen, its ring (a px of white and a px of the cursor's red round the 20 x 20 icon), FireRed's cursor in it
- * and its name on a small window above (below, if there is no room). Every piece paints inside the viewport only. */
-#define RING_D 24
+/* The pieces over the HOME map, in the order they are drawn: the region's red ribbon at the map's corner (it carries a small arrow when there is
+ * another map to go to, and a touch on it goes there), the two zoom buttons at its right edge, the player's icon and, for the destination chosen,
+ * its ring (an orange ring with a dark red edge round the orb) and its name on a small window above (below, if there is no room). Every piece
+ * paints inside the viewport only. */
 #define LABEL_H 21
+#define ZOOM_D 20
 
 static const char *RegionName(int group)
 {
-    return group == PT_MAP_KANTO ? "Kanto" : "Sevii";
+    return group == PT_MAP_KANTO ? "Kanto" : group == PT_MAP_SEVII123 ? "Sevii 1-3" : group == PT_MAP_SEVII45 ? "Sevii 4-5" : "Sevii 6-7";
 }
 
-/* The destination's ring: the cursor icon's rectangle and 2 px round it; false when nothing is chosen or its cell is off the map. */
-static int RingRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
+static CtrPokeTouchRect sHomeRibbon;            /* as last drawn (w 0: no other map, so nothing to touch) */
+
+static int sHomeShown;                          /* HOME's overlay was the last thing drawn on the viewport */
+
+bool CtrPokeTouch_HomeRibbonHit(int x, int y)
+{
+    const CtrPokeTouchRect *r = &sHomeRibbon;
+
+    return r->w && x >= r->x - 3 && y >= r->y - 3 && x < r->x + r->w + 3 && y < r->y + r->h + 3;
+}
+
+static CtrPokeTouchRect ZoomRect(int plus)
+{
+    CtrPokeTouchRect r = {PT_VIEW_X + PT_VIEW_W - ZOOM_D - 6, (int16_t)(PT_VIEW_Y + PT_VIEW_H / 2 - ZOOM_D - 2 + (plus ? 0 : ZOOM_D + 4)), ZOOM_D, ZOOM_D};
+
+    return r;
+}
+
+/* +1 on the "+" button, -1 on "-", else 0. */
+int CtrPokeTouch_HomeZoomHit(int x, int y)
+{
+    if (!sHomeShown)
+        return 0;
+    for (int plus = 0; plus < 2; ++plus) {
+        CtrPokeTouchRect r = ZoomRect(plus);
+
+        if (x >= r.x - 3 && y >= r.y - 3 && x < r.x + r.w + 3 && y < r.y + r.h + 3)
+            return plus ? 1 : -1;
+    }
+    return 0;
+}
+
+/* A zoom button: a cream disc with a slate rim and a sign (greyed at its limit). */
+static void ZoomButton(int plus, int enabled)
+{
+    CtrPokeTouchRect r = ZoomRect(plus);
+    uint16_t rim = enabled ? LL_SLATE : UI_RGB(150, 158, 180), face = enabled ? UI_RGB(255, 255, 250) : UI_RGB(226, 230, 240);
+    uint16_t sign = enabled ? LL_SLATE : UI_RGB(170, 176, 196);
+
+    for (int row = 0; row < ZOOM_D; ++row)
+        for (int col = 0; col < ZOOM_D; ++col) {
+            int dx = 2 * col + 1 - ZOOM_D, dy = 2 * row + 1 - ZOOM_D, d2 = dx * dx + dy * dy;
+
+            if (d2 > ZOOM_D * ZOOM_D)
+                continue;
+            Px(r.x + col, r.y + row, d2 > (ZOOM_D - 2) * (ZOOM_D - 2) ? rim : d2 > (ZOOM_D - 4) * (ZOOM_D - 4) ? UI_RGB(122, 180, 216) : face);
+        }
+    Fill(r.x + 6, r.y + ZOOM_D / 2 - 1, 8, 2, sign);
+    if (plus)
+        Fill(r.x + ZOOM_D / 2 - 1, r.y + 6, 2, 8, sign);
+}
+
+/* The player's icon: its 16x16 rectangle in the viewport; false when the player is off the map. */
+static int PlayerRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
 {
     int x, y;
 
-    if (v->cursorX < 0 || !MarkerRect(v->cursorX, v->cursorY, &x, &y))
+    if (!CellView(v, v->playerX, v->playerY, &x, &y))
         return 0;
-    r->x = (int16_t)(PT_VIEW_X + x - 2);
-    r->y = (int16_t)(PT_VIEW_Y + y - 2);
-    r->w = r->h = RING_D;
+    r->x = (int16_t)(PT_VIEW_X + x - MARKER / 2);
+    r->y = (int16_t)(PT_VIEW_Y + y - MARKER / 2);
+    r->w = r->h = MARKER;
+    return 1;
+}
+
+/* The destination's ring: its diameter (the orb's, grown a little with the zoom). */
+static int RingD(const CtrPokeTouchView *v)
+{
+    int s = HmScale(v->mapZoom);
+
+    return (24 * (s < 205 ? 205 : s) / 256 + 6) & ~1;
+}
+
+/* The destination's ring: the square it is drawn in; false when nothing is chosen or its cell is off the map. */
+static int RingRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
+{
+    int x, y, d = RingD(v);
+
+    if (v->cursorX < 0 || !CellView(v, v->cursorX, v->cursorY, &x, &y) || x < 0 || y < 0 || x >= PT_VIEW_W || y >= PT_VIEW_H)
+        return 0;                           /* off the window: no ring, no name */
+    r->x = (int16_t)(PT_VIEW_X + x - d / 2);
+    r->y = (int16_t)(PT_VIEW_Y + y - d / 2);
+    r->w = r->h = (int16_t)d;
     return 1;
 }
 
@@ -668,70 +844,56 @@ static int LabelRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
     return 1;
 }
 
-static void RingDraw(const CtrPokeTouchRect *r)
+static void RingDraw(const CtrPokeTouchRect *r, int blink)
 {
-    for (int row = 0; row < RING_D; ++row)
-        for (int col = 0; col < RING_D; ++col) {
-            int dx = 2 * col + 1 - RING_D, dy = 2 * row + 1 - RING_D, d2 = dx * dx + dy * dy, x = r->x + col, y = r->y + row;
+    int D = r->w;
 
-            if (x < PT_VIEW_X || y < PT_VIEW_Y || x >= PT_VIEW_X + PT_VIEW_W || y >= PT_VIEW_Y + PT_VIEW_H || d2 > RING_D * RING_D)
+    for (int row = 0; row < D; ++row)
+        for (int col = 0; col < D; ++col) {
+            int dx = 2 * col + 1 - D, dy = 2 * row + 1 - D, d2 = dx * dx + dy * dy, x = r->x + col, y = r->y + row;
+
+            if (x < PT_VIEW_X || y < PT_VIEW_Y || x >= PT_VIEW_X + PT_VIEW_W || y >= PT_VIEW_Y + PT_VIEW_H || d2 > D * D)
                 continue;
-            if (d2 > (RING_D - 2) * (RING_D - 2))
-                Px(x, y, LL_CURSOR);
-            else if (d2 > (RING_D - 4) * (RING_D - 4))
-                Px(x, y, EM_WHITE);
+            if (d2 > (D - 2) * (D - 2))
+                Px(x, y, UI_RGB(138, 22, 16));
+            else if (d2 > (D - 6) * (D - 6))
+                Px(x, y, blink ? UI_RGB(255, 200, 96) : UI_RGB(255, 154, 56));
         }
 }
 
 static void HomeOverlay(const CtrPokeTouchView *v)
 {
-    CtrPokeTouchRect ring, label;
+    CtrPokeTouchRect ring, label, player;
+    const char *name = RegionName(v->mapGroup);
+    int multi = (v->mapOpen & (v->mapOpen - 1)) != 0, textW = UiTextWidth(name, 1), w = textW + 18 + (multi ? 9 : 0);
 
-    LlRibbon(PT_VIEW_X, PT_VIEW_Y, RegionName(v->mapGroup), LL_RIB_TOP, LL_RIB_BOT);
+    LlRibbonBox(PT_VIEW_X, PT_VIEW_Y, w, 13, 7, 0, LL_RIB_TOP, LL_RIB_BOT, name);
+    if (multi)
+        LlArrow(PT_VIEW_X + 6 + textW + 4, PT_VIEW_Y + 3, 4, 7, 3, EM_WHITE);
+    sHomeShown = 1;
+    sHomeRibbon = multi ? (CtrPokeTouchRect){PT_VIEW_X, PT_VIEW_Y, (int16_t)w, 13} : (CtrPokeTouchRect){0, 0, 0, 0};
+    ZoomButton(1, v->mapZoom < HM_ZOOMS - 1);
+    ZoomButton(0, v->mapZoom > 0);
     if (sPlayer.key != v->playerFemale)
         IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
-    IconDraw(&sPlayer, 0, v->playerX, v->playerY);
+    if (PlayerRect(v, &player))
+        IconDraw(&sPlayer, 0, player.x - PT_VIEW_X + MARKER / 2, player.y - PT_VIEW_Y + MARKER / 2);
     if (!RingRect(v, &ring))
         return;
-    RingDraw(&ring);
-    if (sCursor.key != 0)
-        IconBuild(&sCursor, 0, CtrPokeTouch_MapCursorIcon);
-    IconDraw(&sCursor, v->cursorFrame, v->cursorX, v->cursorY);
+    RingDraw(&ring, v->cursorFrame);
     if (LabelRect(v, &label)) {
         LlWindowPlain(label.x, label.y, label.w, label.h);
         Em2Text(v->bar[0], label.x + 10, label.y + 6, EM_DARK, EM_DARK_SH, label.x + label.w - 6);
     }
 }
 
-/* The map's own pixels back over a rectangle of the viewport (where an icon
- * was). */
-static void MapRestore(int x, int y, int w, int h)
-{
-    for (int cx = x < 0 ? 0 : x; cx < x + w && cx < PT_VIEW_W; ++cx) {
-        int y0 = y < 0 ? 0 : y, y1 = y + h > PT_VIEW_H ? PT_VIEW_H : y + h;
-        memcpy(sCanvas + (size_t)(PT_VIEW_X + cx) * H + (H - PT_VIEW_Y - y1), &sMap.cols[cx][PT_VIEW_H - y1],
-               (size_t)(y1 - y0) * sizeof(uint16_t));
-    }
-}
-
-/* Draw the map's picture over the viewport; false when there is none. */
-static int MapShow(int group, int version)
-{
-    if (sMap.group != group || sMap.version != version)
-        MapBuild(group, version);
-    if (!sMap.ok)
-        return 0;
-    for (int x = 0; x < PT_VIEW_W; ++x)
-        memcpy(sCanvas + (size_t)(PT_VIEW_X + x) * H + (H - PT_VIEW_Y - PT_VIEW_H), sMap.cols[x],
-               PT_VIEW_H * sizeof(uint16_t));
-    return 1;
-}
-
-/* HOME's picture: the map, the player and the selection on it. */
+/* HOME's picture: the map (or the sea's blue while it is built), the player and the selection on it. */
 static int HomeShow(const CtrPokeTouchView *v)
 {
-    if (!MapShow(v->mapGroup, v->mapVersion))
+    if (!sMap.ok || sMap.group != v->mapGroup || sMap.version != v->mapVersion)
         return 0;
+    HomeSetView(v);
+    MapRestore(0, 0, PT_VIEW_W, PT_VIEW_H);
     HomeOverlay(v);
     return 1;
 }
@@ -1127,6 +1289,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sMenuFrame;
 
+    if (!(v->home && !v->viewport && !v->options && !v->save)) {
+        sHomeShown = 0;                             /* HOME's ribbon and zoom buttons are not on the screen */
+        sHomeRibbon.w = 0;
+    }
     TsBgRect(r->x, r->y, r->w, r->h);
     if (v->dex.on && !v->viewport) {
         FDexFrame(v);
@@ -1555,7 +1721,8 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
         Mark(dirty, &sBar);
     } else if (old->viewport != v->viewport || old->home != v->home || old->options != v->options || old->save != v->save
         || (v->options && !v->viewport && (old->optCount != v->optCount || old->optLook.on != v->optLook.on))
-        || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion))) {
+        || (v->home && (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion || old->mapZoom != v->mapZoom
+                        || old->mapCX != v->mapCX || old->mapCY != v->mapCY || old->mapReady != v->mapReady || old->mapOpen != v->mapOpen))) {
         MenuFrame(v);
         Mark(dirty, &sMenuFrame);
     } else if (v->home && !v->viewport && (old->playerX != v->playerX || old->playerY != v->playerY
@@ -1570,15 +1737,11 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
         int label = old->cursorX != v->cursorX || old->cursorY != v->cursorY || strcmp(old->bar[0], v->bar[0]);
         const CtrPokeTouchView *views[2] = {old, v};
         CtrPokeTouchRect r;
-        int x, y;
 
+        HomeSetView(v);
         for (int i = 0; i < 2; ++i) {
-            if (player && MarkerRect(views[i]->playerX, views[i]->playerY, &x, &y)) {
-                r.x = (int16_t)(PT_VIEW_X + x);
-                r.y = (int16_t)(PT_VIEW_Y + y);
-                r.w = r.h = PT_HOME_ICON;
+            if (player && PlayerRect(views[i], &r))
                 MapRestoreRect(&r, dirty);
-            }
             if (cursor && RingRect(views[i], &r))
                 MapRestoreRect(&r, dirty);
             if (label && LabelRect(views[i], &r))
