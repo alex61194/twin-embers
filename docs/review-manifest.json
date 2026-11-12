@@ -1709,7 +1709,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "3168b3cc8279a99a86e83cea774855ba40ea20cb1dccc41be299183535614eb5",
+   "sha256": "aba4e6f22989086cc2553a2e796d8fb79e19e2cce116737a7556cdd173aaa1fb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
