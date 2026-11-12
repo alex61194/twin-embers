@@ -313,12 +313,17 @@ static uint16_t Tone(uint16_t c, int on)
 static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, int y0, int w, int h,
                 int x, int y, int on)
 {
-    for (int py = 0; py < h; ++py)
-        for (int px = 0; px < w; ++px) {
+    int px0 = x < 0 ? -x : 0, px1 = x + w > W ? W - x : w, py0 = y < 0 ? -y : 0, py1 = y + h > H ? H - y : h;
+
+    for (int px = px0; px < px1; ++px) {                       /* a column at a time, the canvas' order, clipped once */
+        uint16_t *p = sCanvas + (size_t)(x + px) * H + (H - 1 - (size_t)(y + py0));
+
+        for (int py = py0; py < py1; ++py, --p) {
             uint8_t v = pixels[(y0 + py) * stride + x0 + px];
             if (v)
-                Px(x + px, y + py, Tone(pal[v], on));
+                *p = Tone(pal[v], on);
         }
+    }
 }
 
 #include "3ds_ui_theme_impl.h"
@@ -1101,6 +1106,9 @@ static void FCardNote(const CtrPokeTouchView *v, int w);
 /* The move to forget the port draws (3ds_field_learn_impl.h, included at the end). */
 static void FLearnFrame(const CtrPokeTouchView *v);
 static void FLearnNote(const CtrPokeTouchView *v, int w);
+/* The move relearner's list the port draws (3ds_field_relearn_impl.h, included at the end). */
+static void FRelearnFrame(const CtrPokeTouchView *v);
+static void FRelearnNote(const CtrPokeTouchView *v, int w);
 /* The field's choice the port draws (3ds_field_choice_impl.h, included at the end). */
 static void FChoiceFrame(const CtrPokeTouchView *v);
 static void FChoiceNote(const CtrPokeTouchView *v, int w);
@@ -1127,6 +1135,10 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->learn.on && !v->viewport) {
         FLearnFrame(v);
+        return;
+    }
+    if (v->relearn.on && !v->viewport) {
+        FRelearnFrame(v);
         return;
     }
     if (v->choice.on && !v->viewport) {
@@ -1289,7 +1301,7 @@ static void Bar(const CtrPokeTouchView *v)
     for (int i = 0; i < PT_BAR_LINES; ++i)
         if (v->bar[i][0])
             lines = i + 1;
-    if (!v->viewport && !v->save && (v->dex.on || v->card.on || v->learn.on || v->choice.on || v->name.on || v->box.on || v->bag.on))
+    if (!v->viewport && !v->save && (v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->choice.on || v->name.on || v->box.on || v->bag.on))
         Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);           /* the screens that draw their own note (each puts the shadow its note throws) */
     if (v->save && !v->viewport)
         SaveNote(v);
@@ -1299,6 +1311,8 @@ static void Bar(const CtrPokeTouchView *v)
         FCardNote(v, w);
     else if (v->learn.on && !v->viewport)
         FLearnNote(v, w);
+    else if (v->relearn.on && !v->viewport)
+        FRelearnNote(v, w);
     else if (v->choice.on && !v->viewport)
         FChoiceNote(v, w);
     else if (v->name.on && !v->viewport)
@@ -1510,6 +1524,7 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     sCanvas = canvas;
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
         || memcmp(&old->card, &v->card, sizeof(v->card)) || memcmp(&old->learn, &v->learn, sizeof(v->learn))
+        || memcmp(&old->relearn, &v->relearn, sizeof(v->relearn))
         || memcmp(&old->name, &v->name, sizeof(v->name)) || memcmp(&old->box, &v->box, sizeof(v->box))
         || memcmp(&old->choice, &v->choice, sizeof(v->choice))) {
         /* The Bag or the Pokedex: its whole area and its note (the description follows the selection). */
@@ -1682,6 +1697,7 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_dex_impl.h"
 #include "3ds_field_card_impl.h"
 #include "3ds_field_learn_impl.h"
+#include "3ds_field_relearn_impl.h"
 #include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
 #include "3ds_field_box_impl.h"

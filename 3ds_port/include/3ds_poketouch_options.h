@@ -58,6 +58,9 @@ int CtrOptions_Randomlocke(void);    /* RANDOMLOCKE: wild and trainer Pokemon ar
  * unused numbers between Celebi and Treecko, the Egg or nothing. */
 unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species);
 int CtrOptions_Nuzlocke(void);       /* the Nuzlocke rules (NUZLOCKE): one wild encounter to catch in each area, a fainted Pokemon is released */
+int CtrOptions_NuzDuplicates(void);   /* NUZLOCKE clause (with NUZLOCKE on): a species already caught does not use the area's catch */
+int CtrOptions_NuzShiny(void);        /* NUZLOCKE clause: a shiny does not use the area's catch */
+int CtrOptions_NuzLevelCap(void);     /* NUZLOCKE level caps: no experience at or above the next Gym Leader's level (by badges) */
 /* The pages of OPTIONS: not a fixed number of rows each (a page may end early to keep a card under its rows). */
 const char *CtrOptions_PageName(int page);   /* a page's short name in the game's language, "" past the last */
 int CtrOptions_PageCount(void);

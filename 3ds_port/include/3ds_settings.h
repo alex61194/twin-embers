@@ -38,6 +38,12 @@ int CtrSettings_TmReuse(void);               /* a TM is not used up when it teac
 void CtrSettings_SetTmReuse(int on);
 int CtrSettings_Nuzlocke(void);              /* the Nuzlocke rules are on (NUZLOCKE, off by default) */
 void CtrSettings_SetNuzlocke(int on);
+int CtrSettings_NuzDuplicates(void);          /* Nuzlocke clause: a species already caught does not use the area's catch (off by default) */
+void CtrSettings_SetNuzDuplicates(int on);
+int CtrSettings_NuzShiny(void);               /* Nuzlocke clause: a shiny does not use the area's catch (off by default) */
+void CtrSettings_SetNuzShiny(int on);
+int CtrSettings_NuzLevelCap(void);            /* Nuzlocke level caps: no experience at or above the badge's cap (off by default) */
+void CtrSettings_SetNuzLevelCap(int on);
 int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
 void CtrSettings_SetRandomlocke(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */

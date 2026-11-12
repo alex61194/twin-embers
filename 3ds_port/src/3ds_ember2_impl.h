@@ -85,9 +85,35 @@ UI_FN uint16_t Em2Lerp(uint16_t a, uint16_t b, int n, int d)
 
 /* The glass face of the mockup: rows [0, 42%) from g1 to g2, the rest from f1 to f2 (a cut between them), in a rounded
  * rectangle; one fill per column. */
+UI_FN const uint16_t *Em2FaceColours(int h, uint16_t g1, uint16_t g2, uint16_t f1, uint16_t f2)
+{
+    /* The colours of a face depend only on its palette and height, and a screen draws a dozen of the same: the last few are kept. */
+    enum { KEPT = 6 };
+    static struct { uint16_t g1, g2, f1, f2, h; uint16_t colour[H]; } cache[KEPT];
+    static unsigned next;
+    uint16_t *colour = 0;
+    int split = h * 42 / 100;
+
+    if (h <= 0 || h > H)
+        return 0;
+    if (split < 1)
+        split = 1;
+    for (unsigned i = 0; i < KEPT; ++i)
+        if (cache[i].h == h && cache[i].g1 == g1 && cache[i].g2 == g2 && cache[i].f1 == f1 && cache[i].f2 == f2)
+            colour = cache[i].colour;
+    if (!colour) {
+        colour = cache[next].colour;
+        cache[next].g1 = g1, cache[next].g2 = g2, cache[next].f1 = f1, cache[next].f2 = f2, cache[next].h = (uint16_t)h;
+        next = (next + 1) % KEPT;
+        for (int row = 0; row < h; ++row)
+            colour[row] = row < split ? Em2Lerp(g1, g2, row, split - 1) : Em2Lerp(f1, f2, row - split, h - split - 1);
+    }
+    return colour;
+}
+
 UI_FN void Em2Face(int x, int y, int w, int h, int radius, uint16_t g1, uint16_t g2, uint16_t f1, uint16_t f2)
 {
-    uint16_t colour[H];
+    const uint16_t *colour = Em2FaceColours(h, g1, g2, f1, f2);
     int split = h * 42 / 100, r0 = y < 0 ? -y : 0, r1 = y + h > H ? H - y : h;
 
     if (w <= 0 || h <= 0)
@@ -98,9 +124,15 @@ UI_FN void Em2Face(int x, int y, int w, int h, int radius, uint16_t g1, uint16_t
         radius = h / 2;
     if (split < 1)
         split = 1;
-    for (int row = r0; row < r1; ++row)
-        colour[row - r0] = row < split ? Em2Lerp(g1, g2, row, split - 1) : Em2Lerp(f1, f2, row - split, h - split - 1);
-    EmFillRows(x, y, w, h, radius, colour, r0, r1);
+    if (!colour) {                          /* taller than the screen (not used): only the rows on it, not kept */
+        uint16_t part[H];
+
+        for (int row = r0; row < r1; ++row)
+            part[row - r0] = row < split ? Em2Lerp(g1, g2, row, split - 1) : Em2Lerp(f1, f2, row - split, h - split - 1);
+        EmFillRows(x, y, w, h, radius, part, r0, r1);
+        return;
+    }
+    EmFillRows(x, y, w, h, radius, colour + r0, r0, r1);   /* (EmFillRows reads colour[row - r0] for rows r0..r1) */
 }
 
 /* A vertical gradient with a middle stop: c0 down to c1 over the first `stop` rows, c1 down to c2 over the rest. */
@@ -123,21 +155,17 @@ UI_FN void Em2Fill3(int x, int y, int w, int h, int radius, uint16_t c0, uint16_
 }
 
 /* A disc of diameter d with its top-left at (x, y): the pixels whose centre is inside. */
+UI_FN unsigned LlIsqrt(unsigned n);
+
 UI_FN void Em2Disc(int x, int y, int d, uint16_t c)
 {
-    for (int row = 0; row < d; ++row) {
-        int dy = 2 * row + 1 - d, left = d;
+    /* A column at a time (the canvas' order): the pixels of column col whose centre is inside are rows [(d - s) / 2, (d + s - 1) / 2], s
+     * the integer root of d * d - dx * dx. */
+    for (int col = 0; col < d; ++col) {
+        int dx = 2 * col + 1 - d, s = (int)LlIsqrt((unsigned)(d * d - dx * dx)), lo = (d - s) / 2, hi = (d + s - 1) / 2;
 
-        for (int col = 0; col < d; ++col) {
-            int dx = 2 * col + 1 - d;
-
-            if (dx * dx + dy * dy <= d * d) {
-                left = col;
-                break;
-            }
-        }
-        if (left < d)
-            Fill(x + left, y + row, d - 2 * left, 1, c);
+        if (hi >= lo)
+            Fill(x + col, y + lo, 1, hi - lo + 1, c);
     }
 }
 
@@ -254,8 +282,18 @@ UI_FN void Em2Note(int x, int y, int w, int h)
 {
     if (w < 12 || h < 14)
         return;
-    UiRoundFill(x, y, w, h, 5, EM2_SLATE);
-    Em2Fill3(x + 1, y + 1, w - 2, h - 2, 4, UI_RGB(255, 253, 248), UI_RGB(251, 245, 234), (h - 2) * 55 / 100, UI_RGB(242, 232, 214));
+    {
+        uint16_t paper[H];
+        int ih = h - 2, stop = ih * 55 / 100;
+
+        if (h > H)
+            return;
+        if (stop < 1)
+            stop = 1;
+        for (int row = 0; row < ih; ++row)      /* Em2Fill3's rows */
+            paper[row] = row < stop ? Em2Lerp(UI_RGB(255, 253, 248), UI_RGB(251, 245, 234), row, stop) : Em2Lerp(UI_RGB(251, 245, 234), UI_RGB(242, 232, 214), row - stop, ih - stop - 1);
+        EmFramedRows(x, y, w, h, 5, 4, EM2_SLATE, paper);   /* the outline and the paper, each pixel once */
+    }
     Fill(x + 4, y + 1, w - 8, 1, EM_WHITE);
     Fill(x + 3, y + h - 3, w - 6, 2, UI_RGB(232, 220, 198));
     UiRoundFill(x + 4, y + 6, 4, h - 12, 2, EM2_STRIPE_TOP);
@@ -268,10 +306,15 @@ UI_FN void Em2Note(int x, int y, int w, int h)
 UI_FN void Em2NoteShadow(int x, int y, int w, int h)
 {
     static const uint8_t alpha[3] = {150, 105, 50};
+    int x0 = x + 2 < 0 ? 0 : x + 2, x1 = x + w - 2 > W ? W : x + w - 2;
 
-    for (int i = 0; i < 3; ++i)
-        for (int cx = x + 2; cx < x + w - 2; ++cx)
-            EmBlend(cx, y + h + i, UI_RGB(14, 0, 0), alpha[i]);
+    for (int cx = x0; cx < x1; ++cx)
+        for (int i = 0; i < 3; ++i)
+            if ((unsigned)(y + h + i) < H) {            /* EmBlend of the dark red over what is there, a column at a time */
+                uint16_t *p = &sCanvas[(size_t)cx * H + (H - 1 - (size_t)(y + h + i))];
+
+                *p = UiMix(*p, UI_RGB(14, 0, 0), alpha[i] * 8 / 255);
+            }
 }
 
 /* A hairline of the note: a rule with a white row under it. */
@@ -554,10 +597,17 @@ UI_FN void Em2Tint(int section, int chosen, uint16_t *top, uint16_t *bottom)
  * from the backdrop, not blended onto the canvas, so drawing it again changes nothing). Only the 2 px a piece owns. */
 UI_FN void Em2CardShadow(int x, int y, int w, int h)
 {
-    for (int i = 0; i < 2; ++i)
-        for (int cx = x + 3; cx < x + w - 3; ++cx)
-            if ((unsigned)cx < W && (unsigned)(y + h + i) < H)
-                Px(cx, y + h + i, UiMix(EMBER_BG(cx, y + h + i), UI_RGB(14, 0, 0), i == 0 ? 5 : 3));
+    int x0 = x + 3 < 0 ? 0 : x + 3, x1 = x + w - 3 > W ? W : x + w - 3;
+
+    if (!sTsBgReady)
+        TsBgPrepare();
+    for (int cx = x0; cx < x1; ++cx)
+        for (int i = 0; i < 2; ++i)
+            if ((unsigned)(y + h + i) < H) {
+                size_t at = (size_t)cx * H + (H - 1 - (size_t)(y + h + i));
+
+                sCanvas[at] = UiMix(sTsBg[at], UI_RGB(14, 0, 0), i == 0 ? 5 : 3);     /* sTsBg is EMBER_BG in the canvas' order */
+            }
 }
 
 /* A banner: a raised band with a short word at its left (the title of a window), in a palette's face. */
@@ -728,13 +778,51 @@ UI_FN void LlGradSlab(int x, int y, int w, int h, int sl, int sr, int corners, u
  * throws under it (two rows, from the backdrop's own pixels: only where the backdrop shows under it); LlWindowPlain is without it. */
 UI_FN void LlWindowPlain(int x, int y, int w, int h)
 {
-    if (w < 14 || h < 14)
+    /* Five nested rounded shapes (slate, white, sky blue, light blue, the paper's gradient), the inner ones over the outer: each pixel is
+     * painted once, a column at a time. A column is its rows' colours top to bottom, built from where each shape starts and ends in it; the
+     * columns the corners do not reach (all but the six at each end) are one image. */
+    static const uint8_t inset[5] = {0, 1, 2, 4, 5}, radius[5] = {5, 5, 4, 3, 2};
+    const uint16_t flat[4] = {LL_SLATE, EM_WHITE, UI_RGB(122, 180, 216), UI_RGB(200, 228, 240)};
+    uint16_t grad[H], img[H];                       /* img in the canvas' order: row r of the window is img[h - 1 - r] */
+    int imgFor = -1;
+
+    if (w < 14 || h < 14 || h > H)
         return;
-    UiRoundFill(x, y, w, h, 5, LL_SLATE);
-    UiRoundFill(x + 1, y + 1, w - 2, h - 2, 5, EM_WHITE);
-    UiRoundFill(x + 2, y + 2, w - 4, h - 4, 4, UI_RGB(122, 180, 216));
-    UiRoundFill(x + 4, y + 4, w - 8, h - 8, 3, UI_RGB(200, 228, 240));
-    LlGrad(x + 5, y + 5, w - 10, h - 10, 2, EM_WHITE, UI_RGB(248, 248, 240));
+    for (int r = 0; r < h - 10; ++r)
+        grad[r] = Em2Lerp(EM_WHITE, UI_RGB(248, 248, 240), r, h - 10 > 1 ? h - 11 : 1);
+    for (int c = 0; c < w; ++c) {
+        int cx = x + c, t[5], b[5], lo, hi, built = c >= 6 && c < w - 6;
+
+        if ((unsigned)cx >= W)
+            continue;
+        for (int k = 0; k < 5; ++k) {
+            int lx = c - inset[k], lw = w - 2 * inset[k], edge = lx < lw - 1 - lx ? lx : lw - 1 - lx, n = 0;
+
+            if (lx < 0 || lx >= lw) {               /* this shape does not reach the column: the one outside it fills it */
+                t[k] = b[k] = k ? t[k - 1] : 0;
+                continue;
+            }
+            while (n < 4 && sUiCut[radius[k]][n] > edge)
+                ++n;
+            t[k] = inset[k] + n;
+            b[k] = h - inset[k] - n;
+        }
+        if (!(built && imgFor == 1)) {
+            for (int k = 0; k < 4; ++k) {
+                for (int r = t[k]; r < t[k + 1]; ++r)
+                    img[h - 1 - r] = flat[k];
+                for (int r = b[k + 1]; r < b[k]; ++r)
+                    img[h - 1 - r] = flat[k];
+            }
+            for (int r = t[4]; r < b[4]; ++r)
+                img[h - 1 - r] = grad[r - inset[4]];
+            imgFor = built ? 1 : -1;
+        }
+        lo = t[0] < -y ? -y : t[0];
+        hi = b[0] > H - y ? H - y : b[0];
+        if (hi > lo)
+            memcpy(sCanvas + (size_t)cx * H + (H - h - y) + (h - hi), img + (h - hi), (size_t)(hi - lo) * sizeof(uint16_t));
+    }
 }
 
 UI_FN void LlWindow(int x, int y, int w, int h)
@@ -992,6 +1080,9 @@ UI_FN const EmPal *LlPick(int chosen, const EmPal *idle)
  * ring, the slate arrow (#4c5a8c) pointing left. (x, y) is the outer 24 x 24 (the mockup's box is it shrunk by 1). */
 UI_FN void LlBackDisc(int x, int y)
 {
+    static uint16_t kept[22][22];                           /* the gradient never changes: made the first time */
+    static int ready;
+
     Em2Disc(x, y, 24, LL_SLATE_DK);
     for (int row = 0; row < 22; ++row)
         for (int col = 0; col < 22; ++col) {
@@ -999,10 +1090,17 @@ UI_FN void LlBackDisc(int x, int y)
 
             if (px * px + py * py > 22 * 22)
                 continue;
-            /* the gradient's centre is at 50% / 35%: (11, 7.7) in tenths of a pixel; its radius reaches the far corner (18) */
-            px = col * 10 + 5 - 110;
-            py = row * 10 + 5 - 77;
-            Px(x + 1 + col, y + 1 + row, Em2Lerp(EM_WHITE, UI_RGB(216, 222, 244), (int)LlIsqrt((unsigned)(px * px + py * py)) * 255 / 180, 255));
+            if (!ready) {
+                /* the gradient's centre is at 50% / 35%: (11, 7.7) in tenths of a pixel; its radius reaches the far corner (18) */
+                for (int r = 0; r < 22; ++r)
+                    for (int c = 0; c < 22; ++c) {
+                        int gx = c * 10 + 5 - 110, gy = r * 10 + 5 - 77;
+
+                        kept[r][c] = Em2Lerp(EM_WHITE, UI_RGB(216, 222, 244), (int)LlIsqrt((unsigned)(gx * gx + gy * gy)) * 255 / 180, 255);
+                    }
+                ready = 1;
+            }
+            Px(x + 1 + col, y + 1 + row, kept[row][col]);
         }
     LlArrow(x + 7, y + 7, 7, 10, 2, UI_RGB(76, 90, 140));
 }
@@ -1043,6 +1141,25 @@ UI_FN void LlSubPill(int x, int y, int w, int h)
                 Px(cx, y + h, Em2Lerp(TsGet(cx, y + h), EM_WHITE, 77, 255));
 }
 
+/* The colour of the plate's pixel (col, row) when it is inside the disc of diameter d (returns 0 when it is not). */
+UI_FN int LlPlateColour(int d, int col, int row, uint16_t *out)
+{
+    int px = 2 * col + 1 - d, py = 2 * row + 1 - d, below = 2 * row + 3 - d;
+    int gx, gy, t;
+    uint16_t c;
+
+    if (px * px + py * py > d * d)
+        return 0;
+    gx = col * 10 + 5 - 5 * d;                              /* the light's centre: 50% across, 35% down; tenths of a pixel */
+    gy = row * 10 + 5 - (7 * d + 1) / 2;
+    t = (int)LlIsqrt((unsigned)(gx * gx + gy * gy)) * 256 / (82 * d / 10);
+    c = t < 179 ? Em2Lerp(UI_RGB(255, 253, 244), UI_RGB(248, 236, 200), t, 179) : Em2Lerp(UI_RGB(248, 236, 200), UI_RGB(232, 212, 156), t - 179, 77);
+    if (px * px + below * below > d * d)                    /* the inset shade: what the disc shifted up two px would not cover */
+        c = Em2Lerp(c, UI_RGB(120, 90, 40), 46, 255);
+    *out = c;
+    return 1;
+}
+
 /* LlPlate: the round plate a Pokemon sits on (.plate), `d` across at (x, y) (its CSS box): cream with a radial light from above (#fffdf4,
  * #f8ecc8 at 70 percent, #e8d49c), a warm shade along its bottom, and its rings: with bandW 0 one px of `edge` round it (the mockup's
  * #404868); with bandW > 0 a px of `edge`, bandW px of `band`, a px of `edge` (the FIGHT card's #8a1610 / #ffd890 x2, the party's
@@ -1056,22 +1173,48 @@ UI_FN void LlPlate(int x, int y, int d, uint16_t edge, uint16_t band, int bandW)
         Em2Disc(x - e + 1, y - e + 1, d + 2 * e - 2, band);
         Em2Disc(x - 1, y - 1, d + 2, edge);
     }
-    for (int row = 0; row < d; ++row)
-        for (int col = 0; col < d; ++col) {
-            int px = 2 * col + 1 - d, py = 2 * row + 1 - d, below = 2 * row + 3 - d;
-            int gx, gy, t;
-            uint16_t c;
+    /* The disc's colours depend only on its diameter and a screen draws several of one size, so the last few sizes are kept (in the
+     * canvas' order: column by column, bottom up) and a plate is a copy a column. A larger plate is drawn a pixel at a time. */
+    enum { KEPT = 3, MAXD = 66 };
+    static struct { int d; uint16_t colour[MAXD * MAXD]; } cache[KEPT];
+    static unsigned next;
+    uint16_t *kept = 0;
 
-            if (px * px + py * py > d * d)
-                continue;
-            gx = col * 10 + 5 - 5 * d;                      /* the light's centre: 50% across, 35% down; tenths of a pixel */
-            gy = row * 10 + 5 - (7 * d + 1) / 2;
-            t = (int)LlIsqrt((unsigned)(gx * gx + gy * gy)) * 256 / (82 * d / 10);
-            c = t < 179 ? Em2Lerp(UI_RGB(255, 253, 244), UI_RGB(248, 236, 200), t, 179) : Em2Lerp(UI_RGB(248, 236, 200), UI_RGB(232, 212, 156), t - 179, 77);
-            if (px * px + below * below > d * d)            /* the inset shade: what the disc shifted up two px would not cover */
-                c = Em2Lerp(c, UI_RGB(120, 90, 40), 46, 255);
-            Px(x + col, y + row, c);
-        }
+    if (d < 1)
+        return;
+    if (d > MAXD) {
+        for (int row = 0; row < d; ++row)
+            for (int col = 0; col < d; ++col) {
+                uint16_t c;
+
+                if (LlPlateColour(d, col, row, &c))
+                    Px(x + col, y + row, c);
+            }
+        return;
+    }
+    for (int i = 0; i < KEPT; ++i)
+        if (cache[i].d == d)
+            kept = cache[i].colour;
+    if (!kept) {
+        kept = cache[next].colour;
+        cache[next].d = d;
+        next = (next + 1) % KEPT;
+        for (int col = 0; col < d; ++col)
+            for (int row = 0; row < d; ++row)
+                LlPlateColour(d, col, row, &kept[col * d + (d - 1 - row)]);
+    }
+    for (int col = 0; col < d; ++col) {
+        int dx = 2 * col + 1 - d, s = (int)LlIsqrt((unsigned)(d * d - dx * dx)), lo = (d - s) / 2, hi = (d + s - 1) / 2;
+
+        if (x + col < 0 || x + col >= W)
+            continue;
+        if (y + lo < 0)
+            lo = -y;
+        if (y + hi >= H)
+            hi = H - 1 - y;
+        if (hi >= lo)
+            memcpy(sCanvas + (size_t)(x + col) * H + (H - 1 - (size_t)(y + hi)), kept + col * d + (d - 1 - hi), (size_t)(hi - lo + 1) * sizeof(uint16_t));
+    }
 }
 
 /* The flame face of a small raised piece (.nub, .seg): #8a1610 outline, the glass from #ffc45a over #ff9a38 to #f8642a over #d8301e, a light

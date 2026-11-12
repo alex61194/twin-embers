@@ -105,6 +105,28 @@ int main(void)
     fclose(file);
     assert(strstr(text, "nuzlocke") == NULL);
 
+    /* NUZLOCKE options: off until chosen, written only when on, read back. */
+    char big[256];
+    assert(CtrSettings_NuzDuplicates() == 0 && CtrSettings_NuzShiny() == 0 && CtrSettings_NuzLevelCap() == 0);
+    CtrSettings_SetNuzDuplicates(1);
+    CtrSettings_SetNuzShiny(1);
+    CtrSettings_SetNuzLevelCap(1);
+    assert(CtrSettings_NuzDuplicates() == 1 && CtrSettings_NuzShiny() == 1 && CtrSettings_NuzLevelCap() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "nuzdupes=1\n") != NULL && strstr(big, "nuzshiny=1\n") != NULL && strstr(big, "nuzcap=1\n") != NULL);
+    CtrSettings_SetNuzDuplicates(0);
+    CtrSettings_SetNuzShiny(0);
+    CtrSettings_SetNuzLevelCap(0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "nuz") == NULL || strstr(big, "nuzlocke") != NULL);
+    assert(strstr(big, "nuzdupes") == NULL && strstr(big, "nuzshiny") == NULL && strstr(big, "nuzcap") == NULL);
+
     /* FREE HMS: off until chosen, written only when on. */
     assert(CtrSettings_FreeHm() == 0);
     CtrSettings_SetFreeHm(1);

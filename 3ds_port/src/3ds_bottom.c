@@ -106,6 +106,7 @@ extern int CtrBattle_ActionCursor(void);
 extern int CtrBattle_QuickBall(unsigned *item, unsigned *quantity, int *place, int *count);
 extern void CtrBattle_QuickBallStep(int dir);
 extern unsigned CtrBattle_BerryPouch(void);
+extern int CtrBattle_CanRun(void);
 extern int CtrBattle_MoveCursor(void);
 extern int CtrBattle_TargetCursor(void);
 extern void CtrBattle_AskCursor(int slot);
@@ -1207,6 +1208,8 @@ static void LearnSnapshot(Snapshot *s, int mode)
     s->touch.backPressed = (uint8_t)(sBack.inside != 0);
 }
 
+#include "3ds_bottom_relearn_impl.h"
+
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
 {
@@ -1913,6 +1916,7 @@ static void BattleFill(CtrBattleView *v)
         v->cursor = (int8_t)CtrBattle_ActionCursor();
         v->showCursor = !sBatTouchLast;
         v->ball = (uint8_t)CtrBattle_QuickBall(&item, &qty, &place, &count);
+        v->runBlocked = (uint8_t)!CtrBattle_CanRun();
         if (v->ball != CTR_QUICK_BALL_NONE) {
             v->ballItem = (uint16_t)item;
             v->ballQty = (uint16_t)(qty > 999 ? 999 : qty);
@@ -2070,6 +2074,8 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         /* FireRed's own screen, as it draws it, in the viewport; BACK is its B. */
         const char *title = GbaViewTitle();
 
+        if (CtrBottomView_Relearner() && RelearnSnapshot(s, mode))
+            return;                 /* its list drawn here (3ds_bottom_relearn_impl.h) */
         s->touch.viewport = 1;
         s->touch.backVisible = 1;
         s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -3768,6 +3774,8 @@ static void RunBatPlan(void)
 }
 
 extern int CtrText_WaitsForButton(void);
+#define BAT_RUN_HOLD 30             /* frames a finger stays on RUN before it keeps trying to flee */
+static int sRunHold;
 static int sBatIdleTap;             /* a touch that began while the battle offered no choice */
 
 static void ProcessBattleTouch(const CtrInput *in)
@@ -3798,6 +3806,22 @@ static void ProcessBattleTouch(const CtrInput *in)
             sBatPlan.press = K_A;
         }
     }
+    /* Holding RUN keeps trying to flee: once the finger has stayed BAT_RUN_HOLD frames on the card, RUN is chosen (and the
+     * release then chooses nothing more); a failed try brings the action menu back, and a finger still on RUN chooses it again
+     * after the same wait. A trainer or a trap greys RUN, so nothing is held on it. */
+    if (in->touchActive && !(in->held & 0x3ffu) && ready && state == BATTLE_ACTION && !sBatPlan.active
+        && btn == BUI_ACT_RUN && !sShown.battle.runBlocked) {
+        if (++sRunHold >= BAT_RUN_HOLD) {
+            sRunHold = 0;
+            BatPlanClear();
+            sBatPlan.active = 1;
+            sBatPlan.state = state;
+            sBatPlan.target = BUI_ACT_RUN;
+            sBat.swiped = 1;
+            sBat.inside = 0;
+        }
+    } else if (!sBatPlan.active)
+        sRunHold = 0;
     if ((in->held & 0x3ffu) || !ready || (sBat.down && sBat.state != state)) {
         sBat.down = sBat.inside = 0;
         return;
@@ -4998,6 +5022,7 @@ static int ProcessTouch(int mode)
         sPoke.inside = 0;
         sTouch.active = 0;
         ProcessBack(mode, in);
+        ProcessRelearnTouch(in);
         /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
         if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)
             && in->touchX >= PT_VIEW_X && in->touchX < PT_VIEW_X + PT_VIEW_W
@@ -5464,6 +5489,7 @@ void CtrBottom_Frame(void)
         RunLearnPlan();
     else
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    RunRelearnPlan(mode == MODE_GBAVIEW && CtrBottomView_Relearner());
     if (mode == MODE_NAMING)
         RunNamePlan();
     else

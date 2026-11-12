@@ -142,7 +142,7 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
     if (v->state == BUI_ACTION) {
         for (int i = 0; i < 4; ++i)
             if (BIn(BActRect(v, i), x, y))
-                return i;
+                return i == BUI_ACT_RUN && v->runBlocked ? -1 : i;
         if (v->ball != CTR_QUICK_BALL_NONE && BIn(BActRect(v, CTR_ACTION_BALL), x, y)) {
             CtrPokeTouchRect prev = BBallArrow(v, 0), next = BBallArrow(v, 1);
 
@@ -1025,6 +1025,10 @@ static void BFightFace(const CtrPokeTouchRect *r, int fy, const CtrBattleView *v
     }
 }
 
+/* Grey and still: the quick ball with nothing to throw, and RUN when there is no running. */
+static const EmPal kEmBallOff = EM_PAL(UI_RGB(216, 212, 222), UI_RGB(200, 196, 206), UI_RGB(176, 172, 184), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116),
+                                     LL_EDGE, UI_RGB(232, 230, 238), UI_RGB(120, 116, 134), EM_WHITE, UI_RGB(60, 58, 72));
+
 static void BActCard(int i, const CtrBattleView *v)
 {
     static const EmPal *const pal[4] = {&kEmFlame, &kEmBlue, &kEmGreen, &kEmPurple};
@@ -1032,8 +1036,9 @@ static void BActCard(int i, const CtrBattleView *v)
     static const char *const label[4] = {CTR_TR("Fight", "Luchar", "Kampf"), CTR_TR("Bag", "Mochila", "Beutel"), CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xC3\xA9mon"), CTR_TR("Run", "Huir", "Flucht")};
     static const char *const sub[4] = {"", CTR_TR("Items", "Objetos", "Items"), CTR_TR("Party", "Equipo", "Team"), CTR_TR("Escape", "Escapar", "Fliehen")};
     const CtrPokeTouchRect *r = BActRect(v, i);
-    const EmPal *p = pal[i];
-    int fy = BLCard(r, i == 0 ? BL_FIGHT_H : BL_ROW_H, p, v->showCursor && v->cursor == i, v->pressed == i, 1);
+    int off = i == BUI_ACT_RUN && v->runBlocked;
+    const EmPal *p = off ? &kEmBallOff : pal[i];
+    int fy = BLCard(r, i == 0 ? BL_FIGHT_H : BL_ROW_H, p, v->showCursor && v->cursor == i, v->pressed == i && !off, 1);
 
     if (i == 0) {
         BFightFace(r, fy, v, p);
@@ -1053,12 +1058,10 @@ static void BActCard(int i, const CtrBattleView *v)
         BSubPill(r, fy, able, p);
         return;
     }
-    BSubPill(r, fy, sub[i], p);
+    BSubPill(r, fy, off ? CTR_TR("NO ESCAPE", "SIN HUIDA", "Kein Weg") : sub[i], p);
 }
 
 /* The quick ball: grey and still when there is no ball to throw (none left, or the boxes full). */
-static const EmPal kEmBallOff = EM_PAL(UI_RGB(216, 212, 222), UI_RGB(200, 196, 206), UI_RGB(176, 172, 184), UI_RGB(150, 146, 160), UI_RGB(104, 100, 116),
-                                     LL_EDGE, UI_RGB(232, 230, 238), UI_RGB(120, 116, 134), EM_WHITE, UI_RGB(60, 58, 72));
 /* Its colour: gold (kEmGold), apart from FIGHT's flame and the cursor's ring. */
 
 /* An arrow of the quick ball: a white triangle at the end of its caption pill (the mockup's two arrows round the count), its shade under it;
@@ -1557,7 +1560,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
             || memcmp(a->activeType, b->activeType, sizeof(b->activeType)) || memcmp(a->activeTypeName, b->activeTypeName, sizeof(b->activeTypeName))
             || a->activeHp != b->activeHp || a->activeMaxHp != b->activeMaxHp
             || a->activeSlot != b->activeSlot || a->ball != b->ball || a->ballItem != b->ballItem
-            || a->ballQty != b->ballQty || a->ballPlace != b->ballPlace || a->ballCount != b->ballCount
+            || a->ballQty != b->ballQty || a->runBlocked != b->runBlocked || a->ballPlace != b->ballPlace || a->ballCount != b->ballCount
             || strcmp(a->ballName, b->ballName);
     if (b->state == BUI_MOVE)
         return memcmp(a->move, b->move, sizeof(b->move)) != 0;
