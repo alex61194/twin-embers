@@ -38,7 +38,7 @@ static int sLoaded;
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 256
+#define SETTINGS_FILE_BYTES 512     /* was 256: the file grew to about 232 bytes in the worst case; a shorter old file reads as before */
 static FILE *sFile;
 
 static const char *const kLookKey[3] = {"look_red=", "look_leaf=", "look_blue="};
