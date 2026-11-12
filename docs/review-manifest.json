@@ -2103,7 +2103,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "9f9d61a4b2841625c4b209d58b329a6b819eeb413b03b40ab20ce1880f46380a"
+   "sha256": "fc7ed08b29292941166d27bb7e49004de06be3d85050e48e15df869d29849eb0"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -8872,7 +8872,7 @@
   {
    "commit": "968a8306492230d6581c7df7f8b923e99c071a49",
    "path": "3ds_port/tests/poketouch_render_test.c",
-   "sha256": "fc7ed08b29292941166d27bb7e49004de06be3d85050e48e15df869d29849eb0",
+   "sha256": "c5facc8c0c14d56286c2d0a9a695d47085a7632bd3d9ad9600e1b889a125571d",
    "supersedes": "db2e839338ee548d9073cff5f90114529cb3b5098dcca0243af8b19d19a7632e",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
