@@ -6112,7 +6112,7 @@
   },
   {
    "path": "patches/pokefirered/0255-easychat-native-bridge.json",
-   "sha256": "9ae38bb8811dac5c5f999bfcf5afbb2f2266660f77edce24eb9d4707ffba6dcd",
+   "sha256": "ea1361bf202d201d139aa103b840abcd91025fd6c06c70fa7ab4f1ded0b916df",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
