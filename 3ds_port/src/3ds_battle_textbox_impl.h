@@ -1,15 +1,17 @@
-/* The battle's message box in the port's design (v4), included by 3ds_video.c, whose state and helpers it uses.
+/* The battle's message box in the port's design ("Llama", proposal A), included by 3ds_video.c, whose state and helpers
+ * it uses.
  *
  * FireRed's text box is the last six tile rows of BG0: a frame of its own tiles (graphics/battle_interface/textbox.bin,
- * below BOX_FRAME_TILES) and, over it, the windows the game prints into. Here the frame is not drawn: a navy panel takes
- * the bottom 48 lines of the screen, full width, and the windows' tiles are drawn over it at 1:1, moved by BOX_TEXT_X
- * and BOX_TEXT_Y, with the message window's background (colour 15) left out and its text in the design's white and
- * shadow. FireRed's prompt arrow (colours 2, 4 and 9 of the box's palette) is drawn in the design's reds at the panel's
- * right end, at the height the game gives it, so it keeps its bounce. The panel fades with the box's palette.
+ * below BOX_FRAME_TILES) and, over it, the windows the game prints into. Here the frame is not drawn: a slate-blue panel
+ * takes the bottom 48 lines of the screen, full width (a gradient face, FireRed's light-blue fillet round it, a flame
+ * line fading out along its top edge), and the windows' tiles are drawn over it at 1:1, moved by BOX_TEXT_X and
+ * BOX_TEXT_Y, with the message window's background (colour 15) left out and its text in white over a dark shadow.
+ * FireRed's prompt arrow (colours 2, 4 and 9 of the box's palette) is drawn in the design's reds at the panel's right
+ * end, at the height the game gives it, so it keeps its bounce. The panel fades with the box's palette.
+ * The panel is computed, pixel by pixel, when the texture is made (BoxPanelPixel): there is no art for it.
  */
 #define BOX_W 400
 #define BOX_H 48
-#define BOX_CORNER 12
 #define BOX_TEX_W 512
 #define BOX_TEX_H 128
 #define BOX_TEXT_ROW 64                 /* the windows' pixels in the texture */
@@ -22,112 +24,12 @@
 #define BOX_LINE2_ROW 27
 #define BOX_LINE2_UP 4
 #define BOX_ARROW_X 378
-#define BOX_TAB_X0 16                   /* the red tab, rows 6 to 9 */
-#define BOX_TAB_X1 68
-
-/* The panel, from the approved design: its colours, its left and right ends, and the column between them. */
-static const uint8_t kBoxRgb[][3] = {{20, 22, 34}, {28, 30, 44}, {84, 96, 132}, {132, 146, 186}, {74, 86, 121}, {65, 76, 110}, {56, 66, 100}, {55, 65, 98}, {104, 120, 164}, {54, 64, 97}, {24, 28, 46}, {53, 63, 96}, {53, 62, 95}, {52, 62, 94}, {51, 61, 93}, {51, 60, 92}, {50, 59, 91}, {49, 58, 90}, {49, 58, 89}, {48, 57, 88}, {47, 56, 87}, {47, 55, 86}, {46, 54, 85}, {45, 54, 84}, {45, 53, 83}, {44, 52, 82}, {43, 51, 81}, {43, 51, 80}, {42, 50, 78}, {41, 49, 77}, {40, 48, 76}, {40, 47, 75}, {39, 47, 74}, {38, 46, 73}, {38, 45, 72}, {37, 44, 71}, {36, 43, 70}, {36, 43, 69}, {35, 42, 68}, {34, 41, 67}, {34, 40, 66}, {18, 20, 32}, {33, 39, 65}, {32, 39, 64}, {32, 38, 63}, {31, 37, 62}, {30, 36, 61}, {30, 36, 60}};
-static const uint8_t kBoxLeft[BOX_H][BOX_CORNER] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2},
-    {0, 0, 0, 0, 0, 0, 1, 1, 3, 4, 4, 4},
-    {0, 0, 0, 0, 0, 1, 3, 3, 5, 5, 5, 5},
-    {0, 0, 0, 0, 0, 1, 6, 6, 6, 6, 6, 6},
-    {0, 0, 0, 0, 1, 3, 7, 7, 7, 7, 7, 8},
-    {0, 0, 0, 0, 3, 9, 9, 9, 9, 9, 8, 10},
-    {0, 0, 0, 0, 11, 11, 11, 11, 11, 8, 11, 11},
-    {0, 0, 0, 0, 12, 12, 12, 12, 8, 10, 12, 12},
-    {0, 0, 0, 0, 13, 13, 13, 13, 8, 10, 13, 13},
-    {0, 0, 0, 0, 14, 14, 14, 14, 8, 10, 14, 14},
-    {0, 0, 0, 0, 15, 15, 15, 15, 8, 10, 15, 15},
-    {0, 0, 0, 0, 16, 16, 16, 16, 8, 10, 16, 16},
-    {0, 0, 0, 0, 17, 17, 17, 17, 8, 10, 17, 17},
-    {0, 0, 0, 0, 18, 18, 18, 18, 8, 10, 18, 18},
-    {0, 0, 0, 0, 19, 19, 19, 19, 8, 10, 19, 19},
-    {0, 0, 0, 0, 20, 20, 20, 20, 8, 10, 20, 20},
-    {0, 0, 0, 0, 21, 21, 21, 21, 8, 10, 21, 21},
-    {0, 0, 0, 0, 22, 22, 22, 22, 8, 10, 22, 22},
-    {0, 0, 0, 0, 23, 23, 23, 23, 8, 10, 23, 23},
-    {0, 0, 0, 0, 24, 24, 24, 24, 8, 10, 24, 24},
-    {0, 0, 0, 0, 25, 25, 25, 25, 8, 10, 25, 25},
-    {0, 0, 0, 0, 26, 26, 26, 26, 8, 10, 26, 26},
-    {0, 0, 0, 0, 27, 27, 27, 27, 8, 10, 27, 27},
-    {0, 0, 0, 0, 28, 28, 28, 28, 8, 10, 28, 28},
-    {0, 0, 0, 0, 29, 29, 29, 29, 8, 10, 29, 29},
-    {0, 0, 0, 0, 30, 30, 30, 30, 8, 10, 30, 30},
-    {0, 0, 0, 0, 31, 31, 31, 31, 8, 10, 31, 31},
-    {0, 0, 0, 0, 32, 32, 32, 32, 8, 10, 32, 32},
-    {0, 0, 0, 0, 33, 33, 33, 33, 8, 10, 33, 33},
-    {0, 0, 0, 0, 34, 34, 34, 34, 8, 10, 34, 34},
-    {0, 0, 0, 0, 35, 35, 35, 35, 8, 10, 35, 35},
-    {0, 0, 0, 0, 36, 36, 36, 36, 8, 10, 36, 36},
-    {0, 0, 0, 0, 37, 37, 37, 37, 8, 10, 37, 37},
-    {0, 0, 0, 0, 38, 38, 38, 38, 8, 10, 38, 38},
-    {0, 0, 0, 0, 39, 39, 39, 39, 8, 10, 39, 39},
-    {0, 0, 0, 0, 40, 40, 40, 40, 40, 8, 40, 40},
-    {0, 0, 0, 0, 41, 42, 42, 42, 42, 42, 8, 42},
-    {0, 0, 0, 0, 1, 41, 43, 43, 43, 43, 43, 8},
-    {0, 0, 0, 0, 0, 1, 44, 44, 44, 44, 44, 44},
-    {0, 0, 0, 0, 0, 1, 41, 41, 45, 45, 45, 45},
-    {0, 0, 0, 0, 0, 0, 1, 1, 41, 46, 46, 46},
-    {0, 0, 0, 0, 0, 0, 0, 0, 1, 47, 47, 47},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-};
-static const uint8_t kBoxRight[BOX_H][BOX_CORNER] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {4, 4, 4, 3, 1, 1, 0, 0, 0, 0, 0, 0},
-    {5, 5, 5, 5, 3, 3, 1, 0, 0, 0, 0, 0},
-    {6, 6, 6, 6, 6, 6, 1, 0, 0, 0, 0, 0},
-    {8, 7, 7, 7, 7, 7, 3, 1, 0, 0, 0, 0},
-    {10, 8, 9, 9, 9, 9, 9, 3, 0, 0, 0, 0},
-    {11, 11, 8, 11, 11, 11, 11, 11, 0, 0, 0, 0},
-    {12, 12, 12, 8, 12, 12, 12, 12, 0, 0, 0, 0},
-    {13, 13, 13, 8, 13, 13, 13, 13, 0, 0, 0, 0},
-    {14, 14, 14, 8, 14, 14, 14, 14, 0, 0, 0, 0},
-    {15, 15, 15, 8, 15, 15, 15, 15, 0, 0, 0, 0},
-    {16, 16, 16, 8, 16, 16, 16, 16, 0, 0, 0, 0},
-    {17, 17, 17, 8, 17, 17, 17, 17, 0, 0, 0, 0},
-    {18, 18, 18, 8, 18, 18, 18, 18, 0, 0, 0, 0},
-    {19, 19, 19, 8, 19, 19, 19, 19, 0, 0, 0, 0},
-    {20, 20, 20, 8, 20, 20, 20, 20, 0, 0, 0, 0},
-    {21, 21, 21, 8, 21, 21, 21, 21, 0, 0, 0, 0},
-    {22, 22, 22, 8, 22, 22, 22, 22, 0, 0, 0, 0},
-    {23, 23, 23, 8, 23, 23, 23, 23, 0, 0, 0, 0},
-    {24, 24, 24, 8, 24, 24, 24, 24, 0, 0, 0, 0},
-    {25, 25, 25, 8, 25, 25, 25, 25, 0, 0, 0, 0},
-    {26, 26, 26, 8, 26, 26, 26, 26, 0, 0, 0, 0},
-    {27, 27, 27, 8, 27, 27, 27, 27, 0, 0, 0, 0},
-    {28, 28, 28, 8, 28, 28, 28, 28, 0, 0, 0, 0},
-    {29, 29, 29, 8, 29, 29, 29, 29, 0, 0, 0, 0},
-    {30, 30, 30, 8, 30, 30, 30, 30, 0, 0, 0, 0},
-    {31, 31, 31, 8, 31, 31, 31, 31, 0, 0, 0, 0},
-    {32, 32, 32, 8, 32, 32, 32, 32, 0, 0, 0, 0},
-    {33, 33, 33, 8, 33, 33, 33, 33, 0, 0, 0, 0},
-    {34, 34, 34, 8, 34, 34, 34, 34, 0, 0, 0, 0},
-    {35, 35, 35, 8, 35, 35, 35, 35, 0, 0, 0, 0},
-    {36, 36, 36, 8, 36, 36, 36, 36, 0, 0, 0, 0},
-    {37, 37, 37, 8, 37, 37, 37, 37, 0, 0, 0, 0},
-    {38, 38, 38, 8, 38, 38, 38, 38, 0, 0, 0, 0},
-    {39, 39, 39, 8, 39, 39, 39, 39, 0, 0, 0, 0},
-    {40, 40, 8, 40, 40, 40, 40, 40, 0, 0, 0, 0},
-    {42, 8, 42, 42, 42, 42, 42, 41, 0, 0, 0, 0},
-    {8, 43, 43, 43, 43, 43, 41, 1, 0, 0, 0, 0},
-    {44, 44, 44, 44, 44, 44, 1, 0, 0, 0, 0, 0},
-    {45, 45, 45, 45, 41, 41, 1, 0, 0, 0, 0, 0},
-    {46, 46, 46, 41, 1, 1, 0, 0, 0, 0, 0, 0},
-    {47, 47, 47, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-};
-static const uint8_t kBoxMiddle[BOX_H] = {0, 0, 0, 2, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 8, 44, 45, 46, 47, 0, 0, 0};
+/* The panel's face: a rounded rectangle (x 3 to 396, y 3 to 44, corners of radius 6) on a darker ground. */
+#define BOX_FACE_X 3
+#define BOX_FACE_Y 3
+#define BOX_FACE_R 6
+#define BOX_FLAME_X 10                  /* the flame line: x 10 to 159, rows 1 to 3 */
+#define BOX_FLAME_W 150
 
 static C3D_Tex sBoxTex;
 static bool sBoxReady, sBoxFailed;
@@ -139,14 +41,64 @@ static uint32_t BoxRgba(uint8_t r, uint8_t g, uint8_t b)
     return (uint32_t)r << 24 | (uint32_t)g << 16 | (uint32_t)b << 8 | 255u;
 }
 
+static float BoxMix(float a, float b, float t)
+{
+    return a + (b - a) * t;
+}
+
+/* Whether (x, y) is inside the face, its edge moved `grow` pixels out (negative: in): a rounded rectangle, its corners
+ * tested at the pixel centres. */
+static bool BoxFace(int x, int y, int grow)
+{
+    const int x0 = BOX_FACE_X - grow, x1 = BOX_W - BOX_FACE_X + grow;
+    const int y0 = BOX_FACE_Y - grow, y1 = BOX_H - BOX_FACE_Y + grow;
+    const int r = BOX_FACE_R + grow > 0 ? BOX_FACE_R + grow : 0;
+
+    if (x < x0 || x >= x1 || y < y0 || y >= y1) return false;
+    if ((x < x0 + r || x >= x1 - r) && (y < y0 + r || y >= y1 - r))
+    {
+        float dx = x + 0.5f - (x < x0 + r ? x0 + r : x1 - r), dy = y + 0.5f - (y < y0 + r ? y0 + r : y1 - r);
+        return dx * dx + dy * dy <= (float)(r * r);
+    }
+    return true;
+}
+
 static uint32_t BoxPanelPixel(int x, int y)
 {
-    unsigned index = x < BOX_CORNER ? kBoxLeft[y][x] : x >= BOX_W - BOX_CORNER ? kBoxRight[y][x - (BOX_W - BOX_CORNER)]
-                   : kBoxMiddle[y];
+    float r = 20, g = 24, b = 44;                                   /* the ground */
 
-    if (y >= 6 && y <= 9 && x >= BOX_TAB_X0 + (y >= 8) && x < BOX_TAB_X1 - (y >= 8))
-        return y == 6 ? BoxRgba(255, 128, 104) : y == 9 ? BoxRgba(160, 32, 30) : BoxRgba(232, 64, 48);
-    return BoxRgba(kBoxRgb[index][0], kBoxRgb[index][1], kBoxRgb[index][2]);
+    if (BoxFace(x, y, 0))
+    {
+        float t = (y - BOX_FACE_Y) / (float)(BOX_H - 2 * BOX_FACE_Y - 1);
+        if (t < 0.55f)
+        {
+            t /= 0.55f;
+            r = BoxMix(70, 44, t), g = BoxMix(82, 52, t), b = BoxMix(126, 88, t);
+        }
+        else
+        {
+            t = (t - 0.55f) / 0.45f;
+            r = BoxMix(44, 37, t), g = BoxMix(52, 44, t), b = BoxMix(88, 76, t);
+        }
+        if (y < BOX_FACE_Y + 3) r = BoxMix(r, 255, 0.07f), g = BoxMix(g, 255, 0.07f), b = BoxMix(b, 255, 0.07f);
+        if (!BoxFace(x, y, -1))                                      /* FireRed's light-blue fillet */
+            r = 122, g = 180, b = 216;
+        else if (!BoxFace(x, y, -2))                                 /* and its faint second line */
+            r = BoxMix(r, 200, 0.35f), g = BoxMix(g, 228, 0.35f), b = BoxMix(b, 240, 0.35f);
+    }
+    else if (BoxFace(x, y, 1))
+        r = 10, g = 12, b = 24;                                      /* a dark line round the face */
+
+    if (y >= 1 && y <= 3 && x >= BOX_FLAME_X && x < BOX_FLAME_X + BOX_FLAME_W && !(x == BOX_FLAME_X && y != 2))
+    {
+        /* The flame line: amber to orange to red, fading out along its length. */
+        float t = (x - BOX_FLAME_X) / (float)BOX_FLAME_W, a = t < 0.45f ? 1.0f : 1.0f - (t - 0.45f) / 0.55f;
+        float fr = t < 0.45f ? BoxMix(255, 248, t / 0.45f) : BoxMix(248, 216, (t - 0.45f) / 0.55f);
+        float fg = t < 0.45f ? BoxMix(176, 100, t / 0.45f) : BoxMix(100, 48, (t - 0.45f) / 0.55f);
+        float fb = t < 0.45f ? BoxMix(72, 42, t / 0.45f) : BoxMix(42, 30, (t - 0.45f) / 0.55f);
+        r = BoxMix(r, fr, a), g = BoxMix(g, fg, a), b = BoxMix(b, fb, a);
+    }
+    return BoxRgba((uint8_t)(r + 0.5f), (uint8_t)(g + 0.5f), (uint8_t)(b + 0.5f));
 }
 
 static bool BoxInit(void)
@@ -187,7 +139,7 @@ static uint32_t BoxColour(unsigned bank, unsigned c)
     uint16_t rgb = sMemory.palette[bank * 16 + c];
 
     if (bank == 0 && c == 1) return BoxRgba(250, 250, 252);
-    if (bank == 0 && c == 6) return BoxRgba(40, 46, 78);
+    if (bank == 0 && c == 6) return BoxRgba(16, 20, 42);
     return BoxRgba((uint8_t)((rgb & 31) * 255 / 31), (uint8_t)(((rgb >> 5) & 31) * 255 / 31),
                    (uint8_t)(((rgb >> 10) & 31) * 255 / 31));
 }
@@ -244,7 +196,7 @@ static void BoxText(unsigned map, unsigned size, unsigned chars, unsigned first,
                             if (x - arrowX0 < 16 && y - arrowY0 < 16)
                                 texels[CtrVideo_Texel((unsigned)(x - arrowX0), (unsigned)(BOX_ARROW_ROW + y - arrowY0),
                                                       BOX_TEX_W)] =
-                                    c == 4 ? BoxRgba(255, 128, 104) : c == 9 ? BoxRgba(160, 32, 30) : BoxRgba(232, 64, 48);
+                                    c == 4 ? BoxRgba(255, 120, 90) : c == 9 ? BoxRgba(88, 18, 14) : BoxRgba(232, 56, 32);
                         }
                         else
                             texels[CtrVideo_Texel((unsigned)x, (unsigned)(BOX_TEXT_ROW + y), BOX_TEX_W)] =

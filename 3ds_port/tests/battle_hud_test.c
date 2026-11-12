@@ -79,15 +79,22 @@ int main(void)
     assert(Pixel(player, 0, 0) == 0);
     assert((Pixel(player, 136, 43) & 255) == 107);
     assert((Pixel(player, 80, 10) & 255) == 255);
+    /* The look: a cream body with a glass band on top, a flame line under the name, a flame-red cap ringed in dark
+     * red at the right end, and the EXP bar's dark slate base from row 39 down. */
+    assert(Rgb(Pixel(player, 60, 2)) == 0xFEFEFE);
+    assert((Pixel(player, 40, 14) >> 24) >= 248 && ((Pixel(player, 40, 14) >> 16) & 255) < 200);
+    assert(Rgb(Pixel(player, 122, 20)) == 0x8A1610);
+    assert(Rgb(Pixel(player, 5, 39)) == 0x4C547C);
 
-    /* A full HP bar is green to its end; a fifth is red. The track starts 16 past the capsule's left (x 16). */
+    /* A full HP bar is green to its end; a fifth is red. The capsule is at (16, 17); its track starts 16 past its left and
+     * 2 rows down, 6 rows tall. */
     unsigned version = player->version;
-    assert(Rgb(Pixel(player, 16 + 16 + 4, 27 + 5)) == 0x48D478);   /* the fill's third row */
+    assert(Rgb(Pixel(player, 16 + 16 + 4, 17 + 2 + 2)) == 0x30C848);   /* the fill's third row */
     CtrHud_HpBar(0, 9);
     player = sImage(0);
     assert(player->version != version);
-    assert(Rgb(Pixel(player, 16 + 16 + 2, 27 + 5)) == 0xEC4434);
-    assert(Rgb(Pixel(player, 16 + 16 + 60, 27 + 5)) == 0x464C60);  /* the empty track */
+    assert(Rgb(Pixel(player, 16 + 16 + 2, 17 + 2 + 2)) == 0xE84030);
+    assert(Rgb(Pixel(player, 16 + 16 + 60, 17 + 2 + 2)) == 0x586080);  /* the empty track */
     /* Nothing changed, nothing redrawn. */
     version = player->version;
     CtrHud_HpBar(0, 9);
@@ -102,12 +109,12 @@ int main(void)
     sy = 14 * CTR_BATTLE_ZOOM + 192 - 112 * CTR_BATTLE_ZOOM + foe->dy;
     assert(fabsf(sx - 10) < 0.01f && fabsf(sy - 22) < 0.01f);
     /* Its Poke Ball: grey until the species is caught. */
-    assert(Rgb(Pixel(foe, 5 + 4, 12 + 2)) == 0xAAAEBA);
+    assert(Rgb(Pixel(foe, 4 + 4, 12 + 2)) == 0xAAAEBA);
     CtrHud_Caught(1, true);
-    assert(Rgb(Pixel(sImage(1), 5 + 4, 12 + 2)) == 0xE8382C);
+    assert(Rgb(Pixel(sImage(1), 4 + 4, 12 + 2)) == 0xE8382C);
     /* A trainer's Pokemon: no Poke Ball. */
     CtrHud_NoBall(1, true);
-    assert(Rgb(Pixel(sImage(1), 5 + 4, 12 + 2)) != 0xE8382C);
+    assert(Rgb(Pixel(sImage(1), 4 + 4, 12 + 2)) != 0xE8382C);
     CtrHud_NoBall(1, false);
 
     /* A double battle: four boxes, the player's low ones (no EXP bar), 64x32 pairs. */
