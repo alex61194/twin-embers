@@ -1,7 +1,7 @@
 /* A choice of the field in the viewport (3ds_poketouch.h CtrPokeTouchChoice), included at the end of 3ds_poketouch.c
  * after the Bag, whose cards and buttons it shares. A remote for FireRed's menu (a script's multichoice, YES/NO or
  * grid, the PC's menus): its rows as ember buttons, one column (two past five rows, or the grid's own columns) centred
- * on the embers, the cursor's amber; the question of the message box in the note. Every word is FireRed's
+ * on the embers, the cursor's flame with the select ring; the question of the message box in the note. Every word is FireRed's
  * (CtrFieldChoice_*). */
 
 static int FChColumns(const CtrPokeTouchChoice *c)
@@ -48,7 +48,7 @@ static void FChoiceFrame(const CtrPokeTouchView *v)
     for (int i = 0; i < c->count && i < PT_CHOICE_MAX; ++i) {
         CtrPokeTouchRect r = FChRow(c, i);
 
-        FBButton(&r, c->cursor == i ? &kEmAmber : &kEmCream, c->label[i], c->pressed == PT_CHOICE_HIT_ROW + i);
+        FBLlButton(&r, LlPick(c->cursor == i, &kEmCream), c->label[i], c->pressed == PT_CHOICE_HIT_ROW + i, c->cursor == i);
     }
     sUiS = &sUiNavy;
 }
@@ -56,8 +56,8 @@ static void FChoiceFrame(const CtrPokeTouchView *v)
 static void FChoiceNote(const CtrPokeTouchView *v, int w)
 {
     EmSurface();
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
+    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
     if (v->choice.prompt[0])
-        BDescribeN(v->choice.prompt, NOTE_X + 12, NOTE_Y + 8, w - 18, 3, EM_DARK);
+        BDescribeN(v->choice.prompt, NOTE_X + 13, NOTE_Y + 8, w - 26, 3, EM_DARK);
     sUiS = &sUiNavy;
 }
