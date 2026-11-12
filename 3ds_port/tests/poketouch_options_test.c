@@ -188,7 +188,7 @@ int main(void)
     CtrOptions_Fill(&view, 14);
     CHECK(view.optPage == 2 && view.optPageCount == 5 && view.optCount == 5, "page 3 holds EXP SHARE, REUSABLE TMS, NUZLOCKE, RANDOMLOCKE and FREE HMS");
     /* The pages: seven rows, seven, the five rules, the three looks and the three NUZLOCKE options. */
-    CHECK(CtrOptions_PageCount() == 5 && CtrOptions_PageBase(4) == 22 && CtrOptions_PageRows(4) == 3 && strcmp(CtrOptions_PageName(4), "NUZLOCKE") == 0 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
+    CHECK(CtrOptions_PageCount() == 5 && CtrOptions_PageBase(4) == 22 && CtrOptions_PageRows(4) == 3 && strcmp(CtrOptions_PageName(4), "Nuzlocke") == 0 && CtrOptions_PageBase(0) == 0 && CtrOptions_PageBase(2) == 14 && CtrOptions_PageBase(3) == 19
           && CtrOptions_PageRows(0) == 7 && CtrOptions_PageRows(2) == 5 && CtrOptions_PageRows(3) == 3, "five pages");
     /* The page API at its edges, and every row on exactly one page. */
     CHECK(CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7, "page 2 is the second seven rows");
@@ -267,12 +267,12 @@ int main(void)
     /* The three optional rules (page 5, rows 22 to 24): off by default, each its own switch kept in the settings. */
     CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0
           && CtrOptions_Count(22) == 2 && CtrOptions_Count(23) == 2 && CtrOptions_Count(24) == 2, "the NUZLOCKE options start off");
-    Text(22, "OFF");
+    Text(22, "Off");
     CtrOptions_Step(22, 1);
     CtrOptions_Step(24, 1);
     CHECK(CtrOptions_NuzDuplicates() == 1 && CtrSettings_NuzDuplicates() == 1 && CtrOptions_NuzShiny() == 0
           && CtrOptions_NuzLevelCap() == 1 && CtrSettings_NuzLevelCap() == 1, "DUPLICATES and LEVEL CAPS on, SHINY CLAUSE still off");
-    Text(22, "ON");
+    Text(22, "On");
     CtrOptions_Step(23, 1);
     CHECK(CtrOptions_NuzShiny() == 1 && CtrSettings_NuzShiny() == 1, "SHINY CLAUSE on, kept in the settings");
     CtrOptions_Step(22, 1);

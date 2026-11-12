@@ -1058,7 +1058,7 @@ static void BActCard(int i, const CtrBattleView *v)
         BSubPill(r, fy, able, p);
         return;
     }
-    BSubPill(r, fy, off ? CTR_TR("NO ESCAPE", "SIN HUIDA", "Kein Weg") : sub[i], p);
+    BSubPill(r, fy, off ? CTR_TR("No escape", "Sin huida", "Kein Weg") : sub[i], p);
 }
 
 /* The quick ball: grey and still when there is no ball to throw (none left, or the boxes full). */

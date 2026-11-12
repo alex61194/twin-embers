@@ -50,6 +50,13 @@ static inline void CtrTextCase_Touch(CtrPokeTouchView *v)
         CTR_CASE(v->learn.row[i].name);
         CTR_CASE(v->learn.row[i].typeName);
     }
+    /* The move relearner: its moves (and CANCEL), their types, the question and the description; the Pokemon is a nickname. */
+    CTR_CASE(v->relearn.question);
+    CTR_CASE(v->relearn.desc);
+    for (int i = 0; i < PT_RL_ROWS; ++i) {
+        CTR_CASE(v->relearn.row[i].name);
+        CTR_CASE(v->relearn.row[i].typeName);
+    }
     for (int i = 0; i < 6; ++i)
         CTR_CASE(v->card.label[i]);
     for (int i = 0; i < PT_CARD_ROWS; ++i)

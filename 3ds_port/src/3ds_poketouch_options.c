@@ -188,11 +188,11 @@ static const CtrOptionRow sRows[] = {
     {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos del Builder.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
     /* Page 5: the optional rules of the NUZLOCKE row (they count only while it is on). */
-    {CTR_TR("DUPLICATES", "REPETIDOS", "Duplikate"), {CTR_TR("A species you already caught", "Una especie ya capturada", "Eine schon gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+    {CTR_TR("Duplicates", "Repetidos", "Duplikate"), {CTR_TR("A species you already caught", "Una especie ya capturada", "Eine schon gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
      GetNuzDupes, TwoCount, SetNuzDupes},
-    {CTR_TR("SHINY CLAUSE", "CL\xC3\x81USULA SHINY", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no gasta", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
+    {CTR_TR("Shiny clause", "Cl\xC3\xA1usula shiny", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no gasta", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
      GetNuzShiny, TwoCount, SetNuzShiny},
-    {CTR_TR("LEVEL CAPS", "NIVEL M\xC3\x81XIMO", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
+    {CTR_TR("Level caps", "Nivel m\xC3\xA1ximo", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al llegar al nivel", "Keine EP ab dem Level-Limit"), CTR_TR("next Gym Leader's level.", "del pr\xC3\xB3ximo L\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Arenaleiters.")}, 0, sFps, NULL,
      GetNuzCap, TwoCount, SetNuzCap},
 };
 

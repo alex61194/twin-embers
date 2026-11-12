@@ -471,19 +471,19 @@ int main(int argc, char **argv)
         }
         /* The move relearner's list (Llama): eight moves and CANCEL, five rows shown; the cursor, the scroll and a press go through the incremental path. */
         {
-            static const char *const mv[8]={"EMBER","FLAMETHROWER","SLASH","DRAGON CLAW","FIRE SPIN","WING ATTACK","SCARY FACE","HYPER BEAM"};
-            static const char *const ty[8]={"FIRE","FIRE","NORMAL","DRAGON","FIRE","FLYING","NORMAL","NORMAL"};
+            static const char *const mv[8]={"Ember","Flamethrower","Slash","Dragon Claw","Fire Spin","Wing Attack","Scary Face","Hyper Beam"};
+            static const char *const ty[8]={"Fire","Fire","Normal","Dragon","Fire","Flying","Normal","Normal"};
             static const int8_t tn[8]={10,10,0,16,10,2,0,0};
             CtrPokeTouchRelearn *r=&s.relearn;
             s.options=0; s.backVisible=1; memset(&s.learn,0,sizeof(s.learn)); memset(r,0,sizeof(*r)); r->on=1; r->pressed=-1; r->species=6; r->count=8;
-            strcpy(r->nickname,"CHARIZARD"); strcpy(r->level,"50"); strcpy(r->question,"Teach which move to CHARIZARD?");
+            strcpy(r->nickname,"Charizard"); strcpy(r->level,"50"); strcpy(r->question,"Teach which move to Charizard?");
             strcpy(r->desc,"A powerful fire attack that may burn the target.");
             for(int first=0; first<=4; first+=2) for(int cur=first; cur<first+PT_RL_ROWS && cur<=8; ++cur) {
                 r->first=(uint8_t)first; r->cursor=(int8_t)cur;
                 for(int i=0;i<PT_RL_ROWS;++i) {
                     int k=first+i; memset(&r->row[i],0,sizeof(r->row[i])); r->row[i].type=-1;
                     if(k<8) { r->row[i].move=(uint16_t)(k+1); r->row[i].type=tn[k]; strcpy(r->row[i].name,mv[k]); strcpy(r->row[i].typeName,ty[k]); strcpy(r->row[i].pp,"15"); strcpy(r->row[i].power,k==6?"---":"95"); strcpy(r->row[i].accuracy,"100"); }
-                    else if(k==8) strcpy(r->row[i].name,"CANCEL");
+                    else if(k==8) strcpy(r->row[i].name,"Cancel");
                 }
                 update(&old,&s); r->pressed=(int16_t)(PT_RL_HIT_ROW+(cur-first)); update(&old,&s); r->pressed=PT_RL_HIT_DOWN; update(&old,&s); r->pressed=-1; update(&old,&s);
                 if(first==0&&cur==1) SHOT("relearn");
@@ -544,6 +544,11 @@ int main(int argc, char **argv)
         for(int i=1;i<16;++i) s.optLook.palette[i]=(uint16_t)(i*0x0421);
         strcpy(s.bar[0],"Leaf look"); strcpy(s.bar[1],"How Leaf looks."); strcpy(s.bar[2],"Looks from the Builder.");
         SHOT("options_look");
+        /* The Nuzlocke page (the three optional rules, sentence case). */
+        { CtrPokeTouchView keep=s; s.home=0; s.options=1; s.optPageCount=5; s.optPage=4; strcpy(s.optPageName,"Nuzlocke"); s.optCount=3; s.optLook.on=0; s.optLook.has=0; memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount));
+          strcpy(s.optLabel[0],"Duplicates"); strcpy(s.optLabel[1],"Shiny clause"); strcpy(s.optLabel[2],"Level caps"); s.optSwitch[0]=2; s.optSwitch[1]=1; s.optSwitch[2]=2; s.optSelected=1;
+          strcpy(s.bar[0],"Shiny clause"); strcpy(s.bar[1],"A shiny Pokemon does not"); strcpy(s.bar[2],"use up the area.");
+          SHOT("options_nuzlocke"); s=keep; }
         /* The chosen row moves over the rows above the window (its ring lies on its neighbours, and on the 2 px gap above the window). */
         for(int row=0;row<4;++row) { s.optSelected=(uint8_t)row; update(&old,&s); s.optPressed=(int8_t)row; s.optZone=PT_OPT_ZONE_NEXT; update(&old,&s); s.optPressed=-1; update(&old,&s); }
         s.optSelected=3; update(&old,&s); s.optSelected=0; update(&old,&s); s.optSelected=2; update(&old,&s);
