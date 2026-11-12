@@ -6111,7 +6111,7 @@
   },
   {
    "path": "patches/pokefirered/0249-visible-wilds.json",
-   "sha256": "4d78f4dc647853067edde0f4ccf8774f8c716cb383f243630837f4e592c2988d",
+   "sha256": "d3023bd4e036401ffefee091454f395ff9c219c72b495b67c4314809cec81698",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
