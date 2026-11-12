@@ -406,67 +406,85 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
     return -1;
 }
 
-/* ---- Drawing ---- */
+/* ---- Drawing (the Llama look: cream cards, flame for the chosen with its 2 px ring, FireRed's window for panels and notes) ---- */
 static void FDLabel(const char *s, int x, int w, int y, const EmPal *p)
 {
-    UiText(s, x + (w - UiTextWidth(s, 1)) / 2, y, p->ink, p->inkSh, 1, x + w);
+    char cut[40];
+
+    Em2Fit(s, w - 4, cut, sizeof(cut));
+    UiText(cut, x + (w - UiTextWidth(cut, 1)) / 2, y, p->ink, p->inkSh, 1, x + w);
 }
 
-static void FDCounts(int x, int y, int w, const EmPal *p, unsigned seen, unsigned owned)
+/* A card of the zone r: ringed and flame when chosen; returns the face's top. */
+static int FDCard(const CtrPokeTouchRect *r, const EmPal *p, int chosen, int pressed)
+{
+    if (chosen)
+        LlSelectRing(r->x, r->y, r->w, r->h);
+    return EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, pressed);
+}
+
+/* SEEN n / OWNED n: the words dim, the seen count dark, the owned count blue. */
+static void FDCounts(int x, int y, int w, unsigned seen, unsigned owned)
 {
     char n[8];
 
-    UiText(CtrUiText(UIS_DEX_SEEN), x + 10, y, p->ink, p->inkSh, 1, x + w);
+    Em2Text(CtrUiText(UIS_DEX_SEEN), x + 10, y, EM_DIM, EM_DARK_SH, x + w - 40);
     snprintf(n, sizeof(n), "%u", seen);
-    UiTextRight(n, x + w - 10, y, EM_VALUE, p->inkSh, 1);
-    UiText(CtrUiText(UIS_DEX_OWNED), x + 10, y + 13, p->ink, p->inkSh, 1, x + w);
+    UiTextRight(n, x + w - 10, y, EM_DARK, EM_DARK_SH, 1);
+    Em2Text(CtrUiText(UIS_DEX_OWNED), x + 10, y + 13, EM_DIM, EM_DARK_SH, x + w - 40);
     snprintf(n, sizeof(n), "%u", owned);
-    UiTextRight(n, x + w - 10, y + 13, EM_VALUE, p->inkSh, 1);
+    UiTextRight(n, x + w - 10, y + 13, EM2_COUNT_INK, EM2_COUNT_SH, 1);
 }
 
-/* A thin page arrow (up or down) in the ember well of the Bag's arrows. */
+/* A page arrow (dir: 0 up, 1 down, 2 left, 3 right) on a cream card, red when there is somewhere to go. */
 static void FDArrow(const CtrPokeTouchRect *r, int dir, int on)
 {
-    UiRoundFill(r->x, r->y, r->w, r->h, 5, UI_RGB(24, 8, 10));
-    EmGradFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, 4, UI_RGB(72, 26, 26), UI_RGB(44, 14, 16));
-    if (dir == -1 || dir == 1)
-        UiArrow(r->x + (r->w - 5) / 2, r->y + r->h / 2 - 4, dir, on ? EM_GLOW : UI_RGB(110, 50, 44));
-    else
-        UiArrow(r->x + (r->w - 9) / 2, r->y + r->h / 2 - 3, dir, on ? EM_GLOW : UI_RGB(110, 50, 44));
+    int fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, FB_DEPTH, 0), vert = dir < 2, aw = vert ? 8 : 6, ah = vert ? 5 : 10;
+
+    LlArrow(r->x + (r->w - aw) / 2, fy + (r->h - FB_DEPTH - ah) / 2, aw, ah, dir, on ? LL_CURSOR : FB_IDLE_ARROW);
 }
 
 static void FDMenu(const CtrPokeTouchDex *d, int pressed)
 {
     int tab = FDTabShown(d), first, count, pages;
 
-    for (int i = 0; i < 3; ++i)
-        FBButton(&sFDTab[i], tab == i ? &kEmAmber : &kEmCream, CtrUiText(sFDTabLabel[i]), pressed == PT_DEX_HIT_TAB + i);
+    for (int i = 0; i < 3; ++i) {
+        const EmPal *p = LlPick(tab == i, &kEmCream);
+        int fy = EmButton(sFDTab[i].x, sFDTab[i].y, sFDTab[i].w, sFDTab[i].h, p, FB_DEPTH, pressed == PT_DEX_HIT_TAB + i);
+
+        EmLabel(CtrUiText(sFDTabLabel[i]), sFDTab[i].x, sFDTab[i].w, fy, sFDTab[i].h - FB_DEPTH, p);
+    }
     if (tab == 0) {
         int n = FDSectionRows(d, 0, &first), cancel = FDCancelRow(d);
 
         for (int i = 0; i < n && i < 2; ++i) {
             CtrPokeTouchRect r = FDListCard(d, i, n);
             int row = first + i, sel = d->menuCursor == row, nat = d->menu[row].id == PT_DEX_ID_NATIONAL;
-            const EmPal *p = sel ? &kEmAmber : &kEmCream;
-            int fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, pressed == PT_DEX_HIT_ITEM + row);
+            int fy = FDCard(&r, &kEmCream, sel, pressed == PT_DEX_HIT_ITEM + row), rw;
             char label[24];
 
-            FDIconDraw(d->menu[row].id, r.x + (r.w - 64) / 2, fy + 4, 1);
             FDCardLabel(d, row, label, sizeof(label));
-            FDLabel(label, r.x, r.w, fy + 54, p);
-            FDCounts(r.x, fy + 70, r.w, p, d->seen[nat], d->owned[nat]);
+            rw = UiTextWidth(label, 1) + 18;
+            LlRibbonBox(r.x + 1, fy + 1, rw < r.w - 2 ? rw : r.w - 2, 13, 7, LL_TL, LL_RIB_TOP, LL_RIB_BOT, label);
+            FDIconDraw(d->menu[row].id, r.x + (r.w - 64) / 2, fy + 18, 1);
+            FDCounts(r.x, fy + 70, r.w, d->seen[nat], d->owned[nat]);
         }
-        if (cancel >= 0)
-            FBButton(&sFDClose, d->menuCursor == cancel ? &kEmAmber : &kEmViolet, d->menu[cancel].name,
-                     pressed == PT_DEX_HIT_ITEM + cancel);
+        if (cancel >= 0) {
+            int sel = d->menuCursor == cancel;
+            const EmPal *p = LlPick(sel, &kEmSlate);
+            int fy = FDCard(&sFDClose, p, sel, pressed == PT_DEX_HIT_ITEM + cancel);
+
+            LlArrow(sFDClose.x + 10, fy + (sFDClose.h - FB_DEPTH - 10) / 2, 6, 10, 2, EM_WHITE);
+            EmLabel(d->menu[cancel].name, sFDClose.x, sFDClose.w, fy, sFDClose.h - FB_DEPTH, p);
+        }
         return;
     }
     FDGridPage(d, tab, &first, &count, &pages);
     for (int i = 0; i < count; ++i) {
         CtrPokeTouchRect r = FDGridCard(i);
-        int row = first + i, locked = d->menu[row].locked;
-        const EmPal *p = d->menuCursor == row ? &kEmAmber : locked ? &kEmGrey : &kEmCream;
-        int fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, pressed == PT_DEX_HIT_ITEM + row);
+        int row = first + i, locked = d->menu[row].locked, sel = d->menuCursor == row;
+        const EmPal *p = sel ? &kEmFlame : locked ? &kEmGrey : &kEmCream;
+        int fy = FDCard(&r, p, sel, pressed == PT_DEX_HIT_ITEM + row);
         char label[24];
 
         FDIconDraw(d->menu[row].id, r.x + (r.w - 64) / 2, fy + 1, !locked);
@@ -478,48 +496,45 @@ static void FDMenu(const CtrPokeTouchDex *d, int pressed)
 
         FDSectionRows(d, tab, &start);
         at = (first - start) / FD_GRID_PAGE;
-        FDArrow(&sFDGridUp, -2, at > 0);
-        FDArrow(&sFDGridDown, 2, at < pages - 1);
+        FDArrow(&sFDGridUp, 0, at > 0);
+        FDArrow(&sFDGridDown, 1, at < pages - 1);
     }
 }
 
-/* The selected Pokemon beside a list: its picture on a disc, name, number and types. */
+/* The selected Pokemon beside a list: FireRed's window with its number in a ribbon, its picture on a plate, name and types. */
 static void FDSidePanel(const CtrPokeTouchDex *d)
 {
     const CtrPokeTouchRect *r = &sFDSide;
-    int fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, FB_DEPTH, 0), cx = r->x + r->w / 2;
-    char no[12];
+    int cx = r->x + r->w / 2, py = r->y + 26;
+    char no[12], cut[40];
 
-    UiDisc(cx, fy + 44, 41, UiMix(kEmCream.edge, EM_WHITE, 2));
-    UiDisc(cx, fy + 44, 40, UI_RGB(255, 236, 214));
-    if (d->sel.flags & 1)
-        FDPicDrawBig(d->sel.species, cx - 32, fy + 12);
-    FDLabel(d->sel.flags & 1 ? d->sel.name : "-----", r->x, r->w, fy + 88, &kEmCream);
+    LlWindow(r->x, r->y, r->w, r->h);
     FDNumber(d->sel.number, no, sizeof(no));
-    FDLabel(no, r->x, r->w, fy + 102, &kEmCream);
+    LlRibbon(r->x + 1, r->y + 1, no, LL_RIB_TOP, LL_RIB_BOT);
+    LlPlate(cx - 30, py, 60, EM2_SLATE, 0, 0);
+    if (d->sel.flags & 1)
+        FDPicDrawBig(d->sel.species, cx - 32, py - 2);
+    Em2Fit(d->sel.flags & 1 ? d->sel.name : "-----", r->w - 12, cut, sizeof(cut));
+    Em2Text(cut, cx - UiTextWidth(cut, 1) / 2, r->y + 96, EM_DARK, EM_DARK_SH, r->x + r->w - 4);
     if (d->type[0] >= 0) {
-        CtrPokeTouchRect t0 = {(int16_t)(r->x + 12), (int16_t)(fy + 120), (int16_t)(r->w - 24), 15};
+        int two = d->type[1] >= 0, y = r->y + (two ? 113 : 120);
+        int w0 = UiTextWidth(d->typeName[0], 1) + 12;
 
-        if (d->type[1] >= 0) {
-            t0.y = (int16_t)(fy + 118);
-            UiTypeBadge(&t0, d->type[0], d->typeName[0]);
-            t0.y = (int16_t)(fy + 136);
-            UiTypeBadge(&t0, d->type[1], d->typeName[1]);
-        } else
-            UiTypeBadge(&t0, d->type[0], d->typeName[0]);
+        LlTypeBadge(cx - w0 / 2, y, d->typeName[0], UiTypeColor(d->type[0]));
+        if (two)
+            LlTypeBadge(cx - (UiTextWidth(d->typeName[1], 1) + 12) / 2, y + 17, d->typeName[1], UiTypeColor(d->type[1]));
     }
 }
 
 static void FDList(const CtrPokeTouchDex *d, int pressed)
 {
-    int fy = EmButton(sFDListHead.x, sFDListHead.y, sFDListHead.w, sFDListHead.h, &kEmCream, FB_DEPTH, 0);
     static const CtrUiString kOrder[6] = {UIS_DEX_KANTO, UIS_DEX_ATOZ, UIS_DEX_TYPE, UIS_DEX_LIGHTEST,
                                           UIS_DEX_SMALLEST, UIS_DEX_NATIONAL};
-
     const char *title = CtrUiText(kOrder[d->order < 6 ? d->order : 0]);
-    int titleEnd = sFDListHead.x + 8 + UiTextWidth(title, 1);
+    int titleEnd = sFDListHead.x + 8 + UiTextWidth(title, 1), ty = sFDListHead.y + (sFDListHead.h - UI_TEXT_H) / 2;
 
-    UiText(title, sFDListHead.x + 8, fy + 6, EM_DARK, EM_DARK_SH, 1, sFDListHead.x + sFDListHead.w - 6);
+    LlWindowPlain(sFDListHead.x, sFDListHead.y, sFDListHead.w, sFDListHead.h);
+    UiText(title, sFDListHead.x + 8, ty, EM_DARK, EM_DARK_SH, 1, sFDListHead.x + sFDListHead.w - 6);
     if (d->order == 0 || d->order == 5) {
         char counts[32], owned[8];
         int nat = d->order == 5, right = sFDListHead.x + sFDListHead.w - 6;
@@ -528,38 +543,45 @@ static void FDList(const CtrPokeTouchDex *d, int pressed)
            the rows, so the counts never run into KANTO or NATIONAL. */
         snprintf(counts, sizeof(counts), "%s %u  %s %u", CtrUiText(UIS_DEX_SEEN), d->seen[nat], CtrUiText(UIS_DEX_OWNED),
                  d->owned[nat]);
-        if (right - UiTextWidth(counts, 1) >= titleEnd + 6 || !FDCaughtLoad()) {
-            UiTextRight(counts, right, fy + 6, EM_DIM, EM_DARK_SH, 1);
+        if (right - UiTextWidth(counts, 1) >= titleEnd + 6) {
+            UiTextRight(counts, right, ty, EM_DIM, EM_DARK_SH, 1);
+        } else if (!FDCaughtLoad()) {
+            snprintf(counts, sizeof(counts), "%u/%u", d->seen[nat], d->owned[nat]);
+            UiTextRight(counts, right, ty, EM_DIM, EM_DARK_SH, 1);
         } else {
             snprintf(owned, sizeof(owned), "%u", d->owned[nat]);
             snprintf(counts, sizeof(counts), "%s %u", CtrUiText(UIS_DEX_SEEN), d->seen[nat]);
-            UiTextRight(owned, right, fy + 6, EM_DIM, EM_DARK_SH, 1);
+            UiTextRight(owned, right, ty, EM_DIM, EM_DARK_SH, 1);
             right -= UiTextWidth(owned, 1) + 10;
-            FDCaughtDraw(right, fy + 7);
-            UiTextRight(counts, right - 5, fy + 6, EM_DIM, EM_DARK_SH, 1);
+            FDCaughtDraw(right, ty + 1);
+            UiTextRight(counts, right - 5, ty, EM_DIM, EM_DARK_SH, 1);
         }
     }
     for (int i = 0; i < PT_DEX_ROWS; ++i) {
         CtrPokeTouchRect r = FDListRow(i);
-        int index = d->listFirst + i;
+        int index = d->listFirst + i, sel = index == d->listCursor;
         const CtrPokeTouchDexMon *m = &d->row[i];
-        const EmPal *p;
+        const EmPal *p = LlPick(sel, &kEmCream);
         char no[8];
-        int ry;
+        int ry, ty2, nx;
 
         if (index >= d->listCount)
             break;
-        p = index == d->listCursor ? &kEmAmber : &kEmCream;
-        ry = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, pressed == PT_DEX_HIT_ROW + i);
+        ry = FDCard(&r, p, sel, pressed == PT_DEX_HIT_ROW + i);
+        ty2 = ry + (r.h - FB_DEPTH - UI_TEXT_H) / 2;
+        LlPlate(r.x + 3, ry + 2, 19, EM2_SLATE, 0, 0);
         if (m->flags & 2)
-            FDCaughtDraw(r.x + 5, ry + 7);
+            FDCaughtDraw(r.x + 8, ry + 7);
+        if (sel)
+            LlCursor(r.x + 25, ry + (r.h - FB_DEPTH - 10) / 2, EM_WHITE);
+        nx = r.x + (sel ? 35 : 27);
         snprintf(no, sizeof(no), "%03u", m->number > 999 ? 999 : m->number);
-        UiText(no, r.x + 18, ry + 7, p->ink, p->inkSh, 1, r.x + 44);
-        UiText(m->flags & 1 ? m->name : "-----", r.x + 44, ry + 7, p->ink, p->inkSh, 1, r.x + r.w - 4);
+        UiText(no, nx, ty2, sel ? UI_RGB(255, 233, 168) : EM_DIM, p->inkSh, 1, nx + 24);
+        Em2Text(m->flags & 1 ? m->name : "-----", r.x + (sel ? 58 : 50), ty2, p->ink, p->inkSh, r.x + r.w - 4);
     }
     if (d->listCount > PT_DEX_ROWS) {
-        FDArrow(&sFDListUp, -2, d->listFirst > 0);
-        FDArrow(&sFDListDown, 2, d->listFirst + PT_DEX_ROWS < d->listCount);
+        FDArrow(&sFDListUp, 0, d->listFirst > 0);
+        FDArrow(&sFDListDown, 1, d->listFirst + PT_DEX_ROWS < d->listCount);
     }
     FDSidePanel(d);
 }
@@ -569,57 +591,56 @@ static void FDCategory(const CtrPokeTouchDex *d, int pressed)
     for (int i = 0; i < d->slots && i < 4; ++i) {
         CtrPokeTouchRect r = FDSlot(i);
         const CtrPokeTouchDexMon *m = &d->mon[i];
-        const EmPal *p = i == d->slot ? &kEmAmber : &kEmCream;
-        int fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, pressed == PT_DEX_HIT_SLOT + i);
-        char label[24];
+        int sel = i == d->slot, fy = FDCard(&r, LlPick(sel, &kEmCream), sel, pressed == PT_DEX_HIT_SLOT + i);
+        char label[40], cut[40];
+        int lw;
 
-        /* The picture whole (80x80) on a disc filling the card, its number and name on a pill over its foot. */
-        UiDisc(r.x + r.w / 2, fy + 38, 37, i == d->slot ? UiMix(p->top, EM_WHITE, 2) : UI_RGB(255, 236, 214));
+        /* The picture on its plate filling the card, its number and name in a small window over its foot. */
+        LlPlate(r.x + (r.w - 66) / 2, fy + 4, 66, EM2_SLATE, 0, 0);
         if (m->flags & 1)
-            FDPicDrawBig(m->species, r.x + (r.w - 64) / 2, fy + 6);
+            FDPicDrawBig(m->species, r.x + (r.w - 64) / 2, fy + 5);
         snprintf(label, sizeof(label), "%03u %s", m->number > 999 ? 999 : m->number, m->flags & 1 ? m->name : "-----");
-        BPill(r.x + (r.w - BPillW(label)) / 2, fy + 62, label, p->lip, EM_WHITE, p->edge);
+        Em2Fit(label, r.w - 20, cut, sizeof(cut));
+        lw = UiTextWidth(cut, 1) + 12;
+        LlWindowPlain(r.x + (r.w - lw) / 2, fy + 60, lw, 17);
+        Em2Text(cut, r.x + (r.w - lw) / 2 + 6, fy + 60 + (17 - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, r.x + r.w - 6);
         if (m->flags & 2)
             FDCaughtDraw(r.x + 6, fy + 6);
     }
-    FDArrow(&sFDPrev, -1, d->canPrev);
-    FDArrow(&sFDNext, 1, d->canNext);
+    FDArrow(&sFDPrev, 2, d->canPrev);
+    FDArrow(&sFDNext, 3, d->canNext);
 }
 
 static void FDPage(const CtrPokeTouchDex *d)
 {
-    int fy = EmButton(4, 4, 96, 110, &kEmCream, FB_DEPTH, 0);
     char no[12], text[32];
 
-    UiDisc(52, fy + 46, 40, UiMix(kEmCream.edge, EM_WHITE, 2));
-    UiDisc(52, fy + 46, 39, UI_RGB(255, 236, 214));
-    FDPicDrawBig(d->sel.species, 20, fy + 14);
+    LlWindow(4, 4, 96, 110);
     FDNumber(d->sel.number, no, sizeof(no));
-    BPill(52 - BPillW(no) / 2, fy + 90, no, kEmAmber.lip, EM_WHITE, kEmAmber.edge);
-    fy = EmButton(104, 4, 140, 110, &kEmCream, FB_DEPTH, 0);
-    UiText(d->sel.name, 114, fy + 8, EM_DARK, EM_DARK_SH, 1, 240);
-    UiText(d->sel.flags & 2 ? d->kind : "?????", 114, fy + 22, EM_DIM, EM_DARK_SH, 1, 240);
-    Fill(112, fy + 35, 124, 1, UI_RGB(214, 204, 192));
-    UiText(CtrUiText(UIS_DEX_HT), 114, fy + 42, EM_DARK, EM_DARK_SH, 1, 140);
+    LlRibbon(5, 5, no, LL_RIB_TOP, LL_RIB_BOT);
+    LlPlate(20, 34, 64, EM2_SLATE, 0, 0);
+    FDPicDrawBig(d->sel.species, 20, 34);
+    LlWindow(104, 4, 140, 110);
+    Em2Text(d->sel.name, 114, 12, EM_DARK, EM_DARK_SH, 212);
+    Em2Text(d->sel.flags & 2 ? d->kind : "?????", 114, 26, EM_DIM, EM_DARK_SH, 212);
+    FDFootprint(d->sel.species, 218, 10);
+    LlRule(114, 41, 120);
+    Em2Text(CtrUiText(UIS_DEX_HT), 114, 48, EM_DIM, EM_DARK_SH, 170);
     FDHeight(d, text, sizeof(text));
-    UiTextRight(text, 232, fy + 42, EM_VALUE, EM_DARK_SH, 1);
-    UiText(CtrUiText(UIS_DEX_WT), 114, fy + 56, EM_DARK, EM_DARK_SH, 1, 140);
+    UiTextRight(text, 234, 48, EM_DARK, EM_DARK_SH, 1);
+    Em2Text(CtrUiText(UIS_DEX_WT), 114, 62, EM_DIM, EM_DARK_SH, 170);
     FDWeight(d, text, sizeof(text));
-    UiTextRight(text, 232, fy + 56, EM_VALUE, EM_DARK_SH, 1);
-    Fill(112, fy + 69, 124, 1, UI_RGB(214, 204, 192));
+    UiTextRight(text, 234, 62, EM_DARK, EM_DARK_SH, 1);
+    LlRule(114, 77, 120);
     if (d->type[0] >= 0) {
-        CtrPokeTouchRect t = {114, (int16_t)(fy + 78), 46, 15};
+        int x = 114 + LlTypeBadge(114, 85, d->typeName[0], UiTypeColor(d->type[0])) + 4;
 
-        UiTypeBadge(&t, d->type[0], d->typeName[0]);
-        if (d->type[1] >= 0) {
-            t.x = 164;
-            UiTypeBadge(&t, d->type[1], d->typeName[1]);
-        }
+        if (d->type[1] >= 0)
+            LlTypeBadge(x, 85, d->typeName[1], UiTypeColor(d->type[1]));
     }
-    FDFootprint(d->sel.species, 218, fy + 77);
-    fy = EmButton(4, 118, 240, 46, &kEmCream, FB_DEPTH, 0);
+    LlWindow(4, 118, 240, 46);
     if (d->desc[0])
-        BDescribeN(d->desc, 12, fy + 5, 226, 3, EM_DARK);
+        BDescribeN(d->desc, 12, 123, 226, 3, EM_DIM);
 }
 
 /* The viewport's area: the screen the Pokedex shows. */
@@ -640,7 +661,7 @@ static void FDexFrame(const CtrPokeTouchView *v)
     sUiS = &sUiNavy;
 }
 
-/* The note under the Pokedex: what the selection is (a Pokemon's page has its AREA and CRY buttons there). */
+/* The note under the Pokedex, FireRed's window: what the selection is (a Pokemon's page has its AREA and CRY buttons there). */
 static void FDexNote(const CtrPokeTouchView *v, int w)
 {
     const CtrPokeTouchDex *d = &v->dex;
@@ -648,8 +669,12 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
 
     EmSurface();
     if (d->state == PT_DEX_STATE_PAGE && !d->added) {
-        FBButton(&sFDArea, &kEmCream, CtrUiText(UIS_DEX_AREA), d->pressed == PT_DEX_HIT_AREA);
-        FBButton(&sFDCry, &kEmCream, CtrUiText(UIS_DEX_CRY), d->pressed == PT_DEX_HIT_CRY);
+        const EmPal *pa = &kEmFlame, *pc = &kEmCream;
+        int fa = EmButton(sFDArea.x, sFDArea.y, sFDArea.w, sFDArea.h, pa, FB_DEPTH, d->pressed == PT_DEX_HIT_AREA);
+        int fc = EmButton(sFDCry.x, sFDCry.y, sFDCry.w, sFDCry.h, pc, FB_DEPTH, d->pressed == PT_DEX_HIT_CRY);
+
+        EmLabel(CtrUiText(UIS_DEX_AREA), sFDArea.x, sFDArea.w, fa, sFDArea.h - FB_DEPTH, pa);
+        EmLabel(CtrUiText(UIS_DEX_CRY), sFDCry.x, sFDCry.w, fc, sFDCry.h - FB_DEPTH, pc);
         sUiS = &sUiNavy;
         return;
     }
@@ -673,8 +698,9 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
         else
             snprintf(body, sizeof(body), "%s", CtrUiText(d->sel.flags & 1 ? UIS_DEX_NOTE_OPEN : UIS_DEX_NOTE_UNSEEN));
     }
-    EmNote(NOTE_X, NOTE_Y, w, NOTE_H);
-    UiText(title, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, NOTE_X + w - 4);
-    BDescribeN(body, NOTE_X + 12, NOTE_Y + 21, w - 18, 3, EM_DIM);
+    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+    Em2Text(title, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
+    LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
+    BDescribeN(body, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
     sUiS = &sUiNavy;
 }

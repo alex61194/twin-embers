@@ -411,6 +411,45 @@ int main(int argc, char **argv)
             for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.cursor=(int8_t)i; update(&old,&s); s.learn.pressed=(int16_t)(PT_LEARN_HIT_ROW+i); update(&old,&s); s.learn.pressed=-1; update(&old,&s); }
             s.learn.cursor=4; SHOT("learn_new"); s.learn.on=0;
         }
+        CtrPokeTouchView keepOpt=s;
+        /* Llama: the Pokedex (menu, list, habitats, category, page) and the Trainer Card note; each through the incremental path (a cursor
+         * move, a press, a page turn) and then written. */
+        s.options=0; s.backVisible=1; s.backEnabled=1; memset(s.bar,0,sizeof(s.bar));
+        {
+            CtrPokeTouchDex *d=&s.dex; memset(d,0,sizeof(*d)); d->on=1; d->state=PT_DEX_STATE_MENU; d->pressed=-1; d->national=1;
+            d->seen[0]=142; d->owned[0]=118; d->seen[1]=251; d->owned[1]=203;
+            d->menuCount=8; d->menuCursor=1;
+            d->menu[0].id=PT_DEX_ID_HEADER; d->menu[1].id=PT_DEX_ID_KANTO; strcpy(d->menu[1].name,"KANTO");
+            d->menu[2].id=PT_DEX_ID_NATIONAL; strcpy(d->menu[2].name,"NATIONAL"); d->menu[3].id=PT_DEX_ID_CANCEL; strcpy(d->menu[3].name,"CLOSE POKEDEX");
+            d->menu[4].id=PT_DEX_ID_HEADER; d->menu[5].id=0; strcpy(d->menu[5].name,"GRASSLAND POK\xC3\xA9MON"); d->menu[6].id=1; strcpy(d->menu[6].name,"FOREST POK\xC3\xA9MON");
+            d->menu[7].id=2; d->menu[7].locked=1; strcpy(d->menu[7].name,"WATER'S EDGE POK\xC3\xA9MON");
+            strcpy(s.bar[0],"KANTO"); strcpy(s.bar[1],"Your POKEMON by number");
+            SHOT("dex_menu");
+            d->menuCursor=2; update(&old,&s); d->pressed=PT_DEX_HIT_ITEM+2; update(&old,&s); d->pressed=-1; d->menuCursor=3; update(&old,&s); SHOT("dex_menu_close");
+            d->menuCursor=5; SHOT("dex_habitats"); d->menuCursor=7; update(&old,&s); d->menuCursor=6; update(&old,&s);
+            d->state=PT_DEX_STATE_LIST; d->listCount=151; d->listFirst=1; d->listCursor=3; d->order=0;
+            static const char *const nm[PT_DEX_ROWS]={"IVYSAUR","VENUSAUR","CHARMANDER","CHARMELEON","CHARIZARD"};
+            for(int i=0;i<PT_DEX_ROWS;++i) { d->row[i].number=(uint16_t)(2+i); d->row[i].species=(uint16_t)(2+i); d->row[i].flags=(uint8_t)(i==4?1:3); strcpy(d->row[i].name,nm[i]); }
+            d->sel=d->row[2]; d->type[0]=9; d->type[1]=-1; strcpy(d->typeName[0],"FIRE");
+            SHOT("dex_list");
+            d->listCursor=4; d->type[1]=2; strcpy(d->typeName[1],"FLYING"); d->sel=d->row[3]; update(&old,&s);
+            d->pressed=PT_DEX_HIT_ROW+1; update(&old,&s); d->pressed=-1; d->listFirst=0; update(&old,&s);
+            d->state=PT_DEX_STATE_CATEGORY; d->slots=4; d->slot=1; d->canPrev=0; d->canNext=1; d->page=1; d->pages=2;
+            for(int i=0;i<4;++i) { d->mon[i]=d->row[i]; }
+            SHOT("dex_category"); d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
+            d->state=PT_DEX_STATE_PAGE; d->sel=d->row[4]; d->sel.flags=3; d->height=17; d->weight=905; strcpy(d->kind,"FLAME POK\xC3\xA9MON");
+            strcpy(d->desc,"Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.");
+            SHOT("dex_page"); d->pressed=PT_DEX_HIT_AREA; update(&old,&s); d->pressed=-1; d->added=1; update(&old,&s); d->added=0;
+        }
+        s.dex.on=0;
+        {
+            CtrPokeTouchCard *c=&s.card; memset(c,0,sizeof(*c)); c->on=1; strcpy(c->name,"RICK"); strcpy(c->label[0],"NAME: "); strcpy(c->label[1],"IDNo."); strcpy(c->label[2],"MONEY");
+            strcpy(c->label[3],"\xC2\xA5"); strcpy(c->label[4],"POK\xC3\xA9" "DEX"); strcpy(c->label[5],"TIME"); c->id=12345; c->money=128450; c->hasDex=1; c->caught=118; c->hours=47; c->minutes=5; c->stars=2; c->badges=0x1f;
+            strcpy(s.bar[0],"TRAINER CARD"); strcpy(s.bar[1],"Tap the card to turn it.");
+            SHOT("card_front"); c->pressed=1; update(&old,&s); c->pressed=0; c->back=1; c->rows=2; strcpy(c->row[0].label,"HALL OF FAME"); strcpy(c->row[0].value,"3"); strcpy(c->row[1].label,"LINK BATTLES"); strcpy(c->row[1].value,"0/0"); update(&old,&s);
+            c->on=0;
+        }
+        s=keepOpt;
         /* The look page: three look rows and the preview card. */
         s.optPage=3; strcpy(s.optPageName,"LOOKS"); s.optCount=4; memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount));
         strcpy(s.optLabel[0],"EXP SHARE"); s.optSegCount[0]=3; s.optSegValue[0]=1; strcpy(s.optSegName[0][0],"OFF"); strcpy(s.optSegName[0][1],"HALF"); strcpy(s.optSegName[0][2],"ALL");
