@@ -900,9 +900,10 @@ void VBlankIntrWait(void)
                      perfVideo->commandUsage);
 }
 
-/* VISIBLE WILDS (event_object_movement.c): how many wild Pokemon may be out at once. An Old 3DS keeps 2 (the same object event
- * and sprite budget as everything else on a slow console), a New 3DS 4 (local ids 0xF0 to 0xF3). */
+/* VISIBLE WILDS (event_object_movement.c, 3ds_wilds_core.h): the console's cap on the wild Pokemon out at once. An Old 3DS keeps 2 (the
+ * same object event and sprite budget as everything else on a slow console, whatever the density), a New 3DS up to 6 (WILD POKEMON:
+ * MANY); the density and the free object events lower it, never raise it. */
 int CtrWilds_Max(void)
 {
-    return CtrPlatform_IsNew3DS() ? 4 : 2;
+    return CtrPlatform_IsNew3DS() ? 6 : 2;
 }

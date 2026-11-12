@@ -3400,7 +3400,7 @@ static void DrawObjects(unsigned priority, bool effects)
             if (npc)
             {
                 CtrHudImage fade = {.unfaded = gen4.unfaded};
-                HudTint(&fade, attr2 >> 12, &npcTint);
+                HudNpcTint(&fade, attr2 >> 12, gen4.silhouette != 0, &npcTint);
                 sTint = npcTint;
             }
             for (unsigned ty = 0; ty < gen4.side; ++ty)

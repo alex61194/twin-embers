@@ -67,6 +67,7 @@ typedef struct CtrWildsCore
     uint16_t tick;
     uint16_t map;               /* the map the table was made on */
     uint8_t mapKnown;
+    uint8_t probed;             /* mapLand and mapWater have been worked out for this map */
     uint8_t active;             /* wilds in the table */
     uint8_t mapLand, mapWater;  /* the map has a land / water table with a Pokemon that has a picture */
     uint8_t operative;          /* the system works on this map right now: it may hide the step encounters */
@@ -121,6 +122,9 @@ typedef struct CtrWildRing
     int left, right, top, bottom;   /* the object event view */
 } CtrWildRing;
 
+/* The one table the game's glue uses. */
+extern CtrWildsCore gCtrWilds;
+
 /* The game's answer for a cell: CTRW_TILE_NONE when nobody may stand there (not grass or water, a wall, an object, other height). */
 typedef int (*CtrWildTileFn)(void *ctx, int x, int y);
 /* How many object events are free right now (a scan, so it is asked rarely). */
@@ -165,6 +169,9 @@ int CtrWildsCore_Idle(const CtrWildsCore *c, int density);
 /* The frame's setting: sets whether the system works here. Returns TRUE when every wild must be removed (it stopped working). */
 int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env);
 
+/* TRUE when this map was probed and neither a land nor a water table of it can show a Pokemon, and no wild is out: nothing to do. */
+int CtrWildsCore_Unsupported(const CtrWildsCore *c);
+
 /* The budget. */
 int CtrWildsCore_Target(int density, int consoleCap, int freeObjects, int active);
 int CtrWildsCore_ShedCount(int freeObjects, int active);       /* wilds to remove to bring the reserve back */
@@ -199,6 +206,10 @@ int CtrWildsCore_RollRoamer(CtrWildsCore *c, int roamerHere, int roamerOut);    
 int CtrWildsCore_SpeciesOk(int species, int hasPicture, int isUnown);
 /* A Repel keeps a wild off when it is weaker than the lead Pokemon (the game's IsWildLevelAllowedByRepel). leadLevel 0: none fit. */
 int CtrWildsCore_RepelBlocks(int repelActive, int wildLevel, int leadLevel);
+
+int CtrWildsCore_HasRoamer(const CtrWildsCore *c);                 /* a roamer is already out */
+/* A wild that has been out a long while (1500 frames plus 300 per slot), is resting and is out of the screen's sight is retired. */
+int CtrWildsCore_Stale(const CtrWildsCore *c, int slot, int screenDist);
 
 /* The mind. */
 void CtrWildsCore_Think(CtrWildsCore *c, int slot, const CtrWildSense *sense, CtrWildAct *act);

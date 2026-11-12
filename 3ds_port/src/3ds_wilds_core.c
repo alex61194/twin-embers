@@ -40,8 +40,12 @@ void CtrWildsCore_Init(CtrWildsCore *c, uint32_t seed)
         c->wild[i].obj = CTRW_NONE;
 }
 
+CtrWildsCore gCtrWilds;
+
 uint16_t CtrWildsCore_Rand(CtrWildsCore *c)
 {
+    if (c->rng == 0)
+        c->rng = 0x2545F491u;       /* the game's table starts zeroed */
     c->rng = c->rng * 1103515245u + 12345u;
     return (uint16_t)(c->rng >> 16);
 }
@@ -89,6 +93,7 @@ int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map)
     c->map = map;
     c->mapKnown = 1;
     c->mapLand = c->mapWater = 0;
+    c->probed = 0;
     c->operative = c->spawnable = 0;
     c->target = 0;
     c->tick = 0;            /* the first frame counts the free object events */
@@ -109,6 +114,29 @@ int CtrWildsCore_Frame(CtrWildsCore *c, const CtrWildEnv *env)
     if (!c->operative)
         c->spawnable = 0;
     return !c->operative && c->active > 0;
+}
+
+int CtrWildsCore_Unsupported(const CtrWildsCore *c)
+{
+    return c->probed && !c->mapLand && !c->mapWater && c->active == 0;
+}
+
+int CtrWildsCore_HasRoamer(const CtrWildsCore *c)
+{
+    for (int i = 0; i < CTRW_SLOTS; ++i)
+        if (c->wild[i].state != CTRW_S_FREE && c->wild[i].roamer)
+            return 1;
+    return 0;
+}
+
+int CtrWildsCore_Stale(const CtrWildsCore *c, int slot, int screenDist)
+{
+    const CtrWild *w;
+
+    if (slot < 0 || slot >= CTRW_SLOTS)
+        return 0;
+    w = &c->wild[slot];
+    return (w->state == CTRW_S_IDLE || w->state == CTRW_S_WANDER) && w->age > 1500 + 300 * slot && (int)w->dist > screenDist;
 }
 
 /* The budget -------------------------------------------------------------------------------------------------------------- */

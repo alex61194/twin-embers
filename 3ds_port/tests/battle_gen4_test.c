@@ -23,6 +23,7 @@ static unsigned sNpcGfx, sNpcFrame, sNpcTile = 0xFFFF;
 static uint16_t sNpcUnfaded[512];
 static uint16_t sNpcPalette[16][16];
 static unsigned sNpcPaletteSets;
+static unsigned sNpcSilhouette;     /* CTR_NPC_SILHOUETTE or 0, or'd into what the game answers */
 
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,
                   unsigned *frame, const uint16_t **unfaded)
@@ -34,7 +35,7 @@ int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned
     *graphicsId = sNpcGfx;
     *frame = sNpcFrame;
     *unfaded = sNpcUnfaded;
-    return paletteNum == 9 ? 2 + 3 : 1;
+    return (paletteNum == 9 ? 2 + 3 : 1) | sNpcSilhouette;
 }
 
 void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
@@ -641,6 +642,25 @@ int main(void)
             assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 16, &again));
             assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
             assert(sNpcPaletteSets == 1);
+        }
+        /* A silhouette (a wild Pokemon of the overworld): the answer carries the flag and the object says so, for the person and for its
+         * reflection; nothing else changes (the picture, the slot). */
+        sNpcFrame = 4;
+        assert(!person.silhouette);
+        sNpcSilhouette = CTR_NPC_SILHOUETTE;
+        {
+            CtrGen4Obj dark, reflection;
+            unsigned sets = sNpcPaletteSets;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &dark) && dark.silhouette == 1 && dark.tiles[0] == 0x34 && dark.slot == person.slot);
+            assert(CtrNpc_Match(90, 40, 100 | 9 << 12, 16, 32, &reflection) && reflection.silhouette == 1);
+            sNpcPaletteSets = sets;
+        }
+        sNpcSilhouette = 0;
+        {
+            CtrGen4Obj plain;
+
+            assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &plain) && plain.silhouette == 0 && plain.tiles[0] == 0x34);
         }
         /* A person's tenth image is drawn as the first. */
         sNpcFrame = 9;

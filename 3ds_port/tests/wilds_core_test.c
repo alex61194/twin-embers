@@ -876,6 +876,48 @@ static void TestIds(void)
     }
 }
 
+static void TestGlueSupport(void)
+{
+    CtrWildsCore c;
+    CtrWildMon mon = {16, 5, 0, 0, 1, 100};
+
+    /* the game's own table starts zeroed: its generator still works and slots are empty */
+    memset(&gCtrWilds, 0, sizeof(gCtrWilds));
+    CHECK(CtrWildsCore_Rand(&gCtrWilds) != CtrWildsCore_Rand(&gCtrWilds), "a zeroed table draws numbers");
+    CHECK(gCtrWilds.active == 0 && gCtrWilds.wild[0].state == CTRW_S_FREE, "a zeroed table is empty");
+    /* a map nothing can be shown on, once probed, has nothing to do; before the probe it is not known */
+    CtrWildsCore_Init(&c, 91);
+    CtrWildsCore_MapChanged(&c, 1);
+    CHECK(!CtrWildsCore_Unsupported(&c), "not probed: not known to be empty");
+    c.probed = 1;
+    CHECK(CtrWildsCore_Unsupported(&c), "probed with no land and no water: unsupported");
+    c.mapLand = 1;
+    CHECK(!CtrWildsCore_Unsupported(&c), "land: supported");
+    c.mapLand = 0;
+    CtrWildsCore_Commit(&c, 0, &mon, 0, 0, 1);
+    CHECK(!CtrWildsCore_Unsupported(&c), "a wild is out: it has to be removed first");
+    CtrWildsCore_MapChanged(&c, 2);
+    CHECK(c.probed == 0 && !CtrWildsCore_Unsupported(&c), "a new map is probed again");
+    /* the roamer already out */
+    CHECK(!CtrWildsCore_HasRoamer(&c), "no roamer out");
+    mon.roamer = 1;
+    CtrWildsCore_Commit(&c, 2, &mon, 0, 0, 1);
+    CHECK(CtrWildsCore_HasRoamer(&c), "a roamer is out");
+    CHECK(!CtrWildsCore_RollRoamer(&c, 1, CtrWildsCore_HasRoamer(&c)), "so no second one");
+    /* a wild that has been out long, rests and is far goes; one that is seen, or busy, does not */
+    c.wild[2].state = CTRW_S_IDLE;
+    c.wild[2].age = 1500 + 600 + 1;
+    c.wild[2].dist = 12;
+    CHECK(!CtrWildsCore_Stale(&c, 2, 12) && CtrWildsCore_Stale(&c, 2, 9), "retired only beyond the screen");
+    c.wild[2].age = 1500 + 600;
+    CHECK(!CtrWildsCore_Stale(&c, 2, 9), "not before its time (1500 + 300 per slot)");
+    c.wild[2].age = 5000;
+    c.wild[2].state = CTRW_S_CHASE;
+    CHECK(!CtrWildsCore_Stale(&c, 2, 9), "a chase is never retired");
+    c.wild[2].state = CTRW_S_WANDER;
+    CHECK(CtrWildsCore_Stale(&c, 2, 9) && !CtrWildsCore_Stale(&c, 9, 9) && !CtrWildsCore_Stale(&c, -1, 9), "wandering is; bad slots are not");
+}
+
 /* Micro-benchmarks: the pure logic's cost per frame on this host (not a console's). */
 static double Now(void)
 {
@@ -969,6 +1011,7 @@ int main(void)
     TestData();
     TestRoamer();
     TestIds();
+    TestGlueSupport();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();

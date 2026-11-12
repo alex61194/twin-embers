@@ -301,7 +301,7 @@
   },
   {
    "path": "3ds_port/include/3ds_battle_gen4.h",
-   "sha256": "3805d2cf81c0ceaf3369b00a4c36f65262f21f6c9f586fba03eeda8046d6801f",
+   "sha256": "3139fe67943ee00e1dbc314258b668dd0b11c453e22c73d010c1a458fb966c57",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -824,7 +824,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wilds_core.h",
-   "sha256": "dde55277f35669a93772e8494cff89d30edd2d2800738edd184e5de5cf27e527",
+   "sha256": "a4f3020a6f8303a8fb43ada4d109148589c158b020d05d5c116455b6ae3e40a8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -987,7 +987,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_gen4.c",
-   "sha256": "eb411aae834c82679a5e92199e5c069e91ff80100c599aee931740cd4c5fea60",
+   "sha256": "cd790f99ff1b008e946bb89cd0481144a2d32ade69e34476209d109c10a65066",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1003,7 +1003,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_hud_impl.h",
-   "sha256": "05256f71c7a420dca05243f2a800296e7556bac4fe566c060edf4bfda085a94b",
+   "sha256": "f5e53b4a03a9a9497000e6bb9ada7aa5dd3305cbdd8783500dbbf05f5bfbfb04",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1287,7 +1287,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "d92e6928643196a8c0a61667875f22c6c2b6fcc9d0625d7fc5388004ca3d485d",
+   "sha256": "4949b9e7935673d285c6e3d8b571b086ae12f1ac89bdcd8186824a4a12edbd85",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1623,7 +1623,7 @@
   },
   {
    "path": "3ds_port/src/3ds_video.c",
-   "sha256": "5d34bafcf2e12974aef7a0ec57689f1d7ebd1a2c424ae95ec89aff292cefa806",
+   "sha256": "e195ccc0c8b9e93bfb35b85dba22edb93f061aa12f321879e9f9933b224b6742",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1664,7 +1664,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wilds_core.c",
-   "sha256": "7d071f868deac9ea04c279c76784ac67228124d1c377e5ddd5f565859b2ec421",
+   "sha256": "42d2f1f0e5e7755336a77cfc9d1a58328d396f2b75dfdd5ea16d60bba7161162",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1790,7 +1790,7 @@
   },
   {
    "path": "3ds_port/tests/battle_gen4_test.c",
-   "sha256": "91c3b7a8c7ba4ada77ee5dcfc8f489c24c447959cab10d363c845fb61cf11af5",
+   "sha256": "83d16871dc0b92568d1b642f3dfa6616bc910f9138a2cd1ed5ab250d3dd3e03a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2250,7 +2250,7 @@
   },
   {
    "path": "3ds_port/tests/wilds_core_test.c",
-   "sha256": "3a66406888ae9bbbaf5308ab0708e25caf3a9d0f0ef9ad33245d6d6c653d7c9f",
+   "sha256": "b1310319a5ea6044bdd116c1c66cb6fea8c6de9fdac5630634516ab8eb4d3d01",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6111,7 +6111,7 @@
   },
   {
    "path": "patches/pokefirered/0249-visible-wilds.json",
-   "sha256": "9ffab16791e59d3e8a911627ab913901cb9f7829b1ba3e7637456a797df6b2fc",
+   "sha256": "4d78f4dc647853067edde0f4ccf8774f8c716cb383f243630837f4e592c2988d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6119,7 +6119,7 @@
   },
   {
    "path": "patches/pokefirered/0250-visible-wilds-everywhere.json",
-   "sha256": "b81dd559ab9090ffddfffcef976ad0fd2b0dc4576a0c82d5970d6ad43ed4fc1d",
+   "sha256": "c3e19b8b64a0fced34df0d305f4cd312f1a892876739ef2da8fd7575bdd2ccaa",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
