@@ -126,20 +126,36 @@ typedef int (*CtrWildTileFn)(void *ctx, int x, int y);
 /* How many object events are free right now (a scan, so it is asked rarely). */
 typedef int (*CtrWildFreeFn)(void *ctx);
 
-/* Settings. */
+/* Settings (static inline: 3ds_settings.c reads them without linking this module). */
+static inline int CtrWildsCore_ClampDensity(int v)
+{
+    return v >= 0 && v < CTRW_DENSITIES ? v : 0;
+}
+
+static inline int CtrWildsCore_ClampAggro(int v)
+{
+    return v >= 0 && v < CTRW_AGGROS ? v : 0;
+}
+
+/* settings.cfg: the density read from `visiblewilds`. The first version wrote visiblewilds=1 for "on" and had neither wildsil nor
+ * wildaggro. The new one writes both with it whenever the density is not OFF, so a 1 that comes alone is the old "on", which is
+ * NORMAL, and a 1 with them is FEW. Anything out of range is OFF. */
+static inline int CtrWildsCore_MigrateDensity(int raw, int haveSil, int haveAggro)
+{
+    if (raw == 1 && !haveSil && !haveAggro)
+        return 2;
+    return CtrWildsCore_ClampDensity(raw);
+}
+
 int CtrWildsCore_DensityCap(int density);                       /* 0, 2, 4, 6 */
 int CtrWildsCore_AggroPercent(int aggro);                       /* 0, 10, 20, 30, 40 */
-/* settings.cfg: the density read from `visiblewilds`. An old file wrote 1 for "on" and had neither wildsil nor wildaggro: that is NORMAL. */
-int CtrWildsCore_MigrateDensity(int raw, int haveSil, int haveAggro);
-int CtrWildsCore_ClampDensity(int v);
-int CtrWildsCore_ClampAggro(int v);
 
 /* The table and its random numbers (its own, never the game's Random()). */
 void CtrWildsCore_Init(CtrWildsCore *c, uint32_t seed);
 uint16_t CtrWildsCore_Rand(CtrWildsCore *c);
 uint32_t CtrWildsCore_Seed(CtrWildsCore *c);                    /* an unrelated 32-bit seed, for the game's generator while it picks */
 void CtrWildsCore_Stir(CtrWildsCore *c, uint32_t salt);
-/* A new map: the table is cleared (the object events went with the map). Returns how many wilds were in it. */
+/* A new map: the table is cleared (the object events went with the map). Returns how many wilds were in it, or -1 for the same map. */
 int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map);
 void CtrWildsCore_Clear(CtrWildsCore *c);
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot);

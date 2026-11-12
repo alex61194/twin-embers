@@ -30,25 +30,6 @@ int CtrWildsCore_AggroPercent(int aggro)
     return aggro >= 1 && aggro <= 4 ? aggro * 10 : 0;
 }
 
-int CtrWildsCore_ClampDensity(int v)
-{
-    return v >= 0 && v < CTRW_DENSITIES ? v : 0;
-}
-
-int CtrWildsCore_ClampAggro(int v)
-{
-    return v >= 0 && v < CTRW_AGGROS ? v : 0;
-}
-
-int CtrWildsCore_MigrateDensity(int raw, int haveSil, int haveAggro)
-{
-    /* The first version wrote visiblewilds=1 for "on". The new one writes wildsil and wildaggro with it whenever the density is not
-     * OFF, so a 1 that comes alone is the old "on", which is NORMAL; a 1 with them is FEW. */
-    if (raw == 1 && !haveSil && !haveAggro)
-        return 2;
-    return CtrWildsCore_ClampDensity(raw);
-}
-
 /* The table and its random numbers ---------------------------------------------------------------------------------------- */
 
 void CtrWildsCore_Init(CtrWildsCore *c, uint32_t seed)

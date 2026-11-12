@@ -75,7 +75,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/text_case_test.exe build/dirty_rect_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/looks_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe build/shake_pointer_test.exe build/wilds_core_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/text_case_test.exe build/dirty_rect_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/looks_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe build/shake_pointer_test.exe build/wilds_core_test.exe build/wilds_settings_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -98,6 +98,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/battle_hud_test.exe
 	./build/shake_pointer_test.exe
 	./build/wilds_core_test.exe
+	./build/wilds_settings_test.exe
 	./build/night_wild_test.exe
 	./build/audio_cadence_test.exe
 	./build/audio_catchup_test.exe
@@ -441,7 +442,7 @@ build/looks_test.exe: tests/looks_test.c src/3ds_looks.c src/3ds_settings.c incl
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/looks_test.cfg"' -Iinclude tests/looks_test.c src/3ds_looks.c src/3ds_settings.c -o $@
 
-build/settings_test.exe: tests/settings_test.c src/3ds_settings.c include/3ds_settings.h
+build/settings_test.exe: tests/settings_test.c src/3ds_settings.c include/3ds_settings.h include/3ds_wilds_core.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/settings_test.cfg"' -Iinclude tests/settings_test.c src/3ds_settings.c -o $@
 
@@ -476,6 +477,10 @@ build/battle_gen4_test.exe: tests/battle_gen4_test.c src/3ds_battle_gen4.c inclu
 build/wilds_core_test.exe: tests/wilds_core_test.c src/3ds_wilds_core.c include/3ds_wilds_core.h
 	@mkdir -p build
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tests/wilds_core_test.c src/3ds_wilds_core.c -o $@
+
+build/wilds_settings_test.exe: tests/wilds_settings_test.c src/3ds_settings.c include/3ds_settings.h include/3ds_wilds_core.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/wilds_settings_test.cfg"' -Iinclude tests/wilds_settings_test.c src/3ds_settings.c -o $@
 
 build/shake_pointer_test.exe: tests/shake_pointer_test.c
 	@mkdir -p build

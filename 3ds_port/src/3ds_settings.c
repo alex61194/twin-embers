@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "3ds_settings.h"
+#include "3ds_wilds_core.h"
 
 /* __3DS__ comes from <3ds.h> itself, so it cannot choose whether to include it: the 0.2.8 builds tested __3DS__ here,
  * never had the writer thread and wrote settings.cfg on the game thread (5-16 ms per turbo change, no "written in place"
@@ -30,7 +31,9 @@ static int sNuzDupes;       /* NUZLOCKE clauses: a species already caught does n
 static int sNuzShiny;       /* a shiny does not use it either */
 static int sNuzCap;         /* LEVEL CAPS: no experience at or above the badge's cap */
 static int sFreeHm;
-static int sVisibleWilds;   /* VISIBLE WILDS (prototype): wild Pokemon walk about on one route */
+static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
+static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
+static int sWildAggro;      /* AGGRESSIVE: 0 OFF to 4 HIGH (wildaggro=) */
 static unsigned sBall;          /* the ball the battle's ball button last threw (0: none yet) */
 static int sLoaded;
 
@@ -72,6 +75,7 @@ static void Load(void)
 {
     char line[64];
     FILE *file;
+    int wildRaw = 0, haveSil = 0, haveAggro = 0;
 
     if (sLoaded)
         return;
@@ -113,12 +117,23 @@ static void Load(void)
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
-            sVisibleWilds = value != 0;
+            wildRaw = value < 1000 ? (int)value : -1;       /* settled below: an old file's 1 is NORMAL */
+        else if (sscanf(line, "wildsil=%u", &value) == 1)
+        {
+            sWildSil = value == 1;
+            haveSil = 1;
+        }
+        else if (sscanf(line, "wildaggro=%u", &value) == 1)
+        {
+            sWildAggro = value <= 4 ? (int)value : 0;
+            haveAggro = 1;
+        }
         else if (LookLine(line))
             ;
         else if (sscanf(line, "ball=%u", &value) == 1)
             sBall = value <= 0xffff ? value : 0;
     }
+    sWildDensity = CtrWildsCore_MigrateDensity(wildRaw, haveSil, haveAggro);
 }
 
 static void WriteText(const char *text)
@@ -164,8 +179,14 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "nuzcap=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
-    if (sVisibleWilds && length > 0 && (size_t)length < size)
-        length += snprintf(text + length, size - (size_t)length, "visiblewilds=1\n");
+    /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
+     * wildaggro come first so that a visiblewilds that was read always had them (a lone 1 is the old format, NORMAL). */
+    if ((sWildDensity || sWildSil) && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "wildsil=%d\n", sWildSil);
+    if ((sWildDensity || sWildAggro) && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "wildaggro=%d\n", sWildAggro);
+    if (sWildDensity && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "visiblewilds=%d\n", sWildDensity);
     for (int slot = 0; slot < 3; ++slot)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
@@ -447,19 +468,51 @@ void CtrSettings_SetNuzShiny(int on)
     Save();
 }
 
-int CtrSettings_VisibleWilds(void)
+int CtrSettings_WildDensity(void)
 {
     Load();
-    return sVisibleWilds;
+    return sWildDensity;
 }
 
-void CtrSettings_SetVisibleWilds(int on)
+void CtrSettings_SetWildDensity(int density)
+{
+    Load();
+    density = CtrWildsCore_ClampDensity(density);
+    if (density == sWildDensity)
+        return;
+    sWildDensity = density;
+    Save();
+}
+
+int CtrSettings_WildSilhouette(void)
+{
+    Load();
+    return sWildSil;
+}
+
+void CtrSettings_SetWildSilhouette(int on)
 {
     Load();
     on = on != 0;
-    if (on == sVisibleWilds)
+    if (on == sWildSil)
         return;
-    sVisibleWilds = on;
+    sWildSil = on;
+    Save();
+}
+
+int CtrSettings_WildAggro(void)
+{
+    Load();
+    return sWildAggro;
+}
+
+void CtrSettings_SetWildAggro(int aggro)
+{
+    Load();
+    aggro = CtrWildsCore_ClampAggro(aggro);
+    if (aggro == sWildAggro)
+        return;
+    sWildAggro = aggro;
     Save();
 }
 

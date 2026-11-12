@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "bb21a22d9d68b45c0fe95b12b9247984383e3090839c81deacd99e7d708ab417",
+   "sha256": "9a7eeaf64989ae37c1b2d23236d8f178ef57e9e507a2e5e332ef834909926699",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -655,7 +655,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "663ce4cf3fe079cebf0d63c6f0763b58daaf3a1f0cdbe22499bcac109248fc1b",
+   "sha256": "d1bc09cff7bd8a2fefc6dc91a2386dfe4434d6be4562ab513dbac1e4c4c86895",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -702,7 +702,7 @@
   },
   {
    "path": "3ds_port/include/3ds_settings.h",
-   "sha256": "8595aa2a1a13f018174ec87aa6919a68dd150bdc6a5d940c46016e53e8692cdb",
+   "sha256": "be75b65a2b7d6858d58578af88437cc2fe90f44dfa6a12a009488fffb3099f5d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -822,14 +822,14 @@
    "source_sha256": "94dd3d0eba9625fdb1b7953e22e04e2531c977b0fa1c3d0f064a8f9fb96b9c5a",
    "modified_for_distribution": false
   },
- {
-  "path": "3ds_port/include/3ds_wilds_core.h",
-  "sha256": "64cf28193ee9c528301b2fb949f68875dcf6788afb5be6d16648361b0a0c91fe",
-  "review_status": "reviewed",
-  "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-  "license": "MIT only for original owned contributions; third-party rights unchanged",
-  "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
- },
+  {
+   "path": "3ds_port/include/3ds_wilds_core.h",
+   "sha256": "dde55277f35669a93772e8494cff89d30edd2d2800738edd184e5de5cf27e527",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
   {
    "path": "3ds_port/include/battle_flat_icons.h",
    "sha256": "1551b8de7c58fba461b226386c160f745224e182c03b94cf80be85615f4ad58b",
@@ -1503,7 +1503,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "4a4b871850a78c40e8cda4c06d5b3a2c1efa659df249468314cf30dfbaf1e43e",
+   "sha256": "2a519246008d89ca62982c3e77b20e2505a41a0cf2220b9688409c6c431fd53d",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1559,7 +1559,7 @@
   },
   {
    "path": "3ds_port/src/3ds_settings.c",
-   "sha256": "f98bb412eef5fdab5ea6db2dae2365a56e0e79b26d4abe41cc81c3655ab3a95f",
+   "sha256": "6c84990861751ef29ce1010721f131c176942d83d15918284dbc1a20ec07ae08",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1662,14 +1662,14 @@
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
- {
-  "path": "3ds_port/src/3ds_wilds_core.c",
-  "sha256": "8d72991ad1333486451e50db8419832e0b224b6c11486c9fb88cb1a92a1a8f0c",
-  "review_status": "reviewed",
-  "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-  "license": "MIT only for original owned contributions; third-party rights unchanged",
-  "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
- },
+  {
+   "path": "3ds_port/src/3ds_wilds_core.c",
+   "sha256": "7d071f868deac9ea04c279c76784ac67228124d1c377e5ddd5f565859b2ec421",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
   {
    "path": "3ds_port/src/gba_shadow.c",
    "sha256": "7796723500d0c6a149dc4c75340f8a5c572ec819ca518073a9aaab41b28ecd99",
@@ -2107,7 +2107,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "f75b82f2aef47b8982f3b84365338e733236c842d86fdf24fc69c74ddf2e8bf2",
+   "sha256": "84739f0215b113cdad7e3b5c3922985092c1f8e8263072523c3093de4e0d29e0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2166,7 +2166,7 @@
   },
   {
    "path": "3ds_port/tests/settings_test.c",
-   "sha256": "0a94e5fd497eee70d324fff8ce0959c5529612939e1b05ed67ee58d7a83802dd",
+   "sha256": "cddb5ae1535d2e374b7101175b43d13cacd27c348718225af3b9c833faadef22",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2248,14 +2248,22 @@
    "source_sha256": "c92983f37247ec0fcb2a7def8f06d3e07fd1e5e06d7844282b7f477550020fde",
    "modified_for_distribution": false
   },
- {
-  "path": "3ds_port/tests/wilds_core_test.c",
-  "sha256": "3a66406888ae9bbbaf5308ab0708e25caf3a9d0f0ef9ad33245d6d6c653d7c9f",
-  "review_status": "reviewed",
-  "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-  "license": "MIT only for original owned contributions; third-party rights unchanged",
-  "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
- },
+  {
+   "path": "3ds_port/tests/wilds_core_test.c",
+   "sha256": "3a66406888ae9bbbaf5308ab0708e25caf3a9d0f0ef9ad33245d6d6c653d7c9f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wilds_settings_test.c",
+   "sha256": "cdf2d3c0d445b90e0d7557b276f2e522fa6bdfd1880d88e917afdad5de49a20a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
   {
    "path": "AI_DISCLOSURE.md",
    "sha256": "939d0fe09103a8b5cdbfd9d28439ad1ff0c5de59f5a8405af13dcd7c84c3af2d",
