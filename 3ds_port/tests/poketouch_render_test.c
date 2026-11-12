@@ -398,6 +398,19 @@ int main(int argc, char **argv)
         s=before; SHOT("options2_again");
         s.optPage=0; strcpy(s.optPageName,"GAME"); s.optSelected=0; strcpy(s.bar[0],"TYPE CHART"); strcpy(s.bar[1],"Shows how effective a move"); strcpy(s.bar[2],"will be on the foe.");
         SHOT("options1");
+        /* The move to forget for a new one (Llama look): its rows, the cursor and a press move nothing but themselves. */
+        {
+            static const char *const mv[5]={"FLAMETHROWER","WING ATTACK","DRAGON CLAW","SLASH","HYPER BEAM"};
+            static const char *const ty[5]={"FIRE","FLYING","DRAGON","NORMAL","NORMAL"};
+            static const int8_t tn[5]={10,2,16,0,0};
+            s.options=0; s.backVisible=0; memset(&s.learn,0,sizeof(s.learn)); s.learn.on=1; s.learn.pressed=-1; s.learn.species=6;
+            strcpy(s.learn.nickname,"CHARIZARD"); strcpy(s.learn.level,"Lv50"); strcpy(s.learn.question,"Make it forget which move?");
+            for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.row[i].move=(uint16_t)(i+1); s.learn.row[i].type=tn[i]; strcpy(s.learn.row[i].name,mv[i]); strcpy(s.learn.row[i].typeName,ty[i]); strcpy(s.learn.row[i].pp,"15/15"); strcpy(s.learn.row[i].power,"90"); strcpy(s.learn.row[i].accuracy,"100"); }
+            strcpy(s.learn.desc,"A powerful fire attack that may burn the target.");
+            s.learn.cursor=1; SHOT("learn");
+            for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.cursor=(int8_t)i; update(&old,&s); s.learn.pressed=(int16_t)(PT_LEARN_HIT_ROW+i); update(&old,&s); s.learn.pressed=-1; update(&old,&s); }
+            s.learn.cursor=4; SHOT("learn_new"); s.learn.on=0;
+        }
         /* The look page: three look rows and the preview card. */
         s.optPage=3; strcpy(s.optPageName,"LOOKS"); s.optCount=4; memset(s.optSwitch,0,sizeof(s.optSwitch)); memset(s.optSegCount,0,sizeof(s.optSegCount));
         strcpy(s.optLabel[0],"EXP SHARE"); s.optSegCount[0]=3; s.optSegValue[0]=1; strcpy(s.optSegName[0][0],"OFF"); strcpy(s.optSegName[0][1],"HALF"); strcpy(s.optSegName[0][2],"ALL");
