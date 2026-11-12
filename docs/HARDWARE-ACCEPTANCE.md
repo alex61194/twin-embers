@@ -15,7 +15,7 @@ FAIL should include the screen text or `/3ds/twinembers/port.log` lines.
 ## Starting and saving
 
 - [ ] New game (no save anywhere): intro, title, Oak speech and naming screen run.
-- [ ] First save of that new game asks "Would you like to save your adventure?"
+- [ ] First save of that new game asks "Save your game?"
       (no "different game file" warning on a blank card).
 - [ ] Save in the field, power off, restart: Continue resumes at the saved spot.
 - [ ] Existing save: copy a known FireRed save to `/3ds/pokefirered/firered.sav`

@@ -1985,22 +1985,22 @@ static void SaveFill(CtrPokeTouchView *v)
     switch (sSave.state) {
     case SAVE_WRITING:
         snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Saving...", "Guardando...", "Speichern..."));
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Please don't turn off the power.", "No apagues la consola.", "Bitte Konsole nicht ausschalten."));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Don't turn off the power.", "No apagues la consola.", "Nicht ausschalten."));
         break;
     case SAVE_SUCCESS:
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Your game has been saved!", "\xc2\xa1Partida guardada!", "Spiel wurde gespeichert!"));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Game saved!", "\xc2\xa1Partida guardada!", "Spiel gespeichert!"));
         break;
     case SAVE_ERROR:
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("The save file could not", "No se ha podido guardar", "Speichern fehlgeschlagen."));
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("be written. Try again.", "la partida. Prueba otra vez.", "Bitte erneut versuchen."));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Could not save.", "No se pudo guardar.", "Speichern fehlgeschlagen."));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Try again.", "Prueba otra vez.", "Bitte erneut versuchen."));
         break;
     default:
         if (CtrSave_IsDifferentFile()) {
-            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("There is a different game", "Ya hay otra partida", "Bereits ein Spielstand"));
-            snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("file saved. Overwrite it?", "guardada. \xc2\xbfSobrescribirla?", "vorhanden. \xc3\x9c" "berschreiben?"));
+            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Another game is saved.", "Ya hay otra partida.", "Anderer Spielstand da."));
+            snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Overwrite it?", "\xc2\xbfSobrescribirla?", "\xc3\x9c" "berschreiben?"));
         } else {
-            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Would you like to save", "\xc2\xbfQuieres guardar", "M\xc3\xb6" "chtest du das Spiel"));
-            snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("your adventure?", "tu aventura?", "jetzt speichern?"));
+            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Save your game?", "\xc2\xbfGuardar la partida?", "Spiel speichern?"));
+            v->bar[1][0] = 0;
         }
         break;
     }
