@@ -457,6 +457,33 @@ int main(int argc, char **argv)
             for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.cursor=(int8_t)i; update(&old,&s); s.learn.pressed=(int16_t)(PT_LEARN_HIT_ROW+i); update(&old,&s); s.learn.pressed=-1; update(&old,&s); }
             s.learn.cursor=4; SHOT("learn_new"); s.learn.on=0;
         }
+        /* The move relearner's list (Llama): eight moves and CANCEL, five rows shown; the cursor, the scroll and a press go through the incremental path. */
+        {
+            static const char *const mv[8]={"EMBER","FLAMETHROWER","SLASH","DRAGON CLAW","FIRE SPIN","WING ATTACK","SCARY FACE","HYPER BEAM"};
+            static const char *const ty[8]={"FIRE","FIRE","NORMAL","DRAGON","FIRE","FLYING","NORMAL","NORMAL"};
+            static const int8_t tn[8]={10,10,0,16,10,2,0,0};
+            CtrPokeTouchRelearn *r=&s.relearn;
+            s.options=0; s.backVisible=1; memset(&s.learn,0,sizeof(s.learn)); memset(r,0,sizeof(*r)); r->on=1; r->pressed=-1; r->species=6; r->count=8;
+            strcpy(r->nickname,"CHARIZARD"); strcpy(r->level,"50"); strcpy(r->question,"Teach which move to CHARIZARD?");
+            strcpy(r->desc,"A powerful fire attack that may burn the target.");
+            for(int first=0; first<=4; first+=2) for(int cur=first; cur<first+PT_RL_ROWS && cur<=8; ++cur) {
+                r->first=(uint8_t)first; r->cursor=(int8_t)cur;
+                for(int i=0;i<PT_RL_ROWS;++i) {
+                    int k=first+i; memset(&r->row[i],0,sizeof(r->row[i])); r->row[i].type=-1;
+                    if(k<8) { r->row[i].move=(uint16_t)(k+1); r->row[i].type=tn[k]; strcpy(r->row[i].name,mv[k]); strcpy(r->row[i].typeName,ty[k]); strcpy(r->row[i].pp,"15"); strcpy(r->row[i].power,k==6?"---":"95"); strcpy(r->row[i].accuracy,"100"); }
+                    else if(k==8) strcpy(r->row[i].name,"CANCEL");
+                }
+                update(&old,&s); r->pressed=(int16_t)(PT_RL_HIT_ROW+(cur-first)); update(&old,&s); r->pressed=PT_RL_HIT_DOWN; update(&old,&s); r->pressed=-1; update(&old,&s);
+                if(first==0&&cur==1) SHOT("relearn");
+                if(first==2&&cur==4) SHOT("relearn_scroll");
+                if(first==4&&cur==8) SHOT("relearn_cancel");
+            }
+            assert(CtrPokeTouch_RelearnHit(&s,110,35)==PT_RL_HIT_ROW && CtrPokeTouch_RelearnHit(&s,110,62)==PT_RL_HIT_ROW+1);
+            assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
+            assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
+            r->first=7; r->cursor=7; update(&old,&s); assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
+            r->on=0; s.backVisible=0;
+        }
         CtrPokeTouchView keepOpt=s;
         /* Llama: the Pokedex (menu, list, habitats, category, page) and the Trainer Card note; each through the incremental path (a cursor
          * move, a press, a page turn) and then written. */

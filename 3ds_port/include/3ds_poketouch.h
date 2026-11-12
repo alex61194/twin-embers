@@ -180,6 +180,28 @@ typedef struct {
     char desc[160];
 } CtrPokeTouchLearn;
 
+/* The move relearner's list (REMEMBER, the Two Island man), drawn by the port (3ds_field_relearn_impl.h), a remote for FireRed's
+ * list: the Pokemon, a window of PT_RL_ROWS rows of the list (the moves it can remember, then CANCEL), the cursor and the
+ * selected move's numbers and description. A row is walked to with the list's own UP / DOWN and taken with its A; BACK is its B. */
+#define PT_RL_ROWS 5
+enum { PT_RL_HIT_ROW = 200, PT_RL_HIT_UP = 230, PT_RL_HIT_DOWN = 231 };
+typedef struct {
+    uint8_t on;
+    int8_t cursor;                  /* list index of the selected row (count: CANCEL) */
+    uint8_t count;                  /* the moves; the list has one more row, CANCEL */
+    uint8_t first;                  /* list index of the first row shown */
+    int16_t pressed;                /* the hit code under a held touch, or -1 */
+    uint16_t species;
+    char nickname[13], level[8];
+    char question[48];
+    struct {
+        uint16_t move;              /* 0: CANCEL or no row */
+        int8_t type;
+        char name[16], pp[8], power[8], accuracy[8], typeName[10];
+    } row[PT_RL_ROWS];
+    char desc[160];
+} CtrPokeTouchRelearn;
+
 /* A choice of the field (a script's multichoice, YES/NO or grid, the PC's menus) drawn by the port
  * (3ds_field_choice_impl.h), a remote for FireRed's menu: its rows as buttons (cols > 0: a grid of that many columns),
  * the cursor's, and the question of the message box. A row is asked of the menu and taken with its A; BACK is its B. */
@@ -361,6 +383,7 @@ typedef struct {
     CtrPokeTouchDex dex;        /* the Pokedex, when dex.on */
     CtrPokeTouchCard card;      /* the Trainer Card, when card.on */
     CtrPokeTouchLearn learn;    /* the move to forget, when learn.on */
+    CtrPokeTouchRelearn relearn;/* the move relearner's list, when relearn.on */
     CtrPokeTouchName name;      /* the naming screen, when name.on */
     CtrPokeTouchBox box;        /* a PC box, when box.on */
     CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
@@ -399,6 +422,8 @@ int CtrPokeTouch_DexGridPageRow(const CtrPokeTouchView *view, int dir);
  * tiles) and the caught marker (one 4bpp tile). 0 when there is none. */
 /* The row of the move to forget (view->learn.on) under lower-screen point (x, y): PT_LEARN_HIT_ROW + row, or -1. */
 int CtrPokeTouch_LearnHit(const CtrPokeTouchView *view, int x, int y);
+/* The row (or scroll arrow) of the relearner's list (view->relearn.on) under (x, y): PT_RL_HIT_*, or -1. */
+int CtrPokeTouch_RelearnHit(const CtrPokeTouchView *view, int x, int y);
 /* The row of the field's choice (view->choice.on) under lower-screen point (x, y): PT_CHOICE_HIT_ROW + row, or -1. */
 int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *view, int x, int y);
 /* The key, tab or button of the naming screen (view->name.on) under lower-screen point (x, y): a PT_NAME_HIT_* code

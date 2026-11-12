@@ -1202,6 +1202,8 @@ static void LearnSnapshot(Snapshot *s, int mode)
     s->touch.backPressed = (uint8_t)(sBack.inside != 0);
 }
 
+#include "3ds_bottom_relearn_impl.h"
+
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
 {
@@ -2065,6 +2067,8 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         /* FireRed's own screen, as it draws it, in the viewport; BACK is its B. */
         const char *title = GbaViewTitle();
 
+        if (CtrBottomView_Relearner() && RelearnSnapshot(s, mode))
+            return;                 /* its list drawn here (3ds_bottom_relearn_impl.h) */
         s->touch.viewport = 1;
         s->touch.backVisible = 1;
         s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -4993,6 +4997,7 @@ static int ProcessTouch(int mode)
         sPoke.inside = 0;
         sTouch.active = 0;
         ProcessBack(mode, in);
+        ProcessRelearnTouch(in);
         /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
         if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)
             && in->touchX >= PT_VIEW_X && in->touchX < PT_VIEW_X + PT_VIEW_W
@@ -5459,6 +5464,7 @@ void CtrBottom_Frame(void)
         RunLearnPlan();
     else
         memset(&sLearnPlan, 0, sizeof(sLearnPlan));
+    RunRelearnPlan(mode == MODE_GBAVIEW && CtrBottomView_Relearner());
     if (mode == MODE_NAMING)
         RunNamePlan();
     else
