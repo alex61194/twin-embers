@@ -3086,7 +3086,7 @@
   },
   {
    "path": "docs/HARDWARE-ACCEPTANCE.md",
-   "sha256": "ff505c87f671260545c7fc1c9a6f1ec3f4ba5b990ba942d1120b2aad9021ba01",
+   "sha256": "7d4973fa4d6030b0de83a62b9d940ef9f2323d848fc09e46c430dbce77fd5f94",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
