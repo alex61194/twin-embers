@@ -68,6 +68,15 @@ int main(void)
     CtrPokeTouchView view;
     char small[4];
 
+    /* Every row's label fits the view's optLabel (PT_OPT_LABEL_LEN, the NUL included): Fill's snprintf would cut it without a
+     * sign. Run for each build language (-DCTR_LANG_ES=1 / -DCTR_LANG_DE=1) to cover them all. */
+    for (int i = 0; i < CtrOptions_RowCount(); ++i) {
+        const CtrOptionRow *row = CtrOptions_Row(i);
+
+        CHECK(row != NULL && row->label != NULL && strlen(row->label) < PT_OPT_LABEL_LEN, "row %d label \"%s\" is %d bytes, room for %d",
+              i, row && row->label ? row->label : "?", row && row->label ? (int)strlen(row->label) : 0, PT_OPT_LABEL_LEN - 1);
+    }
+
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
     CHECK(CtrOptions_RowCount() == 26, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
