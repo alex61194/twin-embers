@@ -642,11 +642,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-<<<<<<< HEAD
-   "sha256": "7273acd07d2713b10f0549e98948f05832eb5405306c6c518f09d6ab8f46cb48",
-=======
-   "sha256": "606a42de2853c34ad5f03845f5493165c7eeed61a6b826d34a82205808680e27",
->>>>>>> agent/regionmap
+   "sha256": "121052ee8c6eda868c45c94466c63dfb8dd7dcd5e962ed96833f6e114c57375c",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1054,11 +1050,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-<<<<<<< HEAD
-   "sha256": "7ffa4ca201e5dd3b0a8771bfde90e5ed15101cb61882323df125e48f77260451",
-=======
-   "sha256": "4f82b2f5d47289ebc3f886b2e7525501e97a76a6e77bf5f1c4615d2b1c23fe40",
->>>>>>> agent/regionmap
+   "sha256": "48e67df98481b2c942476b62ec005b381118211ba9174df690e9e38706c3c47a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1473,11 +1465,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-<<<<<<< HEAD
-   "sha256": "87882b0568e869cc4bb8c0da9fd78284f43a89770ce119636f1f4680d922d6e6",
-=======
-   "sha256": "bf0d6f7ab8102dd904ebe93895c0b75517bc6040cc234ea5dbfd8c6ccbbc55d5",
->>>>>>> agent/regionmap
+   "sha256": "be4281f933d11d1351e13d230219b6a1ef12bc494b5f99624c86e87418f1dd9e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2091,12 +2079,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-<<<<<<< HEAD
-   "sha256": "6167b3c6327f6c5093fd83bdc1dfa603cad38c26bec843eb7abd7d0c324cfa7b"
-=======
-   "sha256": "66f647d6c468f0ae1a2d264bd6da554bb3ab5a93ea8b7d1fd0f18e4723cda295",
-   "source_blob": "af62eba5f7215ccf5ffe28e93bb6fe6a82961afc"
->>>>>>> agent/regionmap
+   "sha256": "1c5d2863ab1d73d6c9b6eda7e0b7ea6ec4849f78670e3bf05277328e557dcf87"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
