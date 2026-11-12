@@ -103,7 +103,7 @@ enum { PT_BAG_STATE_BUSY = 0, PT_BAG_STATE_LIST, PT_BAG_STATE_ACTIONS, PT_BAG_ST
        PT_BAG_STATE_MESSAGE };
 /* Hit codes (CtrPokeTouch_BagHit). */
 enum { PT_BAG_HIT_TAB = 100, PT_BAG_HIT_ROW = 200, PT_BAG_HIT_MENU = 300, PT_BAG_HIT_MESSAGE = 500, PT_BAG_HIT_UP = 600,
-       PT_BAG_HIT_DOWN, PT_BAG_HIT_QTY_UP = 610, PT_BAG_HIT_QTY_DOWN, PT_BAG_HIT_QTY_OK, PT_BAG_HIT_QTY_CANCEL };
+       PT_BAG_HIT_DOWN, PT_BAG_HIT_QTY_UP = 610, PT_BAG_HIT_QTY_DOWN, PT_BAG_HIT_QTY_OK, PT_BAG_HIT_QTY_CANCEL, PT_BAG_HIT_RAIL = 620 };
 typedef struct {
     uint8_t on;                     /* the viewport shows this Bag (no GBA picture) */
     uint8_t kind;                   /* PT_BAG_KIND_*: the Bag, or a case it opens */
@@ -420,6 +420,7 @@ int CtrPokeTouch_HitTest(int x, int y);
 bool CtrPokeTouch_FlyHit(int x, int y);          /* HOME's FLY button, while it is drawn */
 /* What the field Bag (view->bag.on) shows under lower-screen point (x, y): a PT_BAG_HIT_* code, or -1. */
 int CtrPokeTouch_BagHit(const CtrPokeTouchView *view, int x, int y);
+int CtrPokeTouch_BagRailTarget(const CtrPokeTouchBag *bag, int y);   /* the cursor index the rail's thumb at y stands for (-1: no rail) */
 /* What the Pokedex (view->dex.on) shows under lower-screen point (x, y): a PT_DEX_HIT_* code, or -1. */
 int CtrPokeTouch_DexHit(const CtrPokeTouchView *view, int x, int y);
 /* The top menu row a tab (0-2) leads to, and the first row of the habitat/search page before (-1) or after (1) the
@@ -518,7 +519,7 @@ typedef struct {
     char desc[BUI_DESC_LEN];        /* FireRed's description, wrapped when drawn */
 } CtrBattleMove;
 enum { BUI_BAG_TAB = 100, BUI_BAG_ROW = 200, BUI_BAG_MENU = 300, BUI_BAG_CANCEL = 400, BUI_BAG_MESSAGE = 500,
-       BUI_BAG_UP = 600, BUI_BAG_DOWN = 601, BUI_BAG_BERRIES = 602 };
+       BUI_BAG_UP = 600, BUI_BAG_DOWN = 601, BUI_BAG_BERRIES = 602, BUI_BAG_RAIL = 603 };
 #define BUI_BAG_ROWS 5
 #define BUI_ITEM_LEN 20
 typedef struct {
@@ -622,6 +623,7 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
 int CtrBattleUi_TabPocket(int tab);
 /* The button under a canvas point of the screen `view` shows, or -1. */
 int CtrBattleUi_Hit(const CtrBattleView *view, int x, int y);
+int CtrBattleUi_BagRailTarget(const CtrBattleBag *bag, int y);       /* the same for the battle Bag */
 
 
 /*

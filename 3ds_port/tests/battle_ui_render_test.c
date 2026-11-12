@@ -586,6 +586,22 @@ int main(int argc, char **argv)
         names(b->selDesc, BUI_DESC_LEN, "Restores the HP of one POKeMON by 50 points.");
     }
     settle(&old, &v); old = v; put(out, "07_bag"); hits(&v);
+    /* The scroll rail is a slider: the arrows are their own buttons, the rail between them takes a press anywhere on it, and its target
+     * runs from the first item at the top to the last at the bottom, never going back. */
+    assert(CtrBattleUi_Hit(&v, 180, 165) == BUI_BAG_DOWN);
+    assert(CtrBattleUi_Hit(&v, 180, 40) == -1);                       /* the up arrow with nothing above */
+    assert(CtrBattleUi_Hit(&v, 180, 80) == BUI_BAG_RAIL && CtrBattleUi_Hit(&v, 180, 140) == BUI_BAG_RAIL);
+    {
+        int last = -1;
+
+        for (int y = 50; y <= 160; ++y) {
+            int t = CtrBattleUi_BagRailTarget(&v.bag, y);
+
+            assert(t >= last && t >= 0 && t <= v.bag.count - 1);
+            last = t;
+        }
+        assert(CtrBattleUi_BagRailTarget(&v.bag, 40) == 0 && CtrBattleUi_BagRailTarget(&v.bag, 170) == v.bag.count - 1);
+    }
     v.pressed = BUI_BAG_ROW + 2; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
     /* The Berry Pouch in the Bag: BERRIES beside the title, which takes the whole width without it. */
     v.bag.berries = 365; settle(&old, &v); old = v;

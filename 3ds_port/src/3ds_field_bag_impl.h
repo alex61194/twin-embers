@@ -12,7 +12,8 @@
 
 static const CtrPokeTouchRect sFBTab[3] = {{4, 4, 78, 24}, {85, 4, 78, 24}, {166, 4, 78, 24}};
 static const CtrUiString sFBTabLabel[3] = {UIS_BAG_ITEMS, UIS_BAG_KEY_ITEMS, UIS_BAG_BALLS};
-static const CtrPokeTouchRect sFBUp = {222, 34, 22, 63}, sFBDown = {222, 101, 22, 62};
+/* The arrows' zones are their buttons only; the rail between them (222, 59, 22, 78) is a slider: a tap or a drag on it goes where the finger is. */
+static const CtrPokeTouchRect sFBUp = {222, 34, 22, 25}, sFBDown = {222, 137, 22, 26}, sFBRail = {222, 59, 22, 78};
 static const CtrPokeTouchRect sFBArea = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
 static const CtrPokeTouchRect sFBTitle = {4, 4, 240, 24};
 #define FB_DEPTH 2
@@ -75,6 +76,8 @@ int CtrPokeTouch_BagHit(const CtrPokeTouchView *v, int x, int y)
                 return b->first > 0 ? PT_BAG_HIT_UP : -1;
             if (UiIn(&sFBDown, x, y))
                 return b->first + PT_BAG_ROWS <= b->count ? PT_BAG_HIT_DOWN : -1;
+            if (UiIn(&sFBRail, x, y))
+                return PT_BAG_HIT_RAIL;
         }
         for (int i = 0; i < PT_BAG_ROWS; ++i) {
             CtrPokeTouchRect r = FBRow(i);
@@ -86,6 +89,24 @@ int CtrPokeTouch_BagHit(const CtrPokeTouchView *v, int x, int y)
     return -1;
 }
 
+
+/* The slider: the cursor index that puts the thumb, centred on y, where the finger is. */
+int CtrPokeTouch_BagRailTarget(const CtrPokeTouchBag *b, int y)
+{
+    int total = b->count + 1, range = total - PT_BAG_ROWS, thumbH = sFBRail.h * PT_BAG_ROWS / total, first, t;
+
+    if (range <= 0)
+        return -1;
+    if (thumbH < 12)
+        thumbH = 12;
+    t = y - sFBRail.y - thumbH / 2;
+    t = t < 0 ? 0 : t > sFBRail.h - thumbH ? sFBRail.h - thumbH : t;
+    first = (t * range * 2 + (sFBRail.h - thumbH)) / (2 * (sFBRail.h - thumbH));
+    first = first > range ? range : first;
+    t = first + (y < sFBRail.y ? 0 : y >= sFBRail.y + sFBRail.h ? PT_BAG_ROWS - 1
+              : (y - sFBRail.y) * (PT_BAG_ROWS - 1) / sFBRail.h);
+    return t > b->count ? b->count : t;
+}
 
 /* ---- the Llama look (llama2_mockup.html, panel 6) ----
  * A card is a raised piece (EmButton): FB_FACE rows of face and FB_DEPTH of lip, in a rectangle FB_FACE + FB_DEPTH tall; the chosen one wears

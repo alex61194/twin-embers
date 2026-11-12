@@ -216,10 +216,19 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
         }
         if (b->menuCount == 0 && BBagSelRow(b) >= 0 && BIn(&sBUse, x, y))
             return BUI_BAG_ROW + BBagSelRow(b);             /* USE: the selected row again, which uses it */
-        if (b->count > BUI_BAG_ROWS && BIn(&sBUpArrow, x, y) && b->first > 0)
-            return BUI_BAG_UP;
-        if (b->count > BUI_BAG_ROWS && BIn(&sBDownArrow, x, y) && b->first + BUI_BAG_ROWS < b->count)
-            return BUI_BAG_DOWN;
+        if (b->count > BUI_BAG_ROWS) {
+            /* The arrows are their 22 px buttons; between them the rail is a slider. */
+            CtrPokeTouchRect up = {sBUpArrow.x, sBUpArrow.y, sBUpArrow.w, 22};
+            CtrPokeTouchRect down = {sBDownArrow.x, sBDownArrow.y + sBDownArrow.h - 22, sBDownArrow.w, 22};
+            CtrPokeTouchRect rail = {sBUpArrow.x, sBUpArrow.y + 22, sBUpArrow.w, sBDownArrow.y + sBDownArrow.h - 22 - (sBUpArrow.y + 22)};
+
+            if (BIn(&up, x, y))
+                return b->first > 0 ? BUI_BAG_UP : -1;
+            if (BIn(&down, x, y))
+                return b->first + BUI_BAG_ROWS < b->count ? BUI_BAG_DOWN : -1;
+            if (BIn(&rail, x, y))
+                return BUI_BAG_RAIL;
+        }
         for (int i = 0; i < BUI_BAG_ROWS; ++i) {
             CtrPokeTouchRect r = BRow(i);
             if (b->row[i].item && BIn(&r, x, y))
@@ -1381,6 +1390,24 @@ static void BBagRow(int i, const CtrBattleView *v)
 
 /* A scroll arrow: a small cream button with a red triangle (FireRed's), the triangle grey while the list cannot go that way. The button sits at the
  * top of the arrow's area going up, at its foot going down. */
+/* The slider: the cursor index that puts the thumb, centred on y, where the finger is. */
+int CtrBattleUi_BagRailTarget(const CtrBattleBag *b, int y)
+{
+    int railY = sBUpArrow.y + 22, railH = sBDownArrow.y + sBDownArrow.h - 22 - railY, left = b->count - BUI_BAG_ROWS, thumbH, first, t;
+
+    if (left <= 0)
+        return -1;
+    thumbH = railH * BUI_BAG_ROWS / b->count;
+    if (thumbH < 14)
+        thumbH = 14;
+    t = y - railY - thumbH / 2;
+    t = t < 0 ? 0 : t > railH - thumbH ? railH - thumbH : t;
+    first = (t * left * 2 + (railH - thumbH)) / (2 * (railH - thumbH));
+    first = first > left ? left : first;
+    t = first + (y < railY ? 0 : y >= railY + railH ? BUI_BAG_ROWS - 1 : (y - railY) * (BUI_BAG_ROWS - 1) / railH);
+    return t > b->count - 1 ? b->count - 1 : t;
+}
+
 static void BBagArrow(const CtrPokeTouchRect *r, int down, int on)
 {
     int fy = EmButton(r->x, down ? r->y + r->h - 20 : r->y, 20, 20, &kEmCream, 2, 0);

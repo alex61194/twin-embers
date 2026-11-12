@@ -4055,10 +4055,20 @@ static void ProcessBattleBagTouch(const CtrInput *in)
         sBat.down = sBat.inside = btn >= 0;
         sBat.btn = btn;
         sBat.state = state;
-        return;
+        if (btn != BUI_BAG_RAIL)
+            return;
     }
     if (!sBat.down)
         return;
+    if (sBat.btn == BUI_BAG_RAIL && (in->touchActive || in->touchDown)) {
+        /* The rail is a slider: a press jumps there, a drag follows the finger, release does nothing. */
+        int target = CtrBattleUi_BagRailTarget(&sShown.battle.bag, (int)in->touchY);
+
+        sBat.inside = 0;
+        if (target >= 0 && target != list->cursor() && sBagPlan.kind == BAGPLAN_NONE)
+            BagPlanStart(list, BAGPLAN_LIST, target, 0, 0);
+        return;
+    }
     if (in->touchActive) {
         sBat.inside = btn == sBat.btn;
         return;
@@ -4125,10 +4135,21 @@ static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
         sFieldBag.y0 = (int)in->touchY;
         sFieldBag.cursor0 = list->cursor();
         sFieldBag.scrolling = 0;
-        return;
+        if (hit != PT_BAG_HIT_RAIL)
+            return;
     }
     if (!sFieldBag.down)
         return;
+    if (sFieldBag.code == PT_BAG_HIT_RAIL && (in->touchActive || in->touchDown)) {
+        /* The rail is a slider: a press jumps there, a drag follows the finger, release does nothing. */
+        int target = CtrPokeTouch_BagRailTarget(&sShown.touch.bag, (int)in->touchY);
+
+        sFieldBag.inside = 0;
+        sFieldBag.scrolling = 1;
+        if (target >= 0 && target != list->cursor() && sBagPlan.kind == BAGPLAN_NONE)
+            BagPlanStart(list, BAGPLAN_LIST, target, 0, 0);
+        return;
+    }
     if (in->touchActive) {
         int dy = (int)in->touchY - sFieldBag.y0;
 

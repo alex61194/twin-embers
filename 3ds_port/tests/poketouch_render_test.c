@@ -418,6 +418,11 @@ int main(int argc, char **argv)
             for(int i=0;i<PT_BAG_ROWS;++i) { b3.bag.row[i].item=13+i; b3.bag.row[i].qty=(uint16_t)(3+i*20); strcpy(b3.bag.row[i].name,"Potion"); }
             strcpy(b3.bag.selName,"Potion"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
             update(&o3,&b3); if(dir) ppm(dir,"bag_list");
+            /* The rail is a slider: the arrows are their buttons, the rail between them is hit anywhere, and its target never goes back. */
+            assert(CtrPokeTouch_BagHit(&b3,230,150)==PT_BAG_HIT_DOWN && CtrPokeTouch_BagHit(&b3,230,40)==-1);
+            assert(CtrPokeTouch_BagHit(&b3,230,70)==PT_BAG_HIT_RAIL && CtrPokeTouch_BagHit(&b3,230,130)==PT_BAG_HIT_RAIL);
+            { int last=-1; for(int y=50;y<=145;++y){ int t=CtrPokeTouch_BagRailTarget(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
+              assert(CtrPokeTouch_BagRailTarget(&b3.bag,40)==0 && CtrPokeTouch_BagRailTarget(&b3.bag,150)==b3.bag.count); }
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
             b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
