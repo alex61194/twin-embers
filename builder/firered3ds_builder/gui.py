@@ -138,7 +138,7 @@ class BuilderWindow(tk.Tk):
         self.backgrounds_check.grid(row=8, column=0, sticky="w", pady=(4, 0))
         self.followers_check = ttk.Checkbutton(
             build_card, variable=self.followers,
-            text="Pokémon that walk behind you: your first Pokémon follows you on the map, as in HeartGold "
+            text="HeartGold overworld sprites: your first Pokémon follows you and visible wild Pokémon can appear "
                  "(optional, needs internet: about 390 small files from GitHub)")
         self.followers_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
         self.hd_check = ttk.Checkbutton(
@@ -210,7 +210,7 @@ class BuilderWindow(tk.Tk):
         if info.get("backgrounds"):
             lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
         if info.get("followers"):
-            lines.append("Pokémon that walk behind you: {0}.".format(info["followers"]))
+            lines.append("Overworld sprites (followers & wild Pokémon): {0}.".format(info["followers"]))
         if info.get("hd"):
             lines.append("HD battle scenes: {0} files.".format(info["hd"]))
         if info.get("looks"):
@@ -220,7 +220,7 @@ class BuilderWindow(tk.Tk):
         for key, count_keys, name in (("heartgold", ("species",), "HeartGold battle sprites"),
                                       ("npcs", ("npcs",), "New people on the map"),
                                       ("backgrounds", ("backgrounds",), "Battle backgrounds"),
-                                      ("followers", ("followers",), "Pokémon that walk behind you"),
+                                      ("followers", ("followers",), "Overworld sprites (followers & wild Pokémon)"),
                                       ("hd_backgrounds", ("hd",), "HD battle scenes"),
                                       ("alt_looks", ("looks",), "More characters to be")):
             if options and options.get(key) and not any(info.get(k) for k in count_keys):

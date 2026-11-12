@@ -143,12 +143,12 @@ class GuiWindowTest(unittest.TestCase):
     def test_a_ticked_set_that_brought_nothing_is_said_not_reported_as_done(self):
         none = {"species": 0, "missing": [], "trainers": 0, "backs": 0, "npcs": 0, "backgrounds": 0, "followers": 0, "hd": 0, "looks": 0}
         text = self.window._gen4_summary(none, {"followers": True, "alt_looks": True, "npcs": False})
-        self.assertIn("Pokémon that walk behind you: nothing was added", text)
+        self.assertIn("Overworld sprites (followers & wild Pokémon): nothing was added", text)
         self.assertIn("More characters to be: nothing was added", text)
         self.assertNotIn("New people on the map", text)
         self.assertIn("Build again to retry", text)
         got = self.window._gen4_summary(dict(none, followers=12), {"followers": True})
-        self.assertIn("Pokémon that walk behind you: 12.", got)
+        self.assertIn("Overworld sprites (followers & wild Pokémon): 12.", got)
         self.assertNotIn("nothing was added", got)
 
     def test_every_terminal_event_hides_progress_and_restores_controls(self):

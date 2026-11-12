@@ -207,6 +207,31 @@ duplicates, no Mart roof tile, and only General's non-house buildings public); `
 (the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
 a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
 
+## Visible wild Pokémon
+
+Optional wild Pokémon seen walking in the grass and on the water of the overworld, one system for all of them
+(`patches/pokefirered/0249` and `0250`, the rules in `3ds_port/src/3ds_wilds_core.c`; the full design is in
+`docs/overworld-wilds-research.md`, section 8). It combines our earlier visible-wilds work with the ideas of PR #83 by
+**mcl5500/Sh3ld0r** (MIT: silhouettes, the "!" alert with `SE_PIN`, water wilds, roamers, the Pokémon kept into the battle,
+configurable aggression) and the design of **Wilds of Hoenn** by **poooooby**; the PR's code was not imported.
+
+- OPTIONS, Graphics, page **Wilds**: **WILD POKEMON** (Off / Few 2 / Normal 4 / Many 6), **WILD DISPLAY** (Pokemon / Silhouette) and
+  **AGGRESSIVE** (Off / Rare 10% / Low 20% / Moderate 30% / High 40% of the wilds). Kept in `settings.cfg` as `visiblewilds` (the
+  density; an old file's lone `visiblewilds=1` reads as Normal), `wildsil` and `wildaggro`. All off by default: nothing changes.
+- An Old 3DS shows at most 2 at once whatever the density; a New 3DS up to 6. Four of FireRed's 16 object events always stay free
+  and wilds are removed when fewer are, so the map's own NPCs are never displaced.
+- The battle starts with the Pokémon that was seen (species, level, gender, nature, shininess, or the roamer); Repel works as for
+  a step encounter. Aggressive ones notice you within 4 tiles ("!"), then chase; a much stronger lead makes them flee instead. Calm
+  ones only flee from a much stronger lead.
+- The game's step encounters give way only where wilds can really appear; everywhere else (Safari Zone, Randomlocke, maps with no
+  picture for any species, no free object events) they stay. Sprites are the pack's HeartGold follower set; silhouettes are drawn by
+  one GPU combiner pass, also forced in the Pokémon Tower without the Silph Scope.
+
+Checked: `3ds_port/tests/wilds_core_test.c`, `wilds_settings_test.c`, `settings_test.c`, `poketouch_options_test.c`,
+`battle_gen4_test.c` (in `verify-host`), the render test's measured fit of the three rows in EN/ES/DE, `tools/test_option_labels.py`;
+the recipe chain applies from a pristine tree and the three game files compile with the game's flags. NEEDS VALIDATION in Azahar and
+on a console (see section 8 of the design document for the list).
+
 ## Not added, and why
 
 - ZL/ZR for the turbo: the port removed it on purpose (`3ds_fast_forward.h`).

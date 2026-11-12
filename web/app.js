@@ -175,8 +175,9 @@ function finish(pak, info) {
       `Neue Leute auf der Karte: ${info.gen4.npcs} von 74`));
     if (info.gen4.backgrounds) lines.push(L(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`,
       `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`, `Kampfhintergründe: ${info.gen4.backgrounds} der 20 aus Feuerrot`));
-    if (info.gen4.followers) lines.push(L(`Pokémon that walk behind you: ${info.gen4.followers}`, `Pokémon que andan tras de ti: ${info.gen4.followers}`,
-      `Pokémon, die dir folgen: ${info.gen4.followers}`));
+    if (info.gen4.followers) lines.push(L(`Pokémon overworld sprites (followers & wild): ${info.gen4.followers}`,
+      `Sprites de Pokémon en el mapa (acompañante y salvajes): ${info.gen4.followers}`,
+      `Pokémon-Karten-Sprites (Begleiter & wilde Pokémon): ${info.gen4.followers}`));
     if (info.gen4.hd) lines.push(L(`HD battle scenes: ${info.gen4.hd} files`, `Escenas de combate HD: ${info.gen4.hd} archivos`,
       `HD-Kampfszenen: ${info.gen4.hd} Dateien`));
     if (info.gen4.looks) lines.push(L(`More characters to be: ${info.gen4.looks} looks`, `Más personajes: ${info.gen4.looks} aspectos`,

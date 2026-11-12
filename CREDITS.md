@@ -79,3 +79,10 @@ do not expand the license on external game code.
 - **poooooby (Wilds of Hoenn)** — design reference for the visible wild Pokémon
   option (spawning outside the screen, pacing, and fleeing/approaching reactions).
   MIT; no code or assets copied. See NOTICE.md. Its PMDCollab art (CC BY-NC) is not used.
+- **mcl5500 / Sh3ld0r (PR #83)** — design and ideas for the visible wild Pokémon
+  (silhouette display, the "!" alert, water wilds, roamers, the Pokémon kept into the
+  battle, configurable aggression, the WILD POKEMON / WILD DISPLAY / AGGRESSIVE options),
+  contributed under MIT with disclosed AI assistance; the final system is a rewrite that
+  imports none of the PR's code. Concept inspired by **Wilds of Kanto Revival** by
+  **poooooby**, a fork of **Wilds of Kanto** by **YoDrehDenSwagAuf** and collaborators for
+  `Gen1Recomp`.

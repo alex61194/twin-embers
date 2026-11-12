@@ -2284,7 +2284,7 @@
   },
   {
    "path": "CREDITS.md",
-   "sha256": "9e3970f704552815db4b4e437837996d4db2f6143c7782e365b0cc1ae22aea75",
+   "sha256": "f2faf54334a23e9381fcb040e8632cfa135fb197ed113ae25dcd16e6795b9fad",
    "review_status": "reviewed",
    "credit": "Original rightsholders/authors identified in the preserved legal notice",
    "license": "Exact component scope and original notice text; no expanded grant",
@@ -2426,7 +2426,7 @@
   },
   {
    "path": "builder/firered3ds_builder/cli.py",
-   "sha256": "dbb6d18fec01066ceea53481dfcc3ba12716692735e38a6b6f40e61ecccd30cd",
+   "sha256": "64444098346438ca61d9a00fc256ad9de77f3a76edc854edaac5295626f43384",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2484,7 +2484,7 @@
    "credit": "alex61194 (original source-only offline GUI with disclosed AI assistance)",
    "license": "MIT for owned GUI contributions only; inherited game content and dependencies excluded",
    "basis": "Reviewed original Tk/ttk presentation, synthetic GUI regressions and Windows builder-only packaging; no game assets, ROM, pak or game binary; CLI, SHA-1, ABI, file safety and binary release gate unchanged.",
-   "sha256": "4baae344924bc73793db4c1e9e8dfa830e81fc157b825054b4e8e50adf1883b8",
+   "sha256": "4bfd64b014bf87e8cd5368de9fa76959fa5dc2205bdc94d4e0b0c59e12a7abb1",
    "modified_for_distribution": true,
    "gui_review": "Remove the standalone Verify ROM GUI action and shortcut; automatic ROM validation, CLI, pack safety and data/ABI remain unchanged",
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
@@ -3082,7 +3082,7 @@
    "review_status": "reviewed",
    "credit": "alex61194 (original builder UI and synthetic tests with AI assistance)",
    "license": "MIT for owned contributions; external game and runtime rights unchanged",
-   "sha256": "7467d2afd0ec3c797ccb11901e4e9c4de61a6c05b4d63b4cf3ddecc4747a65d8",
+   "sha256": "8f2378a170bc2cd674330c7fcf0bc1a616177f885fc9c5987483dc83ed45646e",
    "basis": "Reviewed original Tk/ttk presentation, synthetic GUI regressions and Windows builder-only packaging; no game assets, ROM, pak or game binary; CLI, SHA-1, ABI, file safety and binary release gate unchanged.",
    "gui_review": "Remove the standalone Verify ROM GUI action and shortcut; automatic ROM validation, CLI, pack safety and data/ABI remain unchanged",
    "modified_for_distribution": true,
@@ -3259,7 +3259,7 @@
   },
   {
    "path": "docs/QUALITY-OF-LIFE.md",
-   "sha256": "e98cd1391fb38c33552b59df3a73900aac26292143a3e23008d6d34a58938dad",
+   "sha256": "a883c5959f09dadb0f43c6c3291c36830ada7d79d166411c3101eb3e03ca2f1a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3568,7 +3568,7 @@
   },
   {
    "path": "docs/overworld-wilds-research.md",
-   "sha256": "a026533382440b23d5ebc01a1f699cd4df20ecb72c8e148c2a4d9e4d43ef2f83",
+   "sha256": "9798a6ed71d5b0605648c5cd5015dd99b3c6143d72ef76aa430227607340ca65",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7090,7 +7090,7 @@
   },
   {
    "path": "web/app.js",
-   "sha256": "4c8a71fa0ef5d65a19df6d41cde20600c8c70e95c1faddbaac00ab2995e9b246",
+   "sha256": "099e910e5bf8252e1708955aa544e6851e8a0b5c333caa8b43507fe6238a8bb0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7098,7 +7098,7 @@
   },
   {
    "path": "web/de.html",
-   "sha256": "030e7f5ac48c7c2396c25ccc95187b802750e2496f935938562404386b903b94",
+   "sha256": "3c9ea9440f157b071df2b8fb403bdb7e4dbd923f77298d0e4a649382f730ecce",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7106,7 +7106,7 @@
   },
   {
    "path": "web/es.html",
-   "sha256": "a9a8303899d23941eeed6e6337852c13ce7ca9cbcec99924fcde4f278388e699",
+   "sha256": "827fc04914c8de221329d5875b8b79619eb4d39d92d6e64d18e08199d42cc510",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7114,7 +7114,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "6a678740f4e733c3df83bd5d920cfb1b2cbbe30e44d5be51aeb16193986e1543",
+   "sha256": "6b863f1492e89ff683066882265d5fb4800ea330e65d6499f7044876f4496bf5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
