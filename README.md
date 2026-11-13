@@ -1,5 +1,9 @@
 <h1 align="center"><img src="docs/media/twin-embers-banner.png" width="600" alt="Twin Embers"></h1>
 
+<p align="center"><a href="https://alex61194.github.io/twin-embers/"><b>&#9654;&nbsp; Official website and web Builder: alex61194.github.io/twin-embers</b></a></p>
+
+<p align="center"><a href="https://github.com/alex61194/twin-embers/releases">Releases</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="docs/">Documentation</a> · <a href="docs/BUILDING.md">Build from source</a> · <a href="https://github.com/alex61194/twin-embers/issues">Report a bug</a></p>
+
 <p align="center"><sub>Logo by <b>@xsh3d0r_</b> (Discord)</sub></p>
 
 Pokémon FireRed, rebuilt to use both screens of a Nintendo 3DS.
@@ -17,12 +21,23 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Platform:** Nintendo 3DS / 2DS family through Homebrew Launcher, or from the HOME Menu with the optional shortcut (Luma3DS).
 - **Game:** Pokémon FireRed, USA, Revision 0, Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game), or Pokémon Feuerrote Edition, Germany, Revision 0 (the German game). Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
-- **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.5.2). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, optional visible wild Pokémon, Nuzlocke and Randomlocke options, turbo, and a save file that lives next to the game.
+- **Status:** alpha (v0.6.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
 
 ---
 
 ## What's new
+
+**In v0.6.0:**
+
+- **Visible wild Pokémon (optional, off by default).** OPTIONS, Graphics, page Wilds: wild Pokémon walk in the grass and on the water of the map, up to 2 on an Old 3DS and up to 6 on a New 3DS, with a silhouette option and a setting for how many notice you and chase. The battle starts with the one you saw. Ideas from PR #83 by mcl5500/Sh3ld0r and the design of Wilds of Hoenn by poooooby, both credited. The owner played it on real hardware and its general operation is correct; the individual edge cases are still unverified. Details in [QUALITY-OF-LIFE.md](docs/QUALITY-OF-LIFE.md).
+- **Nuzlocke v2 and Randomlocke.** One catch per area, DUPLICATES and SHINY clauses, LEVEL CAPS, and wild and trainer Pokémon of random species fixed by your Trainer ID. Also **REUSABLE TMS**, **FREE HMS** and **REMEMBER** (the move relearner) in the party menu.
+- **A new lower-screen look.** OPTIONS in sections, HOME, the Bag, SAVE, the PC, the Pokédex, the Trainer Card, the Summary and the battle menus are redrawn in the ember look, with a native mail screen and Easy Chat on the lower screen.
+- **A better HOME map.** A world map built from your own Region Map art, with zoom, drag and a ribbon that cycles Kanto and the Sevii Islands; Fly works across them.
+- **Smoother.** No stall at doors from the day and night camera search, a cheaper lower screen and a HOME map that no longer slows the game when you change region.
+- **Fixes:** people and Pokémon that share a picture on screen (the Bird Keepers of Route 18) no longer borrow each other's frame (tested on a computer only, not yet in the game), a battle animation address, a German recipe alignment fix by mcl5500 (PR #84), and the evolution scene.
+
+The full list, with the known issues, is in the [CHANGELOG](CHANGELOG.md).
 
 **In v0.5.2:**
 
@@ -36,7 +51,6 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 - **Twin Embers in German.** `twinembers-de.3dsx` is the German game, built from your own Pokémon Feuerrote Edition (Germany), with the lower screen's words translated (thanks to mcl5500). The web Builder has an EN/ES/DE selector.
 - **A Pokémon that follows you.** The COMPANION option makes your first Pokémon walk behind you on the map, as in HeartGold (all 386, a new Builder option), or lets you play as it.
-- **Visible wild Pokémon (optional, off by default).** OPTIONS, Graphics, page Wilds: wild Pokémon walk in the grass and on the water of the map, up to 2 on an Old 3DS and up to 6 on a New 3DS, with a silhouette option and a setting for how many chase you. The battle starts with the one you saw. Details in [QUALITY-OF-LIFE.md](docs/QUALITY-OF-LIFE.md).
 - **Quick ball.** In a wild battle a fourth button throws a ball at once; its arrows, a swipe or SELECT change the ball. The battle Bag shows your items only, with BERRIES for the Berry Pouch.
 - **REPEL AGAIN**, an option that offers another Repel when one wears off, and **TMs and HMs in one press** when a Pokémon already knows four moves.
 - **Battle transitions as FireRed draws them** (the cave's wipe, the big Poké Ball, the swirl, the slices, the ripples), and still move backgrounds such as Solar Beam's fill the screen.
@@ -120,7 +134,7 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 ### Settings
 
-OPTIONS has two pages. The first holds FireRed's own settings plus a switch for an on-screen FPS counter; the second holds the port's own: type matchups and move details on the battle cards, the time of day and the rising EMBERS.
+OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the rising EMBERS, the optional looks, the visible wild Pokémon and the Nuzlocke rules.
 
 <img src="docs/media/17-options-1.png" width="300" alt="Options, page 1"> <img src="docs/media/18-options-2.png" width="300" alt="Options, page 2">
 
@@ -134,9 +148,12 @@ Setup is a one-time job of about five minutes. You need three things on the SD c
 
 **1. Get the downloads** from the [latest release](https://github.com/alex61194/twin-embers/releases/latest). They are separate files:
 
-- `twinembers.3dsx`, the game itself, or `twinembers-es.3dsx` for the Spanish game (Spanish ROM). The HOME Menu shortcut of v0.5.0 starts either name (the newer one when both are on the card).
-- `TwinEmbersBuilder.exe`, the Windows tool.
+- `twinembers.3dsx`, the game itself (English, from the USA ROM), `twinembers-es.3dsx` for the Spanish game (Spanish ROM) or `twinembers-de.3dsx` for the German game (German ROM). The HOME Menu shortcut starts whichever is on the card (the newest when several are).
+- `TwinEmbersBuilder.exe`, the Windows tool that makes `twinembers.pak` from your own ROM.
 - `TwinEmbers-Forwarder.cia`, optional: a HOME Menu shortcut (see below).
+- `SHA256SUMS.txt`, the checksums of the files above; compare them before running anything.
+
+No ROM, game data or `twinembers.pak` is distributed: you build the pack yourself, with the Builder, from your own cartridge dump.
 
 **2. Make the data pack.** Put the SD card in your PC and start the Builder. Choose your FireRed ROM, press **SD folder…** and pick the *root* of the card, then press **Build Data Pack**. The Builder checks the ROM, writes `3ds/twinembers/twinembers.pak` and verifies what it wrote. It needs no internet and no administrator rights.
 
@@ -157,7 +174,7 @@ SD:/3ds/
 
 ### HOME Menu shortcut (optional)
 
-`TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx` or `twinembers-es.3dsx` (the newer one when both are there), so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
+`TwinEmbers-Forwarder.cia` puts a **Twin Embers** icon on the HOME Menu. Install it once with FBI or another CIA installer. It contains no game: it starts `SD:/3ds/twinembers/twinembers.3dsx`, `twinembers-es.3dsx` or `twinembers-de.3dsx` (the newest when several are there), so updating the game only ever means replacing the `.3dsx`. It needs Luma3DS; on a New 3DS it runs the game at 804 MHz with the L2 cache, and on an Old 3DS in the default mode. The Homebrew Launcher entry keeps working as before.
 
 ### Install from the 3DS itself (optional)
 
@@ -172,13 +189,13 @@ If Windows SmartScreen warns about the Builder, compare its SHA-256 with the one
 
 | | |
 |---|---|
-| | English game (`twinembers.3dsx`) | Spanish game (`twinembers-es.3dsx`) |
-|---|---|---|
-| Game | Pokémon FireRed, USA, **Revision 0** | Pokémon Edición Rojo Fuego, Spain, **Revision 0** |
-| Size | 16,777,216 bytes | 16,777,216 bytes |
-| SHA-1 | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` | `ab8f6bfe0ccdaf41188cd015c8c74c314d02296a` |
+| | English game (`twinembers.3dsx`) | Spanish game (`twinembers-es.3dsx`) | German game (`twinembers-de.3dsx`) |
+|---|---|---|---|
+| Game | Pokémon FireRed, USA, **Revision 0** | Pokémon Edición Rojo Fuego, Spain, **Revision 0** | Pokémon Feuerrote Edition, Germany, **Revision 0** |
+| Size | 16,777,216 bytes | 16,777,216 bytes | 16,777,216 bytes |
+| SHA-1 | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` | `ab8f6bfe0ccdaf41188cd015c8c74c314d02296a` | `18a3758ceeef2c77b315144be2c3910d6f1f69fe` |
 
-Revision 1, LeafGreen, other languages, modified ROMs and trimmed dumps are refused. No ROM links are provided here or anywhere in this project.
+Revision 1, LeafGreen, other languages (only English, Spanish and German), modified ROMs and trimmed dumps are refused. No ROM links are provided here or anywhere in this project.
 
 ### Coming from an older version
 
@@ -206,8 +223,8 @@ Turbo works while exploring and in battle. It skips drawing frames, not game log
 
 - **Not listed in Homebrew Launcher.** The file must be exactly `SD:/3ds/twinembers/twinembers.3dsx`.
 - **"Data pack missing."** In the Builder, press **SD folder…** and choose the root of the card, not the `3ds` folder.
-- **Pack does not match the engine.** Rebuild it with the Builder from the same release as the `.3dsx`, and from the ROM of the same language: the Spanish ROM's pack only works with `twinembers-es.3dsx`, the USA ROM's with `twinembers.3dsx`.
-- **"Unsupported ROM."** Check it is FireRed USA or Rojo Fuego Spain, Revision 0, against the SHA-1s above.
+- **Pack does not match the engine.** Rebuild it with the Builder from the same release as the `.3dsx`, and from the ROM of the same language: the Spanish ROM's pack only works with `twinembers-es.3dsx`, the German ROM's with `twinembers-de.3dsx` and the USA ROM's with `twinembers.3dsx`.
+- **"Unsupported ROM."** Check it is FireRed USA, Rojo Fuego Spain or Feuerrote Edition Germany, Revision 0, against the SHA-1s above.
 - **Builder cannot write.** Free at least 32 MiB and check the card's write-protect switch.
 - **No sound.** Look for `SD:/3ds/dspfirm.cdc`.
 - **Save error.** The message stays on the lower screen until you press A. Leave the card alone, keep your backup (`twinembers.sav.bak`), and report it.
