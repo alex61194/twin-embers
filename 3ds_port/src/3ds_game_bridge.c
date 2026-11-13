@@ -907,3 +907,10 @@ int CtrWilds_Max(void)
 {
     return CtrPlatform_IsNew3DS() ? 6 : 2;
 }
+
+/* One summary line of the visible wilds' spawn counters (3ds_wilds_core.h, CtrWildsCore_StatsLine), written when the map changes and
+ * every 30 s on one map. CtrLog_Write does nothing unless port.log is on (an Old 3DS build, or sdmc:/3ds/twinembers/debug.txt). */
+void CtrWilds_Log(const char *line)
+{
+    CtrLog_Write(CTR_LOG_GAME, "%s", line);
+}

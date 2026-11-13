@@ -49,6 +49,32 @@ class WildsRecipeTest(unittest.TestCase):
         # The first version removed anything with a wild's local id: that could take a legitimate object event.
         self.assertNotIn('CTR_IS_WILD_LOCALID(gObjectEvents[i].localId)', self.move)
 
+    def test_each_failed_attempt_says_why(self):
+        body = self.move[self.move.index('static void CtrWild_Spawn('):]
+        body = body[:body.index('static u8 CtrWild_DirTo')]
+        for reason in ('CTRW_FAIL_NOCELL', 'CTRW_FAIL_ROLL', 'CTRW_FAIL_NOOBJ'):
+            self.assertRegex(body, r'CtrWildsCore_NoteFail\(&gCtrWilds, ' + reason + r'\);\n\s+CtrWildsCore_SpawnDone\(&gCtrWilds, FALSE\);')
+        self.assertEqual(body.count('CtrWildsCore_SpawnDone('), 4)      # three failures and the success
+
+    def test_summary_is_logged_once_per_map_and_every_30_seconds(self):
+        body = self.move[self.move.index('static void CtrWild_NewMap('):]
+        body = body[:body.index('static void CtrWilds_Update(')]
+        # the map that is left is summed up before the counters are reset, and only if it had attempts
+        self.assertLess(body.index('CtrWild_LogStats()'), body.index('CtrWildsCore_MapChanged'))
+        self.assertIn('gCtrWilds.stats.attempts != 0', body)
+        self.assertIn('CtrWildsCore_StatsDue(&gCtrWilds)', self.move)
+        # nothing is written per frame: the periodic check sits in the 30-frame tick
+        tick = self.move[self.move.index('shed = CtrWildsCore_Tick('):]
+        self.assertLess(tick.index('if (shed >= 0)'), tick.index('CtrWildsCore_StatsDue'))
+        self.assertLess(tick.index('CtrWildsCore_StatsDue'), tick.index('CtrWildsCore_SpawnDue'))
+        self.assertIn('extern void CtrWilds_Log(const char *line);', self.move)
+
+    def test_log_line_buffer_is_local_not_static(self):
+        body = self.move[self.move.index('static void CtrWild_LogStats(void)'):]
+        body = body[:body.index('// A new map')]
+        self.assertIn('char line[112];', body)
+        self.assertEqual(body.count('static'), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
