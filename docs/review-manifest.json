@@ -2275,6 +2275,14 @@
    "source_commit": "4c2f244c1881fae2f7ba2629d53aec27a95ee56a"
   },
   {
+   "path": "CHANGELOG.md",
+   "sha256": "3b8c2761e6ee97071077d351ea62ebf4cfa70aadcd26c1c53079f2c438429f83",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "CONTRIBUTING.md",
    "sha256": "eafb218a3880d6f6d729efdc00d68da88488957ada39e6a711ef24cf7ac6ba97",
    "review_status": "reviewed",
