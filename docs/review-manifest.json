@@ -54,7 +54,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "02365d530119acdaf9e411d2ef016add8749ce63c17f416a23675e05fa7785e9",
+   "sha256": "f29ac99ff91463098e407766c1b59062843f41eb2dcb2c99cee11c19f0d03fa0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
