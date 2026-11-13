@@ -181,13 +181,20 @@ typedef struct {
     char desc[160];
 } CtrPokeTouchLearn;
 
-/* The move relearner's list (REMEMBER, the Two Island man), drawn by the port (3ds_field_relearn_impl.h), a remote for FireRed's
- * list: the Pokemon, a window of PT_RL_ROWS rows of the list (the moves it can remember, then CANCEL), the cursor and the
- * selected move's numbers and description. A row is walked to with the list's own UP / DOWN and taken with its A; BACK is its B. */
+/* The move relearner (REMEMBER, the Two Island man), drawn by the port (3ds_field_relearn_impl.h), a remote for FireRed's
+ * screen: the list (the Pokemon, a window of PT_RL_ROWS rows of the list: the moves it can remember, then CANCEL, the cursor and the
+ * selected move's numbers and description), and over the dimmed list what FireRed has up besides it, in the Bag's look: a question with
+ * YES and NO, or a message. A row is walked to with the list's own UP / DOWN and taken with its A; BACK is its B. */
 #define PT_RL_ROWS 5
-enum { PT_RL_HIT_ROW = 200, PT_RL_HIT_UP = 230, PT_RL_HIT_DOWN = 231 };
+enum { PT_RL_HIT_ROW = 200, PT_RL_HIT_UP = 230, PT_RL_HIT_DOWN = 231, PT_RL_HIT_YES = 232, PT_RL_HIT_NO = 233, PT_RL_HIT_MESSAGE = 234 };
+/* What the screen shows: the list; a message over it; a question with YES / NO over it; nothing but the backdrop (being set up). */
+enum { PT_RL_PANEL_LIST = 0, PT_RL_PANEL_MESSAGE, PT_RL_PANEL_YESNO, PT_RL_PANEL_BLANK };
 typedef struct {
     uint8_t on;
+    uint8_t panel;                  /* PT_RL_PANEL_* */
+    uint8_t menuCursor;             /* YES (0) or NO (1) while the panel is a question */
+    uint8_t tap;                    /* the message waits for A: a tap on it goes on (and says so) */
+    char message[200];              /* the question or message FireRed has printed */
     int8_t cursor;                  /* list index of the selected row (count: CANCEL) */
     uint8_t count;                  /* the moves; the list has one more row, CANCEL */
     uint8_t first;                  /* list index of the first row shown */
