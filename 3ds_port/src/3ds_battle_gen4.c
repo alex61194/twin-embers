@@ -1016,6 +1016,12 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
         out->bank = ReflectionBank(npc, out->slot, unfaded + 256 + (unsigned)(shows - 2) % 16 * 16,
                                    unfaded + 256 + (attr2 >> 12) * 16);
     out->tiles = npc->entry + NPC_HEADER + frame * side * side * 32;
+    /* Each frame has its own tiles in the slot: the compositor checks a cached tile once a screen frame, so two object
+     * events with this picture (three Bird Keepers on Route 18) that showed different frames at one address were both
+     * drawn with the first one's: a walker without steps, a person looking where another one looks. */
+    out->first = frame * side * side;
+    if (out->first + side * side > CTR_GEN4_SLOT_TILES)
+        out->first = 0;             /* cannot happen with the sizes NpcLoad accepts; then as before, one frame a slot */
     out->side = side;
     out->pivotX = (float)side * 4.0f;
     out->pivotY = (float)side * 8.0f - (float)height / 2.0f;

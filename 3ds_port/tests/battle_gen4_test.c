@@ -641,6 +641,28 @@ int main(void)
 
             assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 16, &again));
             assert(again.slot == person.slot && again.tiles[0] == 0x30 && again.pivotY == 24.0f);
+            /* Two people with one picture showing different frames in the same screen frame: the same slot, but each
+             * frame at its own place in it, so the compositor's tile cache keeps them apart; both count from the
+             * entry's first frame. */
+            assert(person.first == 4 * 16 && again.first == 0);
+            assert(person.tiles - person.first * 32 == again.tiles - again.first * 32);
+        }
+        /* The four directions and their steps (FireRed's images 0-8: south, north, west, the east being the west one
+         * flipped by the OBJ): each its own picture and its own place, none over another, all inside the slot. A
+         * trainer looking north (image 1) is never drawn with a neighbour's west one (image 2). */
+        {
+            CtrGen4Obj dir[9];
+
+            for (unsigned f = 0; f < 9; ++f)
+            {
+                sNpcFrame = f;
+                assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &dir[f]));
+                assert(dir[f].slot == person.slot && dir[f].tiles[0] == 0x30 + f && dir[f].first == f * 16);
+                assert(dir[f].first + dir[f].side * dir[f].side <= CTR_GEN4_SLOT_TILES);
+                for (unsigned g = 0; g < f; ++g)
+                    assert(dir[g].first + 16 <= dir[f].first);
+            }
+            sNpcFrame = 0;
             assert(sNpcPaletteSets == 1);
         }
         /* A silhouette (a wild Pokemon of the overworld): the answer carries the flag and the object says so, for the person and for its

@@ -92,11 +92,17 @@ int CtrGen4_BackSprite(unsigned battler, unsigned *backPic, unsigned *frame, con
 #define CTR_GEN4_SLOTS 12
 #define CTR_GEN4_TRAINER_SLOT(battler) (4 + (battler))
 #define CTR_GEN4_BACK_SLOT(battler) (8 + (battler))
+/* Tiles of a slot's own address space in the compositor's tile cache: the largest pack entry whole (a person's or a
+ * follower's 32 frames of 64x64 at most), so every frame of an entry has tiles of its own there. */
+#define CTR_GEN4_SLOT_TILES 2048u
 
 /* Compositor side. For an OAM entry in battle, the HeartGold picture it stands for. */
 typedef struct CtrGen4Obj {
     unsigned slot;                  /* 0-11: which picture (CTR_GEN4_SLOTS) */
     const uint8_t *tiles;           /* side x side 4bpp tiles, row by row */
+    unsigned first;                 /* where those tiles stand in the slot's address space, in tiles: 0 in battle; a field
+                                     * NPC's frame * side * side, so two people with the same picture who show different
+                                     * frames in one screen frame do not share cached tiles (CtrNpc_Match) */
     unsigned side;                  /* tiles to a row and a column: 10 (CTR_GEN4_TILES), 13 for a back */
     float pivotX, pivotY;           /* the picture's point drawn on the 64x64 box's centre */
     float scale;                    /* GBA pixels per picture pixel */
