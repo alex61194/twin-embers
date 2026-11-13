@@ -568,3 +568,218 @@ footer a { color: #fff; font-weight: 600; }
   html { scroll-behavior: auto; }
   .brand .ball, .features li, .gallery .shot, .btn, .btn::before, .btn svg { transition: none; }
 }
+
+/* ---- Ascuas 2: the look of the game's own lower screen (v0.6.0). Cream raised cards with a light inner line, the
+   selected row's orange for headers and main buttons, the blue of BACK for the secondary ones, green switches and
+   bars like the game's, and the message box's blue double frame for notes. Same structure, one font. ---- */
+:root {
+  --cream: #fff6e2;
+  --cream-edge: #ffffff;
+  --row: #fdeccb;
+  --sel-top: #ffb24d;
+  --sel: #f57f22;
+  --sel-low: #d9531a;
+  --sel-edge: #8a3208;
+  --back-top: #7fa0ee;
+  --back: #4f72cf;
+  --back-low: #3552a6;
+  --on-top: #6fdc8b;
+  --on: #35b25c;
+  --box-edge: #4763b3;
+  --box-inner: #b9c9f2;
+}
+
+/* Cards: cream, slate outline, a white line inside it (the game's raised pieces). */
+.card {
+  background: var(--cream);
+  box-shadow: inset 0 0 0 3px var(--cream-edge), 0 8px 0 rgba(0, 0, 0, 0.3), 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+/* Their header is the selected row: orange, white text, the marker arrow before the icon. */
+.card > h2 {
+  background: linear-gradient(180deg, var(--sel-top) 0%, var(--sel) 52%, var(--sel-low) 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.35), inset 0 -4px 0 rgba(120, 40, 0, 0.22);
+  text-shadow: 0 2px 0 rgba(120, 40, 0, 0.5);
+  border-bottom: 3px solid var(--slate);
+}
+.card > h2::before {
+  content: ""; flex: none; width: 0; height: 0;
+  border-style: solid; border-width: 9px 0 9px 13px; border-color: transparent transparent transparent #fff;
+  filter: drop-shadow(0 2px 0 rgba(120, 40, 0, 0.45));
+}
+.card > h2 .icon { box-shadow: 0 2px 0 rgba(120, 40, 0, 0.35); }
+
+/* Main buttons: the selected row. No Poke Ball: the marker arrow, which nudges forward on hover. */
+.btn {
+  --face: linear-gradient(180deg, var(--sel-top) 0%, var(--sel) 55%, var(--sel-low) 100%);
+  border-radius: 14px;
+  text-shadow: 0 2px 0 rgba(120, 40, 0, 0.45);
+}
+.btn:not(.secondary):not(.x):not(.kofi)::before {
+  width: 0; height: 0; border-radius: 0; background: none; box-shadow: none;
+  border-style: solid; border-width: 7px 0 7px 10px; border-color: transparent transparent transparent #fff;
+  transition: transform 0.15s ease;
+}
+.btn.big::before { width: 0; height: 0; border-width: 8px 0 8px 12px; }
+.btn:not(.secondary):not(.x):not(.kofi):hover { --face: linear-gradient(180deg, #ffc266 0%, #ff8f33 55%, #e5611f 100%); }
+.btn:hover::before { transform: translateX(3px); }
+/* Secondary buttons: the blue of BACK. */
+.btn.secondary {
+  --face: linear-gradient(180deg, var(--back-top) 0%, var(--back) 55%, var(--back-low) 100%);
+  color: #fff; text-shadow: 0 2px 0 rgba(20, 30, 80, 0.5);
+}
+.btn.secondary:hover { --face: linear-gradient(180deg, #9db8f6 0%, #6285dc 55%, #4163bb 100%); color: #fff; }
+.btn.kofi { border-radius: 14px; text-shadow: none; }
+.btn.x { text-shadow: none; }
+.btn[disabled], .btn[aria-disabled="true"] { --face: linear-gradient(180deg, #e4e4ea 0%, #c9cbd6 100%); text-shadow: none; }
+
+/* Switches and bars: the green of the game. */
+.switch input:checked + .track { background: linear-gradient(180deg, var(--on-top), var(--on)); }
+.progress { background: #3a3f55; box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.3); }
+.progress .fill { background: linear-gradient(180deg, var(--on-top), var(--on)); box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.35); }
+
+/* Value chips and step numbers. */
+.pill { background: var(--row); border-radius: 10px; }
+.step { border-top: 2px solid rgba(64, 72, 104, 0.14); }
+.step .num {
+  background: linear-gradient(180deg, var(--sel-top), var(--sel-low)); border-radius: 12px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 3px 0 var(--slate); text-shadow: 0 1px 0 rgba(120, 40, 0, 0.5);
+}
+
+/* Notes, results and errors: the message box (white, blue double frame). */
+.note, .result, .error {
+  background: #fff; border: 3px solid var(--box-edge); border-radius: 12px;
+  box-shadow: inset 0 0 0 2px var(--box-inner), 0 3px 0 rgba(34, 53, 111, 0.35);
+  color: var(--ink);
+}
+.result { background: #f1fbf4; }
+.error {
+  background: #fff1ef; color: #6e1515; border-color: #a33a2e;
+  box-shadow: inset 0 0 0 2px #f1c1ba, 0 3px 0 rgba(110, 21, 21, 0.3);
+}
+
+/* Feature cards: the option rows (cream, a colour stripe, slate outline). */
+.features li {
+  background: var(--cream); border: 2px solid var(--slate); border-radius: 14px;
+  box-shadow: inset 7px 0 0 var(--t), inset 0 0 0 2px var(--cream-edge), 0 5px 0 rgba(0, 0, 0, 0.3);
+  padding-left: 20px;
+}
+.features .type { border-radius: 8px; border: 2px solid rgba(0, 0, 0, 0.18); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3); }
+
+/* Gallery groups: a selected tab. Captures: a cream frame like a card. */
+.gallery-group {
+  background: linear-gradient(180deg, var(--sel-top) 0%, var(--sel) 55%, var(--sel-low) 100%);
+  border: 2px solid var(--slate); border-radius: 12px; padding: 4px 14px 4px 10px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 3px 0 var(--slate);
+  text-shadow: 0 1px 0 rgba(120, 40, 0, 0.5);
+}
+.gallery-group::before {
+  width: 0; height: 0; border-radius: 0; background: none; box-shadow: none;
+  border-style: solid; border-width: 6px 0 6px 9px; border-color: transparent transparent transparent #fff;
+}
+.gallery .shot {
+  background: var(--cream); border: 2px solid var(--slate); padding: 5px;
+  box-shadow: inset 0 0 0 2px var(--cream-edge), 0 4px 0 rgba(0, 0, 0, 0.3);
+}
+.gallery .shot:hover { box-shadow: inset 0 0 0 2px var(--cream-edge), 0 8px 0 rgba(0, 0, 0, 0.28), 0 0 0 3px var(--sel); }
+.lightbox { background: var(--cream); box-shadow: inset 0 0 0 3px var(--cream-edge); }
+.lightbox .close {
+  border-radius: 10px; background: linear-gradient(180deg, var(--back-top), var(--back-low)); border: 2px solid var(--slate);
+}
+.lightbox .close:hover { background: linear-gradient(180deg, var(--sel-top), var(--sel-low)); }
+
+/* QR panels and tags. */
+.qr-panel { background: var(--row); box-shadow: inset 0 0 0 2px var(--cream-edge); }
+.qr-box { border: 2px solid var(--slate); padding: 6px; }
+.qr-tag { background: linear-gradient(180deg, var(--sel-top), var(--sel-low)); border: 2px solid var(--slate); border-radius: 8px; }
+
+/* Top bar: the ember edge instead of a red line; a hovered link is one of the column buttons; the language of the
+   page is the selected segment. */
+.topbar { border-bottom: 3px solid var(--sel); box-shadow: 0 2px 0 var(--sel-edge), 0 6px 18px rgba(0, 0, 0, 0.4); }
+.topbar .links a { border-radius: 10px; border: 2px solid transparent; }
+.topbar .links a:hover, .topbar .links a:focus-visible { background: var(--cream); color: var(--ink); border-color: var(--slate); }
+.topbar .lang-switch { border-radius: 12px; background: var(--row); border: 2px solid var(--slate); }
+.topbar .lang-switch a { border-radius: 8px; color: var(--ink); border: 0; }
+.topbar .lang-switch a:hover { background: rgba(245, 127, 34, 0.25); color: var(--ink); border: 0; }
+.topbar .lang-switch a[aria-current="page"] {
+  background: linear-gradient(180deg, var(--sel-top), var(--sel-low)); color: #fff; text-shadow: 0 1px 0 rgba(120, 40, 0, 0.5);
+}
+.topbar .x-link, .topbar .x-link:hover { border-radius: 10px; background: #000; border-color: rgba(255, 255, 255, 0.25); }
+
+.card a:not(.btn) { color: var(--sel-low); }
+.follow-panel { border-radius: 14px; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12); }
+
+/* The gallery: one row a group that slides sideways (35 captures in a 3-column grid made the page three screens of
+   pictures). A capture snaps into place; the bar under the row is the ember's orange. */
+.gallery {
+  display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(220px, 27%);
+  gap: 14px; overflow-x: auto; overscroll-behavior-x: contain;
+  padding: 8px 6px 14px; margin: 0 -6px;
+  scroll-snap-type: x proximity; scroll-padding-left: 6px;
+  scrollbar-width: thin; scrollbar-color: var(--sel) var(--row);
+}
+.gallery::-webkit-scrollbar { height: 12px; }
+.gallery::-webkit-scrollbar-track { background: var(--row); border: 2px solid var(--slate); border-radius: 999px; }
+.gallery::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--sel-top), var(--sel-low)); border: 2px solid var(--slate); border-radius: 999px;
+}
+.gallery figure { scroll-snap-align: start; }
+.gallery figcaption { min-height: 2.6em; }
+.gallery-group { margin-top: 14px; }
+@media (max-width: 760px) { .gallery { grid-template-columns: none; grid-auto-columns: 46%; } }
+@media (max-width: 480px) { .gallery { grid-auto-columns: 68%; } }
+
+/* The Builder's options: each one a row of the game's OPTIONS (cream, slate outline, the switch centred on its first
+   line); a row that is on gets the green stripe. */
+.switch {
+  align-items: center; gap: 14px; margin: 8px 0; padding: 10px 14px 10px 16px;
+  background: var(--row); border: 2px solid var(--slate); border-radius: 14px;
+  box-shadow: inset 0 0 0 2px var(--cream-edge), 0 3px 0 rgba(64, 72, 104, 0.35);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.switch:hover { transform: translateY(-1px); background: #fff3d8; }
+.switch:has(input:checked) {
+  background: #fffaf0;
+  box-shadow: inset 6px 0 0 var(--on), inset 0 0 0 2px var(--cream-edge), 0 3px 0 rgba(64, 72, 104, 0.35);
+}
+.switch:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 2px; }
+.switch:hover .track { box-shadow: inset 0 2px 3px rgba(64, 72, 104, 0.35); }
+.switch .label { flex: 1; min-width: 0; font-weight: 600; }
+.switch .label small { font-weight: 400; margin-top: 2px; }
+
+/* The hero: the banner breathes like a fire (still for whoever asks for less motion); the main way in is larger. */
+@keyframes ember-breathe {
+  from { transform: translateY(0); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 18px rgba(255, 138, 61, 0.3)); }
+  to { transform: translateY(-6px); filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 34px rgba(255, 150, 60, 0.6)); }
+}
+header.hero .banner { animation: ember-breathe 3.2s ease-in-out infinite alternate; }
+header.hero .tagline { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35); }
+.hero-actions { gap: 12px; margin-bottom: 22px; }
+.hero-actions .btn:not(.secondary) { min-height: 54px; font-size: 19px; padding: 0 28px; }
+.features li { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.features li:hover {
+  box-shadow: inset 7px 0 0 var(--t), inset 0 0 0 2px var(--cream-edge), 0 8px 0 rgba(0, 0, 0, 0.28), 0 0 0 3px rgba(255, 178, 77, 0.55);
+}
+
+/* Cards lift a little under the pointer's section; QR panels are rows of their own. */
+.qr-panel { transition: transform 0.15s ease; }
+.qr-panel:hover { transform: translateY(-3px); }
+.qr-box { box-shadow: 0 3px 0 rgba(64, 72, 104, 0.3); }
+
+footer { padding: 10px 12px 28px; line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .hero-actions .btn { flex: 1 1 100%; }
+  .switch { padding: 10px 12px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  header.hero .banner { animation: none; }
+  .switch, .features li, .qr-panel { transition: none; }
+  .switch:hover, .qr-panel:hover { transform: none; }
+}
+
+/* Narrow screens: an option row takes the step's whole width (under its number), its switch on the first line. */
+@media (max-width: 560px) {
+  .step .switch { margin-left: -48px; align-items: flex-start; }
+  .step .switch .track { margin-top: 2px; }
+  .topbar .links { mask-image: linear-gradient(90deg, #000 86%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); }
+}
