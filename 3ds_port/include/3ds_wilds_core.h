@@ -82,9 +82,12 @@ typedef struct CtrWild
 /* Why a spawn attempt failed (CtrWildsCore_NoteFail). */
 enum { CTRW_FAIL_NOCELL = 0, CTRW_FAIL_ROLL, CTRW_FAIL_NOOBJ, CTRW_FAIL_REASONS };
 
-/* Light diagnostics of the map the table is on (reset by every new map): plain counters, nothing is written per frame. frames counts
- * only the frames the spawn logic runs (the system is operative there), so with the option off, nothing is counted. 0 in firstFrames
- * or fillFrames: not reached yet. */
+/* Light diagnostics of the map the table is on (reset by every new map): plain counters, nothing is written per frame. They work only
+ * while the table's statsOn is set (the game's glue sets it from "port.log is on", CtrWildsCore_SetStats): with the log off not one
+ * counter moves and no line is formatted. frames counts only the frames the spawn logic runs (the system is operative there), so
+ * with the option off, nothing is counted. 0 in firstFrames or fillFrames: not reached yet. They count from the moment counting
+ * began: on a new map that is the map's first frame; if the log came on later, from then (SetStats starts from zero, never from a
+ * half state). */
 typedef struct CtrWildsStats
 {
     uint32_t frames;            /* operative frames since the map changed */
@@ -114,6 +117,7 @@ typedef struct CtrWildsCore
     uint8_t target;             /* how many wilds the budget allows */
     uint8_t fails;              /* spawn attempts that found nowhere to appear, in a row (0 at a success, a new map, off) */
     uint8_t aggro;              /* the AGGRESSIVE setting, 0 to 4 */
+    uint8_t statsOn;            /* the diagnostics count (CtrWildsCore_SetStats); 0 at the start and while port.log is off */
     uint32_t leadPower;         /* the lead Pokemon's level x base stats */
 } CtrWildsCore;
 
@@ -202,6 +206,10 @@ void CtrWildsCore_Stir(CtrWildsCore *c, uint32_t salt);
 /* A new map: the table is cleared (the object events went with the map). Returns how many wilds were in it, or -1 for the same map. */
 int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map);
 void CtrWildsCore_Clear(CtrWildsCore *c);
+/* Switches the diagnostics on or off (the glue asks the log's state every CTRW_TICK frames and on a new map, never per frame). A change
+ * either way starts from zero: the counters are cleared (on: counting begins now; off: nothing is left behind). The same state does
+ * nothing. It never touches the spawn logic, the timers or the table's random numbers. */
+void CtrWildsCore_SetStats(CtrWildsCore *c, int on);
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot);            /* a wild is gone: the next one is brought forward (CtrWildsCore_Removed) */
 /* A wild went away: a longer wait for the next one is cut to CTRW_REMOVED_MIN..+SPAN-1 frames. Does nothing when the wait is already
  * that short (so calling it for several wilds in a row draws no more than once, and never makes a wait longer). */
@@ -250,10 +258,12 @@ int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *ring, CtrWildTileF
 void CtrWildsCore_NoteFail(CtrWildsCore *c, int reason);
 /* An attempt ended (after the wild was committed, when it succeeded): sets the wait to the next one (CTRW_*_MIN above). */
 void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success);
-/* Diagnostics: TRUE (and the next one is scheduled) once in CTRW_STATS_PERIOD operative frames while attempts were made in this map. */
+/* Diagnostics: TRUE (and the next one is scheduled) once in CTRW_STATS_PERIOD operative frames while attempts were made in this map.
+ * Always FALSE while statsOn is 0. */
 int CtrWildsCore_StatsDue(CtrWildsCore *c);
 /* One short line for port.log, into buf (always terminated): "wilds: map=0102 att=9 ok=6 nocell=2 roll=1 noobj=0 first=31 fill=420
- * stalls=0 t=900". first and fill are frames, 0 when not reached. Returns the length written. */
+ * stalls=0 t=900". first and fill are frames, 0 when not reached. Returns the length written. While statsOn is 0 it
+ * writes nothing (buf is "" ) and returns 0: the glue does not call it then, this is the second guard. */
 int CtrWildsCore_StatsLine(const CtrWildsCore *c, char *buf, unsigned cap);
 int CtrWildsCore_Commit(CtrWildsCore *c, int slot, const CtrWildMon *mon, int gender, int shiny, int gfx);
 void CtrWildsCore_SetObject(CtrWildsCore *c, int slot, int obj);

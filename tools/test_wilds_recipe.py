@@ -75,6 +75,26 @@ class WildsRecipeTest(unittest.TestCase):
         self.assertIn('char line[112];', body)
         self.assertEqual(body.count('static'), 1)
 
+    def test_counters_follow_port_log(self):
+        # The counters work only while port.log is on: the summary is not formatted (nor written) otherwise, and the log's state is
+        # asked at a new map and in the 30-frame pass, never in the per-frame update.
+        body = self.move[self.move.index('static void CtrWild_LogStats(void)'):]
+        body = body[:body.index('// A new map')]
+        self.assertLess(body.index('if (!gCtrWilds.statsOn)'), body.index('CtrWildsCore_StatsLine('))
+        self.assertLess(body.index('CtrWildsCore_StatsLine('), body.index('CtrWilds_Log(line)'))
+        new_map = self.move[self.move.index('static void CtrWild_NewMap('):]
+        new_map = new_map[:new_map.index('static void CtrWilds_Update(')]
+        self.assertIn('if (gCtrWilds.statsOn && gCtrWilds.stats.attempts != 0)', new_map)
+        self.assertLess(new_map.index('CtrWildsCore_MapChanged'), new_map.index('CtrWildsCore_SetStats(&gCtrWilds, CtrWilds_LogOn())'))
+        refresh = self.move[self.move.index('static void CtrWild_Refresh('):]
+        refresh = refresh[:refresh.index('static void CtrWild_Spawn(')]
+        self.assertEqual(refresh.count('CtrWildsCore_SetStats(&gCtrWilds, CtrWilds_LogOn())'), 1)
+        self.assertEqual(len(re.findall(r'CtrWilds_LogOn\(\)', self.move)), 2)      # the new map and the pass: no other place asks
+        update = self.move[self.move.index('static void CtrWilds_Update('):]
+        update = update[:update.index('static bool8 CtrWild_Fight(')]
+        self.assertNotIn('CtrWilds_LogOn', update)
+        self.assertIn('extern int CtrWilds_LogOn(void);', self.move)
+
 
 if __name__ == '__main__':
     unittest.main()

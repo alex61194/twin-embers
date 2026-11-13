@@ -1533,6 +1533,13 @@ static void TestPick(void)
 
 /* The diagnostics ------------------------------------------------------------------------------------------------------------ */
 
+/* A table with the diagnostics on (the glue turns them on when port.log is on). */
+static void InitOn(CtrWildsCore *c, uint32_t seed)
+{
+    CtrWildsCore_Init(c, seed);
+    CtrWildsCore_SetStats(c, 1);
+}
+
 static void TestStats(void)
 {
     CtrWildsCore c;
@@ -1543,7 +1550,7 @@ static void TestStats(void)
 
     memset(&zero, 0, sizeof(zero));
     /* a normal run: the first wild comes at the counted frame, the target is reached at the 4th, every attempt is told apart */
-    CtrWildsCore_Init(&c, 21);
+    InitOn(&c, 21);
     WorldInit(&w, CTRW_TILE_LAND);
     MapOn(&c, 0x0102, 1, 0);
     CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "stats start at zero");
@@ -1568,7 +1575,7 @@ static void TestStats(void)
     printf("  stats line: %s\n", line);
     CHECK(strncmp(line, "wilds: map=0102 att=", 20) == 0 && strstr(line, " ok=4 ") && strstr(line, " stalls=0 t=6000"), "the line: %s", line);
     /* failures by reason */
-    CtrWildsCore_Init(&c, 22);
+    InitOn(&c, 22);
     CtrWildsCore_MapChanged(&c, 1);
     CtrWildsCore_NoteFail(&c, CTRW_FAIL_NOCELL);
     CtrWildsCore_SpawnDone(&c, 0);
@@ -1602,7 +1609,7 @@ static void TestStats(void)
     small[0] = 'x';
     CHECK(CtrWildsCore_StatsLine(&c, small, 0) == 0 && small[0] == 'x', "a zero-size buffer is not touched");
     /* the system off or with nothing to show counts nothing: no frame, no attempt */
-    CtrWildsCore_Init(&c, 23);
+    InitOn(&c, 23);
     WorldInit(&w, CTRW_TILE_LAND);
     MapOn(&c, 3, 1, 0);
     for (int i = 0; i < 5000; ++i)
@@ -1617,14 +1624,14 @@ static void TestStats(void)
     for (int i = 0; i < 5000; ++i)
         GlueIdle(&c, 0);                    /* the glue's early out */
     CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "Idle: not one count");
-    CtrWildsCore_Init(&c, 24);
+    InitOn(&c, 24);
     MapOn(&c, 4, 0, 0);
     c.probed = 1;                           /* a map that cannot show a wild: Unsupported is the glue's early out */
     for (int i = 0; i < 5000; ++i)
         GlueIdle(&c, 2);
     CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "Unsupported: not one count");
     /* target 0 is not a fill */
-    CtrWildsCore_Init(&c, 25);
+    InitOn(&c, 25);
     CtrWildsCore_MapChanged(&c, 5);
     c.operative = 1;
     c.target = 0;
@@ -1632,7 +1639,7 @@ static void TestStats(void)
         CtrWildsCore_SpawnDue(&c);
     CHECK(c.stats.frames == 100 && c.stats.fillFrames == 0 && !c.stats.gotFill, "target 0 is not a fill");
     /* a map with no room: only no-cell failures, one stall, no first wild */
-    CtrWildsCore_Init(&c, 26);
+    InitOn(&c, 26);
     WorldPatch(&w, 3);
     MapOn(&c, 6, 1, 0);
     for (int i = 0; i < 3000; ++i)
@@ -1641,7 +1648,7 @@ static void TestStats(void)
           "a map with no room: only no-cell failures, one stall (%u attempts)", c.stats.attempts);
     /* the species roll failing is told apart */
     sRollFails = 1;
-    CtrWildsCore_Init(&c, 27);
+    InitOn(&c, 27);
     WorldInit(&w, CTRW_TILE_LAND);
     MapOn(&c, 7, 1, 0);
     for (int i = 0; i < 1000; ++i)
@@ -1649,7 +1656,7 @@ static void TestStats(void)
     sRollFails = 0;
     CHECK(c.stats.attempts > 0 && c.stats.fail[CTRW_FAIL_ROLL] == c.stats.attempts && c.stats.fail[CTRW_FAIL_NOCELL] == 0, "roll failures are told apart");
     /* no free object event: told apart too */
-    CtrWildsCore_Init(&c, 28);
+    InitOn(&c, 28);
     WorldInit(&w, CTRW_TILE_LAND);
     MapOn(&c, 8, 1, 0);
     for (int i = 0; i < CTRW_OBJECTS; ++i)
@@ -1661,6 +1668,203 @@ static void TestStats(void)
     CtrWildsCore_SpawnDue(&c);
     Spawn(&c, &w, 6, 10, 100, 0);
     CHECK(c.stats.fail[CTRW_FAIL_NOOBJ] == 1 && c.stats.attempts == 1, "no object event is told apart (%u, %u)", c.stats.fail[CTRW_FAIL_NOOBJ], c.stats.attempts);
+}
+
+/* The counters follow port.log ---------------------------------------------------------------------------------------------- */
+
+/* The glue's logging, as the game does it (CtrWild_LogStats, CtrWild_NewMap, CtrWild_Refresh), with the formatter and the log call counted. */
+typedef struct Driver
+{
+    int logOn;                  /* what CtrWilds_LogOn() answers */
+    int formatCalls, logCalls;  /* CtrWildsCore_StatsLine calls, CtrWilds_Log calls */
+    char last[160];
+    uint64_t hash;              /* of the table's state after each frame: the spawn behaviour */
+    int spawns;                 /* wilds made */
+} Driver;
+
+static void DriverLogStats(CtrWildsCore *c, Driver *d)
+{
+    char line[112];
+
+    if (!c->statsOn)
+        return;
+    ++d->formatCalls;
+    CtrWildsCore_StatsLine(c, line, sizeof(line));
+    ++d->logCalls;
+    snprintf(d->last, sizeof(d->last), "%s", line);
+}
+
+static void HashMix(uint64_t *h, uint64_t v)
+{
+    *h = (*h ^ v) * 1099511628211ull;
+}
+
+/* One frame of CtrWilds_Update in the glue's order: a new map (the summary of the map left, MapChanged, SetStats), the frame setting, the
+ * 30-frame pass (SetStats, shed, the periodic summary) and the spawn. */
+static void DriverFrame(CtrWildsCore *c, World *w, Driver *d, uint16_t map, int density, int cap)
+{
+    CtrWildEnv env = {density, c->aggro, cap, 0, c->leadPower};
+    int shed, before;
+
+    if (!(c->mapKnown && c->map == map))
+    {
+        if (c->statsOn && c->stats.attempts != 0)
+            DriverLogStats(c, d);
+        CtrWildsCore_MapChanged(c, map);
+        CtrWildsCore_SetStats(c, d->logOn);
+        c->mapLand = 1;
+        c->mapWater = 0;
+        c->probed = 1;
+    }
+    if (CtrWildsCore_Frame(c, &env))
+        Shed(c, w, c->active);
+    else if (c->operative)
+    {
+        shed = CtrWildsCore_Tick(c, density, cap, FreeObjects, w);
+        if (shed >= 0)
+        {
+            CtrWildsCore_SetStats(c, d->logOn);
+            if (shed > 0)
+                Shed(c, w, shed);
+            if (CtrWildsCore_StatsDue(c))
+                DriverLogStats(c, d);
+        }
+        before = c->active;
+        Spawn(c, w, cap, 10, 100, 0);
+        d->spawns += c->active > before;
+    }
+    HashMix(&d->hash, c->active);
+    HashMix(&d->hash, c->spawnTimer);
+    HashMix(&d->hash, c->rng);
+    HashMix(&d->hash, c->fails);
+    HashMix(&d->hash, c->target);
+    for (int i = 0; i < CTRW_SLOTS; ++i)
+    {
+        HashMix(&d->hash, c->wild[i].state);
+        HashMix(&d->hash, c->wild[i].personality);
+        HashMix(&d->hash, c->wild[i].obj);
+    }
+}
+
+static int StatsZero(const CtrWildsCore *c)
+{
+    CtrWildsStats zero;
+
+    memset(&zero, 0, sizeof(zero));
+    return memcmp(&c->stats, &zero, sizeof(zero)) == 0;
+}
+
+/* The whole run: three maps of 2000 frames, with the log state given per frame by the pattern (0 off, 1 on, 2 changing every 700 frames). */
+static void DriverRun(int pattern, Driver *d)
+{
+    CtrWildsCore c;
+    World w;
+
+    memset(d, 0, sizeof(*d));
+    d->hash = 1469598103934665603ull;
+    CtrWildsCore_Init(&c, 4242);
+    WorldInit(&w, CTRW_TILE_LAND);
+    for (int f = 0; f < 6000; ++f)
+    {
+        uint16_t map = (uint16_t)(0x0100 + f / 2000);
+
+        d->logOn = pattern == 1 || (pattern == 2 && (f / 700) % 2 == 1);
+        DriverFrame(&c, &w, d, map, 2, 6);
+        if (pattern == 0)
+            CHECK(c.statsOn == 0 && StatsZero(&c), "log off: frame %d: no counter moved", f);
+    }
+}
+
+static void TestStatsSwitch(void)
+{
+    Driver off, on, tog;
+    CtrWildsCore c;
+    char buf[64];
+
+    /* the switch itself */
+    CtrWildsCore_Init(&c, 1);
+    CHECK(c.statsOn == 0 && StatsZero(&c), "a new table: counters off, zero");
+    CtrWildsCore_SetStats(&c, 5);
+    CHECK(c.statsOn == 1, "any non-zero value means on");
+    c.stats.attempts = 3;
+    c.stats.frames = 99;
+    CtrWildsCore_SetStats(&c, 1);
+    CHECK(c.stats.attempts == 3 && c.stats.frames == 99, "on again: nothing is cleared");
+    CtrWildsCore_MapChanged(&c, 7);
+    CHECK(c.statsOn == 1 && StatsZero(&c), "a new map clears the counters and leaves the switch on");
+    c.stats.attempts = 3;
+    CtrWildsCore_SetStats(&c, 0);
+    CHECK(c.statsOn == 0 && StatsZero(&c), "off: nothing is left behind");
+    CtrWildsCore_SetStats(&c, 0);
+    CHECK(c.statsOn == 0 && StatsZero(&c), "off again: no change");
+    /* off: the core's own guards (the glue does not even call the formatter) */
+    c.operative = 1;
+    c.target = 4;
+    for (int i = 0; i < 100; ++i)
+        CtrWildsCore_SpawnDue(&c);
+    CtrWildsCore_NoteFail(&c, CTRW_FAIL_NOCELL);
+    CtrWildsCore_SpawnDone(&c, 1);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(StatsZero(&c), "off: SpawnDue, NoteFail and SpawnDone count nothing");
+    CHECK(c.spawnTimer >= CTRW_FAIL_MIN, "...but the wait is set as always (%d)", c.spawnTimer);
+    CHECK(c.fails == 1, "...and the failures in a row are still counted (they decide the stall)");
+    strcpy(buf, "unchanged");
+    CHECK(CtrWildsCore_StatsLine(&c, buf, sizeof(buf)) == 0 && buf[0] == 0, "off: the line is empty");
+    CHECK(!CtrWildsCore_StatsDue(&c), "off: no summary is ever due");
+    c.stats.attempts = 5;       /* even with a stale counter */
+    c.stats.nextLog = 0;
+    CHECK(!CtrWildsCore_StatsDue(&c), "off: no summary is due even with attempts");
+
+    /* port.log off for the whole run: not one counter moves, the formatter and the log are never called */
+    DriverRun(0, &off);
+    CHECK(off.formatCalls == 0 && off.logCalls == 0, "log off: %d formatter calls and %d log calls, none expected", off.formatCalls, off.logCalls);
+    CHECK(off.spawns > 0, "log off: the wilds still appear (%d)", off.spawns);
+
+    /* port.log on: a summary when a map is left and every 1800 operative frames */
+    DriverRun(1, &on);
+    CHECK(on.formatCalls == on.logCalls && on.logCalls >= 6 && on.logCalls <= 12, "log on: summaries written (%d)", on.logCalls);
+    CHECK(strncmp(on.last, "wilds: map=0102 att=", 20) == 0, "the last line is of the map being played: %s", on.last);
+
+    /* the log's state changes mid-run: off, on, off, on */
+    DriverRun(2, &tog);
+    CHECK(tog.logCalls > 0 && tog.formatCalls == tog.logCalls, "toggled: some summaries (%d)", tog.logCalls);
+    /* the spawn behaviour is the same in all three: the same state after each frame (active, wait, rng, wilds), so the same spawns */
+    CHECK(off.hash == on.hash && on.hash == tog.hash, "the same frame-by-frame state with the log off, on and toggled");
+    CHECK(off.spawns == on.spawns && on.spawns == tog.spawns, "the same spawns (%d, %d, %d)", off.spawns, on.spawns, tog.spawns);
+
+    /* the transitions leave nothing half done: on at the pass, from zero; off at the pass, zero */
+    {
+        World w;
+        Driver d;
+        int f;
+
+        memset(&d, 0, sizeof(d));
+        CtrWildsCore_Init(&c, 77);
+        WorldInit(&w, CTRW_TILE_LAND);
+        d.logOn = 1;
+        for (f = 0; f < 500; ++f)
+            DriverFrame(&c, &w, &d, 0x0200, 2, 6);
+        CHECK(c.statsOn == 1 && c.stats.attempts > 0 && c.stats.frames == 500, "on: counting from the map's first frame (%u frames)", (unsigned)c.stats.frames);
+        CHECK(c.stats.attempts == c.stats.ok + c.stats.fail[0] + c.stats.fail[1] + c.stats.fail[2], "on: attempts add up");
+        d.logOn = 0;
+        for (f = 0; f < CTRW_TICK; ++f)
+            DriverFrame(&c, &w, &d, 0x0200, 2, 6);
+        CHECK(c.statsOn == 0 && StatsZero(&c), "off: at the next pass the counters are zero");
+        for (f = 0; f < 200; ++f)
+        {
+            DriverFrame(&c, &w, &d, 0x0200, 2, 6);
+            CHECK(StatsZero(&c), "off: still zero after %d frames", f);
+        }
+        d.logOn = 1;
+        for (f = 0; f < CTRW_TICK; ++f)
+            DriverFrame(&c, &w, &d, 0x0200, 2, 6);
+        CHECK(c.statsOn == 1 && c.stats.frames > 0 && c.stats.frames <= (uint32_t)CTRW_TICK, "on again: counting from zero at the pass (%u frames)", (unsigned)c.stats.frames);
+        for (f = 0; f < 3000; ++f)
+            DriverFrame(&c, &w, &d, 0x0200, 2, 6);
+        CHECK(c.stats.attempts == c.stats.ok + c.stats.fail[0] + c.stats.fail[1] + c.stats.fail[2], "on again: attempts add up (%u)", (unsigned)c.stats.attempts);
+        CHECK(c.stats.firstFrames <= c.stats.frames && c.stats.fillFrames <= c.stats.frames && c.stats.nextLog <= c.stats.frames + CTRW_STATS_PERIOD,
+              "on again: the frame marks are not ahead of the count");
+    }
 }
 
 static void TestGlueSupport(void)
@@ -1728,10 +1932,27 @@ static int AlwaysLand(void *ctx, int x, int y)
     return CTRW_TILE_LAND;
 }
 
-/* SpawnDue as it was before the diagnostics (no frame count), for the cost of the counter. */
+/* SpawnDue without any counter, and the same with the byte test, both in this file (same translation unit, same call), so that the
+ * difference between them is the byte test and the increment and nothing else. */
 __attribute__((noinline)) static int OldSpawnDue(CtrWildsCore *c)
 {
     if (!c->operative || c->active >= c->target)
+        return 0;
+    if (c->spawnTimer != 0)
+    {
+        --c->spawnTimer;
+        return 0;
+    }
+    return 1;
+}
+
+__attribute__((noinline)) static int CopySpawnDue(CtrWildsCore *c)
+{
+    if (!c->operative)
+        return 0;
+    if (c->statsOn)
+        ++c->stats.frames;
+    if (c->active >= c->target)
         return 0;
     if (c->spawnTimer != 0)
     {
@@ -1795,10 +2016,12 @@ static void Bench(void)
         printf("bench: one spawn attempt (cell + personality): %.1f ns each\n", (t1 - t0) / (N / 10));
         (void)ok;
     }
-    /* the diagnostics' only per-frame cost: the frame count in SpawnDue (operative, below the target, the wait running down) */
+    /* the diagnostics' only per-frame cost: one byte tested (and, with port.log on, one increment) in SpawnDue (operative, below the target,
+     * the wait running down). Two sets, in one file so that only the counter differs: copies of the function without and with the test,
+     * and the core's own function with the counters off and on. */
     {
         const int M = 200000000;
-        double tOld, tNew;
+        double tRef, tCopyOff, tCopyOn, tOff, tOn;
 
         CtrWildsCore_Init(&c, 84);
         c.operative = 1;
@@ -1809,15 +2032,33 @@ static void Bench(void)
             c.spawnTimer = 0xFFFF;
             sink += (uint32_t)OldSpawnDue(&c);
         }
-        tOld = (Now() - t0) / M;
-        t0 = Now();
-        for (int i = 0; i < M; ++i)
+        tRef = (Now() - t0) / M;
+        for (int on = 0; on < 2; ++on)
         {
-            c.spawnTimer = 0xFFFF;
-            sink += (uint32_t)CtrWildsCore_SpawnDue(&c);
+            CtrWildsCore_SetStats(&c, on);
+            t0 = Now();
+            for (int i = 0; i < M; ++i)
+            {
+                c.spawnTimer = 0xFFFF;
+                sink += (uint32_t)CopySpawnDue(&c);
+            }
+            if (on)
+                tCopyOn = (Now() - t0) / M;
+            else
+                tCopyOff = (Now() - t0) / M;
+            t0 = Now();
+            for (int i = 0; i < M; ++i)
+            {
+                c.spawnTimer = 0xFFFF;
+                sink += (uint32_t)CtrWildsCore_SpawnDue(&c);
+            }
+            if (on)
+                tOn = (Now() - t0) / M;
+            else
+                tOff = (Now() - t0) / M;
         }
-        tNew = (Now() - t0) / M;
-        printf("bench: SpawnDue per frame, without / with the frame count: %.2f / %.2f ns (a host, both as a call; not a console: the difference is one increment and a compare)\n", tOld, tNew);
+        printf("bench: SpawnDue per frame, same file: no counter / byte tested, off / tested and incremented, on: %.2f / %.2f / %.2f ns\n", tRef, tCopyOff, tCopyOn);
+        printf("bench: SpawnDue per frame, the core's own function, counters off / on: %.2f / %.2f ns (a host, as a call; not a console)\n", tOff, tOn);
         /* the same with the option off: the early out, and nothing at all reaches the counter */
         CtrWildsCore_Init(&c, 85);
         t0 = Now();
@@ -1851,6 +2092,7 @@ int main(void)
     TestFastRetry();
     TestPick();
     TestStats();
+    TestStatsSwitch();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();

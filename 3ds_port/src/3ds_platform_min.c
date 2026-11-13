@@ -250,6 +250,12 @@ void CtrLog_WarpTrace(const char *stage, unsigned step)
     }
 }
 
+bool CtrLog_Enabled(void)
+{
+    if (sLogMode == LOG_UNINIT) LogInit();
+    return sLogMode != LOG_OFF;
+}
+
 void CtrLog_Write(CtrLogCategory category, const char *format, ...)
 {
     (void)category;

@@ -74,6 +74,16 @@ void CtrWildsCore_Clear(CtrWildsCore *c)
     c->fails = 0;
 }
 
+void CtrWildsCore_SetStats(CtrWildsCore *c, int on)
+{
+    uint8_t flag = (uint8_t)(on != 0);
+
+    if (c->statsOn == flag)
+        return;
+    c->statsOn = flag;
+    memset(&c->stats, 0, sizeof(c->stats));     /* either way from zero: counting begins now, or nothing is left of it */
+}
+
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot)
 {
     if (slot < 0 || slot >= CTRW_SLOTS || c->wild[slot].state == CTRW_S_FREE)
@@ -234,7 +244,8 @@ int CtrWildsCore_SpawnDue(CtrWildsCore *c)
 {
     if (!c->operative)
         return 0;
-    ++c->stats.frames;      /* the only per-frame count: only where the spawn logic runs (with the option off this is never reached) */
+    if (c->statsOn)         /* the only per-frame cost of the diagnostics: one byte tested where the spawn logic runs (never with the option off) */
+        ++c->stats.frames;
     if (c->active >= c->target)
         return 0;
     if (c->spawnTimer != 0)
@@ -346,7 +357,7 @@ static void NoteFill(CtrWildsCore *c)
 
 void CtrWildsCore_NoteFail(CtrWildsCore *c, int reason)
 {
-    if (reason >= 0 && reason < CTRW_FAIL_REASONS)
+    if (c->statsOn && reason >= 0 && reason < CTRW_FAIL_REASONS)
         ++c->stats.fail[reason];
 }
 
@@ -354,17 +365,21 @@ void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success)
 {
     int wasStalled = CtrWildsCore_Stalled(c);
 
-    ++c->stats.attempts;
+    if (c->statsOn)
+        ++c->stats.attempts;
     if (success)
     {
         c->fails = 0;
-        ++c->stats.ok;
-        if (!c->stats.gotFirst)
+        if (c->statsOn)
         {
-            c->stats.gotFirst = 1;
-            c->stats.firstFrames = c->stats.frames;
+            ++c->stats.ok;
+            if (!c->stats.gotFirst)
+            {
+                c->stats.gotFirst = 1;
+                c->stats.firstFrames = c->stats.frames;
+            }
+            NoteFill(c);
         }
-        NoteFill(c);
         /* active already counts the wild just made: with fewer than half of the target out the next comes sooner */
         if (c->active * 2 < c->target)
             c->spawnTimer = (uint16_t)(CTRW_FILL_MIN + CtrWildsCore_Rand(c) % CTRW_FILL_SPAN);
@@ -374,7 +389,7 @@ void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success)
     }
     if (c->fails < 255)
         ++c->fails;
-    if (!wasStalled && CtrWildsCore_Stalled(c))
+    if (c->statsOn && !wasStalled && CtrWildsCore_Stalled(c))
         ++c->stats.stalls;
     if (CtrWildsCore_Stalled(c))        /* nowhere to appear: it goes on trying, a little less often */
         c->spawnTimer = (uint16_t)(CTRW_STALLED_MIN + CtrWildsCore_Rand(c) % CTRW_STALLED_SPAN);
@@ -384,7 +399,7 @@ void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success)
 
 int CtrWildsCore_StatsDue(CtrWildsCore *c)
 {
-    if (c->stats.attempts == 0 || c->stats.frames < c->stats.nextLog)
+    if (!c->statsOn || c->stats.attempts == 0 || c->stats.frames < c->stats.nextLog)
         return 0;
     c->stats.nextLog = c->stats.frames + CTRW_STATS_PERIOD;
     return 1;
@@ -397,6 +412,11 @@ int CtrWildsCore_StatsLine(const CtrWildsCore *c, char *buf, unsigned cap)
 
     if (cap == 0)
         return 0;
+    if (!c->statsOn)
+    {
+        buf[0] = 0;
+        return 0;
+    }
     n = snprintf(buf, cap, "wilds: map=%04X att=%u ok=%u nocell=%u roll=%u noobj=%u first=%u fill=%u stalls=%u t=%u", (unsigned)c->map,
                  (unsigned)s->attempts, (unsigned)s->ok, (unsigned)s->fail[CTRW_FAIL_NOCELL], (unsigned)s->fail[CTRW_FAIL_ROLL],
                  (unsigned)s->fail[CTRW_FAIL_NOOBJ], (unsigned)s->firstFrames, (unsigned)s->fillFrames, (unsigned)s->stalls,

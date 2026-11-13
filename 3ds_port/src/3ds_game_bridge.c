@@ -914,3 +914,10 @@ void CtrWilds_Log(const char *line)
 {
     CtrLog_Write(CTR_LOG_GAME, "%s", line);
 }
+
+/* Whether the spawn counters may work: port.log is on. The glue asks it every 30 frames and on a new map (never per frame); with the
+ * log off the counters do not move and no line is formatted. */
+int CtrWilds_LogOn(void)
+{
+    return CtrLog_Enabled();
+}
