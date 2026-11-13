@@ -36,6 +36,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 - **Twin Embers in German.** `twinembers-de.3dsx` is the German game, built from your own Pokémon Feuerrote Edition (Germany), with the lower screen's words translated (thanks to mcl5500). The web Builder has an EN/ES/DE selector.
 - **A Pokémon that follows you.** The COMPANION option makes your first Pokémon walk behind you on the map, as in HeartGold (all 386, a new Builder option), or lets you play as it.
+- **Visible wild Pokémon (optional, off by default).** OPTIONS, Graphics, page Wilds: wild Pokémon walk in the grass and on the water of the map, up to 2 on an Old 3DS and up to 6 on a New 3DS, with a silhouette option and a setting for how many chase you. The battle starts with the one you saw. Details in [QUALITY-OF-LIFE.md](docs/QUALITY-OF-LIFE.md).
 - **Quick ball.** In a wild battle a fourth button throws a ball at once; its arrows, a swipe or SELECT change the ball. The battle Bag shows your items only, with BERRIES for the Berry Pouch.
 - **REPEL AGAIN**, an option that offers another Repel when one wears off, and **TMs and HMs in one press** when a Pokémon already knows four moves.
 - **Battle transitions as FireRed draws them** (the cave's wipe, the big Poké Ball, the swirl, the slices, the ripples), and still move backgrounds such as Solar Beam's fill the screen.
@@ -223,7 +224,7 @@ To report a bug, [open an issue](https://github.com/alex61194/twin-embers/issues
 
 Automated tests cover the pack format, the Builder, save handling and its failure cases, the rendering paths for the touch screens and the map edge, and the audio mixer. A fresh build is also checked to confirm it embeds no game data.
 
-Real-hardware coverage is narrower. One New 3DS-family console and Azahar have been used to play through a new game to the first rival battle, a Route 1 wild battle, saving, Continue and turbo. Older 3DS and 2DS models, long play sessions and late-game content have not been systematically tested. The [validation notes](docs/VALIDATION.md) and [hardware checklist](docs/HARDWARE-ACCEPTANCE.md) list exactly what has and has not been exercised.
+Real-hardware coverage is narrower. One New 3DS-family console and Azahar have been used to play through a new game to the first rival battle, a Route 1 wild battle, saving, Continue and turbo. The visible wild Pokémon have also been played on real hardware by the project owner, and their general operation is correct; the individual edge cases (Old 3DS frame time, crowded maps, save and load with a wild on screen, caves, Safari Zone) are still listed as pending. Older 3DS and 2DS models, long play sessions and late-game content have not been systematically tested. The [validation notes](docs/VALIDATION.md) and [hardware checklist](docs/HARDWARE-ACCEPTANCE.md) list exactly what has and has not been exercised.
 
 ## How it is put together
 

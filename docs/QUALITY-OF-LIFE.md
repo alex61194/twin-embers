@@ -204,8 +204,17 @@ shade never raises a colour's luma and the night is the moonlit grade, dusk stay
 night and off by day, glass is told from sill, wall and grass; the windows' hours: none at noon, all at
 21:00, fewer through the night, some all night and some at dawn; the light tables are valid tiles with no
 duplicates, no Mart roof tile, and only General's non-house buildings public); `tests/poketouch_options_test.c`
-(the DAY/NIGHT row, its default and its two values); the ARM build links. NEEDS VALIDATION in Azahar and on
-a console (outdoors at night with the clock set, entering a house, a battle, a door fade, 3D on).
+(the DAY/NIGHT row, its default and its two values); the ARM build links (host and build checks, not game runs). Implemented; the README's screenshots show it working. No per-device
+result is recorded in this repository, so still to check on a console: outdoors at night with the clock set, entering a house, a
+battle, a door fade, 3D on.
+
+## Companion
+
+The COMPANION option (recipe 0224) makes the first Pokémon of the party walk behind the player on the map, with the pack's
+HeartGold follower pictures (all 386, the Builder's follower option), or lets the player play as it. Implemented. Checked on a
+computer: the Builder's follower data (`builder/tests/test_gen4_sprites.py`) and the game side's guards for a follower asked
+before the pack opens or read from a truncated file. No hardware result is recorded in this repository; the companion's local id
+(0xF7) is kept apart from the visible wilds by their own tests.
 
 ## Visible wild Pokémon
 
@@ -233,8 +242,10 @@ configurable aggression) and the design of **Wilds of Hoenn** by **poooooby**; t
 
 Checked: `3ds_port/tests/wilds_core_test.c`, `wilds_settings_test.c`, `settings_test.c`, `poketouch_options_test.c`,
 `battle_gen4_test.c` (in `verify-host`), the render test's measured fit of the three rows in EN/ES/DE, `tools/test_option_labels.py`;
-the recipe chain applies from a pristine tree and the three game files compile with the game's flags. NEEDS VALIDATION in Azahar and
-on a console (see section 8 of the design document for the list).
+the recipe chain applies from a pristine tree and the three game files compile with the game's flags (host and build checks, not game runs). Implemented and not under
+development any more. The owner played it on real hardware and its general operation is correct (2026-11-13). The individual
+cases listed in section 8 of the design document ("Validation status") are still to be checked one by one; none is recorded as
+done.
 
 ## Not added, and why
 

@@ -1,6 +1,7 @@
 # Overworld wild Pokemon: research, plan and the final design
 
-Status: research only, no game code written. Branch `agent/q5-research`.
+Status: implemented. Sections 0 to 7 are the original research and plan, kept as history; section 8 is the design as built
+(recipes 0249 and 0250, `3ds_port/src/3ds_wilds_core.c`) and its validation status.
 
 ## 0. Key finding: the reference is not a Gen 3 hack
 
@@ -274,8 +275,15 @@ loaded game against NPCs, the companion and the Berry Blender's local ids), `too
 `poketouch_options_test`, `battle_gen4_test` (the silhouette flag), the render test's measured fit check for the three rows, and
 `tools/test_option_labels.py`.
 
-### Not verified (needs a console or Azahar)
-Nothing of the game glue ran. To try: (1) the spawn band is off screen on the top screen and nothing pops in; (2) held movements of a
+### Validation status
+- **Host (a computer, gcc):** the pure core, the settings file, the OPTIONS text fit and the recipe glue's text are covered by the
+  tests listed above, and the recipe chain applies and the three game files compile with the game's flags. A passing host test is
+  not a result of the game running; no scenario below is counted as verified because a test covers it.
+- **Real hardware:** the owner played the system on real hardware (report of 2026-11-13) and its general operation is correct.
+  Which of the points below were looked at one by one was not recorded, so none is marked as verified here.
+- **Emulator and Old 3DS timing:** no per-point result is recorded. The Old 3DS frame time needs `port.log` on a console.
+
+Still to check, one by one (none recorded as done): (1) the spawn band is off screen on the top screen and nothing pops in; (2) held movements of a
 wild do not wedge its object event (a wild that stops after a flight); (3) a chaser starts the battle without a double step of the
 player; (4) frame time on an Old 3DS with 2 wilds and a New 3DS with 6; (5) caves and Viridian Forest (land encounter tiles that are not
 tall grass); (6) the picture's gender, nature and shininess match the battle; (7) a map with many NPCs (Celadon, Saffron): the NPCs
