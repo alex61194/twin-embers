@@ -110,19 +110,23 @@ The lower screen is **PokéTouch**, a home screen with a touch Town Map and a co
 
 Battle commands move to the touch screen: a large FIGHT button with BAG, POKéMON and RUN below it, and the party's Poké Balls along the top. Picking FIGHT shows the moves as a 2 × 2 grid of cards with their type, power, accuracy and remaining PP, and a note describing the selected move, so you can choose without remembering the numbers. In a single battle each damaging move also shows how it hits the foe's types (NOT VERY, SUPER and so on). A tap also continues a battle message that waits for A.
 
-<img src="docs/media/06-battle-intro.png" width="300" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"> <img src="docs/media/07-battle-action.png" width="300" alt="Pikachu against a Spearow, with the lead Pokémon's icon in the FIGHT disc">
+<img src="docs/media/06-battle-intro.png" width="300" alt="A shiny Charizard in its HeartGold sprite, with FIGHT, BAG, POKéMON and RUN below"> <img src="docs/media/07-battle-action.png" width="300" alt="Groudon against a wild Raticate: FIGHT with the lead Pokémon, BAG, POKéMON and RUN below">
 
 <img src="docs/media/08-battle-moves.png" width="300" alt="Move cards with type, power, accuracy and PP"> <img src="docs/media/11-battle-party.png" width="300" alt="Switching Pokémon in battle">
 
 The battle Bag keeps its pockets as tabs and shows the selected item large with a USE button, and the Summary opens on the lower screen without leaving the fight.
 
-<img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag, Poké Balls pocket"> <img src="docs/media/19-battle-summary.png" width="300" alt="A Pokémon's Summary during a battle">
+<img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag: the selected item shown large with its USE button"> <img src="docs/media/19-battle-summary.png" width="300" alt="A Pokémon's Summary during a battle">
 
 ### Looking after your team
 
 The party list, Pokémon Summary and Trainer Card each get a full lower-screen page, and the Bag and Pokédex open beside the button column. PC storage is touch-driven as well, menus included: move, withdraw and deposit by tapping. Saving asks once, with your progress shown next to it.
 
 <img src="docs/media/12-party.png" width="300" alt="Party"> <img src="docs/media/14-pokedex.png" width="300" alt="Pokédex">
+
+<img src="docs/media/32-pokedex-list.png" width="300" alt="Pokédex list with the selected entry beside it"> <img src="docs/media/33-pokedex-habitats.png" width="300" alt="Pokédex, Habitats">
+
+<img src="docs/media/29-summary.png" width="300" alt="A Pokémon's Summary on the lower screen"> <img src="docs/media/30-summary-stats.png" width="300" alt="Summary, Stats page with IVs and EVs">
 
 <img src="docs/media/13-bag.png" width="300" alt="Bag, Items pocket"> <img src="docs/media/22-bag-key-items.png" width="300" alt="Bag, Key Items pocket">
 
@@ -132,13 +136,21 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 <img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/16-save.png" width="300" alt="Saving the game">
 
+<img src="docs/media/31-remember.png" width="300" alt="REMEMBER: the move relearner on the lower screen"> <img src="docs/media/34-home-map.png" width="300" alt="HOME: the map of Kanto on the lower screen">
+
+<img src="docs/media/35-home-map-zoom.png" width="300" alt="HOME map zoomed in"> <img src="docs/media/36-home-map-sevii.png" width="300" alt="HOME map: the Sevii Islands">
+
 ### Settings
 
 OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the rising EMBERS, the optional looks, the visible wild Pokémon and the Nuzlocke rules.
 
-<img src="docs/media/17-options-1.png" width="300" alt="Options, page 1"> <img src="docs/media/18-options-2.png" width="300" alt="Options, page 2">
+<img src="docs/media/17-options-1.png" width="300" alt="Options, Settings: FireRed's own options"> <img src="docs/media/18-options-2.png" width="300" alt="Options, Graphics: frame, FPS counter, day and night, hour, embers and companion">
 
-<sub>All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the battle, menu and PC screens come from AzaharPlus with the HeartGold sprites in the pack. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
+<img src="docs/media/25-options-looks.png" width="300" alt="Options, Looks: the player's and the rival's look, with a preview and its artist"> <img src="docs/media/26-options-wilds.png" width="300" alt="Options, Wilds: visible wild Pokémon, how they are shown and how many chase you">
+
+<img src="docs/media/27-options-qol.png" width="300" alt="Options, Quality of life: type matchups, move data, REPEL AGAIN, EXP share, reusable TMs and free HMs"> <img src="docs/media/28-options-nuzlocke.png" width="300" alt="Options, Nuzlocke: Nuzlocke, Randomlocke, duplicates and shiny clauses, level cap">
+
+<sub>The menu, battle, OPTIONS, Summary, Pokédex and HOME map captures are from v0.6.0 (AzaharPlus, Spanish game, 2026-11-13); the title, night, move cards, party and PC ones are from earlier versions and show the previous look of the lower screen. All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the battle, menu and PC screens come from AzaharPlus with the HeartGold sprites in the pack. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
 
 ---
 
