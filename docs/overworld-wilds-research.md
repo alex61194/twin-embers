@@ -158,7 +158,7 @@ is run by the host tests.
   count is lowered by the free object events, never raised above the density or the console.
 - Land wilds appear on the tiles the game rolls land encounters on, water wilds on sea tiles of a map with a water table (only when the
   player surfs, or a third of the cells on foot when the map also has land). They appear in the band just outside the screen that the
-  game keeps object events in (left, right and below; no pop-in), one every 1.5 to 4 seconds while below the target.
+  game keeps object events in (left, right and below; no pop-in), at the pace of the table below while under the target.
 - Not in the Safari Zone, Randomlocke, the Union Room, the quest log playback, with encounters disabled, nor on a map whose tables have no
   species with a picture in the pack (Unown never). A Pokemon without a picture is not picked at all (the picker rolls a few times).
 - Pictures come from the pack's follower set (`CtrFollower_Has`), the female picture when the Pokemon is female and the pack has it.
@@ -197,23 +197,63 @@ Three cases give the game's encounters back (`wilds_core_test`: `TestIdleRelease
   (`CtrWildsCore_Idle`, `CtrWildsCore_Unsupported`) clears `operative` and `spawnable` itself, as it never reaches the frame setting.
 - **Nowhere to appear** (a map smaller than the screen, a narrow route, the player at an edge, nothing the table can use): after
   `CTRW_STALL_FAILS` (6) spawn attempts in a row that fail, with no wild out, the step encounters come back (`CtrWildsCore_Stalled`).
-  Nothing is switched off for good: the attempts go on at 3 to 5 seconds instead of 1 to 2, a success hides the step encounters again,
-  a new map or the option going off starts the count over. No work is added per frame.
+  Nothing is switched off for good: the attempts go on at 1 to 1.5 seconds instead of a third to two thirds of a second, a success hides
+  the step encounters again, a new map or the option going off starts the count over. No work is added per frame. The quick retries do not
+  delay the game's encounters: they come back after the 6th failure in a row, at most about 6 x 40 frames (3 to 4 seconds; 190 frames
+  measured in `TestFastRetry`) after the first failure, and the first success hides them again.
 - **A saved game**: object events are saved with the game, and the table is not. A wild's object event carries a mark (the Boy, no
   movement type, `trainerRange_berryTreeId` = `CTRW_MARK`, a byte the Boy does not use). When the field is rebuilt from a save
   (`SpawnObjectEventsOnReturnToField`, before the sprites are made) every object event with a wild's local id (0xF0 to 0xF5), the mark
   and no matching table entry is deactivated (`CtrWildsCore_IsOrphan`); a map's own object events, the companion (0xF7) and anything
   without the mark are never touched. A new map does the same sweep (it already removed them all).
 
+### When the next wild comes (frames at 60 fps)
+The wait to the next attempt is `MIN + Rand() % SPAN` of the table's own generator (never the game's), named in `3ds_wilds_core.h`:
+
+| After | Wait | Constant |
+| --- | --- | --- |
+| a new map (the first wild) | 24 to 36 (0.4 to 0.6 s) | `CTRW_FIRST_*` |
+| a success with fewer than half of the target out (`active * 2 < target`, `active` counting the wild just made) | 45 to 90 | `CTRW_FILL_*` |
+| a success with half of the target or more out | 90 to 150 | `CTRW_TOPUP_*` |
+| a failed attempt | 20 to 40 | `CTRW_FAIL_*` |
+| a failed attempt while stalled (6 in a row, nothing out) | 60 to 90 | `CTRW_STALLED_*` |
+| a wild went away (`CtrWildsCore_Forget`: shed, stale, out of view, battle) and the wait was longer | cut to 60 to 119 | `CTRW_REMOVED_*` |
+
+The wait only runs down while the system is operative and below the target. A removal never lengthens a wait and does nothing when it is
+already 119 or less, so several wilds removed in one frame cut it once. Turning the option off removes the wilds too (the wait is
+irrelevant then: nothing counts).
+
+**The ring is drawn in proportion.** A spawn attempt looks at up to 24 cells (`CTRW_PICK_TRIES`, one tile lookup each). Each cell is
+drawn uniformly over the three zones outside the screen taken together (left, right, below): a zone weighs its number of cells, an
+empty one 0, and the two bottom corners that the side zones also hold weigh twice. An empty ring gives no cell and no lookup. The ring
+itself (the screen's half size plus a tile, the object event view) did not change.
+
+### Diagnostics: the summary line
+`CtrWildsCore.stats` (reset by every new map) counts plain integers: attempts, successes, failures by reason (`CTRW_FAIL_NOCELL`: the
+ring had no cell the game accepts; `ROLL`: the map's table gave no pictured species; `NOOBJ`: no free object event), the frames until
+the first wild and until the target was first reached, and the times it stalled. The frame count is one increment inside
+`CtrWildsCore_SpawnDue`, after the operative check: with the option off, a blocked state or a map
+with nothing to show, it never runs. Nothing is written per frame. `port.log` (Old 3DS builds, or with `sdmc:/3ds/twinembers/debug.txt`;
+otherwise `CtrWilds_Log` does nothing) gets one line when the map changes, if the map had attempts, and one every 30 s on a map:
+
+    wilds: map=0102 att=9 ok=6 nocell=2 roll=1 noobj=0 first=31 fill=420 stalls=0 t=900
+
+`map` is the map group and number in hex; `att`, `ok` and the three failure reasons add up (`att = ok + nocell + roll + noobj`);
+`first` and `fill` are operative frames from the map change to the first wild and to the target (0: not reached); `stalls` is how
+often it gave the step encounters back; `t` is the operative frames counted. Many `nocell` with `stalls` above 0 means the ring is
+too narrow there; `roll` means the map's table has no species with a picture; `noobj` means the object events were full.
+
 ### Cost per frame
 With the option off and nothing out the per-frame update compares the map id and returns (a few instructions, 1 to 2 ns on a host). With
 it on: a table of 6 wilds (object event index, state) is walked, no scan of the 16 object events, no free-slot search and no Pokemon
-generation per frame; spawn attempts every 1.5 to 4 seconds only below the target; the free object events, the lead Pokemon and the
-Repel are read once per 30 frames. Host micro-benchmarks (`wilds_core_test`) print the numbers; there is no console or emulator timing.
+generation per frame; spawn attempts every 0.3 to 2.5 seconds only below the target (up to 24 tile lookups each); the free object events, the lead Pokemon and the
+Repel are read once per 30 frames. Host micro-benchmarks (`wilds_core_test`) print the numbers (a computer's time; the counters' one increment is about 0.6 ns there);
+there is no console or emulator timing.
 
 ### Tests
 `wilds_core_test` (budget, density and console cap, the 16 object events with the reserve, almost-full maps, spawn rate and ring,
-Repel, the state machine and its ranges, the Pokemon's round trip, water and land, roamer, guards, map changes, fallback to the game's
+Repel, the state machine and its ranges, every spawn interval over 4000 seeds, the refill after a removal, the quick retries against the
+stall and the recovery, the weighted ring (histograms), the lookup limit and the counters with their summary line, the Pokemon's round trip, water and land, roamer, guards, map changes, fallback to the game's
 encounters, the option turned off before any wild appeared, spawn failures in small and narrow maps with the recovery, the orphans of a
 loaded game against NPCs, the companion and the Berry Blender's local ids), `tools/test_wilds_recipe.py` (the glue's text), `wilds_settings_test` (old, new, unknown, truncated at every byte, longer than the file), `settings_test`,
 `poketouch_options_test`, `battle_gen4_test` (the silhouette flag), the render test's measured fit check for the three rows, and
@@ -228,7 +268,9 @@ all appear and no wild takes the last 4 object events; (8) water wilds while sur
 Pokemon Tower; (9) a roamer on its map; (10) Repel on and off; (11) step encounters come back in a Safari Zone, with Randomlocke and on a map
 with a table of Unown only; (12) option Normal then Off before any wild appears: the grass encounters are the game's at once;
 (13) a place with no room for a wild (a small indoor grass patch): encounters come back after some seconds; (14) save with a wild on
-screen, reload in the same session and from a cold start: no leftover Boy-looking object, no blocked tile.
+screen, reload in the same session and from a cold start: no leftover Boy-looking object, no blocked tile; (15) the real time to the
+first wild and to the target on a route (the `first` and `fill` of the summary line in `port.log`), and that 24 to 36 frames is not
+too abrupt; (16) frame time with the quicker retries in a place with no room.
 
 ### Credit
 Design after Wilds of Hoenn by poooooby (MIT; `NOTICE.md`), and the ideas of PR #83 by mcl5500/Sh3ld0r (MIT): silhouettes, the "!" alert

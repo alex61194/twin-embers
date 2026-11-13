@@ -226,7 +226,7 @@ configurable aggression) and the design of **Wilds of Hoenn** by **poooooby**; t
 - The game's step encounters give way only where wilds can really appear; everywhere else (Safari Zone, Randomlocke, maps with no
   picture for any species, no free object events) they stay. Turning the option off gives FireRed's encounters back at the next
   step, even before any wild appeared; where no wild can find a place to appear (a few seconds of failed attempts) the original
-  encounters come back until one can, and the system keeps trying. Wilds on the water with Surf and in caves stay when the system
+  encounters come back until one can, and the system keeps trying (every second or so). Wilds on the water with Surf and in caves stay when the system
   can operate; fishing, Rock Smash and Sweet Scent are unchanged. A game saved with a wild on screen and loaded again leaves no
   stray wild behind. Sprites are the pack's HeartGold follower set; silhouettes are drawn by
   one GPU combiner pass, also forced in the Pokémon Tower without the Silph Scope.
