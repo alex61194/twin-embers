@@ -2618,7 +2618,7 @@
   },
   {
    "path": "builder/firered3ds_builder/recipes/firered-18a3758c/event_scripts-01.json",
-   "sha256": "e7f6298f409a0fc31bb27fa1e13fce35bb9c3e2c46fa32e0f86494806c8b4104",
+   "sha256": "d692825e5eb8e37cbab07f87a99e2e2f31d6b8de72bc4ec67b5779bcf5ae4008",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
