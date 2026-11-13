@@ -2252,7 +2252,7 @@
   },
   {
    "path": "CREDITS.md",
-   "sha256": "9e3970f704552815db4b4e437837996d4db2f6143c7782e365b0cc1ae22aea75",
+   "sha256": "fb63555f374c2d306587f7df72a47584e47743731bd31bceca195ccadfe4d7f7",
    "review_status": "reviewed",
    "credit": "Original rightsholders/authors identified in the preserved legal notice",
    "license": "Exact component scope and original notice text; no expanded grant",
@@ -2323,7 +2323,7 @@
   },
   {
    "path": "builder/README.md",
-   "sha256": "c1436ebbb54abb1d7b5a23c020b5eee6f45101e6f3b85edb23a8f3dabc921ebf",
+   "sha256": "e1f661713d58bfe301af134c5946f2893673f15e4e5fe439c84ce80d011202d8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2432,7 +2432,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sources.py",
-   "sha256": "e95165f6160faf87a780d348f8d3b1b780a68ccd39f8abd0c485294fd40fb201",
+   "sha256": "eb98750e4dcb1bf3522908d025c325778505aef33281a35f627e0cacfa8f5d63",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2440,7 +2440,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "523e9177fb506ec57038d51ad0667190657f0b5c0ecb976219afe74a52445150",
+   "sha256": "f2ca58a7361af41d56fbca8b39fd9f4937a175d40f3854cbe65733dc03a0755c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3028,7 +3028,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "a5a117e977eb91ca109776e1cfee4eb7ae5ddefd83064ddead2b56fc7a7791aa",
+   "sha256": "c539ce286ffe9176ec3bbd0b77f457f98adf82c2368915a3a7452f81721a6e36",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6511,7 +6511,7 @@
   },
   {
    "path": "tools/make_gen4_sources.py",
-   "sha256": "c80cce17aefa04b9880201135055b64239b074228319da02dba17e2d2f093277",
+   "sha256": "957ab68d4d21981a77b4fe50904024cad7376548e17a37deb3fa57603d8fefc9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -13,6 +13,7 @@ Pack entries, one per species with a complete set, and the icons:
     graphics/gen4/battle/NNN.bin    NNN = national dex number, 001-386
     graphics/gen4/battle/201_FF.bin Unown's letters, FF = 01-27 (B to Z, !, ?), as FireRed numbers them
     graphics/gen4/battle/351_FF.bin Castform's weather forms, FF = 01-03 (sun, rain, ice), FireRed's order
+    (386 is Deoxys' Attack Forme, FireRed's and LeafGreen's: gen4_sources lists it as "deoxys" rows, not pokegra's Normal one)
     graphics/gen4/spinda.bin        where HeartGold draws Spinda's spots (from pret's pokepic.c)
     graphics/gen4/icons.bin         every menu icon, only when all of them could be had
                                     (their palettes replace FireRed's for every icon)
@@ -93,6 +94,7 @@ from . import gen4_followers, gen4_hd, gen4_looks, gen4_sources, nsbtx
 
 SIZE = 80
 PICTURE = SIZE * SIZE // 2
+DEOXYS_DEX = 386    # FireRed and LeafGreen have its Attack Forme
 MAGIC = b"G4B1"
 PREFIX = "graphics/gen4/battle/"
 ICONS = "graphics/gen4/icons.bin"
@@ -1090,6 +1092,8 @@ def source_path(row: tuple) -> str:
         return gen4_sources.UNOWN_PATH.format(gen4_sources.UNOWN_NAMES[row[0]], row[2])
     if row[1] == "castform":
         return gen4_sources.CASTFORM_PATH.format(gen4_sources.CASTFORM_NAMES[row[0]], row[2])
+    if row[1] == "deoxys":
+        return gen4_sources.DEOXYS_PATH.format(gen4_sources.DEOXYS_NAMES[row[0]], row[2])
     if row[1] == "spinda":
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
@@ -1107,6 +1111,8 @@ def file_name(row: tuple) -> str:
         return "unown_{:02d}_{}.png".format(row[0], row[2])
     if row[1] == "castform":
         return "castform_{:02d}_{}.png".format(row[0], row[2])
+    if row[1] == "deoxys":
+        return "deoxys_{:02d}_{}.png".format(row[0], row[2])
     if row[1] == "spinda":
         return "pokepic.c"
     if row[1] == "trainers":
@@ -1266,6 +1272,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     followers = [row for row in rows if row[1] == "follower"]
     hd_rows = [row for row in rows if row[1] == "hd"]
     look_rows = [row for row in rows if row[1] == "look"]
+    rows_all = rows
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
         # The first listed pair is the species' own; a second one (female) differs from it.
@@ -1275,6 +1282,14 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
             missing.append(dex)
             continue
         files.append(("%s%03d.bin" % (PREFIX, dex), convert(*pairs[0], pairs[1] if len(pairs) > 1 else None)))
+    # 386 is Deoxys' Attack Forme (FireRed's and LeafGreen's), from its own pair of files: a Builder without them
+    # leaves 386 to FireRed's pictures (which are that form) and reports it missing.
+    for row in (row for row in rows_all if row[1] == "deoxys" and row[2] == "front"):
+        pair = (got.get((row[0], "deoxys", "front")), got.get((row[0], "deoxys", "back")))
+        if None in pair:
+            missing.append(DEOXYS_DEX)
+        else:
+            files.append(("%s%03d.bin" % (PREFIX, DEOXYS_DEX), convert(*pair)))
     species = len(files)
     for kind, dex in (("unown", 201), ("castform", 351)):
         for form in sorted({row[0] for row in form_rows[kind]}):

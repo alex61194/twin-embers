@@ -5,7 +5,9 @@ pinned commit PATH.format(dex, body, side). An icon: (key, "icon", HeartGold's i
 SHA-256), its path ICON_PATH.format(number); key 0 is the egg, 1-386 the national dex, 387-413
 Unown's letters B to ?. An Unown letter: (1-27, "unown", side, size, SHA-256), its path
 UNOWN_PATH.format(UNOWN_NAMES[letter], side). A Castform form: (1-3, "castform", side, size,
-SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Spinda's spots: (0, "spinda",
+SHA-256), its path CASTFORM_PATH.format(CASTFORM_NAMES[form], side). Deoxys' Attack Forme, FireRed's
+and LeafGreen's (1, "deoxys", side, size, SHA-256), its path DEOXYS_PATH.format(DEOXYS_NAMES[form], side); it
+takes the place of 386's own pair, which is the Normal Forme. Spinda's spots: (0, "spinda",
 "spots", size, SHA-256), the C file SPINDA_PATH whose tables give them. The trainer pictures: (0,
 "trainers", "front", size, SHA-256), the archive TRAINERS_PATH."""
 
@@ -17,6 +19,8 @@ UNOWN_PATH = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
 UNOWN_NAMES = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'exclamation_mark', 'question_mark')
 CASTFORM_PATH = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
 CASTFORM_NAMES = ('normal', 'sun', 'rain', 'ice')
+DEOXYS_PATH = 'files/poketool/pokegra/otherpoke/deoxys/{}/{}.png'
+DEOXYS_NAMES = ('normal', 'attack', 'defense', 'speed')
 SPINDA_PATH = 'src/pokepic.c'
 TRAINERS_PATH = 'files/a/0/5/8'
 FILES = (
@@ -916,8 +920,6 @@ FILES = (
     (384, 'male', 'back', 1518, '7a89ecb8cd63f35e68d5423bb17d8110a55d33472cb2ca00e1f5079401c459f6'),
     (385, 'male', 'front', 914, 'd4e63424c9e55fed9acc4b0595298123d451be4f710377857c374b4ac842452b'),
     (385, 'male', 'back', 1231, '35602a05ae95c5591585c6d2b36b6a626490566608edf1a6da46a7a81896d93c'),
-    (386, 'male', 'front', 1583, 'a595200e2a7242c3d88782225a4a8da89d9bd0c73192ad07312cc89ea342a164'),
-    (386, 'male', 'back', 927, '632567e805276812184716224696c1a835d83087876af77d1d4e3883b98057cb'),
     (1, 'unown', 'front', 374, '228935b0d354549d4bcb0f9acc8a22c67e7a3ba9c9ef98c2f6d1d3375b398f52'),
     (1, 'unown', 'back', 412, '982f0011c6f03d7fc082315a55fa3a796e20c87984ae08383c56701d6772dd44'),
     (2, 'unown', 'front', 415, 'dfd61c477ddd437bb684b6009a09a749c7210452cf2f62c832be44bff1d3d2a1'),
@@ -978,6 +980,8 @@ FILES = (
     (2, 'castform', 'back', 637, '057dd025004eec0da1b911aef5f13795fd7e4202423fdcc9d1248b1093a9bd58'),
     (3, 'castform', 'front', 787, '605b03795cc9d40d6bed889867e56073ac18179fadf1929e2562d69ab2a2da5c'),
     (3, 'castform', 'back', 712, 'a41d681f9deec18547e0c31545482664fa8cfc003859eca087b45e9cb465ba0e'),
+    (1, 'deoxys', 'front', 2021, '87c62762e313ecc76b58875d96433ea07ce6a4bb32aab749a21f872e47e4ebff'),
+    (1, 'deoxys', 'back', 1792, 'f240142dc8da80955060dfa8f0d4fbac9a4cf23200087961f60734b9c98f7aff'),
     (0, 'spinda', 'spots', 51363, 'c764681d5c640be1ae55c33570a37168d5b2b2b00898456981579bc40b0426e1'),
     (0, 'trainers', 'front', 1663908, 'f3d726e4c131e2aa3fbd9a8a236755370768db8edf0970aaeaaaff5b5be37e50'),
     (0, 'icon', 501, 307, 'c772fb205fdd9daab5dac934f575cc3f1de19ab3dbf7a727a19092756d54f7ac'),
