@@ -26,7 +26,10 @@
 #define CTRW_DENSITIES 4        /* OFF, FEW, NORMAL, MANY */
 #define CTRW_AGGROS 5           /* OFF, RARE, LOW, MODERATE, HIGH */
 
-/* The spawn rhythm, in frames (60 per second). Each is a minimum and the number of values from it: the wait is MIN + Rand() % SPAN. */
+/* The spawn rhythm, in frames (60 per second). Each is a minimum and the number of values from it: the wait is MIN + Rand() % SPAN.
+ * That is the configured wait; the REAL frames equal it: SpawnDue counts operative frames below the target and answers on the frame the
+ * wait reaches 0, so a wait of T is T frames between two attempts (the frames with locked controls or a blocked system do not count),
+ * and the first wait is T frames from the map change, the change frame being frame 1. */
 #define CTRW_FIRST_MIN 24       /* the first wild after a new map: 24 to 36 frames (0.4 to 0.6 s) of operative time */
 #define CTRW_FIRST_SPAN 13
 #define CTRW_FILL_MIN 45        /* after a success while fewer than half of the target are out (active * 2 < target): 45 to 90 */
@@ -246,7 +249,9 @@ int CtrWildsCore_SuppressStep(const CtrWildsCore *c, int tileKind);
 int CtrWildsCore_Stalled(const CtrWildsCore *c);
 
 /* Spawning. */
-int CtrWildsCore_SpawnDue(CtrWildsCore *c);                    /* TRUE when it is time for an attempt and one is wanted */
+/* TRUE when it is time for an attempt and one is wanted. A call counts one operative frame below the target: the wait goes down by one and
+ * the answer is TRUE on the call that brings it to 0 (a wait of T: the T-th call; already 0: this one). */
+int CtrWildsCore_SpawnDue(CtrWildsCore *c);
 int CtrWildsCore_FreeSlot(const CtrWildsCore *c);              /* an empty slot below the target, or CTRW_NONE */
 int CtrWildsCore_AcceptKind(CtrWildsCore *c, int tile, int hasLand, int hasWater, int surfing);
 /* A cell in the ring just outside the screen (left, right or below it) that the game accepts: TRUE with its x, y and kind. The cell is

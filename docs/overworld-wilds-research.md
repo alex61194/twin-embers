@@ -207,21 +207,34 @@ Three cases give the game's encounters back (`wilds_core_test`: `TestIdleRelease
   and no matching table entry is deactivated (`CtrWildsCore_IsOrphan`); a map's own object events, the companion (0xF7) and anything
   without the mark are never touched. A new map does the same sweep (it already removed them all).
 
-### When the next wild comes (frames at 60 fps)
-The wait to the next attempt is `MIN + Rand() % SPAN` of the table's own generator (never the game's), named in `3ds_wilds_core.h`:
+### When the next wild comes (real frames at 60 fps)
+Three numbers are kept apart:
 
-| After | Wait | Constant |
-| --- | --- | --- |
-| a new map (the first wild) | 24 to 36 (0.4 to 0.6 s) | `CTRW_FIRST_*` |
-| a success with fewer than half of the target out (`active * 2 < target`, `active` counting the wild just made) | 45 to 90 | `CTRW_FILL_*` |
-| a success with half of the target or more out | 90 to 150 | `CTRW_TOPUP_*` |
-| a failed attempt | 20 to 40 | `CTRW_FAIL_*` |
-| a failed attempt while stalled (6 in a row, nothing out) | 60 to 90 | `CTRW_STALLED_*` |
-| a wild went away (`CtrWildsCore_Forget`: shed, stale, out of view, battle) and the wait was longer | cut to 60 to 119 | `CTRW_REMOVED_*` |
+- (a) the **configured wait**: `spawnTimer`, `MIN + Rand() % SPAN` of the table's own generator (never the game's), named in `3ds_wilds_core.h`;
+- (b) the **real frames between two attempts**: the operative frames from one attempt to the next, the later attempt's frame included. A
+  wait of T gives exactly T of them: `CtrWildsCore_SpawnDue` counts a frame down and answers TRUE on the frame the wait reaches 0 (it used
+  to answer on the next one, one frame late; a wait that is already 0 gives the attempt on the same frame);
+- (c) the **real frames from a map change to the first wild**: the change frame is frame 1 (its 30-frame pass has just made the target),
+  and every operative frame up to the one that makes the wild counts.
 
-The wait only runs down while the system is operative and below the target. A removal never lengthens a wait and does nothing when it is
-already 119 or less, so several wilds removed in one frame cut it once. Turning the option off removes the wilds too (the wait is
-irrelevant then: nothing counts).
+An operative frame is one where `CtrWilds_Update` reaches `SpawnDue`: the option on, not blocked, the map able to show a wild and the
+field's controls free. Frames with the controls locked (a door, a script, a menu) or the system blocked do not count, and neither do the
+frames at the target: the wait only runs down while a wild is wanted (`active < target`). So the real time on screen can be longer than
+the table when the player is locked, never shorter.
+
+| After | Real frames (what the tests measure) | Configured wait | Constant |
+| --- | --- | --- | --- |
+| a new map, to the first wild (c) | 24 to 36 (0.4 to 0.6 s) | 24 to 36 | `CTRW_FIRST_*` |
+| a success with fewer than half of the target out (`active * 2 < target`, `active` counting the wild just made) | 45 to 90 | 45 to 90 | `CTRW_FILL_*` |
+| a success with half of the target or more out | 90 to 150 | 90 to 150 | `CTRW_TOPUP_*` |
+| a failed attempt | 20 to 40 | 20 to 40 | `CTRW_FAIL_*` |
+| a failed attempt while stalled (6 in a row, nothing out) | 60 to 90 | 60 to 90 | `CTRW_STALLED_*` |
+| a wild went away (`CtrWildsCore_Forget`: shed, stale, out of view, battle) and the wait was longer | 60 to 119 at most (the removal frame counts as frame 1) | cut to 60 to 119 | `CTRW_REMOVED_*` |
+
+`wilds_core_test` runs the glue's order every frame (frame setting, 30-frame pass, spawn) over 4000 seeds and checks that the observed
+minimum and maximum are exactly these numbers, and that each real gap equals the configured wait. A removal never lengthens a wait (a
+wait of 0 to 119 gives the attempt in max(wait, 1) frames) and does nothing when it is already 119 or less, so several wilds removed in
+one frame cut it once. Turning the option off removes the wilds too (the wait is irrelevant then: nothing counts).
 
 **The ring is drawn in proportion.** A spawn attempt looks at up to 24 cells (`CTRW_PICK_TRIES`, one tile lookup each). Each cell is
 drawn uniformly over the three zones outside the screen taken together (left, right, below): a zone weighs its number of cells, an
@@ -231,10 +244,12 @@ itself (the screen's half size plus a tile, the object event view) did not chang
 ### Diagnostics: the summary line
 `CtrWildsCore.stats` (reset by every new map) counts plain integers: attempts, successes, failures by reason (`CTRW_FAIL_NOCELL`: the
 ring had no cell the game accepts; `ROLL`: the map's table gave no pictured species; `NOOBJ`: no free object event), the frames until
-the first wild and until the target was first reached, and the times it stalled. The frame count is one increment inside
-`CtrWildsCore_SpawnDue`, after the operative check: with the option off, a blocked state or a map
-with nothing to show, it never runs. Nothing is written per frame. `port.log` (Old 3DS builds, or with `sdmc:/3ds/twinembers/debug.txt`;
-otherwise `CtrWilds_Log` does nothing) gets one line when the map changes, if the map had attempts, and one every 30 s on a map:
+the first wild and until the target was first reached, and the times it stalled. They work only while `CtrWildsCore.statsOn` is set,
+which the glue takes from `CtrWilds_LogOn` (`CtrLog_Enabled`: port.log is on) at a new map and in the 30-frame pass, never per frame; any
+change of that state starts the counters from zero, and the count is from the moment it began. With port.log off nothing is counted and no
+line is formatted. The frame count is one byte tested (and, with the log on, one increment) inside `CtrWildsCore_SpawnDue`, after the
+operative check: with the option off, a blocked state or a map with nothing to show, it never runs. Nothing is written per frame. `port.log`
+(Old 3DS builds, or with `sdmc:/3ds/twinembers/debug.txt`) gets one line when the map changes, if the map had attempts, and one every 30 s on a map:
 
     wilds: map=0102 att=9 ok=6 nocell=2 roll=1 noobj=0 first=31 fill=420 stalls=0 t=900
 
@@ -247,7 +262,7 @@ too narrow there; `roll` means the map's table has no species with a picture; `n
 With the option off and nothing out the per-frame update compares the map id and returns (a few instructions, 1 to 2 ns on a host). With
 it on: a table of 6 wilds (object event index, state) is walked, no scan of the 16 object events, no free-slot search and no Pokemon
 generation per frame; spawn attempts every 0.3 to 2.5 seconds only below the target (up to 24 tile lookups each); the free object events, the lead Pokemon and the
-Repel are read once per 30 frames. Host micro-benchmarks (`wilds_core_test`) print the numbers (a computer's time; the counters' one increment is about 0.6 ns there);
+Repel are read once per 30 frames. Host micro-benchmarks (`wilds_core_test`) print the numbers (a computer's time, not a console's: the counters' byte test is lost in the noise and the increment is a fraction of a nanosecond there);
 there is no console or emulator timing.
 
 ### Tests
@@ -269,7 +284,7 @@ Pokemon Tower; (9) a roamer on its map; (10) Repel on and off; (11) step encount
 with a table of Unown only; (12) option Normal then Off before any wild appears: the grass encounters are the game's at once;
 (13) a place with no room for a wild (a small indoor grass patch): encounters come back after some seconds; (14) save with a wild on
 screen, reload in the same session and from a cold start: no leftover Boy-looking object, no blocked tile; (15) the real time to the
-first wild and to the target on a route (the `first` and `fill` of the summary line in `port.log`), and that 24 to 36 frames is not
+first wild and to the target on a route (the `first` and `fill` of the summary line in `port.log`), and that 24 to 36 real frames is not
 too abrupt; (16) frame time with the quicker retries in a place with no room.
 
 ### Credit

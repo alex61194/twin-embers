@@ -824,7 +824,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wilds_core.h",
-   "sha256": "e47a9b59c1940430ee710e9dd91237a939fe81e53a4411d7c48589cefa74236e",
+   "sha256": "e63d0443935cc152fa4bf339e4b1426c7a2eeb5676cc62b7516768f2df3fef0a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1664,7 +1664,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wilds_core.c",
-   "sha256": "0c913fc30a2ab2a2d5fe16cd21243d2f81883b0facb05761caaeb88a187f3465",
+   "sha256": "d5a3ee290ea294c56235c0115899f7f0d47494d05cac46809c0a81a094fcf6bd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2250,7 +2250,7 @@
   },
   {
    "path": "3ds_port/tests/wilds_core_test.c",
-   "sha256": "3922b18e46a065188c39b143077fa9605c235ab25817450341f3bd33fdb4b291",
+   "sha256": "d73c15f258e505793f85b981106bc69b25a94c303af0e71de20269972794d17e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3568,7 +3568,7 @@
   },
   {
    "path": "docs/overworld-wilds-research.md",
-   "sha256": "eb1183539c1049d77864a7c02bae41ae08ccd76a0fa23a89b377e7dd3ad2a4fd",
+   "sha256": "4e5ceff3e9e5756356bfcfff3fd45decfc4162f389f7451551cd52997ba3b49a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

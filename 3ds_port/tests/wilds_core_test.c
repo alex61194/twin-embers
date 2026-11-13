@@ -1305,7 +1305,7 @@ static void TestRemoved(void)
         }
         worst = frames > worst ? frames : worst;
     }
-    CHECK(worst <= CTRW_REMOVED_MIN + CTRW_REMOVED_SPAN + 1, "a removed wild is replaced within 120 frames (worst %d)", worst);
+    CHECK(worst <= CTRW_REMOVED_MIN + CTRW_REMOVED_SPAN - 1, "a removed wild is replaced within 119 real frames (worst %d)", worst);
 }
 
 /* Quick retries must not delay the game's own encounters: the stall is reached within about 6 x 40 frames of the first failure. */
@@ -1344,7 +1344,7 @@ static void TestFastRetry(void)
             if (c.active > 0)
                 back = i;
         }
-        CHECK(back >= 0 && back <= CTRW_STALLED_MIN + CTRW_STALLED_SPAN, "seed %d: recovered in %d frames", seed, back);
+        CHECK(back >= 0 && back <= CTRW_STALLED_MIN + CTRW_STALLED_SPAN - 1, "seed %d: recovered in %d frames", seed, back);
         CHECK(c.fails == 0 && !CtrWildsCore_Stalled(&c) && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "seed %d: the first success suppresses again", seed);
         worstBack = back > worstBack ? back : worstBack;
         /* a new map leaves the stall too */
@@ -1569,7 +1569,7 @@ static void TestStats(void)
           "attempts add up (%u, %u ok)", c.stats.attempts, c.stats.ok);
     CHECK(c.stats.frames == 6000 && c.stats.firstFrames == (uint32_t)firstStat && c.stats.fillFrames == (uint32_t)fourth && firstStat > 0 && fourth >= firstStat,
           "first wild at %u frames, target at %u (%d, %d)", c.stats.firstFrames, c.stats.fillFrames, firstStat, fourth);
-    CHECK(c.stats.firstFrames >= CTRW_FIRST_MIN + 1 && c.stats.firstFrames <= CTRW_FIRST_MIN + CTRW_FIRST_SPAN, "first=%u is 25..37 frames", c.stats.firstFrames);
+    CHECK(c.stats.firstFrames >= CTRW_FIRST_MIN && c.stats.firstFrames <= CTRW_FIRST_MIN + CTRW_FIRST_SPAN - 1, "first=%u is 24..36 real frames", c.stats.firstFrames);
     CHECK(due == 4, "a summary at the first attempt and then every 1800 frames (%d in 6000)", due);
     CtrWildsCore_StatsLine(&c, line, sizeof(line));
     printf("  stats line: %s\n", line);
@@ -1867,6 +1867,262 @@ static void TestStatsSwitch(void)
     }
 }
 
+/* Real frames ---------------------------------------------------------------------------------------------------------------- *
+ * Three different numbers, kept apart:
+ *  (a) the configured wait: spawnTimer as SpawnDone / MapChanged / Removed set it (the CTRW_*_MIN.. ranges);
+ *  (b) the real frames between two attempts: the operative frames (the ones where CtrWilds_Update reaches SpawnDue with the field
+ *      free) from one attempt to the next, the later attempt's frame included. The wait runs down only while a wild is wanted
+ *      (active < target), and a frame that is not operative (option off, blocked, controls locked) is not counted: SpawnDue is not
+ *      called there. A wait of T gives exactly T real frames;
+ *  (c) the real frames from a map change to the first wild: the change frame itself is frame 1 (its Tick has just made the target) and
+ *      every operative frame up to the one that makes the wild counts, so it is the first wait, 24 to 36.
+ * Each is measured below in a loop that runs the glue's order every frame (frame setting, 30-frame pass, spawn). */
+
+typedef struct Attempt
+{
+    int frame;          /* operative-or-not frame number since the start, 1-based */
+    int ok;
+    int activeAfter;
+    int timerAfter;     /* the wait SpawnDone set (a) */
+    int fails;
+} Attempt;
+
+#define MAX_ATT 64
+
+/* The glue's frame with the field's controls possibly locked (CtrWilds_Update returns before the pass and the spawn then). */
+static void FrameLocked(CtrWildsCore *c, World *w, int density, int consoleCap, int blocked, int locked)
+{
+    CtrWildEnv env = {density, c->aggro, consoleCap, blocked, c->leadPower};
+    int shed;
+
+    if (CtrWildsCore_Frame(c, &env))
+    {
+        Shed(c, w, c->active);
+        return;
+    }
+    if (!c->operative || locked)
+        return;
+    shed = CtrWildsCore_Tick(c, density, consoleCap, FreeObjects, w);
+    if (shed > 0)
+        Shed(c, w, shed);
+    Spawn(c, w, consoleCap, 10, 100, 0);
+}
+
+/* Runs `frames` frames from frame number *f + 1 and appends the attempts seen. Needs the counters on. */
+static int RunAttempts(CtrWildsCore *c, World *w, int density, int cap, int frames, int *f, Attempt *a, int na)
+{
+    for (int i = 0; i < frames; ++i)
+    {
+        uint32_t before = c->stats.attempts, okBefore = c->stats.ok;
+
+        ++*f;
+        FrameLocked(c, w, density, cap, 0, 0);
+        if (c->stats.attempts != before && na < MAX_ATT)
+        {
+            a[na].frame = *f;
+            a[na].ok = c->stats.ok != okBefore;
+            a[na].activeAfter = c->active;
+            a[na].timerAfter = c->spawnTimer;
+            a[na].fails = c->fails;
+            ++na;
+        }
+    }
+    return na;
+}
+
+static void TestRealFrames(void)
+{
+    Range first = {0}, fill = {0}, topup = {0}, fail = {0}, stalled = {0}, removed = {0}, locked = {0};
+    int seed24 = 0, seed36 = 0;
+
+    /* SpawnDue itself: a wait of T is T calls, the T-th gives the attempt; a wait of 0 gives it at once; at the target nothing runs down */
+    for (int t = 0; t <= 200; ++t)
+    {
+        CtrWildsCore c;
+        int n = 0, got = 0;
+
+        CtrWildsCore_Init(&c, 1);
+        c.operative = 1;
+        c.target = 3;
+        c.spawnTimer = (uint16_t)t;
+        while (!got && n < 1000)
+        {
+            got = CtrWildsCore_SpawnDue(&c);
+            ++n;
+        }
+        CHECK(n == (t == 0 ? 1 : t), "a wait of %d: the attempt is on call %d (%d expected)", t, n, t == 0 ? 1 : t);
+        c.active = 3;
+        c.spawnTimer = (uint16_t)t;
+        for (int i = 0; i < 50; ++i)
+            CHECK(!CtrWildsCore_SpawnDue(&c), "at the target there is no attempt");
+        CHECK(c.spawnTimer == t, "at the target the wait does not run down");
+        c.active = 0;
+        c.operative = 0;
+        CHECK(!CtrWildsCore_SpawnDue(&c) && c.spawnTimer == t, "not operative: not a frame");
+    }
+
+    for (int seed = 1; seed <= SEEDS; ++seed)
+    {
+        CtrWildsCore c;
+        World w;
+        Attempt at[MAX_ATT];
+        int n, f = 0, t0;
+
+        /* (c) and (b): an open field, six wanted (density MANY, New 3DS): the change frame is frame 1 */
+        InitOn(&c, (uint32_t)seed);
+        WorldInit(&w, CTRW_TILE_LAND);
+        MapOn(&c, 9, 1, 0);
+        t0 = c.spawnTimer;
+        n = RunAttempts(&c, &w, 3, 6, 1500, &f, at, 0);
+        CHECK(n == 6 && c.active == 6, "seed %d: six wilds in 1500 frames (%d attempts)", seed, n);
+        if (n < 6)
+            continue;
+        RangeAdd(&first, at[0].frame);
+        CHECK(at[0].ok && at[0].frame == t0, "seed %d: first wild on frame %d, the first wait was %d", seed, at[0].frame, t0);
+        if (t0 == 24 && !seed24)
+            seed24 = seed;
+        if (t0 == 36 && !seed36)
+            seed36 = seed;
+        for (int k = 0; k + 1 < n; ++k)
+        {
+            int gap = at[k + 1].frame - at[k].frame;
+
+            CHECK(gap == at[k].timerAfter, "seed %d: %d real frames between attempts %d and %d, the wait set was %d", seed, gap, k + 1, k + 2, at[k].timerAfter);
+            RangeAdd(at[k].activeAfter * 2 < 6 ? &fill : &topup, gap);
+        }
+        /* (b) after a failure: nowhere to appear; 20 to 40 up to the 5th in a row, 60 to 90 from the 6th */
+        InitOn(&c, (uint32_t)seed);
+        WorldPatch(&w, 3);
+        f = 0;
+        MapOn(&c, 40, 1, 0);
+        n = RunAttempts(&c, &w, 3, 6, 1400, &f, at, 0);
+        CHECK(n >= 8, "seed %d: attempts keep coming (%d)", seed, n);
+        for (int k = 0; k + 1 < n; ++k)
+        {
+            int gap = at[k + 1].frame - at[k].frame;
+
+            CHECK(!at[k].ok && gap == at[k].timerAfter, "seed %d: failure %d: %d real frames to the next, the wait set was %d", seed, k + 1, gap, at[k].timerAfter);
+            RangeAdd(at[k].fails < CTRW_STALL_FAILS ? &fail : &stalled, gap);
+        }
+        /* (b) after a wild is taken away: a full table of four, one goes, it is back within 119 frames (the removal frame is frame 1) */
+        InitOn(&c, (uint32_t)seed);
+        WorldInit(&w, CTRW_TILE_LAND);
+        MapOn(&c, 6, 1, 0);
+        f = 0;
+        n = RunAttempts(&c, &w, 2, 6, 3000, &f, at, 0);
+        CHECK(c.active == 4, "seed %d: the table filled", seed);
+        {
+            int k = 0;
+
+            Shed(&c, &w, 1);
+            do
+            {
+                FrameLocked(&c, &w, 2, 6, 0, 0);
+                ++k;
+            } while (c.active < 4 && k < 400);
+            RangeAdd(&removed, k);
+        }
+        /* a map change with the field locked or the system blocked for a while: those frames are not counted */
+        if (seed <= 300)
+        {
+            int lockedFrames = 1 + seed % 90, k = 0;
+
+            InitOn(&c, (uint32_t)seed);
+            WorldInit(&w, CTRW_TILE_LAND);
+            MapOn(&c, 9, 1, 0);
+            t0 = c.spawnTimer;
+            for (int i = 0; i < lockedFrames; ++i)
+            {
+                FrameLocked(&c, &w, 3, 6, seed & 1, 1);       /* controls locked (the change frame too), or blocked */
+                ++k;
+            }
+            CHECK(c.stats.frames == 0 && c.active == 0 && c.spawnTimer == t0, "seed %d: locked frames count for nothing", seed);
+            while (c.active == 0 && k < 1000)
+            {
+                FrameLocked(&c, &w, 3, 6, 0, 0);
+                ++k;
+            }
+            CHECK(c.stats.frames == (uint32_t)t0 && k == lockedFrames + t0, "seed %d: %d locked + %d operative frames, %d in all", seed, lockedFrames, t0, k);
+            RangeAdd(&locked, c.stats.frames);
+        }
+    }
+    CHECK(seed24 && seed36, "seeds were found for the first wait at both ends (%d, %d)", seed24, seed36);
+    CheckRange(&first, 24, 36, "REAL frames from the map change to the first wild");
+    CheckRange(&fill, 45, 90, "REAL frames between attempts, below half of the target");
+    CheckRange(&topup, 90, 150, "REAL frames between attempts, half of the target or more");
+    CheckRange(&fail, 20, 40, "REAL frames between attempts after a failure");
+    CheckRange(&stalled, 60, 90, "REAL frames between attempts while stalled");
+    CheckRange(&removed, 60, 119, "REAL frames from taking a wild away to the next one");
+    CheckRange(&locked, 24, 36, "operative frames up to the first wild with locked frames before it");
+    printf("  real frames (min..max over %d seeds): first %d..%d, fill %d..%d, complete %d..%d, after a failure %d..%d, stalled %d..%d, after a removal %d..%d\n",
+           SEEDS, first.min, first.max, fill.min, fill.max, topup.min, topup.max, fail.min, fail.max, stalled.min, stalled.max, removed.min, removed.max);
+
+    /* the two ends of the first wait, exactly, in the real loop */
+    for (int e = 0; e < 2; ++e)
+    {
+        int seed = e ? seed36 : seed24, want = e ? 36 : 24, f = 0;
+        CtrWildsCore c;
+        World w;
+        Attempt at[MAX_ATT];
+
+        InitOn(&c, (uint32_t)seed);
+        WorldInit(&w, CTRW_TILE_LAND);
+        MapOn(&c, 9, 1, 0);
+        RunAttempts(&c, &w, 3, 6, 100, &f, at, 0);
+        CHECK(at[0].frame == want, "seed %d: the first wild is on frame %d (%d expected)", seed, at[0].frame, want);
+    }
+
+    /* a shorter wait is never made longer by a removal (a wait of 0 is the next frame) and a longer one is cut to 60..119 */
+    {
+        CtrWildsCore base;
+        World wbase;
+        int f = 0;
+        Attempt at[MAX_ATT];
+
+        InitOn(&base, 5);
+        WorldInit(&wbase, CTRW_TILE_LAND);
+        MapOn(&base, 6, 1, 0);
+        RunAttempts(&base, &wbase, 2, 6, 3000, &f, at, 0);
+        Shed(&base, &wbase, 1);       /* one slot is free again; the wait is whatever the removal left */
+        for (int t = 0; t <= 400; ++t)
+        {
+            CtrWildsCore c = base;
+            World w = wbase;
+            int k = 0;
+
+            c.spawnTimer = (uint16_t)t;
+            do
+            {
+                FrameLocked(&c, &w, 2, 6, 0, 0);
+                ++k;
+            } while (c.active < 4 && k < 600);
+            if (t <= 119)
+                CHECK(k == (t == 0 ? 1 : t), "a wait of %d is not made longer: %d frames", t, k);
+            else
+                CHECK(k >= 1 && k <= 400, "a wait of %d: %d frames", t, k);
+        }
+        /* the removal itself cuts the long ones: from a wait that is long, the next wild is out within 119 frames and not before 60 */
+        for (int t = 120; t <= 400; t += 7)
+        {
+            CtrWildsCore c = base;
+            World w = wbase;
+            int k = 0;
+
+            c.spawnTimer = (uint16_t)t;
+            c.active = 4;
+            c.wild[0].state = CTRW_S_IDLE;
+            c.wild[0].obj = CTRW_NONE;
+            CtrWildsCore_Forget(&c, 0);
+            do
+            {
+                FrameLocked(&c, &w, 2, 6, 0, 0);
+                ++k;
+            } while (c.active < 4 && k < 600);
+            CHECK(k >= CTRW_REMOVED_MIN && k <= CTRW_REMOVED_MIN + CTRW_REMOVED_SPAN - 1, "a wait of %d cut by a removal: %d real frames", t, k);
+        }
+    }
+}
+
 static void TestGlueSupport(void)
 {
     CtrWildsCore c;
@@ -1939,11 +2195,8 @@ __attribute__((noinline)) static int OldSpawnDue(CtrWildsCore *c)
     if (!c->operative || c->active >= c->target)
         return 0;
     if (c->spawnTimer != 0)
-    {
         --c->spawnTimer;
-        return 0;
-    }
-    return 1;
+    return c->spawnTimer == 0;
 }
 
 __attribute__((noinline)) static int CopySpawnDue(CtrWildsCore *c)
@@ -1955,11 +2208,8 @@ __attribute__((noinline)) static int CopySpawnDue(CtrWildsCore *c)
     if (c->active >= c->target)
         return 0;
     if (c->spawnTimer != 0)
-    {
         --c->spawnTimer;
-        return 0;
-    }
-    return 1;
+    return c->spawnTimer == 0;
 }
 
 static void Bench(void)
@@ -2093,6 +2343,7 @@ int main(void)
     TestPick();
     TestStats();
     TestStatsSwitch();
+    TestRealFrames();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();

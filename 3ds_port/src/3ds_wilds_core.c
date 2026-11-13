@@ -248,12 +248,11 @@ int CtrWildsCore_SpawnDue(CtrWildsCore *c)
         ++c->stats.frames;
     if (c->active >= c->target)
         return 0;
+    /* The wait is counted in operative frames below the target, this one included: a wait of T gives an attempt on the T-th such frame
+     * (the frame it reaches 0), so T is the real number of frames between two attempts. A wait that is already 0 gives it at once. */
     if (c->spawnTimer != 0)
-    {
         --c->spawnTimer;
-        return 0;
-    }
-    return 1;
+    return c->spawnTimer == 0;
 }
 
 int CtrWildsCore_FreeSlot(const CtrWildsCore *c)
