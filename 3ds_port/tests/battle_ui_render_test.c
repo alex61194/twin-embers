@@ -265,6 +265,64 @@ static void names(char *dst, size_t n, const char *s) { snprintf(dst, n, "%s", s
 /* A name of the game's text: proper case, as the Bag's reader gives it (3ds_bottom.c CtrBottomBag_ItemName). */
 static void gnames(char *dst, size_t n, const char *s) { names(dst, n, s); CtrTextCase(dst); }
 
+/* The Party's action menu: the rows BPMenuRow draws and the D-pad rule the game's input follows (3ds_party_grid.h, recipe 0257) must
+ * agree. Judged from the drawn rectangles alone: UP / DOWN go to the neighbour above or below in the same drawn column and wrap at its
+ * ends, LEFT / RIGHT to the other column at the same height, or at the lowest row of the right column when it is shorter. */
+static void partyMenuGrid(void)
+{
+    for (int n = 1; n <= 8; ++n) {
+        CtrPokeTouchRect r[8];
+        int xs[2], nx = 0;
+
+        for (int i = 0; i < n; ++i) {
+            r[i] = BPMenuRow(n, i);
+            assert(r[i].x >= 0 && r[i].x + r[i].w <= 320 && r[i].y >= 0 && r[i].y + r[i].h <= 240 && r[i].h == 27);
+            if (!nx || r[i].x != xs[nx - 1]) {
+                assert(nx < 2 && (nx == 0 || r[i].x > xs[0]));
+                xs[nx++] = r[i].x;
+            }
+            for (int j = 0; j < i; ++j)
+                assert(r[i].x + r[i].w <= r[j].x || r[j].x + r[j].w <= r[i].x || r[i].y + r[i].h <= r[j].y || r[j].y + r[j].h <= r[i].y);
+        }
+        assert(nx == (n > 4 ? 2 : 1));
+        for (int i = 0; i < n; ++i) {
+            int top = 1 << 30, bottom = -1, otherTop = 1 << 30, otherBottom = -1, sameRow = -1;
+
+            if (i > 0 && r[i].x == r[i - 1].x)
+                assert(r[i].y == r[i - 1].y + 30);                       /* a column fills from the top, 30 px a row */
+            if (i > 0 && r[i].x != r[i - 1].x)
+                assert(r[i].y == r[0].y);                                /* the right column starts level with the left */
+            for (int j = 0; j < n; ++j) {
+                if (r[j].x == r[i].x) {
+                    if (r[j].y < top) top = r[j].y;
+                    if (r[j].y > bottom) bottom = r[j].y;
+                } else {
+                    if (r[j].y < otherTop) otherTop = r[j].y;
+                    if (r[j].y > otherBottom) otherBottom = r[j].y;
+                    if (r[j].y == r[i].y) sameRow = j;
+                }
+            }
+            for (int d = CTR_PGRID_UP; d <= CTR_PGRID_RIGHT; ++d) {
+                int to = CtrPartyGrid_Move(n, i, d);
+
+                if (n <= 4) {
+                    assert(to == -1);                                    /* one column: the game's own list input */
+                    continue;
+                }
+                assert(to >= 0 && to < n);
+                if (d == CTR_PGRID_UP) {
+                    assert(r[to].x == r[i].x && r[to].y == (r[i].y > top ? r[i].y - 30 : bottom));
+                } else if (d == CTR_PGRID_DOWN) {
+                    assert(r[to].x == r[i].x && r[to].y == (r[i].y < bottom ? r[i].y + 30 : top));
+                } else {
+                    assert(r[to].x != r[i].x && r[to].y == (sameRow >= 0 ? r[i].y : otherBottom));
+                    assert(sameRow < 0 || to == sameRow);
+                }
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     const char *out = getenv("BATTLE_UI_OUT"), *fontPath = getenv("BATTLE_UI_FONT");
@@ -272,6 +330,7 @@ int main(int argc, char **argv)
     int k;
 
     (void)argv;
+    partyMenuGrid();
 #ifndef BATTLE_UI_EXTERNAL_LOAD
 #ifndef BATTLE_UI_BEFORE
     gNoPack = getenv("BATTLE_UI_NO_PACK") != NULL;

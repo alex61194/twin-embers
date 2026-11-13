@@ -13,6 +13,7 @@
 #include "3ds_ui_strings.h"
 #include "3ds_type_chart.h"
 #include "3ds_battle_nav.h"
+#include "3ds_party_grid.h"
 
 /* The party's balls, on their tray (the mockup's .tray: 196 x 25 at (62, 5); a ball every 28 px, 14 across, its mini bar under it). */
 #define BL_TRAY_X 62
@@ -110,10 +111,11 @@ static CtrPokeTouchRect BPanel(const CtrBattleParty *p, int i)
     return r;
 }
 
-/* A row of the Party's menu: one column of up to four, two columns beyond. */
+/* A row of the Party's menu: one column of up to four, two columns beyond. Which column and row an action is in is
+ * 3ds_party_grid.h's, the same arithmetic the game's D-pad walks it by (recipe 0257). */
 static CtrPokeTouchRect BPMenuRow(int count, int i)
 {
-    int cols = count > 4 ? 2 : 1, rows = (count + cols - 1) / cols, col = cols == 2 ? i / rows : 0, row = cols == 2 ? i % rows : i;
+    int cols = CtrPartyGrid_Cols(count), rows = CtrPartyGrid_Rows(count), col = CtrPartyGrid_Col(count, i), row = CtrPartyGrid_Row(count, i);
     CtrPokeTouchRect r = {(int16_t)(cols == 2 ? 44 + 118 * col : 100), (int16_t)(88 - 15 * rows + 30 * row),
                           (int16_t)(cols == 2 ? 112 : 120), 27};
     return r;

@@ -1,8 +1,68 @@
-/* The move relearner's list, in the viewport's place (3ds_poketouch.h CtrPokeTouchRelearn), included at the end of 3ds_poketouch.c after the
+/* The move relearner, in the viewport's place (3ds_poketouch.h CtrPokeTouchRelearn), included at the end of 3ds_poketouch.c after the
  * move to forget (3ds_field_learn_impl.h), whose look it shares: the question in a FireRed text window with two scroll buttons, the Pokemon
  * (front picture on a plate, level in a ribbon, nickname) with the selected move's PP, power and accuracy, a window of the list as rows
  * (type badge on the right, the chosen one flame with the select ring, CANCEL in slate), the move's description in the note.
- * Every word but the three labels is FireRed's (CtrBottomRelearn_*). */
+ * Every word but the three labels is FireRed's (CtrBottomRelearn_*).
+ * What FireRed has up besides the list (its questions "Teach X?", "Stop learning X?", "Delete an older move...?" and its messages) is
+ * drawn over the dimmed list with the Field Bag's pieces (3ds_field_bag_impl.h: its text window, YES and NO as cards, the message with
+ * "Tap to continue"): the screen is never FireRed's own picture in the viewport. */
+
+/* The question's window (up to five lines of the long one) over YES and NO; the message's window with its "Tap to continue". Both are as
+ * high as their text needs and stand in the middle of the area (the question with its buttons under it). */
+#define FR_TEXT_W 204                                   /* the text's width in both windows (232 - 2 x 14) */
+
+/* How many lines Em2Wrap sets `text` in at `width` (at most `maxLines`): it breaks at spaces the same way. */
+static int FRLines(const char *text, int width, int maxLines)
+{
+    char line[100], joined[100], word[40];
+    const char *p = text;
+    int lines = 0;
+
+    line[0] = 0;
+    for (;;) {
+        int w = 0;
+
+        while (*p == ' ' || *p == '\n')
+            ++p;
+        if (!*p)
+            break;
+        while (*p && *p != ' ' && *p != '\n' && w < (int)sizeof(word) - 1)
+            word[w++] = *p++;
+        word[w] = 0;
+        Em2Join(joined, sizeof(joined), line, word);
+        if (line[0] && UiTextWidth(joined, 1) > width) {
+            ++lines;
+            Em2Join(line, sizeof(line), "", word);
+        } else
+            memcpy(line, joined, sizeof(line));
+    }
+    if (line[0])
+        ++lines;
+    return lines < 1 ? 1 : lines > maxLines ? maxLines : lines;
+}
+
+static CtrPokeTouchRect FRAsk(const CtrPokeTouchRelearn *l)
+{
+    int lines = FRLines(l->message, FR_TEXT_W, 5), h = 14 * lines + 20;
+    CtrPokeTouchRect r = {8, (int16_t)((168 - h - 40) / 2), 232, (int16_t)h};
+
+    return r;
+}
+
+static CtrPokeTouchRect FRButton(const CtrPokeTouchRelearn *l, int no)
+{
+    CtrPokeTouchRect a = FRAsk(l), r = {(int16_t)(no ? 128 : 30), (int16_t)(a.y + a.h + 12), 90, 30};
+
+    return r;
+}
+
+static CtrPokeTouchRect FRSay(const CtrPokeTouchRelearn *l)
+{
+    int lines = FRLines(l->message, FR_TEXT_W, 4), h = 14 * lines + 20 + (l->tap ? 16 : 0);
+    CtrPokeTouchRect r = {8, (int16_t)((168 - h) / 2), 232, (int16_t)h};
+
+    return r;
+}
 
 static const CtrPokeTouchRect sFRBand = {4, 4, 240, 22};
 static const CtrPokeTouchRect sFRSide = {4, 30, 96, 134};
@@ -19,6 +79,15 @@ int CtrPokeTouch_RelearnHit(const CtrPokeTouchView *v, int x, int y)
     const CtrPokeTouchRelearn *l = &v->relearn;
 
     if (!l->on)
+        return -1;
+    if (l->panel == PT_RL_PANEL_YESNO) {
+        CtrPokeTouchRect yes = FRButton(l, 0), no = FRButton(l, 1);
+
+        return UiIn(&yes, x, y) ? PT_RL_HIT_YES : UiIn(&no, x, y) ? PT_RL_HIT_NO : -1;
+    }
+    if (l->panel == PT_RL_PANEL_MESSAGE)
+        return l->tap && x < 248 && y < 168 ? PT_RL_HIT_MESSAGE : -1;       /* anywhere above the note: it waits for A */
+    if (l->panel == PT_RL_PANEL_BLANK)
         return -1;
     if (UiIn(&sFRUp, x, y))
         return PT_RL_HIT_UP;
@@ -97,6 +166,32 @@ static void FRArrow(const CtrPokeTouchRect *r, int dir, int on, int pressed)
     LlArrow(r->x + (r->w - 8) / 2, fy + 4, 8, 5, dir, on ? LL_CURSOR : FB_IDLE_ARROW);
 }
 
+/* The question over the dimmed list: FireRed's words in the text window, YES and NO under it (the cursor's one flame with the ring). */
+static void FRQuestion(const CtrPokeTouchRelearn *l)
+{
+    CtrPokeTouchRect ask = FRAsk(l), yes = FRButton(l, 0), no = FRButton(l, 1);
+
+    FBWindow(&ask);
+    Em2Wrap(l->message, ask.x + 14, ask.y + 11, FR_TEXT_W, 5, 14, EM_DARK, EM_DARK_SH);
+    FBLlButton(&yes, LlPick(l->menuCursor == 0, &kEmCream), CtrUiText(UIS_YES), l->pressed == PT_RL_HIT_YES, l->menuCursor == 0);
+    FBLlButton(&no, LlPick(l->menuCursor == 1, &kEmSlate), CtrUiText(UIS_NO), l->pressed == PT_RL_HIT_NO, l->menuCursor == 1);
+}
+
+/* A message over the dimmed list; "Tap to continue" and its arrow only where it waits for A (the last one: a fade or a fanfare is not asked). */
+static void FRMessage(const CtrPokeTouchRelearn *l)
+{
+    CtrPokeTouchRect box = FRSay(l);
+    const CtrPokeTouchRect *m = &box;
+    const char *tap = CtrUiText(UIS_TAP_TO_CONTINUE);
+
+    FBWindow(m);
+    Em2Wrap(l->message, m->x + 14, m->y + 11, FR_TEXT_W, 4, 14, EM_DARK, EM_DARK_SH);
+    if (l->tap) {
+        UiText(tap, m->x + m->w - 14 - UiTextWidth(tap, 1) - 9, m->y + m->h - 17, EM_DIM, EM_DARK_SH, 1, m->x + m->w - 8);
+        LlArrow(m->x + m->w - 19, m->y + m->h - 16, 8, 5, 1, LL_CURSOR);
+    }
+}
+
 static void FRelearnFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRelearn *l = &v->relearn;
@@ -104,6 +199,10 @@ static void FRelearnFrame(const CtrPokeTouchView *v)
 
     EmSurface();
     TsBgRect(PT_VIEW_X - 4, PT_VIEW_Y - 4, PT_VIEW_W + 8, PT_VIEW_H + 8);
+    if (l->panel == PT_RL_PANEL_BLANK) {                /* being set up: the backdrop, nothing of FireRed's */
+        sUiS = &sUiNavy;
+        return;
+    }
     LlWindow(band.x, band.y, band.w, band.h);
     Em2Text(l->question, band.x + 12, band.y + (band.h - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, sFRUp.x - 2);
     FRArrow(&sFRUp, 0, l->first > 0 || l->cursor > 0, l->pressed == PT_RL_HIT_UP);
@@ -113,6 +212,15 @@ static void FRelearnFrame(const CtrPokeTouchView *v)
         for (int i = 0; i < PT_RL_ROWS; ++i)
             if ((pass == 1) == (l->first + i == l->cursor))
                 FRRowDraw(l, i);
+    if (l->panel == PT_RL_PANEL_YESNO || l->panel == PT_RL_PANEL_MESSAGE) {
+        CtrPokeTouchRect dim = {0, 0, 248, 168};
+
+        UiDim(&dim);
+        if (l->panel == PT_RL_PANEL_YESNO)
+            FRQuestion(l);
+        else
+            FRMessage(l);
+    }
     sUiS = &sUiNavy;
 }
 

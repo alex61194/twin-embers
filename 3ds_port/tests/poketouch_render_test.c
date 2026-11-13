@@ -577,6 +577,32 @@ int main(int argc, char **argv)
             assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
             assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
             r->first=7; r->cursor=7; update(&old,&s); assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
+            /* Everything else FireRed shows in the relearner is the port's own picture over the dimmed list, never its viewport: the questions
+             * (the cursor on YES or NO, a press), a long one, a message that waits for A, one that does not, and the bare backdrop while it is set up. */
+            r->first=0; r->cursor=1;
+            for(int i=0;i<PT_RL_ROWS;++i) {
+                int k=i; memset(&r->row[i],0,sizeof(r->row[i])); r->row[i].type=-1;
+                r->row[i].move=(uint16_t)(k+1); r->row[i].type=tn[k]; strcpy(r->row[i].name,mv[k]); strcpy(r->row[i].typeName,ty[k]); strcpy(r->row[i].pp,"15"); strcpy(r->row[i].power,"95"); strcpy(r->row[i].accuracy,"100");
+            }
+            r->pressed=-1; update(&old,&s);
+            r->panel=PT_RL_PANEL_YESNO; strcpy(r->message,"Teach Flamethrower?"); r->menuCursor=0; update(&old,&s); SHOT("relearn_teach");
+            assert(CtrPokeTouch_RelearnHit(&s,75,108)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,108)==PT_RL_HIT_NO);   /* one line of question: the buttons just under its window */
+            assert(CtrPokeTouch_RelearnHit(&s,75,60)==-1 && CtrPokeTouch_RelearnHit(&s,75,126)==-1);
+            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,210,10)==-1 && CtrPokeTouch_RelearnHit(&s,75,60)==-1);   /* the list behind answers nothing */
+            r->menuCursor=1; update(&old,&s); SHOT("relearn_teach_no");
+            r->pressed=PT_RL_HIT_NO; update(&old,&s); r->pressed=PT_RL_HIT_YES; update(&old,&s); r->pressed=-1; update(&old,&s);
+            strcpy(r->message,"Charizard is trying to learn Flamethrower. But Charizard can't learn more than four moves. Delete an older move to make room for Flamethrower?");
+            r->menuCursor=0; update(&old,&s); SHOT("relearn_make_room");
+            assert(CtrPokeTouch_RelearnHit(&s,75,135)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,135)==PT_RL_HIT_NO && CtrPokeTouch_RelearnHit(&s,75,108)==-1);   /* five lines: lower */
+            strcpy(r->message,"Stop learning Flamethrower?"); r->menuCursor=1; update(&old,&s); SHOT("relearn_stop");
+            r->panel=PT_RL_PANEL_MESSAGE; r->tap=1; strcpy(r->message,"Charizard forgot Slash. And... Charizard learned Flamethrower."); update(&old,&s); SHOT("relearn_learned");
+            assert(CtrPokeTouch_RelearnHit(&s,100,100)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,247,0)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,100,170)==-1);
+            r->pressed=PT_RL_HIT_MESSAGE; update(&old,&s); r->pressed=-1; update(&old,&s);
+            r->tap=0; strcpy(r->message,"Which move should be forgotten?"); update(&old,&s); SHOT("relearn_which");
+            assert(CtrPokeTouch_RelearnHit(&s,100,100)==-1);                    /* nothing to answer while it prints or fades */
+            r->panel=PT_RL_PANEL_BLANK; r->message[0]=0; update(&old,&s); SHOT("relearn_blank");
+            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,75,108)==-1);
+            r->panel=PT_RL_PANEL_LIST; r->message[0]=0; update(&old,&s);
             r->on=0; s.backVisible=0;
         }
         /* The letter being read (Llama): the paper, its name and the writer; a long name and writer end in "...", no writer, no icon; each through the incremental path. */

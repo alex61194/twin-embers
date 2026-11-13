@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "db4f13e64c384429ee01b30283eaaa96c37a44b7d9917d7655b0f85b35bfefdb",
+   "sha256": "bcdf4669ac660c58c9976a5d4943ec8ecb70340384a72fa8621a55e91454dbb9",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -614,6 +614,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/include/3ds_party_grid.h",
+   "sha256": "bbed936225797a014666db0e808a817a427f893dd91a731da57d600b3a956dda",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/include/3ds_perf.h",
    "sha256": "60901a893f3c8c95a4b747bacaaf409d1e7f270570953a906fa1d885ccf2a9a5",
    "review_status": "reviewed",
@@ -642,7 +650,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "0bc5617cef38cfcaa8b79a8f631cdad3aa876b35ac2f86acbddbc208d77ab1bf",
+   "sha256": "585b96690a323535ce08247be0169688128c9e905ad4b77df2f8dcb278b1d1c9",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1019,7 +1027,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "37e0b24fa840d1bd91a4da14c80fa6cf1cf7adb97375faa0e3bccbf9e26bfea7",
+   "sha256": "e00b0b6500d15413fa1d98626906898ca253fc112409ed449a9b8adfe47c5408",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1091,7 +1099,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom_relearn_impl.h",
-   "sha256": "a4ccb7e0d5dae59d289c2bb3584d77a12e5c63c080921d10041dcd87528328d3",
+   "sha256": "219eba8d0f8974590d2aa9f83b86234875b36ee1321179bb8fab1618fb4631de",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1256,7 +1264,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_relearn_impl.h",
-   "sha256": "c19b96b0de2a0f20d854dfc0c1bf71416e07f58ab4eddedee77038c8a2f60415",
+   "sha256": "4aa1bcbb4c793480e2424ed621fe91ea5cb8671019174d7ada44b143b6c8ccc1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1806,7 +1814,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "885e7a7d2468cc4254073d22c66d42303746ab020a09f3ddb7201627224dbafe",
+   "sha256": "b07aece7ebbc53856d1c48d482fe04dfdcef7e9d87b3f1ed5e215c822b9b12de",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2106,6 +2114,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/tests/party_grid_test.c",
+   "sha256": "d96c26e94dee6f8aa58bdcdde672ac6e0e7b340a6fe0cd281a758d95b1cd926a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/poketouch_options_test.c",
    "sha256": "84739f0215b113cdad7e3b5c3922985092c1f8e8263072523c3093de4e0d29e0",
    "review_status": "reviewed",
@@ -2119,7 +2135,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "fc7ed08b29292941166d27bb7e49004de06be3d85050e48e15df869d29849eb0"
+   "sha256": "07e1fcd6b1664ac1bde092212a94ed32e50e3d89cff24fff84fb5db72f52de55"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2335,7 +2351,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "e40a6545cd88af6a06922aa3d0b5d9f8e3801cbbf40bc40f3087064de1a4ca69",
+   "sha256": "77e6745fe9a31185c965cd69b03f26a21e1f9ef21ea0ee49a52457adfb62f407",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -3424,7 +3440,7 @@
   },
   {
    "path": "docs/media/07-battle-action.png",
-   "sha256": "9bf1990c9c25ad68b2c9b513da2e0402f0180a29bdf440721e5631751922dd6b",
+   "sha256": "fcbe75c4c7674ac6d4683af8803e1a3f40740e6e856de7dc62390947730d8ef3",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3440,7 +3456,7 @@
   },
   {
    "path": "docs/media/09-battle-bag.png",
-   "sha256": "b2b8ea4e057c5405645af4e9f6f21467418fcdb9d8bef9b7e94c54206a58e26d",
+   "sha256": "e70b104af73eb44858dcfa790de03af0fdd93a7237a0c67e61c568cb0e98765f",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3448,7 +3464,7 @@
   },
   {
    "path": "docs/media/11-battle-party.png",
-   "sha256": "438308a67907fbd72f0f56dace8e4f5c254833d458545efb29874e0aadda0c32",
+   "sha256": "a4acae7f020ba5111bf76bb89b6789452bf14b28c298e10d5255f14ce468eacd",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3464,7 +3480,7 @@
   },
   {
    "path": "docs/media/13-bag.png",
-   "sha256": "24382fde94062d1bbc5d040be1884bf536ba4093e9789dd34600ed7da00ee8f7",
+   "sha256": "b860c507193397d93428ccf615df528b91abec1a36c5728131a536daa20e6459",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3472,7 +3488,7 @@
   },
   {
    "path": "docs/media/14-pokedex.png",
-   "sha256": "f5ae58d6e5158cf28512511ae9a8327d749eefbc9e705261227ab340b7e5f988",
+   "sha256": "8cb1d3a7957276089fc0e9c56b6fb0837a118f4081dcc9fe8cb88e7aa519ba8a",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3480,7 +3496,7 @@
   },
   {
    "path": "docs/media/15-trainer-card.png",
-   "sha256": "fd77bae8b01dde1667b8c3a508b30e024f6280d18669a132346878153941c08a",
+   "sha256": "baea5d293919ea54d16143ee479fd9d898ccdda38228f380e4abffe80036934a",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3488,7 +3504,7 @@
   },
   {
    "path": "docs/media/16-save.png",
-   "sha256": "f5a2dd1b05de3fbae464d3c1405582f8db47743fd06afa86091db545ecad6b13",
+   "sha256": "38f2c00c7207d7f76f28fe443e1d7ef1b7a89e248d3a4c7447f9a45f8328de32",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3496,7 +3512,7 @@
   },
   {
    "path": "docs/media/17-options-1.png",
-   "sha256": "292d503d85fdff19784d221801f704576068dea6c23b51581c204128d7572110",
+   "sha256": "a3b249c4b9ee170bb2e7a592938f0505a19d498a3e2a3562ecb664b43b275f33",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3504,7 +3520,7 @@
   },
   {
    "path": "docs/media/18-options-2.png",
-   "sha256": "0cbbc321537b420a5bf534c544923e53577e5a3a194d463d2bade3acc91d6936",
+   "sha256": "d3142fd8f40fec95c95c540090f956700aaf05db58f239d5b05b72196661ff88",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3557,6 +3573,102 @@
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
    "basis": "Real capture of Twin Embers (main after v0.3.0, with the optional HeartGold sprites in the pack) running in AzaharPlus, made by alex61194 on 2026-10-29 for the README and the web page (emulator screenshot reduced from 9x to the native 400x480 two-screen layout). Reviewed 2026-10-29: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/25-options-looks.png",
+   "sha256": "35d7225d7f9f639d26158922adcda31f0d93534bb4063c587a0c88192f8e2b99",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/26-options-wilds.png",
+   "sha256": "54e3231700d87dd727835fc84ff82943fc9ccae4984e453d3741b25b0bbccd10",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/27-options-qol.png",
+   "sha256": "f2b91e8d8d88f89dc2e60bec4fdaae9e5b96df929140c1a481552beb7451d90f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/28-options-nuzlocke.png",
+   "sha256": "6a894ba9429f61dc21657cde50fd8858459a9cb83c0493dc7311b8464a63f255",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/29-summary.png",
+   "sha256": "c314f0633c101950962193a276bafd6017c27ad9c6b1f53577339c40e6196005",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/30-summary-stats.png",
+   "sha256": "f590c6e0b8dc9ce4e468648b92710d66623b95c6d552a3d874ea1ce72a1b662f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/31-remember.png",
+   "sha256": "3781d4e1935038d205e9f060904ccd55b0ff95de0ba8baf9342d43357ae1f13d",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/32-pokedex-list.png",
+   "sha256": "06032d9e01e41cf7ccdd00975c2c4ed5f59fc715987268f84ec859c0b9005742",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/33-pokedex-habitats.png",
+   "sha256": "e64f1d5fa30cd9e8ff02da9115b3e65813a9c19be7eb2b225dec05d8ca55dc4b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/34-home-map.png",
+   "sha256": "cc623f793f9d6aa16c45bc340c325d1a80cee7e37bd49573c9e21b477d14007e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/35-home-map-zoom.png",
+   "sha256": "a16c9f03e276982db89191d3db09e6b4989af72c395cb5f1803ffa150d2bd5c0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/36-home-map-sevii.png",
+   "sha256": "77a35906a8e7549127c78ac7569e593e7ae9808b0b270c141a7893f97cb16d11",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers 0.6 running in Azahar (AzaharPlus), made by alex61194 on 2026-11-13 for the README and the site, reduced to 400x480; no ROM, pack or game binary."
   },
   {
    "path": "docs/media/twin-embers-banner.png",
@@ -6167,6 +6279,22 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0257-party-action-menu-dpad-two-columns.json",
+   "sha256": "79cec6624e3301e2e156b90b172198b102ad05c9d3ac91155aa149b545af365d",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0258-relearner-native-states.json",
+   "sha256": "eb8773c37b66f84067d0c825ae668aa2b44888b6d0757cc95bd44e88dffd4163",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -6902,6 +7030,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_party_relearn_recipes.py",
+   "sha256": "c889d360d19af03e3bfa179f655c2aa857a4d22c7cb646d6fde4997ca56c66cb",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_poketouch_render.py",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -7114,7 +7250,7 @@
   },
   {
    "path": "web/de.html",
-   "sha256": "3c9ea9440f157b071df2b8fb403bdb7e4dbd923f77298d0e4a649382f730ecce",
+   "sha256": "63912d96bd5f7bad322fe67a2cb3854b5add7a9f4fc3a4bca14de663c728172e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7122,7 +7258,7 @@
   },
   {
    "path": "web/es.html",
-   "sha256": "827fc04914c8de221329d5875b8b79619eb4d39d92d6e64d18e08199d42cc510",
+   "sha256": "7899e1e9413b12812ba4a11f13a41a4f8593459ec905798d9ed2a9b5ee02ad11",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7130,7 +7266,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "6b863f1492e89ff683066882265d5fb4800ea330e65d6499f7044876f4496bf5",
+   "sha256": "f47ac9a4d48884b7e48584fc05e1fabf41669a0e4879587e722d391185731af6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7138,7 +7274,7 @@
   },
   {
    "path": "web/style.css",
-   "sha256": "3726526c0fa33bcba28e9012af9b220aca435a329558db9e4e579832236b663a",
+   "sha256": "76be4168f8f8e8c56d4898a84d9ba8ace4fc8fb828c8649acf2e0bdc429f9306",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
