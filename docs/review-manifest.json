@@ -54,7 +54,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "f29ac99ff91463098e407766c1b59062843f41eb2dcb2c99cee11c19f0d03fa0",
+   "sha256": "a6e9041b63f239afc61e8174c1e61495fdb52943f1481dae20b0b9a5693053f5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -848,7 +848,7 @@
   },
   {
    "path": "3ds_port/include/ember_skin.h",
-   "sha256": "9a81cfe727fdc4fec1ec038ddc2a0295abdb04ef130f41d3bed7ba8f6436ee22",
+   "sha256": "3e039428de93c873afbdc1318a3a529608c0effd393f138302992253e80cccb2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6615,7 +6615,7 @@
   },
   {
    "path": "tools/make_ember_skin.py",
-   "sha256": "666a2ea937a66ff319b746c9b31b30f386a564ff1548fef21872a5e666841ce5",
+   "sha256": "fbabece4b577dc4804507a452a2c0a393bebf1d7ef03c15f5c12abf4077da3d1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6992,6 +6992,14 @@
   {
    "path": "tools/test_option_labels.py",
    "sha256": "449c86f14a2186ab86f24607a6b02adcb9b8d537bc8f0f0ca092fa54d44452d0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_column_labels.py",
+   "sha256": "d73f88ea538b146715be141a5bc90dc53f53cbe124996f807182f019d1fef318",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

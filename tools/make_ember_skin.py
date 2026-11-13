@@ -3,8 +3,7 @@
 
 Everything here is drawn by this script (no game pixels): the backdrop of the PokeTouch, battle and Summary screens
 (a dark red gradient, faint diagonal stripes, a fire's glow at the foot and glowing embers) and the six 16x16 icons of
-the START column (POKeDEX, POKeMON, BAG, the Trainer Card, SAVE, OPTIONS), flat and cel-shaded with a dark outline.
-The BAG is the port's own battle Bag (battle_ui_art.h) reduced to 16x16.
+the START column (POKeDEX, POKeMON, BAG, the Trainer Card, SAVE, OPTIONS), flat and cel-shaded with a slate outline, drawn pixel by pixel.
 
 Needs Pillow; it is a development tool and its output is committed. Run it again after changing the art.
 """
@@ -21,176 +20,188 @@ ART = ROOT / '3ds_port/include/battle_ui_art.h'
 W, H = 320, 240
 BG_PARTS = 4
 EMBER_T, EMBER_B = (132, 26, 22), (34, 6, 8)
-K = (48, 40, 56)
 
 
 
-def outline(im):
+# The START column's icons, drawn pixel by pixel (ICON x ICON): a slate outline (64, 72, 104), flat tones, the light from the
+# upper left. In the pictures below '.' is clear, 'O' the outline and any other letter a colour of that picture's own table.
+O = (64, 72, 104)
+ICON = 16
+
+DEX = ("""
+..OOOOOOOOOOOO..
+.OrrrrrrrrrrrRO.
+OrrWWWWrRcRyRgDO
+OrWwbBBWRRRRRRDO
+OrWbBBBWRRRRRRDO
+OrWBBBNWRRRRRRDO
+OrrWWWWrRRRRRRDO
+OrRRRRRRRRRRRRDO
+OnnnnnnnnnnnnnnO
+OrRRRRRRRRRRRRDO
+OrROOOOOOOOOORDO
+OrROGGGGGGGGORDO
+OrROGHHHHHHHORDO
+OrROGHHHHHIIORDO
+OrROOOOOOOOOORDO
+..OOOOOOOOOOOO..
+""", {'r': (255, 128, 110), 'R': (230, 56, 48), 'D': (174, 32, 44), 'n': (126, 20, 34), 'W': (255, 255, 255),
+      'w': (214, 240, 255), 'b': (120, 196, 255), 'B': (56, 136, 240), 'N': (30, 84, 190), 'c': (120, 230, 255),
+      'y': (255, 226, 80), 'g': (104, 226, 120), 'G': (200, 246, 218), 'H': (112, 206, 162), 'I': (70, 160, 128)})
+
+BAG = ("""
+.....OOOOOO.....
+....OttttttO....
+....OtOOOOTO....
+...OOtO..OTOO...
+..OffffffffffO..
+.OffFFFFFFFFFEO.
+.OFFFFFyyFFFFEO.
+.OOOOOOyYOOOOOO.
+.OtttTTTTTTTTuO.
+.OtTOOOOOOOOTuO.
+.OtTOppppppOTuO.
+.OtTOPPPPPPOTuO.
+.OtTOOOOOOOOTuO.
+.OTTTTTTTuuuuuO.
+..OTTTTuuuuuuO..
+...OOOOOOOOOO...
+""", {'f': (255, 124, 104), 'F': (226, 60, 52), 'E': (170, 34, 44), 't': (250, 204, 136), 'T': (218, 154, 86),
+      'u': (164, 104, 60), 'p': (255, 220, 158), 'P': (236, 178, 108), 'y': (255, 240, 150), 'Y': (240, 190, 60)})
+
+CARD = ("""
+................
+................
+.OOOOOOOOOOOOOO.
+OrrrrrrrrrrrrRRO
+ORRRRRRRRRRRRRDO
+ObbbbbbbbbbBBBBO
+ObOOOOOObBBBBBNO
+ObOhhhhObWWWWBNO
+ObOskksObBBBBBNO
+ObOssssObWWWWBNO
+ObOqQQqObBBBBBNO
+OBOOOOOOBBByyBNO
+OBBBBBBBBBNNyyNO
+.OOOOOOOOOOOOOO.
+................
+................
+""", {'r': (255, 124, 104), 'R': (228, 60, 52), 'D': (172, 36, 46), 'b': (156, 204, 255), 'B': (92, 150, 240),
+      'N': (56, 106, 204), 'h': (112, 72, 54), 's': (255, 228, 194), 'k': O, 'q': (255, 124, 104), 'Q': (228, 60, 52),
+      'W': (255, 255, 255), 'y': (255, 224, 84)})
+
+SAVE = ("""
+.OOOOOOOOOOOOO..
+ObbOwwwwwwgOBBO.
+ObbOwwwwBwgOBBBO
+ObbOwwwwBwgOBBNO
+ObBOwwwwwwgOBBNO
+ObBOOOOOOOOOBBNO
+ObBBBBBBBBBBBBNO
+OBBOOOOOOOOOOBNO
+OBBOWWWWWWWWOBNO
+OBBOWrrrrrrWOBNO
+OBBOWWWWWWWWONNO
+OBBOWggggggWONNO
+OBBOWWWWWWWsONNO
+OBNOssssssssONNO
+OOOOOOOOOOOOOOOO
+................
+""", {'b': (134, 180, 255), 'B': (72, 122, 226), 'N': (44, 84, 180), 'w': (238, 242, 252), 'g': (172, 180, 206),
+      'W': (255, 255, 255), 's': (222, 226, 240), 'r': (232, 64, 48)})
+
+GEAR_MASK = """
+......XXXX......
+..XX..XXXX..XX..
+.XXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXX.
+..XXXXXXXXXXXX..
+.XXXXXXXXXXXXXX.
+XXXXXXX..XXXXXXX
+XXXXXX....XXXXXX
+XXXXXX....XXXXXX
+XXXXXXX..XXXXXXX
+.XXXXXXXXXXXXXX.
+..XXXXXXXXXXXX..
+.XXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXX.
+..XX..XXXX..XX..
+......XXXX......
+"""
+
+
+def art_rows(art):
+    r = art.strip('\n').split('\n')
+    assert len(r) == ICON and all(len(l) == ICON for l in r), [(i, len(l)) for i, l in enumerate(r) if len(l) != ICON]
+    return r
+
+
+def from_art(art, pal):
+    im = Image.new('RGBA', (ICON, ICON), (0, 0, 0, 0))
     px = im.load()
-    w, h = im.size
-    edge = []
-    for y in range(h):
-        for x in range(w):
-            if px[x, y][3] == 0 and any(0 <= x + dx < w and 0 <= y + dy < h and px[x + dx, y + dy][3] and
-                                        px[x + dx, y + dy][:3] != K for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                edge.append((x, y))
-    for x, y in edge:
-        px[x, y] = K + (255,)
+    for y, l in enumerate(art_rows(art)):
+        for x, ch in enumerate(l):
+            if ch == 'O':
+                px[x, y] = O + (255,)
+            elif ch != '.':
+                px[x, y] = pal[ch] + (255,)
     return im
 
 
-def pokeball():
-    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = im.load()
-    cx = cy = 7.5
-    for y in range(16):
-        for x in range(16):
-            dx, dy = x - cx, y - cy
-            d = math.hypot(dx, dy)
-            if d > 6.9:
-                continue
-            lit = -dx - dy                     # light from the upper left
-            if abs(dy) < 1.0:
-                c = K
-            elif dy < 0:
-                c = (255, 150, 128) if lit > 6.5 else (232, 56, 48) if lit > -3 else (176, 32, 40)
-            else:
-                c = (255, 255, 255) if lit > 1 else (216, 216, 228) if lit > -6 else (168, 168, 188)
-            px[x, y] = c + (255,)
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x - cx, y - cy)
-            if d <= 1.9:
-                px[x, y] = ((255, 255, 255) if x + y < 15 else (216, 216, 228)) + (255,)
-            elif d <= 2.95:
-                px[x, y] = K + (255,)
-    im = outline(im)
+def ball():
+    """A circle: the red top, the white bottom, the slate band, and a round button (a plus-shaped white 4x4 in a slate ring)."""
+    im = Image.new('RGBA', (ICON, ICON), (0, 0, 0, 0))
     px = im.load()
-    for y in (7, 8):                           # the band runs out to the rim
-        px[0, y] = px[15, y] = K + (255,)
+    c = (ICON - 1) / 2
+    for y in range(ICON):
+        for x in range(ICON):
+            dx, dy = x - c, y - c
+            d = math.hypot(dx, dy)
+            if d > 7.95:
+                continue
+            lit = -(dx + dy)
+            if d > 6.9 or abs(dy) < 1.0:
+                col = O
+            elif dy < 0:
+                col = (255, 132, 112) if lit > 6.2 else (232, 56, 48) if lit > -3.2 else (176, 32, 44)
+            else:
+                col = (255, 255, 255) if lit > 1.0 else (226, 230, 242) if lit > -6.0 else (176, 182, 206)
+            if d <= 1.7:
+                col = (255, 255, 255) if dx + dy < 0.5 else (226, 230, 242)
+            elif d <= 3.4:
+                col = O
+            px[x, y] = col + (255,)
+    for x, y in ((3, 4), (4, 3)):
+        px[x, y] = (255, 236, 228, 255)
     return im
 
 
 def gear():
-    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = im.load()
-    cx = cy = 7.5
-    for y in range(16):
-        for x in range(16):
-            dx, dy = x - cx, y - cy
-            d = math.hypot(dx, dy)
-            a = math.atan2(dy, dx)
-            f = (a / (2 * math.pi / 8)) % 1
-            tooth = 0.3 < f < 0.8
-            r = 7.5 if tooth else 5.0
-            if d > r or d < 2.3:
-                continue
-            lit = -dx - dy
-            c = (232, 232, 244) if lit > 4 else (176, 180, 200) if lit > -4 else (120, 124, 148)
-            px[x, y] = c + (255,)
-    im = outline(im)
+    m = art_rows(GEAR_MASK)
+
+    def on(x, y):
+        return 0 <= x < ICON and 0 <= y < ICON and m[y][x] == 'X'
+
+    im = Image.new('RGBA', (ICON, ICON), (0, 0, 0, 0))
     px = im.load()
-    for y in range(16):                      # the hole's rim
-        for x in range(16):
-            d = math.hypot(x - cx, y - cy)
-            if d < 2.3 and px[x, y][3] == 0 and d > 1.3:
-                px[x, y] = K + (255,)
+    c = (ICON - 1) / 2
+    for y in range(ICON):
+        for x in range(ICON):
+            if not on(x, y):
+                continue
+            if not all(on(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                px[x, y] = O + (255,)                       # the rim, outside and round the hole
+                continue
+            lit = -((x - c) + (y - c))
+            col = (246, 248, 255) if lit > 4.5 else (206, 212, 230) if lit > -4.5 else (152, 160, 190)
+            if max(abs(x - c), abs(y - c)) < 4.1:           # the hub's ring, a tone down
+                col = (206, 212, 230) if lit > 4.5 else (152, 160, 190) if lit > -4.5 else (122, 130, 162)
+            px[x, y] = col + (255,)
     return im
 
 
-def floppy():
-    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = im.load()
-    for y in range(1, 15):
-        for x in range(1, 15):
-            if x >= 13 and y <= 2:             # the clipped corner
-                continue
-            c = (64, 112, 216) if (x + y) < 12 else (48, 84, 184) if (x + y) < 22 else (32, 60, 140)
-            px[x, y] = c + (255,)
-    for y in range(1, 6):                      # the metal shutter
-        for x in range(4, 11):
-            px[x, y] = ((216, 220, 232) if x < 9 else (160, 164, 184)) + (255,)
-    for y in range(2, 5):
-        px[8, y] = (64, 112, 216, 255)
-    for y in range(8, 14):                     # the label
-        for x in range(3, 13):
-            px[x, y] = ((255, 255, 255) if y < 12 else (220, 220, 232)) + (255,)
-    for x in range(4, 12):
-        px[x, 10] = (232, 64, 48, 255)         # a red line on it, FireRed's
-    return outline(im)
-
-
-def pokedex():
-    """FireRed's Pokedex: a red case, the big blue lens, three small lights, a screen below."""
-    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = im.load()
-    for y in range(1, 15):
-        for x in range(2, 14):
-            if (x in (2, 13)) and (y in (1, 14)):
-                continue
-            lit = -(x - 7.5) - (y - 7.5)
-            c = (255, 112, 96) if lit > 8 else (224, 48, 48) if lit > -6 else (168, 28, 36)
-            px[x, y] = c + (255,)
-    for x in range(2, 14):                      # the hinge
-        px[x, 8] = (136, 20, 28, 255)
-    for y in range(1, 8):                       # the lens, in its white rim
-        for x in range(2, 10):
-            d = math.hypot(x - 5.5, y - 4)
-            if d <= 2.0:
-                px[x, y] = ((176, 228, 255) if x <= 5 and y <= 3 else (64, 144, 240) if d < 1.6
-                            else (32, 80, 184)) + (255,)
-            elif d <= 2.9:
-                px[x, y] = (255, 255, 255, 255)
-    for x, col in ((10, (248, 72, 72)), (11, (248, 216, 64)), (12, (88, 216, 96))):
-        px[x, 2] = col + (255,)
-    for y in range(10, 14):                     # the screen
-        for x in range(4, 12):
-            px[x, y] = ((168, 232, 200) if y == 10 or x == 4 else (96, 192, 152)) + (255,)
-    return outline(im)
-
-
-
-
-def card():
-    """The Trainer Card: a blue card with the trainer's photo and two lines."""
-    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = im.load()
-    for y in range(3, 14):
-        for x in range(1, 15):
-            if (x in (1, 14)) and (y in (3, 13)):
-                continue
-            c = (120, 176, 248) if x + y < 12 else (72, 136, 232) if x + y < 22 else (48, 96, 192)
-            px[x, y] = c + (255,)
-    for x in range(1, 15):                      # the title band
-        for y in (3, 4):
-            if not ((x in (1, 14)) and y == 3):
-                px[x, y] = (232, 64, 48, 255)
-    for y in range(6, 12):                      # the photo
-        for x in range(3, 7):
-            px[x, y] = ((255, 236, 200) if y < 9 else (232, 64, 48)) + (255,)
-    for x in range(8, 13):                      # the lines
-        px[x, 7] = px[x, 10] = (255, 255, 255, 255)
-    return outline(im)
-
-
-def bag():
-    """The port's battle Bag (battle_ui_art.h), reduced to 16x16 by area."""
-    src = ART.read_text()
-    w = int(re.search(r'#define SBARTBAG_W (\d+)', src).group(1))
-    h = int(re.search(r'#define SBARTBAG_H (\d+)', src).group(1))
-    px = [int(v, 0) for v in re.findall(r'0x[0-9A-Fa-f]+|\d+',
-                                        re.search(r'sBArtBagPx\[[^\]]*\] = \{(.*?)\};', src, re.S).group(1))]
-    body = re.search(r'sBArtBagPal\[[^\]]*\] = \{(.*?)\};', src, re.S).group(1)
-    pal = [None] + [tuple(int(v) for v in t) for t in re.findall(r'UI_RGB\(\s*(\d+),\s*(\d+),\s*(\d+)\)', body)]
-    im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    o = im.load()
-    for i, v in enumerate(px[:w * h]):
-        if v:
-            o[i % w, i // w] = pal[v] + (255,)
-    im = im.crop(im.getbbox())
-    k = 16 / max(im.size)
-    im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
-    out = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
-    out.alpha_composite(im, ((16 - im.width) // 2, (16 - im.height) // 2))
-    return out
-
-
-ICONS = [('DEX', pokedex), ('BALL', pokeball), ('BAG', bag), ('CARD', card), ('SAVE', floppy), ('GEAR', gear)]
+ICONS = [('DEX', lambda: from_art(*DEX)), ('BALL', ball), ('BAG', lambda: from_art(*BAG)), ('CARD', lambda: from_art(*CARD)),
+         ('SAVE', lambda: from_art(*SAVE)), ('GEAR', gear)]
 
 
 def grad(w, h, top, bot):
@@ -265,18 +276,18 @@ def main():
     out.append('')
     out.append('/* The START column\'s icons, 16x16: RGB565 and coverage (0 clear, 255 solid), in the order of PT_POKEDEX ..')
     out.append(' * PT_OPTIONS. */')
-    out.append(f'#define EMBER_ICON 16')
-    out.append(f'static const uint16_t kEmberIcon[{len(ICONS)}][256] = {{')
+    out.append(f'#define EMBER_ICON {ICON}')
+    out.append(f'static const uint16_t kEmberIcon[{len(ICONS)}][{ICON * ICON}] = {{')
     alphas = []
     for name, f in ICONS:
         im = f().convert('RGBA')
         q = im.load()
         out.append('    {  /* %s */' % name)
-        out.append(rows(['0x%04X' % rgb565(q[x, y]) for y in range(16) for x in range(16)]) + ',')
+        out.append(rows(['0x%04X' % rgb565(q[x, y]) for y in range(ICON) for x in range(ICON)]) + ',')
         out.append('    },')
-        alphas.append((name, [str(q[x, y][3]) for y in range(16) for x in range(16)]))
+        alphas.append((name, [str(q[x, y][3]) for y in range(ICON) for x in range(ICON)]))
     out.append('};')
-    out.append(f'static const uint8_t kEmberIconA[{len(ICONS)}][256] = {{')
+    out.append(f'static const uint8_t kEmberIconA[{len(ICONS)}][{ICON * ICON}] = {{')
     for name, a in alphas:
         out.append('    {  /* %s */' % name)
         out.append(rows(a) + ',')
