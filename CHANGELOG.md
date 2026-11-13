@@ -10,7 +10,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 - **Nuzlocke options, version 2.** One wild catch per area, fainted Pokémon released after the battle (announced in the game's message box), a new game clears the areas used, DUPLICATES and SHINY clauses, and LEVEL CAPS, on their own NUZLOCKE page of OPTIONS.
 - **RANDOMLOCKE.** Wild and trainer Pokémon become random species, fixed by the save's Trainer ID; the starter in Oak's lab is random too.
 - **REUSABLE TMS** (a TM is not used up when it teaches a move) and **FREE HMS** (an HM in the Bag works in the field with no Pokémon that knows it) in OPTIONS.
-- **REMEMBER** in the party menu: FireRed's own move relearner, free and from anywhere, now shown on the lower screen.
+- **REMEMBER** in the party menu: FireRed's own move relearner, free and from anywhere, now drawn on the lower screen in every step (the move list, the Yes and No questions and the messages).
 - **A world map on the lower screen's HOME page** built at run time from your own Region Map art: three zoom levels with + and - buttons, drag to pan, and a ribbon that cycles Kanto and the Sevii Islands. Fly works from the map shown, so Kanto and the Sevii destinations you have visited can be picked from either.
 - **Native lower-screen screens for the mail and the Easy Chat**: the letter (with the stationery's name and who wrote it, and a tap on the letter closes it) and the phrase picker (phrase chips, groups, letters, the word list, Yes and No).
 - **Pokédex page buttons** AREA and CRY on the entry's card, and an **EXP bar** on the Summary's STATS page.
@@ -31,6 +31,8 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 - **A battle animation** that moved a sprite through an address read with sign extension (issue #85) now builds the address from two 16-bit halves.
 - **The evolution scene:** a B held since before the scene no longer stops the evolution, and the scene uses FireRed's plain background.
 - **German text:** a double-encoded u-umlaut in the Summary's and the PC's German text.
+- **Party action menu:** with more than 4 actions the menu is drawn in two columns and the D-pad now moves through them (up and down inside a column, left and right between columns). Checked on a computer only.
+- **REMEMBER** no longer falls back to the GBA screen on its questions and messages. Checked on a computer only; it has not been run in the game yet.
 - **Labels that did not fit** their room on several lower-screen menus.
 - **Menus:** the touch state of a closed screen no longer survives into the next one, and an empty Pokédex list is not scrolled.
 - **Battle scene:** the HD battle picture follows the screen's fades, so the end of a battle shows no black silhouettes.
@@ -51,6 +53,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Interface
 
+- **Sharper START-column icons** (Pokédex, Poké Ball, Bag, Trainer Card, Save, Options) redrawn pixel by pixel at 16x16, with a test that every word fits beside its icon in English, Spanish and German.
 - **A new look for the lower screen** (the ember look, raised cream cards, flame accents and slate edges) on OPTIONS, HOME, the field and battle Bag, SAVE, the PC box and naming keyboard, the Pokédex, the Trainer Card, the Summary, the move-learn screens, the mail and the battle menus. The top screen's healthboxes and dialog panel match it.
 
 ### Known Issues
@@ -58,7 +61,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 - **Visible wilds on an Old 3DS:** the frame time with 2 visible wilds has not been measured on a console (`port.log` `wilds:` lines are pending).
 - **Visible wilds, edge cases not individually verified:** caves and Viridian Forest, the Pokémon Tower silhouettes, the Safari Zone, Randomlocke (step encounters should stay or come back), save and load with a wild on screen, and crowded maps (Celadon, Saffron) with 6 wilds. The owner played the visible wilds on real hardware and their general operation is correct; the list is in `docs/HARDWARE-ACCEPTANCE.md`, Overworld.
 - **The 7 largest follower Pokémon** (Steelix, Lugia, Ho-Oh, Wailord, Kyogre, Groudon, Rayquaza) are drawn at their HeartGold size and cover neighbouring tiles.
-- **The shared-picture fix** (people and Pokémon that share a picture on screen) has only been tested on a computer, not yet in the game.
+- **The shared-picture fix, the party menu D-pad and the native REMEMBER screens** have only been tested on a computer, not yet in the game or on a console.
 - **Day and night and the companion** are implemented but still have no per-console result recorded; Old 3DS and 2DS models, long sessions and late-game content are not systematically tested (see `docs/VALIDATION.md`).
 - **Real hardware coverage** is narrow: one New 3DS-family console and Azahar. Nothing else listed as unchecked in `docs/HARDWARE-ACCEPTANCE.md` should be taken as working.
 - **The Safari Zone sign** still mentions START.
