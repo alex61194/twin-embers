@@ -44,6 +44,36 @@ static void HudTint(const CtrHudImage *image, unsigned palette, C2D_ImageTint *t
         C2D_PlainImageTint(tint, C2D_Color32(255, 255, 255, 255), (float)(sd - ud) / (float)(93 - ud));
 }
 
+/* A field NPC's tint. A silhouette (a wild Pokemon of the overworld with WILD DISPLAY on SILHOUETTE, and in the Pokemon Tower without the
+ * Silph Scope) is the picture's shape in a flat dark slate, dimmed by the game's fades the way HudTint dims a picture. The shape comes from
+ * the picture's alpha, so one combiner pass does it with no extra picture. */
+static void HudNpcTint(const CtrHudImage *image, unsigned palette, bool silhouette, C2D_ImageTint *tint)
+{
+    float dim = 1.0f;
+
+    if (!silhouette)
+    {
+        HudTint(image, palette, tint);
+        return;
+    }
+    if (image->unfaded && sMemory.palette)
+    {
+        const uint16_t *unfaded = image->unfaded + 256 + palette * 16, *shown = sMemory.palette + 256 + palette * 16;
+        unsigned ub = 0, sb = 0;
+
+        for (unsigned i = 1; i < 16; ++i)
+            if (HudLuma(unfaded[i]) > ub)
+            {
+                ub = HudLuma(unfaded[i]);
+                sb = HudLuma(shown[i]);
+            }
+        if (ub && sb < ub)
+            dim = (float)sb / (float)ub;
+    }
+    *tint = sTint;
+    C2D_PlainImageTint(tint, C2D_Color32((uint8_t)(16 * dim), (uint8_t)(16 * dim), (uint8_t)(24 * dim), 255), 1.0f);
+}
+
 static void DrawHud(unsigned battler, int x, int y, unsigned palette)
 {
     const CtrHudImage *image = sHudImage ? sHudImage(battler) : NULL;

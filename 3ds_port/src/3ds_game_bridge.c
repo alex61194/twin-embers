@@ -900,9 +900,24 @@ void VBlankIntrWait(void)
                      perfVideo->commandUsage);
 }
 
-/* VISIBLE WILDS (event_object_movement.c): how many wild Pokemon may be out at once. An Old 3DS keeps 2 (the same object event
- * and sprite budget as everything else on a slow console), a New 3DS 4 (local ids 0xF0 to 0xF3). */
+/* VISIBLE WILDS (event_object_movement.c, 3ds_wilds_core.h): the console's cap on the wild Pokemon out at once. An Old 3DS keeps 2 (the
+ * same object event and sprite budget as everything else on a slow console, whatever the density), a New 3DS up to 6 (WILD POKEMON:
+ * MANY); the density and the free object events lower it, never raise it. */
 int CtrWilds_Max(void)
 {
-    return CtrPlatform_IsNew3DS() ? 4 : 2;
+    return CtrPlatform_IsNew3DS() ? 6 : 2;
+}
+
+/* One summary line of the visible wilds' spawn counters (3ds_wilds_core.h, CtrWildsCore_StatsLine), written when the map changes and
+ * every 30 s on one map. CtrLog_Write does nothing unless port.log is on (an Old 3DS build, or sdmc:/3ds/twinembers/debug.txt). */
+void CtrWilds_Log(const char *line)
+{
+    CtrLog_Write(CTR_LOG_GAME, "%s", line);
+}
+
+/* Whether the spawn counters may work: port.log is on. The glue asks it every 30 frames and on a new map (never per frame); with the
+ * log off the counters do not move and no line is formatted. */
+int CtrWilds_LogOn(void)
+{
+    return CtrLog_Enabled();
 }

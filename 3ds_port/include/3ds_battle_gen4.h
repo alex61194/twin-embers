@@ -102,6 +102,7 @@ typedef struct CtrGen4Obj {
     float scale;                    /* GBA pixels per picture pixel */
     const uint16_t *unfaded;        /* a field NPC's: the game's unfaded palette buffer, for its fade */
     unsigned bank;                  /* a field NPC's: its palette (CtrVideo_SetNpcPalette's slot, 0-15) */
+    uint8_t silhouette;             /* a field NPC's: drawn as a dark silhouette (wild Pokemon with WILD DISPLAY on SILHOUETTE) */
 } CtrGen4Obj;
 
 /* Implemented by the game's battle code: the battler sprite's OAM tile number and palette
@@ -150,6 +151,8 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
 #define CTR_NPC_FOLLOWER 1024
 #define CTR_NPC_FOLLOWER_FEMALE 512
 #define CTR_FOLLOWER_SPECIES 386
+/* Or'd into CtrNpc_Sprite's result: the picture is drawn as a silhouette. */
+#define CTR_NPC_SILHOUETTE 0x100
 /* Whether the pack has a follower for this national dex number (1-386) and, with `female`, its female picture. */
 bool CtrFollower_Has(unsigned dex, bool female);
 int CtrNpc_Sprite(unsigned tileNum, unsigned paletteNum, unsigned oamX, unsigned oamY, unsigned *graphicsId,

@@ -31,5 +31,7 @@ void CtrLog_DrawOverlay(const char *text);
 void CtrLog_ShowFatal(const char *reason);
 void CtrLog_Write(CtrLogCategory category, const char *format, ...)
     __attribute__((format(printf, 2, 3)));
+/* True when port.log is being written (decided once at start); the cheap test that lets a producer skip formatting a line. */
+bool CtrLog_Enabled(void);
 
 #endif

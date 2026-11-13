@@ -127,21 +127,35 @@ int main(void)
     assert(strstr(big, "nuz") == NULL || strstr(big, "nuzlocke") != NULL);
     assert(strstr(big, "nuzdupes") == NULL && strstr(big, "nuzshiny") == NULL && strstr(big, "nuzcap") == NULL);
 
-    /* VISIBLE WILDS: off until chosen, written only when on. */
-    assert(CtrSettings_VisibleWilds() == 0);
-    CtrSettings_SetVisibleWilds(1);
-    assert(CtrSettings_VisibleWilds() == 1);
+    /* WILD POKEMON (visiblewilds, wildsil, wildaggro): off until chosen; the keys are written while it is on, with the other two. */
+    assert(CtrSettings_WildDensity() == 0 && CtrSettings_WildSilhouette() == 0 && CtrSettings_WildAggro() == 0);
+    CtrSettings_SetWildDensity(2);
+    CtrSettings_SetWildSilhouette(1);
+    CtrSettings_SetWildAggro(3);
+    assert(CtrSettings_WildDensity() == 2 && CtrSettings_WildSilhouette() == 1 && CtrSettings_WildAggro() == 3);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "visiblewilds=2\n") != NULL && strstr(big, "wildsil=1\n") != NULL && strstr(big, "wildaggro=3\n") != NULL);
+    /* wildsil and wildaggro come before visiblewilds, so a cut file that kept visiblewilds kept them too */
+    assert(strstr(big, "wildsil=") < strstr(big, "visiblewilds=") && strstr(big, "wildaggro=") < strstr(big, "visiblewilds="));
+    /* values out of range are refused, not stored */
+    CtrSettings_SetWildDensity(9);
+    CtrSettings_SetWildAggro(-4);
+    assert(CtrSettings_WildDensity() == 0 && CtrSettings_WildAggro() == 0);
+    /* OFF with the display kept: the display key stays, the density key goes */
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "visiblewilds") == NULL && strstr(big, "wildsil=1\n") != NULL && strstr(big, "wildaggro") == NULL);
+    CtrSettings_SetWildSilhouette(0);
     file = fopen(CTR_SETTINGS_PATH, "rb");
     memset(text, 0, sizeof(text));
     assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
     fclose(file);
-    assert(strstr(text, "visiblewilds=1\n") != NULL);
-    CtrSettings_SetVisibleWilds(0);
-    file = fopen(CTR_SETTINGS_PATH, "rb");
-    memset(text, 0, sizeof(text));
-    assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
-    fclose(file);
-    assert(strstr(text, "visiblewilds") == NULL);
+    assert(strstr(text, "visiblewilds") == NULL && strstr(text, "wildsil") == NULL && strstr(text, "wildaggro") == NULL);
 
     /* FREE HMS: off until chosen, written only when on. */
     assert(CtrSettings_FreeHm() == 0);
@@ -214,7 +228,9 @@ int main(void)
     CtrSettings_SetNuzShiny(1);
     CtrSettings_SetNuzLevelCap(1);
     CtrSettings_SetFreeHm(1);
-    CtrSettings_SetVisibleWilds(1);
+    CtrSettings_SetWildDensity(3);
+    CtrSettings_SetWildSilhouette(1);
+    CtrSettings_SetWildAggro(4);
     CtrSettings_SetLook(CTR_LOOK_RED, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_LEAF, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_BLUE, "abcdefghijklmno");
@@ -230,8 +246,8 @@ int main(void)
         while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
-        assert(n < 320);
-        assert(strstr(worst, "visiblewilds=1\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
+        assert(n < 360);   /* the file holds 512; the wild keys are before the looks and the ball */
+        assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }
 
     remove(CTR_SETTINGS_PATH);

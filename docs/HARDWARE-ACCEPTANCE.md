@@ -45,6 +45,18 @@ FAIL should include the screen text or `/3ds/twinembers/port.log` lines.
 - [ ] Map edges at Pallet Town, Route 1 and a coastal route show the game's own border
       (no fill), with no holes or flicker.
 
+## Overworld
+
+The visible wild Pokémon, the day and night tint and the companion are implemented. These are the checks not yet recorded as
+done (host tests do not count here).
+
+- [ ] Old 3DS with 2 visible wilds: frame time and the `wilds:` summary lines in `port.log`.
+- [ ] A crowded map (Celadon, Saffron) with 6 visible wilds on a New 3DS: every NPC appears, no wild takes the last free object events.
+- [ ] Save with a visible wild on screen, reload in the same session and from a cold start: no leftover object, no blocked tile.
+- [ ] Edge cases: caves, Viridian Forest, Pokémon Tower silhouettes, Safari Zone and Randomlocke (step encounters stay or come back).
+- [ ] Day and night outdoors at night with the clock set, entering a house, a battle and a door fade, on a console.
+- [ ] The companion follows through doors, Surf and the bike, on a console.
+
 ## Audio and performance
 
 - [ ] Music and effects sound clean and stay in sync for 15+ minutes.
