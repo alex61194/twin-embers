@@ -26,6 +26,23 @@
 #define CTRW_DENSITIES 4        /* OFF, FEW, NORMAL, MANY */
 #define CTRW_AGGROS 5           /* OFF, RARE, LOW, MODERATE, HIGH */
 
+/* The spawn rhythm, in frames (60 per second). Each is a minimum and the number of values from it: the wait is MIN + Rand() % SPAN. */
+#define CTRW_FIRST_MIN 24       /* the first wild after a new map: 24 to 36 frames (0.4 to 0.6 s) of operative time */
+#define CTRW_FIRST_SPAN 13
+#define CTRW_FILL_MIN 45        /* after a success while fewer than half of the target are out (active * 2 < target): 45 to 90 */
+#define CTRW_FILL_SPAN 46
+#define CTRW_TOPUP_MIN 90       /* after a success with half of the target or more out: 90 to 150 (it only counts while active < target) */
+#define CTRW_TOPUP_SPAN 61
+#define CTRW_FAIL_MIN 20        /* after an attempt that found nowhere (or nothing to show): 20 to 40 */
+#define CTRW_FAIL_SPAN 21
+#define CTRW_STALLED_MIN 60     /* the same while stalled (CTRW_STALL_FAILS fails in a row, nothing out): 60 to 90, so a map with no room costs little */
+#define CTRW_STALLED_SPAN 31
+#define CTRW_REMOVED_MIN 60     /* after a wild went away: the wait is cut to 60 to 119 when it was longer (never made longer) */
+#define CTRW_REMOVED_SPAN 60
+#define CTRW_PICK_TRIES 24      /* cells a spawn attempt may try (one tile lookup each) */
+#define CTRW_STATS_PERIOD 1800  /* operative frames (30 s) between two summary lines in one map */
+#define CTRW_ZONE_MAX 4096    /* the longest side of a ring zone that PickCell uses (a guard, the game's are 30 at most) */
+
 /* The directions are the game's (constants/global.h). */
 #define CTRW_DIR_NONE 0
 #define CTRW_DIR_SOUTH 1
@@ -62,9 +79,28 @@ typedef struct CtrWild
     uint32_t power;             /* level x the six base stats, for the strength comparison */
 } CtrWild;
 
+/* Why a spawn attempt failed (CtrWildsCore_NoteFail). */
+enum { CTRW_FAIL_NOCELL = 0, CTRW_FAIL_ROLL, CTRW_FAIL_NOOBJ, CTRW_FAIL_REASONS };
+
+/* Light diagnostics of the map the table is on (reset by every new map): plain counters, nothing is written per frame. frames counts
+ * only the frames the spawn logic runs (the system is operative there), so with the option off, nothing is counted. 0 in firstFrames
+ * or fillFrames: not reached yet. */
+typedef struct CtrWildsStats
+{
+    uint32_t frames;            /* operative frames since the map changed */
+    uint32_t nextLog;           /* frames at which the next periodic line is due */
+    uint32_t firstFrames;       /* frames up to the first wild */
+    uint32_t fillFrames;        /* frames up to the first time active >= target (target > 0) */
+    uint32_t attempts, ok;
+    uint32_t fail[CTRW_FAIL_REASONS];
+    uint32_t stalls;            /* times the system became stalled */
+    uint8_t gotFirst, gotFill;
+} CtrWildsStats;
+
 typedef struct CtrWildsCore
 {
     CtrWild wild[CTRW_SLOTS];
+    CtrWildsStats stats;
     uint32_t rng;
     uint16_t spawnTimer;
     uint16_t tick;
@@ -166,7 +202,10 @@ void CtrWildsCore_Stir(CtrWildsCore *c, uint32_t salt);
 /* A new map: the table is cleared (the object events went with the map). Returns how many wilds were in it, or -1 for the same map. */
 int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map);
 void CtrWildsCore_Clear(CtrWildsCore *c);
-void CtrWildsCore_Forget(CtrWildsCore *c, int slot);
+void CtrWildsCore_Forget(CtrWildsCore *c, int slot);            /* a wild is gone: the next one is brought forward (CtrWildsCore_Removed) */
+/* A wild went away: a longer wait for the next one is cut to CTRW_REMOVED_MIN..+SPAN-1 frames. Does nothing when the wait is already
+ * that short (so calling it for several wilds in a row draws no more than once, and never makes a wait longer). */
+void CtrWildsCore_Removed(CtrWildsCore *c);
 
 /* Every frame, before anything else: TRUE when the option is off and nothing is out (nothing to do at all). It also stops the system
  * working (operative, spawnable, fails), so the game's step encounters are back at once, with no Frame needed. */
@@ -202,10 +241,20 @@ int CtrWildsCore_Stalled(const CtrWildsCore *c);
 int CtrWildsCore_SpawnDue(CtrWildsCore *c);                    /* TRUE when it is time for an attempt and one is wanted */
 int CtrWildsCore_FreeSlot(const CtrWildsCore *c);              /* an empty slot below the target, or CTRW_NONE */
 int CtrWildsCore_AcceptKind(CtrWildsCore *c, int tile, int hasLand, int hasWater, int surfing);
-/* A cell in the ring just outside the screen (left, right or below it) that the game accepts: TRUE with its x, y and kind. */
+/* A cell in the ring just outside the screen (left, right or below it) that the game accepts: TRUE with its x, y and kind. The cell is
+ * drawn uniformly over the three zones (each weighs its number of cells; empty zones weigh 0, an empty ring gives FALSE) and at most
+ * CTRW_PICK_TRIES cells are looked at (one tile lookup each). */
 int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *ring, CtrWildTileFn tileFn, void *ctx, int hasLand, int hasWater,
                           int surfing, int *x, int *y, int *kind);
+/* Before SpawnDone(c, 0): why the attempt failed, for the diagnostics (CTRW_FAIL_*). */
+void CtrWildsCore_NoteFail(CtrWildsCore *c, int reason);
+/* An attempt ended (after the wild was committed, when it succeeded): sets the wait to the next one (CTRW_*_MIN above). */
 void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success);
+/* Diagnostics: TRUE (and the next one is scheduled) once in CTRW_STATS_PERIOD operative frames while attempts were made in this map. */
+int CtrWildsCore_StatsDue(CtrWildsCore *c);
+/* One short line for port.log, into buf (always terminated): "wilds: map=0102 att=9 ok=6 nocell=2 roll=1 noobj=0 first=31 fill=420
+ * stalls=0 t=900". first and fill are frames, 0 when not reached. Returns the length written. */
+int CtrWildsCore_StatsLine(const CtrWildsCore *c, char *buf, unsigned cap);
 int CtrWildsCore_Commit(CtrWildsCore *c, int slot, const CtrWildMon *mon, int gender, int shiny, int gfx);
 void CtrWildsCore_SetObject(CtrWildsCore *c, int slot, int obj);
 

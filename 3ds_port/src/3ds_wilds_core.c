@@ -1,4 +1,5 @@
 /* Visible wild Pokemon, the pure part (see include/3ds_wilds_core.h). No game headers: the host tests build it alone. */
+#include <stdio.h>
 #include <string.h>
 
 #include "3ds_wilds_core.h"
@@ -81,6 +82,13 @@ void CtrWildsCore_Forget(CtrWildsCore *c, int slot)
     c->wild[slot].obj = CTRW_NONE;
     if (c->active)
         --c->active;
+    CtrWildsCore_Removed(c);
+}
+
+void CtrWildsCore_Removed(CtrWildsCore *c)
+{
+    if (c->spawnTimer >= CTRW_REMOVED_MIN + CTRW_REMOVED_SPAN)
+        c->spawnTimer = (uint16_t)(CTRW_REMOVED_MIN + CtrWildsCore_Rand(c) % CTRW_REMOVED_SPAN);
 }
 
 int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map)
@@ -99,7 +107,8 @@ int CtrWildsCore_MapChanged(CtrWildsCore *c, uint16_t map)
     c->target = 0;
     c->fails = 0;
     c->tick = 0;            /* the first frame counts the free object events */
-    c->spawnTimer = 60;     /* and the first wild comes after a second */
+    memset(&c->stats, 0, sizeof(c->stats));
+    c->spawnTimer = (uint16_t)(CTRW_FIRST_MIN + CtrWildsCore_Rand(c) % CTRW_FIRST_SPAN);    /* the first wild comes after half a second (the core's own RNG) */
     return had;
 }
 
@@ -223,7 +232,10 @@ int CtrWildsCore_SuppressStep(const CtrWildsCore *c, int tileKind)
 
 int CtrWildsCore_SpawnDue(CtrWildsCore *c)
 {
-    if (!c->operative || c->active >= c->target)
+    if (!c->operative)
+        return 0;
+    ++c->stats.frames;      /* the only per-frame count: only where the spawn logic runs (with the option off this is never reached) */
+    if (c->active >= c->target)
         return 0;
     if (c->spawnTimer != 0)
     {
@@ -258,29 +270,60 @@ int CtrWildsCore_AcceptKind(CtrWildsCore *c, int tile, int hasLand, int hasWater
     return 0;
 }
 
+/* The three zones of the ring (0 left of the screen, 1 right of it, 2 below it; the view has no margin above): its box, and how many
+ * cells it has (0 when empty). The sides are clamped to CTRW_ZONE_MAX so nothing overflows. */
+static int Zone(const CtrWildRing *r, int zone, int *x0, int *y0, int *w)
+{
+    int x1, y1, h;
+
+    if (zone == 0)
+    {
+        *x0 = r->left; x1 = r->px - r->halfW - 1; *y0 = r->top; y1 = r->bottom;
+    }
+    else if (zone == 1)
+    {
+        *x0 = r->px + r->halfW + 1; x1 = r->right; *y0 = r->top; y1 = r->bottom;
+    }
+    else
+    {
+        *x0 = r->left; x1 = r->right; *y0 = r->py + r->halfH + 1; y1 = r->bottom;
+    }
+    if (x1 < *x0 || y1 < *y0)
+        return 0;
+    *w = (int)((int64_t)x1 - *x0 < CTRW_ZONE_MAX ? (int64_t)x1 - *x0 + 1 : CTRW_ZONE_MAX);
+    h = (int)((int64_t)y1 - *y0 < CTRW_ZONE_MAX ? (int64_t)y1 - *y0 + 1 : CTRW_ZONE_MAX);
+    return *w * h;
+}
+
 int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *r, CtrWildTileFn tileFn, void *ctx, int hasLand, int hasWater,
                           int surfing, int *x, int *y, int *kind)
 {
-    for (int tries = 0; tries < 10; ++tries)
-    {
-        int side = CtrWildsCore_Rand(c) % 3, x0, x1, y0, y1, cx, cy, tile;
+    int x0[3], y0[3], w[3], n[3], total = 0;
 
-        if (side == 0)          /* left of the screen */
+    /* A cell chosen uniformly over the three zones taken together (each zone weighs its number of cells; the bottom corners that the
+     * side zones also hold weigh twice). A long strip is not drawn as often as a short one, which the old third-each choice did. */
+    for (int z = 0; z < 3; ++z)
+    {
+        n[z] = Zone(r, z, &x0[z], &y0[z], &w[z]);
+        total += n[z];
+    }
+    if (total <= 0)
+        return 0;
+    for (int tries = 0; tries < CTRW_PICK_TRIES; ++tries)
+    {
+        uint32_t pick = CtrWildsCore_Rand(c);
+        int z = 0, cx, cy, tile;
+
+        if (total > 0xFFFF)
+            pick = (pick << 16) | CtrWildsCore_Rand(c);
+        pick %= (uint32_t)total;
+        while (z < 2 && pick >= (uint32_t)n[z])
         {
-            x0 = r->left; x1 = r->px - r->halfW - 1; y0 = r->top; y1 = r->bottom;
+            pick -= (uint32_t)n[z];
+            ++z;
         }
-        else if (side == 1)     /* right of it */
-        {
-            x0 = r->px + r->halfW + 1; x1 = r->right; y0 = r->top; y1 = r->bottom;
-        }
-        else                    /* below it (the view has no margin above) */
-        {
-            x0 = r->left; x1 = r->right; y0 = r->py + r->halfH + 1; y1 = r->bottom;
-        }
-        if (x1 < x0 || y1 < y0)
-            continue;
-        cx = x0 + CtrWildsCore_Rand(c) % (x1 - x0 + 1);
-        cy = y0 + CtrWildsCore_Rand(c) % (y1 - y0 + 1);
+        cx = x0[z] + (int)(pick % (uint32_t)w[z]);
+        cy = y0[z] + (int)(pick / (uint32_t)w[z]);
         tile = tileFn(ctx, cx, cy);
         if (tile == CTRW_TILE_NONE || !CtrWildsCore_AcceptKind(c, tile, hasLand, hasWater, surfing))
             continue;
@@ -292,18 +335,78 @@ int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *r, CtrWildTileFn t
     return 0;
 }
 
+static void NoteFill(CtrWildsCore *c)
+{
+    if (!c->stats.gotFill && c->target > 0 && c->active >= c->target)
+    {
+        c->stats.gotFill = 1;
+        c->stats.fillFrames = c->stats.frames;
+    }
+}
+
+void CtrWildsCore_NoteFail(CtrWildsCore *c, int reason)
+{
+    if (reason >= 0 && reason < CTRW_FAIL_REASONS)
+        ++c->stats.fail[reason];
+}
+
 void CtrWildsCore_SpawnDone(CtrWildsCore *c, int success)
 {
+    int wasStalled = CtrWildsCore_Stalled(c);
+
+    ++c->stats.attempts;
     if (success)
+    {
         c->fails = 0;
-    else if (c->fails < 255)
+        ++c->stats.ok;
+        if (!c->stats.gotFirst)
+        {
+            c->stats.gotFirst = 1;
+            c->stats.firstFrames = c->stats.frames;
+        }
+        NoteFill(c);
+        /* active already counts the wild just made: with fewer than half of the target out the next comes sooner */
+        if (c->active * 2 < c->target)
+            c->spawnTimer = (uint16_t)(CTRW_FILL_MIN + CtrWildsCore_Rand(c) % CTRW_FILL_SPAN);
+        else
+            c->spawnTimer = (uint16_t)(CTRW_TOPUP_MIN + CtrWildsCore_Rand(c) % CTRW_TOPUP_SPAN);
+        return;
+    }
+    if (c->fails < 255)
         ++c->fails;
-    if (success)
-        c->spawnTimer = (uint16_t)(90 + CtrWildsCore_Rand(c) % 150);
-    else if (CtrWildsCore_Stalled(c))
-        c->spawnTimer = (uint16_t)(180 + CtrWildsCore_Rand(c) % 120);    /* nowhere to appear: it goes on trying, less often */
+    if (!wasStalled && CtrWildsCore_Stalled(c))
+        ++c->stats.stalls;
+    if (CtrWildsCore_Stalled(c))        /* nowhere to appear: it goes on trying, a little less often */
+        c->spawnTimer = (uint16_t)(CTRW_STALLED_MIN + CtrWildsCore_Rand(c) % CTRW_STALLED_SPAN);
     else
-        c->spawnTimer = (uint16_t)(60 + CtrWildsCore_Rand(c) % 60);
+        c->spawnTimer = (uint16_t)(CTRW_FAIL_MIN + CtrWildsCore_Rand(c) % CTRW_FAIL_SPAN);
+}
+
+int CtrWildsCore_StatsDue(CtrWildsCore *c)
+{
+    if (c->stats.attempts == 0 || c->stats.frames < c->stats.nextLog)
+        return 0;
+    c->stats.nextLog = c->stats.frames + CTRW_STATS_PERIOD;
+    return 1;
+}
+
+int CtrWildsCore_StatsLine(const CtrWildsCore *c, char *buf, unsigned cap)
+{
+    const CtrWildsStats *s = &c->stats;
+    int n;
+
+    if (cap == 0)
+        return 0;
+    n = snprintf(buf, cap, "wilds: map=%04X att=%u ok=%u nocell=%u roll=%u noobj=%u first=%u fill=%u stalls=%u t=%u", (unsigned)c->map,
+                 (unsigned)s->attempts, (unsigned)s->ok, (unsigned)s->fail[CTRW_FAIL_NOCELL], (unsigned)s->fail[CTRW_FAIL_ROLL],
+                 (unsigned)s->fail[CTRW_FAIL_NOOBJ], (unsigned)s->firstFrames, (unsigned)s->fillFrames, (unsigned)s->stalls,
+                 (unsigned)s->frames);
+    if (n < 0)
+    {
+        buf[0] = 0;
+        return 0;
+    }
+    return n < (int)cap ? n : (int)cap - 1;
 }
 
 int CtrWildsCore_Commit(CtrWildsCore *c, int slot, const CtrWildMon *mon, int gender, int shiny, int gfx)

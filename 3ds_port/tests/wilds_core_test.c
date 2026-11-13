@@ -97,6 +97,8 @@ static CtrWildRing Ring(const World *w)
     return r;
 }
 
+static int sRollFails;      /* the fake game species roll fails (a land table with no Pokemon that has a picture) */
+
 /* The glue's spawn, as the game does it: a due attempt picks a cell, then a Pokemon, then makes the object event. */
 static int Spawn(CtrWildsCore *c, World *w, int consoleCap, int level, uint32_t power, int roamer)
 {
@@ -110,6 +112,13 @@ static int Spawn(CtrWildsCore *c, World *w, int consoleCap, int level, uint32_t 
     slot = CtrWildsCore_FreeSlot(c);
     if (slot == CTRW_NONE || !CtrWildsCore_PickCell(c, &ring, TileFn, w, c->mapLand, c->mapWater, 0, &x, &y, &kind))
     {
+        CtrWildsCore_NoteFail(c, CTRW_FAIL_NOCELL);
+        CtrWildsCore_SpawnDone(c, 0);
+        return 0;
+    }
+    if (sRollFails)
+    {
+        CtrWildsCore_NoteFail(c, CTRW_FAIL_ROLL);
         CtrWildsCore_SpawnDone(c, 0);
         return 0;
     }
@@ -123,6 +132,7 @@ static int Spawn(CtrWildsCore *c, World *w, int consoleCap, int level, uint32_t 
     obj = MakeObject(w, x, y);
     if (obj < 0)
     {
+        CtrWildsCore_NoteFail(c, CTRW_FAIL_NOOBJ);
         CtrWildsCore_SpawnDone(c, 0);
         return 0;
     }
@@ -307,7 +317,7 @@ static void TestSpawn(void)
         }
     }
     CHECK(c.active == 4, "NORMAL on a New 3DS: four wilds, got %d", c.active);
-    CHECK(first >= 60 && first < 60 + CTRW_TICK + 2, "the first wild comes after about a second (frame %d)", first);
+    CHECK(first >= CTRW_FIRST_MIN && first < CTRW_FIRST_MIN + CTRW_FIRST_SPAN, "the first wild comes after 24 to 36 frames (frame %d)", first);
     CHECK(appeared == 4, "each appeared once (%d)", appeared);
     /* the wilds stand in the ring outside the screen */
     for (int i = 0; i < CTRW_SLOTS; ++i)
@@ -318,7 +328,8 @@ static void TestSpawn(void)
             CHECK(ox < w.px - 8 || ox > w.px + 8 || oy > w.py + 6, "wild %d spawned inside the screen (%d,%d)", i, ox, oy);
             CHECK(ox >= w.px - 11 && ox <= w.px + 12 && oy >= w.py && oy <= w.py + 10, "wild %d spawned outside the object event view", i);
         }
-    /* the rate: spawns come 90 to 239 frames apart (a failed attempt tries again sooner) */
+    /* the rate: spawns come 46 to 151 frames apart (a failed attempt tries again sooner): 45 to 90 while fewer than half of the target
+     * are out, 90 to 150 after (the gap is the wait plus the frame of the attempt) */
     {
         CtrWildsCore c2;
         World w2;
@@ -343,7 +354,7 @@ static void TestSpawn(void)
                 ++n;
             }
         }
-        CHECK(n == 6 && minGap >= 90 && maxGap <= 240, "spawn rate: %d wilds, gaps %d..%d", n, minGap, maxGap);
+        CHECK(n == 6 && minGap >= CTRW_FILL_MIN + 1 && maxGap <= CTRW_TOPUP_MIN + CTRW_TOPUP_SPAN, "spawn rate: %d wilds, gaps %d..%d", n, minGap, maxGap);
     }
     /* below the target only: at the target no attempt is made */
     {
@@ -675,7 +686,8 @@ static void TestStall(void)
     c.active = 0;
     /* the retry goes on at a lower rate while stalled */
     CtrWildsCore_SpawnDone(&c, 0);
-    CHECK(c.spawnTimer >= 180 && c.spawnTimer < 300, "M1: stalled retries wait 180 to 299 frames (%d)", c.spawnTimer);
+    CHECK(c.spawnTimer >= CTRW_STALLED_MIN && c.spawnTimer < CTRW_STALLED_MIN + CTRW_STALLED_SPAN, "M1: stalled retries wait 60 to 90 frames (%d)",
+          c.spawnTimer);
 }
 
 /* The saved game: wilds the table does not own. */
@@ -1115,6 +1127,542 @@ static void TestIds(void)
     }
 }
 
+/* The rhythm of the attempts ------------------------------------------------------------------------------------------------ */
+
+#define SEEDS 4000
+
+/* Every value over many seeds is inside the range and both ends are reached (so the range is exact, not just contained). */
+typedef struct Range { int seen, min, max; } Range;
+
+static void RangeAdd(Range *r, int v)
+{
+    if (!r->seen || v < r->min)
+        r->min = v;
+    if (!r->seen || v > r->max)
+        r->max = v;
+    r->seen = 1;
+}
+
+static void CheckRange(const Range *r, int lo, int hi, const char *what)
+{
+    CHECK(r->seen && r->min == lo && r->max == hi, "%s: %d to %d expected, got %d to %d", what, lo, hi, r->min, r->max);
+}
+
+static void TestRhythm(void)
+{
+    Range first = {0}, fill = {0}, topup = {0}, fail = {0}, stalled = {0}, removed = {0};
+
+    for (int seed = 1; seed <= SEEDS; ++seed)
+    {
+        CtrWildsCore c;
+
+        CtrWildsCore_Init(&c, (uint32_t)seed);
+        CtrWildsCore_MapChanged(&c, 9);
+        RangeAdd(&first, c.spawnTimer);
+        /* a success with the target at 6: 2 out (active * 2 < target) fills, 3 or more completes */
+        c.target = 6;
+        c.active = 2;
+        CtrWildsCore_SpawnDone(&c, 1);
+        RangeAdd(&fill, c.spawnTimer);
+        c.active = 3;
+        CtrWildsCore_SpawnDone(&c, 1);
+        RangeAdd(&topup, c.spawnTimer);
+        /* a failure with nothing out: 20 to 40 while the count is below CTRW_STALL_FAILS, then 60 to 90 */
+        c.active = 0;
+        c.fails = 0;
+        CtrWildsCore_SpawnDone(&c, 0);
+        RangeAdd(&fail, c.spawnTimer);
+        c.fails = CTRW_STALL_FAILS - 2;
+        CtrWildsCore_SpawnDone(&c, 0);         /* the 5th in a row: not stalled yet */
+        CHECK(!CtrWildsCore_Stalled(&c) && c.spawnTimer >= CTRW_FAIL_MIN && c.spawnTimer < CTRW_FAIL_MIN + CTRW_FAIL_SPAN,
+              "the 5th failure is still a quick retry (%d)", c.spawnTimer);
+        CtrWildsCore_SpawnDone(&c, 0);         /* the 6th: stalled */
+        CHECK(CtrWildsCore_Stalled(&c), "the 6th failure in a row stalls");
+        RangeAdd(&stalled, c.spawnTimer);
+        /* a wild went away while the wait was long: cut to 60..119 */
+        c.spawnTimer = 150;
+        CtrWildsCore_Removed(&c);
+        RangeAdd(&removed, c.spawnTimer);
+    }
+    CheckRange(&first, 24, 36, "first wild after a new map");
+    CheckRange(&fill, 45, 90, "success, below half of the target");
+    CheckRange(&topup, 90, 150, "success, half of the target or more");
+    CheckRange(&fail, 20, 40, "failure");
+    CheckRange(&stalled, 60, 90, "failure while stalled");
+    CheckRange(&removed, 60, 119, "wait after a wild went away");
+    /* the limit of 'below half' for the caps of both consoles (active counted after the wild was made) */
+    {
+        CtrWildsCore c;
+        int lo = 1000, hi = 0;
+        static const struct { int target, active, fill; } rows[] = {
+            {2, 1, 0}, {4, 1, 1}, {4, 2, 0}, {6, 1, 1}, {6, 2, 1}, {6, 3, 0}, {6, 4, 0}, {6, 6, 0}, {1, 1, 0}, {3, 1, 1}, {3, 2, 0},
+        };
+
+        for (unsigned i = 0; i < sizeof(rows) / sizeof(rows[0]); ++i)
+            for (int seed = 1; seed <= 500; ++seed)
+            {
+                CtrWildsCore_Init(&c, (uint32_t)seed);
+                c.target = (uint8_t)rows[i].target;
+                c.active = (uint8_t)rows[i].active;
+                CtrWildsCore_SpawnDone(&c, 1);
+                if (rows[i].fill)
+                    CHECK(c.spawnTimer >= 45 && c.spawnTimer <= 90, "target %d, %d out: fill wait (%d)", rows[i].target, rows[i].active, c.spawnTimer);
+                else
+                    CHECK(c.spawnTimer >= 90 && c.spawnTimer <= 150, "target %d, %d out: complete wait (%d)", rows[i].target, rows[i].active, c.spawnTimer);
+                lo = c.spawnTimer < lo ? c.spawnTimer : lo;
+                hi = c.spawnTimer > hi ? c.spawnTimer : hi;
+            }
+        CHECK(lo >= 45 && hi <= 150, "no wait outside 45..150 after a success (%d..%d)", lo, hi);
+    }
+    /* the new map's wait comes from the table's own RNG: it repeats with the seed (the game's generator takes no part) */
+    {
+        CtrWildsCore a, b;
+
+        CtrWildsCore_Init(&a, 5);
+        CtrWildsCore_Init(&b, 5);
+        CtrWildsCore_MapChanged(&a, 1);
+        CtrWildsCore_MapChanged(&b, 1);
+        CHECK(a.spawnTimer == b.spawnTimer && a.rng == b.rng, "the first wait is deterministic from the table's seed");
+        CtrWildsCore_MapChanged(&a, 1);
+        CHECK(a.rng == b.rng, "the same map again draws nothing");
+    }
+    /* at the target the wait does not run down */
+    {
+        CtrWildsCore c;
+        int before;
+
+        CtrWildsCore_Init(&c, 3);
+        CtrWildsCore_MapChanged(&c, 1);
+        c.operative = 1;
+        c.target = 2;
+        c.active = 2;
+        before = c.spawnTimer;
+        for (int i = 0; i < 100; ++i)
+            CtrWildsCore_SpawnDue(&c);
+        CHECK(c.spawnTimer == before, "at the target the wait does not run down (%d)", c.spawnTimer);
+    }
+}
+
+/* Taking a wild away brings the next one forward. */
+static void TestRemoved(void)
+{
+    CtrWildsCore c;
+    World w;
+    int worst = 0, rangeOk = 1;
+
+    CtrWildsCore_Init(&c, 1);
+    CtrWildsCore_MapChanged(&c, 2);
+    /* longer waits are cut, shorter ones are never made longer */
+    for (int t = 0; t <= 400; ++t)
+    {
+        uint32_t rngBefore;
+
+        c.spawnTimer = (uint16_t)t;
+        rngBefore = c.rng;
+        CtrWildsCore_Removed(&c);
+        if (t <= 119)
+            rangeOk &= c.spawnTimer == t && c.rng == rngBefore;
+        else
+            rangeOk &= c.spawnTimer >= 60 && c.spawnTimer <= 119;
+    }
+    CHECK(rangeOk, "Removed: 0..119 stay as they are (no draw), longer ones become 60..119");
+    /* idempotent: several wilds away at once cut the wait once */
+    CtrWildsCore_Init(&c, 2);
+    c.spawnTimer = 400;
+    for (int i = 0; i < 3; ++i)
+        Make(&c, i, 0, 100);
+    CtrWildsCore_Forget(&c, 0);
+    {
+        uint16_t t1 = c.spawnTimer;
+        uint32_t rng1 = c.rng;
+
+        CtrWildsCore_Forget(&c, 1);
+        CtrWildsCore_Forget(&c, 2);
+        CHECK(t1 >= 60 && t1 <= 119 && c.spawnTimer == t1 && c.rng == rng1 && c.active == 0, "Forget in a row: the wait is cut once (%d, %d)", t1, c.spawnTimer);
+    }
+    c.spawnTimer = 400;
+    CtrWildsCore_Forget(&c, 0);             /* an empty slot: no wild went away */
+    CtrWildsCore_Forget(&c, -1);
+    CtrWildsCore_Forget(&c, CTRW_SLOTS);
+    CHECK(c.spawnTimer == 400, "Forget of an empty or out-of-range slot leaves the wait alone");
+    /* in play: a full table, one goes away, the next is out within 120 frames */
+    for (int seed = 1; seed <= 200; ++seed)
+    {
+        int frames = 0;
+
+        CtrWildsCore_Init(&c, (uint32_t)seed);
+        WorldInit(&w, CTRW_TILE_LAND);
+        MapOn(&c, 6, 1, 0);
+        for (int i = 0; i < 3000 && c.active < 4; ++i)
+            Frame(&c, &w, 2, 6, 0);
+        CHECK(c.active == 4, "seed %d: the table filled", seed);
+        Shed(&c, &w, 1);
+        CHECK(c.active == 3 && c.spawnTimer <= 119, "seed %d: the wait is at most 119 after a removal (%d)", seed, c.spawnTimer);
+        while (c.active < 4 && frames < 1000)
+        {
+            Frame(&c, &w, 2, 6, 0);
+            ++frames;
+        }
+        worst = frames > worst ? frames : worst;
+    }
+    CHECK(worst <= CTRW_REMOVED_MIN + CTRW_REMOVED_SPAN + 1, "a removed wild is replaced within 120 frames (worst %d)", worst);
+}
+
+/* Quick retries must not delay the game's own encounters: the stall is reached within about 6 x 40 frames of the first failure. */
+static void TestFastRetry(void)
+{
+    int worstStall = 0, worstBack = 0;
+
+    for (int seed = 1; seed <= 300; ++seed)
+    {
+        CtrWildsCore c;
+        World w;
+        int firstFail = -1, released = -1, back = -1, i;
+
+        CtrWildsCore_Init(&c, (uint32_t)seed);
+        WorldPatch(&w, 3);                  /* nowhere to appear */
+        MapOn(&c, 40, 1, 0);
+        for (i = 0; i < 3000 && released < 0; ++i)
+        {
+            Frame(&c, &w, 2, 6, 0);
+            if (firstFail < 0 && c.fails > 0)
+                firstFail = i;
+            if (c.fails > 0 && c.fails < CTRW_STALL_FAILS)
+                CHECK(CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "seed %d: still suppressing before the 6th failure", seed);
+            if (!CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND))
+                released = i;
+        }
+        CHECK(firstFail >= 0 && released >= 0 && c.fails >= CTRW_STALL_FAILS, "seed %d: it stalled", seed);
+        CHECK(released - firstFail <= CTRW_STALL_FAILS * (CTRW_FAIL_MIN + CTRW_FAIL_SPAN - 1), "seed %d: released %d frames after the first failure", seed,
+              released - firstFail);
+        worstStall = released - firstFail > worstStall ? released - firstFail : worstStall;
+        /* the retries go on at 60..90; room appears and the first success hides the step encounters again at once */
+        WorldAllLand(&w);
+        for (i = 0; i < 400 && back < 0; ++i)
+        {
+            Frame(&c, &w, 2, 6, 0);
+            if (c.active > 0)
+                back = i;
+        }
+        CHECK(back >= 0 && back <= CTRW_STALLED_MIN + CTRW_STALLED_SPAN, "seed %d: recovered in %d frames", seed, back);
+        CHECK(c.fails == 0 && !CtrWildsCore_Stalled(&c) && CtrWildsCore_SuppressStep(&c, CTRW_TILE_LAND), "seed %d: the first success suppresses again", seed);
+        worstBack = back > worstBack ? back : worstBack;
+        /* a new map leaves the stall too */
+        WorldPatch(&w, 3);
+        MapOn(&c, 41, 1, 0);
+        CHECK(c.fails == 0 && !CtrWildsCore_Stalled(&c), "seed %d: a new map clears the failures", seed);
+    }
+    CHECK(worstStall <= 240, "the stall is at most 240 frames after the first failure (worst %d)", worstStall);
+    printf("  fast retries: released at most %d frames after the first failure; recovery at most %d frames after room appears\n", worstStall, worstBack);
+}
+
+/* The ring is drawn in proportion to its zones ------------------------------------------------------------------------------ */
+
+static int sPickCalls;
+
+static int CountAll(void *ctx, int x, int y)
+{
+    (void)ctx;
+    (void)x;
+    (void)y;
+    ++sPickCalls;
+    return CTRW_TILE_LAND;
+}
+
+static int CountNone(void *ctx, int x, int y)
+{
+    (void)ctx;
+    (void)x;
+    (void)y;
+    ++sPickCalls;
+    return CTRW_TILE_NONE;
+}
+
+static int InZone(const CtrWildRing *r, int z, int x, int y)
+{
+    if (z == 0)
+        return x >= r->left && x <= r->px - r->halfW - 1 && y >= r->top && y <= r->bottom;
+    if (z == 1)
+        return x >= r->px + r->halfW + 1 && x <= r->right && y >= r->top && y <= r->bottom;
+    return x >= r->left && x <= r->right && y >= r->py + r->halfH + 1 && y <= r->bottom;
+}
+
+static int Groups(const CtrWildRing *r, int x, int y)
+{
+    return InZone(r, 0, x, y) | InZone(r, 1, x, y) << 1 | InZone(r, 2, x, y) << 2;
+}
+
+/* 200000 picks over a tile function that takes any cell. Each cell weighs the number of zones that hold it (the bottom corners are in
+ * two), so the share of a group of cells (the same zones) is its weight over the total. Each group is within 2% of its share. */
+static void CheckRing(const CtrWildRing *r, const char *name)
+{
+    enum { N = 200000, GROUPS = 8 };
+    CtrWildsCore c;
+    long cells[GROUPS] = {0}, seen[GROUPS] = {0}, total = 0;
+    int bad = 0, outside = 0, x, y, kind;
+
+    CtrWildsCore_Init(&c, 99);
+    for (int cy = r->top - 2; cy <= r->bottom + 2; ++cy)
+        for (int cx = r->left - 2; cx <= r->right + 2; ++cx)
+        {
+            int g = Groups(r, cx, cy);
+
+            ++cells[g];
+            total += (g & 1) + ((g >> 1) & 1) + ((g >> 2) & 1);
+        }
+    cells[0] = 0;
+    for (int i = 0; i < N; ++i)
+    {
+        int g;
+
+        if (!CtrWildsCore_PickCell(&c, r, CountAll, NULL, 1, 0, 0, &x, &y, &kind))
+        {
+            ++bad;
+            continue;
+        }
+        g = Groups(r, x, y);
+        if (g == 0)
+        {
+            ++bad;
+            continue;
+        }
+        ++seen[g];
+        outside += !(x < r->px - r->halfW || x > r->px + r->halfW || y > r->py + r->halfH);
+    }
+    CHECK(bad == 0 && outside == 0 && total > 0, "%s: every pick is in the ring, outside the screen (%d bad, %d inside the screen)", name, bad, outside);
+    for (int g = 1; g < GROUPS; ++g)
+    {
+        int mult = (g & 1) + ((g >> 1) & 1) + ((g >> 2) & 1);
+        double expect = (double)cells[g] * mult / (double)total, got = (double)seen[g] / N;
+
+        CHECK(got > expect - 0.02 && got < expect + 0.02, "%s: group %d holds %.3f of the picks, expected %.3f", name, g, got, expect);
+    }
+}
+
+static void TestPick(void)
+{
+    World w;
+    CtrWildRing r;
+    CtrWildsCore c;
+    int x = 0, y = 0, kind = 0;
+
+    WorldInit(&w, CTRW_TILE_LAND);
+    r = Ring(&w);                           /* the left zone is 3x11 cells, the right one 4x11, the bottom one 24x4 */
+    CheckRing(&r, "the usual ring");
+    r = Ring(&w);
+    r.bottom = r.py + r.halfH;              /* no bottom zone: only the sides, 3 columns to 4 */
+    CheckRing(&r, "no bottom zone");
+    {
+        long left = 0, right = 0;
+
+        CtrWildsCore_Init(&c, 7);
+        for (int i = 0; i < 100000; ++i)
+        {
+            int ok = CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind);
+
+            CHECK(ok, "no bottom zone: a pick");
+            left += x < r.px;
+            right += x > r.px;
+        }
+        CHECK(left > 100000 * 3 / 7.0 - 1500 && left < 100000 * 3 / 7.0 + 1500 && left + right == 100000, "weights: left 3 : right 4 (%ld : %ld)", left, right);
+    }
+    r = Ring(&w);
+    r.left = r.px - r.halfW;                /* no left zone */
+    CheckRing(&r, "no left zone");
+    r = Ring(&w);
+    r.right = r.px + r.halfW;               /* no right zone */
+    CheckRing(&r, "no right zone");
+    r = Ring(&w);
+    r.left = r.px - r.halfW;
+    r.right = r.px + r.halfW;               /* only the bottom */
+    CheckRing(&r, "only the bottom zone");
+    r = Ring(&w);
+    r.left = r.px;
+    r.right = r.px;                         /* a view narrower than the screen: only the bottom, one column */
+    CheckRing(&r, "a one-column view");
+    /* an empty ring: no cell, and no tile asked for */
+    r = Ring(&w);
+    r.left = r.px + 50;
+    r.right = r.px + 5;
+    sPickCalls = 0;
+    CtrWildsCore_Init(&c, 8);
+    CHECK(!CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind) && sPickCalls == 0, "an empty ring: nothing, no lookup");
+    r = Ring(&w);
+    r.bottom = r.py + 3;
+    r.top = r.bottom + 1;
+    sPickCalls = 0;
+    CHECK(!CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind) && sPickCalls == 0, "no rows in the view: nothing, no lookup");
+    memset(&r, 0, sizeof(r));
+    sPickCalls = 0;
+    CHECK(!CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind) && sPickCalls == 0, "an all-zero ring: nothing, no lookup");
+    /* at most CTRW_PICK_TRIES lookups, and exactly that many when nothing is accepted */
+    r = Ring(&w);
+    CHECK(CTRW_PICK_TRIES == 24, "24 tries");
+    for (int i = 0; i < 100; ++i)
+    {
+        sPickCalls = 0;
+        CHECK(!CtrWildsCore_PickCell(&c, &r, CountNone, NULL, 1, 0, 0, &x, &y, &kind) && sPickCalls == CTRW_PICK_TRIES, "no cell accepted: %d lookups", sPickCalls);
+    }
+    sPickCalls = 0;
+    CHECK(CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind) && sPickCalls == 1 && kind == CTRW_TILE_LAND, "the first cell taken: one lookup");
+    /* water cells are never taken by a land-only table, and the lookups stay at 24 */
+    sPickCalls = 0;
+    CHECK(!CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 0, 1, 0, &x, &y, &kind) && sPickCalls == CTRW_PICK_TRIES, "land cells with a water-only table: 24 lookups, none taken");
+    /* huge or odd rings: no overflow, no division by zero, and the cell is in the ring */
+    r = Ring(&w);
+    r.left = -1000000000;
+    r.right = 1000000000;
+    r.top = -1000000000;
+    r.bottom = 1000000000;
+    for (int i = 0; i < 1000; ++i)
+    {
+        int ok = CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind);
+
+        CHECK(ok && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom, "a huge ring: a cell inside it (%d,%d)", x, y);
+    }
+    r = Ring(&w);
+    r.px = 2147483000;
+    r.left = 2147482900;
+    r.right = 2147483600;
+    r.top = 2147482000;
+    r.bottom = 2147483600;
+    for (int i = 0; i < 100; ++i)
+        CtrWildsCore_PickCell(&c, &r, CountAll, NULL, 1, 0, 0, &x, &y, &kind);
+    CHECK(1, "a ring near INT_MAX runs");
+}
+
+/* The diagnostics ------------------------------------------------------------------------------------------------------------ */
+
+static void TestStats(void)
+{
+    CtrWildsCore c;
+    World w;
+    char line[160], small[16];
+    int due = 0, firstStat = 0, fourth = 0;
+    CtrWildsStats zero;
+
+    memset(&zero, 0, sizeof(zero));
+    /* a normal run: the first wild comes at the counted frame, the target is reached at the 4th, every attempt is told apart */
+    CtrWildsCore_Init(&c, 21);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 0x0102, 1, 0);
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "stats start at zero");
+    for (int i = 0; i < 6000; ++i)
+    {
+        int before = c.active;
+
+        Frame(&c, &w, 2, 6, 0);
+        if (c.active > before && c.active == 1)
+            firstStat = (int)c.stats.frames;
+        if (c.active > before && c.active == 4)
+            fourth = (int)c.stats.frames;
+        due += CtrWildsCore_StatsDue(&c);
+    }
+    CHECK(c.stats.ok == 4 && c.stats.attempts == c.stats.ok + c.stats.fail[CTRW_FAIL_NOCELL] + c.stats.fail[CTRW_FAIL_ROLL] + c.stats.fail[CTRW_FAIL_NOOBJ],
+          "attempts add up (%u, %u ok)", c.stats.attempts, c.stats.ok);
+    CHECK(c.stats.frames == 6000 && c.stats.firstFrames == (uint32_t)firstStat && c.stats.fillFrames == (uint32_t)fourth && firstStat > 0 && fourth >= firstStat,
+          "first wild at %u frames, target at %u (%d, %d)", c.stats.firstFrames, c.stats.fillFrames, firstStat, fourth);
+    CHECK(c.stats.firstFrames >= CTRW_FIRST_MIN + 1 && c.stats.firstFrames <= CTRW_FIRST_MIN + CTRW_FIRST_SPAN, "first=%u is 25..37 frames", c.stats.firstFrames);
+    CHECK(due == 4, "a summary at the first attempt and then every 1800 frames (%d in 6000)", due);
+    CtrWildsCore_StatsLine(&c, line, sizeof(line));
+    printf("  stats line: %s\n", line);
+    CHECK(strncmp(line, "wilds: map=0102 att=", 20) == 0 && strstr(line, " ok=4 ") && strstr(line, " stalls=0 t=6000"), "the line: %s", line);
+    /* failures by reason */
+    CtrWildsCore_Init(&c, 22);
+    CtrWildsCore_MapChanged(&c, 1);
+    CtrWildsCore_NoteFail(&c, CTRW_FAIL_NOCELL);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CtrWildsCore_NoteFail(&c, CTRW_FAIL_ROLL);
+    CtrWildsCore_NoteFail(&c, CTRW_FAIL_ROLL);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CtrWildsCore_NoteFail(&c, CTRW_FAIL_NOOBJ);
+    CtrWildsCore_NoteFail(&c, 77);          /* an unknown reason is ignored */
+    CtrWildsCore_NoteFail(&c, -1);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(c.stats.attempts == 3 && c.stats.ok == 0 && c.stats.fail[0] == 1 && c.stats.fail[1] == 2 && c.stats.fail[2] == 1 && c.stats.stalls == 0, "reasons are counted apart");
+    CtrWildsCore_SpawnDone(&c, 0);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(CtrWildsCore_Stalled(&c) && c.stats.stalls == 1, "the stall is counted once (%u)", c.stats.stalls);
+    CtrWildsCore_SpawnDone(&c, 0);
+    CHECK(c.stats.stalls == 1, "...not again while stalled");
+    CtrWildsCore_StatsLine(&c, line, sizeof(line));
+    CHECK(strcmp(line, "wilds: map=0001 att=7 ok=0 nocell=1 roll=2 noobj=1 first=0 fill=0 stalls=1 t=0") == 0, "exact line: %s", line);
+    /* a new map starts over; the same map does not */
+    CtrWildsCore_MapChanged(&c, 1);
+    CHECK(c.stats.attempts == 7, "the same map keeps the counters");
+    CtrWildsCore_MapChanged(&c, 2);
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "a new map resets them");
+    CHECK(!CtrWildsCore_StatsDue(&c), "no summary without attempts");
+    /* a short buffer is always terminated */
+    CtrWildsCore_StatsLine(&c, small, sizeof(small));
+    CHECK(strlen(small) == 15 && strncmp(small, "wilds: map=0002", 15) == 0, "truncated to the buffer: '%s'", small);
+    small[0] = 'x';
+    CHECK(CtrWildsCore_StatsLine(&c, small, 1) == 0 && small[0] == 0, "a one-byte buffer holds the terminator");
+    small[0] = 'x';
+    CHECK(CtrWildsCore_StatsLine(&c, small, 0) == 0 && small[0] == 'x', "a zero-size buffer is not touched");
+    /* the system off or with nothing to show counts nothing: no frame, no attempt */
+    CtrWildsCore_Init(&c, 23);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 3, 1, 0);
+    for (int i = 0; i < 5000; ++i)
+        Frame(&c, &w, 0, 6, 0);             /* WILD POKEMON off: not operative */
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0 && c.active == 0, "the option off: not one count");
+    for (int i = 0; i < 5000; ++i)
+        Frame(&c, &w, 2, 6, 1);             /* blocked (Safari, Randomlocke...) */
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "blocked: not one count");
+    for (int i = 0; i < 5000; ++i)
+        Frame(&c, &w, 2, 0, 0);             /* a console cap of 0 */
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "no cap: not one count");
+    for (int i = 0; i < 5000; ++i)
+        GlueIdle(&c, 0);                    /* the glue's early out */
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "Idle: not one count");
+    CtrWildsCore_Init(&c, 24);
+    MapOn(&c, 4, 0, 0);
+    c.probed = 1;                           /* a map that cannot show a wild: Unsupported is the glue's early out */
+    for (int i = 0; i < 5000; ++i)
+        GlueIdle(&c, 2);
+    CHECK(memcmp(&c.stats, &zero, sizeof(zero)) == 0, "Unsupported: not one count");
+    /* target 0 is not a fill */
+    CtrWildsCore_Init(&c, 25);
+    CtrWildsCore_MapChanged(&c, 5);
+    c.operative = 1;
+    c.target = 0;
+    for (int i = 0; i < 100; ++i)
+        CtrWildsCore_SpawnDue(&c);
+    CHECK(c.stats.frames == 100 && c.stats.fillFrames == 0 && !c.stats.gotFill, "target 0 is not a fill");
+    /* a map with no room: only no-cell failures, one stall, no first wild */
+    CtrWildsCore_Init(&c, 26);
+    WorldPatch(&w, 3);
+    MapOn(&c, 6, 1, 0);
+    for (int i = 0; i < 3000; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    CHECK(c.stats.ok == 0 && c.stats.stalls == 1 && c.stats.fail[CTRW_FAIL_NOCELL] == c.stats.attempts && c.stats.firstFrames == 0 && c.stats.fillFrames == 0,
+          "a map with no room: only no-cell failures, one stall (%u attempts)", c.stats.attempts);
+    /* the species roll failing is told apart */
+    sRollFails = 1;
+    CtrWildsCore_Init(&c, 27);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 7, 1, 0);
+    for (int i = 0; i < 1000; ++i)
+        Frame(&c, &w, 2, 6, 0);
+    sRollFails = 0;
+    CHECK(c.stats.attempts > 0 && c.stats.fail[CTRW_FAIL_ROLL] == c.stats.attempts && c.stats.fail[CTRW_FAIL_NOCELL] == 0, "roll failures are told apart");
+    /* no free object event: told apart too */
+    CtrWildsCore_Init(&c, 28);
+    WorldInit(&w, CTRW_TILE_LAND);
+    MapOn(&c, 8, 1, 0);
+    for (int i = 0; i < CTRW_OBJECTS; ++i)
+        w.objActive[i] = 1;
+    w.objActive[0] = 1;
+    c.operative = 1;
+    c.target = 2;
+    c.spawnTimer = 0;
+    CtrWildsCore_SpawnDue(&c);
+    Spawn(&c, &w, 6, 10, 100, 0);
+    CHECK(c.stats.fail[CTRW_FAIL_NOOBJ] == 1 && c.stats.attempts == 1, "no object event is told apart (%u, %u)", c.stats.fail[CTRW_FAIL_NOOBJ], c.stats.attempts);
+}
+
 static void TestGlueSupport(void)
 {
     CtrWildsCore c;
@@ -1180,6 +1728,19 @@ static int AlwaysLand(void *ctx, int x, int y)
     return CTRW_TILE_LAND;
 }
 
+/* SpawnDue as it was before the diagnostics (no frame count), for the cost of the counter. */
+__attribute__((noinline)) static int OldSpawnDue(CtrWildsCore *c)
+{
+    if (!c->operative || c->active >= c->target)
+        return 0;
+    if (c->spawnTimer != 0)
+    {
+        --c->spawnTimer;
+        return 0;
+    }
+    return 1;
+}
+
 static void Bench(void)
 {
     CtrWildsCore c;
@@ -1234,6 +1795,37 @@ static void Bench(void)
         printf("bench: one spawn attempt (cell + personality): %.1f ns each\n", (t1 - t0) / (N / 10));
         (void)ok;
     }
+    /* the diagnostics' only per-frame cost: the frame count in SpawnDue (operative, below the target, the wait running down) */
+    {
+        const int M = 200000000;
+        double tOld, tNew;
+
+        CtrWildsCore_Init(&c, 84);
+        c.operative = 1;
+        c.target = 4;
+        t0 = Now();
+        for (int i = 0; i < M; ++i)
+        {
+            c.spawnTimer = 0xFFFF;
+            sink += (uint32_t)OldSpawnDue(&c);
+        }
+        tOld = (Now() - t0) / M;
+        t0 = Now();
+        for (int i = 0; i < M; ++i)
+        {
+            c.spawnTimer = 0xFFFF;
+            sink += (uint32_t)CtrWildsCore_SpawnDue(&c);
+        }
+        tNew = (Now() - t0) / M;
+        printf("bench: SpawnDue per frame, without / with the frame count: %.2f / %.2f ns (a host, both as a call; not a console: the difference is one increment and a compare)\n", tOld, tNew);
+        /* the same with the option off: the early out, and nothing at all reaches the counter */
+        CtrWildsCore_Init(&c, 85);
+        t0 = Now();
+        for (int i = 0; i < M; ++i)
+            sink += (uint32_t)(CtrWildsCore_Idle(&c, 0) || CtrWildsCore_Unsupported(&c));
+        printf("bench: option OFF (Idle || Unsupported) with the counters present: %.2f ns per frame; frames counted: %u\n", (Now() - t0) / M,
+               (unsigned)c.stats.frames);
+    }
     (void)sink;
 }
 
@@ -1254,6 +1846,11 @@ int main(void)
     TestRoamer();
     TestIds();
     TestGlueSupport();
+    TestRhythm();
+    TestRemoved();
+    TestFastRetry();
+    TestPick();
+    TestStats();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();
