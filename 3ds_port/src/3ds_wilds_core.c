@@ -281,28 +281,42 @@ int CtrWildsCore_AcceptKind(CtrWildsCore *c, int tile, int hasLand, int hasWater
 }
 
 /* The three zones of the ring (0 left of the screen, 1 right of it, 2 below it; the view has no margin above): its box, and how many
- * cells it has (0 when empty). The sides are clamped to CTRW_ZONE_MAX so nothing overflows. */
+ * cells it has (0 when empty). Every sum is done in 64 bits and the box is cut to the object event view [left, right] x [top, bottom], so
+ * with any coordinates (INT_MIN, INT_MAX, negative or zero sizes, an upside-down view) nothing overflows and every cell of the box is in
+ * the view, in the zone and (for the three zones) outside the screen box px +- halfW, py +- halfH. The box's origin and its sides (at most
+ * CTRW_ZONE_MAX each) are ints because they lie inside the view. */
 static int Zone(const CtrWildRing *r, int zone, int *x0, int *y0, int *w)
 {
-    int x1, y1, h;
+    int64_t lx0, lx1, ly0, ly1, lw, lh;
 
     if (zone == 0)
     {
-        *x0 = r->left; x1 = r->px - r->halfW - 1; *y0 = r->top; y1 = r->bottom;
+        lx0 = r->left; lx1 = (int64_t)r->px - r->halfW - 1; ly0 = r->top; ly1 = r->bottom;
     }
     else if (zone == 1)
     {
-        *x0 = r->px + r->halfW + 1; x1 = r->right; *y0 = r->top; y1 = r->bottom;
+        lx0 = (int64_t)r->px + r->halfW + 1; lx1 = r->right; ly0 = r->top; ly1 = r->bottom;
     }
     else
     {
-        *x0 = r->left; x1 = r->right; *y0 = r->py + r->halfH + 1; y1 = r->bottom;
+        lx0 = r->left; lx1 = r->right; ly0 = (int64_t)r->py + r->halfH + 1; ly1 = r->bottom;
     }
-    if (x1 < *x0 || y1 < *y0)
+    if (lx0 < r->left)
+        lx0 = r->left;
+    if (lx1 > r->right)
+        lx1 = r->right;
+    if (ly0 < r->top)
+        ly0 = r->top;
+    if (ly1 > r->bottom)
+        ly1 = r->bottom;
+    if (lx1 < lx0 || ly1 < ly0)
         return 0;
-    *w = (int)((int64_t)x1 - *x0 < CTRW_ZONE_MAX ? (int64_t)x1 - *x0 + 1 : CTRW_ZONE_MAX);
-    h = (int)((int64_t)y1 - *y0 < CTRW_ZONE_MAX ? (int64_t)y1 - *y0 + 1 : CTRW_ZONE_MAX);
-    return *w * h;
+    lw = lx1 - lx0 + 1 < CTRW_ZONE_MAX ? lx1 - lx0 + 1 : CTRW_ZONE_MAX;
+    lh = ly1 - ly0 + 1 < CTRW_ZONE_MAX ? ly1 - ly0 + 1 : CTRW_ZONE_MAX;
+    *x0 = (int)lx0;
+    *y0 = (int)ly0;
+    *w = (int)lw;
+    return (int)(lw * lh);
 }
 
 int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *r, CtrWildTileFn tileFn, void *ctx, int hasLand, int hasWater,
@@ -332,8 +346,8 @@ int CtrWildsCore_PickCell(CtrWildsCore *c, const CtrWildRing *r, CtrWildTileFn t
             pick -= (uint32_t)n[z];
             ++z;
         }
-        cx = x0[z] + (int)(pick % (uint32_t)w[z]);
-        cy = y0[z] + (int)(pick / (uint32_t)w[z]);
+        cx = (int)((int64_t)x0[z] + (int64_t)(pick % (uint32_t)w[z]));      /* inside the box: x0 + w - 1 <= its right side */
+        cy = (int)((int64_t)y0[z] + (int64_t)(pick / (uint32_t)w[z]));
         tile = tileFn(ctx, cx, cy);
         if (tile == CTRW_TILE_NONE || !CtrWildsCore_AcceptKind(c, tile, hasLand, hasWater, surfing))
             continue;

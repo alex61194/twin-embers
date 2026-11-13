@@ -2,6 +2,7 @@
 /* The rules of the visible wild Pokemon (3ds_wilds_core.c), run against a small fake world: a tile grid, FireRed's 16 object
  * events, a lead Pokemon. The game's glue (recipes 0249 and 0250) does what this test's fake world does, so what is checked here is
  * the logic the game runs. Ends with host micro-benchmarks of the pure logic (a host's time, not a console's). */
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2123,6 +2124,244 @@ static void TestRealFrames(void)
     }
 }
 
+/* The ring with extreme numbers ------------------------------------------------------------------------------------------------ *
+ * The oracle is written apart from the core, in long long: for each zone the box it must have (cut to the view, its sides capped at
+ * CTRW_ZONE_MAX from its origin) and so how many cells it holds. Every cell PickCell looks at or returns must lie in one of those
+ * boxes, which are in the view and outside the screen box; with no cell in any box nothing is returned and no tile is asked. */
+
+typedef struct Box { long long x0, y0, w, h; } Box;      /* w or h 0: an empty zone */
+
+static void OracleBox(const CtrWildRing *r, int z, Box *b)
+{
+    long long left = r->left, right = r->right, top = r->top, bottom = r->bottom;
+    long long px = r->px, py = r->py, hw = r->halfW, hh = r->halfH;
+    long long xa, xb, ya, yb;
+
+    if (z == 0)
+    {
+        xa = left;
+        xb = px - hw - 1 < right ? px - hw - 1 : right;
+        ya = top;
+        yb = bottom;
+    }
+    else if (z == 1)
+    {
+        xa = px + hw + 1 > left ? px + hw + 1 : left;
+        xb = right;
+        ya = top;
+        yb = bottom;
+    }
+    else
+    {
+        xa = left;
+        xb = right;
+        ya = py + hh + 1 > top ? py + hh + 1 : top;
+        yb = bottom;
+    }
+    b->x0 = xa;
+    b->y0 = ya;
+    b->w = xb >= xa ? (xb - xa + 1 < CTRW_ZONE_MAX ? xb - xa + 1 : CTRW_ZONE_MAX) : 0;
+    b->h = yb >= ya ? (yb - ya + 1 < CTRW_ZONE_MAX ? yb - ya + 1 : CTRW_ZONE_MAX) : 0;
+    if (b->w == 0 || b->h == 0)
+        b->w = b->h = 0;
+}
+
+typedef struct ZoneCtx
+{
+    CtrWildRing ring;
+    Box box[3];
+    int calls, bad;
+    int lastX, lastY;
+} ZoneCtx;
+
+static int InBoxes(const ZoneCtx *zc, long long x, long long y, int *which)
+{
+    for (int z = 0; z < 3; ++z)
+    {
+        const Box *b = &zc->box[z];
+
+        if (b->w > 0 && x >= b->x0 && x < b->x0 + b->w && y >= b->y0 && y < b->y0 + b->h)
+        {
+            *which = z;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int ZoneTile(void *ctx, int x, int y)
+{
+    ZoneCtx *zc = ctx;
+    int which;
+
+    ++zc->calls;
+    zc->lastX = x;
+    zc->lastY = y;
+    if (!InBoxes(zc, x, y, &which))
+        ++zc->bad;
+    else
+    {
+        const CtrWildRing *r = &zc->ring;
+
+        /* in the view, and outside the screen box of the zone it is in */
+        if (x < r->left || x > r->right || y < r->top || y > r->bottom)
+            ++zc->bad;
+        if (which == 0 && (long long)x > (long long)r->px - r->halfW - 1)
+            ++zc->bad;
+        if (which == 1 && (long long)x < (long long)r->px + r->halfW + 1)
+            ++zc->bad;
+        if (which == 2 && (long long)y < (long long)r->py + r->halfH + 1)
+            ++zc->bad;
+    }
+    return CTRW_TILE_LAND;
+}
+
+static int LandOnly(void *ctx, int x, int y)
+{
+    (void)ctx;
+    (void)x;
+    (void)y;
+    return CTRW_TILE_LAND;
+}
+
+static int ZoneCells(const ZoneCtx *zc)
+{
+    long long t = 0;
+
+    for (int z = 0; z < 3; ++z)
+        t += zc->box[z].w * zc->box[z].h;
+    return t > 0;
+}
+
+/* One ring: PickCell against the oracle. Returns whether a cell was found. */
+static int ZoneCheck(const CtrWildRing *ring, uint32_t seed, const char *what, int *x, int *y)
+{
+    ZoneCtx zc;
+    CtrWildsCore c;
+    int kind = 0, ok, which;
+
+    memset(&zc, 0, sizeof(zc));
+    zc.ring = *ring;
+    for (int z = 0; z < 3; ++z)
+        OracleBox(ring, z, &zc.box[z]);
+    CtrWildsCore_Init(&c, seed);
+    *x = *y = 0;
+    ok = CtrWildsCore_PickCell(&c, ring, ZoneTile, &zc, 1, 0, 0, x, y, &kind);
+    CHECK(ok == ZoneCells(&zc), "%s: a cell is %s but PickCell says %d", what, ZoneCells(&zc) ? "expected" : "not expected", ok);
+    CHECK(zc.bad == 0, "%s: %d cells outside the zones, the view or on the screen", what, zc.bad);
+    if (ok)
+    {
+        CHECK(kind == CTRW_TILE_LAND && zc.calls >= 1 && zc.calls <= CTRW_PICK_TRIES, "%s: kind %d after %d lookups", what, kind, zc.calls);
+        CHECK(InBoxes(&zc, *x, *y, &which) && *x == zc.lastX && *y == zc.lastY, "%s: the cell (%d, %d) is in a zone and is the one asked about", what, *x, *y);
+    }
+    else
+        CHECK(zc.calls == 0 && *x == 0 && *y == 0, "%s: an empty ring asks nothing and writes nothing", what);
+    return ok;
+}
+
+static void TestZoneExtremes(void)
+{
+    static const int V[] = {INT_MIN, INT_MIN + 1, -1, 0, 1, INT_MAX - 1, INT_MAX};
+    enum { N = sizeof(V) / sizeof(V[0]) };
+    long long combos = 0, found = 0, empty = 0;
+    int idx[8] = {0};
+
+    /* every combination of the eight numbers (7^8): the oracle decides; this also runs the pure arithmetic on all of them */
+    for (;;)
+    {
+        CtrWildRing r = {V[idx[0]], V[idx[1]], V[idx[2]], V[idx[3]], V[idx[4]], V[idx[5]], V[idx[6]], V[idx[7]]};
+        /* px, py, halfW, halfH, left, right, top, bottom */
+        ZoneCtx zc;
+        CtrWildsCore c;
+        int x = 0, y = 0, kind = 0, ok, which;
+
+        memset(&zc, 0, sizeof(zc));
+        zc.ring = r;
+        for (int z = 0; z < 3; ++z)
+            OracleBox(&r, z, &zc.box[z]);
+        CtrWildsCore_Init(&c, (uint32_t)(combos * 2654435761u + 1));
+        ok = CtrWildsCore_PickCell(&c, &r, ZoneTile, &zc, 1, 0, 0, &x, &y, &kind);
+        if (ok != ZoneCells(&zc) || zc.bad != 0 || (ok && (!InBoxes(&zc, x, y, &which) || kind != CTRW_TILE_LAND)) || (!ok && zc.calls != 0))
+        {
+            CHECK(0, "extreme ring %d %d %d %d %d %d %d %d: ok=%d expected=%d bad=%d calls=%d", r.px, r.py, r.halfW, r.halfH, r.left, r.right, r.top,
+                  r.bottom, ok, ZoneCells(&zc), zc.bad, zc.calls);
+        }
+        ++checks;
+        ++combos;
+        found += ok;
+        empty += !ok;
+        {
+            int k = 7;
+
+            while (k >= 0 && ++idx[k] == N)
+                idx[k--] = 0;
+            if (k < 0)
+                break;
+        }
+    }
+    CHECK(combos == 5764801 && found > 0 && empty > 0, "extreme rings: %lld combinations, %lld with a cell, %lld empty", combos, found, empty);
+    printf("  extreme rings: %lld combinations of INT_MIN..INT_MAX values, %lld with a cell, %lld empty\n", combos, found, empty);
+
+    /* exact results at the ends: the zone with one cell gives that cell */
+    {
+        int x, y;
+        /* px, py, halfW, halfH, left, right, top, bottom */
+        CtrWildRing leftOnly = {INT_MAX, INT_MAX, 0, 0, INT_MAX - 1, INT_MAX - 1, INT_MIN, INT_MIN};
+        CtrWildRing rightOnly = {INT_MIN, INT_MAX, 0, 0, INT_MIN, INT_MIN + 1, -1, -1};
+        CtrWildRing belowOnly = {INT_MIN, INT_MAX - 2, INT_MAX, 0, -5, -5, 0, INT_MAX - 1};
+        CtrWildRing huge = {0, 0, INT_MAX, INT_MAX, INT_MIN, INT_MAX, 0, 0};
+
+        CHECK(ZoneCheck(&leftOnly, 1, "left zone only", &x, &y) && x == INT_MAX - 1 && y == INT_MIN, "left zone only: (%d, %d)", x, y);
+        CHECK(ZoneCheck(&rightOnly, 2, "right zone only", &x, &y) && x == INT_MIN + 1 && y == -1, "right zone only: (%d, %d)", x, y);
+        CHECK(ZoneCheck(&belowOnly, 3, "below zone only", &x, &y) && x == -5 && y == INT_MAX - 1, "below zone only: (%d, %d)", x, y);
+        CHECK(ZoneCheck(&huge, 4, "huge screen", &x, &y) && x == INT_MIN && y == 0, "huge screen: only the far left cell (%d, %d)", x, y);
+    }
+    /* sizes: zero, negative and enormous, each zone alone, every cell in its zone, many draws */
+    {
+        static const struct { CtrWildRing r; int zone; } rows[] = {
+            /* px, py, halfW, halfH, left, right, top, bottom */
+            {{20, 10, 0, 0, 20, 20, 5, 5}, -1},                 /* a one-cell view: nothing left, right or below */
+            {{20, 10, 3, 2, 0, 40, 0, 12}, -1},                 /* all three zones */
+            {{20, 10, 3, 2, 0, 16, 0, 12}, 0},                  /* left only: x <= 16 (a screen to its right and below the view's end) */
+            {{20, 10, -3, -2, 18, 40, 0, 12}, -1},              /* negative sizes: the boxes meet, nothing breaks */
+            {{20, 10, 5, 100, 0, 30, 0, 30}, -1},               /* a screen taller than the view: no bottom zone */
+            {{20, 10, 1000000, 1000000, -1000000, 1000000, -1000000, 1000000}, -1},    /* nothing outside the screen but the corners' strips */
+            {{0, 0, 0, 0, INT_MIN, INT_MAX, INT_MIN, INT_MAX}, -1},   /* the whole int range: the sides are capped */
+        };
+
+        for (unsigned i = 0; i < sizeof(rows) / sizeof(rows[0]); ++i)
+        {
+            char name[48];
+            int x, y;
+
+            snprintf(name, sizeof(name), "ring row %u", i);
+            for (uint32_t seed = 1; seed <= 300; ++seed)
+                ZoneCheck(&rows[i].r, seed, name, &x, &y);
+            (void)rows[i].zone;
+        }
+        {
+            CtrWildRing r = {20, 10, 0, 0, 20, 20, 5, 5};
+            int x, y;
+
+            CHECK(!ZoneCheck(&r, 9, "one-cell view with the player in it", &x, &y), "a one-cell view has no ring");
+        }
+    }
+    /* the cap: a side is at most CTRW_ZONE_MAX from the box's own origin, so the far end of a huge zone is never reached */
+    {
+        CtrWildRing r = {0, 0, 0, 0, 0, 100000, 0, 0};      /* zone 1: x from 1 to 100000, y 0; zone 0: none */
+        int hi = 0, x, y, kind;
+        CtrWildsCore c;
+
+        for (uint32_t seed = 1; seed <= 2000; ++seed)
+        {
+            CtrWildsCore_Init(&c, seed);
+            if (CtrWildsCore_PickCell(&c, &r, LandOnly, NULL, 1, 0, 0, &x, &y, &kind))
+                hi = x > hi ? x : hi;
+        }
+        CHECK(hi <= CTRW_ZONE_MAX && hi > CTRW_ZONE_MAX / 2, "a zone of 100000 cells wide is cut to %d from its origin (highest x %d)", CTRW_ZONE_MAX, hi);
+    }
+}
+
 static void TestGlueSupport(void)
 {
     CtrWildsCore c;
@@ -2344,6 +2583,7 @@ int main(void)
     TestStats();
     TestStatsSwitch();
     TestRealFrames();
+    TestZoneExtremes();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();
