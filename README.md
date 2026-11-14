@@ -92,7 +92,7 @@ The full list, with the known issues, is in the [CHANGELOG](CHANGELOG.md).
 
 The [release notes](https://github.com/alex61194/twin-embers/releases) list everything, including the stability and real-hardware fixes.
 
-<img src="docs/media/03-day-night-off.png" width="300" alt="Cerulean City with DAY/NIGHT off, next to the option that controls it"> <img src="docs/media/04-night-saffron.png" width="300" alt="Saffron City at night, with the touch map of Kanto">
+<img src="docs/media/03-day-night-off.png" width="300" alt="DAY/NIGHT turned off, next to the option that controls it"> <img src="docs/media/04-night-saffron.png" width="300" alt="Saffron City at night, with the touch map of Kanto">
 
 ---
 
@@ -104,7 +104,7 @@ The overworld is drawn at the 3DS's native top-screen size instead of the GBA's 
 
 The lower screen is **PokéTouch**, a home screen with a touch Town Map and a column of buttons for the Pokédex, your party, Bag, Trainer Card, saving and options. Tapping a button opens that screen directly, and tapping another switches straight to it. Tapping a place on the map twice flies there once you can use FLY. X and Y hold your registered item and the Bicycle. The original START menu is no longer needed.
 
-<img src="docs/media/01-title.png" width="300" alt="Title screen"> <img src="docs/media/05-night-recap.png" width="300" alt="The Previously on your quest recap at night, with the Sevii Islands map below">
+<img src="docs/media/01-title.png" width="300" alt="Title screen"> <img src="docs/media/05-night-recap.png" width="300" alt="The Previously on your quest recap at night, with the touch map below">
 
 ### Fighting
 
