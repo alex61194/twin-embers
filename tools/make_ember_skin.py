@@ -3,7 +3,7 @@
 
 Everything here is drawn by this script (no game pixels): the backdrop of the PokeTouch, battle and Summary screens
 (a dark red gradient, faint diagonal stripes, a fire's glow at the foot and glowing embers) and the six 16x16 icons of
-the START column (POKeDEX, POKeMON, BAG, the Trainer Card, SAVE, OPTIONS), flat and cel-shaded with a slate outline, drawn pixel by pixel.
+the START column (POKeDEX, POKeMON, BAG, the Trainer Card, SAVE, OPTIONS), flat and cel-shaded, each with an outline in the dark tone of its own colour, drawn pixel by pixel.
 
 Needs Pillow; it is a development tool and its output is committed. Run it again after changing the art.
 """
@@ -23,72 +23,83 @@ EMBER_T, EMBER_B = (132, 26, 22), (34, 6, 8)
 
 
 
-# The START column's icons, drawn pixel by pixel (ICON x ICON): a slate outline (64, 72, 104), flat tones, the light from the
-# upper left. In the pictures below '.' is clear, 'O' the outline and any other letter a colour of that picture's own table.
+# The START column's icons, drawn pixel by pixel (ICON x ICON): flat, cel-shaded sprites in hue-shifted ramps (lights lean
+# warm, shadows cool), the light from the upper left, and an outline in the dark tone of the colour it borders (tint_outline)
+# instead of one slate for all. In the pictures below '.' is clear, 'O' the outline and any other letter a colour of that
+# picture's own table.
 O = (64, 72, 104)
 ICON = 16
+RED = ((255, 156, 108), (232, 64, 56), (168, 32, 72), (112, 24, 64))
+YEL = ((255, 244, 160), (248, 192, 72), (212, 120, 56))
+BLU = ((152, 224, 255), (80, 136, 236), (60, 80, 188))
+GRY = ((250, 250, 255), (206, 212, 236), (148, 148, 192), (116, 116, 164))
+OUTLINE_MIX = ((24, 10, 36), 0.78)      # the touched colours' average, pulled this far towards this dark plum
+VIVID = 0.18                            # and every colour's distance from its grey is made this much larger
 
 DEX = ("""
 ..OOOOOOOOOOOO..
 .OrrrrrrrrrrrRO.
-OrrWWWWrRcRyRgDO
-OrWwbBBWRRRRRRDO
-OrWbBBBWRRRRRRDO
-OrWBBBNWRRRRRRDO
 OrrWWWWrRRRRRRDO
-OrRRRRRRRRRRRRDO
+OrWwbBBWRcRyRgDO
+OrWbBBNWRcRyRgDO
+OrWBBNNWRRRRRRDO
+OrrWWWWrRRRRRRDO
 OnnnnnnnnnnnnnnO
 OrRRRRRRRRRRRRDO
-OrROOOOOOOOOORDO
-OrROGGGGGGGGORDO
-OrROGHHHHHHHORDO
-OrROGHHHHHIIORDO
-OrROOOOOOOOOORDO
+OrRnnnnnnnnnnRDO
+OrRnGGGGGGHHnRDO
+OrRnGGGGHHHHnRDO
+OrRnGGHHHHHHnRDO
+OrRnnnnnnnnnnRDO
+.ORRRRRRRRRDDDO.
 ..OOOOOOOOOOOO..
-""", {'r': (255, 128, 110), 'R': (230, 56, 48), 'D': (174, 32, 44), 'n': (126, 20, 34), 'W': (255, 255, 255),
-      'w': (214, 240, 255), 'b': (120, 196, 255), 'B': (56, 136, 240), 'N': (30, 84, 190), 'c': (120, 230, 255),
-      'y': (255, 226, 80), 'g': (104, 226, 120), 'G': (200, 246, 218), 'H': (112, 206, 162), 'I': (70, 160, 128)})
+""", {'r': RED[0], 'R': RED[1], 'D': RED[2], 'n': RED[3], 'W': (255, 255, 255),
+      'w': (214, 240, 255), 'b': BLU[0], 'B': BLU[1], 'N': BLU[2], 'c': (120, 230, 255),
+      'y': (255, 226, 80), 'g': (104, 226, 120), 'G': (216, 250, 232), 'H': (128, 214, 176)})
 
-BAG = ("""
-.....OOOOOO.....
-....OttttttO....
-....OtOOOOTO....
-...OOtO..OTOO...
-..OffffffffffO..
-.OffFFFFFFFFFEO.
-.OFFFFFyyFFFFEO.
-.OOOOOOyYOOOOOO.
-.OtttTTTTTTTTuO.
-.OtTOOOOOOOOTuO.
-.OtTOppppppOTuO.
-.OtTOPPPPPPOTuO.
-.OtTOOOOOOOOTuO.
-.OTTTTTTTuuuuuO.
-..OTTTTuuuuuuO..
-...OOOOOOOOOO...
-""", {'f': (255, 124, 104), 'F': (226, 60, 52), 'E': (170, 34, 44), 't': (250, 204, 136), 'T': (218, 154, 86),
-      'u': (164, 104, 60), 'p': (255, 220, 158), 'P': (236, 178, 108), 'y': (255, 240, 150), 'Y': (240, 190, 60)})
+# The bag is the game's hiker's backpack, drawn small from its left half and mirrored (the right side is a shade darker): two
+# ears, a flap with a grey clasp, a seam, side pockets, a front pocket, a dark base and an orange tab on the right pocket.
+BAG_HALF = ["........",
+            "..OOO...",
+            ".OyyYO..",
+            ".OyyYOOO",
+            ".OyYuOyy",
+            "..Odddyy",
+            "..OyyyyG",
+            "OOOuyyGy",
+            "OyyuuuuY",
+            "OyyuyddY",
+            "OyYuydyy",
+            "OyYuydyy",
+            "Oyuuyddd",
+            "OOOubbbb",
+            "..OOOOOO",
+            "........"]
+BAG_SHADE = {'y': 'Y', 'Y': 'u'}
+BAG_PAL = {'y': YEL[0], 'Y': YEL[1], 'u': (222, 156, 46), 'd': (166, 104, 44), 'b': (112, 96, 128), 'G': (176, 182, 214), 'a': (240, 96, 40)}
+BAG = ('\n'.join(l + ''.join(BAG_SHADE.get(c, c) for c in reversed(l)) for l in BAG_HALF) + '\n', BAG_PAL)
+BAG_TAB = ((14, 9), (14, 10))             # the orange tab; the pocket's left twin stays light
+
 
 CARD = ("""
 ................
 ................
 .OOOOOOOOOOOOOO.
-OrrrrrrrrrrrrRRO
-ORRRRRRRRRRRRRDO
-ObbbbbbbbbbBBBBO
-ObOOOOOObBBBBBNO
+ObbbbbbbbbbbbbBO
+ObOOOOOObbbbbBNO
 ObOhhhhObWWWWBNO
-ObOskksObBBBBBNO
-ObOssssObWWWWBNO
-ObOqQQqObBBBBBNO
-OBOOOOOOBBByyBNO
-OBBBBBBBBBNNyyNO
+ObOhsshObBBBBBNO
+ObOssssObWWWBBNO
+ObOrRRrObBBBBBNO
+ObOrRRrObWWWWBNO
+OBOOOOOOBBBBBNNO
+OBBBBBBBBBNNNNNO
+OyyyyyyyyyyyyYYO
 .OOOOOOOOOOOOOO.
 ................
 ................
-""", {'r': (255, 124, 104), 'R': (228, 60, 52), 'D': (172, 36, 46), 'b': (156, 204, 255), 'B': (92, 150, 240),
-      'N': (56, 106, 204), 'h': (112, 72, 54), 's': (255, 228, 194), 'k': O, 'q': (255, 124, 104), 'Q': (228, 60, 52),
-      'W': (255, 255, 255), 'y': (255, 224, 84)})
+""", {'b': BLU[0], 'B': BLU[1], 'N': BLU[2], 'h': (112, 72, 54), 's': (255, 228, 194),
+      'r': RED[0], 'R': RED[1], 'W': (255, 255, 255), 'y': YEL[0], 'Y': YEL[1]})
 
 SAVE = ("""
 .OOOOOOOOOOOOO..
@@ -107,8 +118,8 @@ OBBOWWWWWWWsONNO
 OBNOssssssssONNO
 OOOOOOOOOOOOOOOO
 ................
-""", {'b': (134, 180, 255), 'B': (72, 122, 226), 'N': (44, 84, 180), 'w': (238, 242, 252), 'g': (172, 180, 206),
-      'W': (255, 255, 255), 's': (222, 226, 240), 'r': (232, 64, 48)})
+""", {'b': BLU[0], 'B': BLU[1], 'N': BLU[2], 'w': (238, 242, 252), 'g': GRY[2],
+      'W': (255, 255, 255), 's': GRY[1], 'r': RED[1]})
 
 GEAR_MASK = """
 ......XXXX......
@@ -149,7 +160,7 @@ def from_art(art, pal):
 
 
 def ball():
-    """A circle: the red top, the white bottom, the slate band, and a round button (a plus-shaped white 4x4 in a slate ring)."""
+    """A circle: the red top, the white bottom, a slate band, and a round button (a white disc in a slate ring)."""
     im = Image.new('RGBA', (ICON, ICON), (0, 0, 0, 0))
     px = im.load()
     c = (ICON - 1) / 2
@@ -163,16 +174,16 @@ def ball():
             if d > 6.9 or abs(dy) < 1.0:
                 col = O
             elif dy < 0:
-                col = (255, 132, 112) if lit > 6.2 else (232, 56, 48) if lit > -3.2 else (176, 32, 44)
+                col = RED[0] if lit > 6.2 else RED[1] if lit > -3.2 else RED[2]
             else:
-                col = (255, 255, 255) if lit > 1.0 else (226, 230, 242) if lit > -6.0 else (176, 182, 206)
+                col = GRY[0] if lit > 1.0 else GRY[1] if lit > -6.0 else GRY[2]
             if d <= 1.7:
-                col = (255, 255, 255) if dx + dy < 0.5 else (226, 230, 242)
+                col = GRY[0] if dx + dy < 0.5 else GRY[1]
             elif d <= 3.4:
                 col = O
             px[x, y] = col + (255,)
     for x, y in ((3, 4), (4, 3)):
-        px[x, y] = (255, 236, 228, 255)
+        px[x, y] = (255, 240, 224, 255)
     return im
 
 
@@ -193,15 +204,55 @@ def gear():
                 px[x, y] = O + (255,)                       # the rim, outside and round the hole
                 continue
             lit = -((x - c) + (y - c))
-            col = (246, 248, 255) if lit > 4.5 else (206, 212, 230) if lit > -4.5 else (152, 160, 190)
-            if max(abs(x - c), abs(y - c)) < 4.1:           # the hub's ring, a tone down
-                col = (206, 212, 230) if lit > 4.5 else (152, 160, 190) if lit > -4.5 else (122, 130, 162)
+            k = 1 if math.hypot(x - c, y - c) < 4.3 else 0   # the hub's ring, a tone down
+            col = GRY[k] if lit > 4.5 else GRY[1 + k] if lit > -4.5 else GRY[2 + k]
             px[x, y] = col + (255,)
     return im
 
 
-ICONS = [('DEX', lambda: from_art(*DEX)), ('BALL', ball), ('BAG', lambda: from_art(*BAG)), ('CARD', lambda: from_art(*CARD)),
-         ('SAVE', lambda: from_art(*SAVE)), ('GEAR', gear)]
+def bag():
+    im = from_art(*BAG)
+    for xy in BAG_TAB:
+        im.putpixel(xy, BAG_PAL['a'] + (255,))
+    for xy in ((1, 9), (1, 10)):
+        im.putpixel(xy, YEL[0] + (255,))
+    return im
+
+
+def finish(im):
+    """The outline in its own colour, then the colours made a little livelier."""
+    im = tint_outline(im)
+    px = im.load()
+    for y in range(ICON):
+        for x in range(ICON):
+            r, g, b, a = px[x, y]
+            if a and (r, g, b) != O:
+                m = (r + g + b) / 3
+                px[x, y] = tuple(max(0, min(255, round(m + (c - m) * (1 + VIVID)))) for c in (r, g, b)) + (255,)
+    return im
+
+
+def tint_outline(im):
+    """Each outline pixel takes the average of the colours it touches, pulled towards a dark plum: a red icon gets a dark red
+    rim, a blue one a dark blue rim. An outline pixel that touches no colour keeps the slate."""
+    src = im.load()
+    out = im.copy()
+    dst = out.load()
+    mix, k = OUTLINE_MIX
+    for y in range(ICON):
+        for x in range(ICON):
+            if src[x, y][3] == 0 or src[x, y][:3] != O:
+                continue
+            near = [src[x + a, y + b][:3] for a in (-1, 0, 1) for b in (-1, 0, 1)
+                    if 0 <= x + a < ICON and 0 <= y + b < ICON and src[x + a, y + b][3] and src[x + a, y + b][:3] != O]
+            if near:
+                avg = [sum(c[i] for c in near) // len(near) for i in range(3)]
+                dst[x, y] = tuple(round(avg[i] + (mix[i] - avg[i]) * k) for i in range(3)) + (255,)
+    return out
+
+
+ICONS = [('DEX', lambda: finish(from_art(*DEX))), ('BALL', lambda: finish(ball())), ('BAG', lambda: finish(bag())),
+         ('CARD', lambda: finish(from_art(*CARD))), ('SAVE', lambda: finish(from_art(*SAVE))), ('GEAR', lambda: finish(gear()))]
 
 
 def grad(w, h, top, bot):
