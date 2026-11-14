@@ -3448,7 +3448,7 @@
   },
   {
    "path": "docs/media/08-battle-moves.png",
-   "sha256": "a3fb5d2009de9796ff8c64666b187775dbcfc9e36e0f1b0a744d26b133219a59",
+   "sha256": "7f70823e4b502fd59fd98b409346fed75e3632c57a18de337318d667c25c9d2d",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3456,7 +3456,7 @@
   },
   {
    "path": "docs/media/09-battle-bag.png",
-   "sha256": "e70b104af73eb44858dcfa790de03af0fdd93a7237a0c67e61c568cb0e98765f",
+   "sha256": "ffe100fbf264517c4d1fb47d460eb4a6dd2d5486ee925e16d81ddffe75b7b673",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3480,7 +3480,7 @@
   },
   {
    "path": "docs/media/13-bag.png",
-   "sha256": "c31dbf7abbedb2ef9add82030b0f1fdf0c4069ae0b1c67daee1500119a7a88b2",
+   "sha256": "ed38d1e1018055b54e3aa9d905a4c53114ff0e117809f6c43f55382f389075e7",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3552,7 +3552,7 @@
   },
   {
    "path": "docs/media/22-bag-key-items.png",
-   "sha256": "390f75636fa2dc11b9ff255d0d903f9d046590b30526dd88394ef3ef4e9b5fb4",
+   "sha256": "b20b0189a97109558e38c17d22e5303f3cae16f05251a44df6072a4a47da3d3e",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3560,7 +3560,7 @@
   },
   {
    "path": "docs/media/23-bag-balls.png",
-   "sha256": "8baef22156f38d8b486b43a3ec8edcd2da62f040e743ccd450a716d4a3ac49fa",
+   "sha256": "30a38209a10c1d4bab86db78cb5da537084821b5cb850245956c808dcc4fb76b",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
