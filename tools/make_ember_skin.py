@@ -33,7 +33,8 @@ RED = ((255, 156, 108), (232, 64, 56), (168, 32, 72), (112, 24, 64))
 YEL = ((255, 244, 160), (248, 192, 72), (212, 120, 56))
 BLU = ((152, 224, 255), (80, 136, 236), (60, 80, 188))
 GRY = ((250, 250, 255), (206, 212, 236), (148, 148, 192), (116, 116, 164))
-OUTLINE_MIX = ((48, 24, 64), 0.62)      # the touched colours' average, pulled this far towards this dark plum
+OUTLINE_MIX = ((24, 10, 36), 0.78)      # the touched colours' average, pulled this far towards this dark plum
+VIVID = 0.18                            # and every colour's distance from its grey is made this much larger
 
 DEX = ("""
 ..OOOOOOOOOOOO..
@@ -56,25 +57,29 @@ OrRnnnnnnnnnnRDO
       'w': (214, 240, 255), 'b': BLU[0], 'B': BLU[1], 'N': BLU[2], 'c': (120, 230, 255),
       'y': (255, 226, 80), 'g': (104, 226, 120), 'G': (216, 250, 232), 'H': (128, 214, 176)})
 
-BAG = ("""
-......OOOO......
-.....OttttO.....
-.....OtOOtO.....
-...OOOtOOtOOO...
-..OffffffffffO..
-.OffFFFFFFFFFEO.
-.OfFFFFFFFFFFEO.
-.OFFFFFwwFFFEEO.
-.OOOOOOwgOOOOOO.
-.OyyYYYYYYYYYuO.
-.OyYOOOOOOOOYuO.
-.OyYOppppppOYuO.
-.OyYOOOOOOOOYuO.
-.OYYYYYYYYuuuuO.
-..OYYYYuuuuuuO..
-...OOOOOOOOOO...
-""", {'f': RED[0], 'F': RED[1], 'E': RED[2], 't': (176, 96, 72), 'y': YEL[0], 'Y': YEL[1], 'u': YEL[2],
-      'p': (255, 246, 200), 'w': (255, 255, 255), 'g': GRY[1]})
+# The bag is the game's hiker's backpack, drawn small from its left half and mirrored (the right side is a shade darker): two
+# ears, a flap with a grey clasp, a seam, side pockets, a front pocket, a dark base and an orange tab on the right pocket.
+BAG_HALF = ["........",
+            "..OOO...",
+            ".OyyYO..",
+            ".OyyYOOO",
+            ".OyYuOyy",
+            "..Odddyy",
+            "..OyyyyG",
+            "OOOuyyGy",
+            "OyyuuuuY",
+            "OyyuyddY",
+            "OyYuydyy",
+            "OyYuydyy",
+            "Oyuuyddd",
+            "OOOubbbb",
+            "..OOOOOO",
+            "........"]
+BAG_SHADE = {'y': 'Y', 'Y': 'u'}
+BAG_PAL = {'y': YEL[0], 'Y': YEL[1], 'u': (222, 156, 46), 'd': (166, 104, 44), 'b': (112, 96, 128), 'G': (176, 182, 214), 'a': (240, 96, 40)}
+BAG = ('\n'.join(l + ''.join(BAG_SHADE.get(c, c) for c in reversed(l)) for l in BAG_HALF) + '\n', BAG_PAL)
+BAG_TAB = ((14, 9), (14, 10))             # the orange tab; the pocket's left twin stays light
+
 
 CARD = ("""
 ................
@@ -205,6 +210,28 @@ def gear():
     return im
 
 
+def bag():
+    im = from_art(*BAG)
+    for xy in BAG_TAB:
+        im.putpixel(xy, BAG_PAL['a'] + (255,))
+    for xy in ((1, 9), (1, 10)):
+        im.putpixel(xy, YEL[0] + (255,))
+    return im
+
+
+def finish(im):
+    """The outline in its own colour, then the colours made a little livelier."""
+    im = tint_outline(im)
+    px = im.load()
+    for y in range(ICON):
+        for x in range(ICON):
+            r, g, b, a = px[x, y]
+            if a and (r, g, b) != O:
+                m = (r + g + b) / 3
+                px[x, y] = tuple(max(0, min(255, round(m + (c - m) * (1 + VIVID)))) for c in (r, g, b)) + (255,)
+    return im
+
+
 def tint_outline(im):
     """Each outline pixel takes the average of the colours it touches, pulled towards a dark plum: a red icon gets a dark red
     rim, a blue one a dark blue rim. An outline pixel that touches no colour keeps the slate."""
@@ -224,8 +251,8 @@ def tint_outline(im):
     return out
 
 
-ICONS = [('DEX', lambda: tint_outline(from_art(*DEX))), ('BALL', lambda: tint_outline(ball())), ('BAG', lambda: tint_outline(from_art(*BAG))),
-         ('CARD', lambda: tint_outline(from_art(*CARD))), ('SAVE', lambda: tint_outline(from_art(*SAVE))), ('GEAR', lambda: tint_outline(gear()))]
+ICONS = [('DEX', lambda: finish(from_art(*DEX))), ('BALL', lambda: finish(ball())), ('BAG', lambda: finish(bag())),
+         ('CARD', lambda: finish(from_art(*CARD))), ('SAVE', lambda: finish(from_art(*SAVE))), ('GEAR', lambda: finish(gear()))]
 
 
 def grad(w, h, top, bot):

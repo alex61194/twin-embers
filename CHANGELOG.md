@@ -53,7 +53,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Interface
 
-- **Sharper START-column icons** (Pokédex, Poké Ball, Bag, Trainer Card, Save, Options) redrawn pixel by pixel at 16x16 with colour ramps and an outline in each icon's own dark tone, with a test that every word fits beside its icon in English, Spanish and German.
+- **Sharper START-column icons** (Pokédex, Poké Ball, Bag, Trainer Card, Save, Options) redrawn pixel by pixel at 16x16 with colour ramps, an outline in each icon's own dark tone and a yellow hiker's backpack for the Bag, with a test that every word fits beside its icon in English, Spanish and German.
 - **A new look for the lower screen** (the ember look, raised cream cards, flame accents and slate edges) on OPTIONS, HOME, the field and battle Bag, SAVE, the PC box and naming keyboard, the Pokédex, the Trainer Card, the Summary, the move-learn screens, the mail and the battle menus. The top screen's healthboxes and dialog panel match it.
 
 ### Known Issues

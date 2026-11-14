@@ -856,7 +856,7 @@
   },
   {
    "path": "3ds_port/include/ember_skin.h",
-   "sha256": "061e3b13e54e9a23697eedf437506d9d3be212cf6af24489b0dd3799577a9e94",
+   "sha256": "ec5ce7c5c772353517c4b3d75eb0c975bd4e5c00de8036b659efbf06e8b94ade",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2292,7 +2292,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "e092b9ad4a9c98b3ddddc3f0ab166ada566d4a8e0a1e0e59730b33dfcc3acd13",
+   "sha256": "6bf8dcc26be57f84bdd880a662575e313ca78db08e7ad85b3b9995418f60e798",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6647,7 +6647,7 @@
   },
   {
    "path": "tools/make_ember_skin.py",
-   "sha256": "34746d22d5cbfe1ffe2df35702ddaad3ccdf57a07200f554b839a1a6135b1472",
+   "sha256": "743cc6e3910dda0874710800a9394e1ada737bbf568c95d65433b7f57d8ca0fe",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
