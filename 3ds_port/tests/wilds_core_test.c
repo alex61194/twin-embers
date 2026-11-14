@@ -2559,6 +2559,302 @@ static void Bench(void)
     (void)sink;
 }
 
+/* The charge (a chaser that has caught up waits for the field input) and the wander directions ---------------------------------- */
+
+static int Opp(int d)
+{
+    return ((d - 1) ^ 1) + 1;           /* the core's own pairing: south/north, west/east */
+}
+
+static int Vertical(int d)
+{
+    return d == CTRW_DIR_SOUTH || d == CTRW_DIR_NORTH;
+}
+
+static void Waiting(CtrWildsCore *c, int slot)
+{
+    Make(c, slot, CTRW_TEMPER_AGGRESSIVE, 1000);
+    c->wild[slot].state = CTRW_S_ENCOUNTER;
+    c->wild[slot].timer = 90;
+    CHECK(CtrWildsCore_Arm(c, slot) == 1, "slot %d waits for the field input", slot);
+}
+
+static CtrWildCharge Beside(int dx, int dy)
+{
+    CtrWildCharge in;
+
+    memset(&in, 0, sizeof(in));
+    in.dx = dx;
+    in.dy = dy;
+    in.present = 1;
+    in.sameElev = 1;
+    return in;
+}
+
+static void TestCharge(void)
+{
+    CtrWildsCore c;
+    CtrWildCharge in;
+
+    /* nothing waits: nothing to decide */
+    CtrWildsCore_Init(&c, 70);
+    in = Beside(1, 0);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0 && CtrWildsCore_Charge(&c, &in) == CTRW_CH_NONE, "no charge: nothing");
+
+    /* the wild reaches the player while they walk: the charge is kept for every frame of the step, then the battle starts */
+    CtrWildsCore_Init(&c, 71);
+    Waiting(&c, 0);
+    in = Beside(1, 0);
+    in.moving = 1;
+    for (int i = 0; i < 12; ++i)
+        CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_WAIT && CtrWildsCore_ChargeSlot(&c) == 0 && c.wild[0].state == CTRW_S_ENCOUNTER,
+              "walking: the charge is kept (frame %d)", i);
+    in.moving = 0;
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_FIGHT, "the step ended next to it: the battle starts");
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0 && CtrWildsCore_Charge(&c, &in) == CTRW_CH_NONE, "and only once: no second trigger");
+
+    /* ... while they stand still: at once */
+    CtrWildsCore_Init(&c, 72);
+    Waiting(&c, 2);
+    in = Beside(0, -1);
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_FIGHT && CtrWildsCore_ChargeSlot(&c) < 0, "standing: the battle starts");
+
+    /* the step that ends away from it: the chase resumes, it is not lost and not stuck in ENCOUNTER */
+    CtrWildsCore_Init(&c, 73);
+    Waiting(&c, 1);
+    in = Beside(2, 0);
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && CtrWildsCore_ChargeSlot(&c) < 0, "walked on: cancelled");
+    CHECK(c.wild[1].state == CTRW_S_CHASE && c.wild[1].steps == 12, "and it chases again (state %d)", c.wild[1].state);
+    Waiting(&c, 1);
+    in = Beside(1, 1);
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && c.wild[1].state == CTRW_S_CHASE, "diagonal is not next to it: the chase resumes");
+    Waiting(&c, 1);
+    in = Beside(CTRW_CHASE_RANGE + 3, 0);
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && c.wild[1].state == CTRW_S_IDLE && c.wild[1].cool == 600, "far away: it settles");
+
+    /* the player changes height (stairs, a ledge, a bridge) */
+    CtrWildsCore_Init(&c, 74);
+    Waiting(&c, 0);
+    in = Beside(1, 0);
+    in.sameElev = 0;
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && c.wild[0].state == CTRW_S_IDLE && CtrWildsCore_ChargeSlot(&c) < 0, "another height: no battle");
+    Waiting(&c, 0);
+    in.moving = 1;
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL, "another height while still walking: cancelled too, not kept");
+
+    /* the wild is gone (its object left the view) */
+    CtrWildsCore_Init(&c, 75);
+    Waiting(&c, 0);
+    in = Beside(1, 0);
+    in.present = 0;
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && CtrWildsCore_ChargeSlot(&c) < 0, "no object: cancelled");
+
+    /* a new map clears the table and the charge */
+    CtrWildsCore_Init(&c, 76);
+    CtrWildsCore_MapChanged(&c, 0x0301);
+    Waiting(&c, 0);
+    CtrWildsCore_MapChanged(&c, 0x0302);
+    in = Beside(1, 0);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0 && CtrWildsCore_Charge(&c, &in) == CTRW_CH_NONE && c.wild[0].state == CTRW_S_FREE, "another map: nothing waits");
+    CtrWildsCore_MapChanged(&c, 0x0302);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0, "the same map again changes nothing");
+
+    /* another event (a script, a menu, a trainer that saw the player) takes the field */
+    CtrWildsCore_Init(&c, 77);
+    Waiting(&c, 0);
+    CtrWildsCore_Interrupt(&c);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0 && c.wild[0].state == CTRW_S_IDLE && c.wild[0].cool == 300, "interrupted: dropped and calm");
+    Waiting(&c, 0);
+    in = Beside(1, 0);
+    in.locked = 1;
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_CANCEL && c.wild[0].state == CTRW_S_IDLE, "locked field controls: no battle");
+    CtrWildsCore_Interrupt(&c);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0, "interrupting with nothing waiting is harmless");
+
+    /* two wilds catch up on the same frame: one waits, the other chases on; one battle, and the other settles after it */
+    CtrWildsCore_Init(&c, 78);
+    Waiting(&c, 0);
+    Make(&c, 3, CTRW_TEMPER_AGGRESSIVE, 1000);
+    c.wild[3].state = CTRW_S_ENCOUNTER;
+    c.wild[3].timer = 90;
+    c.wild[3].steps = 4;
+    CHECK(CtrWildsCore_Arm(&c, 3) == 0 && CtrWildsCore_ChargeSlot(&c) == 0, "the second one does not take the charge");
+    CHECK(c.wild[3].state == CTRW_S_CHASE, "it goes on chasing (state %d), not stuck in ENCOUNTER", c.wild[3].state);
+    CHECK(CtrWildsCore_Arm(&c, 0) == 1 && CtrWildsCore_ChargeSlot(&c) == 0, "asking again for the same one is idempotent");
+    in = Beside(1, 0);
+    CHECK(CtrWildsCore_Charge(&c, &in) == CTRW_CH_FIGHT, "the first one fights");
+    CtrWildsCore_BattleStarted(&c);
+    CHECK(c.wild[3].state == CTRW_S_IDLE && c.wild[3].cool == 900 && CtrWildsCore_ChargeSlot(&c) < 0, "the other settles: no second battle behind the first");
+    /* a charge nobody can finish any more is replaced by the next one */
+    CtrWildsCore_Init(&c, 79);
+    Waiting(&c, 0);
+    c.wild[0].state = CTRW_S_IDLE;
+    Make(&c, 1, CTRW_TEMPER_AGGRESSIVE, 1000);
+    c.wild[1].state = CTRW_S_ENCOUNTER;
+    CHECK(CtrWildsCore_Arm(&c, 1) == 1 && CtrWildsCore_ChargeSlot(&c) == 1, "a stale charge is replaced");
+    /* a wild that is removed takes its charge with it */
+    CtrWildsCore_Forget(&c, 1);
+    CHECK(CtrWildsCore_ChargeSlot(&c) < 0, "forgotten: no charge");
+
+    /* never stuck: the player walks away for good; the encounter's own timer ends it and the charge goes with it */
+    CtrWildsCore_Init(&c, 80);
+    c.leadPower = 1000;
+    Waiting(&c, 0);
+    {
+        CtrWildSense s;
+        CtrWildAct a;
+        int frames = 0;
+
+        in = Beside(1, 0);
+        in.moving = 1;
+        while (frames < 400 && CtrWildsCore_Charge(&c, &in) == CTRW_CH_WAIT)
+        {
+            SenseAt(&s, 1, 0, 0, 0);
+            CtrWildsCore_Think(&c, 0, &s, &a);
+            ++frames;
+        }
+        CHECK(frames > 80 && frames <= 100, "the wait is bounded by the encounter timer (%d frames)", frames);
+        CHECK(c.wild[0].state != CTRW_S_ENCOUNTER && CtrWildsCore_ChargeSlot(&c) < 0, "it is not left in ENCOUNTER, and nothing waits");
+    }
+}
+
+static void TestWanderDirections(void)
+{
+    CtrWildsCore c;
+    CtrWildSense s;
+    CtrWildAct a;
+    int count[5][5];
+    int first[5];
+    int n = 0;
+
+    memset(count, 0, sizeof(count));
+    memset(first, 0, sizeof(first));
+    for (uint32_t seed = 1; seed <= 24000; ++seed)
+    {
+        CtrWildsCore_Init(&c, seed * 2654435761u);
+        Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+        c.wild[0].state = CTRW_S_WANDER;
+        c.wild[0].steps = 3;
+        SenseAt(&s, 30, 30, 0, 0);
+        CtrWildsCore_Think(&c, 0, &s, &a);
+        CHECK(a.kind == CTRW_A_STEP && a.n == 2, "a wander step");
+        if (a.kind != CTRW_A_STEP)
+            continue;
+        ++n;
+        ++first[a.dir[0]];
+        ++count[a.dir[0]][a.dir[1]];
+        CHECK(a.dir[0] >= 1 && a.dir[0] <= 4 && a.dir[1] >= 1 && a.dir[1] <= 4, "directions in range");
+        CHECK(a.dir[1] != a.dir[0] && a.dir[1] != Opp(a.dir[0]), "the second try (%d) is a right angle to the first (%d)", a.dir[1], a.dir[0]);
+        CHECK(Vertical(a.dir[0]) != Vertical(a.dir[1]), "one vertical, one horizontal");
+    }
+    for (int d = 1; d <= 4; ++d)
+    {
+        int other[2];
+        int k = 0;
+
+        CHECK(first[d] > n * 22 / 100 && first[d] < n * 28 / 100, "first direction %d is picked about a quarter of the time (%d of %d)", d, first[d], n);
+        for (int e = 1; e <= 4; ++e)
+            if (Vertical(d) != Vertical(e))
+                other[k++] = count[d][e];
+        CHECK(other[0] > first[d] * 45 / 100 && other[0] < first[d] * 55 / 100 && other[1] > first[d] * 45 / 100 && other[1] < first[d] * 55 / 100,
+              "after %d, both right angles about half each (%d / %d)", d, other[0], other[1]);
+    }
+
+    /* it does not walk back over its last step: not as the first try and not as the second */
+    for (int last = 1; last <= 4; ++last)
+    {
+        int seen[5] = {0, 0, 0, 0, 0};
+
+        for (uint32_t seed = 1; seed <= 3000; ++seed)
+        {
+            CtrWildsCore_Init(&c, seed * 40503u + (uint32_t)last);
+            Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+            c.wild[0].state = CTRW_S_WANDER;
+            c.wild[0].steps = 3;
+            CtrWildsCore_StepTaken(&c, 0, last);
+            CHECK(c.wild[0].last == last, "the step taken is remembered");
+            SenseAt(&s, 30, 30, 0, 0);
+            CtrWildsCore_Think(&c, 0, &s, &a);
+            CHECK(a.kind == CTRW_A_STEP, "step after step");
+            CHECK(a.dir[0] != Opp(last) && a.dir[1] != Opp(last), "after %d: no walking back (%d, %d)", last, a.dir[0], a.dir[1]);
+            CHECK(a.dir[1] != a.dir[0] && a.dir[1] != Opp(a.dir[0]), "still a right angle");
+            ++seen[a.dir[0]];
+        }
+        for (int d = 1; d <= 4; ++d)
+            CHECK(d == Opp(last) ? seen[d] == 0 : seen[d] > 800, "after %d, direction %d came %d times of 3000", last, d, seen[d]);
+    }
+    CtrWildsCore_Init(&c, 5);
+    Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+    CtrWildsCore_StepTaken(&c, 0, 0);
+    CtrWildsCore_StepTaken(&c, 0, 9);
+    CtrWildsCore_StepTaken(&c, 7, 2);
+    CtrWildsCore_StepTaken(&c, -1, 2);
+    CHECK(c.wild[0].last == 0, "a direction that is none is ignored");
+
+    /* the same seed, the same walk */
+    {
+        uint8_t runA[400][3], runB[400][3];
+
+        for (int pass = 0; pass < 2; ++pass)
+        {
+            uint8_t (*run)[3] = pass ? runB : runA;
+
+            CtrWildsCore_Init(&c, 99);
+            Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+            for (int i = 0; i < 400; ++i)
+            {
+                SenseAt(&s, 30, 30, 0, 0);
+                CtrWildsCore_Think(&c, 0, &s, &a);
+                if (a.kind == CTRW_A_STEP)
+                    CtrWildsCore_StepTaken(&c, 0, a.dir[0]);
+                run[i][0] = a.kind;
+                run[i][1] = a.dir[0];
+                run[i][2] = a.dir[1];
+            }
+        }
+        CHECK(memcmp(runA, runB, sizeof(runA)) == 0, "a fixed seed gives the same walk");
+    }
+
+    /* a blocked step: the walk ends, nothing is remembered, and the wild goes back to resting and walks again later */
+    for (int d = 1; d <= 4; ++d)
+    {
+        int idle = 0, steps = 0, again = 0;
+
+        CtrWildsCore_Init(&c, 300 + d);
+        Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+        c.wild[0].state = CTRW_S_WANDER;
+        c.wild[0].steps = 3;
+        CtrWildsCore_StepTaken(&c, 0, d);
+        SenseAt(&s, 30, 30, 0, 0);
+        CtrWildsCore_Think(&c, 0, &s, &a);
+        CHECK(a.kind == CTRW_A_STEP, "a step to be blocked");
+        CtrWildsCore_StepResult(&c, 0, 0);
+        CHECK(c.wild[0].steps == 0 && c.wild[0].last == 0 && c.wild[0].state == CTRW_S_WANDER, "blocked: the walk ends, no step remembered");
+        for (int i = 0; i < 400; ++i)
+        {
+            CtrWildsCore_Think(&c, 0, &s, &a);
+            if (!idle)
+            {
+                steps += a.kind == CTRW_A_STEP;
+                idle = c.wild[0].state == CTRW_S_IDLE;
+            }
+            else
+                again += a.kind == CTRW_A_STEP || a.kind == CTRW_A_TURN;
+        }
+        CHECK(steps == 0 && idle, "after a blocked step it only rests (%d steps, idle %d)", steps, idle);
+        CHECK(again > 0, "and it moves again later (%d)", again);
+    }
+    /* a step that went through leaves the walk as it was */
+    CtrWildsCore_Init(&c, 8);
+    Make(&c, 0, CTRW_TEMPER_CALM, 1000);
+    c.wild[0].state = CTRW_S_WANDER;
+    c.wild[0].steps = 3;
+    SenseAt(&s, 30, 30, 0, 0);
+    CtrWildsCore_Think(&c, 0, &s, &a);
+    CtrWildsCore_StepResult(&c, 0, 1);
+    CHECK(c.wild[0].steps == 2, "a step that worked costs one step of the walk");
+}
+
 int main(void)
 {
     TestSettings();
@@ -2584,6 +2880,8 @@ int main(void)
     TestStatsSwitch();
     TestRealFrames();
     TestZoneExtremes();
+    TestCharge();
+    TestWanderDirections();
     printf("wilds_core_test: %d checks, %d failures\n", checks, failures);
     if (failures == 0)
         Bench();

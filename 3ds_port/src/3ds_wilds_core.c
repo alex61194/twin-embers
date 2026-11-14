@@ -72,6 +72,7 @@ void CtrWildsCore_Clear(CtrWildsCore *c)
     }
     c->active = 0;
     c->fails = 0;
+    c->charge = 0;
 }
 
 void CtrWildsCore_SetStats(CtrWildsCore *c, int on)
@@ -86,7 +87,11 @@ void CtrWildsCore_SetStats(CtrWildsCore *c, int on)
 
 void CtrWildsCore_Forget(CtrWildsCore *c, int slot)
 {
-    if (slot < 0 || slot >= CTRW_SLOTS || c->wild[slot].state == CTRW_S_FREE)
+    if (slot < 0 || slot >= CTRW_SLOTS)
+        return;
+    if (c->charge == slot + 1)
+        c->charge = 0;                  /* a wild that is gone cannot start a battle */
+    if (c->wild[slot].state == CTRW_S_FREE)
         return;
     memset(&c->wild[slot], 0, sizeof(c->wild[slot]));
     c->wild[slot].obj = CTRW_NONE;
@@ -556,6 +561,36 @@ static void Directions(CtrWildsCore *c, int dx, int dy, int away, uint8_t out[2]
     out[1] = second;
 }
 
+/* A direction at a right angle to dir, for a wanderer's second try: never dir itself and never its opposite (the old
+ * 1 + dir % 4 was the opposite for south and west, and always the same turn for the others). avoid, when it is one of the two, is
+ * the opposite of the last step: the other one is taken, so the fallback does not walk back either. Otherwise a coin picks. */
+static uint8_t Perpendicular(CtrWildsCore *c, uint8_t dir, uint8_t avoid)
+{
+    uint8_t a = dir <= CTRW_DIR_NORTH ? CTRW_DIR_WEST : CTRW_DIR_SOUTH;
+    uint8_t b = Opposite(a);
+
+    if (avoid == a)
+        return b;
+    if (avoid == b)
+        return a;
+    return (CtrWildsCore_Rand(c) & 1) ? a : b;
+}
+
+/* The first direction of a wander step: any of the four, except back over the last step when there was one. */
+static uint8_t WanderDirection(CtrWildsCore *c, uint8_t last)
+{
+    uint8_t dir = (uint8_t)(1 + CtrWildsCore_Rand(c) % 4);
+    uint8_t back = last != 0 ? Opposite(last) : 0;
+
+    if (dir == back)
+    {
+        dir = (uint8_t)(1 + CtrWildsCore_Rand(c) % 3);          /* one of the three that are left: skip the opposite */
+        if (dir >= back)
+            ++dir;
+    }
+    return dir;
+}
+
 int CtrWildsCore_Judge(const CtrWildsCore *c, int slot)
 {
     uint64_t ratio;
@@ -582,7 +617,114 @@ void CtrWildsCore_Calm(CtrWildsCore *c, int slot, int cool)
 void CtrWildsCore_StepResult(CtrWildsCore *c, int slot, int ok)
 {
     if (slot >= 0 && slot < CTRW_SLOTS && !ok)
+    {
         c->wild[slot].steps = 0;        /* blocked: the walk, the flight or the chase ends */
+        c->wild[slot].last = 0;         /* and no step was taken */
+    }
+}
+
+void CtrWildsCore_StepTaken(CtrWildsCore *c, int slot, int dir)
+{
+    if (slot >= 0 && slot < CTRW_SLOTS && dir >= CTRW_DIR_SOUTH && dir <= CTRW_DIR_EAST)
+        c->wild[slot].last = (uint8_t)dir;
+}
+
+/* The charge ------------------------------------------------------------------------------------------------------------- */
+
+int CtrWildsCore_ChargeSlot(const CtrWildsCore *c)
+{
+    return (int)c->charge - 1;
+}
+
+void CtrWildsCore_Disarm(CtrWildsCore *c)
+{
+    c->charge = 0;
+}
+
+int CtrWildsCore_Arm(CtrWildsCore *c, int slot)
+{
+    CtrWild *w;
+    int held = (int)c->charge - 1;
+
+    if (slot < 0 || slot >= CTRW_SLOTS)
+        return 0;
+    w = &c->wild[slot];
+    /* a charge nobody can finish any more (its wild left or settled) is replaced */
+    if (held >= 0 && held != slot && (held >= CTRW_SLOTS || c->wild[held].state != CTRW_S_ENCOUNTER))
+        held = -1;
+    if (held < 0 || held == slot)
+    {
+        c->charge = (uint8_t)(slot + 1);
+        return 1;
+    }
+    /* another wild is already waiting for the field input: this one goes on chasing and asks again, so two battles never start */
+    if (w->state == CTRW_S_ENCOUNTER)
+    {
+        w->state = CTRW_S_CHASE;
+        w->timer = 0;
+        if (w->steps == 0)
+            w->steps = 1;
+    }
+    return 0;
+}
+
+int CtrWildsCore_Charge(CtrWildsCore *c, const CtrWildCharge *in)
+{
+    int slot = (int)c->charge - 1;
+    CtrWild *w;
+
+    if (slot < 0)
+        return CTRW_CH_NONE;
+    if (slot >= CTRW_SLOTS || c->wild[slot].state != CTRW_S_ENCOUNTER || !in->present)
+    {
+        c->charge = 0;                  /* it settled, was removed, or the object is gone: nothing to start */
+        return CTRW_CH_CANCEL;
+    }
+    w = &c->wild[slot];
+    if (in->locked || !in->sameElev)
+    {
+        c->charge = 0;                  /* a script or a menu took the field, or the heights differ: the encounter did not happen */
+        CtrWildsCore_Calm(c, slot, 300);
+        return CTRW_CH_CANCEL;
+    }
+    if (in->moving)
+        return CTRW_CH_WAIT;            /* the player is between two tiles: the charge stays, the encounter's own timer bounds the wait */
+    if (Abs(in->dx) + Abs(in->dy) != 1)
+    {
+        c->charge = 0;                  /* it is no longer next to the player (they walked on, or it was pushed): back to the chase */
+        if (Max(Abs(in->dx), Abs(in->dy)) <= CTRW_CHASE_RANGE)
+        {
+            w->state = CTRW_S_CHASE;
+            w->timer = 0;
+            w->steps = 12;
+        }
+        else
+            CtrWildsCore_Calm(c, slot, 600);
+        return CTRW_CH_CANCEL;
+    }
+    c->charge = 0;
+    return CTRW_CH_FIGHT;
+}
+
+void CtrWildsCore_Interrupt(CtrWildsCore *c)
+{
+    int slot = (int)c->charge - 1;
+
+    c->charge = 0;
+    if (slot >= 0 && slot < CTRW_SLOTS && c->wild[slot].state == CTRW_S_ENCOUNTER)
+        CtrWildsCore_Calm(c, slot, 300);
+}
+
+void CtrWildsCore_BattleStarted(CtrWildsCore *c)
+{
+    c->charge = 0;
+    for (int i = 0; i < CTRW_SLOTS; ++i)
+    {
+        uint8_t st = c->wild[i].state;
+
+        if (st == CTRW_S_ALERT || st == CTRW_S_CHASE || st == CTRW_S_ENCOUNTER)
+            CtrWildsCore_Calm(c, i, 900);   /* the others that were closing in settle down: no second battle right behind the first */
+    }
 }
 
 static void Step(CtrWildsCore *c, CtrWild *w, int dx, int dy, int away, CtrWildAct *act)
@@ -678,6 +820,7 @@ void CtrWildsCore_Think(CtrWildsCore *c, int slot, const CtrWildSense *s, CtrWil
         {
             w->state = CTRW_S_WANDER;
             w->steps = (uint8_t)(1 + CtrWildsCore_Rand(c) % 3);
+            w->last = 0;                                            /* a new walk: no step to avoid walking back over */
         }
         return;
     }
@@ -698,8 +841,8 @@ void CtrWildsCore_Think(CtrWildsCore *c, int slot, const CtrWildSense *s, CtrWil
         }
         act->kind = CTRW_A_STEP;
         act->n = 2;
-        act->dir[0] = (uint8_t)(1 + CtrWildsCore_Rand(c) % 4);
-        act->dir[1] = (uint8_t)(1 + act->dir[0] % 4);
+        act->dir[0] = WanderDirection(c, w->last);
+        act->dir[1] = Perpendicular(c, act->dir[0], w->last != 0 ? Opposite(w->last) : 0);
         --w->steps;
         w->timer = (uint16_t)(6 + CtrWildsCore_Rand(c) % 16);       /* a pause between steps */
         return;
