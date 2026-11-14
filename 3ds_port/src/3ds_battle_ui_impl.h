@@ -71,7 +71,6 @@ static const CtrPokeTouchRect sBSafari[4] = {{8, 38, 150, 92}, {162, 38, 150, 92
 /* The battle Bag: its title (the Items pocket, the only one it shows) and BERRIES for the Berry Pouch, the item list
  * on the left with its scroll arrows, the selected item's card on the right, the description's note and CANCEL. */
 static const CtrPokeTouchRect sBTitle = {6, 4, 204, 26}, sBTitleWide = {6, 4, 308, 26}, sBBerries = {214, 4, 100, 26};
-static const int sBTabPocket[3] = {0, 2, 1};            /* FireRed's pockets in the order the tabs once showed them */
 static const CtrPokeTouchRect sBList = {6, 36, 190, 138};
 static const CtrPokeTouchRect sBDetail = {200, 36, 114, 138};
 static const CtrPokeTouchRect sBUse = {210, 136, 94, 30};
@@ -125,12 +124,6 @@ static int BIn(const CtrPokeTouchRect *r, int x, int y)
 {
     return UiIn(r, x, y);
 }
-
-int CtrBattleUi_TabPocket(int tab)
-{
-    return tab >= 0 && tab < 3 ? sBTabPocket[tab] : -1;
-}
-
 
 /* The row of the Bag's selected item when it is on screen (USE stands for it), else -1. */
 static int BBagSelRow(const CtrBattleBag *b)

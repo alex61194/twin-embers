@@ -72,6 +72,7 @@ typedef struct CtrWild
     uint8_t water, roamer, shiny, gender;
     uint8_t level;
     uint8_t steps;              /* steps left of a walk, a flight or a chase */
+    uint8_t last;               /* the direction of the last wander step (0: none): the next one does not walk back over it */
     uint8_t dist;               /* its last distance to the player (tiles, the longer axis) */
     uint16_t species;
     uint16_t gfx;               /* the picture the game draws it with */
@@ -121,6 +122,7 @@ typedef struct CtrWildsCore
     uint8_t fails;              /* spawn attempts that found nowhere to appear, in a row (0 at a success, a new map, off) */
     uint8_t aggro;              /* the AGGRESSIVE setting, 0 to 4 */
     uint8_t statsOn;            /* the diagnostics count (CtrWildsCore_SetStats); 0 at the start and while port.log is off */
+    uint8_t charge;             /* slot + 1 of the chaser that stands next to the player and waits for the field input; 0: none */
     uint32_t leadPower;         /* the lead Pokemon's level x base stats */
 } CtrWildsCore;
 
@@ -292,7 +294,30 @@ int CtrWildsCore_Stale(const CtrWildsCore *c, int slot, int screenDist);
 /* The mind. */
 void CtrWildsCore_Think(CtrWildsCore *c, int slot, const CtrWildSense *sense, CtrWildAct *act);
 void CtrWildsCore_StepResult(CtrWildsCore *c, int slot, int ok);   /* the game's answer to a CTRW_A_STEP */
+void CtrWildsCore_StepTaken(CtrWildsCore *c, int slot, int dir);   /* ... and the direction it walked (CTRW_DIR_*), after an ok one */
 void CtrWildsCore_Calm(CtrWildsCore *c, int slot, int cool);       /* the encounter did not happen (Repel, disabled): it settles down */
 int CtrWildsCore_Judge(const CtrWildsCore *c, int slot);           /* wild power in percent of the lead's, or 0 when unknown */
+
+
+/* The charge: a chaser that has caught up (CTRW_A_CHARGE) waits for the player's field input to start its battle. The decision is made
+ * here, from what the game sees, so that it can be tested: the charge is kept while the player is between two tiles, started when they
+ * stand still next to it, and dropped only for a reason (the heights differ, a script took the field, it is no longer next to them). */
+enum { CTRW_CH_NONE = 0, CTRW_CH_WAIT, CTRW_CH_FIGHT, CTRW_CH_CANCEL };
+
+typedef struct CtrWildCharge
+{
+    int dx, dy;                 /* the player's tile minus the wild's, now */
+    uint8_t present;            /* the wild's object event still exists */
+    uint8_t sameElev;           /* the player and the wild are at compatible heights (a water wild always is) */
+    uint8_t moving;             /* the player is between two tiles */
+    uint8_t locked;             /* a script, a menu or another event holds the field controls */
+} CtrWildCharge;
+
+int CtrWildsCore_Arm(CtrWildsCore *c, int slot);                   /* a wild has caught up: 1 if it is the one that waits, 0 if another already does */
+int CtrWildsCore_Charge(CtrWildsCore *c, const CtrWildCharge *in); /* every field input frame: CTRW_CH_* (FIGHT: start its battle now) */
+int CtrWildsCore_ChargeSlot(const CtrWildsCore *c);                /* the waiting wild's slot, -1 when none */
+void CtrWildsCore_Disarm(CtrWildsCore *c);
+void CtrWildsCore_Interrupt(CtrWildsCore *c);                      /* the field was taken (a script, a menu): the charge is dropped and its wild settles */
+void CtrWildsCore_BattleStarted(CtrWildsCore *c);                  /* a battle began: no charge stays, the wilds closing in settle down */
 
 #endif

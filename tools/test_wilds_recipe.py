@@ -95,6 +95,36 @@ class WildsRecipeTest(unittest.TestCase):
         self.assertNotIn('CtrWilds_LogOn', update)
         self.assertIn('extern int CtrWilds_LogOn(void);', self.move)
 
+    def test_the_charge_is_decided_by_the_core_and_kept_until_it_can_be_used(self):
+        # Before: sCtrWildCharge was cleared first and the player's step checked afterwards, so an encounter that arrived during a step was
+        # thrown away (and its wild left in ENCOUNTER until its timer ended). Now the core keeps it and decides, from what the game sees.
+        self.assertNotIn('sCtrWildCharge', self.move)
+        self.assertIn('CtrWildsCore_Arm(&gCtrWilds, slot);', self.move)
+        body = self.move[self.move.index('bool8 CtrWilds_TryCharge(void)'):]
+        body = body[:body.index('// For the compositor')]
+        self.assertIn('in.moving = gPlayerAvatar.tileTransitionState != T_NOT_MOVING;', body)
+        self.assertIn('in.locked = ArePlayerFieldControlsLocked();', body)
+        self.assertIn('AreElevationsCompatible(', body)
+        self.assertIn('CtrWildsCore_Charge(&gCtrWilds, &in) != CTRW_CH_FIGHT', body)
+        self.assertEqual(body.count('tileTransitionState'), 1)                  # only as an input to the decision, never as a way out
+        self.assertLess(body.index('CtrWildsCore_Charge('), body.index('CtrWild_Fight(slot)'))
+        self.assertIn('CtrWildsCore_Calm(&gCtrWilds, slot, 900);', body)           # a Repel or disabled encounters still calm it down
+
+    def test_a_script_or_a_battle_ends_the_charge(self):
+        update = self.move[self.move.index('static void CtrWilds_Update('):]
+        update = update[:update.index('static bool8 CtrWild_Fight(')]
+        self.assertRegex(update, r'if \(ArePlayerFieldControlsLocked\(\)\)\s+CtrWildsCore_Interrupt\(&gCtrWilds\);')
+        fight = self.move[self.move.index('static bool8 CtrWild_Fight('):]
+        fight = fight[:fight.index('// The player walked into the tile')]
+        self.assertLess(fight.index('CtrWilds_Start('), fight.index('CtrWildsCore_BattleStarted(&gCtrWilds);'))
+        self.assertLess(fight.index('CtrWildsCore_BattleStarted(&gCtrWilds);'), fight.index('CtrWild_Remove(slot);'))
+
+    def test_the_wander_step_tells_the_core_which_way_it_went(self):
+        run = self.move[self.move.index('static void CtrWild_Run('):]
+        run = run[:run.index('static void CtrWild_Sweep')]
+        self.assertIn('CtrWildsCore_StepTaken(&gCtrWilds, slot, act.dir[i]);', run)
+        self.assertLess(run.index('GetWalkNormalMovementAction(act.dir[i])'), run.index('CtrWildsCore_StepTaken('))
+
 
 if __name__ == '__main__':
     unittest.main()

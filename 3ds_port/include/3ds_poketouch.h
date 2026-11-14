@@ -682,8 +682,6 @@ typedef struct {
 void CtrBattleUi_Draw(uint16_t *canvas, const CtrBattleView *view);
 /* The canvas holds `old` drawn: redraw only what differs in `view` and mark its dirty rectangles. */
 void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBattleView *view, CtrDirtyList *dirty);
-/* FireRed's pocket a battle Bag tab (0-2, left to right) shows. */
-int CtrBattleUi_TabPocket(int tab);
 /* The button under a canvas point of the screen `view` shows, or -1. */
 int CtrBattleUi_Hit(const CtrBattleView *view, int x, int y);
 int CtrBattleUi_BagRailTarget(const CtrBattleBag *bag, int y);       /* the same for the battle Bag */
