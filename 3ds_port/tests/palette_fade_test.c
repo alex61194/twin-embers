@@ -62,7 +62,10 @@ int main(void)
             for (unsigned i = 16; i < 64; ++i) sCur[i] = CtrPal_Blend(sBase[i], c, targets[k]);
             assert(!CtrPal_DetectBlend(sBase, sCur, 256, &coeff, &target));
             got = CtrPal_RunFade(sBase, sCur, 32, 16, &t);
-            assert(got == c && t == targets[k]);
+            assert(got != 0);
+            /* Sixteen entries may fit a smaller pair too; whatever pair is reported reproduces the bank exactly. */
+            for (unsigned i = 32; i < 48; ++i)
+                assert(CtrPal_Blend(sBase[i], got, t) == sCur[i]);
         }
     for (unsigned k = 0; k < 3; ++k)
         for (unsigned c = 1; c <= 15; ++c)
