@@ -25,6 +25,10 @@
  * HeartGold's pictures are drawn 1:1 on the screen over it (CTR_GEN4_SCALE).
  */
 #define CTR_BATTLE_ZOOM 1.5f
+/* A move's background over a native battle picture is stretched from the scene's 360x168 to the 400x192 above the text box
+ * (about the scene's bottom centre, GBA 120,112). */
+#define CTR_MOVE_BG_SX (400.0f / 360.0f)
+#define CTR_MOVE_BG_SY (192.0f / 168.0f)
 
 typedef struct
 {

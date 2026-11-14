@@ -6,6 +6,8 @@
  */
 static C3D_Tex sBackdropTex;
 static bool sBackdropReady, sBackdropFailed;
+/* The native picture was drawn under BG3 this time (set by DrawBattleBackdrop, read by DrawBattleBg right after). */
+static bool sBackdropUnder;
 __attribute__((weak)) unsigned CtrGame_SceneFade(uint16_t *target) { *target = 0; return 0; }
 static unsigned sBackdropUploaded;
 
@@ -57,6 +59,7 @@ static bool DrawBattleBackdrop(void)
     C2D_ImageTint fade;
     const C2D_ImageTint *tint = &sTint;
 
+    sBackdropUnder = false;
     if (!picture || !BackdropPrepare(picture, generation)) return false;
     /* A whole-screen fade (the end of the battle, the flash of its transition) is a blend of the palettes towards one colour, which the sprites and
      * the boxes follow; the picture has no palette, so it was left at full brightness while everything else went black (black silhouettes on the
@@ -86,5 +89,6 @@ static bool DrawBattleBackdrop(void)
     ++sStats.tiles;
     C2D_DrawImageAt((C2D_Image){&sBackdropTex, &cut}, sLayerShift * sZoom, 0, 0, tint, 1, 1);
     ViewBase();
-    return BattleBg3Empty();
+    sBackdropUnder = !BattleBg3Empty();
+    return !sBackdropUnder;
 }

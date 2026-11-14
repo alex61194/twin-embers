@@ -146,9 +146,29 @@ static void ProcessRelearnTouch(const CtrInput *in)
 /* The walk: one UP or DOWN, then a frame without, until the cursor is on the row. A held physical button cancels it. A YES / NO row is
  * asked of the game's menu (CtrMenu_Ask: it takes the row on its next frame, no steps) and taken with A once the cursor is on it; the plan
  * is dropped when the machine leaves the state it was tapped in. */
+/* FireRed prints the relearner's long messages a page at a time and waits for A between the pages; the lower screen shows the whole
+ * message at once, where the same text seemed to ignore A. The pages are turned for the player: A on every other frame while window 7's
+ * printer runs. The machine reads no key while it does (CB2_MoveRelearner), and the frame after the printer ends carries no A, so a
+ * YES / NO that follows is never answered by it. */
+extern unsigned char IsTextPrinterActive(unsigned char windowId);
+static void RelearnTurnPages(int on)
+{
+    static uint8_t beat;
+
+    if (!on || !CtrBottomRelearn_IsOpen() || !IsTextPrinterActive(7) || (CtrInput_Get()->held & 0x3ffu)) {
+        beat = 0;
+        return;
+    }
+    beat ^= 1;
+    if (beat)
+        sInjected = K_A;
+}
+
 static void RunRelearnPlan(int on)
 {
     int cur;
+
+    RelearnTurnPages(on);
 
     if (!on || (CtrInput_Get()->held & 0x3ffu) || !CtrBottomRelearn_IsOpen() || ++sRelearnPlan.steps > 60
         || (sRelearnPlan.menu && (CtrBottomRelearn_State() != sRelearnPlan.state || CtrBottomRelearn_Input() != 2))) {
