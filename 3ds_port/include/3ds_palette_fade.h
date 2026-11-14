@@ -68,4 +68,22 @@ static inline bool CtrPal_DetectBlend(const uint16_t *base, const uint16_t *cur,
     return false;
 }
 
+/* How far a run of palette entries (the background banks a battle scene lives in) has been blended towards one colour
+ * while the rest of the palette has not: 0 when they are unchanged or are not one blend, else the coefficient (1-16) and
+ * the colour in *target. FireRed's battle moves blend only the scene's banks (AnimTask_BlendBattleAnimPal with
+ * F_PAL_BG), which the whole-palette test above never sees. */
+static inline unsigned CtrPal_RunFade(const uint16_t *unfaded, const uint16_t *faded, unsigned first, unsigned count,
+                                      uint16_t *target)
+{
+    unsigned coeff = 0;
+
+    *target = 0;
+    if (!CtrPal_DetectBlend(unfaded + first, faded + first, count, &coeff, target))
+    {
+        *target = 0;
+        return 0;
+    }
+    return coeff;
+}
+
 #endif
