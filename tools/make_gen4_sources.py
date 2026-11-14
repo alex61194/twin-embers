@@ -8,6 +8,9 @@ every file the Builder may fetch is listed with its size and SHA-256, so a
 changed or replaced file upstream is refused, never converted. Nothing from the
 checkout is copied into this repository: only paths, sizes and hashes.
 
+Deoxys: 386's own pair in pokegra/ is the Normal Forme, but FireRed and LeafGreen have the Attack Forme, so
+386 is listed from otherpoke/deoxys/attack (as the ("deoxys") rows, key 1) and not from pokegra/.
+
 For national dex 1-386: male/front.png (its palette is the normal one),
 male/back.png (its palette is the shiny one), and the female pair where it
 differs from the male one. A female-only species has only its female pair.
@@ -39,10 +42,14 @@ UNOWN = 'files/poketool/pokegra/otherpoke/unown/{}/{}.png'
 UNOWN_NAMES = [chr(ord('a') + i) for i in range(26)] + ['exclamation_mark', 'question_mark']
 CASTFORM = 'files/poketool/pokegra/otherpoke/castform/{}/{}.png'
 CASTFORM_NAMES = ['normal', 'sun', 'rain', 'ice']
+DEOXYS = 'files/poketool/pokegra/otherpoke/deoxys/{}/{}.png'
+DEOXYS_NAMES = ['normal', 'attack', 'defense', 'speed']
 SPINDA = 'src/pokepic.c'
 TRAINERS = 'files/a/0/5/8'
 UNOWN_LETTERS = 27
 SPECIES = 386
+DEOXYS_DEX = 386
+DEOXYS_FORM = 1
 OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / 'gen4_sources.py'
 
 
@@ -55,6 +62,8 @@ def main() -> None:
                             capture_output=True, text=True).stdout.strip()
     rows = []
     for dex in range(1, SPECIES + 1):
+        if dex == DEOXYS_DEX:
+            continue
         pair = {}
         for body in ('male', 'female'):
             files = [root / DIR.format(dex, body, side) for side in ('front', 'back')]
@@ -74,6 +83,8 @@ def main() -> None:
     for form in range(1, 4):
         for side in ('front', 'back'):
             rows.append((form, 'castform', side, (root / CASTFORM.format(CASTFORM_NAMES[form], side)).read_bytes()))
+    for side in ('front', 'back'):
+        rows.append((DEOXYS_FORM, 'deoxys', side, (root / DEOXYS.format(DEOXYS_NAMES[DEOXYS_FORM], side)).read_bytes()))
     rows.append((0, 'spinda', 'spots', (root / SPINDA).read_bytes()))
     rows.append((0, 'trainers', 'front', (root / TRAINERS).read_bytes()))
     icons = [(0, 501)] + [(dex, dex + 7) for dex in range(1, SPECIES + 1)]
@@ -100,6 +111,8 @@ def main() -> None:
              f'UNOWN_NAMES = {tuple(UNOWN_NAMES)!r}',
              f'CASTFORM_PATH = {CASTFORM!r}',
              f'CASTFORM_NAMES = {tuple(CASTFORM_NAMES)!r}',
+             f'DEOXYS_PATH = {DEOXYS!r}',
+             f'DEOXYS_NAMES = {tuple(DEOXYS_NAMES)!r}',
              f'SPINDA_PATH = {SPINDA!r}',
              f'TRAINERS_PATH = {TRAINERS!r}',
              'FILES = (']

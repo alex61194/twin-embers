@@ -18,6 +18,11 @@ SHA-256 match that list, converts it and adds it to the pack. Nothing is
 uploaded. Files already downloaded are kept in
 `%LOCALAPPDATA%\TwinEmbers\gen4` for the next build.
 
+Deoxys (386) is the exception to "the species' own file": HeartGold's `pokegra/0386` is the Normal Forme, but FireRed
+and LeafGreen's Deoxys is the Attack Forme, so entry 386 is built from `otherpoke/deoxys/attack` (front: the normal
+palette; back: the shiny one, as for every species). If those two files cannot be had, 386 is reported as missing
+and the game keeps FireRed's own pictures.
+
 The same download brings HeartGold's trainer front pictures (one archive,
 `files/a/0/5/8`, also pinned by size and SHA-256): the trainers you battle show
 HeartGold's picture of their class, 71 of FireRed's trainer pictures in all

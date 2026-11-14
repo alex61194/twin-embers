@@ -154,6 +154,52 @@ class DownloadTest(unittest.TestCase):
         self.assertEqual(again, files)
         self.assertEqual((info["downloaded"], self.urls), (0, []))
 
+    def add_deoxys(self, only_front=False):
+        """Rows for the Attack Forme beside the three species, with the species 3's palette told apart."""
+        rows = list(gen4_sprites.gen4_sources.FILES)
+        for side in ("front", "back"):
+            data = png(*sprite(99 + len(side), 5))
+            self.data[(1, "deoxys", side)] = data
+            if not (only_front and side == "back"):
+                rows.append(row_for(1, "deoxys", side, data))
+        patcher = patch.object(gen4_sprites.gen4_sources, "FILES", tuple(rows))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def get_deoxys(self, url):
+        for (form, kind, side), data in self.data.items():
+            if kind == "deoxys" and url.endswith(gen4_sprites.gen4_sources.DEOXYS_PATH.format("attack", side)):
+                return data
+        return self.get(url)
+
+    def test_deoxys_attack_forme_becomes_entry_386(self):
+        self.add_deoxys()
+        files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=self.get_deoxys))
+        self.assertEqual([path for path, _ in files],
+                         ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3, 386)])
+        self.assertEqual((info["species"], info["missing"]), (4, []))
+        self.assertEqual(dict(files)["graphics/gen4/battle/386.bin"],
+                         gen4_sprites.convert(self.data[(1, "deoxys", "front")], self.data[(1, "deoxys", "back")]))
+        # The others are what they were without it.
+        self.assertEqual(dict(files)["graphics/gen4/battle/001.bin"],
+                         gen4_sprites.convert(self.data[(1, "male", "front")], self.data[(1, "male", "back")]))
+
+    def test_deoxys_without_its_files_keeps_firereds_and_is_reported(self):
+        self.add_deoxys(only_front=True)
+        files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=self.get_deoxys))
+        self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
+        self.assertEqual((info["species"], info["missing"]), (3, [386]))
+
+    def test_deoxys_offline_from_a_folder(self):
+        self.add_deoxys()
+        folder = self.root / "folder"
+        folder.mkdir()
+        for (dex, body, side), data in self.data.items():
+            (folder / gen4_sprites.file_name((dex, body, side, 0, ""))).write_bytes(data)
+        files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, folder, get=None))
+        self.assertEqual((info["species"], info["missing"], info["downloaded"]), (4, [], 0))
+        self.assertIn("graphics/gen4/battle/386.bin", [path for path, _ in files])
+
     def test_a_changed_file_is_refused_and_its_species_left_out(self):
         good = self.get
 
@@ -1097,7 +1143,13 @@ class SourcesTest(unittest.TestCase):
         self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "spinda"], [("spinda", "spots")])
         self.assertEqual([row[1:3] for row in gen4_sources.FILES if row[1] == "trainers"], [("trainers", "front")])
         species = {row[0] for row in battle}
-        self.assertEqual(species, set(range(1, 387)))
+        # 386 is Deoxys' Attack Forme (FireRed's), listed as "deoxys" rows and not from pokegra's Normal one.
+        self.assertEqual(species, set(range(1, 386)))
+        self.assertEqual([row[:3] for row in gen4_sources.FILES if row[1] == "deoxys"],
+                         [(1, "deoxys", "front"), (1, "deoxys", "back")])
+        self.assertEqual(gen4_sources.DEOXYS_NAMES[1], "attack")
+        for row in (row for row in gen4_sources.FILES if row[1] == "deoxys"):
+            self.assertTrue(gen4_sprites.source_path(row).endswith("/deoxys/attack/%s.png" % row[2]))
         for dex in species:
             bodies = [row[1:3] for row in battle if row[0] == dex]
             self.assertIn(bodies, ([("male", "front"), ("male", "back")],

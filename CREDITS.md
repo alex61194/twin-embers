@@ -12,7 +12,7 @@
   tools. Credit is not a license grant for the game source.
 - **pret/pokeheartgold contributors** — external Pokémon HeartGold decompilation
   (https://github.com/pret/pokeheartgold). The optional Generation 4 battle sprites,
-  trainer pictures and menu icons are downloaded by the user's Builder from it at the commit pinned
+  trainer pictures and menu icons (Deoxys' from its Attack Forme files) are downloaded by the user's Builder from it at the commit pinned
   in `gen4_sources.py`, verified by size and SHA-256, and are not stored in this
   repository. The artwork belongs to Nintendo, Game Freak and Creatures; credit is
   not a license grant.
