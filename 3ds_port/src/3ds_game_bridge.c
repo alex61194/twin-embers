@@ -433,12 +433,12 @@ unsigned CtrGame_ScreenFade(uint16_t *target)
     return coeff;
 }
 
-/* The same for the battle scene's own backgrounds (palette banks 2-4, where battle_bg.c loads them): a move that whitens or
- * darkens the scene (Sunny Day, Hypnosis...) blends only those, and the full-colour picture that stands for the scene
- * follows them. */
+/* The same for the battle scene's own background: it lives in palette bank 2 (battle_bg.c loads banks 2-4 and the scene uses
+ * the first), and a move that whitens or darkens the scene (Sunny Day, Hypnosis...) blends the banks GetBattlePalettesMask
+ * picks for it, 0xe: banks 1, 2 and 3. Bank 2 is the one the full-colour picture that stands for the scene follows. */
 unsigned CtrGame_SceneFade(uint16_t *target)
 {
-    return CtrPal_RunFade(gPlttBufferUnfaded, gPlttBufferFaded, 2 * 16, 3 * 16, target);
+    return CtrPal_RunFade(gPlttBufferUnfaded, gPlttBufferFaded, 2 * 16, 16, target);
 }
 
 static void ProbeAudio(unsigned frame)
