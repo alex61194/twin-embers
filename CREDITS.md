@@ -24,13 +24,11 @@
   stored in this repository. They depict Nintendo, Game Freak and Creatures'
   characters; credit is not a license grant.
 - **Facets, by ElvieBlooms** (https://github.com/ElvieBlooms/facets, MIT for its code; its art is free to use with
-  credit) — the optional new people on the map and battle backgrounds, downloaded by the user's Builder at the
+  credit) — the optional new people on the map, downloaded by the user's Builder at the
   commit pinned in `gen4_sprites.py`, verified by size and SHA-256, and not stored in this repository. People:
   **KyleDove**, **Jext** and **Hyo** (with some by **DiegoWT** and **Aqua**) for the community set, **DiegoWT**
   (Black/White style), **Taiga** (ORAS style) and **PurpleZaffre** (Agatha, Lorelei, Mr. Fuji and Giovanni).
-  Backgrounds: **LibertyTwins**, **princess-phoenix**, **carchagui**, **aveontrainer**, **WesleyFG**,
-  **kWharever**, **worldslayer608** and **knizz** (Battle Backgrounds Patch FR). The characters belong to
-  Nintendo, Game Freak and Creatures; credit is not a license grant.
+  The characters belong to Nintendo, Game Freak and Creatures; credit is not a license grant.
 - **HD Dynamic Battlefields, by Bentley734** (https://github.com/Bentley734/HD-Dynamic-Battlefields, no licence
   file; used with the author's permission, see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)) — the optional HD
   battle scenes: his paintings cut and reduced to the 3DS's resolution by `tools/dev_hd_battlefields.py`, downloaded
