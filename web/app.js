@@ -23,7 +23,7 @@ const UNISTORE_URL = new URL('twinembers.unistore', location.href).href;
 const $ = (id) => document.getElementById(id);
 const ui = {
   romInput: $('rom-input'), romButton: $('rom-button'), romPill: $('rom-pill'),
-  gen4: $('gen4-toggle'), npcs: $('npcs-toggle'), backgrounds: $('backgrounds-toggle'),
+  gen4: $('gen4-toggle'), npcs: $('npcs-toggle'),
   followers: $('followers-toggle'), hd: $('hd-toggle'), looks: $('looks-toggle'),
   build: $('build-button'),
   progress: $('progress'), fill: $('progress-fill'), status: $('status'),
@@ -40,7 +40,7 @@ function setPill(text, kind) {
 function refresh() {
   ui.build.disabled = !(state.ready && state.romOk && !state.busy);
   ui.romInput.disabled = state.busy;
-  ui.gen4.disabled = ui.npcs.disabled = ui.backgrounds.disabled = ui.followers.disabled = ui.hd.disabled = ui.looks.disabled = state.busy;
+  ui.gen4.disabled = ui.npcs.disabled = ui.followers.disabled = ui.hd.disabled = ui.looks.disabled = state.busy;
   ui.romButton.setAttribute('aria-disabled', state.busy ? 'true' : 'false');
 }
 
@@ -173,8 +173,6 @@ function finish(pak, info) {
     if (info.gen4.backs) lines.push(L('HeartGold-style player backs: ', 'Espaldas del jugador al estilo HeartGold: ', 'Spielerrücken im HeartGold-Stil: ') + info.gen4.backs);
     if (info.gen4.npcs) lines.push(L(`New people on the map: ${info.gen4.npcs} of 74`, `Gente nueva en el mapa: ${info.gen4.npcs} de 74`,
       `Neue Leute auf der Karte: ${info.gen4.npcs} von 74`));
-    if (info.gen4.backgrounds) lines.push(L(`Battle backgrounds: ${info.gen4.backgrounds} of FireRed's 20`,
-      `Fondos de combate: ${info.gen4.backgrounds} de los 20 de Rojo Fuego`, `Kampfhintergründe: ${info.gen4.backgrounds} der 20 aus Feuerrot`));
     if (info.gen4.followers) lines.push(L(`Pokémon overworld sprites (followers & wild): ${info.gen4.followers}`,
       `Sprites de Pokémon en el mapa (acompañante y salvajes): ${info.gen4.followers}`,
       `Pokémon-Karten-Sprites (Begleiter & wilde Pokémon): ${info.gen4.followers}`));
@@ -189,7 +187,6 @@ function finish(pak, info) {
   for (const [box, count, en, es, de] of [
     [ui.gen4, g.species, 'HeartGold battle sprites', 'Sprites de combate de HeartGold', 'HeartGold-Kampf-Sprites'],
     [ui.npcs, g.npcs, 'New people on the map', 'Gente nueva en el mapa', 'Neue Leute auf der Karte'],
-    [ui.backgrounds, g.backgrounds, 'Battle backgrounds', 'Fondos de combate', 'Kampfhintergründe'],
     [ui.followers, g.followers, 'Pokémon that walk behind you', 'Pokémon que andan tras de ti', 'Pokémon, die dir folgen'],
     [ui.hd, g.hd, 'HD battle scenes', 'Escenas de combate HD', 'HD-Kampfszenen'],
     [ui.looks, g.looks, 'More characters to be', 'Más personajes', 'Mehr Figuren'],
@@ -218,7 +215,7 @@ async function startBuild() {
   try {
     const rom = await state.rom.arrayBuffer();
     worker.postMessage({ type: 'build', rom, gen4: ui.gen4.checked, npcs: ui.npcs.checked,
-      backgrounds: ui.backgrounds.checked, followers: ui.followers.checked, hd: ui.hd.checked, looks: ui.looks.checked }, [rom]);
+      followers: ui.followers.checked, hd: ui.hd.checked, looks: ui.looks.checked }, [rom]);
   } catch (error) {
     state.busy = false;
     showError(`${L('Could not read the ROM again:', 'No se ha podido volver a leer la ROM:', 'Das ROM konnte nicht erneut gelesen werden:')} ${error.message}`);

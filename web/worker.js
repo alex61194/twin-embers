@@ -116,7 +116,6 @@ async function build(rom, options) {
   const groups = [];
   if (options.gen4) groups.push('pokemon');
   if (options.npcs) groups.push('npc');
-  if (options.backgrounds) groups.push('bg');
   if (options.followers) groups.push('follower');
   if (options.hd) groups.push('hd');
   if (options.looks) groups.push('looks');
@@ -144,7 +143,7 @@ self.onmessage = async (event) => {
   const message = event.data;
   if (message.type !== 'build') return;
   try {
-    await build(message.rom, { gen4: message.gen4, npcs: message.npcs, backgrounds: message.backgrounds,
+    await build(message.rom, { gen4: message.gen4, npcs: message.npcs,
       followers: message.followers, hd: message.hd, looks: message.looks });
   } catch (error) {
     try { clearWork(); } catch (ignored) { /* nothing left to clean */ }
