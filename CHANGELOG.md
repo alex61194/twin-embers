@@ -2,6 +2,12 @@
 
 Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS. This file lists what changed for the player in each release. It does not repeat the detail of the [documentation](docs/).
 
+## Unreleased
+
+### Removed
+
+- Removed the optional Facets battle backgrounds from both Builders (the desktop app and command line `--battle-backgrounds`, and the web page's switch). The optional HD battle scenes are unchanged. A data pack made earlier with them keeps working.
+
 ## v0.6.0
 
 ### Added

@@ -127,7 +127,7 @@ class GuiWorkflowTest(unittest.TestCase):
     def test_the_report_names_every_option_asked(self):
         result = self.run_build()
         self.assertEqual(set(result["options"]),
-                         {"heartgold", "npcs", "backgrounds", "followers", "hd_backgrounds", "alt_looks"})
+                         {"heartgold", "npcs", "followers", "hd_backgrounds", "alt_looks"})
 
     def test_copy_failure_removes_incomplete_new_output(self):
         with patch.object(gui_service, "shutil") as mocked:

@@ -8,7 +8,7 @@ a local copy of the art (DIR/<environment>/<environment>-01-16x10.png and ...-ni
 (metadata/maps/frlg.lua) and pokefirered's include/constants/map_groups.h, and writes under --out the files the game
 reads (add them to a pack with `firered3ds-builder build --extra-dir OUT`):
 
-    graphics/gen4/hd/NNN.bin   NNN = environment * 2 (day) or * 2 + 1 (night): a battle scene as the Builder's convert_bg
+    graphics/gen4/hd/NNN.bin   NNN = environment * 2 (day) or * 2 + 1 (night): a battle scene as the Builder's convert_bg_wide
                                makes it (272x112, one 15-colour palette: the whole width of the 3DS's battle view, nothing mirrored), the painting cut to the battle area
     graphics/gen4/hdn/NNN.bin  the same numbers, the scene at the 3DS's own resolution: b"G4H1", u16 400, u16 240, then the
                                picture as RGB565 (little endian) row by row, full colour, dithered, the painting's whole width

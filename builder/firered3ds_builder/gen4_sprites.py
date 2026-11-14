@@ -117,47 +117,14 @@ BACK_FILES = (
     (1, "back", "hgss_sprites/assets/battle/back-animated/leafplayer.png", 5524,
      "8c222cfdae83898370c60806bf1c9297207023da59a46ec1f0fce2e9acd8945d"),
 )
-# The battle backgrounds: Facets' SCENERY set (LibertyTwins' Battle Backgrounds Patch FR, converted to 240x112
-# PNGs of 15 colours), pinned like the rest: (scene, "bg", path, size, SHA-256). BG_TERRAIN gives each of FireRed's
-# BATTLE_TERRAIN_* (grass, long grass, sand, underwater, water, pond, mountain, cave, building, plain, link, gym, leader,
-# indoor 2, indoor 1, Lorelei, Bruno, Agatha, Lance, champion) its scene, as Facets maps them.
+# The battle scene pack entry's format (G4G1) is written only by convert_bg_wide, for the HD scenes (gen4_hd): there is
+# no download of Facets' scenery backgrounds any more. BG_REPO and BG_COMMIT stay for the people (NPC_FILES).
 BG_REPO = "ElvieBlooms/facets"
 BG_COMMIT = "9b4940d54f8bad152746481b56d841698a548e64"
-BG_PREFIX = "graphics/gen4/bg/"
 BG_MAGIC = b"G4G1"
-BG_W, BG_H = 240, 112
+BG_H = 112
 BG_MAP_COLUMNS, BG_MAP_ROWS = 64, 32
 BG_TILES_MAX = 512
-BG_FILES = (
-    (0, "bg", "assets/battlebg/scenery/grass.png", 7203,
-     "26a618485a29fa74b389439d3f730b3fc0e236f2399c99e907e07e6c5df7bf74"),
-    (1, "bg", "assets/battlebg/scenery/forest.png", 8960,
-     "62cd98d05159d1c15e9fb45d11457d6fa776307759eb2d1c5301e0b73e5e1e62"),
-    (2, "bg", "assets/battlebg/scenery/beach.png", 6480,
-     "5c800d2ae752b2e04cd4105df6ccdccf1943d083451bde17eb594b712d4ad25f"),
-    (3, "bg", "assets/battlebg/scenery/underwater.png", 5485,
-     "c7f3e9e468feaea6b63cde9c0664eca40ef4bbb73e68aa32f5bb4ab24cb44c3c"),
-    (4, "bg", "assets/battlebg/scenery/sea.png", 3666,
-     "8c10cea856f281511e3f7bded7f26624c7702f9eb4bcb988d1f64f380cae3611"),
-    (5, "bg", "assets/battlebg/scenery/lake.png", 5866,
-     "11592e3ed8ed148231078ba0756496e09b212b89d25e0a770e4f654f7ed0d770"),
-    (6, "bg", "assets/battlebg/scenery/mountain.png", 9330,
-     "c66d9d846c18593d0d4053ae6be0b8362e4b781cfc2858204276860ba0cf1591"),
-    (7, "bg", "assets/battlebg/scenery/cave.png", 11799,
-     "ab0dd0dfaaa2f9ecdf15cd2c3c71131b3e3d46b913692aca35faa8b2e84df44a"),
-    (8, "bg", "assets/battlebg/scenery/lab.png", 3966,
-     "95d12a070159cd58313309c189eab2d659eb942c218a6e03c545a3ea6010f415"),
-    (9, "bg", "assets/battlebg/scenery/route.png", 9873,
-     "9b16990868cdc3aa0bd60e71510999e252dfee08755d76875d571525e5829809"),
-    (10, "bg", "assets/battlebg/scenery/indoors.png", 1586,
-     "d21831b0da6d3f7c992de0474245c2b9d8dda184b6e9e34926785efeff393b24"),
-    (11, "bg", "assets/battlebg/scenery/neutral.png", 2211,
-     "3e99166d28c748adaabded65d486d3cf0ca4a86c8a1950a50030aef3c162a865"),
-    (12, "bg", "assets/battlebg/scenery/gym.png", 4170,
-     "edc34b6191b8da6f46c8488a40473ef6fc35a967e01807d54aab41e5253030b4"),
-    (13, "bg", "assets/battlebg/scenery/space.png", 2205,
-     "13ee861c57029aa50cbe6ff2f7d532c78e149188973db1ee04d54697681db72d"),
-)
 # The field's people: Facets' NPC sets for FireRed and LeafGreen at the same pinned commit, one file for each of the 74
 # people it draws (FireRed's OBJ_EVENT_GFX_* in the first place): the community set where it has one, DiegoWT's,
 # Taiga's, then PurpleZaffre's. Each is a 32x288 RGBA sheet of nine 32x32 frames, ordered as FireRed's own.
@@ -379,11 +346,11 @@ PLAYER_FRONT = {"boy": 135, "girl": 136}      # TRAINER_PIC_RED, _LEAF
 # The pictures FireRed copies out whole, in its own format, for the port to put in place of Red's and Leaf's
 # (CtrPlayer_Swap): the front picture (trainer card, Hall of Fame), the Oak intro's and the Region Map icon.
 PLAYER_PREFIX = "graphics/gen4/player/"
-GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "bg", "player", "follower"
+GROUP_POKEMON, GROUP_NPC, GROUP_PLAYER, GROUP_FOLLOWER = "pokemon", "npc", "player", "follower"
 GROUP_HD = "hd"     # the HD battle scenes (Bentley734's): graphics/gen4/hdn/ and hd/, each as it is in the pack
 GROUP_LOOKS = "looks"   # the alternative player looks (Emerald Lens'): graphics/gen4/look/<look>/<sheet>, for the player to pick in the game
 LOOK_SIBLINGS = {"gold_hgss": "gold", "brendan_hgss": "brendan_oras", "green_hgss": "green", "may_hgss": "may_oras"}
-GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_BG, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)   # not GROUP_PLAYER: no switch asks for it now
+GROUPS = (GROUP_POKEMON, GROUP_NPC, GROUP_FOLLOWER, GROUP_HD, GROUP_LOOKS)   # not GROUP_PLAYER: no switch asks for it now
 # The Pokémon that walks behind the player (HeartGold's): one pack entry a national dex number (graphics/gen4/follower/NNN.bin),
 # a second one named NNN_f.bin where HeartGold has a female picture of its own. Each is a person's entry (convert_npc's
 # nine 32x32 frames), the game flipping the west frames for the east. Rows: (dex, or 1000 + dex for the female one,
@@ -394,7 +361,6 @@ FOLLOWER_FILES = tuple(
     (dex + (FOLLOWER_FEMALE if body == "female" else 0), "follower",
      gen4_followers.MMODEL_PATH.format(gen4_followers.BASE + number), size, digest)
     for dex, body, number, size, digest in gen4_followers.FILES)
-BG_TERRAIN = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 12, 10, 10, 12, 12, 12, 12, 13)
 ICON_MAGIC = b"G4I1"
 ICON_PALETTES = 6
 URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
@@ -896,59 +862,13 @@ def convert_follower(archive: bytes) -> bytes:
     return NPC_MAGIC + bytes([NPC_FRAMES, size, 0, 0]) + struct.pack("<16H", *colours) + tiles
 
 
-def convert_bg(scene: bytes) -> bytes:
-    """A battle background's pack entry from its 240x112 PNG: the 15-colour palette, the tiles (identical ones once)
-    and the 64x32 tile map of BG3's two screen blocks."""
-    width, height, _, rows = read_png(scene)
-    if (width, height) != (BG_W, BG_H) or not isinstance(rows[0][0], tuple):
-        raise Gen4Error("a battle background is a 240x112 RGB or RGBA PNG")
-    palette, indices = quantize([pixel for row in rows for pixel in row])
-    columns, tile_rows = BG_W // 8, BG_H // 8
-    tiles: list[bytes] = []
-    seen: dict[bytes, int] = {}
-    grid = [[0] * columns for _ in range(tile_rows)]
-    for ty in range(tile_rows):
-        for tx in range(columns):
-            tile = bytearray()
-            for y in range(8):
-                base = (ty * 8 + y) * width + tx * 8
-                tile += bytes(indices[base + x] | indices[base + x + 1] << 4 for x in range(0, 8, 2))
-            tile = bytes(tile)
-            if tile not in seen:
-                if len(tiles) == BG_TILES_MAX:
-                    raise Gen4Error("a battle background has more than %d different tiles" % BG_TILES_MAX)
-                seen[tile] = len(tiles)
-                tiles.append(tile)
-            grid[ty][tx] = seen[tile]
-    # BG3 reads a 64x32 map (screen blocks 26 and 27, 32 columns each) with palette 2. The 3DS shows the scene past
-    # its 240x112, so around the picture the map mirrors it with flipped tiles: the rows above (wrapping from 31) are
-    # its top rows upside down, the rows below its bottom ones, the columns on the right (30 up) its last columns
-    # reversed and those on the left (wrapping from 63) its first ones. A mirror has no seam, unlike a repeated edge.
-    def mirror(position: int, size: int, wrap: int, below: int) -> tuple[int, int]:
-        if position < size:
-            return position, 0
-        if position < below:
-            return 2 * size - 1 - position, 1
-        return wrap - 1 - position, 1
-    mapped = [[0] * BG_MAP_COLUMNS for _ in range(BG_MAP_ROWS)]
-    for row in range(BG_MAP_ROWS):
-        source_row, vflip = mirror(row, tile_rows, BG_MAP_ROWS, tile_rows + 4)
-        for column in range(BG_MAP_COLUMNS):
-            source_column, hflip = mirror(column, columns, BG_MAP_COLUMNS, 47)
-            mapped[row][column] = grid[source_row][source_column] | hflip << 10 | vflip << 11 | 2 << 12
-    tilemap = b"".join(struct.pack("<H", mapped[row][block * 32 + column]) for block in (0, 1)
-                       for row in range(BG_MAP_ROWS) for column in range(32))
-    colours = (palette + [0] * 16)[:16]
-    return BG_MAGIC + struct.pack("<HH", len(tiles), 0) + struct.pack("<16H", *colours) + b"".join(tiles) + tilemap
-
-
 BG_WIDE_W = 272         # the battle view is 400 / 1.5 = 267 GBA pixels wide, centred on the 240: 16 pixels on each side
 BG_WIDE_LEFT = 2        # tile columns of the picture left of the scene's column 0 (map columns 62 and 63)
 
 
 def convert_bg_wide(scene: bytes) -> bytes:
-    """A battle scene that fills the 3DS's width: its 272x112 PNG (the 240 of the GBA's screen and 16 pixels more on each
-    side) as the same pack entry as convert_bg's, but the two outer tile columns go where the GBA's map wraps (columns 62
+    """A battle scene that fills the 3DS's width (the G4G1 pack entry): its 272x112 PNG (the 240 of the GBA's screen and 16 pixels more on each
+    side) with the 15-colour palette, the tiles (identical ones once) and the 64x32 tile map of BG3's two screen blocks; the two outer tile columns go where the GBA's map wraps (columns 62
     and 63) and the rest are the map's columns 0-31, so nothing is mirrored in the sight of the player. At most 34 x 14
     tiles, under the 512 a screen block takes."""
     width, height, _, rows = read_png(scene)
@@ -983,7 +903,7 @@ def convert_bg_wide(scene: bytes) -> bytes:
         return columns - 1 if map_column < 48 else 0
 
     def row_of(row: int) -> tuple[int, int]:
-        """The rows below the 14 of the scene (the message box covers them) mirror it, as convert_bg's do."""
+        """The rows below the 14 of the scene (the message box covers them) mirror it."""
         if row < tile_rows:
             return row, 0
         if row < tile_rows + 4:
@@ -1047,7 +967,7 @@ HD_NATIVE_W, HD_NATIVE_H = 400, 240
 def check_hd(path: str, data: bytes) -> bytes:
     """An HD scene file as it goes into the pack, once it is known to be what the game reads: graphics/gen4/hdn/NNN.bin is
     the scene at the 3DS's own resolution (G4H1, u16 400, u16 240, RGB565 rows), graphics/gen4/hd/NNN.bin a tile scene
-    like convert_bg's and graphics/gen4/hd/map.bin the table of maps (G4M1, u16 count, four bytes each)."""
+    like convert_bg_wide's and graphics/gen4/hd/map.bin the table of maps (G4M1, u16 count, four bytes each)."""
     if path.startswith("graphics/gen4/hdn/"):
         if (data[:4] != HD_NATIVE_MAGIC or struct.unpack_from("<HH", data, 4) != (HD_NATIVE_W, HD_NATIVE_H)
                 or len(data) != 8 + HD_NATIVE_W * HD_NATIVE_H * 2):
@@ -1098,7 +1018,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "bg", "npc", "player", "follower", "hd", "look"):
+    if row[1] in ("back", "npc", "player", "follower", "hd", "look"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -1119,8 +1039,6 @@ def file_name(row: tuple) -> str:
         return "trainers_a058.narc"
     if row[1] == "back":
         return "back_{:03d}.png".format(row[0])
-    if row[1] == "bg":
-        return "bg_{:02d}.png".format(row[0])
     if row[1] == "npc":
         return "npc_{:03d}.png".format(row[0])
     if row[1] == "player":
@@ -1137,7 +1055,7 @@ def file_name(row: tuple) -> str:
 def file_url(row: tuple) -> str:
     if row[1] == "back":
         return URL.format(repo=BACK_REPO, commit=BACK_COMMIT, path=source_path(row))
-    if row[1] in ("bg", "npc"):
+    if row[1] == "npc":
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     if row[1] == "player":
         return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
@@ -1152,14 +1070,12 @@ def file_url(row: tuple) -> str:
 
 def all_files(groups: tuple = GROUPS) -> tuple:
     """Every file the download may fetch for the groups asked: HeartGold's (pret's gen4_sources.FILES and the fan-made
-    backs), the field's people, the battle scenes, the player (whose backs then take the fan-made ones' place)."""
+    backs), the field's people, the player (whose backs then take the fan-made ones' place)."""
     rows: tuple = ()
     if GROUP_POKEMON in groups:
         rows += tuple(gen4_sources.FILES) + (BACK_FILES if GROUP_PLAYER not in groups else ())
     if GROUP_NPC in groups:
         rows += NPC_FILES
-    if GROUP_BG in groups:
-        rows += BG_FILES
     if GROUP_PLAYER in groups:
         rows += PLAYER_FILES
     if GROUP_FOLLOWER in groups:
@@ -1214,7 +1130,7 @@ class Downloader:
 
 def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | None = None,
                groups: tuple = GROUPS) -> tuple[list[tuple[str, bytes]], dict]:
-    """The pack entries of the groups asked (HeartGold's pictures, the field's people, the battle backgrounds): every
+    """The pack entries of the groups asked (HeartGold's pictures, the field's people): every
     species whose files could be had, the icons if all could, and a summary."""
     rows = list(all_files(groups))
     got: dict[tuple, bytes] = {}
@@ -1266,7 +1182,6 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     spinda = [row for row in rows if row[1] == "spinda"]
     trainers = [row for row in rows if row[1] == "trainers"]
     backs = [row for row in rows if row[1] == "back"]
-    scenes = [row for row in rows if row[1] == "bg"]
     people = [row for row in rows if row[1] == "npc"]
     player = [row for row in rows if row[1] == "player"]
     followers = [row for row in rows if row[1] == "follower"]
@@ -1310,12 +1225,6 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     back_files = [("%s%03d.bin" % (BACK_PREFIX, row[0]), convert_back(got[row[:3]])) for row in backs
                   if row[:3] in got]
     files += back_files
-    # Every terrain gets its scene, or none of them does (half a set would mix two looks).
-    converted = {row[0]: convert_bg(got[row[:3]]) for row in scenes if row[:3] in got}
-    bg_files = []
-    if scenes and len(converted) == len(scenes):
-        bg_files = [("%s%03d.bin" % (BG_PREFIX, terrain), converted[scene]) for terrain, scene in enumerate(BG_TERRAIN)]
-    files += bg_files
     # A person whose sheet could not be had keeps FireRed's picture; the others are drawn.
     npc_files = [("%s%03d.bin" % (NPC_PREFIX, row[0]), convert_npc(got[row[:3]])) for row in people if row[:3] in got]
     files += npc_files
@@ -1381,6 +1290,6 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
                              ("%sicon_%s.gbapal" % (PLAYER_PREFIX, row[0]), colours)]
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
-                   "backs": len(back_files), "backgrounds": len(bg_files), "npcs": len(npc_files),
+                   "backs": len(back_files), "npcs": len(npc_files),
                    "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made,
                    "player": len(player_files), "downloaded": downloaded}

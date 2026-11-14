@@ -19,8 +19,6 @@ def main() -> None:
     make.add_argument('--recipe', type=Path, help=argparse.SUPPRESS)
     make.add_argument('--npc-sprites', action='store_true',
                       help="also download the field's people (Facets' sets; needs internet)")
-    make.add_argument('--battle-backgrounds', action='store_true',
-                      help='also download the battle backgrounds (LibertyTwins\' set through Facets; needs internet)')
     make.add_argument('--follower-sprites', action='store_true',
                       help="also download HeartGold overworld sprites for followers and visible wild Pokemon (needs internet)")
     make.add_argument('--hd-backgrounds', action='store_true',
@@ -43,7 +41,6 @@ def main() -> None:
             extra = []
             groups = tuple(group for flag, group in ((args.gen4_sprites, gen4_sprites.GROUP_POKEMON),
                                                      (args.npc_sprites, gen4_sprites.GROUP_NPC),
-                                                     (args.battle_backgrounds, gen4_sprites.GROUP_BG),
                                                      (args.follower_sprites, gen4_sprites.GROUP_FOLLOWER),
                                                      (args.hd_backgrounds, gen4_sprites.GROUP_HD),
                                                      (args.alt_looks, gen4_sprites.GROUP_LOOKS)) if flag)
@@ -55,8 +52,6 @@ def main() -> None:
                           f"{info['trainers']} trainer pictures, {info['backs']} player backs")
                 if args.npc_sprites:
                     print(f"People of the field: {info['npcs']} of {len(gen4_sprites.NPC_FILES)}")
-                if args.battle_backgrounds:
-                    print(f"Battle backgrounds: {info['backgrounds']} of 20 terrains")
                 if args.follower_sprites:
                     print(f"HeartGold overworld sprites (followers & wild): {info['followers']} of {len(gen4_sprites.FOLLOWER_FILES)} files")
                 if args.hd_backgrounds:

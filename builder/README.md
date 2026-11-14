@@ -1,8 +1,8 @@
 # Twin Embers data Builder
 
-User-owned ROM reconstruction, offline unless you tick one of the three optional
-downloads (below): HeartGold sprites, new people on the map and new battle
-backgrounds, each on its own. Python 3.11+ is required. The GUI uses only Python's
+User-owned ROM reconstruction, offline unless you tick one of the optional
+downloads (below): HeartGold sprites and new people on the map (plus the
+followers, HD battle scenes and more player looks), each on its own. Python 3.11+ is required. The GUI uses only Python's
 standard library: no SDK, online account, telemetry or game content is included.
 
 ## Optional HeartGold battle sprites
@@ -57,17 +57,6 @@ changes about one pixel in a hundred) and writes `graphics/gen4/npc/NNN.bin` for
 The rival and everything that is not a person keep FireRed's pictures; Red and Leaf have an option of their own
 (below). A sheet that could not be had
 (no network, a file that did not match its size and SHA-256) leaves that person as FireRed draws them.
-
-## Optional new battle backgrounds
-
-Ticking "New battle backgrounds" (or `build --battle-backgrounds`) replaces FireRed's 20 battle settings with 14
-hand-drawn 240x112 scenes (grass, forest, beach, underwater, sea, lake, mountain, cave, lab, route, indoors,
-neutral, gym and space) of LibertyTwins' Battle Backgrounds Patch FR, as converted by Facets (the same repository
-and pinned commit as the people). The Builder turns each into tiles, a tile map and a palette
-(`graphics/gen4/bg/NNN.bin`) and gives every terrain its scene (the gym, its leaders and the Elite Four share the
-gym's). The 3DS shows more than 240x112 of the scene, so the tile map mirrors the picture around its edges with
-flipped tiles instead of stretching its last row and columns. It writes all of them or none, so a battle never mixes
-two looks.
 
 ## Ash and Green
 
