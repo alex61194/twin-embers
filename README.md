@@ -118,6 +118,8 @@ The battle Bag keeps its pockets as tabs and shows the selected item large with 
 
 <img src="docs/media/09-battle-bag.png" width="300" alt="Battle Bag: the selected item shown large with its USE button"> <img src="docs/media/19-battle-summary.png" width="300" alt="A Pokémon's Summary during a battle">
 
+<img src="docs/media/37-battle-bag-berries.png" width="300" alt="The battle Bag on its Berries pocket">
+
 ### Looking after your team
 
 The party list, Pokémon Summary and Trainer Card each get a full lower-screen page, and the Bag and Pokédex open beside the button column. PC storage is touch-driven as well, menus included: move, withdraw and deposit by tapping. Saving asks once, with your progress shown next to it.
@@ -133,6 +135,10 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 <img src="docs/media/23-bag-balls.png" width="300" alt="Bag, Poké Balls pocket"> <img src="docs/media/24-pallet-town.png" width="300" alt="Entering Pallet Town: the area's name on top while the party stays open below">
 
 <img src="docs/media/20-pc-menu.png" width="300" alt="The PC's menu on the lower screen"> <img src="docs/media/21-pc-box.png" width="300" alt="A PC box, moved by touch">
+
+<img src="docs/media/38-pc-pokemon-menu.png" width="300" alt="The PC's Pokémon menu: withdraw, deposit and move Pokémon or items"> <img src="docs/media/39-pc-items.png" width="300" alt="The PC's item storage: taking an item out, with its description">
+
+<img src="docs/media/40-pc-box-item.png" width="300" alt="A PC box showing the item a Pokémon holds and its description"> <img src="docs/media/41-hall-of-fame.png" width="300" alt="The Hall of Fame on the lower screen">
 
 <img src="docs/media/15-trainer-card.png" width="300" alt="Trainer Card"> <img src="docs/media/16-save.png" width="300" alt="Saving the game">
 
@@ -150,7 +156,7 @@ OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke
 
 <img src="docs/media/27-options-qol.png" width="300" alt="Options, Quality of life: type matchups, move data, REPEL AGAIN, EXP share, reusable TMs and free HMs"> <img src="docs/media/28-options-nuzlocke.png" width="300" alt="Options, Nuzlocke: Nuzlocke, Randomlocke, duplicates and shiny clauses, level cap">
 
-<sub>The menu, battle, OPTIONS, Summary, Pokédex and HOME map captures are from v0.6.0 (AzaharPlus, Spanish game, 2026-11-13); the title, night, move cards, party and PC ones are from earlier versions and show the previous look of the lower screen. All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the battle, menu and PC screens come from AzaharPlus with the HeartGold sprites in the pack. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
+<sub>The captures are from v0.6.0 (AzaharPlus, Spanish game, 2026-11-13 and 2026-11-14); the Trainer Card and Save ones were taken before the new START-column icons and only have those icons replaced by the current ones. All images are real captures from Azahar (AzaharPlus) and a New 3DS-family console; the battle, menu and PC screens come from AzaharPlus with the HeartGold sprites in the pack. Native resolutions are 400 × 240 on top and 320 × 240 below. Game artwork belongs to its rightsholders.</sub>
 
 ---
 
