@@ -1112,6 +1112,7 @@ static void DrawTile(unsigned address, unsigned bank, bool color256,
 static int sSpanShiftX;
 
 /* The base transform of everything composed: the current zoom. */
+static bool sMoveBgStretch;     /* see DrawBattleBg */
 static void ViewBase(void)
 {
     C2D_ViewReset();
@@ -1119,6 +1120,11 @@ static void ViewBase(void)
     {
         C2D_ViewTranslate(sOffX, sOffY);
         C2D_ViewScale(sZoom, sZoom);
+    }
+    if (sMoveBgStretch)
+    {
+        C2D_ViewTranslate(120 * (1 - CTR_MOVE_BG_SX), 112 * (1 - CTR_MOVE_BG_SY));
+        C2D_ViewScale(CTR_MOVE_BG_SX, CTR_MOVE_BG_SY);
     }
 }
 
@@ -1917,6 +1923,18 @@ static bool DrawBattleLayerTex(unsigned bg, int x0, int x1, int y0, int y1)
 static void DrawBattleBg(unsigned bg)
 {
     if (bg == 3 && DrawBattleBackdrop()) return;
+    if (bg == 3 && sBackdropUnder)
+    {
+        /* A move's own background over the native picture (Solar Beam's rays): it is a GBA picture, 240x112 under the
+         * scene's zoom, and left the painting showing in a strip above it and beside it. It is drawn alone, stretched
+         * from the scene's rectangle to the whole screen above the text box. */
+        sMoveBgStretch = true;
+        if (!DrawBattleLayerTex(bg, 0, 240, 0, 160)) DrawBattleCut(bg, 0, 240, 0, 160, 0);
+        C2D_Flush();
+        sMoveBgStretch = false;
+        ViewBase();
+        return;
+    }
     unsigned control = Reg(8 + bg * 2), size = control >> 14;
     unsigned map = ((control >> 8) & 31) * 0x800;
     unsigned chars = ((control >> 2) & 3) * 0x4000;

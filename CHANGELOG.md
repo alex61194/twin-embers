@@ -40,6 +40,8 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 - **The companion** no longer vanishes and reappears when you cross from one route to the next: what it remembers of the player's way is moved with the map's new coordinates. Warps and doors still hide it until your next step. Checked on a computer only; it has not been run in the game yet.
 - **Labels that did not fit** their room on several lower-screen menus.
 - **Menus:** the touch state of a closed screen no longer survives into the next one, and an empty Pokédex list is not scrolled.
+- **Solar Beam and other moves with their own background:** over an HD battle picture the move's background is stretched to the whole screen above the text box, instead of leaving the painting in a strip above and beside it. Not yet seen in the game.
+- **REMEMBER:** long messages no longer wait for A page by page while the lower screen already shows the whole text; the pages turn by themselves.
 - **Sunny Day and other moves that light or darken the scene:** the HD battle picture now follows the blend of the scene's own colours, so the strip and the corner the move's picture does not cover are no longer left dark. Checked on a computer only (the colour maths); not yet seen in the game.
 - **Battle scene:** the HD battle picture follows the screen's fades, so the end of a battle shows no black silhouettes.
 - **Saving:** the save is committed with fsync, and a pack with a truncated back picture, or a follower asked for before the pack opens, no longer breaks the game.
