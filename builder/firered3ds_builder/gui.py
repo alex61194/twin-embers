@@ -36,7 +36,6 @@ class BuilderWindow(tk.Tk):
         self.phase = tk.StringVar(value="READY")
         self.gen4 = tk.BooleanVar(value=False)
         self.npcs = tk.BooleanVar(value=False)
-        self.backgrounds = tk.BooleanVar(value=False)
         self.followers = tk.BooleanVar(value=False)
         self.hd_backgrounds = tk.BooleanVar(value=False)
         self.alt_looks = tk.BooleanVar(value=False)
@@ -132,25 +131,21 @@ class BuilderWindow(tk.Tk):
             text="New people on the map: 74 characters redrawn in DS style, by Facets and its artists "
                  "(optional, needs internet)")
         self.npcs_check.grid(row=7, column=0, sticky="w", pady=(4, 0))
-        self.backgrounds_check = ttk.Checkbutton(
-            build_card, variable=self.backgrounds,
-            text="New battle backgrounds: 14 scenes by LibertyTwins and others (optional, needs internet)")
-        self.backgrounds_check.grid(row=8, column=0, sticky="w", pady=(4, 0))
         self.followers_check = ttk.Checkbutton(
             build_card, variable=self.followers,
             text="HeartGold overworld sprites: your first Pokémon follows you and visible wild Pokémon can appear "
                  "(optional, needs internet: about 390 small files from GitHub)")
-        self.followers_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
+        self.followers_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
         self.hd_check = ttk.Checkbutton(
             build_card, variable=self.hd_backgrounds,
             text="HD battle scenes: the whole top screen painted, by Bentley734 (HD Dynamic Battlefields), "
                  "used with his permission (optional, needs internet: about 13 MB from GitHub)")
-        self.hd_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
+        self.hd_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
         self.looks_check = ttk.Checkbutton(
             build_card, variable=self.alt_looks,
             text="More characters to be: 18 looks (Ash, Gary, Silver, Gold, Brendan, May, Green, Kris...) for you, Leaf and your rival "
                  "to pick in OPTIONS, from Emerald Lens (optional, needs internet: about 180 small files from GitHub)")
-        self.looks_check.grid(row=12, column=0, sticky="w", pady=(4, 0))
+        self.looks_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
         self.build_button = ttk.Button(buttons, text="Build Data Pack",
@@ -207,8 +202,6 @@ class BuilderWindow(tk.Tk):
             lines.append("HeartGold-style player backs: {0}.".format(info["backs"]))
         if info.get("npcs"):
             lines.append("New people on the map: {0} of 74.".format(info["npcs"]))
-        if info.get("backgrounds"):
-            lines.append("Battle backgrounds: {0} of FireRed's 20.".format(info["backgrounds"]))
         if info.get("followers"):
             lines.append("Overworld sprites (followers & wild Pokémon): {0}.".format(info["followers"]))
         if info.get("hd"):
@@ -219,7 +212,6 @@ class BuilderWindow(tk.Tk):
         # building again tries it again.
         for key, count_keys, name in (("heartgold", ("species",), "HeartGold battle sprites"),
                                       ("npcs", ("npcs",), "New people on the map"),
-                                      ("backgrounds", ("backgrounds",), "Battle backgrounds"),
                                       ("followers", ("followers",), "Overworld sprites (followers & wild Pokémon)"),
                                       ("hd_backgrounds", ("hd",), "HD battle scenes"),
                                       ("alt_looks", ("looks",), "More characters to be")):
@@ -275,7 +267,7 @@ class BuilderWindow(tk.Tk):
         state = "disabled" if busy else "normal"
         for widget in (self.rom_entry, self.pack_entry, self.rom_browse,
                        self.pack_browse, self.sd_browse,
-                       self.build_button, self.gen4_check, self.npcs_check, self.backgrounds_check,
+                       self.build_button, self.gen4_check, self.npcs_check,
                        self.followers_check, self.hd_check, self.looks_check):
             widget.configure(state=state)
         self.cancel_button.configure(state="normal" if busy else "disabled")
@@ -294,7 +286,7 @@ class BuilderWindow(tk.Tk):
         self.details.set("Do not remove the destination drive while writing the pack.")
         # Tk variables belong to the window's thread: read here, not in the worker.
         create_directories = self._create_dirs
-        choices = dict(gen4=self.gen4.get(), npcs=self.npcs.get(), backgrounds=self.backgrounds.get(),
+        choices = dict(gen4=self.gen4.get(), npcs=self.npcs.get(),
                        followers=self.followers.get(), hd_backgrounds=self.hd_backgrounds.get(),
                        alt_looks=self.alt_looks.get())
 

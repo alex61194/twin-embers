@@ -15,8 +15,8 @@ from .rom import load_rom
 
 
 def gen4_downloads(groups=None) -> list[list[str]]:
-    """[URL, file name] of every listed file of the groups asked (all by default: HeartGold's, the people, the
-    backgrounds), for the page to fetch into one folder."""
+    """[URL, file name] of every listed file of the groups asked (all by default: HeartGold's, the people and
+    the rest), for the page to fetch into one folder."""
     chosen = tuple(groups) if groups is not None else gen4_sprites.GROUPS
     return [[gen4_sprites.file_url(row), gen4_sprites.file_name(row)] for row in gen4_sprites.all_files(chosen)]
 

@@ -30,7 +30,7 @@ class Gen4DownloadsTest(unittest.TestCase):
         listed = gen4_sprites.all_files()
         # Everything the switches offer at once (not the player's own group, which no switch asks for any more).
         self.assertEqual(len(rows), len(gen4_sources.FILES) + len(gen4_sprites.BACK_FILES) + len(gen4_sprites.NPC_FILES)
-                         + len(gen4_sprites.BG_FILES) + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
+                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
         self.assertFalse(any(row[1] == "player" for row in listed))
         self.assertEqual(len({name for _, name in rows}), len(rows))
         prefix = f"https://raw.githubusercontent.com/{gen4_sources.REPO}/{gen4_sources.COMMIT}/"
@@ -106,7 +106,7 @@ class SyntheticBuildTest(unittest.TestCase):
         with patch.object(threading.Thread, "start", no_threads):
             info = browser.build(str(self.root / "rom.gba"), str(out), str(self.folder))
         self.assertEqual(out.read_bytes(), self.desktop(True))
-        self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "trainers": 0, "backs": 0, "backgrounds": 0,
+        self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "trainers": 0, "backs": 0,
                                        "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "player": 0, "downloaded": 0})
         with PakReader(out, self.abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
             self.assertEqual(reader.verify(), 4)
@@ -116,7 +116,7 @@ class SyntheticBuildTest(unittest.TestCase):
         (self.folder / "001_male_front.png").unlink()
         info = browser.build(str(self.root / "rom.gba"), str(self.root / "web.pak"), str(self.folder))
         self.assertEqual(info["gen4"], {"species": 0, "missing": [1, 2], "icons": False, "trainers": 0, "backs": 0,
-                                       "backgrounds": 0, "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "player": 0, "downloaded": 0})
+                                       "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "player": 0, "downloaded": 0})
         self.assertEqual(info["entries"], 2)
 
     def test_never_uses_the_network(self):
