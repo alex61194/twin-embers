@@ -6,6 +6,7 @@
  */
 static C3D_Tex sBackdropTex;
 static bool sBackdropReady, sBackdropFailed;
+__attribute__((weak)) unsigned CtrGame_SceneFade(uint16_t *target) { *target = 0; return 0; }
 static unsigned sBackdropUploaded;
 
 static bool BackdropPrepare(const uint16_t *picture, unsigned generation)
@@ -60,12 +61,26 @@ static bool DrawBattleBackdrop(void)
     /* A whole-screen fade (the end of the battle, the flash of its transition) is a blend of the palettes towards one colour, which the sprites and
      * the boxes follow; the picture has no palette, so it was left at full brightness while everything else went black (black silhouettes on the
      * scene). It takes the same tint the field's layers take (UpdateFade's coefficient and colour). */
-    if (sFadeBaseValid && sFadeCoeff)
     {
-        uint32_t rgb = CtrVideo_RGBA8(sFadeTarget, true);
+        unsigned coeff = sFadeBaseValid ? sFadeCoeff : 0;
+        uint16_t target = sFadeTarget;
 
-        C2D_PlainImageTint(&fade, C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255), sFadeCoeff / 16.0f);
-        tint = &fade;
+        /* A move that blends only the scene's own banks (Sunny Day whitens them) is no whole-screen fade, but the picture
+         * is the scene and takes it the same way, or it stays dark round the part of the screen the move lights. */
+        if (!coeff)
+        {
+            uint16_t sceneTarget = 0;
+            unsigned scene = CtrGame_SceneFade(&sceneTarget);
+
+            if (scene) { coeff = scene; target = sceneTarget; }
+        }
+        if (coeff)
+        {
+            uint32_t rgb = CtrVideo_RGBA8(target, true);
+
+            C2D_PlainImageTint(&fade, C2D_Color32(rgb >> 24, rgb >> 16, rgb >> 8, 255), Min(coeff, 16u) / 16.0f);
+            tint = &fade;
+        }
     }
     C2D_ViewReset();
     ++sStats.tiles;
