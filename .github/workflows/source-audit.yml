@@ -46,6 +46,7 @@ jobs:
           python3 -m unittest discover -s tools -p test_wilds_recipe.py -v
           python3 -m unittest discover -s tools -p test_option_labels.py -v
           python3 -m unittest discover -s tools -p test_column_labels.py -v
+          python3 -m unittest discover -s tools -p test_m4a_reverse_block.py -v
       - name: Field menus, Flash masks and cave transition geometry
         run: python3 -m unittest discover -s tools -p test_field_presentation.py -v
       - name: Fly actors, exact OAM publication and invocation strip

@@ -28,6 +28,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 ### Fixed
 
 - **Field people and Pokémon that share a picture** (for example the three Bird Keepers of Route 18, or two wilds of one species) were drawn with each other's frame: a walker slid without steps, or a trainer was drawn looking another way than it really looked. Each frame now has its own tiles. Checked on a computer only; it has not been run in the game yet.
+- **A reversed Pokémon cry** (Growl, Hyper Voice) that played to its first sample crashed the console with a data abort (issue #87): the block index of the compressed sample was made with a logical shift, so sample -1 asked for an unmapped address. It now uses an arithmetic shift on the 3DS, which reads the same bytes the GBA read through its address mirror; playback of every other sample is unchanged. Checked with a model of the arithmetic and the assembled instruction; not yet run on a console.
 - **A battle animation** that moved a sprite through an address read with sign extension (issue #85) now builds the address from two 16-bit halves.
 - **The evolution scene:** a B held since before the scene no longer stops the evolution, and the scene uses FireRed's plain background.
 - **German text:** a double-encoded u-umlaut in the Summary's and the PC's German text.
