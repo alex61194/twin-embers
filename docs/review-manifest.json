@@ -3400,7 +3400,7 @@
   },
   {
    "path": "docs/media/02-night-cerulean.png",
-   "sha256": "a76875bade8f0788ca268904a618895107e2a65fcafb3240eed8526fcf59d708",
+   "sha256": "60b337b044bc01fd4d9a38826402ad2839e09fddd8e031aff0c1e7369f94203d",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3408,7 +3408,7 @@
   },
   {
    "path": "docs/media/03-day-night-off.png",
-   "sha256": "5b9129933d769bfdb0f5e3e8a4f293870dcc5e894d1514257f4fe9e125f67b88",
+   "sha256": "7dea6ac0b8181a68af29f0c1b61c49a4ed86775a582f8b7b611a7c4ff999d64f",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3416,7 +3416,7 @@
   },
   {
    "path": "docs/media/04-night-saffron.png",
-   "sha256": "cb12228aba3c7db62074e2854eb6d14f1ce4538741daadd28868e7a0dc34f3be",
+   "sha256": "36c540854c7d3a80301a2c2a57748ed2c8f4920fa477751e84117555c9ea8b7d",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3512,7 +3512,7 @@
   },
   {
    "path": "docs/media/17-options-1.png",
-   "sha256": "a1e78574824bef51c98a763a206e8a995b2e173cac4669c6b27acdbde4e6d528",
+   "sha256": "bde7a74c5c69c72c6c2e11664aaa1c8c1ae8376d080cae581fec4f8a465cd8df",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3520,7 +3520,7 @@
   },
   {
    "path": "docs/media/18-options-2.png",
-   "sha256": "89fc3eddbde2b3e8c8b61773c0d6d30131abc26eb69bd6a6d77bbb5d570c5ead",
+   "sha256": "4791cedb78b2755d8fa647ed4e4036d4095e07b3565ab31aeb334b7a81bde1ba",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3576,7 +3576,7 @@
   },
   {
    "path": "docs/media/25-options-looks.png",
-   "sha256": "38f013ca8230b45a19b11e051f70dc1bcf83561de447768116c67e7b0566c319",
+   "sha256": "df6d885b550b44224d2a147d23fa26cca9d23f44bcb8bd29918e8e12598d7912",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3584,7 +3584,7 @@
   },
   {
    "path": "docs/media/26-options-wilds.png",
-   "sha256": "10dd60eb2a4ae569d71804b7562f78b5cb5eb3fa0c65f15196e63cd1bb333e47",
+   "sha256": "2b8eada23bb23e3da2c0186c00233840609e83f68683e69d5f1dc06c22789410",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3592,7 +3592,7 @@
   },
   {
    "path": "docs/media/27-options-qol.png",
-   "sha256": "4b008c913b1f5f58009ba968d86174a09f7854985f6f0b6f9b6b89a442bd92ba",
+   "sha256": "4bf2cf6ac17881fd7c8d6f090e2c8dfbbcf922d9a7c62deadb7ec740e67fe5ce",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3600,7 +3600,7 @@
   },
   {
    "path": "docs/media/28-options-nuzlocke.png",
-   "sha256": "416ec1560ce957791aec5fb7db101c13f78eb17c064ce9d14c6ba8ee52203d56",
+   "sha256": "ed121d631f14d8ddeb72a457cc8ad5ba94bf0bf9d9fbc85fa35b5b4bd9b42dbd",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
@@ -3656,7 +3656,7 @@
   },
   {
    "path": "docs/media/35-home-map-zoom.png",
-   "sha256": "7fa7a0990920af334670645176de28599a2f78ecfa04b3a57ebec49acfe6e8fd",
+   "sha256": "46bae99b85ccb6b824b425c649dd934f3eded0248302779330bc8c10116bfb66",
    "review_status": "reviewed",
    "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
    "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
