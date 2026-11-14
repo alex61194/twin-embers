@@ -433,6 +433,14 @@ unsigned CtrGame_ScreenFade(uint16_t *target)
     return coeff;
 }
 
+/* The same for the battle scene's own backgrounds (palette banks 2-4, where battle_bg.c loads them): a move that whitens or
+ * darkens the scene (Sunny Day, Hypnosis...) blends only those, and the full-colour picture that stands for the scene
+ * follows them. */
+unsigned CtrGame_SceneFade(uint16_t *target)
+{
+    return CtrPal_RunFade(gPlttBufferUnfaded, gPlttBufferFaded, 2 * 16, 3 * 16, target);
+}
+
 static void ProbeAudio(unsigned frame)
 {
     const struct SoundInfo *sound = &gSoundInfo;
