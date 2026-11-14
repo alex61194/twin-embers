@@ -48,5 +48,34 @@ int main(void)
     for (unsigned i = 0; i < 256; ++i) sCur[i] = sBase[i];
     sCur[17] ^= 0x21;
     assert(!CtrPal_DetectBlend(sBase, sCur, 256, &coeff, &target));
+
+    /* A move that blends only the scene's banks (2-4, entries 32-79): CtrPal_RunFade sees that blend, in the battle's
+     * whitening and in the darkening of other moves, and nothing else; the whole-palette test above does not. */
+    for (unsigned k = 0; k < 3; ++k)
+        for (unsigned c = 1; c <= 15; ++c)
+        {
+            unsigned got;
+            uint16_t t;
+
+            for (unsigned i = 0; i < 256; ++i) sCur[i] = sBase[i];
+            for (unsigned i = 32; i < 80; ++i) sCur[i] = CtrPal_Blend(sBase[i], c, targets[k]);
+            assert(!CtrPal_DetectBlend(sBase, sCur, 256, &coeff, &target));
+            got = CtrPal_RunFade(sBase, sCur, 32, 48, &t);
+            assert(got == c && t == targets[k]);
+            for (unsigned i = 32; i < 80; ++i)
+                assert(CtrPal_Blend(sBase[i], got, t) == sCur[i]);
+        }
+    {
+        uint16_t t = 99;
+
+        for (unsigned i = 0; i < 256; ++i) sCur[i] = sBase[i];
+        assert(CtrPal_RunFade(sBase, sCur, 32, 48, &t) == 0 && t == 0);        /* unchanged */
+        for (unsigned i = 32; i < 80; ++i) sCur[i] = CtrPal_Blend(sBase[i], 8, 0x7fff);
+        sCur[40] ^= 0x21;
+        assert(CtrPal_RunFade(sBase, sCur, 32, 48, &t) == 0 && t == 0);        /* a palette animation, not a blend */
+        for (unsigned i = 32; i < 80; ++i) sCur[i] = CtrPal_Blend(sBase[i], 8, 0x7fff);
+        for (unsigned i = 48; i < 64; ++i) sCur[i] = sBase[i];
+        assert(CtrPal_RunFade(sBase, sCur, 32, 48, &t) == 0);                /* one of the three banks missed */
+    }
     return 0;
 }
