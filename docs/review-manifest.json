@@ -35,7 +35,7 @@
   },
   {
    "path": ".github/workflows/pages.yml",
-   "sha256": "769d08650edbe0e6dc828c4f102a72a31639780c0cad6d331ec26d71c7e616c6",
+   "sha256": "58c0eccf3cef77e8ef488fe20c9c42bfa7667cf9b89255c0754843cfce1f6e33",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2351,7 +2351,7 @@
   },
   {
    "path": "README.md",
-   "sha256": "81f2a3c635fd4047ee105346243e31102c5a95aa7199736dfba91ed5cbf352c6",
+   "sha256": "df7efc06913e0c21431a84bbfb161b2b537f7998b4c59cb66fb3e2cf4f0bb952",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -7250,7 +7250,7 @@
   },
   {
    "path": "web/de.html",
-   "sha256": "14fb525ea062be93c1056c230e4f3a660823f4bb339dc28bf839218ae1264d4c",
+   "sha256": "4b41ce2d784624de5a575862b67fc86ced3dee8fe948f291551fded30fe9bbbd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7258,7 +7258,7 @@
   },
   {
    "path": "web/es.html",
-   "sha256": "73e82871991d55cd1987c4174324df220451b13686740414e3c8362280194f80",
+   "sha256": "56a4f78ce792f0fe0c5823ce8260a38f871ab10aab04ec8523968565a661cb6a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7266,7 +7266,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "b046350f7d5d7e9862d2337f755a760bffc3c108790974c353f2235b6cb55a8b",
+   "sha256": "66b9ec93c3f82dbeee7c61bd9bc17f5871a0f50344617195ba4d7e79373604a1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7375,6 +7375,46 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/media/37-battle-bag-berries.png",
+   "sha256": "150dcbb419d37d6b6b5c4dca2767456c6f67dad8b503a7f971da3d168840b4c8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers v0.6.0 running in AzaharPlus, made by alex61194 for the README (emulator screenshot reduced to the native 400x480 two-screen layout), added on 2026-11-14. Reviewed 2026-11-14: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/38-pc-pokemon-menu.png",
+   "sha256": "4f165c1dd6ebd02c4df63d06cc03e5cc1387dd590527b555c7b0b42b41f02208",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers v0.6.0 running in AzaharPlus, made by alex61194 for the README (emulator screenshot reduced to the native 400x480 two-screen layout), added on 2026-11-14. Reviewed 2026-11-14: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/39-pc-items.png",
+   "sha256": "8541640e7b189dd090f0ead3f45c8af31b50d00cb8493c4fd9ff9d00cec535a4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers v0.6.0 running in AzaharPlus, made by alex61194 for the README (emulator screenshot reduced to the native 400x480 two-screen layout), added on 2026-11-14. Reviewed 2026-11-14: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/40-pc-box-item.png",
+   "sha256": "037b7d07acca6fe3db32a4c62e7c828321f1aee2a63462cb27be280bde179e1a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers v0.6.0 running in AzaharPlus, made by alex61194 for the README (emulator screenshot reduced to the native 400x480 two-screen layout), added on 2026-11-14. Reviewed 2026-11-14: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
+  },
+  {
+   "path": "docs/media/41-hall-of-fame.png",
+   "sha256": "784809bfaaa8be8525e435c6e56ae1a9bf7e493ad0e3ed607751b931d79fcfc6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (capture); game artwork belongs to Nintendo, Game Freak, Creatures and The Pokémon Company",
+   "license": "Screenshot for documentation only; not covered by the port MIT licence; game artwork rights excluded",
+   "basis": "Real capture of Twin Embers v0.6.0 running in AzaharPlus, made by alex61194 for the README (emulator screenshot reduced to the native 400x480 two-screen layout), added on 2026-11-14. Reviewed 2026-11-14: owner decision to keep the README images in the repository (docs/media only, well-formed PNG/JPEG/WebP, 1 MiB cap, binary attribute, byte-exact hashes); no ROM, pack or game binary."
   }
  ],
  "historical_reviews": [
