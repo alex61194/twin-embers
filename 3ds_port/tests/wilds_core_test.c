@@ -2510,7 +2510,7 @@ static void Bench(void)
      * and the core's own function with the counters off and on. */
     {
         const int M = 200000000;
-        double tRef, tCopyOff, tCopyOn, tOff, tOn;
+        double tRef = 0, tCopyOff = 0, tCopyOn = 0, tOff = 0, tOn = 0;
 
         CtrWildsCore_Init(&c, 84);
         c.operative = 1;

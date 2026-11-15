@@ -279,7 +279,7 @@ typedef struct {
  * its page (FireRed's own character codes, 0xff for no key), tabs for its three pages, DELETE and OK. A key moves
  * FireRed's cursor there and presses its A; a tab is its SELECT, DELETE its B. */
 #define PT_NAME_ROWS 4
-#define PT_NAME_COLS 8
+#define PT_NAME_COLS 9
 #define PT_NAME_MAX 12
 enum { PT_NAME_HIT_KEY = 200, PT_NAME_HIT_TAB = 240, PT_NAME_HIT_DELETE = 250, PT_NAME_HIT_OK = 251 };
 typedef struct {

@@ -65,17 +65,15 @@ static bool DrawBattleBackdrop(void)
      * the boxes follow; the picture has no palette, so it was left at full brightness while everything else went black (black silhouettes on the
      * scene). It takes the same tint the field's layers take (UpdateFade's coefficient and colour). */
     {
-        unsigned coeff = sFadeBaseValid ? sFadeCoeff : 0;
-        uint16_t target = sFadeTarget;
+        uint16_t sceneTarget = 0;
+        unsigned scene = CtrGame_SceneFade(&sceneTarget);
+        unsigned coeff = scene;
+        uint16_t target = sceneTarget;
 
-        /* A move that blends only the scene's own banks (Sunny Day whitens them) is no whole-screen fade, but the picture
-         * is the scene and takes it the same way, or it stays dark round the part of the screen the move lights. */
-        if (!coeff)
+        if (!coeff && sFadeBaseValid)
         {
-            uint16_t sceneTarget = 0;
-            unsigned scene = CtrGame_SceneFade(&sceneTarget);
-
-            if (scene) { coeff = scene; target = sceneTarget; }
+            coeff = sFadeCoeff;
+            target = sFadeTarget;
         }
         if (coeff)
         {
