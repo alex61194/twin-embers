@@ -5,7 +5,7 @@ used with the author's permission; see docs/THIRD-PARTY-ART.md. LOOKS: (folder, 
 row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256)."""
 
 REPO = 'ElvieBlooms/emerald_lens'
-COMMIT = 'cdff5a9bd5acdff67773bcb608ce72c62805111e'
+COMMIT = '9a97879e5c82ea44e2acf7717fa94f864b382ceb'
 LOOKS = (
     ('ash', 'ASH', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
     ('ash_hgss', 'ASH HGSS', 'ASH', 'boy', 'Made by PKMNTrainerRick'),
@@ -25,6 +25,9 @@ LOOKS = (
     ('kris_hgss', 'KRIS LOU', 'KRIS', 'girl', 'Made by LouLilie'),
     ('may_oras', 'MAY', 'MAY', 'girl', "Both Packs sourced from Team Aqua's Asset Repo"),
     ('may_hgss', 'MAY HGSS', 'MAY', 'girl', 'Made by DiegoWT'),
+    ('harmony_dp', 'HARMONY', 'HARMONY', 'girl', 'Art by xlia_chanx; Dive blob by Elvie'),
+    ('peach_hgss', 'PEACH', 'PEACH', 'girl', 'From Slawter666; Dive blob by Elvie'),
+    ('aang', 'AANG', 'AANG', 'boy', 'Commissioned by Slawter666 and made by iamtrine; Back and Front sprites made by waterpixelart'),
 )
 FILES = (
     (0, 'look', 'assets/sprites/ash/gen3/frlg/walk.png', 2822, '09b884356200c50d3872cc81442607e38415b111d9b7f31db341c432af18fb55'),
@@ -201,4 +204,29 @@ FILES = (
     (17, 'look', 'assets/sprites/may_hgss/gen3/frlg/fishing.png', 4409, '97d8e1903ec1c8d52cee0d15421ac1836f8e323edb46cc4f0b7275c2b3a2ce70'),
     (17, 'look', 'assets/sprites/may_hgss/gen3/frlg/vsSeekerBike.png', 895, 'f18785103925a5157538307ad5e53f08d30965c28b1cb9820a3bf43cd46495c3'),
     (17, 'look', 'assets/sprites/may_hgss/gen3/frlg/flyBird.png', 1658, '8b5f8f85bfcb9f8566d4637242751f08b05dc4cd7b58f56e9831577759c55add'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/walk.png', 6259, 'e0f34c70e33a1669da855ce638df18d1776d227d926994d95dbfd6812cc0defa'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/bike.png', 3508, '8904e25dbf6b7578a26c964bd7d927d3142de9dbc81cb01866833dd6378b23e5'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/surf.png', 2916, '4e8b4fbff80a9652e9e6e68b9a03ec4a7a13631868ef4362ae91c1a0ee0855f9'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/fieldMove.png', 2295, '9c1fa11e8b5ca5dec401298285559550a8822425c5f54e75fe699797e85a464f'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/fishing.png', 4485, 'ff6207c3458fe64898fe55cd84b15aae70f371e22193709abfd0ec03c06b6eef'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/vsSeekerBike.png', 866, '0d0832e09129ec60406bcc4044af7145b4a9847a92db1d9ad274d00e7af8cf0d'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/back.png', 6664, '97068249f7bbcd736570af9cb508921c623c716854ff5e1377cc30d45a2d13fa'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/front.png', 1879, '7d173f52a228ffd47f100d1841ada0879c4f1577f8e6aeb0dc7f611db5b7cd81'),
+    (18, 'look', 'assets/sprites/harmony_dp/gen3/frlg/intro.png', 2356, '8498858b04d76601cff3a46471ee836a793258330f37e7cd299c1e139f79a393'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/walk.png', 5127, '6dc1b80596d865767a3379f2111a1712abe442b6e9392eebc56562965377332a'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/bike.png', 2713, '706d0828ed578a6e17ea0df9e908ded73fed3c9329a14b831231479b5cf9b01c'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/surf.png', 2344, '5ee1e4e6ce0570206ef9cda0906bba1a6444d28deb46eab27202181fa42c7d9b'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/fieldMove.png', 2196, '2e224d809c111c250bc09c748b95cc3e04cfb66c8298069ff4ca940ae94622da'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/fishing.png', 3446, 'a40b36ec813dee87450e5ade5d904919c801b9ef06c0da61450b8fffcc2852fc'),
+    (19, 'look', 'assets/sprites/peach_hgss/gen3/frlg/vsSeekerBike.png', 841, 'cdc543dc5afbbb33e9138ba7bdabff16c5e214868706dc68ed3dae2dc76c1a52'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/walk.png', 3120, '41183ca779b05a823297245d9930acda64e01ece11f8be589c8dbd0f00d72ec7'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/bike.png', 2256, '40459de237a39a27eeec44aabd78da1b6ca427c23bf9d3ece222990a3040b41d'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/surf.png', 1408, 'fdeb219834f40c2bbb75b3de9a9541854a60d4bf1d17f89a5dc7def23e29d4db'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/fieldMove.png', 1640, '6816ffb04842abdb99350f4b1abdbf11eecdd30dd2676cc1ebe951fdcbb04d0b'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/fishing.png', 3047, '794ba9cad2fd739ea25384d9e1bb2632e4a8d0db7d98a48c771d2d2d23414d8c'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/vsSeekerBike.png', 774, 'b2cf3dab42847d1b273778c265576311de91251dea310d8a06916785e4544c5f'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/flyBird.png', 5378, '64933bef04e78bbaa697a068eb533d9c6a91afa4b2e0a501f02245d7305cfca1'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/back.png', 4875, '109302113b05fe9d55f2c3c1d97cc9d49120b15c1a7bca0b7303e42fec683e53'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/front.png', 1730, '3e4c153753bdafe1adffac832c44ab70172456ad6e43d6df5b6d400c88f283ca'),
+    (20, 'look', 'assets/sprites/aang/gen3/frlg/intro.png', 2063, '91d214f11d716d9899fc94fc4f47805451027c31d44745cf9a9963525818abba'),
 )

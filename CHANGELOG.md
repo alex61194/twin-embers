@@ -4,6 +4,10 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ## Unreleased
 
+### Added
+
+- Three more player looks from Emerald Lens 1.1.1 for the Builder's *More characters to be*: Harmony (D/P), Peach (HGSS) and Aang, so there are 21 in all. The sheets are pinned at Emerald Lens' commit 9a97879 by size and SHA-256; a look without a back, front or intro picture keeps FireRed's own.
+
 ### Changed
 
 - **Visible wilds** (PR #88 by mcl5500): aggressive wilds now run from your lead only when they have 15% of its power or less (before, below 70%), so they chase you far more; chasing land Pokémon may leave the tall grass for plain ground; new wilds appear near you but always just off the screen, and the map keeps alive a symmetric margin of 3 to 4 tiles of objects around the screen.

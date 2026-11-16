@@ -23,7 +23,9 @@ file's size and SHA-256 against the list pinned in `builder/firered3ds_builder/`
 - **Work:** the looks of Emerald Lens (https://github.com/ElvieBlooms/emerald_lens), each by the artists named in its
   `meta.json` (listed in `builder/firered3ds_builder/gen4_looks.py` and in `CREDITS.md`).
 - **Permission:** the author, Elvie, gave alex61194 her permission to use them in Twin Embers (reported by alex61194,
-  2026-11-06). It is not a licence, and the looks' own artists are credited, not replaced.
+  2026-11-06). It is not a licence, and the looks' own artists are credited, not replaced. Harmony (D/P), Peach (HGSS)
+  and Aang were added on 2026-11-16 from Emerald Lens 1.1.1; their artists are named in their credit, and Elvie's
+  permission for these three has to be confirmed by alex61194 before a release that carries them.
 - **What the Builder does:** with `--alt-looks` it downloads each look's FireRed/LeafGreen sheets at the pinned commit,
   checks them by size and SHA-256 and puts them in the user's own pack (`graphics/gen4/look/<look>/`), for the player to
   pick in the game.
