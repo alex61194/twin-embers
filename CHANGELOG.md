@@ -15,6 +15,9 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- Eggs no longer gain experience under the EXP. Share options 1 and 2 (before, an egg in the party counted as a receiver, took its cut and could level up).
+- The German naming keyboard has its ninth column again, so the full stop and the comma can be typed.
+- The naming screen's question is copied up to its own end, so a long Spanish or German title no longer carries stack garbage after it.
 - The HOME map's background worker thread is joined at exit before the data and assets shut down, so closing the game while the map is still being built cannot touch freed memory.
 - **Packs with an empty file:** the Builder and the game could reject a pack when a payload had size 0 and shared its offset with the next one (the order of equal offsets depended on the file names). No pack made so far has an empty file, so nobody was affected yet.
 - **Builder, desktop:** a pack that appeared at the destination while the Builder was working is no longer replaced when overwriting was not confirmed.
