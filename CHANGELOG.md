@@ -13,6 +13,10 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 - Removed the optional Facets battle backgrounds from both Builders (the desktop app and command line `--battle-backgrounds`, and the web page's switch). The optional HD battle scenes are unchanged. A data pack made earlier with them keeps working.
 
+### Fixed
+
+- **New game, choosing the name:** FireRed's own keyboard no longer shows on the upper screen. Oak's picture stays there while the lower screen's keyboard is used, for the player's and the rival's name. Checked only by reading the code and the host build; not yet run in the game.
+
 ## v0.6.0
 
 ### Added
