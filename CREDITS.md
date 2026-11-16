@@ -46,7 +46,9 @@
   Green and Kris in their versions, and Harmony, Peach and Aang) are downloaded the same way; each is by the artists named in its credit in
   `builder/firered3ds_builder/gen4_looks.py` (kalarie, PKMNTrainerRick, Alan_Flygon, lichenprincess, FourLeafSunny,
   GregarLink10, DiegoWT, LouLilie, richardPT, eykav, ChromeValiant, xlia_chanx, Slawter666, iamtrine, waterpixelart and others), and Team Aqua's Asset Repo for some. They
-  are used with Elvie's permission (see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)).
+  are used with Elvie's permission (see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)). The Pokemon to surf on come from the same download,
+  by eMMe97 (Blastoise), Nolo33LP (Latias, Pikachu), Avara (Tentacruel), Hestia (Wailmer), EduarPokeN (Whiscash), Jordank and the
+  contributors of the dynamic surf overworlds (Lapras, Dewgong, Ludicolo, Mantine, Pelipper).
 - **YamaArashi** — MIT-licensed external conversion/preprocessing tools listed
   individually in NOTICE.md.
 - **ipatix** — MIT-licensed external wav2agb tool.

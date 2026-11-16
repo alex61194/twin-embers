@@ -48,7 +48,7 @@ static int FireBottom(const uint8_t *pic);
  * Leaf and the rival Blue (settings.cfg, the OPTIONS' ASPECTO). A look that lacks a sheet, or none chosen, keeps the picture
  * that was in use before (the Builder's Ash and Green, or FireRed's own). The pictures already read are dropped, when the
  * choice changes, at the next time one is asked for. */
-enum { LOOK_RED, LOOK_LEAF, LOOK_BLUE };
+enum { LOOK_RED, LOOK_LEAF, LOOK_BLUE, LOOK_SURF };
 extern const char *CtrSettings_Look(int slot);
 static bool sLooksDirty;
 
@@ -87,6 +87,16 @@ static bool LookNpcPath(unsigned gfx, char *path, size_t size)
         return LookPath(gfx == 250 ? LOOK_RED : LOOK_LEAF, "flyBird.bin", path, size);
     if (gfx == 72)
         return LookPath(LOOK_BLUE, "walk.bin", path, size);
+    if (gfx == CTR_NPC_SURFBLOB)
+    {
+        const char *id = LookId(LOOK_SURF);
+        uint32_t bytes;
+
+        if (!id)
+            return false;
+        snprintf(path, size, "graphics/gen4/surfmon/%s/blob.bin", id);
+        return CtrData_Size(path, &bytes);
+    }
     return false;
 }
 
@@ -874,7 +884,11 @@ static Npc *NpcLoad(unsigned gfx)
         snprintf(path, sizeof(path), "graphics/gen4/follower/%03u%s.bin", dex, female ? "_f" : "");
     }
     else if (!LookNpcPath(gfx, path, sizeof(path)))
+    {
+        if (gfx == CTR_NPC_SURFBLOB)
+            return NULL;            /* no Pokemon chosen to surf on (or not in the pack): FireRed's own blob */
         snprintf(path, sizeof(path), "graphics/gen4/npc/%03u.bin", gfx);
+    }
     entry = CtrData_Load(path, &size);
     if (!entry)
         return NULL;

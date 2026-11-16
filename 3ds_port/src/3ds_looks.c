@@ -161,3 +161,150 @@ void CtrLooks_Choose(int slot, int index)
     CtrSettings_SetLook(slot, index >= 0 && index < sCount ? sLooks[index].id : "");
     CtrGen4_LooksChanged();
 }
+
+/* The Pokemon to surf on: the list is read like the looks', a line being "folder<TAB>name<TAB>credit". */
+static struct {
+    char id[CTR_LOOK_ID_LEN];
+    char name[CTR_LOOK_NAME_LEN];
+    char credit[CTR_LOOK_CREDIT_LEN];
+} sSurf[CTR_SURFMONS_MAX];
+static int sSurfCount;
+static bool sSurfRead;
+
+static void SurfRead(void)
+{
+    uint32_t size = 0;
+    uint8_t *data;
+    char *text, *line, *end;
+
+    if (sSurfRead || CtrData_GetBackend() == CTR_DATA_NONE)
+        return;
+    sSurfRead = true;
+    data = CtrData_Load("graphics/gen4/surfmon/index.bin", &size);
+    if (!data)
+        return;
+    if (size < 5 || memcmp(data, "G4S1\n", 5) != 0)
+    {
+        free(data);
+        return;
+    }
+    text = malloc(size + 1);
+    if (!text)
+    {
+        free(data);
+        return;
+    }
+    memcpy(text, data, size);
+    text[size] = 0;
+    free(data);
+    for (line = text + 5; *line && sSurfCount < CTR_SURFMONS_MAX; line = end ? end + 1 : line + strlen(line))
+    {
+        char *tab1, *tab2;
+
+        end = strchr(line, '\n');
+        if (end)
+            *end = 0;
+        tab1 = strchr(line, '\t');
+        if (tab1)
+        {
+            *tab1 = 0;
+            tab2 = strchr(tab1 + 1, '\t');
+            if (tab2)
+                *tab2 = 0;
+            if (line[0] && strlen(line) < CTR_LOOK_ID_LEN && tab1[1] && strlen(tab1 + 1) < CTR_LOOK_NAME_LEN)
+            {
+                snprintf(sSurf[sSurfCount].id, sizeof(sSurf[sSurfCount].id), "%s", line);
+                snprintf(sSurf[sSurfCount].name, sizeof(sSurf[sSurfCount].name), "%s", tab1 + 1);
+                snprintf(sSurf[sSurfCount].credit, sizeof(sSurf[sSurfCount].credit), "%s", tab2 ? tab2 + 1 : "");
+                ++sSurfCount;
+            }
+        }
+        if (!end)
+            break;
+    }
+    free(text);
+}
+
+int CtrSurf_Count(void)
+{
+    SurfRead();
+    return sSurfCount;
+}
+
+const char *CtrSurf_Id(int index)
+{
+    SurfRead();
+    return index >= 0 && index < sSurfCount ? sSurf[index].id : NULL;
+}
+
+const char *CtrSurf_Name(int index)
+{
+    SurfRead();
+    return index >= 0 && index < sSurfCount ? sSurf[index].name : NULL;
+}
+
+const char *CtrSurf_Credit(int index)
+{
+    SurfRead();
+    return index >= 0 && index < sSurfCount ? sSurf[index].credit : NULL;
+}
+
+int CtrSurf_Picture(int index, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[16])
+{
+    static int shown = -1;
+    static bool ok;
+    static uint8_t keptTiles[CTR_LOOK_WALK_BYTES];
+    static uint16_t keptPalette[16];
+
+    SurfRead();
+    if (index < 0 || index >= sSurfCount)
+        return 0;
+    if (shown != index)
+    {
+        char path[64];
+        uint32_t size = 0;
+        uint8_t *entry;
+
+        shown = index;
+        ok = false;
+        snprintf(path, sizeof(path), "graphics/gen4/surfmon/%s/blob.bin", sSurf[index].id);
+        entry = CtrData_Load(path, &size);
+        if (entry)
+        {
+            /* G4N1, the frame count, 32, two bytes, 16 colours, then the frames (the first faces south). */
+            if (size >= 40 + CTR_LOOK_WALK_BYTES && memcmp(entry, "G4N1", 4) == 0 && entry[4] >= 1 && entry[5] == 32)
+            {
+                memcpy(keptTiles, entry + 40, sizeof(keptTiles));
+                for (int i = 0; i < 16; ++i)
+                    keptPalette[i] = (uint16_t)(entry[8 + i * 2] | entry[9 + i * 2] << 8);
+                ok = true;
+            }
+            free(entry);
+        }
+    }
+    if (!ok)
+        return 0;
+    memcpy(tiles, keptTiles, sizeof(keptTiles));
+    memcpy(palette, keptPalette, sizeof(keptPalette));
+    return 1;
+}
+
+int CtrSurf_Chosen(void)
+{
+    const char *id = CtrSettings_Look(CTR_LOOK_SURF);
+
+    SurfRead();
+    if (!id || !id[0])
+        return -1;
+    for (int i = 0; i < sSurfCount; ++i)
+        if (strcmp(sSurf[i].id, id) == 0)
+            return i;
+    return -1;
+}
+
+void CtrSurf_Choose(int index)
+{
+    SurfRead();
+    CtrSettings_SetLook(CTR_LOOK_SURF, index >= 0 && index < sSurfCount ? sSurf[index].id : "");
+    CtrGen4_LooksChanged();
+}

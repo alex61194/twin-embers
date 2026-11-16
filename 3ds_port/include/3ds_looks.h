@@ -27,4 +27,18 @@ int CtrLooks_Chosen(int slot);
 /* Choose the look of `index` for the slot, or none with -1: kept in the settings, and the pictures already read are dropped. */
 void CtrLooks_Choose(int slot, int index);
 
+/* The Pokemon to surf on the pack has (the Builder's --alt-looks as well): graphics/gen4/surfmon/index.bin (b"G4S1\n", then a line
+ * "folder<TAB>name<TAB>credit" for each) and, for each, blob.bin: six 32x32 frames of the blob under the player surfing (south, north
+ * and west, two each) as a person's entry. The choice is the settings' CTR_LOOK_SURF; 3ds_battle_gen4.c draws it. */
+#define CTR_SURFMONS_MAX 16
+int CtrSurf_Count(void);
+const char *CtrSurf_Id(int index);
+const char *CtrSurf_Name(int index);
+const char *CtrSurf_Credit(int index);
+/* The first frame (facing south) and its 16 colours, for the preview: 0 when the pack does not have it. */
+int CtrSurf_Picture(int index, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[16]);
+/* The index chosen (CTR_LOOK_SURF), or -1 for FireRed's own; choose one, or none with -1. */
+int CtrSurf_Chosen(void);
+void CtrSurf_Choose(int index);
+
 #endif

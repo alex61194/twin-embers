@@ -926,11 +926,22 @@ LOOK_PREFIX = "graphics/gen4/look/"
 LOOK_INDEX = LOOK_PREFIX + "index.bin"
 
 
+SURFMON_PREFIX = "graphics/gen4/surfmon/"
+SURFMON_INDEX = SURFMON_PREFIX + "index.bin"
+SURFMON_FRAMES = 6   # the blob under the player surfing: south, north and west, two frames each
+
+
 def look_index(looks: list[tuple[str, str, str, str]]) -> bytes:
     """The list of the looks the pack has, for the game's options: b"G4L1\n", then a line "folder<TAB>name<TAB>boy or girl<TAB>credit" for
     each, in the order the Builder lists them (the credit is what the options show under the look: its artists)."""
     lines = ("%s\t%s\t%s\t%s\n" % (folder, name, gender, " ".join(credit.split())) for folder, name, gender, credit in looks)
     return b"G4L1\n" + "".join(lines).encode("ascii", "replace")
+
+
+def surfmon_index(mons: list[tuple[str, str, str]]) -> bytes:
+    """The list of the Pokemon to surf on the pack has, for the game's options: b"G4S1\n", then a line "folder<TAB>name<TAB>credit" for each."""
+    lines = ("%s\t%s\t%s\n" % (folder, name, " ".join(credit.split())) for folder, name, credit in mons)
+    return b"G4S1\n" + "".join(lines).encode("ascii", "replace")
 
 
 def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes]]:
@@ -1018,7 +1029,7 @@ def source_path(row: tuple) -> str:
         return gen4_sources.SPINDA_PATH
     if row[1] == "trainers":
         return gen4_sources.TRAINERS_PATH
-    if row[1] in ("back", "npc", "player", "follower", "hd", "look"):
+    if row[1] in ("back", "npc", "player", "follower", "hd", "look", "surfmon"):
         return row[2]
     return gen4_sources.PATH.format(*row[:3])
 
@@ -1049,6 +1060,8 @@ def file_name(row: tuple) -> str:
         return "hd_" + row[2].rsplit("gen4/", 1)[1].replace("/", "_")
     if row[1] == "look":
         return "look_{:02d}_{}".format(row[0], row[2].rsplit("/", 1)[1])
+    if row[1] == "surfmon":
+        return "surfmon_{:02d}.png".format(row[0])
     return "{:03d}_{}_{}.png".format(*row[:3])
 
 
@@ -1059,7 +1072,7 @@ def file_url(row: tuple) -> str:
         return URL.format(repo=BG_REPO, commit=BG_COMMIT, path=source_path(row))
     if row[1] == "player":
         return URL.format(repo=PLAYER_REPO, commit=PLAYER_COMMIT, path=source_path(row))
-    if row[1] == "look":
+    if row[1] in ("look", "surfmon"):
         return URL.format(repo=gen4_looks.REPO, commit=gen4_looks.COMMIT, path=row[2])
     if row[1] == "hd":
         return URL.format(repo=gen4_hd.REPO, commit=gen4_hd.COMMIT, path=row[2])
@@ -1083,7 +1096,7 @@ def all_files(groups: tuple = GROUPS) -> tuple:
     if GROUP_HD in groups:
         rows += tuple(gen4_hd.FILES)
     if GROUP_LOOKS in groups:
-        rows += tuple(gen4_looks.FILES)
+        rows += tuple(gen4_looks.FILES) + tuple(gen4_looks.SURFMON_FILES)
     return rows
 
 
@@ -1187,6 +1200,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     followers = [row for row in rows if row[1] == "follower"]
     hd_rows = [row for row in rows if row[1] == "hd"]
     look_rows = [row for row in rows if row[1] == "look"]
+    surf_rows = [row for row in rows if row[1] == "surfmon"]
     rows_all = rows
     rows = [row for row in rows if row[1] in ("male", "female")]
     for dex in sorted({row[0] for row in rows}):
@@ -1262,6 +1276,16 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     if looks_made:
         files.append((LOOK_INDEX, look_index(made)))
     files += look_files
+    # The Pokemon to surf on: each one whose blob sheet came, as a person entry of six 32x32 frames (south, north and west, two each).
+    surf_made, surf_files = [], []
+    for number, (folder, name, credit) in enumerate(gen4_looks.SURFMONS):
+        row = next((r for r in surf_rows if r[0] == number and r[:3] in got), None)
+        if row is not None:
+            surf_files.append((SURFMON_PREFIX + folder + "/blob.bin", convert_npc(got[row[:3]], SURFMON_FRAMES)))
+            surf_made.append((folder, name, credit))
+    if surf_made:
+        files.append((SURFMON_INDEX, surfmon_index(surf_made)))
+    files += surf_files
     # The player: each sheet that could be had replaces FireRed's for its graphics ids, the back and the front picture.
     player_files = []
     for row in (row for row in player if row[:3] in got):
@@ -1291,5 +1315,5 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "npcs": len(npc_files),
-                   "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made,
+                   "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made, "surfmons": len(surf_made),
                    "player": len(player_files), "downloaded": downloaded}

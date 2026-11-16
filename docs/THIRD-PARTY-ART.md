@@ -30,6 +30,14 @@ file's size and SHA-256 against the list pinned in `builder/firered3ds_builder/`
   checks them by size and SHA-256 and puts them in the user's own pack (`graphics/gen4/look/<look>/`), for the player to
   pick in the game.
 
+## Surf Pokemon (Emerald Lens, ElvieBlooms)
+
+- **Work:** the surf blobs of Emerald Lens' `assets/surfmons` (each by the artist named in its `meta.json`, listed in
+  `builder/firered3ds_builder/gen4_looks.py` and in `CREDITS.md`).
+- **Permission:** as for the looks above; alex61194 has to confirm Elvie's permission for them before a release that carries them.
+- **What the Builder does:** with `--alt-looks` it downloads each blob's FireRed/LeafGreen sheet at the pinned commit, checks it by
+  size and SHA-256 and puts it in the user's own pack (`graphics/gen4/surfmon/<name>/blob.bin`), for the player to pick in the game.
+
 ## Facets (ElvieBlooms)
 
 Their authors' permission and each look's credit are in `CREDITS.md`.

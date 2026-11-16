@@ -24,12 +24,18 @@ NAMES = {'ash': 'ASH', 'ash_hgss': 'ASH HGSS', 'ash_hatless': 'ASH NO CAP', 'ash
          'brendan_hgss': 'BRENDAN HG', 'green': 'GREEN', 'green_hgss': 'GREEN HGSS', 'green_lou': 'GREEN LOU', 'kris': 'KRIS',
          'kris_blue': 'KRIS BLUE', 'kris_hgss': 'KRIS LOU', 'may_oras': 'MAY', 'may_hgss': 'MAY HGSS', 'harmony_dp': 'HARMONY', 'peach_hgss': 'PEACH', 'aang': 'AANG'}
 assert set(NAMES) == set(LOOKS) and all(len(name) <= 11 for name in NAMES.values())
+# The Pokemon the player may surf on (assets/surfmons/<folder>/frlg/surfBlob.png: six 32x32 frames) and the name the options show.
+SURFMONS = ('lapras', 'blastoise', 'dewgong', 'latias', 'ludicolo', 'mantine', 'pelipper', 'pikachu', 'tentacruel', 'wailmer',
+            'whiscash')
+SURFMON_NAMES = {folder: folder.upper() for folder in SURFMONS}
+assert all(len(name) <= 11 for name in SURFMON_NAMES.values())
 SHEETS = ('walk', 'bike', 'surf', 'fieldMove', 'fishing', 'vsSeekerBike', 'flyBird', 'back', 'front', 'intro', 'mapIcon')
 HEAD = '''"""The player looks of Emerald Lens the Builder may fetch (tools/make_gen4_looks.py; do not edit).
 
 By the artists named in each look's credit, shared in ElvieBlooms' Emerald Lens (https://github.com/ElvieBlooms/emerald_lens),
 used with the author's permission; see docs/THIRD-PARTY-ART.md. LOOKS: (folder, name, character, gender, credit); a
-row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256)."""
+row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256). SURFMONS: (folder, name, credit)
+of each Pokemon to surf on; a row of SURFMON_FILES: (its number, "surfmon", its blob sheet's path, size, SHA-256)."""
 
 REPO = {repo!r}
 COMMIT = {commit!r}
@@ -60,9 +66,18 @@ def main() -> None:
                 continue
             files.append((number, 'look', path, len(data), hashlib.sha256(data).hexdigest()))
         assert any(row[0] == number and row[2].endswith('/walk.png') for row in files), folder
+    surfmons, surf_files = [], []
+    for number, folder in enumerate(SURFMONS):
+        meta = json.loads(get(args.commit, f'assets/surfmons/{folder}/meta.json'))
+        surfmons.append((folder, SURFMON_NAMES[folder], '; '.join(meta.get('credit', []))))
+        path = f'assets/surfmons/{folder}/frlg/surfBlob.png'
+        data = get(args.commit, path)
+        surf_files.append((number, 'surfmon', path, len(data), hashlib.sha256(data).hexdigest()))
     text = HEAD.format(repo=REPO, commit=args.commit)
     text += 'LOOKS = (\n' + ''.join('    %r,\n' % (look,) for look in looks) + ')\n'
     text += 'FILES = (\n' + ''.join('    %r,\n' % (row,) for row in files) + ')\n'
+    text += 'SURFMONS = (\n' + ''.join('    %r,\n' % (mon,) for mon in surfmons) + ')\n'
+    text += 'SURFMON_FILES = (\n' + ''.join('    %r,\n' % (row,) for row in surf_files) + ')\n'
     OUT.write_text(text, encoding='utf-8', newline='\n')
     print('wrote', OUT, len(looks), 'looks,', len(files), 'files')
 

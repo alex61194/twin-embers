@@ -57,7 +57,7 @@ def main() -> None:
                 if args.hd_backgrounds:
                     print(f"HD battle scenes: {info['hd']} of {len(gen4_hd.FILES)} files")
                 if args.alt_looks:
-                    print(f"Alternative player looks: {info['looks']} of {len(gen4_looks.LOOKS)}")
+                    print(f"Alternative player looks: {info['looks']} of {len(gen4_looks.LOOKS)}; surf Pokemon: {info['surfmons']} of {len(gen4_looks.SURFMONS)}")
             if args.extra_dir:
                 # Files made by a local tool (tools/dev_hd_battlefields.py), each under its path in the folder.
                 extra += [(file.relative_to(args.extra_dir).as_posix(), file.read_bytes())

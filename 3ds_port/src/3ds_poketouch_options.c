@@ -90,6 +90,19 @@ static int GetLookBlue(void) { LookNamesFill(); return CtrLooks_Chosen(CTR_LOOK_
 static void SetLookRed(int v) { CtrLooks_Choose(CTR_LOOK_RED, v - 1); }
 static void SetLookLeaf(int v) { CtrLooks_Choose(CTR_LOOK_LEAF, v - 1); }
 static void SetLookBlue(int v) { CtrLooks_Choose(CTR_LOOK_BLUE, v - 1); }
+/* The Pokemon to surf on (the same Builder download): DEFAULT is FireRed's own, then each one the pack has. */
+static const char *sSurfNames[1 + CTR_SURFMONS_MAX];
+static void SurfNamesFill(void)
+{
+    int n = CtrSurf_Count();
+
+    sSurfNames[0] = CTR_TR("Default", "Normal", "Standard");
+    for (int i = 0; i < n; ++i)
+        sSurfNames[1 + i] = CtrSurf_Name(i);
+}
+static int SurfCount(void) { SurfNamesFill(); return 1 + CtrSurf_Count(); }
+static int GetSurf(void) { SurfNamesFill(); return CtrSurf_Chosen() + 1; }
+static void SetSurf(int v) { CtrSurf_Choose(v - 1); }
 static int GetFreeHm(void) { return !CtrSettings_FreeHm(); }
 static void SetFreeHm(int v) { CtrSettings_SetFreeHm(!(v & 1)); }
 static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
@@ -213,6 +226,8 @@ static const CtrOptionRow sRows[] = {
      GetLookLeaf, LookCount, SetLookLeaf},
     {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
+    {CTR_TR("Surf Pokemon", "Pok\xC3\xA9mon surf", "Surf-Pok\xC3\xA9mon"), {CTR_TR("The Pokemon you surf on,", "El Pok\xC3\xA9mon sobre el que", "Das Pok\xC3\xA9mon, auf dem du"), CTR_TR("from the alternative ones.", "surfeas, de los extra.", "surfst, aus den Builder-Looks.")}, 0, sSurfNames, NULL,
+     GetSurf, SurfCount, SetSurf},
     /* Graphics, page 3: the wild Pokemon that are seen in the overworld. */
     {CTR_TR("Wild Pokemon", "Salvajes", "Wilde Pok\xC3\xA9mon"), {CTR_TR("How many wild Pokemon", "Cu\xC3\xA1ntos Pok\xC3\xA9mon salvajes", "Wie viele wilde Pok\xC3\xA9mon"), CTR_TR("walk about the map.", "andan por el mapa.", "auf der Karte laufen.")}, 0,
      sWildDensity, NULL, GetWildDensity, WildDensityCount, SetWildDensity},
@@ -256,7 +271,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 14, PAGE5 = 17, PAGE6 = 23, PAGE7 = 28 };
+enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 15, PAGE5 = 18, PAGE6 = 24, PAGE7 = 29 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
 static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
@@ -421,6 +436,23 @@ static void LookPreview(CtrPokeTouchView *v, int selected)
     slot = first >= 0 ? selected - first : -1;
 
     memset(l, 0, sizeof(*l));
+    if (selected >= 0 && selected < ROWS && sRows[selected].names == sSurfNames)
+    {
+        /* The Pokemon to surf on: its name, the artist and the blob facing south. */
+        l->on = 1;
+        index = CtrSurf_Chosen();
+        text = index >= 0 ? CtrSurf_Name(index) : CTR_TR("Default", "Normal", "Standard");
+        snprintf(l->name, sizeof(l->name), "%s", text ? text : "");
+        if (index < 0)
+        {
+            snprintf(l->credit, sizeof(l->credit), "%s", CTR_TR("The one FireRed has.", "El que tiene FireRed.", "Das von FireRed."));
+            return;
+        }
+        text = CtrSurf_Credit(index);
+        snprintf(l->credit, sizeof(l->credit), "%s", text ? text : "");
+        l->has = (uint8_t)CtrSurf_Picture(index, l->tiles, l->palette);
+        return;
+    }
     if (slot < 0 || slot > 2)
         return;
     l->on = 1;

@@ -196,7 +196,11 @@ int main(void)
     CtrSettings_SetLook(CTR_LOOK_RED, "ash_hgss");
     CtrSettings_SetLook(CTR_LOOK_BLUE, "gary_kanto");
     assert(strcmp(CtrSettings_Look(CTR_LOOK_RED), "ash_hgss") == 0 && strcmp(CtrSettings_Look(CTR_LOOK_BLUE), "gary_kanto") == 0);
-    assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0 && CtrSettings_Look(3)[0] == 0);
+    assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0 && CtrSettings_Look(CTR_LOOK_SURF)[0] == 0 && CtrSettings_Look(4)[0] == 0);
+    CtrSettings_SetLook(CTR_LOOK_SURF, "lapras");
+    assert(strcmp(CtrSettings_Look(CTR_LOOK_SURF), "lapras") == 0);
+    CtrSettings_SetLook(CTR_LOOK_SURF, "");
+    assert(CtrSettings_Look(CTR_LOOK_SURF)[0] == 0);
     CtrSettings_SetLook(CTR_LOOK_LEAF, "Bad Name/..");
     assert(CtrSettings_Look(CTR_LOOK_LEAF)[0] == 0);                       /* the first character is not allowed: nothing */
     CtrSettings_SetLook(CTR_LOOK_LEAF, "abcdefghijklmnopqrstu");
@@ -237,6 +241,7 @@ int main(void)
     CtrSettings_SetLook(CTR_LOOK_RED, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_LEAF, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_BLUE, "abcdefghijklmno");
+    CtrSettings_SetLook(CTR_LOOK_SURF, "abcdefghijklmno");
     CtrSettings_SetLastBall(65535);
     {
         static char worst[4096];
@@ -251,7 +256,7 @@ int main(void)
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
         assert(n < 360);   /* the file holds 512; the wild keys are before the looks and the ball */
         assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
-        assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
+        assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "look_surf=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }
 
     remove(CTR_SETTINGS_PATH);

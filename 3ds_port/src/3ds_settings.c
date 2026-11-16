@@ -22,7 +22,7 @@ static int sAutoRun;
 static int sEmbers = -1;
 static int sRepelAgain = 1;
 static int sCompanion;
-static char sLook[3][16];     /* look_red, look_leaf, look_blue */
+static char sLook[4][16];     /* look_red, look_leaf, look_blue, look_surf (the Pokemon to surf on) */
 static int sExpShare;
 static int sTmReuse;
 static int sNuzlocke;
@@ -47,7 +47,7 @@ static int sLoaded;
 #define SETTINGS_FILE_BYTES 512     /* was 256: the file grew to about 232 bytes in the worst case; a shorter old file reads as before */
 static FILE *sFile;
 
-static const char *const kLookKey[3] = {"look_red=", "look_leaf=", "look_blue="};
+static const char *const kLookKey[4] = {"look_red=", "look_leaf=", "look_blue=", "look_surf="};
 
 /* A look's name is its folder's: only [a-z0-9_], at most 15 characters, up to the first other one (the line's end). */
 static void LookSet(int slot, const char *text)
@@ -65,7 +65,7 @@ static void LookSet(int slot, const char *text)
 
 static int LookLine(const char *line)
 {
-    for (int slot = 0; slot < 3; ++slot)
+    for (int slot = 0; slot < 4; ++slot)
         if (strncmp(line, kLookKey[slot], strlen(kLookKey[slot])) == 0)
         {
             LookSet(slot, line + strlen(kLookKey[slot]));
@@ -202,7 +202,7 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "wildaggro=%d\n", sWildAggro);
     if (sWildDensity && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "visiblewilds=%d\n", sWildDensity);
-    for (int slot = 0; slot < 3; ++slot)
+    for (int slot = 0; slot < 4; ++slot)
         if (sLook[slot][0] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "%s%s\n", kLookKey[slot], sLook[slot]);
     if (sBall && length > 0 && (size_t)length < size)
@@ -598,7 +598,7 @@ void CtrSettings_SetRandomNoLegendary(int on)
 const char *CtrSettings_Look(int slot)
 {
     Load();
-    return slot >= 0 && slot < 3 ? sLook[slot] : "";
+    return slot >= 0 && slot < 4 ? sLook[slot] : "";
 }
 
 void CtrSettings_SetLook(int slot, const char *id)
@@ -606,7 +606,7 @@ void CtrSettings_SetLook(int slot, const char *id)
     char before[16];
 
     Load();
-    if (slot < 0 || slot >= 3)
+    if (slot < 0 || slot >= 4)
         return;
     memcpy(before, sLook[slot], sizeof(before));
     LookSet(slot, id ? id : "");

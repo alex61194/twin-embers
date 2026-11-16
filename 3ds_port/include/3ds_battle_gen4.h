@@ -151,6 +151,9 @@ bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned attr2, unsigned width
  * palette slot: that object event's reflection in water; 1 with CTR_NPC_BIRD + gender and image 0 or 1: the Fly bird
  * carrying the player. 0: none. */
 #define CTR_NPC_BIRD 250
+/* The blob under the player surfing, graphics id 252 with its image 0 to 5 (south, north and west, two each): drawn from the Pokemon the
+ * player chose to surf on (CTR_LOOK_SURF), graphics/gen4/surfmon/<folder>/blob.bin, when there is one. */
+#define CTR_NPC_SURFBLOB 252
 /* The Pokemon that walks behind the player (the Builder's "Pokemon that walk behind you"): an object event whose
  * graphics id is CTR_NPC_FOLLOWER + its national dex number (+ CTR_NPC_FOLLOWER_FEMALE for a female picture of its
  * own) is drawn from graphics/gen4/follower/NNN.bin (NNN_f.bin), the same entry as a person (nine 32x32 frames). */

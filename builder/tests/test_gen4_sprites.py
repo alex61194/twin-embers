@@ -127,7 +127,7 @@ class DownloadTest(unittest.TestCase):
                         patch.object(gen4_sprites, "BACK_FILES", ()),
                         patch.object(gen4_sprites, "NPC_FILES", ()), patch.object(gen4_sprites, "PLAYER_FILES", ()),
                         patch.object(gen4_sprites, "FOLLOWER_FILES", ()), patch.object(gen4_hd, "FILES", ()),
-                        patch.object(gen4_looks, "FILES", ())):
+                        patch.object(gen4_looks, "FILES", ()), patch.object(gen4_looks, "SURFMON_FILES", ())):
             patcher.start()
             self.addCleanup(patcher.stop)
         self.urls = []
@@ -144,7 +144,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "player": 0, "downloaded": 8})
+                                "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -611,7 +611,7 @@ class PeopleTest(unittest.TestCase):
         self.assertEqual(len(gen4_sprites.all_files(("follower",))), len(gen4_sprites.FOLLOWER_FILES))
         self.assertEqual(len(gen4_sprites.all_files(())), 0)
         self.assertEqual(len(gen4_sprites.all_files()), len(gen4_sprites.all_files(("pokemon",))) + 74
-                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES))
+                         + len(gen4_sprites.FOLLOWER_FILES) + len(gen4_hd.FILES) + len(gen4_looks.FILES) + len(gen4_looks.SURFMON_FILES))
         data = rgba_png(self.sheet())
         rows = tuple((16 + i, "npc", "n/%d.png" % i, len(data), hashlib.sha256(data).hexdigest()) for i in range(3))
         with patch.object(gen4_sprites, "NPC_FILES", rows):
@@ -1002,6 +1002,33 @@ class LookTest(unittest.TestCase):
             files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(
                 None, get=lambda url: urls.append(url) or b""), groups=())
             self.assertEqual((files, urls, info["looks"]), ([], [], 0))
+
+    def test_the_pinned_surf_pokemon(self):
+        self.assertEqual(len({mon[0] for mon in gen4_looks.SURFMONS}), len(gen4_looks.SURFMONS))
+        for number, (folder, name, credit) in enumerate(gen4_looks.SURFMONS):
+            rows = [row for row in gen4_looks.SURFMON_FILES if row[0] == number]
+            self.assertEqual(len(rows), 1, folder)
+            self.assertEqual((rows[0][1], len(rows[0][4])), ("surfmon", 64))
+            self.assertTrue(rows[0][2].endswith("/%s/frlg/surfBlob.png" % folder))
+            self.assertLessEqual(len(name), 11)
+            self.assertTrue(credit)
+        self.assertEqual(gen4_sprites.file_name(gen4_looks.SURFMON_FILES[0]), "surfmon_00.png")
+        self.assertIn(gen4_looks.COMMIT, gen4_sprites.file_url(gen4_looks.SURFMON_FILES[0]))
+
+    def test_the_group_adds_each_surf_pokemon_whose_blob_came(self):
+        blob = self.sheet(32, 6)
+        rows = ((0, "surfmon", "assets/surfmons/a/frlg/surfBlob.png", len(blob), hashlib.sha256(blob).hexdigest()),
+                (1, "surfmon", "assets/surfmons/b/frlg/surfBlob.png", len(blob), hashlib.sha256(blob).hexdigest()))
+        mons = (("a", "A", "by x"), ("b", "B", "by y"))
+        by_url = {gen4_sprites.file_url(rows[0]): blob}
+        with patch.object(gen4_looks, "SURFMON_FILES", rows), patch.object(gen4_looks, "SURFMONS", mons), patch.object(gen4_looks, "FILES", ()), patch.object(gen4_looks, "LOOKS", ()):
+            files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(None, get=by_url.__getitem__), groups=("looks",))
+        made = dict(files)
+        self.assertEqual(sorted(made), ["graphics/gen4/surfmon/a/blob.bin", "graphics/gen4/surfmon/index.bin"])
+        self.assertEqual(made["graphics/gen4/surfmon/index.bin"], b"G4S1\na\tA\tby x\n")
+        entry = made["graphics/gen4/surfmon/a/blob.bin"]
+        self.assertEqual((entry[:4], entry[4], entry[5], len(entry)), (b"G4N1", 6, 32, 40 + 6 * 512))
+        self.assertEqual(info["surfmons"], 1)
 
     def test_an_hgss_look_without_a_sheet_wears_its_siblings(self):
         walk, bike = self.sheet(16, 20), self.sheet(16, 9)

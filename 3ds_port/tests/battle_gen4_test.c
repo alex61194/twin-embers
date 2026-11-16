@@ -147,7 +147,7 @@ void *CtrData_Load(const char *path, uint32_t *outSize)
 static unsigned sSizeAsked;
 
 /* The look the player chose for Red, Leaf and Blue (settings), and whether the pack has the looks' entries. */
-static const char *sLook[3];
+static const char *sLook[4];
 static bool sLookPack;
 
 const char *CtrSettings_Look(int slot) { return sLook[slot]; }
@@ -158,6 +158,11 @@ bool CtrData_Size(const char *path, uint32_t *outSize)
     if (strncmp(path, "graphics/gen4/look/", 19) == 0)
     {
         *outSize = 40 + 9 * 512;
+        return sLookPack;
+    }
+    if (strncmp(path, "graphics/gen4/surfmon/", 22) == 0)
+    {
+        *outSize = 40 + 6 * 512;
         return sLookPack;
     }
     if (strcmp(path, "graphics/gen4/follower/004.bin") && strcmp(path, "graphics/gen4/follower/012_f.bin"))
@@ -866,6 +871,26 @@ int main(void)
         assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/007.bin") == 0);
         sNpcGfx = 21;
         assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/npc/021.bin") == 0);
+        /* The blob under the player surfing (graphics id 252, six frames): the Pokemon chosen to surf on, and FireRed's own blob without one. */
+        sEntry[4] = 6;
+        sEntrySize = 40 + 6 * 512;
+        sNpcGfx = 252;
+        sNpcFrame = 4;
+        sAsked[0] = 0;
+        CtrGen4_LooksChanged();
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && sAsked[0] == 0);
+        sLook[3] = "lapras";
+        CtrGen4_LooksChanged();
+        assert(CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person) && strcmp(sAsked, "graphics/gen4/surfmon/lapras/blob.bin") == 0);
+        assert(person.side == 4 && person.first == 4 * 16);
+        sLookPack = false;
+        CtrGen4_LooksChanged();
+        assert(!CtrNpc_Match(60, 40, 100 | 3 << 12, 16, 32, &person));
+        sLookPack = true;
+        sLook[3] = NULL;
+        sEntry[4] = 9;
+        sEntrySize = 40 + 9 * 512;
+        CtrGen4_LooksChanged();
         /* The pack without the looks (or a look without the sheet): the usual entry, asked again after the change. */
         sLookPack = false;
         CtrGen4_LooksChanged();

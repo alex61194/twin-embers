@@ -2,7 +2,8 @@
 
 By the artists named in each look's credit, shared in ElvieBlooms' Emerald Lens (https://github.com/ElvieBlooms/emerald_lens),
 used with the author's permission; see docs/THIRD-PARTY-ART.md. LOOKS: (folder, name, character, gender, credit); a
-row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256)."""
+row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at COMMIT, size, SHA-256). SURFMONS: (folder, name, credit)
+of each Pokemon to surf on; a row of SURFMON_FILES: (its number, "surfmon", its blob sheet's path, size, SHA-256)."""
 
 REPO = 'ElvieBlooms/emerald_lens'
 COMMIT = '9a97879e5c82ea44e2acf7717fa94f864b382ceb'
@@ -229,4 +230,30 @@ FILES = (
     (20, 'look', 'assets/sprites/aang/gen3/frlg/back.png', 4875, '109302113b05fe9d55f2c3c1d97cc9d49120b15c1a7bca0b7303e42fec683e53'),
     (20, 'look', 'assets/sprites/aang/gen3/frlg/front.png', 1730, '3e4c153753bdafe1adffac832c44ab70172456ad6e43d6df5b6d400c88f283ca'),
     (20, 'look', 'assets/sprites/aang/gen3/frlg/intro.png', 2063, '91d214f11d716d9899fc94fc4f47805451027c31d44745cf9a9963525818abba'),
+)
+SURFMONS = (
+    ('lapras', 'LAPRAS', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),
+    ('blastoise', 'BLASTOISE', 'Surf sprite by eMMe97'),
+    ('dewgong', 'DEWGONG', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),
+    ('latias', 'LATIAS', 'Surf sprite by Nolo33LP'),
+    ('ludicolo', 'LUDICOLO', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),
+    ('mantine', 'MANTINE', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),
+    ('pelipper', 'PELIPPER', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),
+    ('pikachu', 'PIKACHU', 'Surf sprite by Nolo33LP, additional editing by Jordank'),
+    ('tentacruel', 'TENTACRUEL', 'Surf sprite by Avara'),
+    ('wailmer', 'WAILMER', 'Surf sprite by Hestia'),
+    ('whiscash', 'WHISCASH', 'Surf sprite by EduarPokeN'),
+)
+SURFMON_FILES = (
+    (0, 'surfmon', 'assets/surfmons/lapras/frlg/surfBlob.png', 2099, 'c7efe404458e189a80f1bea3c70ff556dc1eb534c7e7ff5dbd244acf49f58685'),
+    (1, 'surfmon', 'assets/surfmons/blastoise/frlg/surfBlob.png', 2160, 'c2123f3364400ceef98be90a1877d04bd25befed26a9e432351cbcddb9982a59'),
+    (2, 'surfmon', 'assets/surfmons/dewgong/frlg/surfBlob.png', 1899, 'b13ba5c5913030a1a661d21710b14a996894f59fef447bce74140e42f3be6e53'),
+    (3, 'surfmon', 'assets/surfmons/latias/frlg/surfBlob.png', 2570, '7fa0874a46d08b70ae49abd792c2defeaab358f16a33e75c65b61b89ae6f7574'),
+    (4, 'surfmon', 'assets/surfmons/ludicolo/frlg/surfBlob.png', 1257, '60d9a3ece7b7b40dbc5e7f4c64aad94e52f28a7953f46d2365048c7b676ecfee'),
+    (5, 'surfmon', 'assets/surfmons/mantine/frlg/surfBlob.png', 2409, '70f1c897cd8965fb6aae09245dd1da354bdd871d31ac5baa35571767ce62cf6f'),
+    (6, 'surfmon', 'assets/surfmons/pelipper/frlg/surfBlob.png', 1950, '2a37012a93a321694c6ae0d058326f2874d0b968586fd59813e70ed3abea1c1d'),
+    (7, 'surfmon', 'assets/surfmons/pikachu/frlg/surfBlob.png', 2234, '86fc934df2e88344748b10fe593e795d8ca4dba1c4a74982fbeaad4170eb2dbc'),
+    (8, 'surfmon', 'assets/surfmons/tentacruel/frlg/surfBlob.png', 1372, '66c8a0e9b420ab43948e6a56db4fcc4548d5ab54f74acfc4158e288e86ae572f'),
+    (9, 'surfmon', 'assets/surfmons/wailmer/frlg/surfBlob.png', 1629, '4c2779d5ae97080c34ed780670d2b1605fcd6d1658056b9792bdbf8ce6265da1'),
+    (10, 'surfmon', 'assets/surfmons/whiscash/frlg/surfBlob.png', 2203, '2bf7ebaa37e33c7cd9fd6a31bed62f8e32ad066180492d33e06d9c10eb0f82d7'),
 )

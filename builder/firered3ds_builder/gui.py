@@ -207,7 +207,7 @@ class BuilderWindow(tk.Tk):
         if info.get("hd"):
             lines.append("HD battle scenes: {0} files.".format(info["hd"]))
         if info.get("looks"):
-            lines.append("More characters to be: {0} looks.".format(info["looks"]))
+            lines.append("More characters to be: {0} looks and {1} Pokemon to surf on.".format(info["looks"], info.get("surfmons", 0)))
         # A ticked set whose files could not be had (no network, or a file did not match) is not a success: say so, and that
         # building again tries it again.
         for key, count_keys, name in (("heartgold", ("species",), "HeartGold battle sprites"),
