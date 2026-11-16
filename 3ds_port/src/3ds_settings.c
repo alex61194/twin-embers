@@ -30,6 +30,9 @@ static int sRandomlocke;
 static int sNuzDupes;       /* NUZLOCKE clauses: a species already caught does not use the area's catch */
 static int sNuzShiny;       /* a shiny does not use it either */
 static int sNuzCap;         /* LEVEL CAPS: no experience at or above the badge's cap */
+static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE is on */
+static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
+static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
 static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
@@ -114,6 +117,12 @@ static void Load(void)
             sNuzShiny = value != 0;
         else if (sscanf(line, "nuzcap=%u", &value) == 1)
             sNuzCap = value != 0;
+        else if (sscanf(line, "nuzset=%u", &value) == 1)
+            sNuzSet = value != 0;
+        else if (sscanf(line, "randtarget=%u", &value) == 1)
+            sRandTarget = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "randnolegend=%u", &value) == 1)
+            sRandNoLegend = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
@@ -177,6 +186,12 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "nuzshiny=1\n");
     if (sNuzCap && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "nuzcap=1\n");
+    if (sNuzSet && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "nuzset=1\n");
+    if (sRandTarget && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "randtarget=%d\n", sRandTarget);
+    if (sRandNoLegend && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "randnolegend=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
     /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
@@ -529,6 +544,54 @@ void CtrSettings_SetNuzLevelCap(int on)
     if (on == sNuzCap)
         return;
     sNuzCap = on;
+    Save();
+}
+
+int CtrSettings_NuzSet(void)
+{
+    Load();
+    return sNuzSet;
+}
+
+void CtrSettings_SetNuzSet(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sNuzSet)
+        return;
+    sNuzSet = on;
+    Save();
+}
+
+int CtrSettings_RandomTarget(void)
+{
+    Load();
+    return sRandTarget;
+}
+
+void CtrSettings_SetRandomTarget(int target)
+{
+    Load();
+    target = target >= 0 && target <= 2 ? target : 0;
+    if (target == sRandTarget)
+        return;
+    sRandTarget = target;
+    Save();
+}
+
+int CtrSettings_RandomNoLegendary(void)
+{
+    Load();
+    return sRandNoLegend;
+}
+
+void CtrSettings_SetRandomNoLegendary(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sRandNoLegend)
+        return;
+    sRandNoLegend = on;
     Save();
 }
 

@@ -4,6 +4,10 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ## Unreleased
 
+### Added
+
+- **More Nuzlocke and Randomlocke options** (OPTIONS, Nuzlocke section, now two pages). Nuzlocke gets *Set mode*: the battle style is Set while the rules are on, so there is no free switch after a foe faints. Randomlocke moves to its own page and gets *Random for* (both, wild only or trainers only; the starter and gifts follow the wild side) and *Legendaries* (allow them, or never pick a legendary or mythical species). All are off or at their old behaviour by default.
+
 ### Changed
 
 - **Visible wilds** (PR #88 by mcl5500): aggressive wilds now run from your lead only when they have 15% of its power or less (before, below 70%), so they chase you far more; chasing land Pokémon may leave the tall grass for plain ground; new wilds appear near you but always just off the screen, and the map keeps alive a symmetric margin of 3 to 4 tiles of objects around the screen.
