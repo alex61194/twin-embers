@@ -193,7 +193,8 @@ class PakReader:
             last = pid
             self.entries[pid] = Entry(None, pid, typ, flags, off, stored, raw, crc)
         cursor = self.data_offset
-        for entry in sorted(self.entries.values(), key=lambda e: e.offset):
+        # An empty payload shares its offset with the next one: the empty one goes first, whatever their ids.
+        for entry in sorted(self.entries.values(), key=lambda e: (e.offset, e.raw_size)):
             if entry.offset != cursor or entry.raw_size > total - cursor:
                 raise PakError("invalid payload index entry")
             cursor = (cursor + entry.raw_size + 31) // 32 * 32

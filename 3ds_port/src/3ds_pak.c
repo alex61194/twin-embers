@@ -184,8 +184,11 @@ typedef struct
 
 static int CompareRange(const void *a, const void *b)
 {
-    uint64_t x = ((const PakRange *)a)->offset, y = ((const PakRange *)b)->offset;
-    return x < y ? -1 : x > y;
+    const PakRange *p = a, *q = b;
+
+    if (p->offset != q->offset) return p->offset < q->offset ? -1 : 1;
+    /* An empty payload shares its offset with the next one (qsort is not stable): the empty one goes first. */
+    return (p->size > q->size) - (p->size < q->size);
 }
 
 /* Schema 2: any index order, but the payloads tile the data area exactly. */

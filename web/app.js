@@ -30,7 +30,7 @@ const ui = {
   result: $('result'), download: $('download'), details: $('result-details'), error: $('error'),
 };
 
-const state = { ready: false, busy: false, rom: null, romOk: false, pakUrl: null };
+const state = { ready: false, busy: false, rom: null, romOk: false, pakUrl: null, pick: 0 };
 
 function setPill(text, kind) {
   ui.romPill.textContent = text;
@@ -65,6 +65,7 @@ function mib(bytes) {
 
 // A quick check on the page so a wrong file is reported at once; the Builder checks again itself.
 async function chooseRom(file) {
+  const pick = ++state.pick;      // a slower check of an earlier file must not overwrite the choice of a later one
   state.rom = null;
   state.romOk = false;
   ui.error.classList.add('hidden');
@@ -83,8 +84,10 @@ async function chooseRom(file) {
   }
   setPill(L('Checking…', 'Comprobando…', 'Wird geprüft…'), 'busy');
   const data = await file.arrayBuffer();
+  if (pick !== state.pick) return;
   if (crypto.subtle) {
     const sha1 = hex(await crypto.subtle.digest('SHA-1', data));
+    if (pick !== state.pick) return;
     const rom = ROMS[sha1];
     if (!rom) {
       setPill(L('Unsupported ROM', 'ROM no compatible', 'ROM nicht unterstützt'), 'bad');
@@ -149,6 +152,18 @@ worker.onmessage = (event) => {
     showError(message.message);
     refresh();
   }
+};
+
+// The worker dying (on a phone, usually for lack of memory) or failing to load: the page must not wait for it for ever.
+worker.onerror = () => {
+  state.busy = false;
+  state.ready = false;
+  ui.progress.classList.add('hidden');
+  ui.status.textContent = L('The Builder stopped.', 'El Builder se ha detenido.', 'Der Builder wurde beendet.');
+  showError(L('The Builder stopped unexpectedly; on a phone this is usually the memory. Reload the page and try again with the optional pictures off.',
+    'El Builder se ha detenido de forma inesperada; en un móvil suele ser por la memoria. Recarga la página y vuelve a intentarlo sin las imágenes opcionales.',
+    'Der Builder wurde unerwartet beendet; auf dem Handy liegt es meist am Speicher. Lade die Seite neu und versuche es ohne die optionalen Bilder erneut.'));
+  refresh();
 };
 
 function finish(pak, info) {

@@ -30,7 +30,10 @@ function hex(buffer) {
 }
 
 async function fetchBytes(url) {
-  const response = await fetch(url);
+  // A download that hangs (a weak mobile connection) ends after 60 s instead of leaving the page waiting for ever.
+  const options = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+    ? { signal: AbortSignal.timeout(60000) } : {};
+  const response = await fetch(url, options);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
   return response.arrayBuffer();
 }

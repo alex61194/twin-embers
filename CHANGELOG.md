@@ -15,6 +15,9 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- **Packs with an empty file:** the Builder and the game could reject a pack when a payload had size 0 and shared its offset with the next one (the order of equal offsets depended on the file names). No pack made so far has an empty file, so nobody was affected yet.
+- **Builder, desktop:** a pack that appeared at the destination while the Builder was working is no longer replaced when overwriting was not confirmed.
+- **Web Builder:** a download that hangs ends after 60 seconds, a failing or killed Builder worker (usually for lack of memory on a phone) now shows a message instead of an endless progress bar, and choosing a second ROM while the first is still being checked can no longer leave the first one selected.
 - **New game, choosing the name:** FireRed's own keyboard no longer shows on the upper screen. Oak's picture stays there while the lower screen's keyboard is used, for the player's and the rival's name. Checked only by reading the code and the host build; not yet run in the game.
 
 ## v0.6.0
