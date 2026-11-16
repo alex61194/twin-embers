@@ -7,6 +7,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 ### Added
 
 - Three more player looks from Emerald Lens 1.1.1 for the Builder's *More characters to be*: Harmony (D/P), Peach (HGSS) and Aang, so there are 21 in all. The sheets are pinned at Emerald Lens' commit 9a97879 by size and SHA-256; a look without a back, front or intro picture keeps FireRed's own.
+- **More Nuzlocke and Randomlocke options** (OPTIONS, Nuzlocke section, now two pages). Nuzlocke gets *Set mode*: the battle style is Set while the rules are on, so there is no free switch after a foe faints. Randomlocke moves to its own page and gets *Random for* (both, wild only or trainers only; the starter and gifts follow the wild side) and *Legendaries* (allow them, or never pick a legendary or mythical species). All are off or at their old behaviour by default.
 
 ### Changed
 

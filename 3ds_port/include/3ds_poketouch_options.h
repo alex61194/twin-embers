@@ -53,6 +53,9 @@ int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (RE
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
 int CtrOptions_FreeHm(void);         /* FREE HMS: an HM in the Bag works in the field (with its badge) with no Pokemon that knows the move */
 int CtrOptions_Randomlocke(void);    /* RANDOMLOCKE: wild and trainer Pokemon are random species */
+int CtrOptions_RandomWild(void);     /* RANDOMLOCKE on and its target is not TRAINERS: wild Pokemon, gifts and the starter are random */
+int CtrOptions_RandomTrainers(void); /* RANDOMLOCKE on and its target is not WILD: the trainers' Pokemon are random */
+int CtrOptions_NuzSetMode(void);     /* NUZLOCKE on with SET MODE: the battle style is Set whatever OPTIONS says */
 /* The species (FireRed's internal number) that stands in for one of the game's: always the same for a seed (the save's Trainer ID),
  * a place (a map, or a trainer's party slot) and the species it replaces, so an area keeps its Pokemon through a game. Never the
  * unused numbers between Celebi and Treecko, the Egg or nothing. */

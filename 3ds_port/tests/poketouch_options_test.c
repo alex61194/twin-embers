@@ -79,7 +79,7 @@ int main(void)
 
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 28, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 31, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * CtrOptions_PageCount(), "more rows than the pages hold");
     CHECK(strcmp(CtrOptions_Row(6)->label, "FPS counter") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(17)->label, "Type matchup") == 0, "TYPE MATCHUP is row 7");
@@ -195,32 +195,34 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 20);
-    CHECK(view.optPage == 4 && view.optPageCount == 6 && view.optCount == 6 && view.optSection == 2 && view.optSectionCount == 4,
+    CHECK(view.optPage == 4 && view.optPageCount == 7 && view.optCount == 6 && view.optSection == 2 && view.optSectionCount == 4,
           "the QoL page holds six rows and is the third section of four");
-    /* The pages: Settings (5 rows), Graphics (6: the screen; 3: the looks; 3: the wild Pokemon), QoL (6) and Nuzlocke (5), in four sections. */
-    CHECK(CtrOptions_PageCount() == 6 && CtrOptions_SectionCount() == 4
+    /* The pages: Settings (5 rows), Graphics (6: the screen; 3: the looks; 3: the wild Pokemon), QoL (6) and Nuzlocke (5), Randomlocke (3), in four sections. */
+    CHECK(CtrOptions_PageCount() == 7 && CtrOptions_SectionCount() == 4
           && CtrOptions_PageBase(0) == 0 && CtrOptions_PageRows(0) == 5 && CtrOptions_PageBase(1) == 5 && CtrOptions_PageRows(1) == 6
           && CtrOptions_PageBase(2) == 11 && CtrOptions_PageRows(2) == 3 && CtrOptions_PageBase(3) == 14 && CtrOptions_PageRows(3) == 3
-          && CtrOptions_PageBase(4) == 17 && CtrOptions_PageRows(4) == 6 && CtrOptions_PageBase(5) == 23 && CtrOptions_PageRows(5) == 5,
-          "six pages in four sections");
+          && CtrOptions_PageBase(4) == 17 && CtrOptions_PageRows(4) == 6 && CtrOptions_PageBase(5) == 23 && CtrOptions_PageRows(5) == 5
+          && CtrOptions_PageBase(6) == 28 && CtrOptions_PageRows(6) == 3,
+          "seven pages in four sections");
     CHECK(strcmp(CtrOptions_PageName(0), "Settings") == 0 && strcmp(CtrOptions_PageName(1), "Graphics") == 0
           && strcmp(CtrOptions_PageName(2), "Looks") == 0 && strcmp(CtrOptions_PageName(3), "Wilds") == 0 && strcmp(CtrOptions_PageName(4), "QoL") == 0
-          && strcmp(CtrOptions_PageName(5), "Nuzlocke") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(6)[0] == 0,
+          && strcmp(CtrOptions_PageName(5), "Nuzlocke") == 0 && strcmp(CtrOptions_PageName(6), "Random") == 0
+          && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(7)[0] == 0,
           "each page has its own short name (the PAGE button is 64 px of text), none past the last");
     {
         int of = 0;
 
         CHECK(CtrOptions_SectionPage(1, &of) == 1 && of == 3 && CtrOptions_SectionPage(2, &of) == 2 && of == 3 && CtrOptions_SectionPage(3, &of) == 3 && of == 3
-              && CtrOptions_SectionPage(0, &of) == 1 && of == 1 && CtrOptions_SectionPage(5, &of) == 1 && of == 1
+              && CtrOptions_SectionPage(0, &of) == 1 && of == 1 && CtrOptions_SectionPage(5, &of) == 1 && of == 2 && CtrOptions_SectionPage(6, &of) == 2 && of == 2
               && CtrOptions_SectionOf(0) == 0 && CtrOptions_SectionOf(1) == 1 && CtrOptions_SectionOf(2) == 1 && CtrOptions_SectionOf(3) == 1
-              && CtrOptions_SectionOf(4) == 2 && CtrOptions_SectionOf(5) == 3, "Graphics has three pages, the rest one");
+              && CtrOptions_SectionOf(4) == 2 && CtrOptions_SectionOf(5) == 3 && CtrOptions_SectionOf(6) == 3, "Graphics has three pages, Nuzlocke two, the rest one");
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 11);
     CHECK(strcmp(view.optPageName, "Looks") == 0 && view.optPage == 2 && view.optSection == 1, "the looks page is named Looks and is in the Graphics section");
     CtrOptions_Fill(&view, 23);
     CHECK(strcmp(view.optPageName, "Nuzlocke") == 0 && view.optPage == 5 && view.optSection == 3, "the Nuzlocke page is named alone");
-    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(6) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(6) == 0,
+    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(7) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(7) == 0,
           "a page that does not exist has no rows");
     {
         int total = 0;
@@ -234,13 +236,13 @@ int main(void)
         CHECK(total == CtrOptions_RowCount(), "the pages hold every row once (%d of %d)", total, CtrOptions_RowCount());
     }
     memset(&view, 0, sizeof(view));
-    CtrOptions_Fill(&view, CtrOptions_RowCount() - 3);
-    CHECK(view.optPage == 5 && view.optCount == 5 && view.optSelected == 2 && view.optLabel[5][0] == 0,
-          "the last page: its five rows, the third selected, no sixth");
+    CtrOptions_Fill(&view, CtrOptions_RowCount() - 2);
+    CHECK(view.optPage == 6 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
+          "the last page: its three rows, the second selected, no fourth");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(4) == 0 && CtrOptions_PageOf(5) == 1 && CtrOptions_PageOf(10) == 1
           && CtrOptions_PageOf(11) == 2 && CtrOptions_PageOf(13) == 2 && CtrOptions_PageOf(14) == 3 && CtrOptions_PageOf(16) == 3
           && CtrOptions_PageOf(17) == 4 && CtrOptions_PageOf(22) == 4 && CtrOptions_PageOf(23) == 5 && CtrOptions_PageOf(27) == 5
-          && CtrOptions_PageOf(99) == 5, "a row's page");
+          && CtrOptions_PageOf(28) == 6 && CtrOptions_PageOf(30) == 6 && CtrOptions_PageOf(99) == 6, "a row's page");
     /* FREE HMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_FreeHm() == 0 && CtrSettings_FreeHm() == 0 && CtrOptions_Count(22) == 2, "FREE HMS starts off");
     Text(22, "Off");
@@ -250,12 +252,12 @@ int main(void)
     CtrOptions_Step(22, 1);
     CHECK(CtrOptions_FreeHm() == 0, "FREE HMS back off");
     /* RANDOMLOCKE: off by default, a switch that is kept in the settings. */
-    CHECK(CtrOptions_Randomlocke() == 0 && CtrSettings_Randomlocke() == 0 && CtrOptions_Count(24) == 2, "RANDOMLOCKE starts off");
-    Text(24, "Off");
-    CtrOptions_Step(24, 1);
+    CHECK(CtrOptions_Randomlocke() == 0 && CtrSettings_Randomlocke() == 0 && CtrOptions_Count(28) == 2, "RANDOMLOCKE starts off");
+    Text(28, "Off");
+    CtrOptions_Step(28, 1);
     CHECK(CtrOptions_Randomlocke() == 1 && CtrSettings_Randomlocke() == 1, "RANDOMLOCKE on, kept in the settings");
-    Text(24, "On");
-    CtrOptions_Step(24, 1);
+    Text(28, "On");
+    CtrOptions_Step(28, 1);
     CHECK(CtrOptions_Randomlocke() == 0, "RANDOMLOCKE back off");
     /* Its species: a real one always, the same for the same seed, place and species, and not the same for every seed or place. */
     {
@@ -287,24 +289,71 @@ int main(void)
     Text(23, "On");
     CtrOptions_Step(23, 1);
     CHECK(CtrOptions_Nuzlocke() == 0, "NUZLOCKE back off");
-    /* The three optional rules (page 5, rows 22 to 24): off by default, each its own switch kept in the settings. */
+    /* The three optional rules (page 6, rows 24 to 26): off by default, each its own switch kept in the settings. */
     CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0
-          && CtrOptions_Count(25) == 2 && CtrOptions_Count(26) == 2 && CtrOptions_Count(27) == 2, "the NUZLOCKE options start off");
-    Text(25, "Off");
-    CtrOptions_Step(25, 1);
-    CtrOptions_Step(27, 1);
+          && CtrOptions_Count(24) == 2 && CtrOptions_Count(25) == 2 && CtrOptions_Count(26) == 2, "the NUZLOCKE options start off");
+    Text(24, "Off");
+    CtrOptions_Step(24, 1);
+    CtrOptions_Step(26, 1);
     CHECK(CtrOptions_NuzDuplicates() == 1 && CtrSettings_NuzDuplicates() == 1 && CtrOptions_NuzShiny() == 0
           && CtrOptions_NuzLevelCap() == 1 && CtrSettings_NuzLevelCap() == 1, "DUPLICATES and LEVEL CAPS on, SHINY CLAUSE still off");
-    Text(25, "On");
-    CtrOptions_Step(26, 1);
+    Text(24, "On");
+    CtrOptions_Step(25, 1);
     CHECK(CtrOptions_NuzShiny() == 1 && CtrSettings_NuzShiny() == 1, "SHINY CLAUSE on, kept in the settings");
+    CtrOptions_Step(24, 1);
     CtrOptions_Step(25, 1);
     CtrOptions_Step(26, 1);
-    CtrOptions_Step(27, 1);
     CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0, "the NUZLOCKE options back off");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 25);
     CHECK(view.optPage == 5 && view.optCount == 5 && view.optLabel[0][0] && view.optLabel[4][0] && view.optLabel[5][0] == 0, "the Nuzlocke page holds five rows");
+    /* SET MODE (row 27): off, and only counts while NUZLOCKE is on. */
+    CHECK(CtrOptions_NuzSetMode() == 0 && CtrOptions_Count(27) == 2, "SET MODE starts off");
+    Text(27, "Off");
+    CtrOptions_Step(27, 1);
+    CHECK(CtrSettings_NuzSet() == 1 && CtrOptions_NuzSetMode() == 0, "SET MODE is kept but counts only with NUZLOCKE on");
+    CtrOptions_Step(23, 1);
+    CHECK(CtrOptions_NuzSetMode() == 1, "SET MODE counts with NUZLOCKE on");
+    CtrOptions_Step(23, 1);
+    CtrOptions_Step(27, 1);
+    CHECK(CtrSettings_NuzSet() == 0 && CtrOptions_NuzSetMode() == 0, "SET MODE and NUZLOCKE back off");
+    /* RANDOM FOR (row 29) and LEGENDARIES (row 30): both Wild and Trainers, legendaries allowed, until chosen. */
+    CHECK(CtrOptions_Count(29) == 3 && CtrOptions_Count(30) == 2 && CtrSettings_RandomTarget() == 0 && CtrSettings_RandomNoLegendary() == 0,
+          "RANDOM FOR has three values and starts at Both, LEGENDARIES starts allowed");
+    CtrOptions_Step(28, 1);
+    CHECK(CtrOptions_RandomWild() == 1 && CtrOptions_RandomTrainers() == 1, "RANDOMLOCKE on: wild and trainers");
+    CtrOptions_Step(29, 1);
+    CHECK(CtrSettings_RandomTarget() == 1 && CtrOptions_RandomWild() == 1 && CtrOptions_RandomTrainers() == 0, "WILD only");
+    CtrOptions_Step(29, 1);
+    CHECK(CtrSettings_RandomTarget() == 2 && CtrOptions_RandomWild() == 0 && CtrOptions_RandomTrainers() == 1, "TRAINERS only");
+    CtrOptions_Step(29, 1);
+    CHECK(CtrSettings_RandomTarget() == 0, "back to Both");
+    CtrOptions_Step(28, 1);
+    CHECK(CtrOptions_RandomWild() == 0 && CtrOptions_RandomTrainers() == 0, "RANDOMLOCKE off: nothing is random whatever the target");
+    CtrSettings_SetRandomTarget(9);
+    CHECK(CtrSettings_RandomTarget() == 0, "an unknown target is Both");
+    CtrOptions_Step(30, 1);
+    CHECK(CtrSettings_RandomNoLegendary() == 1, "LEGENDARIES off is kept in the settings");
+    {
+        unsigned legend = 0, bad = 0, kinds = 0, seen[412] = {0};
+
+        for (unsigned place = 0; place < 600; ++place)
+            for (unsigned species = 1; species < 40; ++species) {
+                unsigned made = CtrOptions_RandomSpecies(0x12345678u, place, species);
+
+                if ((made >= 144 && made <= 146) || made == 150 || made == 151 || (made >= 243 && made <= 245) || (made >= 249 && made <= 251)
+                    || (made >= 401 && made <= 410))
+                    ++legend;
+                if (made < 1 || made > 411 || (made > 251 && made < 277) || made != CtrOptions_RandomSpecies(0x12345678u, place, species))
+                    ++bad;
+                else if (!seen[made]++)
+                    ++kinds;
+            }
+        CHECK(legend == 0 && bad == 0, "no legendary comes out when they are off, and the choice repeats (%u legendary, %u bad)", legend, bad);
+        CHECK(kinds == 386 - 21, "every other species still can (%u of %u)", kinds, 386u - 21u);
+    }
+    CtrOptions_Step(30, 1);
+    CHECK(CtrSettings_RandomNoLegendary() == 0, "LEGENDARIES allowed again");
     /* The Wilds page (Graphics, page 3: rows 14 to 16): WILD POKEMON, WILD DISPLAY and AGGRESSIVE, all off or plain until chosen, kept in the settings. */
     CHECK(CtrOptions_WildDensity() == 0 && CtrSettings_WildDensity() == 0 && CtrOptions_Count(14) == 4, "WILD POKEMON starts off, with four values");
     CHECK(strcmp(CtrOptions_Row(14)->label, "Wild Pokemon") == 0 && strcmp(CtrOptions_Row(15)->label, "Wild display") == 0
@@ -349,7 +398,7 @@ int main(void)
     CtrOptions_Set(16, 0);
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 15);
-    CHECK(view.optPage == 3 && view.optPageCount == 6 && view.optCount == 3 && view.optSelected == 1 && view.optSection == 1 && view.optSectionCount == 4
+    CHECK(view.optPage == 3 && view.optPageCount == 7 && view.optCount == 3 && view.optSelected == 1 && view.optSection == 1 && view.optSectionCount == 4
           && strcmp(view.optPageName, "Wilds") == 0 && strcmp(view.optLabel[0], "Wild Pokemon") == 0 && view.optLabel[3][0] == 0,
           "the Wilds page: three rows, the third page of Graphics");
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
@@ -430,7 +479,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 18);
-    CHECK(view.optPage == 4 && view.optPageCount == 6 && view.optCount == 6 && view.optSelected == 1
+    CHECK(view.optPage == 4 && view.optPageCount == 7 && view.optCount == 6 && view.optSelected == 1
           && strcmp(view.optLabel[1], "Move details") == 0, "QoL Fill");
     /* ON/OFF rows are switches (on, off), the others text: EXP SHARE's levels are words, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 2 && view.optSwitch[3] == 0, "QoL switches");

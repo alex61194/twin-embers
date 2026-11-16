@@ -679,7 +679,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch_options.h",
-   "sha256": "d1bc09cff7bd8a2fefc6dc91a2386dfe4434d6be4562ab513dbac1e4c4c86895",
+   "sha256": "74df85f255e2ff2d846d7b83718e6f0adcd07a3d81ffc3d6e97ee6c8cf0fa9a7",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -726,7 +726,7 @@
   },
   {
    "path": "3ds_port/include/3ds_settings.h",
-   "sha256": "be75b65a2b7d6858d58578af88437cc2fe90f44dfa6a12a009488fffb3099f5d",
+   "sha256": "8cdb2f5234f72baad3dd81d377aeaadf9f4e8244dbc637f608b87100c190ddd6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1527,7 +1527,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "2a519246008d89ca62982c3e77b20e2505a41a0cf2220b9688409c6c431fd53d",
+   "sha256": "721d26095290e741e7514f9a149a9a3751f41f66ae699137169061614e235422",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1583,7 +1583,7 @@
   },
   {
    "path": "3ds_port/src/3ds_settings.c",
-   "sha256": "6c84990861751ef29ce1010721f131c176942d83d15918284dbc1a20ec07ae08",
+   "sha256": "48616163a04dd8df264b0fff74b864b722c15e638ed25fe241c2e1a74b92ce0a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2155,7 +2155,7 @@
   },
   {
    "path": "3ds_port/tests/poketouch_options_test.c",
-   "sha256": "84739f0215b113cdad7e3b5c3922985092c1f8e8263072523c3093de4e0d29e0",
+   "sha256": "4108b415e70d88939a64e82c044393c4fb57ca0d92b75404ecd4b654bd0589f2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2214,7 +2214,7 @@
   },
   {
    "path": "3ds_port/tests/settings_test.c",
-   "sha256": "cddb5ae1535d2e374b7101175b43d13cacd27c348718225af3b9c833faadef22",
+   "sha256": "163062e062e6684d191d0d5f48118ffe9aac3ed1752d599986fcb2ea59e51f2a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2324,7 +2324,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "d37caeb822ff366e45b0b3d599f100da3f3ff5db46a6741dbc59351a8013b6fe",
+   "sha256": "fbbe79778c1d937923a87e0cd6f4ab6213b3df483f66417532ebaf50a4ef588b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7443,6 +7443,14 @@
   {
    "path": "patches/pokefirered/0265-nuzlocke-never-leaves-only-eggs.json",
    "sha256": "4d07261ed26b64b85a7989a73587a2a3e187003047614837834cd940a7c48add",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0266-randomlocke-target-nuzlocke-set-mode.json",
+   "sha256": "c839cae12ae01a85af021ef796d31d4601f3453b0265c5b2e46482178b521553",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

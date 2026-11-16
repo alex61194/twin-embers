@@ -227,6 +227,9 @@ int main(void)
     CtrSettings_SetNuzDuplicates(1);
     CtrSettings_SetNuzShiny(1);
     CtrSettings_SetNuzLevelCap(1);
+    CtrSettings_SetNuzSet(1);
+    CtrSettings_SetRandomTarget(2);
+    CtrSettings_SetRandomNoLegendary(1);
     CtrSettings_SetFreeHm(1);
     CtrSettings_SetWildDensity(3);
     CtrSettings_SetWildSilhouette(1);
@@ -247,6 +250,7 @@ int main(void)
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
         assert(n < 360);   /* the file holds 512; the wild keys are before the looks and the ball */
+        assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
         assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }
 

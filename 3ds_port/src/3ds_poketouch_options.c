@@ -33,6 +33,7 @@ static const char *const sHourName[HOUR_COUNT] = {
 static const char *const sEmbers[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Low", "Bajo", "Wenig"), CTR_TR("High", "Alto", "Viel")};     /* CTR_EMBERS_* */
 /* EXP SHARE: who gets experience (HALF: the whole team shares as if each held an EXP. SHARE; FULL: every Pokemon that can
  * still fight gets the share of one that fought). */
+static const char *const sRandTargetName[] = {CTR_TR("Both", "Ambos", "Beide"), CTR_TR("Wild", "Salvajes", "Wilde"), CTR_TR("Trainers", "Rivales", "Trainer")};
 static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half", "Mitad", "Halb"), CTR_TR("Full", "Toda", "Voll")};
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
 static const char *const sCompanion[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
@@ -101,6 +102,12 @@ static int GetNuzShiny(void) { return !CtrSettings_NuzShiny(); }
 static void SetNuzShiny(int v) { CtrSettings_SetNuzShiny(!(v & 1)); }
 static int GetNuzCap(void) { return !CtrSettings_NuzLevelCap(); }
 static void SetNuzCap(int v) { CtrSettings_SetNuzLevelCap(!(v & 1)); }
+static int GetNuzSet(void) { return !CtrSettings_NuzSet(); }
+static void SetNuzSet(int v) { CtrSettings_SetNuzSet(!(v & 1)); }
+static int GetRandTarget(void) { return CtrSettings_RandomTarget(); }
+static void SetRandTarget(int v) { CtrSettings_SetRandomTarget(v); }
+static int GetRandLegend(void) { return CtrSettings_RandomNoLegendary(); }   /* On (allowed) is the first choice */
+static void SetRandLegend(int v) { CtrSettings_SetRandomNoLegendary(v & 1); }
 static int GetWildDensity(void) { return CtrSettings_WildDensity(); }
 static int WildDensityCount(void) { return CTRW_DENSITIES; }
 static void SetWildDensity(int v) { CtrSettings_SetWildDensity(v); }
@@ -138,19 +145,36 @@ int CtrOptions_WildSilhouette(void) { return CtrSettings_WildSilhouette(); }
 int CtrOptions_WildAggro(void) { return CtrSettings_WildAggro(); }
 int CtrOptions_NuzLevelCap(void) { return CtrSettings_NuzLevelCap(); }
 int CtrOptions_Randomlocke(void) { return CtrSettings_Randomlocke(); }
+int CtrOptions_RandomWild(void) { return CtrSettings_Randomlocke() && CtrSettings_RandomTarget() != 2; }
+int CtrOptions_RandomTrainers(void) { return CtrSettings_Randomlocke() && CtrSettings_RandomTarget() != 1; }
+int CtrOptions_NuzSetMode(void) { return CtrSettings_Nuzlocke() && CtrSettings_NuzSet(); }
 int CtrOptions_FreeHm(void) { return CtrSettings_FreeHm(); }
+
+/* The legendary and mythical species of the pool (FireRed's numbers): the birds, Mewtwo, Mew, the beasts, Lugia, Ho-Oh, Celebi and Hoenn's
+ * Regis, Kyogre, Groudon, Rayquaza, Latias, Latios, Jirachi and Deoxys. */
+static int IsLegendary(unsigned s)
+{
+    return (s >= 144 && s <= 146) || s == 150 || s == 151 || (s >= 243 && s <= 245) || (s >= 249 && s <= 251) || (s >= 401 && s <= 410);
+}
 
 unsigned CtrOptions_RandomSpecies(unsigned seed, unsigned place, unsigned species)
 {
     uint32_t h = (uint32_t)seed ^ ((uint32_t)place * 0x9E3779B1u) ^ ((uint32_t)species * 0x85EBCA6Bu);
+    int noLegend = CtrSettings_RandomNoLegendary();
+    unsigned pick;
 
-    h ^= h >> 16;
-    h *= 0x7FEB352Du;
-    h ^= h >> 15;
-    h *= 0x846CA68Bu;
-    h ^= h >> 16;
-    h %= 386;                                   /* 251 of Kanto and Johto (1-251), 135 of Hoenn (277-411) */
-    return h < 251 ? h + 1 : h - 251 + 277;
+    for (int tries = 0;; ++tries) {
+        h ^= h >> 16;
+        h *= 0x7FEB352Du;
+        h ^= h >> 15;
+        h *= 0x846CA68Bu;
+        h ^= h >> 16;
+        pick = h % 386;                         /* 251 of Kanto and Johto (1-251), 135 of Hoenn (277-411) */
+        pick = pick < 251 ? pick + 1 : pick - 251 + 277;
+        if (!noLegend || !IsLegendary(pick) || tries >= 64)
+            return pick;
+        h += 0x9E3779B9u;                       /* the same seed and place always walk the same way, so the choice stays fixed */
+    }
 }
 
 void CtrOptions_EmbersInit(int isNew3ds)
@@ -212,29 +236,35 @@ static const CtrOptionRow sRows[] = {
     /* Nuzlocke: the mode and its optional rules (they count only while it is on). */
     {CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), {CTR_TR("One catch per area;", "Un salvaje por zona;", "Ein Fang pro Gebiet;"), CTR_TR("fainted ones go free.", "los ca\xC3\xAD" "dos se liberan.", "Besiegte werden frei.")}, 0, sFps, NULL,
      GetNuzlocke, TwoCount, SetNuzlocke},
-    {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und gegnerische"), CTR_TR("are random species.", "con especies al azar.", "Pok\xC3\xA9mon sind zuf\xC3\xA4llig.")}, 0, sFps, NULL,
-     GetRandomlocke, TwoCount, SetRandomlocke},
     {CTR_TR("Duplicates", "Repetidos", "Duplikate"), {CTR_TR("A species you caught", "Una especie capturada", "Eine gefangene Art"), CTR_TR("does not use the area.", "no gasta la zona.", "z\xC3\xA4hlt nicht f\xC3\xBCrs Gebiet.")}, 0, sFps, NULL,
      GetNuzDupes, TwoCount, SetNuzDupes},
     {CTR_TR("Shiny clause", "Cl\xC3\xA1usula shiny", "Shiny-Regel"), {CTR_TR("A shiny Pokemon does not", "Un Pok\xC3\xA9mon shiny no", "Ein Shiny-Pok\xC3\xA9mon z\xC3\xA4hlt"), CTR_TR("use up the area.", "gasta la zona.", "nicht f\xC3\xBCr das Gebiet.")}, 0, sFps, NULL,
      GetNuzShiny, TwoCount, SetNuzShiny},
     {CTR_TR("Level caps", "Nivel m\xC3\xA1ximo", "Level-Limit"), {CTR_TR("No EXP at or above the", "Sin EXP al nivel del", "Keine EP ab dem Level"), CTR_TR("next Gym Leader's level.", "pr\xC3\xB3ximo l\xC3\xAD" "der.", "des n\xC3\xA4" "chsten Leiters.")}, 0, sFps, NULL,
      GetNuzCap, TwoCount, SetNuzCap},
+    {CTR_TR("Set mode", "Modo fijo", "Folgen-Modus"), {CTR_TR("The battle style is Set:", "El estilo es Fijo: no", "Kampfstil FEST: kein"), CTR_TR("no free switch.", "hay cambio gratis.", "freier Wechsel.")}, 0, sFps, NULL,
+     GetNuzSet, TwoCount, SetNuzSet},
+    {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und gegnerische"), CTR_TR("are random species.", "con especies al azar.", "Pok\xC3\xA9mon sind zuf\xC3\xA4llig.")}, 0, sFps, NULL,
+     GetRandomlocke, TwoCount, SetRandomlocke},
+    {CTR_TR("Random for", "Azar en", "Zufall f\xC3\xBCr"), {CTR_TR("Who is random: both,", "Qui\xC3\xA9n es aleatorio:", "Wer zuf\xC3\xA4llig ist: beide,"), CTR_TR("wild or trainers.", "ambos, salvajes o rivales.", "Wilde oder Trainer.")}, 0, sRandTargetName, NULL,
+     GetRandTarget, ThreeCount, SetRandTarget},
+    {CTR_TR("Legendaries", "Legendarios", "Legend\xC3\xA4re"), {CTR_TR("Allow legendary species", "Permite especies", "Legend\xC3\xA4re Arten sind"), CTR_TR("among the random ones.", "legendarias al azar.", "unter den zuf\xC3\xA4lligen.")}, 0, sFps, NULL,
+     GetRandLegend, TwoCount, SetRandLegend},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
- * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke. */
-enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 14, PAGE5 = 17, PAGE6 = 23 };
-static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, ROWS};
-static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3};
+ * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
+enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 14, PAGE5 = 17, PAGE6 = 23, PAGE7 = 28 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
+static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
 #define SECTIONS 4
-_Static_assert(PAGE6 < ROWS, "the last page has rows");
+_Static_assert(PAGE7 < ROWS, "the last page has rows");
 _Static_assert(sizeof(sPageSection) == PAGES, "a section for each page");
 _Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX
-               && PAGE6 - PAGE5 <= PT_OPT_MAX && ROWS - PAGE6 <= PT_OPT_MAX,
+               && PAGE6 - PAGE5 <= PT_OPT_MAX && PAGE7 - PAGE6 <= PT_OPT_MAX && ROWS - PAGE7 <= PT_OPT_MAX,
                "a page holds up to PT_OPT_MAX rows");
 
 int CtrOptions_PageCount(void) { return PAGES; }
@@ -244,7 +274,7 @@ const char *CtrOptions_PageName(int page)
     /* A page's own short name (it has to fit the PAGE button's 64 px): the looks page is a page of the Graphics section, and says so with its dot. */
     static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Optionen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
                                         CTR_TR("Looks", "Aspectos", "Looks"), CTR_TR("Wilds", "Salvajes", "Wilde"), CTR_TR("QoL", "QoL", "QoL"),
-                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke")};
+                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Random", "Azar", "Zufall")};
 
     _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
     return page >= 0 && page < PAGES ? names[page] : "";
