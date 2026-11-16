@@ -438,33 +438,12 @@ unsigned CtrGame_ScreenFade(uint16_t *target)
  * picks for it, 0xe: banks 1, 2 and 3. Bank 2 is the one the full-colour picture that stands for the scene follows. */
 unsigned CtrGame_SceneFade(uint16_t *target)
 {
-    if (gPaletteFade.active)
+    /* gPaletteFade_submode only means something while a FAST fade runs (it is the same field as the normal fade's, left at whatever the last
+     * fast fade put in it), so it is read only then. A fade that has finished its steps (the buffers are filled black or white, or are the real
+     * palette again) and a normal fade are read off the palette buffers below, as for every other blend. */
+    if (gPaletteFade.active && !gPaletteFade.softwareFadeFinishing)
     {
-        if (gPaletteFade.softwareFadeFinishing)
-        {
-            u8 submode = gPaletteFade_submode;
-            if (submode == FAST_FADE_OUT_TO_BLACK)
-            {
-                *target = 0;
-                return 16;
-            }
-            if (submode == FAST_FADE_OUT_TO_WHITE)
-            {
-                *target = 0x7FFF;
-                return 16;
-            }
-            if (submode == FAST_FADE_IN_FROM_BLACK || submode == FAST_FADE_IN_FROM_WHITE)
-            {
-                *target = submode == FAST_FADE_IN_FROM_WHITE ? 0x7FFF : 0;
-                return 0;
-            }
-            if (gPaletteFade_selectedPalettes & (1u << 2))
-            {
-                *target = gPaletteFade.blendColor;
-                return gPaletteFade.targetY;
-            }
-        }
-        else if (gPaletteFade.mode == 1) /* FAST_FADE */
+        if (gPaletteFade.mode == 1) /* FAST_FADE */
         {
             u8 submode = gPaletteFade_submode;
             if (submode == FAST_FADE_OUT_TO_BLACK)

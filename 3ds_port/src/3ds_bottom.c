@@ -1248,7 +1248,7 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
     c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
     for (int i = 0; i < c->count; ++i) {
         if (isBattle) {
-            const char *label = (i == 0) ? CTR_TR("YES", "S\xC3\x8D", "JA") : CTR_TR("NO", "NO", "NEIN");
+            const char *label = (i == 0) ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein");
             snprintf(c->label[i], sizeof(c->label[i]), "%s", label);
         } else {
             CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));

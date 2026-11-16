@@ -4,6 +4,11 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ## Unreleased
 
+### Changed
+
+- **Visible wilds** (PR #88 by mcl5500): aggressive wilds now run from your lead only when they have 15% of its power or less (before, below 70%), so they chase you far more; chasing land Pokémon may leave the tall grass for plain ground; new wilds appear near you but always just off the screen, and the map keeps alive a symmetric margin of 3 to 4 tiles of objects around the screen.
+- **Naming screen, OPTIONS and battle prompts** (PR #88 by mcl5500): the naming keyboard is full width with 9 columns (the German one has the umlauts in the ninth), the OPTIONS page dots show one dot per page, the top screen's battle picture fades out with the rest at the end of a fight and holds the battle while the new Pokédex entry is shown, and the battle's Yes/No questions (the nickname of a caught Pokémon, learning a move, stopping, and the battle's own question box) are answered on the lower screen. Checked on a computer only.
+
 ### Removed
 
 - Removed the optional Facets battle backgrounds from both Builders (the desktop app and command line `--battle-backgrounds`, and the web page's switch). The optional HD battle scenes are unchanged. A data pack made earlier with them keeps working.
