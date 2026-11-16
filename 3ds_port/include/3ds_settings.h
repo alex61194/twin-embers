@@ -44,6 +44,12 @@ int CtrSettings_NuzShiny(void);               /* Nuzlocke clause: a shiny does n
 void CtrSettings_SetNuzShiny(int on);
 int CtrSettings_NuzLevelCap(void);            /* Nuzlocke level caps: no experience at or above the badge's cap (off by default) */
 void CtrSettings_SetNuzLevelCap(int on);
+int CtrSettings_NuzSet(void);                 /* Nuzlocke: the battle style is Set while the rules are on (off by default) */
+void CtrSettings_SetNuzSet(int on);
+int CtrSettings_RandomTarget(void);           /* Randomlocke: 0 wild and trainers, 1 wild only, 2 trainers only */
+void CtrSettings_SetRandomTarget(int target);
+int CtrSettings_RandomNoLegendary(void);      /* Randomlocke: the random species are never legendary (off by default) */
+void CtrSettings_SetRandomNoLegendary(int on);
 int CtrSettings_WildDensity(void);             /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY wild Pokemon seen in the overworld (visiblewilds=; OFF by default) */
 void CtrSettings_SetWildDensity(int density);
 int CtrSettings_WildSilhouette(void);          /* WILD DISPLAY: 1 draws them as silhouettes (wildsil=) */
