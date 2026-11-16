@@ -1,4 +1,5 @@
 /* Real renderer with synthetic pack/game bridges; no ROM-derived fixtures. */
+#define _POSIX_C_SOURCE 199309L
 #include <time.h>
 #include <assert.h>
 #ifndef PT_SOURCE

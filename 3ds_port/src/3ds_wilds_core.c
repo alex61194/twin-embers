@@ -762,11 +762,12 @@ void CtrWildsCore_Think(CtrWildsCore *c, int slot, const CtrWildSense *s, CtrWil
         {
             int ratio = CtrWildsCore_Judge(c, slot);
             int weak = ratio != 0 && ratio < 70;
+            int muchWeaker = ratio != 0 && ratio <= 15;
 
             if (w->temper == CTRW_TEMPER_AGGRESSIVE)
             {
                 /* surprised first; then it charges, or, against a much stronger Pokemon, runs */
-                w->after = weak ? CTRW_S_FLEE : CTRW_S_CHASE;
+                w->after = muchWeaker ? CTRW_S_FLEE : CTRW_S_CHASE;
                 w->state = CTRW_S_ALERT;
                 w->timer = 30;
                 act->kind = CTRW_A_ALERT;

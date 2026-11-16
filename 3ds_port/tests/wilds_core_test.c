@@ -912,6 +912,19 @@ static void TestAi(void)
     CtrWildsCore_Think(&c, 0, &s, &a);
     CHECK(c.wild[0].state == CTRW_S_FLEE, "it flees");
     CHECK(a.kind == CTRW_A_STEP && a.fast && a.dir[0] == CTRW_DIR_WEST, "away from the player, fast");
+    /* the line between running and charging: an aggressive wild runs from the lead only at 15% of its power or less, and charges at anything above */
+    for (int k = 0; k < 3; ++k)
+    {
+        static const int power[3] = {1500, 1600, 5000};
+
+        CtrWildsCore_Init(&c, (uint32_t)(90 + k));
+        c.leadPower = 10000;
+        Make(&c, 0, CTRW_TEMPER_AGGRESSIVE, power[k]);
+        SenseAt(&s, 3, 0, 0, 0);
+        CtrWildsCore_Think(&c, 0, &s, &a);
+        CHECK(a.kind == CTRW_A_ALERT, "aggressive at %d%%: '!' first", power[k] / 100);
+        CHECK(c.wild[0].after == (k == 0 ? CTRW_S_FLEE : CTRW_S_CHASE), "aggressive at %d%%: %s", power[k] / 100, k == 0 ? "it runs" : "it charges");
+    }
     /* a calm weak wild: runs only sometimes, from 2 tiles (4 when the player runs); a strong or equal one never */
     {
         int fled = 0, calmFleeFast = 0, alerts = 0, strongReact = 0;
@@ -2510,7 +2523,7 @@ static void Bench(void)
      * and the core's own function with the counters off and on. */
     {
         const int M = 200000000;
-        double tRef, tCopyOff, tCopyOn, tOff, tOn;
+        double tRef = 0, tCopyOff = 0, tCopyOn = 0, tOff = 0, tOn = 0;
 
         CtrWildsCore_Init(&c, 84);
         c.operative = 1;

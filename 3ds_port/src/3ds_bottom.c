@@ -152,6 +152,13 @@ extern int CtrBattle_TargetCount(void);
 extern int CtrBattle_TargetInfo(int target, char *name, int size, int *level, int *hp, int *maxHp);
 extern int CtrBattle_BagPending(void);
 extern int CtrBattle_NickHold(void);
+extern int CtrBattle_DexHold(void);
+extern int CtrBattle_ChoiceIsOpen(void);
+extern int CtrBattle_ChoiceReady(void);
+extern int CtrBattle_ChoiceCursor(void);
+extern void CtrBattle_ChoiceAsk(int row);
+extern void CtrBattle_ChoicePrompt(char *out, int size);
+extern int CtrBattle_ChoiceWindowRect(int *x, int *y, int *w, int *h);
 extern int CtrBattle_PartyPending(void);
 extern int CtrBottomParty_InBattle(void);
 extern int CtrBottomParty_Action(void);
@@ -837,7 +844,7 @@ static int CurrentMode(void)
     if (CtrBottomMailbox_IsOpen())
         return MODE_MAILBOX;
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
-    if (CtrFieldChoice_IsOpen())
+    if (CtrFieldChoice_IsOpen() || CtrBattle_ChoiceIsOpen())
         return MODE_CHOICE;
     /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
@@ -1230,17 +1237,26 @@ static void LearnSnapshot(Snapshot *s, int mode)
 static void ChoiceSnapshot(Snapshot *s, int mode)
 {
     CtrPokeTouchChoice *c = &s->touch.choice;
-    int n = CtrFieldChoice_Count();
+    int isBattle = CtrBattle_ChoiceIsOpen();
+    int n = isBattle ? 2 : CtrFieldChoice_Count();
 
     memset(c, 0, sizeof(*c));
     c->on = 1;
     c->count = (uint8_t)(n > PT_CHOICE_MAX ? PT_CHOICE_MAX : n);
-    c->cols = (uint8_t)CtrFieldChoice_Columns();
-    c->cursor = (int8_t)CtrFieldChoice_Cursor();
+    c->cols = (uint8_t)(isBattle ? 1 : CtrFieldChoice_Columns());
+    c->cursor = (int8_t)(isBattle ? CtrBattle_ChoiceCursor() : CtrFieldChoice_Cursor());
     c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
-    for (int i = 0; i < c->count; ++i)
-        CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
-    if (CtrBottomStorage_PCMenu())
+    for (int i = 0; i < c->count; ++i) {
+        if (isBattle) {
+            const char *label = (i == 0) ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein");
+            snprintf(c->label[i], sizeof(c->label[i]), "%s", label);
+        } else {
+            CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
+        }
+    }
+    if (isBattle)
+        CtrBattle_ChoicePrompt(c->prompt, sizeof(c->prompt));
+    else if (CtrBottomStorage_PCMenu())
         CtrBottomStorage_PCMessage(c->prompt, sizeof(c->prompt));
     else
         CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
@@ -3111,7 +3127,7 @@ static int BackEnabled(int mode)
     if (mode == MODE_CARD)
         return CtrBottomCard_State() != CARD_BUSY;
     if (mode == MODE_CHOICE)
-        return CtrFieldChoice_Ready();
+        return CtrBattle_ChoiceIsOpen() ? CtrBattle_ChoiceReady() : CtrFieldChoice_Ready();
     if (mode == MODE_GBAVIEW)
         return 1;
     if (mode == MODE_DEX)
@@ -4724,7 +4740,10 @@ static void RunLearnPlan(void)
 /* A row of the field's choice: asked of FireRed's menu (CtrMenu_Ask) and taken with its A on the same frame. */
 static void ProcessChoiceTouch(const CtrInput *in)
 {
-    int hit = -1, ready = sHaveShown && sShown.mode == MODE_CHOICE && sShown.touch.choice.on && CtrFieldChoice_Ready();
+    int isBattle = CtrBattle_ChoiceIsOpen();
+    int ready = sHaveShown && sShown.mode == MODE_CHOICE && sShown.touch.choice.on
+        && (isBattle ? CtrBattle_ChoiceReady() : CtrFieldChoice_Ready());
+    int hit = -1;
 
     if (in->touchActive && ready)
         hit = CtrPokeTouch_ChoiceHit(&sShown.touch, (int)in->touchX, (int)in->touchY);
@@ -4744,7 +4763,10 @@ static void ProcessChoiceTouch(const CtrInput *in)
         return;
     }
     if (sChoiceTap.inside) {
-        CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        if (isBattle)
+            CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        else
+            CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
         sRouteKey = K_A;
     }
     sChoiceTap.down = sChoiceTap.inside = 0;
@@ -5701,7 +5723,7 @@ void CtrBottom_Frame(void)
     {
         int x, y, w, h;
 
-        if (mode != MODE_OFF && CtrFieldChoice_WindowRect(&x, &y, &w, &h))
+        if (mode != MODE_OFF && (CtrBattle_ChoiceIsOpen() ? CtrBattle_ChoiceWindowRect(&x, &y, &w, &h) : CtrFieldChoice_WindowRect(&x, &y, &w, &h)))
             CtrVideo_HideBg0Rect(x, y, w, h);
         else
             CtrVideo_HideBg0Rect(0, 0, 0, 0);
@@ -5710,7 +5732,7 @@ void CtrBottom_Frame(void)
      * few frames between them with neither open: released there, TOP drew the field with the first menu's window
      * still up and froze on it for the second. The hold outlasts a choice by CHOICE_HOLD_GRACE frames. */
     if (mode == MODE_CHOICE)
-        sChoiceGrace = CHOICE_HOLD_GRACE;
+        sChoiceGrace = CtrBattle_InBattle() ? 0 : CHOICE_HOLD_GRACE;
     else if (sChoiceGrace)
         --sChoiceGrace;
     /* The battle Bag's Berry Pouch: the upper screen keeps the battle it had under the Bag, through the Pouch, its
@@ -5730,10 +5752,10 @@ void CtrBottom_Frame(void)
             sPouchHold = 0;
     }
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || sPouchHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || mode == MODE_CHOICE || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
+        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || mode == MODE_NAMING || CtrBattle_NickHold();   /* SAVE keeps TOP on the frozen frame */
+        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;

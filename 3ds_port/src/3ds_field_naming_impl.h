@@ -8,23 +8,30 @@
 #define FN_SLOT_BOT UI_RGB(42, 8, 9)
 #define FN_SLOT_EDGE UI_RGB(20, 3, 4)
 
-static const CtrPokeTouchRect sFNBand = {4, 4, 240, 34};
-static const CtrPokeTouchRect sFNDelete = {142, 42, 50, 22};
-static const CtrPokeTouchRect sFNOk = {194, 42, 50, 22};
+static const CtrPokeTouchRect sFNBand = {4, 4, 312, 34};
+static const CtrPokeTouchRect sFNDelete = {193, 42, 60, 22};
+static const CtrPokeTouchRect sFNOk = {256, 42, 60, 22};
 
 static CtrPokeTouchRect FNTab(int page)
 {
     /* Left to right: capitals, small letters, then FireRed's symbols page. */
     static const int8_t kSlot[3] = {2, 0, 1};
-    CtrPokeTouchRect r = {(int16_t)(4 + 46 * kSlot[page]), 42, 44, 22};
+    CtrPokeTouchRect r = {(int16_t)(4 + 63 * kSlot[page]), 42, 60, 22};
     return r;
 }
 
 static CtrPokeTouchRect FNKey(const CtrPokeTouchName *n, int row, int col)
 {
-    int pitch = n->cols > 6 ? 30 : 40;
-    int left = 4 + (240 - (pitch * n->cols - 2)) / 2;
-    CtrPokeTouchRect r = {(int16_t)(left + pitch * col), (int16_t)(68 + 24 * row), (int16_t)(pitch - 2), 22};
+    int pitch;
+    if (n->cols >= 9)
+        pitch = 34;
+    else if (n->cols > 6)
+        pitch = 39;
+    else
+        pitch = 51;
+    int w = pitch - 2;
+    int left = 4 + (312 - (pitch * n->cols - 2)) / 2;
+    CtrPokeTouchRect r = {(int16_t)(left + pitch * col), (int16_t)(68 + 24 * row), (int16_t)w, 22};
     return r;
 }
 
@@ -238,7 +245,6 @@ static void FNameFrame(const CtrPokeTouchView *v)
     const CtrPokeTouchName *n = &v->name;
 
     EmSurface();
-    TsBgRect(PT_VIEW_X - 4, PT_VIEW_Y - 4, PT_VIEW_W + 8, PT_VIEW_H + 8);
     FNEntry(n);
     FNTabs(n);
     FNKeys(n);
@@ -249,14 +255,38 @@ static void FNameNote(const CtrPokeTouchView *v, int w)
 {
     const CtrPokeTouchName *n = &v->name;
     char title[66];
+    int x = (320 - w) / 2;
     int textW = n->species ? w - 76 : w - 18;
 
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+    LlWindow(x, 168, w, 68);
     FNText(n->title, (int)sizeof(n->title), title, (int)sizeof(title));
-    UiText(title, NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, 1, NOTE_X + 12 + textW);
-    BPWrap(CtrUiText(UIS_NAME_HINT), NOTE_X + 12, NOTE_Y + 21, textW, 3, EM_DIM, EM_DARK_SH);
+    UiText(title, x + 12, 168 + 8, EM_DARK, EM_DARK_SH, 1, x + 12 + textW);
+    BPWrap(CtrUiText(UIS_NAME_HINT), x + 12, 168 + 26, textW, 3, EM_DIM, EM_DARK_SH);
     if (n->species)
-        FDPicDraw(n->species, NOTE_X + w - 68, NOTE_Y, 0);
+        FDPicDraw(n->species, x + w - 68, 168 + 4, 0);
     sUiS = &sUiNavy;
+}
+
+static void FNameDraw(const CtrPokeTouchView *v)
+{
+    TsBackdrop();
+    FNameFrame(v);
+    FNameNote(v, 312);
+}
+
+static void FNameUpdate(uint16_t *canvas, const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty)
+{
+    CtrPokeTouchRect whole = {0, 0, W, H};
+
+    (void)canvas;
+    if (old->name.on != v->name.on) {
+        CtrPokeTouch_Draw(canvas, v);
+        Mark(dirty, &whole);
+        return;
+    }
+    if (v->name.on) {
+        FNameDraw(v);
+        Mark(dirty, &whole);
+    }
 }
