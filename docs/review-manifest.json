@@ -3364,7 +3364,7 @@
   },
   {
    "path": "docs/THIRD-PARTY-ART.md",
-   "sha256": "26b9127f85077f5cef450c5a6d952f4a257081be20b250ca26290cc3a2784495",
+   "sha256": "719b87e5ef9c078a18bcbc6b455921f07b6c55379c223b5ceb3616cb171fc076",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
