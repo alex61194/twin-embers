@@ -2324,7 +2324,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "fa58cd2166bb32adb575f3f6bddc1caf7600f7cf4b7e77a2c1c5e7dc0a1ce1de",
+   "sha256": "6be86216948157af78c992c09ef2c160b764632d53203d3ba1ef84ca90a0e5a7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7435,6 +7435,14 @@
   {
    "path": "patches/pokefirered/0264-eggs-no-exp-german-keys-long-titles.json",
    "sha256": "bcfa2042fd1b9aa74be4ac71feb38aa9fabce5e6abae180a7855b9943e7c144f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0265-nuzlocke-never-leaves-only-eggs.json",
+   "sha256": "4d07261ed26b64b85a7989a73587a2a3e187003047614837834cd940a7c48add",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -15,6 +15,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- Nuzlocke no longer releases the last Pokémon that can fight when only eggs would stay in the party.
 - Eggs no longer gain experience under the EXP. Share options 1 and 2 (before, an egg in the party counted as a receiver, took its cut and could level up).
 - The German naming keyboard has its ninth column again, so the full stop and the comma can be typed.
 - The naming screen's question is copied up to its own end, so a long Spanish or German title no longer carries stack garbage after it.
