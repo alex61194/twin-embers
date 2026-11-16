@@ -15,6 +15,17 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- Nuzlocke no longer releases the last Pokémon that can fight when only eggs would stay in the party.
+- Eggs no longer gain experience under the EXP. Share options 1 and 2 (before, an egg in the party counted as a receiver, took its cut and could level up).
+- The German naming keyboard has its ninth column again, so the full stop and the comma can be typed.
+- The naming screen's question is copied up to its own end, so a long Spanish or German title no longer carries stack garbage after it.
+- The HOME map's background worker thread is joined at exit before the data and assets shut down, so closing the game while the map is still being built cannot touch freed memory.
+- **Packs with an empty file:** the Builder and the game could reject a pack when a payload had size 0 and shared its offset with the next one (the order of equal offsets depended on the file names). No pack made so far has an empty file, so nobody was affected yet.
+- **Builder, desktop:** a pack that appeared at the destination while the Builder was working is no longer replaced when overwriting was not confirmed.
+- **Web Builder:** a download that hangs ends after 60 seconds, a failing or killed Builder worker (usually for lack of memory on a phone) now shows a message instead of an endless progress bar, and choosing a second ROM while the first is still being checked can no longer leave the first one selected.
+- **Easy Chat, A-Z screen:** the letters Y and Z had the same touch codes as the A-Z / Groups button and BACK, so tapping Y took you back to the groups and Z left the screen, and the selection ring of those buttons lit on the letters. They have codes of their own now.
+- **Naming screen:** a space you typed was drawn as an empty box in the preview of the name.
+- **Save file:** a new save file (a new game, or the copy of an old save the first time) is written beside its name and renamed into place, so a power cut in the middle no longer leaves a short file that the next start refuses for good. The copy of the save kept at each start now keeps the previous copy beside it (`twinembers.sav.bak.prev`), so a session that ended with a bad save does not cost the last good copy.
 - **New game, choosing the name:** FireRed's own keyboard no longer shows on the upper screen. Oak's picture stays there while the lower screen's keyboard is used, for the player's and the rival's name. Checked only by reading the code and the host build; not yet run in the game.
 
 ## v0.6.0

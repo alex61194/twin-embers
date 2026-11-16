@@ -122,6 +122,10 @@ int main(void)
     assert(file && fseek(file, 5 * 4096, SEEK_SET) == 0 && fgetc(file) == 0x01);
     fclose(file);
     assert(fopen("build/flash-test.sav.bak.tmp", "rb") == NULL);
+    /* the copy before it is kept as .prev: after a session that ended with a bad save, the next start does not cost the last good copy */
+    file = fopen("build/flash-test.sav.bak.prev", "rb");
+    assert(file && fseek(file, 5 * 4096, SEEK_SET) == 0 && fgetc(file) == 0x42);
+    fclose(file);
     remove(path);
     assert(CtrFlash_Init(path));                      /* a deleted save starts blank... */
     assert(!CtrFlash_Backup(backup));
@@ -131,5 +135,36 @@ int main(void)
     fclose(file);
     remove(path);
     remove(backup);
+    remove("build/flash-test.sav.bak.prev");
+
+    /* A new save is written beside its name and renamed into place: a cut in the middle leaves a .new file, never a short save under the
+     * real name, and the next start goes on from there (creating a blank card, or migrating the old save again). */
+    const char *cut = "build/flash-test-cut.sav";
+    const char *cutNew = "build/flash-test-cut.sav.new";
+    remove(cut);
+    file = fopen(cutNew, "wb");
+    assert(file && fwrite("half a save", 1, 11, file) == 11);
+    fclose(file);
+    assert(CtrFlash_Init(cut));                       /* a blank card with a .new left by a cut */
+    CtrFlash_Close();
+    assert(fopen(cutNew, "rb") == NULL);
+    file = fopen(cut, "rb");
+    assert(file && fseek(file, 0, SEEK_END) == 0 && ftell(file) == 131072);
+    fclose(file);
+    remove(cut);
+    assert(CtrFlash_Init(legacy));
+    assert(ProgramFlashSectorAndVerify(9, sector) == 0);
+    assert(CtrFlash_Flush());
+    CtrFlash_Close();
+    file = fopen(cutNew, "wb");
+    assert(file && fwrite("half a save", 1, 11, file) == 11);
+    fclose(file);
+    assert(CtrFlash_InitMigrating(cut, legacy, NULL)); /* the migration with a .new left by a cut */
+    ReadFlash(9, 0, readback, sizeof(readback));
+    assert(readback[0] == 0x42);
+    CtrFlash_Close();
+    assert(fopen(cutNew, "rb") == NULL);
+    remove(cut);
+    remove(legacy);
     return 0;
 }

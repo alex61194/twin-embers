@@ -45,6 +45,7 @@ enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COU
 /* The map is redrawn at 4x from that art by 3ds_home_map_impl.h: an image of 768x576 pixels that the viewport shows at one of three zooms (0: the
  * whole width, 1: about 0.8, 2: about 1.45) round a centre in the image's own pixels. A tap picks the town whose orb is near it, else the cell
  * (22x15) it is in. */
+void CtrPokeTouch_Shutdown(void);                                      /* stops the map worker before the process ends (atexit) */
 bool CtrPokeTouch_MapPrepare(int group, int version);                  /* a frame's work on a map's image; true once it is there */
 bool CtrPokeTouch_HomeCellWorld(int cx, int cy, int *wx, int *wy);     /* a cell's centre in the image */
 void CtrPokeTouch_HomeClamp(int zoom, int *cx, int *cy);               /* a centre kept so the image covers the viewport */
@@ -230,8 +231,8 @@ typedef struct {
 #define PT_EC_ASK_LEN 48
 enum { PT_EC_EDIT, PT_EC_GROUP, PT_EC_LETTER, PT_EC_LIST };         /* the screen: the phrase, the groups, the letters, a list */
 enum { PT_EC_ASK_NONE, PT_EC_ASK_QUIT, PT_EC_ASK_DELETE, PT_EC_ASK_CONFIRM };
-#define PT_EC_CELL_TOGGLE 24        /* the group and letter screens' A-Z / groups button and BACK, as cells */
-#define PT_EC_CELL_BACK 25
+#define PT_EC_CELL_TOGGLE PT_EC_LETTERS     /* the group and letter screens' A-Z / groups button and BACK, as cells: after the letters' own 26 */
+#define PT_EC_CELL_BACK (PT_EC_LETTERS + 1)
 /* Hit codes (CtrPokeTouch_EasyHit). */
 enum { PT_EC_HIT_CHIP = 100, PT_EC_HIT_MODE_GROUPS = 120, PT_EC_HIT_MODE_ALPHA, PT_EC_HIT_DELETE = 130, PT_EC_HIT_CANCEL,
        PT_EC_HIT_CONFIRM, PT_EC_HIT_CELL = 200, PT_EC_HIT_ROW = 300, PT_EC_HIT_UP = 320, PT_EC_HIT_DOWN, PT_EC_HIT_RAIL,

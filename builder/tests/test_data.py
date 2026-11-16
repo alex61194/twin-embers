@@ -91,6 +91,23 @@ class DataTests(unittest.TestCase):
             for path, data in self.files:
                 self.assertEqual(reader.read(path), data)
 
+    def test_empty_payload_in_any_id_order(self):
+        # An empty file has the same offset as the next payload: both readers must accept it wherever its id falls.
+        for k in range(8):
+            files = [(f'data/f{i}', b'' if i == k else bytes([i + 1]) * (i + 5)) for i in range(8)]
+            abi = engine_abi((p, len(b), zlib.crc32(b)) for p, b in files)
+            path = Path(self.tmp.name) / f'empty{k}.pak'
+            write_pak(path, files, abi, self.sha)
+            raw = path.read_bytes()
+            h = Header()
+            self.assertEqual(self.lib.CtrPak_ParseHeader(raw[:64], abi, self.sha, c.byref(h)), 0)
+            entries = (Entry * h.count)()
+            self.assertEqual(self.lib.CtrPak_ParseIndex(raw[64:64 + h.count * 40], c.byref(h), entries), 0)
+            self.assertEqual(self.lib.CtrPak_ValidateRanges(c.byref(h), entries, len(raw)), 0, f'C reader, empty file {k}')
+            with PakReader(path, abi, self.sha) as reader:
+                self.assertEqual(reader.verify(), 8)
+                self.assertEqual(reader.read(f'data/f{k}'), b'')
+
     def test_abi(self): self.reject(self.mutate(12, self.abi ^ 1))
     def test_schema(self):
         self.reject(self.mutate(8, 1))

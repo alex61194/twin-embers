@@ -154,8 +154,9 @@ def build_private_pack(
         installed = False
         keep_backup = False
         try:
-            if output_path.exists():
-                # The GUI explicitly confirmed overwrite before starting.
+            if overwrite and output_path.exists():
+                # The GUI explicitly confirmed overwrite before starting. Without it a file that appeared since the check is
+                # never replaced: the exclusive creation below fails on it.
                 # Preserve the previous bytes until destination verification.
                 with tempfile.NamedTemporaryFile(
                     mode="wb", prefix=".fire3ds-previous-", suffix=".pak",
