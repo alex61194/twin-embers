@@ -438,6 +438,65 @@ unsigned CtrGame_ScreenFade(uint16_t *target)
  * picks for it, 0xe: banks 1, 2 and 3. Bank 2 is the one the full-colour picture that stands for the scene follows. */
 unsigned CtrGame_SceneFade(uint16_t *target)
 {
+    if (gPaletteFade.active)
+    {
+        if (gPaletteFade.softwareFadeFinishing)
+        {
+            u8 submode = gPaletteFade_submode;
+            if (submode == FAST_FADE_OUT_TO_BLACK)
+            {
+                *target = 0;
+                return 16;
+            }
+            if (submode == FAST_FADE_OUT_TO_WHITE)
+            {
+                *target = 0x7FFF;
+                return 16;
+            }
+            if (submode == FAST_FADE_IN_FROM_BLACK || submode == FAST_FADE_IN_FROM_WHITE)
+            {
+                *target = submode == FAST_FADE_IN_FROM_WHITE ? 0x7FFF : 0;
+                return 0;
+            }
+            if (gPaletteFade_selectedPalettes & (1u << 2))
+            {
+                *target = gPaletteFade.blendColor;
+                return gPaletteFade.targetY;
+            }
+        }
+        else if (gPaletteFade.mode == 1) /* FAST_FADE */
+        {
+            u8 submode = gPaletteFade_submode;
+            if (submode == FAST_FADE_OUT_TO_BLACK)
+            {
+                *target = 0;
+                return (unsigned)((31 - gPaletteFade.y) * 16 / 31);
+            }
+            if (submode == FAST_FADE_OUT_TO_WHITE)
+            {
+                *target = 0x7FFF;
+                return (unsigned)((31 - gPaletteFade.y) * 16 / 31);
+            }
+            if (submode == FAST_FADE_IN_FROM_BLACK)
+            {
+                *target = 0;
+                return (unsigned)(gPaletteFade.y * 16 / 31);
+            }
+            if (submode == FAST_FADE_IN_FROM_WHITE)
+            {
+                *target = 0x7FFF;
+                return (unsigned)(gPaletteFade.y * 16 / 31);
+            }
+        }
+        else if (gPaletteFade.mode == 0) /* NORMAL_FADE */
+        {
+            if (gPaletteFade_selectedPalettes & (1u << 2))
+            {
+                *target = gPaletteFade.blendColor;
+                return gPaletteFade.y;
+            }
+        }
+    }
     return CtrPal_RunFade(gPlttBufferUnfaded, gPlttBufferFaded, 2 * 16, 16, target);
 }
 

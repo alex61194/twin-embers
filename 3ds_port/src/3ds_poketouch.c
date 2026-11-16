@@ -1328,6 +1328,8 @@ static void FChoiceNote(const CtrPokeTouchView *v, int w);
 /* The naming screen the port draws (3ds_field_naming_impl.h, included at the end). */
 static void FNameFrame(const CtrPokeTouchView *v);
 static void FNameNote(const CtrPokeTouchView *v, int w);
+static void FNameDraw(const CtrPokeTouchView *v);
+static void FNameUpdate(uint16_t *canvas, const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty);
 /* The PC box the port draws (3ds_field_box_impl.h, included at the end). */
 static void FBoxFrame(const CtrPokeTouchView *v);
 static void FBoxNote(const CtrPokeTouchView *v, int w);
@@ -1417,7 +1419,8 @@ static void Back(const CtrPokeTouchView *v)
 static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-    int fy, dots = v->optSectionCount > 6 ? 6 : v->optSectionCount, x0;
+    int dots = v->optPageCount > 6 ? 6 : (v->optPageCount > 0 ? v->optPageCount : v->optSectionCount);
+    int fy, x0;
     char label[40];
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
@@ -1425,9 +1428,13 @@ static void OptPageButton(const CtrPokeTouchView *v)
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
     x0 = r->x + (r->w - ((dots - 1) * 10 + 7)) / 2;
     for (int i = 0; i < dots; ++i) {
-        uint16_t colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
+        uint16_t colour;
+        if (dots == 6)
+            colour = i == 0 ? EM2_PAGE_A : (i <= 3) ? EM2_PAGE_B : i == 4 ? EM2_PAGE_C : EM2_PAGE_D;
+        else
+            colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
 
-        if (i == v->optSection)
+        if (i == v->optPage)
             Em2Dot(x0 + i * 10, fy + 3, colour, 1);
         else
             Em2Dot(x0 + i * 10 + 1, fy + 4, colour, 0);
@@ -1717,6 +1724,10 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
         FEasyDraw(v);
         return;
     }
+    if (v->name.on) {
+        FNameDraw(v);
+        return;
+    }
     Frame();
     MenuFrame(v);
     Bar(v);
@@ -1763,6 +1774,10 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     sCanvas = canvas;
     if (v->ec.on || old->ec.on) {
         FEasyUpdate(canvas, old, v, dirty);
+        return;
+    }
+    if (v->name.on || old->name.on) {
+        FNameUpdate(canvas, old, v, dirty);
         return;
     }
     if (memcmp(&old->bag, &v->bag, sizeof(v->bag)) || memcmp(&old->dex, &v->dex, sizeof(v->dex))
