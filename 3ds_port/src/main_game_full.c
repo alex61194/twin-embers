@@ -65,7 +65,9 @@ static void ShutdownPlatform(void)
         CtrLog_Write(CTR_LOG_BOOT, "exit: " #name " done"); \
     }
 TRACED_EXIT(ExitData, CtrData_Shutdown())
+void CtrPokeTouch_Shutdown(void);
 TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
+TRACED_EXIT(ExitPokeTouch, CtrPokeTouch_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
 /* Leaving through the HOME Menu (aptMainLoop) is exit(0) from the VBlank bridge:
  * whatever is still pending reaches the card before the process ends. */
@@ -216,6 +218,7 @@ int main(void)
         CtrPlatform_ShowDataError("FireRed graphics could not be loaded.",
                                  "The fonts/UI data does not match this engine. Rebuild the data pack.");
     atexit(ExitAssets);
+    atexit(ExitPokeTouch);          /* runs before the two above: the HOME map worker reads the pack */
     CtrAssets_StartWarmup();
     /* Audio is optional: without DSP firmware the game runs silently. The
      * VBlank bridge leaves through exit(0), so shutdown is also atexit. */

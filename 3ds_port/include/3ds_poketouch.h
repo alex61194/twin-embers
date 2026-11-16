@@ -45,6 +45,7 @@ enum { PT_MAP_KANTO, PT_MAP_SEVII123, PT_MAP_SEVII45, PT_MAP_SEVII67, PT_MAP_COU
 /* The map is redrawn at 4x from that art by 3ds_home_map_impl.h: an image of 768x576 pixels that the viewport shows at one of three zooms (0: the
  * whole width, 1: about 0.8, 2: about 1.45) round a centre in the image's own pixels. A tap picks the town whose orb is near it, else the cell
  * (22x15) it is in. */
+void CtrPokeTouch_Shutdown(void);                                      /* stops the map worker before the process ends (atexit) */
 bool CtrPokeTouch_MapPrepare(int group, int version);                  /* a frame's work on a map's image; true once it is there */
 bool CtrPokeTouch_HomeCellWorld(int cx, int cy, int *wx, int *wy);     /* a cell's centre in the image */
 void CtrPokeTouch_HomeClamp(int zoom, int *cx, int *cy);               /* a centre kept so the image covers the viewport */

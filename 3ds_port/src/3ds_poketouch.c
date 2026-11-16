@@ -581,6 +581,13 @@ static int MapFeed(int group)
     return 1;
 }
 
+/* The worker's stack is heap memory that libctru unmaps at exit and it reads the data pack: it is stopped before the process ends (atexit,
+ * registered after the data's, so it runs before it). */
+void CtrPokeTouch_Shutdown(void)
+{
+    MapJoin();
+}
+
 /* One frame's work on the map's image; true once it is there (HOME calls it for the map it shows, every frame). */
 bool CtrPokeTouch_MapPrepare(int group, int version)
 {

@@ -15,6 +15,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- The HOME map's background worker thread is joined at exit before the data and assets shut down, so closing the game while the map is still being built cannot touch freed memory.
 - **Packs with an empty file:** the Builder and the game could reject a pack when a payload had size 0 and shared its offset with the next one (the order of equal offsets depended on the file names). No pack made so far has an empty file, so nobody was affected yet.
 - **Builder, desktop:** a pack that appeared at the destination while the Builder was working is no longer replaced when overwriting was not confirmed.
 - **Web Builder:** a download that hangs ends after 60 seconds, a failing or killed Builder worker (usually for lack of memory on a phone) now shows a message instead of an endless progress bar, and choosing a second ROM while the first is still being checked can no longer leave the first one selected.
