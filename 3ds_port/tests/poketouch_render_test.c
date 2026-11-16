@@ -657,6 +657,24 @@ int main(int argc, char **argv)
             for(int c=0;c<26;++c) { e->cell=(int8_t)c; update(&old,&s); e->pressed=(int16_t)(PT_EC_HIT_CELL+c); update(&old,&s); e->pressed=-1; update(&old,&s); }
             assert(CtrPokeTouch_EasyHit(&s,10,35)==PT_EC_HIT_CELL && CtrPokeTouch_EasyHit(&s,10,64)==PT_EC_HIT_CELL+6 && CtrPokeTouch_EasyHit(&s,280,120)==PT_EC_HIT_CELL+25);
             assert(CtrPokeTouch_EasyHit(&s,100,35)==PT_EC_HIT_CELL+2 && CtrPokeTouch_EasyHit(&s,280,64)==-1);
+            /* the letters Y and Z (cells 24 and 25) are not the A-Z / groups button and BACK (they had the same codes once, so a tap on Y or Z went
+             * back to the groups or out of the screen) */
+            {
+                int toggle = 0, back = 0, y24 = 0, z25 = 0;
+
+                for(int py=0; py<240; ++py)
+                    for(int px=0; px<320; ++px)
+                    {
+                        int hit = CtrPokeTouch_EasyHit(&s,px,py);
+
+                        toggle += hit==PT_EC_HIT_CELL+PT_EC_CELL_TOGGLE;
+                        back += hit==PT_EC_HIT_CELL+PT_EC_CELL_BACK;
+                        y24 += hit==PT_EC_HIT_CELL+24;
+                        z25 += hit==PT_EC_HIT_CELL+25;
+                    }
+                assert(toggle > 0 && back > 0 && y24 > 0 && z25 > 0);
+                assert(PT_EC_CELL_TOGGLE >= PT_EC_LETTERS && PT_EC_CELL_BACK > PT_EC_CELL_TOGGLE);
+            }
             /* a group's words: 100 of them, six rows (twelve words) shown, the rail and the strip */
             e->screen=PT_EC_LIST; e->alpha=0; strcpy(e->listTitle,"Battle"); e->listCount=100; e->first=0; e->word=4; e->letter=0;
             for(int k=0;k<12;++k) strcpy(e->list[k],lw[k]);

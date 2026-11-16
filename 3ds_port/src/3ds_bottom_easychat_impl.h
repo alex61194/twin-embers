@@ -422,7 +422,7 @@ static void ProcessEasyTouch(const CtrInput *in)
             sRouteKey = K_A;
         else if (code == PT_EC_HIT_TOGGLE)
             EasyPlanStart(EP_TOGGLE, 0, 0);
-    } else if (code >= PT_EC_HIT_CELL && code < PT_EC_HIT_CELL + 26) {
+    } else if (code >= PT_EC_HIT_CELL && code < PT_EC_HIT_CELL + PT_EC_CELL_BACK + 1) {
         int cell = code - PT_EC_HIT_CELL;
 
         if (cell == PT_EC_CELL_TOGGLE)

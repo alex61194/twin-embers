@@ -163,7 +163,7 @@ static void FNEntry(const CtrPokeTouchName *n)
     EmGradFill(b->x + 1, b->y + 1, b->w - 2, b->h - 2, 4, FN_SLOT_TOP, FN_SLOT_BOT);
     for (int i = 0; i < slots; ++i) {
         int sx = x0 + i * pitch;
-        int written = i < n->len && n->text[i];
+        int written = i < n->len;       /* a typed space is the code 0, and is written all the same */
 
         UiRoundFill(sx, sy, sw, sh, 3, written || i != n->len ? LL_SLATE : LL_RING_IN);
         if (written)

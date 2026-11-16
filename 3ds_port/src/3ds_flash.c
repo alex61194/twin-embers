@@ -116,6 +116,13 @@ static bool ReadSave(FILE *file, u8 *image, size_t *trailerLength)
     return true;
 }
 
+/* A new save file is written beside its final name and only then renamed to it, so a power cut or a failed write in the middle leaves no
+ * file of the wrong size under the real name (which the next start would refuse for good) and the migration can run again. */
+static bool NewPath(const char *path, char *out, size_t size)
+{
+    return snprintf(out, size, "%s.new", path) < (int)size;
+}
+
 bool CtrFlash_Init(const char *path)
 {
     memset(sImage, 0xff, sizeof(sImage));
@@ -138,7 +145,11 @@ bool CtrFlash_Init(const char *path)
     }
     if (errno != ENOENT)
         return false;
-    sFile = CreateExclusive(path);
+    char fresh[256];
+    if (!NewPath(path, fresh, sizeof(fresh)))
+        return false;
+    remove(fresh);                                    /* one a cut left behind */
+    sFile = CreateExclusive(fresh);
     if (!sFile)
         return false;
     sDirtySectors = UINT32_MAX;
@@ -146,10 +157,23 @@ bool CtrFlash_Init(const char *path)
     {
         fclose(sFile);
         sFile = NULL;
-        remove(path);
+        remove(fresh);
         return false;
     }
-    return true;
+    if (fclose(sFile) != 0)
+    {
+        sFile = NULL;
+        remove(fresh);
+        return false;
+    }
+    sFile = NULL;
+    if (rename(fresh, path) != 0)
+    {
+        remove(fresh);
+        return false;
+    }
+    sFile = fopen(path, "rb+");
+    return sFile != NULL;
 }
 
 bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
@@ -188,7 +212,11 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
             HW_SAVE_TRACE("HW SAVE ERROR invalid or unreadable legacy save %s", sources[i]);
             return false;
         }
-        FILE *copy = CreateExclusive(path);
+        char fresh[256];
+        if (!NewPath(path, fresh, sizeof(fresh)))
+            return false;
+        remove(fresh);                                /* one a cut left behind */
+        FILE *copy = CreateExclusive(fresh);
         if (!copy)
         {
             HW_SAVE_TRACE("HW SAVE ERROR cannot create migration destination %s errno=%d", path, errno);
@@ -200,10 +228,12 @@ bool CtrFlash_InitMigrating(const char *path, const char *legacyPath,
             ok = false;
         if (fclose(copy) != 0)
             ok = false;
+        if (ok && rename(fresh, path) != 0)
+            ok = false;
         if (!ok)
         {
             /* No fallthrough to fresh-save creation after any copy failure. */
-            remove(path);
+            remove(fresh);
             HW_SAVE_TRACE("HW SAVE ERROR copying %s -> %s", sources[i], path);
             return false;
         }
@@ -300,7 +330,15 @@ bool CtrFlash_Backup(const char *backupPath)
         ok = false;
     if (ok)
     {
-        remove(backupPath);
+        /* The copy of the start before this one is kept as .prev, so a session that ended with a bad save does not cost the last good copy
+         * at the next start (which would otherwise replace the only one). */
+        char previous[256];
+
+        if (snprintf(previous, sizeof(previous), "%s.prev", backupPath) < (int)sizeof(previous))
+        {
+            remove(previous);
+            rename(backupPath, previous);
+        }
         ok = rename(temp, backupPath) == 0;
     }
     if (!ok)

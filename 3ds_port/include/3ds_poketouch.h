@@ -230,8 +230,8 @@ typedef struct {
 #define PT_EC_ASK_LEN 48
 enum { PT_EC_EDIT, PT_EC_GROUP, PT_EC_LETTER, PT_EC_LIST };         /* the screen: the phrase, the groups, the letters, a list */
 enum { PT_EC_ASK_NONE, PT_EC_ASK_QUIT, PT_EC_ASK_DELETE, PT_EC_ASK_CONFIRM };
-#define PT_EC_CELL_TOGGLE 24        /* the group and letter screens' A-Z / groups button and BACK, as cells */
-#define PT_EC_CELL_BACK 25
+#define PT_EC_CELL_TOGGLE PT_EC_LETTERS     /* the group and letter screens' A-Z / groups button and BACK, as cells: after the letters' own 26 */
+#define PT_EC_CELL_BACK (PT_EC_LETTERS + 1)
 /* Hit codes (CtrPokeTouch_EasyHit). */
 enum { PT_EC_HIT_CHIP = 100, PT_EC_HIT_MODE_GROUPS = 120, PT_EC_HIT_MODE_ALPHA, PT_EC_HIT_DELETE = 130, PT_EC_HIT_CANCEL,
        PT_EC_HIT_CONFIRM, PT_EC_HIT_CELL = 200, PT_EC_HIT_ROW = 300, PT_EC_HIT_UP = 320, PT_EC_HIT_DOWN, PT_EC_HIT_RAIL,
