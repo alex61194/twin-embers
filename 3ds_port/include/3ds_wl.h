@@ -68,6 +68,8 @@ typedef struct WlNet {
 } WlNet;
 
 void WlNet_Init(WlNet *net, const WlBackend *io, uint16_t self);
+/* This console's node, once the session gives it one (0 before). */
+void WlNet_SetSelf(WlNet *net, uint16_t self);
 /* Queue a message for node `dest`; false when its window is full or the message is too long. */
 bool WlNet_Send(WlNet *net, uint16_t dest, const void *data, uint16_t len);
 /* Receive what the radio has, send what is due again, acknowledge. Call often (every frame or whenever the radio wakes). */
@@ -145,6 +147,8 @@ typedef struct WlRfu {
 } WlRfu;
 
 void WlRfu_Init(WlRfu *rfu, WlNet *net, uint16_t myId);
+/* The adapter id the others see (never 0). */
+void WlRfu_SetId(WlRfu *rfu, uint16_t id);
 /* The nodes that are in the session now (bit n for node n, not this one). Hosts tell them they are hosting. */
 void WlRfu_SetMembers(WlRfu *rfu, uint32_t members);
 /* Answer one command. req[0] is the command word (0x9966LLCC), req[1..LL] its parameters. The answer goes to ack[]

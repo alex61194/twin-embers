@@ -55,6 +55,11 @@ void WlRfu_Init(WlRfu *rfu, WlNet *net, uint16_t myId)
     rfu->connectStatus = 3;
 }
 
+void WlRfu_SetId(WlRfu *rfu, uint16_t id)
+{
+    rfu->myId = id ? id : 1;
+}
+
 void WlRfu_SetMembers(WlRfu *rfu, uint32_t members)
 {
     rfu->members = members;

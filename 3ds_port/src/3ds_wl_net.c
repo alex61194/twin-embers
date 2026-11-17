@@ -29,6 +29,11 @@ void WlNet_Init(WlNet *net, const WlBackend *io, uint16_t self)
     net->self = self;
 }
 
+void WlNet_SetSelf(WlNet *net, uint16_t self)
+{
+    net->self = self;
+}
+
 static WlPeer *Peer(WlNet *net, uint16_t node)
 {
     if (node < 1 || node > WL_MAX_NODES || node == net->self)
