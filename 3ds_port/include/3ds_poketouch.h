@@ -41,6 +41,12 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
 /* HOME's layout: the map in the middle of the screen, the buttons round it (the 40 px band left on each side). */
 #define PT_HOME_X 40
 #define PT_HOME_Y 40
+/* HOME's status panel: the taps it gives (CtrPokeTouch_HomePanelHit). */
+enum { PT_REPEL_PLAIN, PT_REPEL_SUPER, PT_REPEL_MAX };
+enum { PT_PANEL_NONE = -1, PT_PANEL_OUT = 0, PT_PANEL_TURBO = 10, PT_PANEL_REPEL = 20 };
+bool CtrPokeTouch_HomeLayout(void);           /* HOME's layout is the one on the screen */
+bool CtrPokeTouch_HomeStatusHit(int x, int y);
+int CtrPokeTouch_HomePanelHit(int x, int y);
 #define PT_ZONE_MAX 5          /* the Pokemon the note under HOME's map has room for */
 /* The HOME map: FireRed's own Region Map art, drawn passively over the field's
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
@@ -419,6 +425,14 @@ typedef struct {
     uint8_t zoneWater;          /* all of them are met in water or fishing: the note says so */
     uint16_t zoneSpecies[PT_ZONE_MAX];
     uint8_t zoneFlags[PT_ZONE_MAX];     /* what the Pokedex knows: seen (1), caught (2); none: a question mark */
+    uint8_t homeStage;          /* HOME's note where no wild Pokemon live: the postgame's step (1-4; 0 none) */
+    uint16_t homeDex;           /* and the national Pokedex's caught count for the last */
+    uint8_t homePanel;          /* HOME's status panel is open over the map: the turbo, the Repels and the money */
+    uint16_t homeRepelSteps;    /* a Repel in force: its steps left (0: none) */
+    uint16_t homeRepelTotal;    /* and the length it began with */
+    uint8_t homeRepelKind;      /* PT_REPEL_*: which one it is */
+    uint16_t homeRepelItem[3];  /* the three Repels' item numbers */
+    uint16_t homeRepelHave[3];  /* and how many of each the Bag holds */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */

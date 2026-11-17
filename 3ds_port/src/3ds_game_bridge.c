@@ -647,6 +647,12 @@ static LightEvent sWatchdogStop;
  * watchdog stays quiet while suspended, and the game thread resyncs input
  * and the audio clock when it gets back (VBlankIntrWait). */
 static CtrFastForward sFastForward;
+static unsigned sTurboRequest = 0xFFFFu;    /* a speed asked for by HOME's status panel (0, 2-4), taken at the next frame */
+
+void CtrGameBridge_SetTurbo(unsigned turbo)
+{
+    sTurboRequest = turbo;
+}
 static unsigned sFlashFailures;   /* consecutive frames whose save flush failed */
 
 /* A VBlank span (input, lower screen, field state, keys) over 100 ms is logged part by part. */
@@ -856,6 +862,11 @@ void VBlankIntrWait(void)
     {
         turboRestored = true;
         sFastForward.turbo = CtrSettings_Turbo();   /* the speed chosen in an earlier session */
+    }
+    if (sTurboRequest != 0xFFFFu)
+    {
+        sFastForward.turbo = sTurboRequest == 0 || (sTurboRequest >= CTR_TURBO_MIN && sTurboRequest <= CTR_TURBO_MAX) ? sTurboRequest : 0;
+        sTurboRequest = 0xFFFFu;
     }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
                          CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);

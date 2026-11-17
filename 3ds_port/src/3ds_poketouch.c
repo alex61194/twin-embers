@@ -353,6 +353,20 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
 #include "3ds_ui_theme_impl.h"
 
 /* FireRed's small font (8 wide cells): the labels under HOME's buttons, the plates' captions. Without it, the normal font. */
+static int SmallWidth(const char *s)
+{
+    int w = 0;
+
+    if (!CtrTwinSmallFontData())
+        return UiTextWidth(s, 1);
+    while (*s) {
+        unsigned code = GlyphCode(&s) & 0xffu, cw = CtrTwinSmallFontWidth(code);
+
+        w += (int)(cw > 8 ? 8 : cw);
+    }
+    return w;
+}
+
 static void SmallText(const char *s, int x, int cellTop, uint16_t fg, uint16_t shadow, int limit)
 {
     const uint8_t *font = CtrTwinSmallFontData();
@@ -472,7 +486,7 @@ static CtrPokeTouchRect Under(const CtrPokeTouchRect *r)
 
 /* Shortcut item icons from FireRed's icon table, decoded once per item and
  * shown as the 20x20 around their drawn part. */
-enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_MAIL, ICON_COUNT };
+enum { ICON_REGISTERED, ICON_BIKE, ICON_BOX_HAND, ICON_BOX_NOTE, ICON_MAIL, ICON_REPEL, ICON_REPEL_2, ICON_REPEL_3, ICON_COUNT };
 
 static struct {
     unsigned item;
@@ -1832,6 +1846,32 @@ static void HomeStatus(const CtrPokeTouchView *v)
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
     LlWindow(r->x, r->y, r->w, r->h);
+    {
+        /* The plate opens the panel: a small chevron at its lower edge says so. */
+        int cx = r->x + r->w / 2;
+
+        for (int i = 0; i < 3; ++i)
+            Fill(cx - 3 + i, r->y + r->h - 5 + i, 7 - 2 * i, 1, UI_RGB(120, 172, 232));
+    }
+    if (v->homeRepelSteps) {
+        /* What is in force: the Repel in use, the steps it has left and a bar of how much is left of its length. */
+        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
+                                              CTR_TR("Max Repel", "MÃ¡x. Rep.", "Top-Schutz")};
+        int kind = v->homeRepelKind > 2 ? 0 : v->homeRepelKind, barW = r->w - 36;
+        int total = v->homeRepelTotal ? v->homeRepelTotal : v->homeRepelSteps, fill;
+
+        ItemArt(ICON_REPEL + kind, v->homeRepelItem[kind], r->x + 5, r->y + 6, 1);
+        SmallText(kName[kind], r->x + 28, r->y + 1, EM_DIM, EM_DARK_SH, r->x + r->w - 4);
+        snprintf(money, sizeof(money), CTR_TR("%u steps", "%u pasos", "%u Schritte"), (unsigned)v->homeRepelSteps);
+        Em2Text(money, r->x + 28, r->y + 13, EM_DARK, EM_DARK_SH, r->x + r->w - 4);
+        fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
+        if (fill > barW)
+            fill = barW;
+        UiRoundFill(r->x + 28, r->y + 27, barW, 3, 1, LL_SLATE);
+        if (fill > 0)
+            Fill(r->x + 28 + 1, r->y + 28, fill > 2 ? fill - 2 : fill, 1, UI_RGB(96, 214, 120));
+        return;
+    }
     if (m >= 1000000)
         snprintf(money, sizeof(money), "%u.%03u.%03u", m / 1000000, m / 1000 % 1000, m % 1000);
     else if (m >= 1000)
@@ -1944,12 +1984,140 @@ static void HomeNote(const CtrPokeTouchView *v)
         titleRight = left - 4;
         line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("PokÃ©mon seen here", "PokÃ©mon vistos aquÃ­", "Hier gesehene PokÃ©mon");
     }
+    if (!zones && !v->flyOk && v->homeStage && v->bar[1][0]) {
+        /* Nothing wild here: after the League, the next step of the Sevii postgame, and once the gems are restored the national Pokedex. */
+        static const char *const kHint[3] = {
+            CTR_TR("Postgame: explore the Sevii Islands", "Postgame: explora las Islas Sete", "Postgame: erkunde die Sevii-Inseln"),
+            CTR_TR("You have the Ruby: find the Sapphire", "Tienes el RubÃ­: busca el Zafiro", "Du hast den Rubin: finde den Saphir"),
+            CTR_TR("Both gems: go and see Celio", "Las dos gemas: ve a ver a Celio", "Beide Edelsteine: besuche Celio")};
+
+        if (v->homeStage < 4) {
+            line = kHint[v->homeStage - 1];
+        } else {
+            char count[16];
+            int bx = HN_X + 140, bw = right - bx;
+            unsigned dex = v->homeDex > 386 ? 386 : v->homeDex;
+
+            line = CTR_TR("National PokÃ©" "dex", "PokÃ©" "dex Nacional", "Nationaler PokÃ©" "dex");
+            snprintf(count, sizeof(count), "%u / 386", dex);
+            SmallText(CTR_TR("Caught", "Capturados", "Gefangen"), bx, HN_Y + 1, EM_DIM, EM_DARK_SH, right);
+            SmallText(count, right - SmallWidth(count), HN_Y + 1, EM_DARK, EM_DARK_SH, right);
+            UiRoundFill(bx, HN_Y + 20, bw, 6, 3, LL_SLATE);
+            if (dex)
+                Fill(bx + 2, HN_Y + 22, (bw - 4) * (int)dex / 386, 2, UI_RGB(96, 214, 120));
+            titleRight = bx - 6;
+        }
+    }
     if (line) {
         Em2Text(v->bar[0], HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, titleRight);
         SmallText(line, HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, titleRight);
     } else if (v->bar[0][0]) {
         Em2Text(v->bar[0], HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
     }
+}
+
+/* The status panel over the map: the turbo speeds, the three Repels (a tap on one uses it, while none is in force) and the money. */
+#define PN_X 44
+#define PN_Y 44
+#define PN_W 232
+#define PN_H 148
+#define PN_TURBO_Y (PN_Y + 18)
+#define PN_REPEL_Y (PN_Y + 62)
+
+static CtrPokeTouchRect PanelTurbo(int k)
+{
+    return (CtrPokeTouchRect){(int16_t)(PN_X + 10 + k * 53), PN_TURBO_Y, 49, 22};
+}
+
+static CtrPokeTouchRect PanelRepel(int k)
+{
+    return (CtrPokeTouchRect){(int16_t)(PN_X + 10 + k * 71), PN_REPEL_Y, 67, 44};
+}
+
+bool CtrPokeTouch_HomeLayout(void)
+{
+    return sLayoutHome != 0;
+}
+
+bool CtrPokeTouch_HomeStatusHit(int x, int y)
+{
+    const CtrPokeTouchRect *r = &sHomeStatus;
+
+    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h + 2;
+}
+
+int CtrPokeTouch_HomePanelHit(int x, int y)
+{
+    for (int k = 0; k < 4; ++k) {
+        CtrPokeTouchRect r = PanelTurbo(k);
+
+        if (x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h)
+            return PT_PANEL_TURBO + k;
+    }
+    for (int k = 0; k < 3; ++k) {
+        CtrPokeTouchRect r = PanelRepel(k);
+
+        if (x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h)
+            return PT_PANEL_REPEL + k;
+    }
+    if (x >= PN_X && y >= PN_Y && x < PN_X + PN_W && y < PN_Y + PN_H)
+        return PT_PANEL_NONE;               /* on the panel, on nothing */
+    return PT_PANEL_OUT;
+}
+
+static void HomePanel(const CtrPokeTouchView *v)
+{
+    static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
+                                          CTR_TR("Max Repel", "MÃ¡x. Rep.", "Top-Schutz")};
+    static const unsigned kSteps[3] = {100, 200, 250};
+    char text[24];
+    unsigned m = v->homeMoney;
+
+    /* the map dims under it */
+    for (int y = PT_HOME_Y; y < PT_HOME_Y + PT_VIEW_H; ++y)
+        for (int x = PT_HOME_X; x < PT_HOME_X + PT_VIEW_W; ++x)
+            if (x < PN_X - 3 || x >= PN_X + PN_W + 3 || y < PN_Y - 3 || y >= PN_Y + PN_H + 3)
+                Px(x, y, UiMix(sCanvas[(size_t)x * H + (H - 1 - (size_t)y)], UI_RGB(10, 6, 20), 3));
+    LlWindow(PN_X, PN_Y, PN_W, PN_H);
+    SmallText(CTR_TR("Turbo", "Turbo", "Turbo"), PN_X + 10, PN_Y + 2, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    for (int k = 0; k < 4; ++k) {
+        CtrPokeTouchRect r = PanelTurbo(k);
+        unsigned speed = k == 0 ? 0 : (unsigned)k + 1;
+        int lit = (v->homeTurbo > 1 ? v->homeTurbo : 0) == speed, fy;
+        const EmPal *pal = lit ? &kEmFlame : &kEmCream;
+
+        snprintf(text, sizeof(text), "x%u", speed);
+        fy = EmButton(r.x, r.y, r.w, r.h, pal, 1, 0);
+        EmLabel(k == 0 ? CTR_TR("Off", "No", "Aus") : text, r.x, r.w, fy, r.h - 1, pal);
+    }
+    Fill(PN_X + 8, PN_Y + 46, PN_W - 16, 1, UI_RGB(214, 206, 190));
+    SmallText(CTR_TR("Repel", "Repelente", "Schutz"), PN_X + 10, PN_Y + 46, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    if (v->homeRepelSteps) {
+        snprintf(text, sizeof(text), CTR_TR("%u steps left", "Quedan %u pasos", "Noch %u Schritte"), (unsigned)v->homeRepelSteps);
+        SmallText(text, PN_X + PN_W - 10 - UiTextWidth(text, 1), PN_Y + 46, EM_DIM, EM_DARK_SH, PN_X + PN_W - 2);
+    }
+    for (int k = 0; k < 3; ++k) {
+        CtrPokeTouchRect r = PanelRepel(k);
+        int can = v->homeRepelHave[k] > 0 && !v->homeRepelSteps, fy;
+        const EmPal *pal = can ? &kEmCream : &kEmGrey;
+
+        fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, 0);
+        ItemArt(ICON_REPEL + k, v->homeRepelItem[k], r.x + 4, fy + 3, can);
+        snprintf(text, sizeof(text), "x%u", (unsigned)v->homeRepelHave[k]);
+        SmallText(text, r.x + 27, fy - 1, pal->ink, pal->inkSh, r.x + r.w - 2);
+        snprintf(text, sizeof(text), CTR_TR("%u st.", "%u p.", "%u S."), kSteps[k]);
+        SmallText(text, r.x + 27, fy + 10, EM_DIM, pal->inkSh, r.x + r.w - 2);
+        SmallText(kName[k], r.x + 4, fy + 24, pal->ink, pal->inkSh, r.x + r.w - 2);
+    }
+    Fill(PN_X + 8, PN_Y + 112, PN_W - 16, 1, UI_RGB(214, 206, 190));
+    SmallText(CTR_TR("Money", "Dinero", "Geld"), PN_X + 10, PN_Y + 112, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    if (m >= 1000000)
+        snprintf(text, sizeof(text), "%u.%03u.%03u", m / 1000000, m / 1000 % 1000, m % 1000);
+    else if (m >= 1000)
+        snprintf(text, sizeof(text), "%u.%03u", m / 1000, m % 1000);
+    else
+        snprintf(text, sizeof(text), "%u", m);
+    Em2Text(text, PN_X + 10, PN_Y + 124, EM_DARK, EM_DARK_SH, PN_X + PN_W - 10);
 }
 
 static void HomeDraw(const CtrPokeTouchView *v)
@@ -1963,10 +2131,22 @@ static void HomeDraw(const CtrPokeTouchView *v)
     HomeNote(v);
     for (int i = 0; i < PT_COUNT; ++i)
         Button(i, v);
+    if (v->homePanel)
+        HomePanel(v);
 }
 
 static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty)
 {
+    if (old->homePanel || v->homePanel) {
+        /* The panel is over the map: it opens, closes or changes with a full redraw; nothing under it is kept up to date meanwhile. */
+        if (old->homePanel != v->homePanel || old->homeTurbo != v->homeTurbo || old->homeMoney != v->homeMoney
+            || old->homeRepelSteps != v->homeRepelSteps || old->homeRepelKind != v->homeRepelKind
+            || memcmp(old->homeRepelHave, v->homeRepelHave, sizeof(v->homeRepelHave))) {
+            HomeDraw(v);
+            CtrDirty_Add(dirty, 0, 0, W, H);
+        }
+        return;
+    }
     if (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion || old->mapZoom != v->mapZoom || old->mapCX != v->mapCX
         || old->mapCY != v->mapCY || old->mapReady != v->mapReady || old->mapOpen != v->mapOpen) {
         HomeMapDraw(v);
@@ -1992,11 +2172,13 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
         HomeOverlay(v);
     }
     if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk || old->zoneN != v->zoneN || old->zoneWater != v->zoneWater
+        || old->homeStage != v->homeStage || old->homeDex != v->homeDex
         || memcmp(old->zoneSpecies, v->zoneSpecies, sizeof(v->zoneSpecies)) || memcmp(old->zoneFlags, v->zoneFlags, sizeof(v->zoneFlags))) {
         HomeNote(v);
         Mark(dirty, &sHomeNote);
     }
-    if (old->homeMoney != v->homeMoney || old->homeTurbo != v->homeTurbo) {
+    if (old->homeMoney != v->homeMoney || old->homeTurbo != v->homeTurbo || old->homeRepelSteps != v->homeRepelSteps
+        || old->homeRepelKind != v->homeRepelKind) {
         CtrPokeTouchRect r = Under(&sHomeStatus);
 
         HomeStatus(v);

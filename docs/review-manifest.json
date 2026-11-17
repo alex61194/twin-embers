@@ -666,7 +666,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "4fe680c7a1035a51a3d3d8339c88e3340afc2deac627400f2a218f6c77d21283",
+   "sha256": "28f4be21e14aa51823a91e02e232fe53f1fb79e8580cd399caa5ff497f6ed727",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "1eaff80651f2ecb78908b2318f7ec5a6cfd202afb806a911d31b623eae88c24f",
+   "sha256": "5c6883851e51404a893d35867479af3aa7b3ce178a70e54e0050494c020f2f23",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1311,7 +1311,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "e5d6e7053b3de03f2c15c6a83a59dec278fa23f624f5c04f7f04861d5017fdd2",
+   "sha256": "d5fc1aefe700d3dee0c2464eb3e9811522e8029f891b45879b589ca1f941a9e2",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "884ea1b9f7063f771bf40cc52fef094992e36fb27471d23a518da261e06a6531",
+   "sha256": "471ccceb9dfb4455f1cc26f334c7df16b033b120e52a8753cbccd0d0fbaaeef0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "28db4873fa6d1e2ad21e8e9c37cad5a9a9aa7f55e920017aa87acb2864c3d2ab"
+   "sha256": "8e7e987888f36c1d8c7ad22349f54661b6bb495f6a0e8ed41680cbad3a82e9ac"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "cebe2f057e95543998895e7b782c783a7e3f5695db4d5d56c9c2081434bb47bc",
+   "sha256": "9e7b85394da4c445cc0b35453de4e61d4a2ba21bd479209a61839943fa36bd1f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7506,7 +7506,7 @@
   },
   {
    "path": "patches/pokefirered/0269-home-zone-wild-list.json",
-   "sha256": "b62903ca654999af225a34fb9af9a7fc81a758bdf62e94ef2153e5c180359284",
+   "sha256": "369f3262e79da430d4b2719cd8beaae055763b115b5bf26c73ad742250a7e934",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

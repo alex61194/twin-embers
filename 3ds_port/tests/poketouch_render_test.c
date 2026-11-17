@@ -827,6 +827,26 @@ int main(int argc, char **argv)
           if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_zone");
           z.zoneWater=1; z.zoneN=3; update(&old,&z); z.flyOk=1; update(&old,&z); z.flyOk=0; z.zoneN=0; z.zoneWater=0; update(&old,&z);
           h=z; h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h); }
+        /* Nowhere wild after the League: each postgame step, then the national Pokedex bar. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"PALLET TOWN"); strcpy(z.bar[1],"KANTO"); update(&old,&z);
+          for(int st=1; st<=4; ++st) { z.homeStage=(uint8_t)st; z.homeDex=(uint16_t)(st*77); update(&old,&z); if(st==4 && getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_dexbar"); }
+          z.homeStage=0; z.homeDex=0; update(&old,&z); h=z; }
+        /* The status panel: opened, a speed chosen, a Repel used (the plate then shows it), closed. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"ROUTE 24"); z.homeMoney=8200; z.homeTurbo=2;
+          for(int k=0;k<3;++k){ z.homeRepelItem[k]=(uint16_t)(1+k); z.homeRepelHave[k]=(uint16_t)(4-2*k); }
+          update(&old,&z); assert(CtrPokeTouch_HomeLayout());
+          assert(CtrPokeTouch_HomeStatusHit(70,10) && !CtrPokeTouch_HomeStatusHit(10,10));
+          z.homePanel=1; update(&old,&z); if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_panel");
+          assert(CtrPokeTouch_HomePanelHit(100,60)==PT_PANEL_NONE && CtrPokeTouch_HomePanelHit(20,120)==PT_PANEL_OUT);
+          { int seen[7]={0}; for(int y=44;y<192;++y) for(int x=44;x<276;++x){ int t=CtrPokeTouch_HomePanelHit(x,y);
+              if(t>=PT_PANEL_TURBO&&t<PT_PANEL_TURBO+4) { seen[t-PT_PANEL_TURBO]=1; }
+              else if(t>=PT_PANEL_REPEL&&t<PT_PANEL_REPEL+3) { seen[4+t-PT_PANEL_REPEL]=1; } }
+            for(int k=0;k<7;++k) assert(seen[k]); }
+          z.homeTurbo=3; update(&old,&z);
+          z.homeRepelSteps=87; z.homeRepelTotal=100; z.homeRepelKind=PT_REPEL_PLAIN; z.homeRepelHave[0]=3; update(&old,&z);
+          z.homePanel=0; update(&old,&z); if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_repel");
+          z.homeRepelSteps=0; update(&old,&z);
+          z.homeMoney=635271; z.homeTurbo=0; update(&old,&z); h=z; }
         for(int zoom=0; zoom<HM_ZOOMS; ++zoom) {                                          /* every zoom, at a few centres: pieces move with the map */
             int centres[][2]={{384,288},{100,100},{700,500},{240,380}};
             for(unsigned c=0;c<sizeof(centres)/sizeof(centres[0]);++c) {

@@ -195,6 +195,15 @@ extern int CtrPokeTouch_RunModeShown(void);
 extern void CtrPokeTouch_PlayerName(char *out, int size);
 extern int CtrPokeTouch_LeavingFor(int entry);
 extern void CtrPokeTouch_Location(char *out, int size);
+extern int CtrBottomProgress(int *caught);       /* wild_encounter.c (recipe 0269) */
+extern int CtrBottomRepel_Item(int kind);       /* wild_encounter.c (recipe 0269): the three Repels */
+extern int CtrBottomRepel_Have(int kind);
+extern int CtrBottomRepel_Steps(void);
+extern int CtrBottomRepel_Kind(void);
+extern int CtrBottomRepel_Length(int kind);
+extern int CtrBottomRepel_Use(int kind);
+extern void CtrGameBridge_SetTurbo(unsigned turbo);   /* 3ds_game_bridge.c: a speed chosen on HOME's panel */
+static int sHomePanel;                          /* HOME's status panel is open over the map */
 extern int CtrBottomWild_Zone(uint16_t *species, uint8_t *flags, uint8_t *how, int max);   /* wild_encounter.c (recipe 0269) */
 extern int CtrPokeTouch_MapGroup(void);
 extern int CtrPokeTouch_MapVersion(void);
@@ -1670,6 +1679,18 @@ static void HomeMapState(Snapshot *s)
         s->touch.homeMoney = CtrSave_Money();
         s->touch.homeTurbo = (uint8_t)(turbo > 4 ? 4 : turbo);
         s->touch.homeClock = (int16_t)(CtrNightWild_Second() / 60u % 1440u);
+        s->touch.homePanel = (uint8_t)(sHomePanel != 0);
+        {
+            int steps = CtrBottomRepel_Steps(), kind = CtrBottomRepel_Kind();
+
+            s->touch.homeRepelSteps = (uint16_t)(steps > 0 && steps < 65535 ? steps : 0);
+            s->touch.homeRepelKind = (uint8_t)kind;
+            s->touch.homeRepelTotal = (uint16_t)CtrBottomRepel_Length(kind);
+            for (int k = 0; k < 3; ++k) {
+                s->touch.homeRepelItem[k] = (uint16_t)CtrBottomRepel_Item(k);
+                s->touch.homeRepelHave[k] = (uint16_t)(sHomePanel ? CtrBottomRepel_Have(k) : 0);
+            }
+        }
     }
     s->touch.mapGroup = (uint8_t)(sHome.view - 1);
     s->touch.mapVersion = (uint8_t)version;
@@ -1716,7 +1737,7 @@ static void HomeMapState(Snapshot *s)
     if (sHome.view - 1 == group) {
         /* The map the player is on: the Pokemon its zone can give, with what the Pokedex knows of each. Read twice a second (and when the
          * map changes), not every frame: the game's tables and the Pokedex are scanned. */
-        static struct { int map; unsigned age; uint8_t n, water; uint16_t species[PT_ZONE_MAX]; uint8_t flags[PT_ZONE_MAX]; } zone = {-1, 0, 0, 0, {0}, {0}};
+        static struct { int map; unsigned age; uint8_t n, water, stage; uint16_t dex, species[PT_ZONE_MAX]; uint8_t flags[PT_ZONE_MAX]; } zone = {-1, 0, 0, 0, 0, 0, {0}, {0}};
         int map = 1;
 
         for (const char *c = s->touch.bar[0]; *c; ++c)
@@ -1732,6 +1753,12 @@ static void HomeMapState(Snapshot *s)
                     water = 0;          /* a land or rock one: not only water */
             if (n > PT_ZONE_MAX)
                 n = PT_ZONE_MAX;
+            {
+                int caught = 0;
+
+                zone.stage = (uint8_t)CtrBottomProgress(&caught);
+                zone.dex = (uint16_t)(caught > 0 && caught < 65535 ? caught : 0);
+            }
             zone.map = map;
             zone.age = 0;
             zone.n = (uint8_t)n;
@@ -1742,6 +1769,8 @@ static void HomeMapState(Snapshot *s)
             }
         }
         s->touch.zoneN = zone.n;
+        s->touch.homeStage = zone.stage;
+        s->touch.homeDex = zone.dex;
         s->touch.zoneWater = zone.water;
         memcpy(s->touch.zoneSpecies, zone.species, sizeof(zone.species));
         memcpy(s->touch.zoneFlags, zone.flags, sizeof(zone.flags));
@@ -3835,12 +3864,38 @@ static void UpdateSave(void)
  * release over it acts once. Holding never repeats. */
 static void ProcessPokeTouch(const CtrInput *in)
 {
+    if (sHomePanel && (in->physicalDown & (CTR_KEY_A | CTR_KEY_B | CTR_KEY_X | CTR_KEY_Y)))
+        sHomePanel = 0;                     /* a button of the console closes HOME's panel */
     if (OptionsActive())
         ProcessOptionsTouch(in);
     if (SaveActive())
         ProcessSaveInput(in);
     if (in->touchDown) {
         int id = CtrPokeTouch_HitTest((int)in->touchX, (int)in->touchY), gx, gy;
+        /* HOME's status plate opens a panel (the turbo, the Repels, the money); while it is open a tap acts on it or closes it. */
+        if (!NativeActive() && CtrPokeTouch_HomeLayout()) {
+            if (sHomePanel) {
+                int hit = CtrPokeTouch_HomePanelHit((int)in->touchX, (int)in->touchY);
+
+                if (hit >= PT_PANEL_TURBO && hit < PT_PANEL_TURBO + 4)
+                    CtrGameBridge_SetTurbo(hit == PT_PANEL_TURBO ? 0u : (unsigned)(hit - PT_PANEL_TURBO) + 1u);
+                else if (hit >= PT_PANEL_REPEL && hit < PT_PANEL_REPEL + 3)
+                    CtrBottomRepel_Use(hit - PT_PANEL_REPEL);
+                else if (hit == PT_PANEL_OUT)
+                    sHomePanel = 0;
+                sPoke.id = PT_NONE;
+                sHome.down = 0;
+                return;
+            }
+            if (CtrPokeTouch_HomeStatusHit((int)in->touchX, (int)in->touchY)) {
+                sHomePanel = 1;
+                sPoke.id = PT_NONE;
+                sHome.down = 0;
+                return;
+            }
+        } else if (sHomePanel) {
+            sHomePanel = 0;                 /* another screen took over */
+        }
         /* HOME's FLY button: the selected place, asked of the game now (the same as tapping the place again). */
         if (!NativeActive() && sHome.valid && sHome.mapsec != MAPSEC_NONE_VALUE
             && CtrPokeTouch_FlyHit((int)in->touchX, (int)in->touchY)) {
