@@ -706,6 +706,6 @@ static __attribute__((noipa)) void HmDrawRect(int zoom, int cx, int cy, int x, i
             sr /= n * n;
             sg /= n * n;
             sb /= n * n;
-            Px(PT_VIEW_X + x + i, PT_VIEW_Y + y + j, (uint16_t)((sr >> 3) << 11 | (sg >> 2) << 5 | (sb >> 3)));
+            Px(PT_HOME_X + x + i, PT_HOME_Y + y + j, (uint16_t)((sr >> 3) << 11 | (sg >> 2) << 5 | (sb >> 3)));
         }
 }

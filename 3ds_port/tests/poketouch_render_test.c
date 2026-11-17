@@ -346,12 +346,12 @@ int main(int argc, char **argv)
         while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200);
         v.mapReady=1; v.mapZoom=HM_ZOOMS-1; v.mapCX=384; v.mapCY=288; v.mapOpen=1;
         CtrPokeTouch_Draw(canvas,&v);
-        for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
-            int onRibbon=x<4+rib&&y<4+13;
-            if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_VIEW_X+PT_VIEW_W-26,PT_VIEW_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
+        for(int x=PT_HOME_X;x<PT_HOME_X+PT_VIEW_W;++x) for(int y=PT_HOME_Y;y<PT_HOME_Y+PT_VIEW_H;++y) {
+            int onRibbon=x<PT_HOME_X+rib&&y<PT_HOME_Y+13;
+            if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_HOME_X+PT_VIEW_W-26,PT_HOME_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
             assert(at(x,y)==UI_RGB(164,180,255) || at(x,y)==UI_RGB(156,213,255));
         }
-        assert(at(4,4)==LL_RIB_TOP && at(4,4+13)!=LL_RIB_TOP);      /* the ribbon: red from its top, 13 rows */
+        assert(at(PT_HOME_X,PT_HOME_Y)==LL_RIB_TOP && at(PT_HOME_X,PT_HOME_Y+13)!=LL_RIB_TOP);      /* the ribbon: red from its top, 13 rows */
         v.mapReady=0; v.mapZoom=0; sMap.group=-1; CtrPokeTouch_Draw(canvas,&v);
     }
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
@@ -813,11 +813,11 @@ int main(int argc, char **argv)
         update(&old,&h);                                                                 /* the map is not built: the sea's blue and the ribbon */
         { int steps=0;  while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200); assert(steps>5 && HmDone() && sHmOrbN==5 && sHmPalN>20 && sHmPalN<=255); }
         h.mapReady=1; update(&old,&h);                                                   /* built: the picture appears */
-        assert(at(PT_VIEW_X+100,PT_VIEW_Y+80)!=C_MAP_WAIT);
+        assert(at(PT_HOME_X+100,PT_HOME_Y+80)!=C_MAP_WAIT);
         h.playerX=5; h.playerY=5; update(&old,&h);                                      /* the player appears */
         h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h);    /* a destination: ring, name */
         assert(RingRect(&h,&ring) && ring.w==ring.h && ring.w>=24 && (ring.w&1)==0 && LabelRect(&h,&label) && label.h==21 && label.w==UiTextWidth("VERMILION CITY",1)+18);
-        assert(label.y+label.h+3==ring.y || label.y==ring.y+ring.h+3 || label.y>=PT_VIEW_Y+3);
+        assert(label.y+label.h+3==ring.y || label.y==ring.y+ring.h+3 || label.y>=PT_HOME_Y+3);
         assert(at(ring.x+ring.w/2,ring.y)==UI_RGB(138,22,16) || at(ring.x+ring.w/2-1,ring.y)==UI_RGB(138,22,16));   /* the ring's dark edge at its top */
         if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_cursor");
         h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the ring blinks */
@@ -832,7 +832,7 @@ int main(int argc, char **argv)
                     h.cursorX=(int8_t)cells[i][0]; h.cursorY=(int8_t)cells[i][1]; update(&old,&h);
                     h.playerX=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][0]; h.playerY=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][1]; update(&old,&h);
                     if(LabelRect(&h,&label)) { /* the name's window stays inside the map */
-                        assert(label.x>=PT_VIEW_X && label.y>=PT_VIEW_Y && label.x+label.w<=PT_VIEW_X+PT_VIEW_W && label.y+label.h<=PT_VIEW_Y+PT_VIEW_H);
+                        assert(label.x>=PT_HOME_X && label.y>=PT_HOME_Y && label.x+label.w<=PT_HOME_X+PT_VIEW_W && label.y+label.h<=PT_HOME_Y+PT_VIEW_H);
                     }
                 }
             }
@@ -847,9 +847,9 @@ int main(int argc, char **argv)
         {
             CtrPokeTouchRect plus=ZoomRect(1), minus=ZoomRect(0);
             assert(CtrPokeTouch_HomeZoomHit(plus.x+10,plus.y+10)==1 && CtrPokeTouch_HomeZoomHit(minus.x+10,minus.y+10)==-1);
-            assert(CtrPokeTouch_HomeZoomHit(PT_VIEW_X+10,PT_VIEW_Y+PT_VIEW_H/2)==0 && !(plus.y+plus.h>minus.y));
-            assert(plus.x+plus.w<=PT_VIEW_X+PT_VIEW_W && minus.y+minus.h<=PT_VIEW_Y+PT_VIEW_H);
-            assert(CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6) && !CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+100,PT_VIEW_Y+60));
+            assert(CtrPokeTouch_HomeZoomHit(PT_HOME_X+10,PT_HOME_Y+PT_VIEW_H/2)==0 && !(plus.y+plus.h>minus.y));
+            assert(plus.x+plus.w<=PT_HOME_X+PT_VIEW_W && minus.y+minus.h<=PT_HOME_Y+PT_VIEW_H);
+            assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6) && !CtrPokeTouch_HomeRibbonHit(PT_HOME_X+100,PT_HOME_Y+60));
             for(int on=0; on<2; ++on) for(int p=0;p<2;++p) {
                 CtrPokeTouchRect r=ZoomRect(p);
                 sCanvas=canvas; for(int i=0;i<W*H;++i) canvas[i]=0x1357;
@@ -862,7 +862,7 @@ int main(int argc, char **argv)
         { int steps=0; while(!CtrPokeTouch_MapPrepare(1,0)) assert(++steps<200); }
         h.mapGroup=PT_MAP_SEVII123; h.mapReady=1; h.cursorX=4; h.cursorY=4; update(&old,&h);   /* another map: SEVII on the ribbon */
         h.mapOpen=1; update(&old,&h);                                                    /* no other map: no arrow on the ribbon */
-        assert(!CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6));
+        assert(!CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
         /* A pick: the town whose orb is near the touch, else the cell it is in. */
         {
             int gx, gy, wx = 0, wy = 0, vx, vy;

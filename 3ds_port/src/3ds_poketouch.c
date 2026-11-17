@@ -165,17 +165,41 @@ static int CtrPokeTouch_PackMenuIcon(unsigned icon, uint8_t pixels[12 * 12], uin
 
 /* The START column on the right of the GBA picture's frame (the picture ends at x = 244, its frame at 247): six raised
  * buttons, the X and Y shortcut tiles and RUN with its switch. */
-const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = {
-    [PT_POKEDEX]    = {250,   4, 68, 21},
-    [PT_POKEMON]    = {250,  29, 68, 21},
-    [PT_BAG]        = {250,  54, 68, 21},
-    [PT_CARD]       = {250,  79, 68, 21},
-    [PT_SAVE]       = {250, 104, 68, 21},
-    [PT_OPTIONS]    = {250, 129, 68, 21},
-    [PT_REGISTERED] = {250, 158, 32, 40},
-    [PT_BIKE]       = {286, 158, 32, 40},
-    [PT_RUN]        = {250, 204, 68, 30},
+#define CLASSIC_RECTS { \
+    [PT_POKEDEX]    = {250,   4, 68, 21}, \
+    [PT_POKEMON]    = {250,  29, 68, 21}, \
+    [PT_BAG]        = {250,  54, 68, 21}, \
+    [PT_CARD]       = {250,  79, 68, 21}, \
+    [PT_SAVE]       = {250, 104, 68, 21}, \
+    [PT_OPTIONS]    = {250, 129, 68, 21}, \
+    [PT_REGISTERED] = {250, 158, 32, 40}, \
+    [PT_BIKE]       = {286, 158, 32, 40}, \
+    [PT_RUN]        = {250, 204, 68, 30}, \
+}
+static const CtrPokeTouchRect sRectsClassic[PT_COUNT] = CLASSIC_RECTS;
+/* HOME's layout (the map in the middle, PT_HOME_X/Y): the START column split in the two side bands (Pokedex, Pokemon, Bag and the
+ * Trainer Card on the left, Save, Options, X and Y on the right), RUN in the top band. 35 wide, so a button's ring and shadow stay off
+ * the map's frame; 36 tall, 40 apart. */
+static const CtrPokeTouchRect sRectsHome[PT_COUNT] = {
+    [PT_POKEDEX]    = {  0,  40, 35, 36},
+    [PT_POKEMON]    = {  0,  80, 35, 36},
+    [PT_BAG]        = {  0, 120, 35, 36},
+    [PT_CARD]       = {  0, 160, 35, 36},
+    [PT_SAVE]       = {285,  40, 35, 36},
+    [PT_OPTIONS]    = {285,  80, 35, 36},
+    [PT_REGISTERED] = {285, 120, 35, 36},
+    [PT_BIKE]       = {285, 160, 35, 36},
+    [PT_RUN]        = {245,   2, 71, 33},
 };
+CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT] = CLASSIC_RECTS;
+static int sLayoutHome;                 /* HOME's layout is the one on the screen (and in gCtrPokeTouchRects) */
+
+static void SetLayout(int home)
+{
+    sLayoutHome = home != 0;
+    memcpy(gCtrPokeTouchRects, home ? sRectsHome : sRectsClassic, sizeof(gCtrPokeTouchRects));
+}
+
 
 /* Areas that are not buttons: the picture's frame, and under it the bar: the note card on the left and, on its
  * right, BACK (and PAGE over it) or SAVE's buttons. */
@@ -327,6 +351,49 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
 }
 
 #include "3ds_ui_theme_impl.h"
+
+/* FireRed's small font (8 wide cells): the labels under HOME's buttons, the plates' captions. Without it, the normal font. */
+static int SmallWidth(const char *s)
+{
+    int w = 0;
+
+    if (!CtrTwinSmallFontData())
+        return UiTextWidth(s, 1);
+    while (*s) {
+        unsigned code = GlyphCode(&s) & 0xffu, cw = CtrTwinSmallFontWidth(code);
+
+        w += (int)(cw > 8 ? 8 : cw);
+    }
+    return w;
+}
+
+static void SmallText(const char *s, int x, int cellTop, uint16_t fg, uint16_t shadow, int limit)
+{
+    const uint8_t *font = CtrTwinSmallFontData();
+
+    if (!font) {
+        UiText(s, x, cellTop + 3, fg, shadow, 1, limit);
+        return;
+    }
+    while (*s) {
+        unsigned code = GlyphCode(&s) & 0xffu, w = CtrTwinSmallFontWidth(code);
+        uint32_t rows[16];
+
+        if (w > 8)
+            w = 8;
+        if (x + (int)w > limit)
+            break;
+        TwinSmallGlyphDecode(font + code * 32, w, rows);
+        for (int row = 0; row < 16; ++row)
+            for (unsigned col = 0; col < w; ++col) {
+                unsigned px = (rows[row] >> (2 * col)) & 3;
+
+                if (px)
+                    Px(x + (int)col, cellTop + row, px == 1 ? fg : shadow);
+            }
+        x += (int)w;
+    }
+}
 #include "3ds_icons.h"
 /* The skin keeps the Ascuas pieces (EmWell, EmKeyTab, EmSwitch, EmBezel) for the screens not converted to Llama; this one draws its own. */
 #pragma GCC diagnostic push
@@ -639,7 +706,7 @@ static void MapRestore(int x, int y, int w, int h)
     if (sViewReady)
         HmDrawRect(sViewZoom, sViewCX, sViewCY, x, y, x1 - x, y1 - y);
     else
-        Fill(PT_VIEW_X + x, PT_VIEW_Y + y, x1 - x, y1 - y, C_MAP_WAIT);
+        Fill(PT_HOME_X + x, PT_HOME_Y + y, x1 - x, y1 - y, C_MAP_WAIT);
 }
 
 /* The centre of a cell in the viewport (its own pixels); false when the cell is off the map or the image is not built. */
@@ -766,7 +833,7 @@ static void IconDraw(const struct Icon *icon, int frame, int cx, int cy)
             uint8_t index = icon->pixels[frame % icon->frames][py * MARKER + px];
 
             if (index && x >= 0 && y >= 0 && x < PT_VIEW_W && y < PT_VIEW_H)
-                Px(PT_VIEW_X + x, PT_VIEW_Y + y, icon->pal[index]);
+                Px(PT_HOME_X + x, PT_HOME_Y + y, icon->pal[index]);
         }
 }
 
@@ -795,7 +862,7 @@ bool CtrPokeTouch_HomeRibbonHit(int x, int y)
 
 static CtrPokeTouchRect ZoomRect(int plus)
 {
-    CtrPokeTouchRect r = {PT_VIEW_X + PT_VIEW_W - ZOOM_D - 6, (int16_t)(PT_VIEW_Y + PT_VIEW_H / 2 - ZOOM_D - 2 + (plus ? 0 : ZOOM_D + 4)), ZOOM_D, ZOOM_D};
+    CtrPokeTouchRect r = {PT_HOME_X + PT_VIEW_W - ZOOM_D - 6, (int16_t)(PT_HOME_Y + PT_VIEW_H / 2 - ZOOM_D - 2 + (plus ? 0 : ZOOM_D + 4)), ZOOM_D, ZOOM_D};
 
     return r;
 }
@@ -841,8 +908,8 @@ static int PlayerRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
 
     if (!CellView(v, v->playerX, v->playerY, &x, &y))
         return 0;
-    r->x = (int16_t)(PT_VIEW_X + x - MARKER / 2);
-    r->y = (int16_t)(PT_VIEW_Y + y - MARKER / 2);
+    r->x = (int16_t)(PT_HOME_X + x - MARKER / 2);
+    r->y = (int16_t)(PT_HOME_Y + y - MARKER / 2);
     r->w = r->h = MARKER;
     return 1;
 }
@@ -862,8 +929,8 @@ static int RingRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
 
     if (v->cursorX < 0 || !CellView(v, v->cursorX, v->cursorY, &x, &y) || x < 0 || y < 0 || x >= PT_VIEW_W || y >= PT_VIEW_H)
         return 0;                           /* off the window: no ring, no name */
-    r->x = (int16_t)(PT_VIEW_X + x - d / 2);
-    r->y = (int16_t)(PT_VIEW_Y + y - d / 2);
+    r->x = (int16_t)(PT_HOME_X + x - d / 2);
+    r->y = (int16_t)(PT_HOME_Y + y - d / 2);
     r->w = r->h = (int16_t)d;
     return 1;
 }
@@ -872,7 +939,7 @@ static int RingRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
 static int LabelRect(const CtrPokeTouchView *v, CtrPokeTouchRect *r)
 {
     CtrPokeTouchRect ring;
-    int w, x, y, left = PT_VIEW_X + 3, right = PT_VIEW_X + PT_VIEW_W - 3, top = PT_VIEW_Y + 3, bottom = PT_VIEW_Y + PT_VIEW_H - 3;
+    int w, x, y, left = PT_HOME_X + 3, right = PT_HOME_X + PT_VIEW_W - 3, top = PT_HOME_Y + 3, bottom = PT_HOME_Y + PT_VIEW_H - 3;
 
     if (!v->bar[0][0] || !RingRect(v, &ring))
         return 0;
@@ -904,7 +971,7 @@ static void RingDraw(const CtrPokeTouchRect *r, int blink)
         for (int col = 0; col < D; ++col) {
             int dx = 2 * col + 1 - D, dy = 2 * row + 1 - D, d2 = dx * dx + dy * dy, x = r->x + col, y = r->y + row;
 
-            if (x < PT_VIEW_X || y < PT_VIEW_Y || x >= PT_VIEW_X + PT_VIEW_W || y >= PT_VIEW_Y + PT_VIEW_H || d2 > D * D)
+            if (x < PT_HOME_X || y < PT_HOME_Y || x >= PT_HOME_X + PT_VIEW_W || y >= PT_HOME_Y + PT_VIEW_H || d2 > D * D)
                 continue;
             if (d2 > (D - 2) * (D - 2))
                 Px(x, y, UI_RGB(138, 22, 16));
@@ -919,17 +986,17 @@ static void HomeOverlay(const CtrPokeTouchView *v)
     const char *name = RegionName(v->mapGroup);
     int multi = (v->mapOpen & (v->mapOpen - 1)) != 0, textW = UiTextWidth(name, 1), w = textW + 18 + (multi ? 9 : 0);
 
-    LlRibbonBox(PT_VIEW_X, PT_VIEW_Y, w, 13, 7, 0, LL_RIB_TOP, LL_RIB_BOT, name);
+    LlRibbonBox(PT_HOME_X, PT_HOME_Y, w, 13, 7, 0, LL_RIB_TOP, LL_RIB_BOT, name);
     if (multi)
-        LlArrow(PT_VIEW_X + 6 + textW + 4, PT_VIEW_Y + 3, 4, 7, 3, EM_WHITE);
+        LlArrow(PT_HOME_X + 6 + textW + 4, PT_HOME_Y + 3, 4, 7, 3, EM_WHITE);
     sHomeShown = 1;
-    sHomeRibbon = multi ? (CtrPokeTouchRect){PT_VIEW_X, PT_VIEW_Y, (int16_t)w, 13} : (CtrPokeTouchRect){0, 0, 0, 0};
+    sHomeRibbon = multi ? (CtrPokeTouchRect){PT_HOME_X, PT_HOME_Y, (int16_t)w, 13} : (CtrPokeTouchRect){0, 0, 0, 0};
     ZoomButton(1, v->mapZoom < HM_ZOOMS - 1);
     ZoomButton(0, v->mapZoom > 0);
     if (sPlayer.key != v->playerFemale)
         IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
     if (PlayerRect(v, &player))
-        IconDraw(&sPlayer, 0, player.x - PT_VIEW_X + MARKER / 2, player.y - PT_VIEW_Y + MARKER / 2);
+        IconDraw(&sPlayer, 0, player.x - PT_HOME_X + MARKER / 2, player.y - PT_HOME_Y + MARKER / 2);
     if (!RingRect(v, &ring))
         return;
     RingDraw(&ring, v->cursorFrame);
@@ -1652,9 +1719,13 @@ static void Button(int id, const CtrPokeTouchView *v)
         const char *key = id == PT_REGISTERED ? "X" : "Y";
 
         LlRibbonBox(r->x + 1, fy + 1, UiTextWidth(key, 1) + 18, 11, 7, LL_TL, LL_BLUE_TOP, LL_BLUE_BOT, key);
-        LlWell(r->x + 3, fy + 15, r->w - 6, fh - 18);
-        ItemArt(id == PT_REGISTERED ? ICON_REGISTERED : ICON_BIKE, id == PT_REGISTERED ? v->registeredItem : v->bikeItem,
-                r->x + (r->w - 20) / 2, fy + 15 + (fh - 18 - 20) / 2, on);
+        {
+            int wellY = fy + (sLayoutHome ? 13 : 15), wellH = fh - (sLayoutHome ? 14 : 18);
+
+            LlWell(r->x + 3, wellY, r->w - 6, wellH);
+            ItemArt(id == PT_REGISTERED ? ICON_REGISTERED : ICON_BIKE, id == PT_REGISTERED ? v->registeredItem : v->bikeItem,
+                    r->x + (r->w - 20) / 2, wellY + (wellH - 20) / 2, on);
+        }
         break;
     }
     case PT_RUN:
@@ -1680,6 +1751,13 @@ static void Button(int id, const CtrPokeTouchView *v)
                 name[n] = v->playerName[n];
             }
             name[n] = 0;
+        }
+        if (sLayoutHome) {
+            int lw = SmallWidth(label);
+
+            EmIcon(ColumnIcon(id), r->x + (r->w - EMBER_ICON) / 2, fy + 2, on);
+            SmallText(label, r->x + (r->w - lw) / 2, fy + 15, pal->ink, pal->inkSh, r->x + r->w);
+            break;
         }
         EmIcon(ColumnIcon(id), r->x + 4, fy + (fh - EMBER_ICON) / 2, on);
         UiText(label, r->x + 23, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 2);
@@ -1715,8 +1793,8 @@ int CtrPokeTouch_HitTest(int x, int y)
 /* The viewport shows the GBA picture 1:1. */
 bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy)
 {
-    x -= PT_VIEW_X;
-    y -= PT_VIEW_Y;
+    x -= sLayoutHome ? PT_HOME_X : PT_VIEW_X;
+    y -= sLayoutHome ? PT_HOME_Y : PT_VIEW_Y;
     if (x < 0 || y < 0 || x >= PT_VIEW_W || y >= PT_VIEW_H)
         return false;
     *gx = x;
@@ -1724,9 +1802,206 @@ bool CtrPokeTouch_ViewportToGba(int x, int y, int *gx, int *gy)
     return true;
 }
 
+static int Changed(int id, const CtrPokeTouchView *a, const CtrPokeTouchView *b);
+static void Mark(CtrDirtyList *dirty, const CtrPokeTouchRect *r);
+static void MapRestoreRect(const CtrPokeTouchRect *r, CtrDirtyList *dirty);
+
+/* ---------------------------------------------------------------- HOME's layout
+ * The map in the middle (PT_HOME_X/Y, 240x160 1:1 in FireRed's window frame); round it: BACK (grey, nothing to go back from), the status
+ * plate (the money and the turbo), the clock and RUN in the top band, the column split in the two side bands, the note under the map. */
+static const CtrPokeTouchRect sHomeBack = {4, 2, 58, 33};
+static const CtrPokeTouchRect sHomeStatus = {65, 2, 116, 33};
+static const CtrPokeTouchRect sHomeClock = {184, 2, 58, 33};
+static const CtrPokeTouchRect sHomeMapArea = {PT_HOME_X - 3, PT_HOME_Y - 3, PT_VIEW_W + 6, PT_VIEW_H + 6};
+static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the map's frame (its last row is 202) */
+#define HN_X 4
+#define HN_Y 203
+#define HN_W 312
+#define HN_H 34
+
+/* Whether the view is HOME with nothing over the map: the layout with the map in the middle. */
+static int IsHome(const CtrPokeTouchView *v)
+{
+    return v->home && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on && !v->dex.on && !v->card.on && !v->learn.on
+        && !v->relearn.on && !v->mail.on && !v->choice.on && !v->box.on && !v->bag.on;
+}
+
+static void HomeBack(void)
+{
+    const CtrPokeTouchRect *r = &sHomeBack;
+    int fy, fh = r->h - BTN_DEPTH;
+
+    TsBgRect(r->x, r->y, r->w, r->h + 2);
+    Em2CardShadow(r->x, r->y, r->w, r->h);
+    fy = EmButton(r->x, r->y, r->w, r->h, &kEmGrey, BTN_DEPTH, 0);
+    LlArrow(r->x + 8, fy + (fh - 10) / 2, 6, 10, 2, kEmGrey.ink);
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck"), r->x + 18, fy + (fh - UI_TEXT_H) / 2, kEmGrey.ink, kEmGrey.inkSh, 1, r->x + r->w - 2);
+}
+
+/* The status plate: the money, and the turbo on a chip at its right. */
+static void HomeStatus(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &sHomeStatus;
+    char money[24], turbo[8];
+    unsigned m = v->homeMoney;
+    int chipW = 26, chipX = r->x + r->w - chipW - 5, fy;
+
+    TsBgRect(r->x, r->y, r->w, r->h + 2);
+    LlWindow(r->x, r->y, r->w, r->h);
+    if (m >= 1000000)
+        snprintf(money, sizeof(money), "%u.%03u.%03u", m / 1000000, m / 1000 % 1000, m % 1000);
+    else if (m >= 1000)
+        snprintf(money, sizeof(money), "%u.%03u", m / 1000, m % 1000);
+    else
+        snprintf(money, sizeof(money), "%u", m);
+    SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 2);
+    Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, chipX - 2);
+    snprintf(turbo, sizeof(turbo), "x%u", v->homeTurbo > 1 ? (unsigned)v->homeTurbo : 1u);
+    fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
+    EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
+}
+
+/* The clock plate: a small dial and the time of day. */
+static void HomeClock(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &sHomeClock;
+    char t[8];
+    int cx = r->x + 12, cy = r->y + r->h / 2;
+
+    TsBgRect(r->x, r->y, r->w, r->h + 2);
+    LlWindow(r->x, r->y, r->w, r->h);
+    for (int dy = -6; dy <= 6; ++dy)
+        for (int dx = -6; dx <= 6; ++dx) {
+            int d2 = dx * dx + dy * dy;
+
+            if (d2 <= 36)
+                Px(cx + dx, cy + dy, d2 > 25 ? LL_SLATE : d2 > 16 ? UI_RGB(255, 226, 150) : UI_RGB(255, 250, 230));
+        }
+    Fill(cx, cy - 4, 1, 4, LL_SLATE);
+    Fill(cx, cy, 3, 1, UI_RGB(214, 70, 28));
+    if (v->homeClock < 0)
+        return;
+    snprintf(t, sizeof(t), "%02d:%02d", v->homeClock / 60 % 24, v->homeClock % 60);
+    Em2Text(t, r->x + 22, r->y + (r->h - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, r->x + r->w - 3);
+}
+
+/* The map in FireRed's frame (the sea's blue while its image is built). */
+static void HomeMapDraw(const CtrPokeTouchView *v)
+{
+    TsBgRect(sHomeMapArea.x, sHomeMapArea.y, sHomeMapArea.w, sHomeMapArea.h);
+    HomeFrame(PT_HOME_X, PT_HOME_Y, PT_VIEW_W, PT_VIEW_H);
+    if (!HomeShow(v))
+        Fill(PT_HOME_X, PT_HOME_Y, PT_VIEW_W, PT_VIEW_H, C_VIEW_EMPTY);
+}
+
+/* The note under the map: the subject and the line that says more; FLY at the subject's right when the destination can be Flown to. */
+static void HomeNote(const CtrPokeTouchView *v)
+{
+    int right = HN_X + HN_W - 10, titleRight = right;
+    const char *line = NULL;
+
+    sFlyButton.w = 0;
+    TsBgRect(sHomeNote.x, sHomeNote.y, sHomeNote.w, sHomeNote.h);
+    LlWindow(HN_X, HN_Y, HN_W, HN_H);
+    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    for (int i = 1; i < PT_BAR_LINES && !line; ++i)
+        if (v->bar[i][0] && !(v->flyOk && i == 1))
+            line = v->bar[i];
+    if (v->flyOk) {
+        const char *fly = CTR_TR("Fly", "Volar", "Fliegen");
+        int pw = UiTextWidth(fly, 1) + 16, px, fy;
+
+        if (pw < 40)
+            pw = 40;
+        px = right - pw;
+        fy = EmButton(px, HN_Y + 8, pw, 18, &kEmFlame, 1, 0);
+        sFlyButton = (CtrPokeTouchRect){(int16_t)px, HN_Y + 8, (int16_t)pw, 18};
+        EmLabel(fly, px, pw, fy, 17, &kEmFlame);
+        titleRight = px - 4;
+    }
+    if (line) {
+        Em2Text(v->bar[0], HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, titleRight);
+        SmallText(line, HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, titleRight);
+    } else if (v->bar[0][0]) {
+        Em2Text(v->bar[0], HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
+    }
+}
+
+static void HomeDraw(const CtrPokeTouchView *v)
+{
+    SetLayout(1);
+    Frame();
+    HomeBack();
+    HomeStatus(v);
+    HomeClock(v);
+    HomeMapDraw(v);
+    HomeNote(v);
+    for (int i = 0; i < PT_COUNT; ++i)
+        Button(i, v);
+}
+
+static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, CtrDirtyList *dirty)
+{
+    if (old->mapGroup != v->mapGroup || old->mapVersion != v->mapVersion || old->mapZoom != v->mapZoom || old->mapCX != v->mapCX
+        || old->mapCY != v->mapCY || old->mapReady != v->mapReady || old->mapOpen != v->mapOpen) {
+        HomeMapDraw(v);
+        Mark(dirty, &sHomeMapArea);
+    } else if (old->playerX != v->playerX || old->playerY != v->playerY || old->playerFemale != v->playerFemale
+               || old->cursorX != v->cursorX || old->cursorY != v->cursorY || old->cursorFrame != v->cursorFrame
+               || ((old->cursorX >= 0 || v->cursorX >= 0) && strcmp(old->bar[0], v->bar[0]))) {
+        int player = old->playerX != v->playerX || old->playerY != v->playerY || old->playerFemale != v->playerFemale;
+        int cursor = old->cursorX != v->cursorX || old->cursorY != v->cursorY || old->cursorFrame != v->cursorFrame;
+        int label = old->cursorX != v->cursorX || old->cursorY != v->cursorY || strcmp(old->bar[0], v->bar[0]);
+        const CtrPokeTouchView *views[2] = {old, v};
+        CtrPokeTouchRect r;
+
+        HomeSetView(v);
+        for (int i = 0; i < 2; ++i) {
+            if (player && PlayerRect(views[i], &r))
+                MapRestoreRect(&r, dirty);
+            if (cursor && RingRect(views[i], &r))
+                MapRestoreRect(&r, dirty);
+            if (label && LabelRect(views[i], &r))
+                MapRestoreRect(&r, dirty);
+        }
+        HomeOverlay(v);
+    }
+    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk) {
+        HomeNote(v);
+        Mark(dirty, &sHomeNote);
+    }
+    if (old->homeMoney != v->homeMoney || old->homeTurbo != v->homeTurbo) {
+        CtrPokeTouchRect r = Under(&sHomeStatus);
+
+        HomeStatus(v);
+        Mark(dirty, &r);
+    }
+    if (old->homeClock != v->homeClock) {
+        CtrPokeTouchRect r = Under(&sHomeClock);
+
+        HomeClock(v);
+        Mark(dirty, &r);
+    }
+    for (int i = 0; i < PT_COUNT; ++i) {
+        if (!Changed(i, old, v))
+            continue;
+        Button(i, v);
+        {
+            CtrPokeTouchRect area = Area(i);
+
+            Mark(dirty, &area);
+        }
+    }
+}
+
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
+    if (IsHome(v)) {
+        HomeDraw(v);
+        return;
+    }
+    SetLayout(0);
     if (v->ec.on) {
         FEasyDraw(v);
         return;
@@ -1756,20 +2031,23 @@ static int Changed(int id, const CtrPokeTouchView *a, const CtrPokeTouchView *b)
 
 static void Mark(CtrDirtyList *dirty, const CtrPokeTouchRect *r)
 {
-    CtrDirty_Add(dirty, r->x, r->y, r->x + r->w, r->y + r->h);
+    int x0 = r->x < 0 ? 0 : r->x, y0 = r->y < 0 ? 0 : r->y, x1 = r->x + r->w > W ? W : r->x + r->w, y1 = r->y + r->h > H ? H : r->y + r->h;
+
+    if (x1 > x0 && y1 > y0)
+        CtrDirty_Add(dirty, x0, y0, x1, y1);
 }
 
 /* A rectangle of the HOME map put back (the part of it inside the viewport) and marked. */
 static void MapRestoreRect(const CtrPokeTouchRect *r, CtrDirtyList *dirty)
 {
-    int x0 = r->x < PT_VIEW_X ? PT_VIEW_X : r->x, y0 = r->y < PT_VIEW_Y ? PT_VIEW_Y : r->y;
-    int x1 = r->x + r->w > PT_VIEW_X + PT_VIEW_W ? PT_VIEW_X + PT_VIEW_W : r->x + r->w;
-    int y1 = r->y + r->h > PT_VIEW_Y + PT_VIEW_H ? PT_VIEW_Y + PT_VIEW_H : r->y + r->h;
+    int x0 = r->x < PT_HOME_X ? PT_HOME_X : r->x, y0 = r->y < PT_HOME_Y ? PT_HOME_Y : r->y;
+    int x1 = r->x + r->w > PT_HOME_X + PT_VIEW_W ? PT_HOME_X + PT_VIEW_W : r->x + r->w;
+    int y1 = r->y + r->h > PT_HOME_Y + PT_VIEW_H ? PT_HOME_Y + PT_VIEW_H : r->y + r->h;
     CtrPokeTouchRect c = {(int16_t)x0, (int16_t)y0, (int16_t)(x1 - x0), (int16_t)(y1 - y0)};
 
     if (c.w <= 0 || c.h <= 0)
         return;
-    MapRestore(x0 - PT_VIEW_X, y0 - PT_VIEW_Y, c.w, c.h);
+    MapRestore(x0 - PT_HOME_X, y0 - PT_HOME_Y, c.w, c.h);
     Mark(dirty, &c);
 }
 
@@ -1779,6 +2057,16 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
+    if (IsHome(old) != IsHome(v) || sLayoutHome != IsHome(v)) {
+        /* Into or out of HOME's layout (the one on the screen, whatever the old view says): everything moves, the whole screen is drawn again. */
+        CtrPokeTouch_Draw(canvas, v);
+        CtrDirty_Add(dirty, 0, 0, W, H);
+        return;
+    }
+    if (IsHome(v)) {
+        HomeUpdate(old, v, dirty);
+        return;
+    }
     if (v->ec.on || old->ec.on) {
         FEasyUpdate(canvas, old, v, dirty);
         return;
@@ -1949,8 +2237,9 @@ void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo)
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, CtrDirtyList *dirty)
 {
     static const CtrPokeTouchRect picture = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
+    static const CtrPokeTouchRect homeMap = {PT_HOME_X, PT_HOME_Y, PT_VIEW_W, PT_VIEW_H};
 
-    EmbersStep(canvas, on, low, pictureShown ? &picture : NULL, dirty);
+    EmbersStep(canvas, on, low, pictureShown ? (sLayoutHome ? &homeMap : &picture) : NULL, dirty);
 }
 
 #include "3ds_battle_ui_impl.h"

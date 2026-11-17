@@ -273,6 +273,8 @@ extern unsigned CtrSave_DexCaught(void);
 extern unsigned CtrSave_PlayHours(void);
 extern unsigned CtrSave_PlayMinutes(void);
 extern unsigned CtrSave_Money(void);
+extern unsigned CtrSettings_Turbo(void);
+extern unsigned CtrNightWild_Second(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
 extern int CtrBottomCard_State(void);
@@ -1660,6 +1662,14 @@ static void HomeMapState(Snapshot *s)
         sHome.centered = 0;
     }
     s->touch.home = 1;
+    {
+        /* HOME's plates: the money, the turbo chosen (START, kept in the settings) and the time of day the outdoors shows. */
+        unsigned turbo = CtrSettings_Turbo();
+
+        s->touch.homeMoney = CtrSave_Money();
+        s->touch.homeTurbo = (uint8_t)(turbo > 4 ? 4 : turbo);
+        s->touch.homeClock = (int16_t)(CtrNightWild_Second() / 60u % 1440u);
+    }
     s->touch.mapGroup = (uint8_t)(sHome.view - 1);
     s->touch.mapVersion = (uint8_t)version;
     s->touch.mapOpen = (uint8_t)open;

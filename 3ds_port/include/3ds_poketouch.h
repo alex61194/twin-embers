@@ -38,6 +38,9 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
 #define PT_VIEW_Y 4
 #define PT_VIEW_W 240
 #define PT_VIEW_H 160
+/* HOME's layout: the map in the middle of the screen, the buttons round it (the 40 px band left on each side). */
+#define PT_HOME_X 40
+#define PT_HOME_Y 40
 /* The HOME map: FireRed's own Region Map art, drawn passively over the field's
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
  * REGIONMAP_* values. */
@@ -408,6 +411,9 @@ typedef struct {
     int8_t cursorX, cursorY;    /* the selected cell (FireRed's cursor icon), -1: none */
     uint8_t cursorFrame;        /* which of the cursor's two blink frames (0 with none) */
     uint8_t flyOk;              /* the selected destination can be Flown to now: the note says so on a pill */
+    uint32_t homeMoney;         /* HOME's status plate: the money, */
+    uint8_t homeTurbo;          /* the turbo speed (0 or 1: off, 2-4), */
+    int16_t homeClock;          /* and its clock plate the time of day in minutes (-1: none) */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */
@@ -456,7 +462,8 @@ typedef struct {
     CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
 } CtrPokeTouchView;
 
-extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
+/* The buttons' rectangles as last drawn: the classic column, or HOME's layout round the map. */
+extern CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
 /* BACK: a shell control in the bar's bottom-right corner, outside the viewport. It
  * stands for the B button of the open screen (3ds_bottom.c sends the real B). */
 extern const CtrPokeTouchRect gCtrPokeTouchBack;

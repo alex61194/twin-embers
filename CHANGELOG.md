@@ -12,6 +12,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Changed
 
+- **Lower screen HOME layout (test)**: on the plain field screen the map now sits in the middle of the lower screen, with POKéDEX, POKéMON, BAG and the trainer card in a column on its left and SAVE, OPTIONS and the X and Y items on its right. A band at the top holds the back key, a plate with your money and the turbo speed, a clock and the running switch; the note under the map keeps the place's name. Every other screen (bag, options, battle, PC...) keeps its layout. Checked on a computer only.
 - **Visible wilds** (PR #88 by mcl5500): aggressive wilds now run from your lead only when they have 15% of its power or less (before, below 70%), so they chase you far more; chasing land Pokémon may leave the tall grass for plain ground; new wilds appear near you but always just off the screen, and the map keeps alive a symmetric margin of 3 to 4 tiles of objects around the screen.
 - **Naming screen, OPTIONS and battle prompts** (PR #88 by mcl5500): the naming keyboard is full width with 9 columns (the German one has the umlauts in the ninth), the OPTIONS page dots show one dot per page, the top screen's battle picture fades out with the rest at the end of a fight and holds the battle while the new Pokédex entry is shown, and the battle's Yes/No questions (the nickname of a caught Pokémon, learning a move, stopping, and the battle's own question box) are answered on the lower screen. Checked on a computer only.
 
