@@ -3767,6 +3767,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "docs/LOCAL-WIRELESS-RESEARCH.md",
+   "sha256": "c4d1a495af9c26a4307d8332ebf79ef4d4b52ae15ce5144097631f61f50bbf4c",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "docs/release-decision.json",
    "sha256": "cca372bc90fc3f3369db6eece04dcac5b92c1e0348c81b36e78044623f7c84dc",
    "review_status": "reviewed",
