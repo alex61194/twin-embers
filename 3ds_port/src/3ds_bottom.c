@@ -2391,6 +2391,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->touch.backEnabled = (uint8_t)BackEnabled(mode);
             s->touch.backPressed = (uint8_t)(sBack.inside != 0);
             CtrOptions_Fill(&s->touch, sOpt.sel);
+            PlateFill(&s->touch);
             s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row - CtrOptions_PageBase(CtrOptions_PageOf(sOpt.row))) : -1);
             s->touch.optZone = (uint8_t)(sOpt.down && sOpt.inside ? sOpt.zone : PT_OPT_ZONE_NONE);
             s->touch.optPagePressed = (uint8_t)(sOpt.pageDown && sOpt.pageInside);

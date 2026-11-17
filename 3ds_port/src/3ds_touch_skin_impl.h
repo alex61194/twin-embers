@@ -22,9 +22,14 @@ static void TsBgPrepare(void)
     sTsBgReady = 1;
 }
 
+/* While a menu in HOME's layout is drawn over its own floor, the backdrop must not be put back under its pieces. */
+static int sKeepBg;
+
 /* The backdrop back over a rectangle. */
 static void TsBgRect(int x, int y, int w, int h)
 {
+    if (sKeepBg)
+        return;
     int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y, x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
 
     if (x0 >= x1 || y0 >= y1)

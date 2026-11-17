@@ -1069,8 +1069,8 @@ static int HomeShow(const CtrPokeTouchView *v)
 
 /* The OPTIONS rows (the Llama mockup's cream cards): 236x22 with their lip, 22 apart from (7, 7), so they touch. The value sits in a well at the
  * right: 120 wide inside OPT_BOX_W: "<" (28), the value and ">" (28) for the hit zones. */
-#define OPT_X 7
-#define OPT_Y 7
+#define OPT_X 42
+#define OPT_Y 43
 #define OPT_W 236
 #define OPT_H 22
 #define OPT_STEP 22
@@ -1432,7 +1432,7 @@ static int FrameLoadFile(const char *base, const char *ext, uint8_t *out, uint32
     return PokeTouch_LoadLz(path, out, cap) == (int)want ? (int)want : 0;
 }
 
-static int FrameSample(int type, int x, int y)
+static int FrameSampleH(int type, int x, int y, int fh)
 {
     static int loaded = -1;
     static uint16_t px[24 * 24];
@@ -1465,16 +1465,26 @@ static int FrameSample(int type, int x, int y)
     }
     if (!ok)
         return 0;
-    for (int dy = 0; dy < FRAME_H; ++dy)
+    for (int dy = 0; dy < fh; ++dy)
         for (int dx = 0; dx < FRAME_W; ++dx) {
             int sx = dx < 8 ? dx : dx >= FRAME_W - 8 ? 16 + dx - (FRAME_W - 8) : 8 + dx % 8;
-            int sy = dy < 8 ? dy : dy >= FRAME_H - 8 ? 16 + dy - (FRAME_H - 8) : 8 + dy % 8;
+            int sy = dy < 8 ? dy : dy >= fh - 8 ? 16 + dy - (fh - 8) : 8 + dy % 8;
 
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
+    if (fh < FRAME_H) {                                 /* the low sample: both words on one line */
+        UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja"), x + 10, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+        UiText(CTR_TR("No", "No", "Nein"), x + 32, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+        return 1;
+    }
     UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     UiText(CTR_TR("No", "No", "Nein"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
+}
+
+static int FrameSample(int type, int x, int y)
+{
+    return FrameSampleH(type, x, y, FRAME_H);
 }
 
 /* HOME's FLY button as last drawn (w 0: not there), so a touch on it can be told. */
@@ -1646,20 +1656,6 @@ static void Button(int id, const CtrPokeTouchView *v)
     }
 }
 
-bool CtrPokeTouch_HitBack(int x, int y)
-{
-    const CtrPokeTouchRect *r = &gCtrPokeTouchBack;
-
-    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
-}
-
-bool CtrPokeTouch_HitOptPage(int x, int y)
-{
-    const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-
-    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
-}
-
 int CtrPokeTouch_HitTest(int x, int y)
 {
     for (int i = 0; i < PT_COUNT; ++i) {
@@ -1703,7 +1699,7 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
 static int NewMenu(const CtrPokeTouchView *v)
 {
-    return v->save && !v->viewport;
+    return (v->save || v->options) && !v->viewport;
 }
 
 static int IsHome(const CtrPokeTouchView *v)
@@ -2091,6 +2087,58 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
 }
 
 /* ---------------------------------------------------------------- Menus in HOME's layout */
+/* BACK of the top band (a screen with a way back): the slate button, grey when there is nothing to go back to. */
+static void BackTop(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &sHomeBack;
+    const EmPal *pal = v->backEnabled ? &kEmSlate : &kEmGrey;
+    int fy, fh = r->h - BTN_DEPTH;
+
+    Em2CardShadow(r->x, r->y, r->w, r->h);
+    fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
+    LlArrow(r->x + 8, fy + (fh - 10) / 2, 6, 10, 2, v->backEnabled ? EM_WHITE : pal->ink);
+    UiText(CTR_TR("Back", "Atrás", "Zurück"), r->x + 18, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 2);
+}
+
+bool CtrPokeTouch_HitBack(int x, int y)
+{
+    const CtrPokeTouchRect *r = sLayoutHome ? &sHomeBack : &gCtrPokeTouchBack;
+
+    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
+}
+
+/* PAGE of OPTIONS in the plate's place: a dot for each page in that page's colour, the shown one larger with a ring, and the page's name. */
+static void OptPageTop(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &sHomeStatus;
+    int dots = v->optPageCount > 6 ? 6 : (v->optPageCount > 0 ? v->optPageCount : v->optSectionCount);
+    int fy, x0;
+
+    Em2CardShadow(r->x, r->y, r->w, r->h);
+    fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
+    x0 = r->x + (r->w - ((dots - 1) * 10 + 7)) / 2;
+    for (int i = 0; i < dots; ++i) {
+        uint16_t colour;
+
+        if (dots == 6)
+            colour = i == 0 ? EM2_PAGE_A : (i <= 3) ? EM2_PAGE_B : i == 4 ? EM2_PAGE_C : EM2_PAGE_D;
+        else
+            colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
+        if (i == v->optPage)
+            Em2Dot(x0 + i * 10, fy + 4, colour, 1);
+        else
+            Em2Dot(x0 + i * 10 + 1, fy + 5, colour, 0);
+    }
+    EmLabel(v->optPageName, r->x, r->w, fy + 14, 13, &kEmCream);
+}
+
+bool CtrPokeTouch_HitOptPage(int x, int y)
+{
+    const CtrPokeTouchRect *r = sLayoutHome ? &sHomeStatus : &gCtrPokeTouchOptPage;
+
+    return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
+}
+
 #define MN_X PT_HOME_X
 #define MN_Y PT_HOME_Y
 #define MN_W PT_VIEW_W
@@ -2101,9 +2149,16 @@ static void MenuChrome(const CtrPokeTouchView *v)
 {
     SetLayout(1);
     Frame();
-    HomeBack();
-    HomeStatus(v);
+    if (v->backVisible)
+        BackTop(v);
+    else
+        HomeBack();
+    if (v->options && v->optPageCount > 1)
+        OptPageTop(v);
+    else
+        HomeStatus(v);
     HomeClock(v);
+    sKeepBg = 1;
     HomeFrame(MN_X, MN_Y, MN_W, MN_H);
     for (int y = 0; y < MN_H; ++y)
         Fill(MN_X, MN_Y + y, MN_W, 1, UI_RGB(84 - 30 * y / (MN_H - 1), 24 - 8 * y / (MN_H - 1), 22 - 8 * y / (MN_H - 1)));
@@ -2112,13 +2167,15 @@ static void MenuChrome(const CtrPokeTouchView *v)
 }
 
 /* The note under the floor: what the screen is (or the selection's name), and one line that says more. */
-static void MenuNote(const char *title, const char *body)
+static void MenuNote(const char *title, const char *body, int frame)
 {
     int right = HN_X + HN_W - 10;
 
     sFlyButton.w = 0;
     LlWindow(HN_X, HN_Y, HN_W, HN_H);
     Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    if (frame >= 0 && FrameSampleH(frame, HN_X + HN_W - FRAME_W - 6, HN_Y + 2, HN_H - 4))
+        right -= FRAME_W + 6;
     if (body && body[0]) {
         Em2Text(title, HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, right);
         SmallText(body, HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, right);
@@ -2233,12 +2290,13 @@ static void SaveScreen(const CtrPokeTouchView *v)
     LlWindow(MN_X + 2, 146, 154, 52);
     Em2Wrap(v->bar[0], MN_X + 14, 155, 130, 2, 17, EM_DARK, EM_DARK_SH);
     SaveButtons(v);
-    MenuNote(CTR_TR("Save", "Guardar", "Sichern"), v->bar[1]);
+    MenuNote(CTR_TR("Save", "Guardar", "Sichern"), v->bar[1], -1);
+    sKeepBg = 0;
 }
 
 static int SaveChanged(const CtrPokeTouchView *a, const CtrPokeTouchView *b)
 {
-    if (!NewMenu(a) || a->saveState != b->saveState || a->saveSel != b->saveSel || a->savePressed != b->savePressed
+    if (!NewMenu(a) || !a->save || a->saveState != b->saveState || a->saveSel != b->saveSel || a->savePressed != b->savePressed
         || a->playerFemale != b->playerFemale || strcmp(a->playerName, b->playerName) || a->saveBadges != b->saveBadges
         || a->saveHasDex != b->saveHasDex || a->saveDex != b->saveDex || a->saveHours != b->saveHours || a->saveMinutes != b->saveMinutes
         || memcmp(a->bar, b->bar, sizeof(b->bar)) || a->homeMoney != b->homeMoney || a->homeTurbo != b->homeTurbo
@@ -2250,11 +2308,30 @@ static int SaveChanged(const CtrPokeTouchView *a, const CtrPokeTouchView *b)
     return 0;
 }
 
+static void OptionsScreen(const CtrPokeTouchView *v)
+{
+    const char *body = v->bar[1][0] ? v->bar[1] : v->bar[2];
+
+    MenuChrome(v);
+    for (int pass = 0; pass < 2; ++pass)                /* the chosen row last: its ring lies on the rows next to it */
+        for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
+            if ((pass == 1) == (v->optSelected == i))
+                OptRow(i, v);
+    if (v->optLook.on)
+        OptLookPanel(v);
+    MenuNote(v->bar[0], body, v->optFrameShow ? v->optFrameType : -1);
+    sKeepBg = 0;
+}
+
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
+    sKeepBg = 0;
     if (NewMenu(v)) {
-        SaveScreen(v);
+        if (v->options)
+            OptionsScreen(v);
+        else
+            SaveScreen(v);
         return;
     }
     if (IsHome(v)) {
@@ -2318,8 +2395,11 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
     sCanvas = canvas;
     if (NewMenu(v)) {
-        if (SaveChanged(old, v)) {
-            SaveScreen(v);
+        if (v->options ? !NewMenu(old) || !old->options || memcmp(old, v, sizeof(*v)) : SaveChanged(old, v)) {
+            if (v->options)
+                OptionsScreen(v);
+            else
+                SaveScreen(v);
             CtrDirty_Add(dirty, 0, 0, W, H);
         }
         return;
