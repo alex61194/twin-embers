@@ -1048,12 +1048,15 @@ static void FieldListName(const FieldList *f, unsigned item, char *out, int size
 /* The field Bag (or a case) as it is now: its pocket, the rows around the cursor (CLOSE the row after the last item),
  * the selected item's detail, and what it has open. While it is busy (a pocket sliding in, a message printing) the
  * picture last shown stays. */
+static void PlateFill(CtrPokeTouchView *t);
+
 static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
 {
     CtrPokeTouchBag *b = &v->bag;
     const ListScreen *list = f->list;
     int count, total, state = list->state();
 
+    PlateFill(v);
     if (state == BAG_BUSY && sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on) {
         *b = sShown.touch.bag;
         b->pressed = -1;

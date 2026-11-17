@@ -1268,6 +1268,7 @@ static int FrameShown(const CtrPokeTouchView *v)
 /* The field Bag the port draws (3ds_field_bag_impl.h, included at the end). */
 static void FBagFrame(const CtrPokeTouchView *v);
 static void FBagNote(const CtrPokeTouchView *v, int w);
+static void FBPositionTop(const CtrPokeTouchBag *b);
 /* The Pokedex the port draws (3ds_field_dex_impl.h, included at the end). */
 static void FDexFrame(const CtrPokeTouchView *v);
 static void FDexNote(const CtrPokeTouchView *v, int w);
@@ -1699,7 +1700,7 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
 static int NewMenu(const CtrPokeTouchView *v)
 {
-    return (v->save || v->options) && !v->viewport;
+    return (v->save || v->options || v->bag.on) && !v->viewport;
 }
 
 static int IsHome(const CtrPokeTouchView *v)
@@ -2155,6 +2156,8 @@ static void MenuChrome(const CtrPokeTouchView *v)
         HomeBack();
     if (v->options && v->optPageCount > 1)
         OptPageTop(v);
+    else if (v->bag.on && v->bag.count > 0)
+        FBPositionTop(&v->bag);
     else
         HomeStatus(v);
     HomeClock(v);
@@ -2323,15 +2326,47 @@ static void OptionsScreen(const CtrPokeTouchView *v)
     sKeepBg = 0;
 }
 
+/* The Bag (and the TM Case, the Berry Pouch, a mart, the item PC) keeps its own rectangles, drawn for a viewport at (4, 4): the canvas is
+ * handed to it moved by MENU_SHIFT, so that its 240 x 160 land on the floor, and its touches are moved back (3ds_field_bag_impl.h). */
+#define MENU_SHIFT (MN_X - PT_VIEW_X)
+
+static void BagScreen(const CtrPokeTouchView *v)
+{
+    uint16_t *base = sCanvas;
+
+    MenuChrome(v);
+    sCanvas = base + (size_t)MENU_SHIFT * H - MENU_SHIFT;
+    FBagFrame(v);
+    sCanvas = base;
+    FBagNote(v, 0);
+    sKeepBg = 0;
+}
+
+static void MenuScreen(const CtrPokeTouchView *v)
+{
+    if (v->options)
+        OptionsScreen(v);
+    else if (v->bag.on)
+        BagScreen(v);
+    else
+        SaveScreen(v);
+}
+
+/* Whether the menu in HOME's layout looks different between two views (the ones of options and the Bag change nothing else the screen
+ * shows, so any difference counts). */
+static int MenuChanged(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
+{
+    if (!NewMenu(old) || old->options != v->options || old->bag.on != v->bag.on || old->save != v->save)
+        return 1;
+    return v->save ? SaveChanged(old, v) : memcmp(old, v, sizeof(*v)) != 0;
+}
+
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
     sKeepBg = 0;
     if (NewMenu(v)) {
-        if (v->options)
-            OptionsScreen(v);
-        else
-            SaveScreen(v);
+        MenuScreen(v);
         return;
     }
     if (IsHome(v)) {
@@ -2395,11 +2430,8 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
     sCanvas = canvas;
     if (NewMenu(v)) {
-        if (v->options ? !NewMenu(old) || !old->options || memcmp(old, v, sizeof(*v)) : SaveChanged(old, v)) {
-            if (v->options)
-                OptionsScreen(v);
-            else
-                SaveScreen(v);
+        if (MenuChanged(old, v)) {
+            MenuScreen(v);
             CtrDirty_Add(dirty, 0, 0, W, H);
         }
         return;

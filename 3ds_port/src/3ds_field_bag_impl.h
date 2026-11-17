@@ -47,7 +47,9 @@ int CtrPokeTouch_BagHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchBag *b = &v->bag;
 
-    if (!b->on || x >= 248)
+    x -= MENU_SHIFT;                                    /* the Bag is drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+    y -= MENU_SHIFT;
+    if (!b->on || x >= 248 || x < 0 || y < 0)
         return -1;
     switch (b->state) {
     case PT_BAG_STATE_MESSAGE:
@@ -95,6 +97,7 @@ int CtrPokeTouch_BagRailTarget(const CtrPokeTouchBag *b, int y)
 {
     int total = b->count + 1, range = total - PT_BAG_ROWS, thumbH = sFBRail.h * PT_BAG_ROWS / total, first, t;
 
+    y -= MENU_SHIFT;
     if (range <= 0)
         return -1;
     if (thumbH < 12)
@@ -389,7 +392,7 @@ static void FBagFrame(const CtrPokeTouchView *v)
     FBList(b);
     if (b->state == PT_BAG_STATE_ACTIONS || b->state == PT_BAG_STATE_YESNO || b->state == PT_BAG_STATE_QUANTITY
         || b->state == PT_BAG_STATE_MESSAGE) {
-        CtrPokeTouchRect dim = {0, 0, 248, 168};
+        CtrPokeTouchRect dim = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
 
         UiDim(&dim);
         if (b->state == PT_BAG_STATE_ACTIONS)
@@ -416,9 +419,10 @@ static int FBSelectedCount(const CtrPokeTouchBag *b)
     return b->row[i].qty > 999 ? 999 : b->row[i].qty;
 }
 
-/* "1-5 of 9": the items the rows show, over the list's length, on a card beside the note (where OPTIONS' page button stands). */
-static void FBPosition(const CtrPokeTouchBag *b)
+/* "1-5 of 9": the items the rows show, over the list's length, on the status plate's place in the top band (absolute coordinates). */
+static void FBPositionTop(const CtrPokeTouchBag *b)
 {
+    const CtrPokeTouchRect *r = &sHomeStatus;
     char text[24];
     int first = b->first + 1, last = b->first + PT_BAG_ROWS, fy;
 
@@ -429,65 +433,103 @@ static void FBPosition(const CtrPokeTouchBag *b)
     if (first > last)
         first = last;
     snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d"), first, last, b->count);
-    if (UiTextWidth(text, 1) > gCtrPokeTouchOptPage.w - 10)     /* "54-58 von 58" is wider than the card: the short form, never cut */
+    if (UiTextWidth(text, 1) > r->w - 10)               /* "54-58 von 58" would be cut: the short form */
         snprintf(text, sizeof(text), "%d-%d/%d", first, last, b->count);
-    fy = EmButton(gCtrPokeTouchOptPage.x, gCtrPokeTouchOptPage.y, gCtrPokeTouchOptPage.w, FB_FACE + FB_DEPTH, &kEmCream, FB_DEPTH, 0);
-    EmLabel(text, gCtrPokeTouchOptPage.x, gCtrPokeTouchOptPage.w, fy, FB_FACE, &kEmCream);
+    Em2CardShadow(r->x, r->y, r->w, r->h);
+    fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, FB_DEPTH, 0);
+    EmLabel(text, r->x, r->w, fy, r->h - FB_DEPTH, &kEmCream);
 }
 
 /* A tag on the note's title line, from the right: a ribbon of `top`..`bottom` (a type badge when `top` is 0) if the name is still whole beside it. */
-static void FBTag(int *right, int base, int nameW, int room, const char *text, uint16_t top, uint16_t bottom, uint16_t type)
+static void FBTag(int *right, int base, int nameW, int room, int y, const char *text, uint16_t top, uint16_t bottom, uint16_t type)
 {
     int tw = (top ? UiTextWidth(text, 1) + 18 : UiTextWidth(text, 1) + 12);
 
     if (nameW + base - *right + tw + 4 > room)
         return;
     if (top)
-        LlRibbon(*right - tw, NOTE_Y + 6, text, top, bottom);
+        LlRibbon(*right - tw, y, text, top, bottom);
     else
-        LlTypeBadge(*right - tw, NOTE_Y + 6, text, type);
+        LlTypeBadge(*right - tw, y, text, type);
     *right -= tw + 4;
 }
 
-/* The note under the Bag, FireRed's text window: the selected item and its description (FireRed's) with its count in a red ribbon (a TM/HM
- * its move's type, a mart its owned count, a sale the player's money, in theirs; each only while the name stays whole beside it), or what
- * the pocket holds; beside it the position card. */
+/* The description in the small font, wrapped on spaces (a newline is a space) over at most `maxLines` lines `step` apart. */
+static void FBSmallWrap(const char *s, int x, int top, int width, int maxLines, int step, uint16_t fg, uint16_t sh)
+{
+    char line[96], trial[96];
+    int n = 0, lines = 0;
+
+    while (*s && lines < maxLines) {
+        const char *e = s;
+        int wl;
+
+        while (*e && *e != ' ' && *e != '\n')
+            ++e;
+        wl = (int)(e - s);
+        if (wl > 0 && wl < (int)sizeof(trial) - 2) {
+            memcpy(trial, line, (size_t)n);
+            if (n)
+                trial[n] = ' ';
+            memcpy(trial + n + (n ? 1 : 0), s, (size_t)wl);
+            trial[n + (n ? 1 : 0) + wl] = 0;
+            if (n && SmallWidth(trial) > width) {
+                line[n] = 0;
+                SmallText(line, x, top + lines * step, fg, sh, x + width);
+                ++lines;
+                n = 0;
+                continue;
+            }
+            memcpy(line, trial, (size_t)(n + (n ? 1 : 0) + wl) + 1);
+            n += (n ? 1 : 0) + wl;
+        }
+        s = *e ? e + 1 : e;
+    }
+    if (n && lines < maxLines) {
+        line[n] = 0;
+        SmallText(line, x, top + lines * step, fg, sh, x + width);
+    }
+}
+
+/* The note under the floor, FireRed's text window: the selected item (its count in a red ribbon, a TM/HM its move's type, a mart its owned
+ * count, a sale the player's money; each only while the name stays whole beside it) and its description in two small lines, or what the
+ * pocket holds. */
 static void FBagNote(const CtrPokeTouchView *v, int w)
 {
     const CtrPokeTouchBag *b = &v->bag;
 
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+    LlWindow(HN_X, HN_Y, HN_W, HN_H);
+    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
     if (b->selItem) {
-        int base = NOTE_X + w - 13, right = base, room = w - 26, nameW = UiTextWidth(b->selName, 1), count = FBSelectedCount(b), before;
+        int base = HN_X + HN_W - 12, right = base, room = HN_W - 30, nameW = UiTextWidth(b->selName, 1), count = FBSelectedCount(b), before;
+        int ty = HN_Y + 2;
         char tag[32];
 
         if (b->moveType >= 0)                           /* a TM/HM: its move's type, the rectangular badge */
-            FBTag(&right, base, nameW, room, b->typeName, 0, 0, UiTypeColor(b->moveType));
+            FBTag(&right, base, nameW, room, ty, b->typeName, 0, 0, UiTypeColor(b->moveType));
         if (b->showOwned) {                             /* buying: how many the Bag already holds, in blue (just the count when the name is long) */
             before = right;
             snprintf(tag, sizeof(tag), "%s %u", CtrUiText(UIS_BAG_IN_BAG), (unsigned)b->owned);
-            FBTag(&right, base, nameW, room, tag, LL_BLUE_TOP, LL_BLUE_BOT, 0);
+            FBTag(&right, base, nameW, room, ty, tag, LL_BLUE_TOP, LL_BLUE_BOT, 0);
             if (right == before) {
                 snprintf(tag, sizeof(tag), "x%u", (unsigned)b->owned);
-                FBTag(&right, base, nameW, room, tag, LL_BLUE_TOP, LL_BLUE_BOT, 0);
+                FBTag(&right, base, nameW, room, ty, tag, LL_BLUE_TOP, LL_BLUE_BOT, 0);
             }
         }
         if (b->use == PT_BAG_USE_SELL) {                /* selling: the player's money */
-            snprintf(tag, sizeof(tag), "¥%u", (unsigned)b->money);
-            FBTag(&right, base, nameW, room, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
+            snprintf(tag, sizeof(tag), "\xc2\xa5%u", (unsigned)b->money);
+            FBTag(&right, base, nameW, room, ty, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
         }
         if (count >= 0) {                               /* the quantity: the ribbon of the mockup */
             snprintf(tag, sizeof(tag), "x%d", count);
-            FBTag(&right, base, nameW, room, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
+            FBTag(&right, base, nameW, room, ty, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
         }
-        Em2Text(b->selName, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, right);
-        LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
-        BDescribeN(b->selDesc, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
+        Em2Text(b->selName, HN_X + 12, ty, EM_DARK, EM_DARK_SH, right);
+        FBSmallWrap(b->selDesc, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
     } else
-        Em2Text(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), NOTE_X + 13,
-                NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH, NOTE_X + w - 13);
-    if (w < 200)
-        FBPosition(b);
+        Em2Text(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), HN_X + 12,
+                HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH, HN_X + HN_W - 12);
     sUiS = &sUiNavy;
 }
