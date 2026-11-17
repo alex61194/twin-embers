@@ -195,6 +195,7 @@ extern int CtrPokeTouch_RunModeShown(void);
 extern void CtrPokeTouch_PlayerName(char *out, int size);
 extern int CtrPokeTouch_LeavingFor(int entry);
 extern void CtrPokeTouch_Location(char *out, int size);
+extern int CtrBottomWild_Zone(uint16_t *species, uint8_t *flags, uint8_t *how, int max);   /* wild_encounter.c (recipe 0269) */
 extern int CtrPokeTouch_MapGroup(void);
 extern int CtrPokeTouch_MapVersion(void);
 extern int CtrPokeTouch_MapOpen(int group);
@@ -1712,6 +1713,39 @@ static void HomeMapState(Snapshot *s)
         return;
     }
     CtrPokeTouch_Location(s->touch.bar[0], PT_BAR_LEN);
+    if (sHome.view - 1 == group) {
+        /* The map the player is on: the Pokemon its zone can give, with what the Pokedex knows of each. Read twice a second (and when the
+         * map changes), not every frame: the game's tables and the Pokedex are scanned. */
+        static struct { int map; unsigned age; uint8_t n, water; uint16_t species[PT_ZONE_MAX]; uint8_t flags[PT_ZONE_MAX]; } zone = {-1, 0, 0, 0, {0}, {0}};
+        int map = 1;
+
+        for (const char *c = s->touch.bar[0]; *c; ++c)
+            map = map * 31 + (unsigned char)*c;      /* the place's name changes with the map */
+
+        if (zone.map != map || ++zone.age >= 30) {
+            uint16_t species[16];
+            uint8_t flags[16], how[16];
+            int n = CtrBottomWild_Zone(species, flags, how, 16), water = n > 0;
+
+            for (int i = 0; i < n; ++i)
+                if (how[i] & 5)
+                    water = 0;          /* a land or rock one: not only water */
+            if (n > PT_ZONE_MAX)
+                n = PT_ZONE_MAX;
+            zone.map = map;
+            zone.age = 0;
+            zone.n = (uint8_t)n;
+            zone.water = (uint8_t)water;
+            for (int i = 0; i < n; ++i) {
+                zone.species[i] = species[i];
+                zone.flags[i] = flags[i];
+            }
+        }
+        s->touch.zoneN = zone.n;
+        s->touch.zoneWater = zone.water;
+        memcpy(s->touch.zoneSpecies, zone.species, sizeof(zone.species));
+        memcpy(s->touch.zoneFlags, zone.flags, sizeof(zone.flags));
+    }
     snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", sRegions[s->touch.mapGroup]);
     snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap a destination", "Toca un destino", "Ziel antippen"));
 }

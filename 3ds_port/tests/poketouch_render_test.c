@@ -821,6 +821,12 @@ int main(int argc, char **argv)
         assert(at(ring.x+ring.w/2,ring.y)==UI_RGB(138,22,16) || at(ring.x+ring.w/2-1,ring.y)==UI_RGB(138,22,16));   /* the ring's dark edge at its top */
         if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_cursor");
         h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the ring blinks */
+        /* The zone's Pokemon in the note: unseen, seen and caught slots (and the water-only wording), then gone again. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"ROUTE 24"); strcpy(z.bar[1],"KANTO"); update(&old,&z);
+          z.zoneN=PT_ZONE_MAX; for(int i=0;i<PT_ZONE_MAX;++i){ z.zoneSpecies[i]=(uint16_t)(16+i); z.zoneFlags[i]=(uint8_t)(i%3); } update(&old,&z);
+          if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_zone");
+          z.zoneWater=1; z.zoneN=3; update(&old,&z); z.flyOk=1; update(&old,&z); z.flyOk=0; z.zoneN=0; z.zoneWater=0; update(&old,&z);
+          h=z; h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h); }
         for(int zoom=0; zoom<HM_ZOOMS; ++zoom) {                                          /* every zoom, at a few centres: pieces move with the map */
             int centres[][2]={{384,288},{100,100},{700,500},{240,380}};
             for(unsigned c=0;c<sizeof(centres)/sizeof(centres[0]);++c) {

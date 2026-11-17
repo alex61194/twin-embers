@@ -41,6 +41,7 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
 /* HOME's layout: the map in the middle of the screen, the buttons round it (the 40 px band left on each side). */
 #define PT_HOME_X 40
 #define PT_HOME_Y 40
+#define PT_ZONE_MAX 5          /* the Pokemon the note under HOME's map has room for */
 /* The HOME map: FireRed's own Region Map art, drawn passively over the field's
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
  * REGIONMAP_* values. */
@@ -414,6 +415,10 @@ typedef struct {
     uint32_t homeMoney;         /* HOME's status plate: the money, */
     uint8_t homeTurbo;          /* the turbo speed (0 or 1: off, 2-4), */
     int16_t homeClock;          /* and its clock plate the time of day in minutes (-1: none) */
+    uint8_t zoneN;              /* HOME's note: the Pokemon this zone's tables can give (0: none, the note has only its name) */
+    uint8_t zoneWater;          /* all of them are met in water or fishing: the note says so */
+    uint16_t zoneSpecies[PT_ZONE_MAX];
+    uint8_t zoneFlags[PT_ZONE_MAX];     /* what the Pokedex knows: seen (1), caught (2); none: a question mark */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */

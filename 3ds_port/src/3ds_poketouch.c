@@ -1879,10 +1879,42 @@ static void HomeMapDraw(const CtrPokeTouchView *v)
 }
 
 /* The note under the map: the subject and the line that says more; FLY at the subject's right when the destination can be Flown to. */
+static void FDTiles(const unsigned char *tiles, int w, int h, uint8_t *px);
+static void FDPal(const unsigned short *in, uint16_t *out);
+
+/* One of the zone's Pokemon in the note: a box with its icon (a question mark while unseen) and, once caught, a small ball. */
+#define ZN_SLOT 36
+static void ZoneSlot(int x, int species, int flags)
+{
+    static unsigned char tiles[1024];
+    static unsigned short pal[16];
+    static uint8_t px[32 * 32];
+    static uint16_t pal565[16];
+    int y = HN_Y + 3;
+
+    UiRoundFill(x, y, 32, 28, 5, UI_RGB(196, 184, 158));
+    UiRoundFill(x + 1, y + 1, 30, 26, 4, UI_RGB(238, 230, 212));
+    if (!(flags & 3)) {
+        Em2Text("?", x + 12, y + 5, UI_RGB(170, 160, 140), UI_RGB(226, 220, 208), x + 32);
+        return;
+    }
+    if (CtrPokeTouch_MonIcon((unsigned)species, 0, 0, tiles, pal)) {
+        FDTiles(tiles, 32, 32, px);
+        FDPal(pal, pal565);
+        UiImage(px, pal565, 32, 32, 32, x, HN_Y + 1, 1, 1);
+    }
+    if (flags & 2) {
+        UiRoundFill(x + 24, y + 1, 7, 7, 3, UI_RGB(90, 20, 14));
+        UiRoundFill(x + 25, y + 2, 5, 5, 2, UI_RGB(230, 60, 40));
+        Fill(x + 25, y + 4, 5, 1, UI_RGB(90, 20, 14));
+    }
+}
+
 static void HomeNote(const CtrPokeTouchView *v)
 {
     int right = HN_X + HN_W - 10, titleRight = right;
     const char *line = NULL;
+    int zones = v->zoneN > PT_ZONE_MAX ? PT_ZONE_MAX : v->zoneN;
 
     sFlyButton.w = 0;
     TsBgRect(sHomeNote.x, sHomeNote.y, sHomeNote.w, sHomeNote.h);
@@ -1902,6 +1934,15 @@ static void HomeNote(const CtrPokeTouchView *v)
         sFlyButton = (CtrPokeTouchRect){(int16_t)px, HN_Y + 8, (int16_t)pw, 18};
         EmLabel(fly, px, pw, fy, 17, &kEmFlame);
         titleRight = px - 4;
+    }
+    if (zones && !v->flyOk) {
+        /* Where the player is: the zone's name, what it holds, and the Pokemon the tables can give (a slot each). */
+        int left = HN_X + HN_W - 6 - zones * ZN_SLOT + 4;
+
+        for (int i = 0; i < zones; ++i)
+            ZoneSlot(left + i * ZN_SLOT, v->zoneSpecies[i], v->zoneFlags[i]);
+        titleRight = left - 4;
+        line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("PokÃ©mon seen here", "PokÃ©mon vistos aquÃ­", "Hier gesehene PokÃ©mon");
     }
     if (line) {
         Em2Text(v->bar[0], HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, titleRight);
@@ -1950,7 +1991,8 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
         }
         HomeOverlay(v);
     }
-    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk) {
+    if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk || old->zoneN != v->zoneN || old->zoneWater != v->zoneWater
+        || memcmp(old->zoneSpecies, v->zoneSpecies, sizeof(v->zoneSpecies)) || memcmp(old->zoneFlags, v->zoneFlags, sizeof(v->zoneFlags))) {
         HomeNote(v);
         Mark(dirty, &sHomeNote);
     }
