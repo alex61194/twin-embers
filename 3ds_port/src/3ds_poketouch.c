@@ -1906,7 +1906,7 @@ static void HomeStatus(const CtrPokeTouchView *v)
     if (v->homeRepelSteps) {
         /* What is in force: the Repel in use, the steps it has left and a bar of how much is left of its length. */
         static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
-                                              CTR_TR("Max Repel", "MÃ¡x. Rep.", "Top-Schutz")};
+                                              CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz")};
         int kind = v->homeRepelKind > 2 ? 0 : v->homeRepelKind, barW = r->w - 36;
         int total = v->homeRepelTotal ? v->homeRepelTotal : v->homeRepelSteps, fill;
 
@@ -2032,13 +2032,13 @@ static void HomeNote(const CtrPokeTouchView *v)
         for (int i = 0; i < zones; ++i)
             ZoneSlot(left + i * ZN_SLOT, v->zoneSpecies[i], v->zoneFlags[i]);
         titleRight = left - 4;
-        line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("PokÃ©mon seen here", "PokÃ©mon vistos aquÃ­", "Hier gesehene PokÃ©mon");
+        line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("Pokémon seen here", "Pokémon vistos aquí", "Hier gesehene Pokémon");
     }
     if (!zones && !v->flyOk && v->homeStage && v->bar[1][0]) {
         /* Nothing wild here: after the League, the next step of the Sevii postgame, and once the gems are restored the national Pokedex. */
         static const char *const kHint[3] = {
             CTR_TR("Postgame: explore the Sevii Islands", "Postgame: explora las Islas Sete", "Postgame: erkunde die Sevii-Inseln"),
-            CTR_TR("You have the Ruby: find the Sapphire", "Tienes el RubÃ­: busca el Zafiro", "Du hast den Rubin: finde den Saphir"),
+            CTR_TR("You have the Ruby: find the Sapphire", "Tienes el Rubí: busca el Zafiro", "Du hast den Rubin: finde den Saphir"),
             CTR_TR("Both gems: go and see Celio", "Las dos gemas: ve a ver a Celio", "Beide Edelsteine: besuche Celio")};
 
         if (v->homeStage < 4) {
@@ -2048,7 +2048,7 @@ static void HomeNote(const CtrPokeTouchView *v)
             int bx = HN_X + 140, bw = right - bx;
             unsigned dex = v->homeDex > 386 ? 386 : v->homeDex;
 
-            line = CTR_TR("National PokÃ©" "dex", "PokÃ©" "dex Nacional", "Nationaler PokÃ©" "dex");
+            line = CTR_TR("National Poké" "dex", "Poké" "dex Nacional", "Nationaler Poké" "dex");
             snprintf(count, sizeof(count), "%u / 386", dex);
             SmallText(CTR_TR("Caught", "Capturados", "Gefangen"), bx, HN_Y + 1, EM_DIM, EM_DARK_SH, right);
             SmallText(count, right - SmallWidth(count), HN_Y + 1, EM_DARK, EM_DARK_SH, right);
@@ -2118,7 +2118,7 @@ int CtrPokeTouch_HomePanelHit(int x, int y)
 static void HomePanel(const CtrPokeTouchView *v)
 {
     static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
-                                          CTR_TR("Max Repel", "MÃ¡x. Rep.", "Top-Schutz")};
+                                          CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz")};
     static const unsigned kSteps[3] = {100, 200, 250};
     char text[24];
     unsigned m = v->homeMoney;
