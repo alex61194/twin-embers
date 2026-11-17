@@ -24,6 +24,7 @@
   </a>
   <div class="links">
     <span class="lang-switch" role="group" aria-label="Language"><a href="index.html" hreflang="en" lang="en" aria-current="page">EN</a><a href="es.html" hreflang="es" lang="es">ES</a><a href="de.html" hreflang="de" lang="de">DE</a></span>
+    <a href="#features-title">Features</a>
     <a href="#gallery-title">Screens</a>
     <a href="#build-title">Build</a>
     <a href="#install-title">Install</a>
@@ -53,6 +54,124 @@
   </header>
 
   <main>
+    <section class="card" aria-labelledby="features-title" id="features">
+      <h2 id="features-title">
+        <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="o" x="5" y="3" width="22" height="26" rx="3" fill="#ffd166"/>
+          <path class="o" d="M10 10 H22 M10 16 H22 M10 22 H18" fill="none"/>
+        </svg>
+        Features and changes
+      </h2>
+      <p class="lead">What Twin Embers does that the GBA game does not, and what each release changed. Items marked optional are switches in the Builder or in OPTIONS.</p>
+      <div class="feat-grid">
+        <article class="feat">
+          <h3>Two screens</h3>
+          <ul>
+            <li>A wide 400 × 240 overworld: Kanto across the whole top screen, and beyond a map's edge the game's own border.</li>
+            <li>PokéTouch, the lower screen: a touch Town Map and buttons for the Pokédex, party, Bag, Trainer Card, saving and OPTIONS.</li>
+            <li>Party, Summary, Bag, Pokédex, PC, Hall of Fame, mail, Easy Chat, Save and the move relearner (REMEMBER) all live below, by touch.</li>
+            <li>HOME: a world map built from your own Region Map art, with zoom, drag and the Sevii Islands; Fly works across them.</li>
+            <li>One ember look everywhere: rounded glossy buttons, switches and a red ember background.</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>Battles</h3>
+          <ul>
+            <li>Touch commands, move cards with type, power, accuracy and PP, the party's balls along the top, a quick ball button in wild battles.</li>
+            <li>The battle Bag with pockets as tabs, the Summary during a fight, Yes/No questions answered on the lower screen.</li>
+            <li>Drawn at 1.5 times the GBA's size without blur, new healthboxes, FireRed's transitions.</li>
+            <li>Optional HeartGold sprites for all 386 species and optional HD battle scenes (by Bentley734).</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>The world</h3>
+          <ul>
+            <li>Day and night from the 3DS clock (CLOCK, FIXED or OFF, any half hour); towns light up at night.</li>
+            <li>LeafGreen's exclusive Pokémon and night-time Pokémon in the wild.</li>
+            <li>Optional visible wild Pokémon in the grass and on the water, with a silhouette option and a setting for how many notice you.</li>
+            <li>Optional Pokémon that follows you as in HeartGold (all 386), or you play as it. Optional new people on the map (74).</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>Choose who you are</h3>
+          <ul>
+            <li>Optional: 21 looks for you, for Leaf and for your rival (Ash in four versions, Gary, Silver, Gold, Brendan, May, Green, Kris, Harmony, Peach, Aang), from Emerald Lens.</li>
+            <li>Optional: eleven Pokémon to surf on (Lapras, Blastoise, Latias, Pikachu and more), with a preview and the artist's name.</li>
+            <li>Optional: you as Ash and Green in HeartGold style.</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>Quality of life</h3>
+          <ul>
+            <li>Turbo: START speeds the slow parts up to 4×. A running switch on the lower screen.</li>
+            <li>EXP SHARE (half or full), REPEL AGAIN, REUSABLE TMS, FREE HMS, HEAL for the party, TMs and HMs in one press.</li>
+            <li>IV, EV and Hidden Power on the Summary's stats page; Rare Candy level ups as a card on the lower screen.</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>Challenge</h3>
+          <ul>
+            <li>Nuzlocke: one catch per area, DUPLICATES and SHINY clauses, LEVEL CAPS, SET MODE; fainted Pokémon are released.</li>
+            <li>Randomlocke: wild and trainer Pokémon of random species fixed by your Trainer ID; choose wild only, trainers only, and whether legendaries can appear.</li>
+          </ul>
+        </article>
+        <article class="feat">
+          <h3>Set up and languages</h3>
+          <ul>
+            <li>The game in English, Spanish and German; the web Builder in the three languages too.</li>
+            <li>A native 3DS program, not an emulator. No ROM inside: you bring your own FireRed dump and the Builder makes the data pack in your browser or on Windows, checked file by file.</li>
+            <li>Install with Universal-Updater, a QR code or a HOME Menu shortcut.</li>
+          </ul>
+        </article>
+      </div>
+      <h3 class="feat-h">Release by release</h3>
+      <details class="release" open>
+        <summary>Next, in testing</summary>
+        <ul>
+          <li>More Nuzlocke and Randomlocke options: SET MODE, RANDOM FOR (wild or trainers) and LEGENDARIES.</li>
+          <li>Pokémon to surf on, and three more looks (Harmony, Peach, Aang): 21 in all. Safer saves, sturdier Builders, no experience for eggs, the German keyboard's full stop and comma.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.6.0</summary>
+        <ul>
+          <li>Visible wild Pokémon; Nuzlocke v2 and Randomlocke; REUSABLE TMS, FREE HMS and REMEMBER.</li>
+          <li>A new ember look for the lower screen; a better HOME map; smoother, with no stall at doors.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.5.2</summary>
+        <ul>
+          <li>Choose who you are (18 looks), EXP SHARE, IV/EV/Hidden Power, HEAL, accuracy on the move cards and HD battle scenes.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.5.1</summary>
+        <ul>
+          <li>The game in German; a Pokémon that follows you; quick ball; REPEL AGAIN; FireRed's battle transitions.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.5.0</summary>
+        <ul>
+          <li>The game in Spanish; battles at 1.5× with new healthboxes; optional new people, backgrounds and Ash and Green; four separate Builder choices.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.4.x</summary>
+        <ul>
+          <li>Rare Candy level ups on the lower screen; the intro at native resolution; HeartGold sprites in both Builders; a web Builder and a UniStore.</li>
+        </ul>
+      </details>
+      <details class="release">
+        <summary>v0.3.0</summary>
+        <ul>
+          <li>Most menus on the lower screen, touch everywhere, day and night on the GPU, faster on the Old 3DS.</li>
+        </ul>
+      </details>
+      <p class="note">The complete list, with the known issues, is in the <a href="https://github.com/alex61194/twin-embers/blob/main/CHANGELOG.md">changelog</a>.</p>
+    </section>
+
     <section class="card" aria-labelledby="gallery-title">
       <h2 id="gallery-title">
         <svg class="icon" viewBox="0 0 32 32" aria-hidden="true">

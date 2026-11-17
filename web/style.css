@@ -783,3 +783,29 @@ footer { padding: 10px 12px 28px; line-height: 1.6; }
   .step .switch .track { margin-top: 2px; }
   .topbar .links { mask-image: linear-gradient(90deg, #000 86%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); }
 }
+
+/* The features section: groups in boxes (a grid that folds to one column) and the releases as folding lists. */
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; margin: 6px 0 4px; }
+.feat {
+  padding: 12px 14px 10px;
+  border-radius: 14px;
+  background: var(--panel-inset);
+  border: 2px solid var(--slate-soft);
+}
+.feat h3 {
+  display: inline-block; margin: 0 0 8px; padding: 2px 12px;
+  border-radius: 999px; background: var(--ember); color: #fff; font-size: 16px; line-height: 22px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2), 0 2px 0 var(--slate);
+}
+.feat ul, .release ul { margin: 0; padding-left: 20px; }
+.feat li, .release li { margin: 0 0 5px; font-size: 15px; }
+.feat-h { margin: 22px 0 8px; font-size: 19px; }
+.release {
+  margin: 0 0 8px; padding: 0 12px;
+  border-radius: 12px; background: var(--panel-inset); border: 2px solid var(--slate-soft);
+}
+.release summary {
+  cursor: pointer; padding: 8px 0; font-weight: 700; color: var(--ember); list-style-position: inside;
+}
+.release[open] summary { border-bottom: 2px solid var(--slate-soft); margin-bottom: 8px; }
+.release ul { padding-bottom: 6px; }
