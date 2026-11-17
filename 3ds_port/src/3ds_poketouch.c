@@ -353,67 +353,6 @@ static void Art(const uint8_t *pixels, const uint16_t *pal, int stride, int x0, 
 #include "3ds_ui_theme_impl.h"
 
 /* FireRed's small font (8 wide cells): the labels under HOME's buttons, the plates' captions. Without it, the normal font. */
-/* A label centred in a key of width w: when it is wider than the key's face, the gaps between its letters close one pixel each, from the
- * middle of the word out, until it fits (the game's small font has no narrower size). */
-static void SmallFitted(const char *s, int x, int w, int cellTop, uint16_t fg, uint16_t shadow)
-{
-    const uint8_t *font = CtrTwinSmallFontData();
-    unsigned widths[16];
-    const char *p = s;
-    int n = 0, ink = -1, room = w - 4, cut, cx;
-
-    if (!font) {
-        int lw = UiTextWidth(s, 1);
-
-        UiText(s, x + (w - lw) / 2, cellTop + 3, fg, shadow, 1, x + w);
-        return;
-    }
-    while (*p && n < 16) {
-        unsigned cw = CtrTwinSmallFontWidth(GlyphCode(&p) & 0xffu);
-
-        widths[n] = cw > 8 ? 8 : cw;
-        ink += (int)widths[n++];
-    }
-    cut = ink - room;
-    if (cut < 0)
-        cut = 0;
-    if (cut > n - 1)
-        cut = n - 1;
-    cx = x + (w - (ink - cut)) / 2;
-    p = s;
-    for (int k = 0; k < n; ++k) {
-        unsigned code = GlyphCode(&p) & 0xffu, gw = widths[k];
-        uint32_t rows[16];
-        /* gap k (after letter k) closes when it is among the cut gaps nearest the middle */
-        int mid2 = n - 2, dist2 = 2 * k - mid2, closed = 0;
-
-        if (dist2 < 0)
-            dist2 = -dist2;
-        if (k < n - 1) {
-            int nearer = 0;
-
-            for (int j = 0; j < n - 1; ++j) {
-                int dj = 2 * j - mid2;
-
-                if (dj < 0)
-                    dj = -dj;
-                if (dj < dist2 || (dj == dist2 && j < k))
-                    ++nearer;
-            }
-            closed = nearer < cut;
-        }
-        TwinSmallGlyphDecode(font + code * 32, gw, rows);
-        for (int row = 0; row < 16; ++row)
-            for (unsigned col = 0; col < gw; ++col) {
-                unsigned px = (rows[row] >> (2 * col)) & 3;
-
-                if (px && cx + (int)col < x + w - 1)
-                    Px(cx + (int)col, cellTop + row, px == 1 ? fg : shadow);
-            }
-        cx += (int)gw - closed;
-    }
-}
-
 static void SmallText(const char *s, int x, int cellTop, uint16_t fg, uint16_t shadow, int limit)
 {
     const uint8_t *font = CtrTwinSmallFontData();
@@ -1800,8 +1739,8 @@ static void Button(int id, const CtrPokeTouchView *v)
             name[n] = 0;
         }
         if (sLayoutHome) {
-            EmIcon(ColumnIcon(id), r->x + (r->w - EMBER_ICON) / 2, fy + 2, on);
-            SmallFitted(label, r->x, r->w, fy + 13, pal->ink, pal->inkSh);
+            /* No label: the icon alone, centred on the key's face. */
+            EmIcon(ColumnIcon(id), r->x + (r->w - EMBER_ICON) / 2, fy + (fh - EMBER_ICON) / 2, on);
             break;
         }
         EmIcon(ColumnIcon(id), r->x + 4, fy + (fh - EMBER_ICON) / 2, on);
