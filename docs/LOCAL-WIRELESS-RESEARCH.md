@@ -108,9 +108,53 @@ answers without any radio, as `tests/` does for the other modules.
 
 ## Internet play
 
-UDS is local. Playing across the internet would need a relay server and the console's Wi-Fi sockets, which is a
-different and much larger project (and Azahar already offers rooms for emulator users). It is not part of this
-proposal.
+Researched 2026-11-17 (public pages only; nothing here was tried).
+
+**Two different things are meant by "reviving 3DS online", and only one helps this port.**
+
+1. *Nintendo Network replacements (Pretendo).* Nintendo closed the 3DS and Wii U services on 2024-04-08, and Pretendo
+   is the fan-run replacement. It is still in beta, covers a growing but partial list of games, needs a console
+   with custom firmware, and gives no ETA per game. It serves games that had online play (Mario Kart 7, the Pokémon
+   X/Y generation and so on). **FireRed never had online play**, and a homebrew `.3dsx` has no Nintendo Network
+   account to log in with, so Pretendo does not give Twin Embers anything by itself.
+2. *Our own relay on the internet.* A homebrew program may open ordinary sockets (libctru's `soc` service, up to 64
+   at a time) over the console's normal Wi-Fi. That is enough to carry what the local wireless would carry.
+
+**Why (2) is cheap here.** The two layers written for local play are already independent of the radio: `WlNet`
+takes a `WlBackend` (send a frame to node N, receive a frame, tell the time), and `WlRfu` only talks to `WlNet`.
+The UDS radio is one backend; an internet one is another backend with the same three functions. Nothing above
+it changes: the Union Room, trades and battles would see the people of a *room* as if they stood next to them.
+
+**Shape of the project** (a sketch, not built):
+
+| Piece | What it is | Notes |
+|---|---|---|
+| Internet backend | The console connects out to a relay with TCP (or UDP with `WlNet`'s own resend), says its room code, gets a node id | An outgoing connection needs no port forwarding, which removes the usual NAT problem |
+| Relay server | A small program (a few hundred lines) that keeps rooms of up to 16 nodes and forwards each frame to its destination | The same model as Azahar's multiplayer rooms and as relay-style projects for other consoles (for example ryu_ldn_nx on the Switch); anyone can host one, which is what "community servers" would be |
+| Rooms | A short code (or a list) instead of "who is near me"; the room's players are the session | No accounts needed, so nothing personal is stored |
+| Same build | The same rule as local play: same engine, tables and language | The server can refuse mismatches by the build id in the room's first message |
+
+**What would be hard or limiting.**
+
+- *Latency.* The link layer exchanges a frame about every 17 ms. Trades, the Union Room and turn-based battles
+  stay usable at 100-150 ms round trips (each turn waits for the other side anyway); the real-time minigames
+  (Pokémon Jump, Dodrio Berry-Picking) would not. A room could simply not offer them over the internet.
+- *Trust and abuse.* Trade data crosses a server somebody runs. Without accounts there is no moderation: a room
+  code is the only access control, so rooms should be private by default, and the protocol should say what the
+  server can see (everything, unless the frames are encrypted between consoles, which a shared room secret could do).
+- *TLS.* The console's TLS support is limited and old; a plain TCP protocol with its own checks is simpler than HTTPS.
+  A relay for real people should still encrypt the frames end to end with the room's secret.
+- *Cost and upkeep.* The traffic is tiny (a few kilobytes a second per player), so a cheap server holds many rooms,
+  but somebody has to run it and keep the protocol versioned.
+- *Fairness.* A trade over the internet can be interrupted midway by a dropped link; the game's own trade
+  protocol has the same weakness on a cable, but the internet makes it likelier, so the first release should say so.
+
+**Emulator players get online play almost free.** Azahar already lets people join each other's rooms over the
+internet and carries UDS across them; once the UDS backend works, Twin Embers running in Azahar can link across the
+internet with no code of ours. Only real consoles need the relay.
+
+**Suggested order.** Finish local play (UDS) first, test it in Azahar, then add the internet backend and a reference
+relay; the relay's wire format is worth writing down early so other people can host compatible ones.
 
 ## Sources
 
@@ -119,3 +163,6 @@ proposal.
 - Emerald 3DS release v0.4.0: https://github.com/ZallaxDev/emerald-3ds/releases/tag/v0.4.0
 - libctru UDS reference: https://libctru.devkitpro.org/uds_8h.html
 - 3dbrew, NWMUDS SendTo (frame size limit): https://3dbrew.org/wiki/NWMUDS:SendTo
+- Pretendo Network (Nintendo Network replacement): https://en.wikipedia.org/wiki/Pretendo_Network
+- libctru sockets (`soc`): https://libctru.devkitpro.org/soc_8h.html
+- Azahar multiplayer rooms: https://citra.azahar-emu.org/help/feature/multiplayer/
