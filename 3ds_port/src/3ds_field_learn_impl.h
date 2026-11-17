@@ -17,6 +17,8 @@ int CtrPokeTouch_LearnHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchLearn *l = &v->learn;
 
+    x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+    y -= MENU_SHIFT;
     if (!l->on)
         return -1;
     for (int i = 0; i < PT_LEARN_ROWS; ++i) {
@@ -96,12 +98,10 @@ static void FLearnNote(const CtrPokeTouchView *v, int w)
     const CtrPokeTouchLearn *l = &v->learn;
     int c = l->cursor >= 0 && l->cursor < PT_LEARN_ROWS ? l->cursor : 0;
 
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    if (l->row[c].move) {
-        Em2Text(l->row[c].name, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
-        LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
-        BDescribeN(l->desc, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
-    }
+    NoteWindow();
+    if (l->row[c].move)
+        NoteTitleBody(l->row[c].name, l->desc);
     sUiS = &sUiNavy;
 }

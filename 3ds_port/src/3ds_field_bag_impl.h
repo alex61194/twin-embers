@@ -454,43 +454,6 @@ static void FBTag(int *right, int base, int nameW, int room, int y, const char *
     *right -= tw + 4;
 }
 
-/* The description in the small font, wrapped on spaces (a newline is a space) over at most `maxLines` lines `step` apart. */
-static void FBSmallWrap(const char *s, int x, int top, int width, int maxLines, int step, uint16_t fg, uint16_t sh)
-{
-    char line[96], trial[96];
-    int n = 0, lines = 0;
-
-    while (*s && lines < maxLines) {
-        const char *e = s;
-        int wl;
-
-        while (*e && *e != ' ' && *e != '\n')
-            ++e;
-        wl = (int)(e - s);
-        if (wl > 0 && wl < (int)sizeof(trial) - 2) {
-            memcpy(trial, line, (size_t)n);
-            if (n)
-                trial[n] = ' ';
-            memcpy(trial + n + (n ? 1 : 0), s, (size_t)wl);
-            trial[n + (n ? 1 : 0) + wl] = 0;
-            if (n && SmallWidth(trial) > width) {
-                line[n] = 0;
-                SmallText(line, x, top + lines * step, fg, sh, x + width);
-                ++lines;
-                n = 0;
-                continue;
-            }
-            memcpy(line, trial, (size_t)(n + (n ? 1 : 0) + wl) + 1);
-            n += (n ? 1 : 0) + wl;
-        }
-        s = *e ? e + 1 : e;
-    }
-    if (n && lines < maxLines) {
-        line[n] = 0;
-        SmallText(line, x, top + lines * step, fg, sh, x + width);
-    }
-}
-
 /* The note under the floor, FireRed's text window: the selected item (its count in a red ribbon, a TM/HM its move's type, a mart its owned
  * count, a sale the player's money; each only while the name stays whole beside it) and its description in two small lines, or what the
  * pocket holds. */
@@ -527,7 +490,7 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
             FBTag(&right, base, nameW, room, ty, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
         }
         Em2Text(b->selName, HN_X + 12, ty, EM_DARK, EM_DARK_SH, right);
-        FBSmallWrap(b->selDesc, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
+        MenuWrap(b->selDesc, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
     } else
         Em2Text(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), HN_X + 12,
                 HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH, HN_X + HN_W - 12);

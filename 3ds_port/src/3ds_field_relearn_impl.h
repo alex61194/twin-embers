@@ -78,6 +78,8 @@ int CtrPokeTouch_RelearnHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchRelearn *l = &v->relearn;
 
+    x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+    y -= MENU_SHIFT;
     if (!l->on)
         return -1;
     if (l->panel == PT_RL_PANEL_YESNO) {
@@ -213,7 +215,7 @@ static void FRelearnFrame(const CtrPokeTouchView *v)
             if ((pass == 1) == (l->first + i == l->cursor))
                 FRRowDraw(l, i);
     if (l->panel == PT_RL_PANEL_YESNO || l->panel == PT_RL_PANEL_MESSAGE) {
-        CtrPokeTouchRect dim = {0, 0, 248, 168};
+        CtrPokeTouchRect dim = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
 
         UiDim(&dim);
         if (l->panel == PT_RL_PANEL_YESNO)
@@ -229,12 +231,10 @@ static void FRelearnNote(const CtrPokeTouchView *v, int w)
     const CtrPokeTouchRelearn *l = &v->relearn;
     int c = FRCursorRow(l);
 
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    if (c >= 0 && l->row[c].move) {
-        Em2Text(l->row[c].name, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
-        LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
-        BDescribeN(l->desc, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
-    }
+    NoteWindow();
+    if (c >= 0 && l->row[c].move)
+        NoteTitleBody(l->row[c].name, l->desc);
     sUiS = &sUiNavy;
 }

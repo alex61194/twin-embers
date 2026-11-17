@@ -5321,10 +5321,12 @@ static int ProcessTouch(int mode)
         ProcessBack(mode, in);
         ProcessRelearnTouch(in);
         /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
-        if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)
-            && in->touchX >= PT_VIEW_X && in->touchX < PT_VIEW_X + PT_VIEW_W
-            && in->touchY >= PT_VIEW_Y && in->touchY < PT_VIEW_Y + PT_VIEW_H)
-            BackPress(mode);
+        if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)) {
+            int mx, my;
+
+            if (CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &mx, &my))
+                BackPress(mode);
+        }
         return HIT_NONE;
     }
     if (mode == MODE_CHOICE) {
@@ -5902,6 +5904,10 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
+    if (!nav && !state.battleUi
+        && (state.touch.dex.on || state.touch.card.on || state.touch.learn.on || state.touch.relearn.on || state.touch.mail.on
+            || state.touch.choice.on || state.touch.box.on))
+        PlateFill(&state.touch);            /* the top band of the menus that share HOME's layout */
     /* Only the view that is drawn is cased (Render draws the battle's or the touch view, never both), and a held picture
      * (nav: state is sShown) was cased when it was first built. */
     if (!nav) {

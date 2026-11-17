@@ -1700,7 +1700,8 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
 static int NewMenu(const CtrPokeTouchView *v)
 {
-    return (v->save || v->options || v->bag.on) && !v->viewport;
+    return (v->save || v->options || v->bag.on || v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on
+            || v->box.on) && !v->viewport && !v->ec.on && !v->name.on;
 }
 
 static int IsHome(const CtrPokeTouchView *v)
@@ -2088,6 +2089,68 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
 }
 
 /* ---------------------------------------------------------------- Menus in HOME's layout */
+/* Text in the small font, wrapped on spaces (a newline is a space) over at most `maxLines` lines `step` apart. */
+static void MenuWrap(const char *s, int x, int top, int width, int maxLines, int step, uint16_t fg, uint16_t sh)
+{
+    char line[160], trial[160];
+    int n = 0, lines = 0;
+
+    while (*s && lines < maxLines) {
+        const char *e = s;
+        int wl, add;
+
+        while (*e && *e != ' ' && *e != '\n')
+            ++e;
+        wl = (int)(e - s);
+        add = n ? 1 : 0;
+        if (wl > 0 && wl < (int)sizeof(trial) - 2 && n + add + wl < (int)sizeof(line) - 1) {
+            memcpy(trial, line, (size_t)n);
+            if (add)
+                trial[n] = ' ';
+            memcpy(trial + n + add, s, (size_t)wl);
+            trial[n + add + wl] = 0;
+            if (n && SmallWidth(trial) > width) {
+                line[n] = 0;
+                SmallText(line, x, top + lines * step, fg, sh, x + width);
+                ++lines;
+                n = 0;
+                continue;
+            }
+            memcpy(line, trial, (size_t)(n + add + wl) + 1);
+            n += add + wl;
+        }
+        s = *e ? e + 1 : e;
+    }
+    if (n && lines < maxLines) {
+        line[n] = 0;
+        SmallText(line, x, top + lines * step, fg, sh, x + width);
+    }
+}
+
+/* The compact notes of the native screens, in the note's window under the floor: a title and two small lines, or only text (up to three small lines). */
+static void NoteWindow(void)
+{
+    LlWindow(HN_X, HN_Y, HN_W, HN_H);
+    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+}
+
+static void NoteTitleBody(const char *title, const char *body)
+{
+    NoteWindow();
+    if (body && body[0]) {
+        Em2Text(title, HN_X + 12, HN_Y + 2, EM_DARK, EM_DARK_SH, HN_X + HN_W - 12);
+        MenuWrap(body, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
+    } else {
+        Em2Text(title, HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, HN_X + HN_W - 12);
+    }
+}
+
+static void NoteText(const char *text, uint16_t ink)
+{
+    NoteWindow();
+    MenuWrap(text, HN_X + 12, HN_Y + 1, HN_W - 24, 3, 10, ink, EM_DARK_SH);
+}
+
 /* BACK of the top band (a screen with a way back): the slate button, grey when there is nothing to go back to. */
 static void BackTop(const CtrPokeTouchView *v)
 {
@@ -2330,15 +2393,45 @@ static void OptionsScreen(const CtrPokeTouchView *v)
  * handed to it moved by MENU_SHIFT, so that its 240 x 160 land on the floor, and its touches are moved back (3ds_field_bag_impl.h). */
 #define MENU_SHIFT (MN_X - PT_VIEW_X)
 
-static void BagScreen(const CtrPokeTouchView *v)
+static void NativeScreen(const CtrPokeTouchView *v)
 {
     uint16_t *base = sCanvas;
 
     MenuChrome(v);
     sCanvas = base + (size_t)MENU_SHIFT * H - MENU_SHIFT;
-    FBagFrame(v);
+    if (v->dex.on)
+        FDexFrame(v);
+    else if (v->card.on)
+        FCardFrame(v);
+    else if (v->learn.on)
+        FLearnFrame(v);
+    else if (v->relearn.on)
+        FRelearnFrame(v);
+    else if (v->mail.on)
+        FMailFrame(v);
+    else if (v->choice.on)
+        FChoiceFrame(v);
+    else if (v->box.on)
+        FBoxFrame(v);
+    else
+        FBagFrame(v);
     sCanvas = base;
-    FBagNote(v, 0);
+    if (v->dex.on)
+        FDexNote(v, 0);
+    else if (v->card.on)
+        FCardNote(v, 0);
+    else if (v->learn.on)
+        FLearnNote(v, 0);
+    else if (v->relearn.on)
+        FRelearnNote(v, 0);
+    else if (v->mail.on)
+        FMailNote(v, 0);
+    else if (v->choice.on)
+        FChoiceNote(v, 0);
+    else if (v->box.on)
+        FBoxNote(v, 0);
+    else
+        FBagNote(v, 0);
     sKeepBg = 0;
 }
 
@@ -2346,17 +2439,17 @@ static void MenuScreen(const CtrPokeTouchView *v)
 {
     if (v->options)
         OptionsScreen(v);
-    else if (v->bag.on)
-        BagScreen(v);
-    else
+    else if (v->save)
         SaveScreen(v);
+    else
+        NativeScreen(v);
 }
 
 /* Whether the menu in HOME's layout looks different between two views (the ones of options and the Bag change nothing else the screen
  * shows, so any difference counts). */
 static int MenuChanged(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
 {
-    if (!NewMenu(old) || old->options != v->options || old->bag.on != v->bag.on || old->save != v->save)
+    if (!NewMenu(old) || old->options != v->options || old->save != v->save)
         return 1;
     return v->save ? SaveChanged(old, v) : memcmp(old, v, sizeof(*v)) != 0;
 }

@@ -68,11 +68,13 @@ int CtrPokeTouch_BoxHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchBox *b = &v->box;
 
+    x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+    y -= MENU_SHIFT;
     if (!b->on)
         return ST_HIT_NONE;
     switch (b->state) {
     case PT_BOX_STATE_MESSAGE:
-        return y < NOTE_Y + NOTE_H && x < 248 ? PT_BOX_HIT_MESSAGE : ST_HIT_NONE;
+        return y < 168 && x < 248 ? PT_BOX_HIT_MESSAGE : ST_HIT_NONE;
     case PT_BOX_STATE_MENU:
         for (int i = 0; i < b->menuCount; ++i) {
             CtrPokeTouchRect r = FXMenuRow(b, i);
@@ -338,7 +340,7 @@ static void FXParty(const CtrPokeTouchBox *b)
 
 static void FXMenu(const CtrPokeTouchBox *b)
 {
-    CtrPokeTouchRect card = FXMenuCard(b), dim = {0, 0, 182, 168};
+    CtrPokeTouchRect card = FXMenuCard(b), dim = {PT_VIEW_X, PT_VIEW_Y, 178, PT_VIEW_H};
     char text[40];
 
     UiDim(&dim);
@@ -478,47 +480,43 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
     const CtrPokeTouchBox *b = &v->box;
     char text[100];
 
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
+    NoteWindow();
     if (b->message[0] != 0xff) {
         FNText(b->message, (int)sizeof(b->message), text, (int)sizeof(text));
-        BPWrap(text, NOTE_X + 12, NOTE_Y + 8, w - 20, b->state == PT_BOX_STATE_MESSAGE ? 2 : 3, EM_DARK, EM_DARK_SH);
-        if (b->state == PT_BOX_STATE_MESSAGE) {
-            const char *tap = CtrUiText(UIS_TAP_TO_CONTINUE);
-
-            UiText(tap, NOTE_X + w - 14 - UiTextWidth(tap, 1) - 9, NOTE_Y + NOTE_H - 16, EM_DIM, EM_DARK_SH, 1, NOTE_X + w);
-            UiArrow(NOTE_X + w - 18, NOTE_Y + NOTE_H - 16, 1, LL_CURSOR);
-        }
+        MenuWrap(text, HN_X + 12, HN_Y + 1, HN_W - 44, 3, 10, EM_DARK, EM_DARK_SH);
+        if (b->state == PT_BOX_STATE_MESSAGE)           /* it waits for a tap: the arrow */
+            UiArrow(HN_X + HN_W - 22, HN_Y + HN_H - 16, 1, LL_CURSOR);
     } else if (b->items && b->mon.species) {
         /* MOVE ITEMS: the item the Pokemon holds, its name by its icon, the Pokemon's on the right, its description. */
         char name[32], desc[200];   /* two bytes a FireRed character */
 
         FNText(b->monText[0], (int)sizeof(b->monText[0]), name, (int)sizeof(name));
         if (b->monItem) {
-            int nameX = NOTE_X + w - 10 - UiTextWidth(name, 1);
+            int nameX = HN_X + HN_W - 10 - UiTextWidth(name, 1);
 
-            /* Three lines of description: FireRed's are up to three (the note beside BACK is narrow). */
-            ItemArt(ICON_BOX_NOTE, b->monItem, NOTE_X + 10, NOTE_Y + 1, 1);
-            FXText(b->itemName, (int)sizeof(b->itemName), NOTE_X + 36, NOTE_Y + 5, EM_DARK, EM_DARK_SH, nameX - 6, 1);
-            UiText(name, nameX, NOTE_Y + 5, EM_DIM, EM_DARK_SH, 1, NOTE_X + w);
+            ItemArt(ICON_BOX_NOTE, b->monItem, HN_X + 10, HN_Y + 5, 1);
+            FXText(b->itemName, (int)sizeof(b->itemName), HN_X + 36, HN_Y + 2, EM_DARK, EM_DARK_SH, nameX - 6, 1);
+            UiText(name, nameX, HN_Y + 2, EM_DIM, EM_DARK_SH, 1, HN_X + HN_W);
             FNText(b->itemDesc, (int)sizeof(b->itemDesc), desc, (int)sizeof(desc));
-            BPWrap(desc, NOTE_X + 12, NOTE_Y + 21, w - 22, 3, EM_DIM, EM_DARK_SH);
+            MenuWrap(desc, HN_X + 36, HN_Y + 13, HN_W - 48, 2, 9, EM_DIM, EM_DARK_SH);
         } else {
-            UiText(name, NOTE_X + 12, NOTE_Y + 8, EM_DARK, EM_DARK_SH, 1, NOTE_X + w - 8);
-            UiText(CtrUiText(UIS_BOX_NO_ITEM), NOTE_X + 12, NOTE_Y + 28, EM_DIM, EM_DARK_SH, 1, NOTE_X + w - 8);
+            UiText(name, HN_X + 12, HN_Y + 2, EM_DARK, EM_DARK_SH, 1, HN_X + HN_W - 8);
+            UiText(CtrUiText(UIS_BOX_NO_ITEM), HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, 1, HN_X + HN_W - 8);
         }
     } else if (b->mon.species) {
-        int right = NOTE_X + w - (b->mon.egg ? 8 : 72);
+        /* The Pokemon under the cursor: its name and gender and level on one line, what the Box says of it under. */
+        int right = HN_X + HN_W - 10;
 
-        FXText(b->monText[0], (int)sizeof(b->monText[0]), NOTE_X + 12, NOTE_Y + 6, EM_DARK, EM_DARK_SH, right, 0);
-        FXGenderLevel(b->monText[2], (int)sizeof(b->monText[2]), NOTE_X + 12, NOTE_Y + 21, right);
-        FXText(b->monText[1], (int)sizeof(b->monText[1]), NOTE_X + 12, NOTE_Y + 36, EM_DIM, EM_DARK_SH, right, 1);
-        FXText(b->monText[3], (int)sizeof(b->monText[3]), NOTE_X + 12, NOTE_Y + 49, EM_VALUE, EM_DARK_SH, right, 1);
+        FXText(b->monText[0], (int)sizeof(b->monText[0]), HN_X + 12, HN_Y + 2, EM_DARK, EM_DARK_SH, HN_X + 190, 0);
+        FXGenderLevel(b->monText[2], (int)sizeof(b->monText[2]), HN_X + 198, HN_Y + 2, right);
+        FXText(b->monText[1], (int)sizeof(b->monText[1]), HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, HN_X + 190, 1);
         if (!b->mon.egg)
-            FDPicDraw(b->mon.species, NOTE_X + w - 68, NOTE_Y, 0);
+            FXText(b->monText[3], (int)sizeof(b->monText[3]), HN_X + 198, HN_Y + 17, EM_VALUE, EM_DARK_SH, right, 1);
     } else {
-        FXText(b->boxName, (int)sizeof(b->boxName), NOTE_X + 12, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH,
-               NOTE_X + w - 4, 0);
+        FXText(b->boxName, (int)sizeof(b->boxName), HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH,
+               HN_X + HN_W - 8, 0);
     }
     sUiS = &sUiNavy;
 }

@@ -176,6 +176,13 @@ static void timing(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
 /* The Bag is drawn on the floor of HOME's layout, 36 px right and down of where its rectangles are: the tests give its own coordinates. */
 static int BagHit36(const CtrPokeTouchView *v,int x,int y) { return CtrPokeTouch_BagHit(v,x+36,y+36); }
 static int BagRail36(const CtrPokeTouchBag *b,int y) { return CtrPokeTouch_BagRailTarget(b,y+36); }
+/* The native screens are drawn on the floor of HOME's layout, 36 px right and down of where their rectangles are: the tests give the rectangles' own coordinates. */
+#define CtrPokeTouch_DexHit(v,x,y) (CtrPokeTouch_DexHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_LearnHit(v,x,y) (CtrPokeTouch_LearnHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_RelearnHit(v,x,y) (CtrPokeTouch_RelearnHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_ChoiceHit(v,x,y) (CtrPokeTouch_ChoiceHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_BoxHit(v,x,y) (CtrPokeTouch_BoxHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_CardHit(v,x,y) (CtrPokeTouch_CardHit)((v),(x)+36,(y)+36)
 static void update_at(int line, CtrPokeTouchView *old, const CtrPokeTouchView *vRaw)
 {
     CtrDirtyList dirty; CtrDirty_Clear(&dirty);

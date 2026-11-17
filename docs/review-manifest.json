@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "adc350de16fd6350de68ce1e10359554e4b0c0e13ea019f9938e936822668075",
+   "sha256": "16c5a09a0c29412ebd273819f4d0279147d71fb94949abf45bdc48afd1b23d5d",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1208,7 +1208,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "2bb0090bdd9559a8e87929b4e8e1e15f0370204ca88fb6172d8ba6cb797fc9b5",
+   "sha256": "c409762a0ef7d893d2a0953fffc6b6794c9b86f2e8cc91da41c12f8755f2c2af",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1216,7 +1216,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "f888d1f177986fd50bcbed5aba29f41618e4acff0c05fcfe75feb0bdc6dfe51d",
+   "sha256": "ecd610af7149baef00533e992d3791fa2ab31ef119ccff257db96a621de7e9cb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1224,7 +1224,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
-   "sha256": "cabbfa0c48dfb685a20699e40e7927f46a5bee6120caec947723bcb2650782f3",
+   "sha256": "dc5527930f597bf5600fbe2f89d0810e19c1f4f77042edf794403d056a84da8a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1232,7 +1232,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_choice_impl.h",
-   "sha256": "a1562efa7e64bc341e19330ad0debf524cbf14976a607b3ad8ff43fd6030f8c7",
+   "sha256": "2f963445f799e676a4571b5a8ee311c72df502742755c93b2b57caf039260ce6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1240,7 +1240,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_dex_impl.h",
-   "sha256": "758d5e939c3a818328ce8dff90f99f5f7a4ecaa40c74b9c8baf39071815a974b",
+   "sha256": "ec8ded1c2f4917fd3042d65c10a76a83fa2c7495e279a421cb4d34ab394001be",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1256,7 +1256,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_learn_impl.h",
-   "sha256": "cf3289106c7db53a4a0d7f47af8711d2fdf1f5c51b15abc495fb93171446800b",
+   "sha256": "ab291105052e4f0d01108d1c6702c25352da407fc3a4fdcb1bb055b84c1c5ef1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1264,7 +1264,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_mail_impl.h",
-   "sha256": "6c47953bd05626f3e36c7e4bc62314703e3b1073febc2cfca760b979ca6cc8b0",
+   "sha256": "542a1c68080969b457ca9c12f377c542cce681fa821f19149021c7ec0f27457f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1280,7 +1280,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_relearn_impl.h",
-   "sha256": "4aa1bcbb4c793480e2424ed621fe91ea5cb8671019174d7ada44b143b6c8ccc1",
+   "sha256": "77cb8f4c36727f9c798d9f01f2267cab8a5a5ae99f703220e24222bc37e8de55",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "0d883da0411b63377d50e301566ba8cc07922811089400ee4992c6dbad27672b",
+   "sha256": "ede681d99eb9445d07d74511163c5f218ebd3109ef11ec8c57e243d58f841b2d",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "60239344b3eec0d56a1b67097e05b105b4cd86f1ed5d93c1e94f6d6e370088d5"
+   "sha256": "b95d49f58c81b7723505c22e70ad4b4562770d2f8fc93f2d828397ef8533ac20"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "9e7b85394da4c445cc0b35453de4e61d4a2ba21bd479209a61839943fa36bd1f",
+   "sha256": "d6a12a076f2d05067f8f837fce459e52455e1d49c604dab19ed50ab98e341386",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

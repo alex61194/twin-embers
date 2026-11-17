@@ -29,6 +29,8 @@ int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchChoice *c = &v->choice;
 
+    x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+    y -= MENU_SHIFT;
     if (!c->on)
         return -1;
     for (int i = 0; i < c->count && i < PT_CHOICE_MAX; ++i) {
@@ -55,9 +57,8 @@ static void FChoiceFrame(const CtrPokeTouchView *v)
 
 static void FChoiceNote(const CtrPokeTouchView *v, int w)
 {
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    if (v->choice.prompt[0])
-        BDescribeN(v->choice.prompt, NOTE_X + 13, NOTE_Y + 8, w - 26, 3, EM_DARK);
+    NoteText(v->choice.prompt, EM_DARK);
     sUiS = &sUiNavy;
 }

@@ -335,7 +335,11 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchDex *d = &v->dex;
 
-    if (!d->on || x >= 248)
+    int absY = y;                                       /* the Pokedex is drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
+
+    x -= MENU_SHIFT;
+    y -= MENU_SHIFT;
+    if (!d->on || x >= 248 || x < 0)
         return -1;
     switch (d->state) {
     case PT_DEX_STATE_MENU: {
@@ -393,9 +397,7 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
     case PT_DEX_STATE_PAGE:
         if (d->added) {
             /* The page a catch added: anywhere on it or its note goes on with the battle (its A). */
-            CtrPokeTouchRect note = {NOTE_X, NOTE_Y, NOTE_W_SIDE, NOTE_H};
-
-            return UiIn(&sFBArea, x, y) || UiIn(&note, x, y) ? PT_DEX_HIT_CONTINUE : -1;
+            return UiIn(&sFBArea, x, y) || absY >= HN_Y ? PT_DEX_HIT_CONTINUE : -1;
         }
         if (UiIn(&sFDArea, x, y))
             return PT_DEX_HIT_AREA;
@@ -671,11 +673,11 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
     const CtrPokeTouchDex *d = &v->dex;
     char title[40], body[96];
 
+    (void)w;
     EmSurface();
     if (d->state == PT_DEX_STATE_PAGE && !d->added) {
-        /* The entry in FireRed's text window (the buttons are on the card); BDescribeN ends it with "..." if it runs on. */
-        LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-        BDescribeN(d->desc[0] ? d->desc : "", NOTE_X + 13, NOTE_Y + 9, w - 26, 3, EM_DIM);
+        /* The entry (the buttons are on the card): up to three small lines. */
+        NoteText(d->desc[0] ? d->desc : "", EM_DIM);
         sUiS = &sUiNavy;
         return;
     }
@@ -699,9 +701,6 @@ static void FDexNote(const CtrPokeTouchView *v, int w)
         else
             snprintf(body, sizeof(body), "%s", CtrUiText(d->sel.flags & 1 ? UIS_DEX_NOTE_OPEN : UIS_DEX_NOTE_UNSEEN));
     }
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    Em2Text(title, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
-    LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
-    BDescribeN(body, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
+    NoteTitleBody(title, body);
     sUiS = &sUiNavy;
 }
