@@ -1224,141 +1224,15 @@ static void OptLookPanel(const CtrPokeTouchView *v)
     }
 }
 
-/* The SAVE screen (Llama): FireRed's text window over the frame where the picture goes: a flame title band, the five
- * lines (label on the left, blue value on the right, a rule under each) and the player's own map icon, enlarged by 3, in a
- * sunk well. Each value has its own rectangle, filled with the window's paper before its text, so one that changes (the
- * play clock) is redrawn alone. The dialogue is the bar: the text in a second window (title, rule, dimmer lines), YES over
- * NO (or a lone OK) on its right. */
-enum { SF_NAME, SF_BADGES, SF_DEX, SF_TIME, SF_MONEY, SF_COUNT };
-static const CtrPokeTouchRect sSavePanel = {3, 3, 244, 160};     /* the window (5, 5, 240 x 154) and 2 px round it, its shadow too */
-static const CtrPokeTouchRect sSaveButtons = {170, 170, 76, 70};   /* right of the note card, glow included */
-static const CtrPokeTouchRect sSaveYes = {172, 172, 72, 30};
-static const CtrPokeTouchRect sSaveNo = {172, 206, 72, 30};
-#define SAVE_WIN_X 5
-#define SAVE_WIN_Y 5
-#define SAVE_WIN_W 240
-#define SAVE_WIN_H 154
-#define SAVE_LINE_Y 34
-#define SAVE_LINE_STEP 24
-#define SAVE_LABEL_X 18
-#define SAVE_VALUE_RIGHT 146
-#define SAVE_NOTE_X 5
-#define SAVE_NOTE_Y 166
-#define SAVE_NOTE_W 162
-#define SAVE_NOTE_H 70
-static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler"), CTR_TR("Badges", "Medallas", "Orden"), CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9" "dex"), CTR_TR("Time", "Tiempo", "Zeit"), CTR_TR("Money", "Dinero", "Geld")};
-
-static CtrPokeTouchRect SaveField(int f)
-{
-    CtrPokeTouchRect r = {84, (int16_t)(SAVE_LINE_Y + f * SAVE_LINE_STEP - 2), SAVE_VALUE_RIGHT + 2 - 84, 16};
-
-    return r;
-}
-
-/* The window's paper (white to #f8f8f0 over its inside, as LlWindow lays it) on row y. */
-static uint16_t SavePaper(int y)
-{
-    return Em2Lerp(EM_WHITE, UI_RGB(248, 248, 240), y - (SAVE_WIN_Y + 5), SAVE_WIN_H - 10 - 1);
-}
-
-static void SaveFieldDraw(int f, const CtrPokeTouchView *v)
-{
-    CtrPokeTouchRect r = SaveField(f);
-    char text[24], fit[32];
-
-    for (int row = 0; row < r.h; ++row)
-        Fill(r.x, r.y + row, r.w, 1, SavePaper(r.y + row));
-    switch (f) {
-    case SF_NAME:   snprintf(text, sizeof(text), "%s", v->playerName); break;
-    case SF_BADGES: snprintf(text, sizeof(text), "%u", (unsigned)v->saveBadges); break;
-    case SF_DEX:
-        if (v->saveHasDex)
-            snprintf(text, sizeof(text), "%u", (unsigned)v->saveDex);
-        else
-            snprintf(text, sizeof(text), "---");
-        break;
-    case SF_TIME:   snprintf(text, sizeof(text), "%u:%02u", (unsigned)(v->saveHours > 999 ? 999 : v->saveHours),
-                             (unsigned)(v->saveMinutes > 59 ? 59 : v->saveMinutes)); break;
-    default:        snprintf(text, sizeof(text), "\xc2\xa5%u", (unsigned)(v->saveMoney > 999999u ? 999999u : v->saveMoney)); break;
-    }
-    Em2Fit(text, SAVE_VALUE_RIGHT - 84, fit, sizeof(fit));
-    UiText(fit, SAVE_VALUE_RIGHT - UiTextWidth(fit, 1), r.y + 2, UI_RGB(48, 104, 216), UI_RGB(192, 208, 240), 1,
-           SAVE_VALUE_RIGHT + 1);
-}
-
-/* The player's portrait: FireRed's own map icon of Red or Leaf, enlarged by 3, on a round cream plate. */
-static void SaveSprite(const CtrPokeTouchView *v)
-{
-    const int scale = 3, x = 166, y = 62;
-
-    LlWell(x - 14, y - 24, 76, 96);                         /* the sunk box of the mockup, the icon in its middle */
-    UiRoundFill(x, y, MARKER * scale, MARKER * scale, 6, UI_RGB(250, 242, 222));   /* the plate under it */
-    if (sPlayer.key != v->playerFemale)
-        IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
-    if (!sPlayer.ok)
-        return;
-    for (int py = 0; py < MARKER; ++py)
-        for (int px = 0; px < MARKER; ++px) {
-            uint8_t index = sPlayer.pixels[0][py * MARKER + px];
-            if (index)
-                Fill(x + px * scale, y + py * scale, scale, scale, sPlayer.pal[index]);
-        }
-}
-
-static void SaveDraw(const CtrPokeTouchView *v)
-{
-    uint16_t band[20];
-    int split = 20 * 42 / 100;
-
-    LlWindow(SAVE_WIN_X, SAVE_WIN_Y, SAVE_WIN_W, SAVE_WIN_H);
-    /* The flame band across the top of the window (the mockup's .fl, 20 tall, no outline: it covers the window's rings). */
-    for (int row = 0; row < 20; ++row)
-        band[row] = row < split ? Em2Lerp(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), row, split - 1)
-                                : Em2Lerp(UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), row - split, 20 - split - 1);
-    EmFillRows(SAVE_WIN_X + 1, SAVE_WIN_Y + 1, SAVE_WIN_W - 2, 20, 4, band, 0, 10);
-    for (int row = 10; row < 20; ++row)
-        Fill(SAVE_WIN_X + 1, SAVE_WIN_Y + 1 + row, SAVE_WIN_W - 2, 1, band[row]);
-    Em2Text(CTR_TR("Save", "Guardar", "Sichern"), SAVE_WIN_X + 11, SAVE_WIN_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh,
-            SAVE_WIN_X + SAVE_WIN_W - 6);
-    for (int f = 0; f < SF_COUNT; ++f) {
-        Em2Text(sSaveLabel[f], SAVE_LABEL_X, SAVE_LINE_Y + f * SAVE_LINE_STEP, EM_DARK, EM_DARK_SH, 84);
-        LlRule(SAVE_LABEL_X, SAVE_LINE_Y + f * SAVE_LINE_STEP + 17, 130);
-        SaveFieldDraw(f, v);
-    }
-    SaveSprite(v);
-}
-
-/* The dialogue's text: a second window under the picture, the subject (what is asked or said), a rule, then the lines
- * that say more, dimmer. One line alone is centred. */
-static void SaveNote(const CtrPokeTouchView *v)
-{
-    const char *shown[PT_BAR_LINES];
-    int count = 0, right = SAVE_NOTE_X + SAVE_NOTE_W - 5;
-
-    LlWindow(SAVE_NOTE_X, SAVE_NOTE_Y, SAVE_NOTE_W, SAVE_NOTE_H);
-    for (int i = 0; i < PT_BAR_LINES; ++i)
-        if (v->bar[i][0])
-            shown[count++] = v->bar[i];
-    if (count == 1) {
-        Em2Text(shown[0], SAVE_LABEL_X, SAVE_NOTE_Y + (SAVE_NOTE_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, right);
-    } else if (count > 1) {
-        Em2Text(shown[0], SAVE_LABEL_X, SAVE_NOTE_Y + 10, EM_DARK, EM_DARK_SH, right);
-        LlRule(SAVE_LABEL_X, SAVE_NOTE_Y + 27, right - SAVE_LABEL_X);
-        for (int i = 1; i < count; ++i)
-            Em2Text(shown[i], SAVE_LABEL_X, SAVE_NOTE_Y + 33 + (i - 1) * 15, EM_DIM, EM_DARK_SH, right);
-    }
-}
-
-static int SaveFieldChanged(int f, const CtrPokeTouchView *a, const CtrPokeTouchView *b)
-{
-    switch (f) {
-    case SF_NAME:   return strcmp(a->playerName, b->playerName) != 0;
-    case SF_BADGES: return a->saveBadges != b->saveBadges;
-    case SF_DEX:    return a->saveHasDex != b->saveHasDex || a->saveDex != b->saveDex;
-    case SF_TIME:   return a->saveHours != b->saveHours || a->saveMinutes != b->saveMinutes;
-    default:        return a->saveMoney != b->saveMoney;
-    }
-}
+/* The SAVE screen, in HOME's layout (the status plate and the clock in the top band, the columns at the sides; see MenuChrome):
+ * a card in the middle with the four lines (label on the left, blue value on the right, a rule under each) and the player's own map
+ * icon, enlarged by 3, in a sunk well; under it the question in a second window, YES over NO (or a lone OK) at its right; the note
+ * under the floor says what is being done. */
+enum { SF_NAME, SF_BADGES, SF_DEX, SF_TIME, SF_COUNT };
+static const CtrPokeTouchRect sSaveYes = {204, 145, 72, 24};
+static const CtrPokeTouchRect sSaveNo = {204, 172, 72, 24};
+static const CtrPokeTouchRect sSaveButtons = {200, 142, 80, 58};   /* both, with the ring and the shadow */
+static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler"), CTR_TR("Badges", "Medallas", "Orden"), CTR_TR("Poké" "dex", "Poké" "dex", "Poké" "dex"), CTR_TR("Time", "Tiempo", "Zeit")};
 
 /* The dialogue's buttons: YES over NO, or a lone OK on YES's place. */
 static CtrPokeTouchRect SaveButtonRect(int which, int state)
@@ -1377,40 +1251,6 @@ int CtrPokeTouch_SaveHit(int x, int y, int state)
             return which;
     }
     return PT_SAVE_NONE;
-}
-
-/* YES cream, NO cream too until chosen; the chosen one is flame with the 2 px ring, a lone OK is flame; the one under a
- * touch sinks. While writing, three flame dots instead. */
-static void SaveButtons(const CtrPokeTouchView *v)
-{
-    const CtrPokeTouchRect *b = &sSaveButtons;
-    int confirm = v->saveState == SAVE_CONFIRM;
-
-    TsBgRect(b->x, b->y, b->w, b->h);
-    if (v->saveState == SAVE_WRITING) {
-        static const int8_t dy[3] = {0, -3, 0};
-
-        for (int i = 0; i < 3; ++i) {
-            int cx = b->x + 14 + 14 * i, cy = b->y + 30 + dy[i];
-
-            UiDisc(cx, cy, 5, UI_RGB(138, 22, 16));
-            UiDisc(cx, cy, 4, i == 1 ? UI_RGB(255, 176, 72) : UI_RGB(240, 128, 40));
-            UiDisc(cx - 1, cy - 1, 2, UI_RGB(255, 226, 170));
-            UiDisc(cx - 1, cy - 1, 1, EM_WHITE);
-        }
-        return;
-    }
-    for (int which = PT_SAVE_FIRST; which <= (confirm ? PT_SAVE_SECOND : PT_SAVE_FIRST); ++which) {
-        CtrPokeTouchRect r = SaveButtonRect(which, v->saveState);
-        int sel = !confirm || v->saveSel == which - PT_SAVE_FIRST, press = v->savePressed == which;
-        const EmPal *pal = LlPick(sel, &kEmCream);
-        int fy;
-
-        if (sel)
-            LlSelectRing(r.x, r.y, r.w, r.h);
-        fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein"), r.x, r.w, fy, r.h - 2, pal);
-    }
 }
 
 /* The backdrop: the embers. */
@@ -1502,10 +1342,6 @@ static void MenuFrame(const CtrPokeTouchView *v)
     }
     if (v->bag.on && !v->viewport) {
         FBagFrame(v);
-        return;
-    }
-    if (v->save && !v->viewport) {
-        SaveDraw(v);
         return;
     }
     if (v->options && !v->viewport) {
@@ -1666,9 +1502,7 @@ static void Bar(const CtrPokeTouchView *v)
             lines = i + 1;
     if (!v->viewport && !v->save && (v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on || v->name.on || v->box.on || v->bag.on))
         Em2NoteShadow(NOTE_X, NOTE_Y, w, NOTE_H);           /* the screens that draw their own note (each puts the shadow its note throws) */
-    if (v->save && !v->viewport)
-        SaveNote(v);
-    else if (v->dex.on && !v->viewport)
+    if (v->dex.on && !v->viewport)
         FDexNote(v, w);
     else if (v->card.on && !v->viewport)
         FCardNote(v, w);
@@ -1728,8 +1562,6 @@ static void Bar(const CtrPokeTouchView *v)
         OptPageButton(v);
     if (v->backVisible)
         Back(v);
-    if (v->save)
-        SaveButtons(v);
 }
 
 /* An element's area: its rectangle and the ring (or the shadow) round it. */
@@ -1868,6 +1700,12 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 #define HN_H 34
 
 /* Whether the view is HOME with nothing over the map: the layout with the map in the middle. */
+/* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
+static int NewMenu(const CtrPokeTouchView *v)
+{
+    return v->save && !v->viewport;
+}
+
 static int IsHome(const CtrPokeTouchView *v)
 {
     return v->home && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on && !v->dex.on && !v->card.on && !v->learn.on
@@ -1896,7 +1734,7 @@ static void HomeStatus(const CtrPokeTouchView *v)
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
     LlWindow(r->x, r->y, r->w, r->h);
-    {
+    if (!NewMenu(v)) {
         /* The plate opens the panel: a small chevron at its lower edge says so. */
         int cx = r->x + r->w / 2;
 
@@ -2252,9 +2090,173 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
     }
 }
 
+/* ---------------------------------------------------------------- Menus in HOME's layout */
+#define MN_X PT_HOME_X
+#define MN_Y PT_HOME_Y
+#define MN_W PT_VIEW_W
+#define MN_H PT_VIEW_H
+
+/* The top band (BACK, the plate, the clock, RUN), the columns and the floor in the middle: the dark red the map's frame sits on. */
+static void MenuChrome(const CtrPokeTouchView *v)
+{
+    SetLayout(1);
+    Frame();
+    HomeBack();
+    HomeStatus(v);
+    HomeClock(v);
+    HomeFrame(MN_X, MN_Y, MN_W, MN_H);
+    for (int y = 0; y < MN_H; ++y)
+        Fill(MN_X, MN_Y + y, MN_W, 1, UI_RGB(84 - 30 * y / (MN_H - 1), 24 - 8 * y / (MN_H - 1), 22 - 8 * y / (MN_H - 1)));
+    for (int i = 0; i < PT_COUNT; ++i)
+        Button(i, v);
+}
+
+/* The note under the floor: what the screen is (or the selection's name), and one line that says more. */
+static void MenuNote(const char *title, const char *body)
+{
+    int right = HN_X + HN_W - 10;
+
+    sFlyButton.w = 0;
+    LlWindow(HN_X, HN_Y, HN_W, HN_H);
+    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    if (body && body[0]) {
+        Em2Text(title, HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, right);
+        SmallText(body, HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, right);
+    } else {
+        Em2Text(title, HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, right);
+    }
+}
+
+/* ---- SAVE */
+#define SV_X (MN_X + 2)
+#define SV_Y (MN_Y + 2)
+#define SV_W (MN_W - 4)
+#define SV_H 98
+#define SV_VALUE_RIGHT 186
+
+static void SaveValueText(int f, const CtrPokeTouchView *v, char *text, size_t size)
+{
+    switch (f) {
+    case SF_NAME:   snprintf(text, size, "%s", v->playerName); break;
+    case SF_BADGES: snprintf(text, size, "%u", (unsigned)v->saveBadges); break;
+    case SF_DEX:
+        if (v->saveHasDex)
+            snprintf(text, size, "%u", (unsigned)v->saveDex);
+        else
+            snprintf(text, size, "---");
+        break;
+    default:        snprintf(text, size, "%u:%02u", (unsigned)(v->saveHours > 999 ? 999 : v->saveHours),
+                             (unsigned)(v->saveMinutes > 59 ? 59 : v->saveMinutes)); break;
+    }
+}
+
+/* The player's portrait: FireRed's own map icon of Red or Leaf, enlarged by 3, on a round cream plate in a sunk well. */
+static void SaveSprite(const CtrPokeTouchView *v)
+{
+    const int scale = 3, x = 210, y = 75;
+
+    LlWell(200, 62, 68, 74);
+    UiRoundFill(x, y, MARKER * scale, MARKER * scale, 6, UI_RGB(250, 242, 222));
+    if (sPlayer.key != v->playerFemale)
+        IconBuild(&sPlayer, v->playerFemale, CtrPokeTouch_MapPlayerIcon);
+    if (!sPlayer.ok)
+        return;
+    for (int py = 0; py < MARKER; ++py)
+        for (int px = 0; px < MARKER; ++px) {
+            uint8_t index = sPlayer.pixels[0][py * MARKER + px];
+
+            if (index)
+                Fill(x + px * scale, y + py * scale, scale, scale, sPlayer.pal[index]);
+        }
+}
+
+/* YES cream, NO cream too until chosen; the chosen one is flame with the 2 px ring, a lone OK is flame; the one under a touch sinks.
+ * While writing, three flame dots instead. */
+static void SaveButtons(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *b = &sSaveButtons;
+    int confirm = v->saveState == SAVE_CONFIRM;
+
+    if (v->saveState == SAVE_WRITING) {
+        static const int8_t dy[3] = {0, -3, 0};
+
+        for (int i = 0; i < 3; ++i) {
+            int cx = b->x + 16 + 24 * i, cy = b->y + 29 + dy[i];
+
+            UiDisc(cx, cy, 5, UI_RGB(138, 22, 16));
+            UiDisc(cx, cy, 4, i == 1 ? UI_RGB(255, 176, 72) : UI_RGB(240, 128, 40));
+            UiDisc(cx - 1, cy - 1, 2, UI_RGB(255, 226, 170));
+            UiDisc(cx - 1, cy - 1, 1, EM_WHITE);
+        }
+        return;
+    }
+    for (int which = PT_SAVE_FIRST; which <= (confirm ? PT_SAVE_SECOND : PT_SAVE_FIRST); ++which) {
+        CtrPokeTouchRect r = SaveButtonRect(which, v->saveState);
+        int sel = !confirm || v->saveSel == which - PT_SAVE_FIRST, press = v->savePressed == which;
+        const EmPal *pal = LlPick(sel, &kEmCream);
+        int fy;
+
+        if (sel)
+            LlSelectRing(r.x, r.y, r.w, r.h);
+        fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, press);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("Yes", "Sí", "Ja") : CTR_TR("No", "No", "Nein"), r.x, r.w, fy, r.h - 2, pal);
+    }
+}
+
+static void SaveScreen(const CtrPokeTouchView *v)
+{
+    uint16_t band[20];
+    int split = 20 * 42 / 100;
+    char text[24], fit[32];
+
+    MenuChrome(v);
+    LlWindow(SV_X, SV_Y, SV_W, SV_H);
+    /* The flame band across the top of the card (20 tall, no outline: it covers the window's rings). */
+    for (int row = 0; row < 20; ++row)
+        band[row] = row < split ? Em2Lerp(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), row, split - 1)
+                                : Em2Lerp(UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), row - split, 20 - split - 1);
+    EmFillRows(SV_X + 1, SV_Y + 1, SV_W - 2, 20, 4, band, 0, 10);
+    for (int row = 10; row < 20; ++row)
+        Fill(SV_X + 1, SV_Y + 1 + row, SV_W - 2, 1, band[row]);
+    Em2Text(CTR_TR("Save", "Guardar", "Sichern"), SV_X + 11, SV_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh, SV_X + SV_W - 6);
+    for (int f = 0; f < SF_COUNT; ++f) {
+        int y = SV_Y + 24 + f * 18;
+
+        Em2Text(sSaveLabel[f], SV_X + 12, y, EM_DARK, EM_DARK_SH, 120);
+        LlRule(SV_X + 12, y + 16, SV_VALUE_RIGHT - SV_X - 12 + 2);
+        SaveValueText(f, v, text, sizeof(text));
+        Em2Fit(text, SV_VALUE_RIGHT - 120, fit, sizeof(fit));
+        UiText(fit, SV_VALUE_RIGHT - UiTextWidth(fit, 1), y + 2, UI_RGB(48, 104, 216), UI_RGB(192, 208, 240), 1, SV_VALUE_RIGHT + 1);
+    }
+    SaveSprite(v);
+    /* The question, in a second window under the card. */
+    LlWindow(MN_X + 2, 146, 154, 52);
+    Em2Wrap(v->bar[0], MN_X + 14, 155, 130, 2, 17, EM_DARK, EM_DARK_SH);
+    SaveButtons(v);
+    MenuNote(CTR_TR("Save", "Guardar", "Sichern"), v->bar[1]);
+}
+
+static int SaveChanged(const CtrPokeTouchView *a, const CtrPokeTouchView *b)
+{
+    if (!NewMenu(a) || a->saveState != b->saveState || a->saveSel != b->saveSel || a->savePressed != b->savePressed
+        || a->playerFemale != b->playerFemale || strcmp(a->playerName, b->playerName) || a->saveBadges != b->saveBadges
+        || a->saveHasDex != b->saveHasDex || a->saveDex != b->saveDex || a->saveHours != b->saveHours || a->saveMinutes != b->saveMinutes
+        || memcmp(a->bar, b->bar, sizeof(b->bar)) || a->homeMoney != b->homeMoney || a->homeTurbo != b->homeTurbo
+        || a->homeClock != b->homeClock || a->homeRepelSteps != b->homeRepelSteps || a->homeRepelKind != b->homeRepelKind)
+        return 1;
+    for (int i = 0; i < PT_COUNT; ++i)
+        if (Changed(i, a, b))
+            return 1;
+    return 0;
+}
+
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
+    if (NewMenu(v)) {
+        SaveScreen(v);
+        return;
+    }
     if (IsHome(v)) {
         HomeDraw(v);
         return;
@@ -2315,6 +2317,13 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
+    if (NewMenu(v)) {
+        if (SaveChanged(old, v)) {
+            SaveScreen(v);
+            CtrDirty_Add(dirty, 0, 0, W, H);
+        }
+        return;
+    }
     if (IsHome(old) != IsHome(v) || sLayoutHome != IsHome(v)) {
         /* Into or out of HOME's layout (the one on the screen, whatever the old view says): everything moves, the whole screen is drawn again. */
         CtrPokeTouch_Draw(canvas, v);
@@ -2372,19 +2381,6 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
                 MapRestoreRect(&r, dirty);
         }
         HomeOverlay(v);
-    } else if (v->save && !v->viewport) {
-        /* A value that changed (the play clock, say): its own rectangle. */
-        for (int f = 0; f < SF_COUNT; ++f)
-            if (SaveFieldChanged(f, old, v)) {
-                CtrPokeTouchRect r = SaveField(f);
-
-                SaveFieldDraw(f, v);
-                Mark(dirty, &r);
-            }
-        if (old->playerFemale != v->playerFemale) {
-            SaveDraw(v);
-            Mark(dirty, &sSavePanel);
-        }
     } else if (v->options && !v->viewport) {
         /* A row whose value, selection or press changed: only its rectangle and the 2 px round it. The chosen row's ring lies on the rows next
          * to it, so a row that was or is chosen has them redrawn too; the chosen row is drawn last, and also when a neighbour was (the redraw of
@@ -2446,10 +2442,6 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
             Back(v);                        /* a press or a state: only BACK's rectangle and its shadow */
             Mark(dirty, &back);
-        } else if (v->save && (old->saveState != v->saveState || old->saveSel != v->saveSel
-                               || old->savePressed != v->savePressed)) {
-            SaveButtons(v);                 /* the selection or a press: only the buttons' area */
-            Mark(dirty, &sSaveButtons);
         }
     }
     for (int i = 0; i < PT_COUNT; ++i) {

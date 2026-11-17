@@ -1651,6 +1651,23 @@ static void HomeSelectionBar(CtrPokeTouchView *v)
  * bar. The ribbon switches to another map the game has opened. */
 static unsigned sHomeOpen;                  /* the maps the ribbon leads to, as the last frame saw them */
 
+/* The status plate and the clock of the top band (HOME's and the menus' that share its layout): the money, the turbo chosen (START, kept
+ * in the settings), the time of day the outdoors shows, and the Repel in force. */
+static void PlateFill(CtrPokeTouchView *t)
+{
+    unsigned turbo = CtrSettings_Turbo();
+    int steps = CtrBottomRepel_Steps(), kind = CtrBottomRepel_Kind();
+
+    t->homeMoney = CtrSave_Money();
+    t->homeTurbo = (uint8_t)(turbo > 4 ? 4 : turbo);
+    t->homeClock = (int16_t)(CtrNightWild_Second() / 60u % 1440u);
+    t->homeRepelSteps = (uint16_t)(steps > 0 && steps < 65535 ? steps : 0);
+    t->homeRepelKind = (uint8_t)kind;
+    t->homeRepelTotal = (uint16_t)CtrBottomRepel_Length(kind);
+    for (int k = 0; k < 3; ++k)
+        t->homeRepelItem[k] = (uint16_t)CtrBottomRepel_Item(k);
+}
+
 static void HomeMapState(Snapshot *s)
 {
     static const char *const sRegions[PT_MAP_COUNT] = {CTR_TR("Main region", "Regi\xc3\xb3n principal", "Kanto"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande")};
@@ -1672,26 +1689,10 @@ static void HomeMapState(Snapshot *s)
         sHome.centered = 0;
     }
     s->touch.home = 1;
-    {
-        /* HOME's plates: the money, the turbo chosen (START, kept in the settings) and the time of day the outdoors shows. */
-        unsigned turbo = CtrSettings_Turbo();
-
-        s->touch.homeMoney = CtrSave_Money();
-        s->touch.homeTurbo = (uint8_t)(turbo > 4 ? 4 : turbo);
-        s->touch.homeClock = (int16_t)(CtrNightWild_Second() / 60u % 1440u);
-        s->touch.homePanel = (uint8_t)(sHomePanel != 0);
-        {
-            int steps = CtrBottomRepel_Steps(), kind = CtrBottomRepel_Kind();
-
-            s->touch.homeRepelSteps = (uint16_t)(steps > 0 && steps < 65535 ? steps : 0);
-            s->touch.homeRepelKind = (uint8_t)kind;
-            s->touch.homeRepelTotal = (uint16_t)CtrBottomRepel_Length(kind);
-            for (int k = 0; k < 3; ++k) {
-                s->touch.homeRepelItem[k] = (uint16_t)CtrBottomRepel_Item(k);
-                s->touch.homeRepelHave[k] = (uint16_t)(sHomePanel ? CtrBottomRepel_Have(k) : 0);
-            }
-        }
-    }
+    PlateFill(&s->touch);
+    s->touch.homePanel = (uint8_t)(sHomePanel != 0);
+    for (int k = 0; k < 3; ++k)
+        s->touch.homeRepelHave[k] = (uint16_t)(sHomePanel ? CtrBottomRepel_Have(k) : 0);
     s->touch.mapGroup = (uint8_t)(sHome.view - 1);
     s->touch.mapVersion = (uint8_t)version;
     s->touch.mapOpen = (uint8_t)open;
@@ -2173,6 +2174,7 @@ static void SaveFill(CtrPokeTouchView *v)
     unsigned minutes = CtrSave_PlayMinutes();
 
     v->save = 1;
+    PlateFill(v);
     v->saveState = (uint8_t)sSave.state;
     v->saveSel = (uint8_t)sSave.sel;
     v->savePressed = (uint8_t)(sSave.down && sSave.inside ? sSave.down : PT_SAVE_NONE);

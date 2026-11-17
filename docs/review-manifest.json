@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "5c6883851e51404a893d35867479af3aa7b3ce178a70e54e0050494c020f2f23",
+   "sha256": "428ab65512d1dfaa56fd0d6a80f3636c464a6fa766036fe4bb4501ae6020e560",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "53160d4ad9dbe51520693997e00e9e7dccc5ca58c409462b530300dac2a8226f",
+   "sha256": "e1188da771dec751e08911882599717076aa1e0cd29b7b49dc12869aa0b24ecb",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "8e7e987888f36c1d8c7ad22349f54661b6bb495f6a0e8ed41680cbad3a82e9ac"
+   "sha256": "67bdb38ea50f87099f30a6dd4f81dd508bab94b11001bdd104c1bceb44df4eb0"
   },
   {
    "path": "3ds_port/tests/rex_test.c",

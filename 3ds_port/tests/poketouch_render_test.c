@@ -383,7 +383,7 @@ int main(int argc, char **argv)
     for(int state=SAVE_CONFIRM;state<=SAVE_ERROR;++state) {
         v.saveState=state; update(&old,&v);
         v.saveSel=1; update(&old,&v); v.savePressed=PT_SAVE_FIRST; update(&old,&v);
-        assert(CtrPokeTouch_SaveHit(180,state==SAVE_CONFIRM?180:200,state)==
+        assert(CtrPokeTouch_SaveHit(240,state==SAVE_CONFIRM?157:157,state)==
                (state==SAVE_WRITING?PT_SAVE_NONE:PT_SAVE_FIRST));
         v.savePressed=PT_SAVE_NONE; update(&old,&v);
     }
