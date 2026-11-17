@@ -367,6 +367,29 @@ static int SmallWidth(const char *s)
     return w;
 }
 
+/* FireRed's small font has the accented letters as blank cells: the base letter and a mark above it (acute, grave, diaeresis, tilde)
+ * stand in for them. Returns the base code, the mark in *mark (0 none, 1 acute, 2 grave, 3 diaeresis, 4 tilde). */
+static unsigned SmallBase(unsigned code, int *mark)
+{
+    static const struct { uint8_t code, base, mark; } kMap[] = {
+        {0x17, 0xd5, 1}, {0x1b, 0xd9, 1}, {0x6f, 0xde, 1}, {0x23, 0xe3, 1}, {0x27, 0xe6, 1},
+        {0x16, 0xd5, 2}, {0x1a, 0xd9, 2}, {0x1e, 0xde, 2}, {0x22, 0xe3, 2}, {0x26, 0xe6, 2},
+        {0xf4, 0xd5, 3}, {0x1d, 0xd9, 3}, {0x21, 0xde, 3}, {0xf5, 0xe3, 3}, {0xf6, 0xe6, 3},
+        {0x02, 0xbb, 1}, {0x06, 0xbf, 1}, {0x5a, 0xc3, 1}, {0x0e, 0xc9, 1}, {0x12, 0xcf, 1},
+        {0x01, 0xbb, 2}, {0x05, 0xbf, 2}, {0x09, 0xc3, 2}, {0x0d, 0xc9, 2}, {0x11, 0xcf, 2},
+        {0xf1, 0xbb, 3}, {0x08, 0xbf, 3}, {0x0c, 0xc3, 3}, {0xf2, 0xc9, 3}, {0xf3, 0xcf, 3},
+        {0x29, 0xe2, 4}, {0x14, 0xc8, 4},
+    };
+
+    *mark = 0;
+    for (unsigned i = 0; i < sizeof(kMap) / sizeof(kMap[0]); ++i)
+        if (kMap[i].code == code) {
+            *mark = kMap[i].mark;
+            return kMap[i].base;
+        }
+    return code;
+}
+
 static void SmallText(const char *s, int x, int cellTop, uint16_t fg, uint16_t shadow, int limit)
 {
     const uint8_t *font = CtrTwinSmallFontData();
@@ -384,13 +407,40 @@ static void SmallText(const char *s, int x, int cellTop, uint16_t fg, uint16_t s
         if (x + (int)w > limit)
             break;
         TwinSmallGlyphDecode(font + code * 32, w, rows);
-        for (int row = 0; row < 16; ++row)
-            for (unsigned col = 0; col < w; ++col) {
-                unsigned px = (rows[row] >> (2 * col)) & 3;
+        {
+            int blank = 1, mark = 0, top = 16;
+            unsigned base = SmallBase(code, &mark);
 
-                if (px)
-                    Px(x + (int)col, cellTop + row, px == 1 ? fg : shadow);
+            for (int row = 0; row < 16; ++row)
+                if (rows[row])
+                    blank = 0;
+            if (mark && blank) {                       /* a blank cell: the base letter, then its mark above */
+                uint32_t b[16];
+
+                TwinSmallGlyphDecode(font + base * 32, w, b);
+                memcpy(rows, b, sizeof(rows));
+                for (int row = 15; row >= 0; --row)
+                    if (b[row])
+                        top = row;
+            } else {
+                mark = 0;
             }
+            for (int row = 0; row < 16; ++row)
+                for (unsigned col = 0; col < w; ++col) {
+                    unsigned px = (rows[row] >> (2 * col)) & 3;
+
+                    if (px)
+                        Px(x + (int)col, cellTop + row, px == 1 ? fg : shadow);
+                }
+            if (mark && top >= 2) {
+                int c = ((int)w - 1) / 2, y0 = cellTop + top - 2, y1 = cellTop + top - 1;
+
+                if (mark == 1) { Px(x + c + 1, y0, fg); Px(x + c, y1, fg); }
+                else if (mark == 2) { Px(x + c, y0, fg); Px(x + c + 1, y1, fg); }
+                else if (mark == 3) { Px(x + c - 1, y0, fg); Px(x + c + 1, y0, fg); }
+                else { Px(x + c - 1, y1, fg); Px(x + c, y0, fg); Px(x + c + 1, y1, fg); }
+            }
+        }
         x += (int)w;
     }
 }
