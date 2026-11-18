@@ -46,7 +46,31 @@ static void Say(const char *what)
     fflush(stdout);
 }
 
-static volatile int sExchange;                      /* a parent runs the data exchange once a child is there */
+static volatile int sExchange;
+
+/* Data both ways once linked, as link_rfu_2.c sets it up: the child sends 14 bytes on its slot, the parent 70 to its children (UNI);
+ * the first byte counts frames, and each side counts the new values it reads. */
+static u8 sChildSend[14], sChildRecv[70], sParentSend[70], sParentRecv[4][14];
+static int sUniReady, sUniSlot, sUniGot;
+static u8 sUniLast;
+
+static int FirstSlot(u8 mask)
+{
+    int i = 0;
+
+    while (i < 4 && !(mask & (1 << i)))
+        ++i;
+    return i < 4 ? i : 0;
+}
+
+static void UniCheck(const u8 *data)
+{
+    if (data[0] != sUniLast)
+    {
+        sUniLast = data[0];
+        ++sUniGot;
+    }
+}                      /* a parent runs the data exchange once a child is there */
 
 /* The child's answer to each exchange the parent opens (link_rfu_2.c, MscCallback_Child): read what came, ask for the clock back. */
 static void Msc(u16 command)
@@ -56,6 +80,16 @@ static void Msc(u16 command)
     {
         rfu_REQ_recvData();
         rfu_waitREQComplete();
+        if (sUniReady && gRfuSlotStatusUNI[sUniSlot]->recv.newDataFlag)
+        {
+            UniCheck(sChildRecv);
+            rfu_UNI_clearRecvNewDataFlag(sUniSlot);
+        }
+        if (sUniReady)
+        {
+            ++sChildSend[0];
+            rfu_UNI_readySendData(sUniSlot);
+        }
         rfu_LMAN_REQ_sendData(TRUE);
     }
 }
@@ -75,6 +109,10 @@ static void Manager(u8 message, u8 param)
     case LMAN_MSG_NEW_CHILD_CONNECT_ACCEPTED:
         Say("child accepted");
         sConnected = 1;
+        sUniSlot = FirstSlot(lman.acceptSlot_flag);
+        rfu_setRecvBuffer(TYPE_UNI, sUniSlot, sParentRecv[sUniSlot], sizeof(sParentRecv[0]));
+        rfu_UNI_setSendData(lman.acceptSlot_flag, sParentSend, sizeof(sParentSend));
+        sUniReady = 1;
         break;
     case LMAN_MSG_PARENT_FOUND:
     {
@@ -95,6 +133,10 @@ static void Manager(u8 message, u8 param)
     case LMAN_MSG_CHILD_NAME_SEND_COMPLETED:
         Say("name sent");
         sNameSent = 1;
+        sUniSlot = FirstSlot(gRfuLinkStatus->connSlotFlag);
+        rfu_setRecvBuffer(TYPE_UNI, sUniSlot, sChildRecv, sizeof(sChildRecv));
+        rfu_UNI_setSendData(1 << sUniSlot, sChildSend, sizeof(sChildSend));
+        sUniReady = 1;
         break;
     case LMAN_MSG_CONNECT_PARENT_FAILED:
         Say("connect failed");
@@ -119,6 +161,16 @@ static void Frame(void)
         /* the parent's turn, once a frame (link_rfu_2.c, RfuMain1_Parent): read, then send and hand the clock over */
         rfu_REQ_recvData();
         rfu_waitREQComplete();
+        if (sUniReady && gRfuSlotStatusUNI[sUniSlot]->recv.newDataFlag)
+        {
+            UniCheck(sParentRecv[sUniSlot]);
+            rfu_UNI_clearRecvNewDataFlag(sUniSlot);
+        }
+        if (sUniReady)
+        {
+            ++sParentSend[0];
+            rfu_UNI_readySendData(sUniSlot);
+        }
         rfu_LMAN_REQ_sendData(FALSE);
     }
     rfu_LMAN_manager_entity((u32)rand());
@@ -201,6 +253,7 @@ int main(int argc, char **argv)
             Frame();                                /* a while more (a second unless E2E_HOLD says): the link stays up */
     }
     printf("STATE %d others %d%c", CtrWl_State(), CtrWl_Others(), 10);
+    printf("UNI got %d%c", sUniGot, 10);
     puts("DONE");
     CtrWl_Shutdown();
     return 0;
