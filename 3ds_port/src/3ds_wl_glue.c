@@ -161,10 +161,13 @@ bool CtrWl_IsInternet(void)
     return sInternet;
 }
 
+static int sNoteAvailable;
+
 uint8_t CtrWl_Available(void)
 {
     uint32_t now;
 
+    WL_NOTE(sNoteAvailable, "wireless: adapter asked for (setup %d, internet %d)", (int)sSetup, (int)sInternet);
     if (!sSetup)
         return 0;
     if (sInternet)
@@ -185,6 +188,14 @@ uint8_t CtrWl_Available(void)
 }
 
 /* ---- the scan and the connection, on a thread of its own on the console (each blocks for seconds) ---- */
+/* What the adapter does, for port.log: the first few of each kind. */
+#ifdef __DEVKITARM__
+#define WL_NOTE(counter, ...) do { if ((counter)++ < 40) CtrLog_Write(CTR_LOG_GAME, __VA_ARGS__); } while (0)
+#else
+#define WL_NOTE(counter, ...) do { (void)(counter); } while (0)
+#endif
+static int sNoteSession, sNoteCommand, sNoteState;
+
 static int sFailStep, sFailErrno, sFailReported;
 static char sTrail[160];
 
@@ -249,6 +260,7 @@ static void StartJob(void)
 
 static void Open(int state)
 {
+    WL_NOTE(sNoteState, "wireless: open state %d", state);
     WlBackend io = sInternet ? WlInet_Backend(&sInet) : WlUds_Backend(&sUds);
 
     sState = state;
@@ -300,6 +312,7 @@ static void BecomeHost(void)
 
 static void StartSession(void)
 {
+    WL_NOTE(sNoteSession, "wireless: session start asked (state %d, internet %d, setup %d)", sState, (int)sInternet, (int)sSetup);
     if (sState != CTR_WL_OFF || !CtrWl_Available())
         return;
     sState = CTR_WL_SEARCH;
@@ -309,6 +322,7 @@ static void StartSession(void)
 
 static void EndSession(void)
 {
+    WL_NOTE(sNoteSession, "wireless: session end asked (state %d)", sState);
     if (sState != CTR_WL_OFF)
         Close();
 }
@@ -467,6 +481,7 @@ int CtrRfu_Command(const uint32_t *request, uint32_t *answer)
         answer[1] = 1;
         return 2;
     }
+    WL_NOTE(sNoteCommand, "wireless: command %02x", (unsigned)(request[0] & 0xffu));
     switch (request[0] & 0xffu)
     {
     case WLC_SC_START:
