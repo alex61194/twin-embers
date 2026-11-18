@@ -479,6 +479,7 @@ int main(int argc, char **argv)
             assert( BagHit36(&b3,230,70)==PT_BAG_HIT_RAIL &&  BagHit36(&b3,230,130)==PT_BAG_HIT_RAIL);
             { int last=-1; for(int y=50;y<=145;++y){ int t= BagRail36(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
               assert( BagRail36(&b3.bag,40)==0 &&  BagRail36(&b3.bag,150)==b3.bag.count); }
+            old=b3;      /* the canvas holds the Bag now: the next update's old view is the one on the screen */
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
             b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
@@ -1206,6 +1207,9 @@ int main(int argc, char **argv)
     if(viewports) fclose(viewports);
     if(realPack) fclose(realPack);
     free(realIndex);
+    /* The game's own picture in HOME's layout (the Pokedex's habitat map): into it, a note that changes, and out of it. */
+    v.viewport=1; v.pictureHome=1; update(&old,&v); strcpy(v.bar[0],"Pokedex"); strcpy(v.bar[1],"Back goes a step."); update(&old,&v);
+    v.pictureHome=0; v.viewport=0; update(&old,&v);
     puts("PASS real renderer: decoder, 4bpp, geometry, viewport, incremental states, X/Y/RUN, save/back hit-tests");
     return 0;
 }

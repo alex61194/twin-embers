@@ -490,7 +490,7 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
             FBTag(&right, base, nameW, room, ty, tag, LL_RIB_TOP, LL_RIB_BOT, 0);
         }
         Em2Text(b->selName, HN_X + 12, ty, EM_DARK, EM_DARK_SH, right);
-        MenuWrap(b->selDesc, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
+        MenuWrap(b->selDesc, HN_X + 12, HN_Y + 11, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
     } else
         Em2Text(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(b->count ? UIS_BAG_CLOSE : UIS_BAG_EMPTY), HN_X + 12,
                 HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH, HN_X + HN_W - 12);

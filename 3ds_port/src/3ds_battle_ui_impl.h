@@ -238,7 +238,8 @@ static int BLooksChanged(const CtrBattleView *a, const CtrBattleView *b, int i)
 {
     return (a->pressed == i) != (b->pressed == i)
         || (a->showCursor && a->cursor == i) != (b->showCursor && b->cursor == i)
-        || (b->state == BUI_ACTION && i == 0 && a->activeFrame != b->activeFrame);   /* the lead's icon bounces */
+        || (b->state == BUI_ACTION && (i == 0 || (i == 2 && b->nextIcon)) && a->activeFrame != b->activeFrame)   /* the lead's icon bounces, the next one's too */
+        || (b->state == BUI_ACTION && i == 2 && (a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot));
 }
 
 /* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here): the last line ends in "..." when
@@ -1066,7 +1067,35 @@ static void BActCard(int i, const CtrBattleView *v)
         BFightFace(r, fy, v, p);
         return;
     }
-    BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    if (i == 2 && v->nextIcon && BPartyIcon(v->nextSlot, v->nextIcon)) {
+        /* POKEMON: the party icon of the next Pokemon that can fight (the one a switch would send), centred on its drawn pixels, bouncing a pixel. */
+        int minX = 32, maxX = -1, minY = 32, maxY = -1, x0, y0;
+
+        BDisc(r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px)
+                if (sBPIcon[v->nextSlot].pixels[y * 32 + px]) {
+                    minX = px < minX ? px : minX;
+                    maxX = px > maxX ? px : maxX;
+                    minY = y < minY ? y : minY;
+                    maxY = y > maxY ? y : maxY;
+                }
+        if (maxX < 0) {
+            minX = minY = 0;
+            maxX = maxY = 31;
+        }
+        x0 = r->x + r->w / 2 - (minX + maxX + 1) / 2;
+        y0 = fy + BACT_DISC_Y - (minY + maxY + 1) / 2 - (v->activeFrame & 1);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px) {
+                uint8_t index = sBPIcon[v->nextSlot].pixels[(y + (v->activeFrame & 1) * 32) * 32 + px];
+
+                if (index)
+                    Px(x0 + px, y0 + y, sBPIcon[v->nextSlot].pal[index]);
+            }
+    } else {
+        BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    }
     BRowLabel(label[i], r, fy, p);
     if (i == 2) {    /* POKEMON: how many are still able, not the word the card already says */
         char able[16];
@@ -1597,6 +1626,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         return 1;
     if (b->state == BUI_ACTION)
         return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon
+            || a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot
             || memcmp(a->activeType, b->activeType, sizeof(b->activeType)) || memcmp(a->activeTypeName, b->activeTypeName, sizeof(b->activeTypeName))
             || a->activeHp != b->activeHp || a->activeMaxHp != b->activeMaxHp
             || a->activeSlot != b->activeSlot || a->ball != b->ball || a->ballItem != b->ballItem

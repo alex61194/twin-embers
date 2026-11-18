@@ -5668,6 +5668,12 @@ static void DrawBuildLabel(C3D_RenderTarget *target)
 static bool sHoldTop;
 static bool sBottomPcField;
 void CtrVideo_SetBottomViewportPcField(bool on) { sBottomPcField = on; }
+static int sBottomPicX = PT_VIEW_X, sBottomPicY = PT_VIEW_Y;
+void CtrVideo_SetBottomViewportOrigin(int x, int y)
+{
+    sBottomPicX = x;
+    sBottomPicY = y;
+}
 
 bool CtrVideo_SetBottomViewport(bool on)
 {
@@ -5732,7 +5738,7 @@ static void RenderBottom(void)
     C2D_ViewReset();
     Blend(5, false, false);
     C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, PT_VIEW_X, PT_VIEW_Y, 0, NULL, 1, 1);
+    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, sBottomPicX, sBottomPicY, 0, NULL, 1, 1);
     C2D_Flush();
     C3D_FrameSplit(0);
 }

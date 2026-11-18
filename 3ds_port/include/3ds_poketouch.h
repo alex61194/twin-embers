@@ -453,6 +453,7 @@ typedef struct {
     uint8_t optSegValue[PT_OPT_MAX];    /* ... the one chosen, and their names */
     char optSegName[PT_OPT_MAX][PT_OPT_SEGS][PT_OPT_SEG_LEN];
     uint8_t save;               /* the SAVE screen fills the viewport (no GBA picture, no map) */
+    uint8_t pictureHome;        /* the GBA picture (viewport) is shown in HOME's layout: at (PT_HOME_X, PT_HOME_Y), the band and the columns round it */
     uint8_t saveState;          /* SAVE_* */
     uint8_t saveSel;            /* the selected button: 0 YES, 1 NO */
     uint8_t savePressed;        /* PT_SAVE_* under a held touch */
@@ -691,6 +692,8 @@ typedef struct {
     uint8_t activeLevel;
     uint8_t activeSlot;             /* its slot in the party */
     uint16_t activeIcon;            /* its party icon (a species number, as CtrBottomParty_IconSpecies gives it) */
+    uint8_t nextSlot;               /* the first other Pokemon that can still fight (not an egg): its icon is the POKEMON button's */
+    uint16_t nextIcon;              /* its party icon, 0 when there is none */
     int8_t activeType[2];           /* its types (FireRed's numbers), -1 for none: the badges of the FIGHT banner */
     char activeTypeName[2][12];
     uint8_t activeFrame;            /* 0 or 1, the icon's bounce: it flips about four times a second */

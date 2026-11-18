@@ -1700,8 +1700,8 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
 static int NewMenu(const CtrPokeTouchView *v)
 {
-    return (v->save || v->options || v->bag.on || v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on
-            || v->box.on) && !v->viewport && !v->ec.on && !v->name.on;
+    return ((v->save || v->options || v->bag.on || v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on
+             || v->box.on) && !v->viewport && !v->ec.on && !v->name.on) || (v->viewport && v->pictureHome);
 }
 
 static int IsHome(const CtrPokeTouchView *v)
@@ -2139,7 +2139,7 @@ static void NoteTitleBody(const char *title, const char *body)
     NoteWindow();
     if (body && body[0]) {
         Em2Text(title, HN_X + 12, HN_Y + 2, EM_DARK, EM_DARK_SH, HN_X + HN_W - 12);
-        MenuWrap(body, HN_X + 12, HN_Y + 13, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
+        MenuWrap(body, HN_X + 12, HN_Y + 11, HN_W - 24, 2, 9, EM_DIM, EM_DARK_SH);
     } else {
         Em2Text(title, HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, HN_X + HN_W - 12);
     }
@@ -2148,7 +2148,7 @@ static void NoteTitleBody(const char *title, const char *body)
 static void NoteText(const char *text, uint16_t ink)
 {
     NoteWindow();
-    MenuWrap(text, HN_X + 12, HN_Y + 1, HN_W - 24, 3, 10, ink, EM_DARK_SH);
+    MenuWrap(text, HN_X + 12, HN_Y - 1, HN_W - 24, 3, 9, ink, EM_DARK_SH);
 }
 
 /* BACK of the top band (a screen with a way back): the slate button, grey when there is nothing to go back to. */
@@ -2208,7 +2208,15 @@ bool CtrPokeTouch_HitOptPage(int x, int y)
 #define MN_W PT_VIEW_W
 #define MN_H PT_VIEW_H
 
-/* The top band (BACK, the plate, the clock, RUN), the columns and the floor in the middle: the dark red the map's frame sits on. */
+/* The floor in the middle: the map's frame round the dark red it sits on. */
+static void MenuFloor(void)
+{
+    HomeFrame(MN_X, MN_Y, MN_W, MN_H);
+    for (int y = 0; y < MN_H; ++y)
+        Fill(MN_X, MN_Y + y, MN_W, 1, UI_RGB(84 - 30 * y / (MN_H - 1), 24 - 8 * y / (MN_H - 1), 22 - 8 * y / (MN_H - 1)));
+}
+
+/* The top band (BACK, the plate, the clock, RUN), the columns and the floor in the middle. */
 static void MenuChrome(const CtrPokeTouchView *v)
 {
     SetLayout(1);
@@ -2225,11 +2233,33 @@ static void MenuChrome(const CtrPokeTouchView *v)
         HomeStatus(v);
     HomeClock(v);
     sKeepBg = 1;
-    HomeFrame(MN_X, MN_Y, MN_W, MN_H);
-    for (int y = 0; y < MN_H; ++y)
-        Fill(MN_X, MN_Y + y, MN_W, 1, UI_RGB(84 - 30 * y / (MN_H - 1), 24 - 8 * y / (MN_H - 1), 22 - 8 * y / (MN_H - 1)));
+    MenuFloor();
     for (int i = 0; i < PT_COUNT; ++i)
         Button(i, v);
+}
+
+/* A menu is drawn whole (the band, the columns, the floor and the note) or, when only what is on the floor and in the note changed, those two
+ * alone: `sMenuFull` says which (a redraw of the whole screen at every step of a list's scroll made it flicker). */
+static int sMenuFull = 1;
+
+static void MenuBegin(const CtrPokeTouchView *v)
+{
+    if (sMenuFull) {
+        MenuChrome(v);
+        return;
+    }
+    SetLayout(1);
+    sKeepBg = 0;
+    TsBgRect(MN_X - 3, MN_Y - 3, MN_W + 6, MN_H + 6);   /* the corners of the frame leave the backdrop, and the note's glow lies on it */
+    sKeepBg = 1;
+    MenuFloor();
+}
+
+static void MenuNoteBegin(void)
+{
+    sKeepBg = 0;
+    if (!sMenuFull)
+        TsBgRect(0, HN_Y, W, H - HN_Y);             /* the note's window and its shadow are laid over the backdrop again */
 }
 
 /* The note under the floor: what the screen is (or the selection's name), and one line that says more. */
@@ -2332,7 +2362,7 @@ static void SaveScreen(const CtrPokeTouchView *v)
     int split = 20 * 42 / 100;
     char text[24], fit[32];
 
-    MenuChrome(v);
+    MenuBegin(v);
     LlWindow(SV_X, SV_Y, SV_W, SV_H);
     /* The flame band across the top of the card (20 tall, no outline: it covers the window's rings). */
     for (int row = 0; row < 20; ++row)
@@ -2356,35 +2386,23 @@ static void SaveScreen(const CtrPokeTouchView *v)
     LlWindow(MN_X + 2, 146, 154, 52);
     Em2Wrap(v->bar[0], MN_X + 14, 155, 130, 2, 17, EM_DARK, EM_DARK_SH);
     SaveButtons(v);
+    MenuNoteBegin();
     MenuNote(CTR_TR("Save", "Guardar", "Sichern"), v->bar[1], -1);
     sKeepBg = 0;
-}
-
-static int SaveChanged(const CtrPokeTouchView *a, const CtrPokeTouchView *b)
-{
-    if (!NewMenu(a) || !a->save || a->saveState != b->saveState || a->saveSel != b->saveSel || a->savePressed != b->savePressed
-        || a->playerFemale != b->playerFemale || strcmp(a->playerName, b->playerName) || a->saveBadges != b->saveBadges
-        || a->saveHasDex != b->saveHasDex || a->saveDex != b->saveDex || a->saveHours != b->saveHours || a->saveMinutes != b->saveMinutes
-        || memcmp(a->bar, b->bar, sizeof(b->bar)) || a->homeMoney != b->homeMoney || a->homeTurbo != b->homeTurbo
-        || a->homeClock != b->homeClock || a->homeRepelSteps != b->homeRepelSteps || a->homeRepelKind != b->homeRepelKind)
-        return 1;
-    for (int i = 0; i < PT_COUNT; ++i)
-        if (Changed(i, a, b))
-            return 1;
-    return 0;
 }
 
 static void OptionsScreen(const CtrPokeTouchView *v)
 {
     const char *body = v->bar[1][0] ? v->bar[1] : v->bar[2];
 
-    MenuChrome(v);
+    MenuBegin(v);
     for (int pass = 0; pass < 2; ++pass)                /* the chosen row last: its ring lies on the rows next to it */
         for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
             if ((pass == 1) == (v->optSelected == i))
                 OptRow(i, v);
     if (v->optLook.on)
         OptLookPanel(v);
+    MenuNoteBegin();
     MenuNote(v->bar[0], body, v->optFrameShow ? v->optFrameType : -1);
     sKeepBg = 0;
 }
@@ -2397,7 +2415,7 @@ static void NativeScreen(const CtrPokeTouchView *v)
 {
     uint16_t *base = sCanvas;
 
-    MenuChrome(v);
+    MenuBegin(v);
     sCanvas = base + (size_t)MENU_SHIFT * H - MENU_SHIFT;
     if (v->dex.on)
         FDexFrame(v);
@@ -2416,6 +2434,7 @@ static void NativeScreen(const CtrPokeTouchView *v)
     else
         FBagFrame(v);
     sCanvas = base;
+    MenuNoteBegin();
     if (v->dex.on)
         FDexNote(v, 0);
     else if (v->card.on)
@@ -2435,23 +2454,57 @@ static void NativeScreen(const CtrPokeTouchView *v)
     sKeepBg = 0;
 }
 
-static void MenuScreen(const CtrPokeTouchView *v)
+/* The game's own picture (the Pokedex's habitat map and the like) in the middle: the floor stays black under it, the note says what the screen does. */
+static void PictureScreen(const CtrPokeTouchView *v)
 {
-    if (v->options)
+    MenuBegin(v);
+    Fill(MN_X, MN_Y, MN_W, MN_H, 0);
+    MenuNoteBegin();
+    MenuNote(v->bar[0], v->bar[1][0] ? v->bar[1] : v->bar[2], -1);
+}
+
+static void MenuScreen(const CtrPokeTouchView *v, int full)
+{
+    sMenuFull = full;
+    if (v->viewport)
+        PictureScreen(v);
+    else if (v->options)
         OptionsScreen(v);
     else if (v->save)
         SaveScreen(v);
     else
         NativeScreen(v);
+    sMenuFull = 1;
 }
 
-/* Whether the menu in HOME's layout looks different between two views (the ones of options and the Bag change nothing else the screen
- * shows, so any difference counts). */
-static int MenuChanged(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
+/* What a menu shows of a view: the keys are never drawn greyed, nor BACK (a screen that is busy for a frame, as a list scrolls, would blink). */
+static void MenuNormalize(CtrPokeTouchView *d, const CtrPokeTouchView *s)
 {
-    if (!NewMenu(old) || old->options != v->options || old->save != v->save)
+    *d = *s;
+    for (int i = 0; i < PT_COUNT; ++i)
+        d->enabled[i] = 1;
+    d->backEnabled = d->backVisible;
+}
+
+static int MenuKind(const CtrPokeTouchView *v)
+{
+    return v->viewport ? 11 : v->save ? 1 : v->options ? 2 : v->dex.on ? 3 : v->card.on ? 4 : v->learn.on ? 5 : v->relearn.on ? 6 : v->mail.on ? 7
+         : v->choice.on ? 8 : v->box.on ? 9 : 10;
+}
+
+/* Whether the top band or the columns look different between two views of the same menu. */
+static int MenuBandChanged(const CtrPokeTouchView *a, const CtrPokeTouchView *b)
+{
+    if (a->backVisible != b->backVisible || a->backEnabled != b->backEnabled || a->backPressed != b->backPressed || a->homeMoney != b->homeMoney
+        || a->homeTurbo != b->homeTurbo || a->homeClock != b->homeClock || a->homeRepelSteps != b->homeRepelSteps
+        || a->homeRepelKind != b->homeRepelKind || a->optPage != b->optPage || a->optPageCount != b->optPageCount
+        || a->optSectionCount != b->optSectionCount || a->optPagePressed != b->optPagePressed || strcmp(a->optPageName, b->optPageName)
+        || a->bag.on != b->bag.on || a->bag.first != b->bag.first || a->bag.count != b->bag.count)
         return 1;
-    return v->save ? SaveChanged(old, v) : memcmp(old, v, sizeof(*v)) != 0;
+    for (int i = 0; i < PT_COUNT; ++i)
+        if (Changed(i, a, b))
+            return 1;
+    return 0;
 }
 
 void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
@@ -2459,7 +2512,10 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
     sCanvas = canvas;
     sKeepBg = 0;
     if (NewMenu(v)) {
-        MenuScreen(v);
+        static CtrPokeTouchView shown;
+
+        MenuNormalize(&shown, v);
+        MenuScreen(&shown, 1);
         return;
     }
     if (IsHome(v)) {
@@ -2523,9 +2579,22 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
 
     sCanvas = canvas;
     if (NewMenu(v)) {
-        if (MenuChanged(old, v)) {
-            MenuScreen(v);
+        static CtrPokeTouchView a, b;
+
+        MenuNormalize(&b, v);
+        if (!NewMenu(old) || MenuKind(old) != MenuKind(v)) {
+            MenuScreen(&b, 1);
             CtrDirty_Add(dirty, 0, 0, W, H);
+            return;
+        }
+        MenuNormalize(&a, old);
+        if (MenuBandChanged(&a, &b)) {
+            MenuScreen(&b, 1);
+            CtrDirty_Add(dirty, 0, 0, W, H);
+        } else if (memcmp(&a, &b, sizeof(a))) {
+            MenuScreen(&b, 0);
+            CtrDirty_Add(dirty, MN_X - 4, MN_Y - 4, MN_X + MN_W + 4, MN_Y + MN_H + 4);
+            CtrDirty_Add(dirty, 0, HN_Y - 3, W, H);
         }
         return;
     }

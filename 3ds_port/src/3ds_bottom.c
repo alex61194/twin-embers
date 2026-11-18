@@ -1848,6 +1848,18 @@ static void BattleCommon(CtrBattleView *v)
             v->partyStatus[i] = (uint8_t)(st > 6 ? 0 : st);
         }
     }
+    {                                   /* the next Pokemon that can fight: the POKEMON button shows its icon */
+        int active = BattleActiveSlot();
+
+        v->nextSlot = 0;
+        v->nextIcon = 0;
+        for (int k = 0; k < 6; ++k)
+            if (k != active && (v->party[k] == 1 || v->party[k] == 3) && !CtrBottomParty_IsEgg(k)) {
+                v->nextSlot = (uint8_t)k;
+                v->nextIcon = (uint16_t)CtrBottomParty_IconSpecies(k);
+                break;
+            }
+    }
     {                                   /* the Pokemon in the field: the action screen's footer and icon */
         int slot = BattleActiveSlot();
 
@@ -5938,6 +5950,11 @@ void CtrBottom_Frame(void)
         }
         if (!gpu)
             state.touch.viewport = 0;
+        /* The Pokedex's own pages (the habitat map...) are the game's picture: shown in HOME's layout, in the middle. */
+        state.touch.pictureHome = (uint8_t)(state.touch.viewport && mode == MODE_DEX);
+        if (state.touch.pictureHome)
+            PlateFill(&state.touch);
+        CtrVideo_SetBottomViewportOrigin(state.touch.pictureHome ? PT_HOME_X : PT_VIEW_X, state.touch.pictureHome ? PT_HOME_Y : PT_VIEW_Y);
     }
     if (sForceRedraw || !sHaveShown || memcmp(&state, &sShown, sizeof(state)) != 0) {
         int screenChange = sHaveShown && state.battleUi && sShown.battleUi && state.battle.state != sShown.battle.state

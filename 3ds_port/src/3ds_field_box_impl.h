@@ -485,7 +485,7 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
     NoteWindow();
     if (b->message[0] != 0xff) {
         FNText(b->message, (int)sizeof(b->message), text, (int)sizeof(text));
-        MenuWrap(text, HN_X + 12, HN_Y + 1, HN_W - 44, 3, 10, EM_DARK, EM_DARK_SH);
+        MenuWrap(text, HN_X + 12, HN_Y - 1, HN_W - 44, 3, 9, EM_DARK, EM_DARK_SH);
         if (b->state == PT_BOX_STATE_MESSAGE)           /* it waits for a tap: the arrow */
             UiArrow(HN_X + HN_W - 22, HN_Y + HN_H - 16, 1, LL_CURSOR);
     } else if (b->items && b->mon.species) {
@@ -500,7 +500,7 @@ static void FBoxNote(const CtrPokeTouchView *v, int w)
             FXText(b->itemName, (int)sizeof(b->itemName), HN_X + 36, HN_Y + 2, EM_DARK, EM_DARK_SH, nameX - 6, 1);
             UiText(name, nameX, HN_Y + 2, EM_DIM, EM_DARK_SH, 1, HN_X + HN_W);
             FNText(b->itemDesc, (int)sizeof(b->itemDesc), desc, (int)sizeof(desc));
-            MenuWrap(desc, HN_X + 36, HN_Y + 13, HN_W - 48, 2, 9, EM_DIM, EM_DARK_SH);
+            MenuWrap(desc, HN_X + 36, HN_Y + 11, HN_W - 48, 2, 9, EM_DIM, EM_DARK_SH);
         } else {
             UiText(name, HN_X + 12, HN_Y + 2, EM_DARK, EM_DARK_SH, 1, HN_X + HN_W - 8);
             UiText(CtrUiText(UIS_BOX_NO_ITEM), HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, 1, HN_X + HN_W - 8);
