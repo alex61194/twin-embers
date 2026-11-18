@@ -227,6 +227,8 @@ static void NetLogOpen(unsigned node)
 
     static bool lockReady;
 
+    if (!CtrLog_Enabled())
+        return;                             /* as port.log: only with sdmc:/3ds/twinembers/debug.txt (or an Old 3DS build) */
     if (!lockReady)
     {
         LightLock_Init(&sNetLogLock);
@@ -246,7 +248,7 @@ static void NetLog(const char *format, ...)
 {
     va_list args;
 
-    if (!sNetLog || sNetLogLines++ > 4000)
+    if (!sNetLog || sNetLogLines++ > 40000)
         return;
     LightLock_Lock(&sNetLogLock);
     fprintf(sNetLog, "[%10.3f] ", (double)(uint32_t)osGetTime() / 1000.0);
@@ -307,7 +309,7 @@ static void WatchMain(void *unused)
 
 static void WatchStart(void)
 {
-    if (!sWatchThread)
+    if (!sWatchThread && sNetLog)
         sWatchThread = threadCreate(WatchMain, NULL, 0x2000, 0x28, -2, true);
 }
 #define WL_WHERE(place) (sWhere = (place))
@@ -686,8 +688,10 @@ int CtrRfu_Command(const uint32_t *request, uint32_t *answer)
         static unsigned last = 0x100, repeats;
         unsigned c = request[0] & 0xffu;
 
-        if (c != last || ++repeats % 300 == 0)
-            NetLog("command %02x (x%u)", c, repeats + 1);
+        static unsigned noted;
+
+        if ((c != last || ++repeats % 300 == 0) && noted++ < 3000)
+            NetLog("command %02x (x%u)", c, repeats + 1);   /* the first commands only: a link's every frame would fill the log */
         if (c != last)
             repeats = 0;
         last = c;
