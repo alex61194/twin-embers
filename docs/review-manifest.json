@@ -7529,6 +7529,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0273-union-room-lists-as-field-choices.json",
+   "sha256": "53338d0251e01d29ec120c71e40247d33b332d0dd35690cc45200f97cd5a796b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/relay-server/install.py",
    "sha256": "a1ae98e210892e6f9d6974b3e1ab7512bdb5bff6b74ee75665c32c2a74487db5",
    "review_status": "reviewed",
