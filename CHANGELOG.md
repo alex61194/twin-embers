@@ -26,6 +26,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- The replay at the start of a game ("Previously on your quest", the Quest Log) tinted the map grey but left the player and the NPCs in colour when they use the Gen 4 pictures; their palettes follow the replay's tint now. The pictures of the Pokémon shown in a box (the starter in Oak's lab, for one) are brought from 80 to 64 pixels by the colour that covers most of each pixel, not by dropping every fifth row and column, so their lines are no longer broken.
 - A Deoxys in the party or in the battle menu drew the other forme's icon (the Party passes the version's forme; the lower screen asked for the Normal one). Scrolling a list in the new menus no longer blinks: only the floor and the note are redrawn, and the keys and BACK are never shown greyed for a frame. The Pokédex and Bag notes fit their window.
 - The Pokédex name, "Máx. Rep." and the Ruby hint on HOME's note and plate drew blank letters (their accents were encoded twice); the small font now also draws accented letters as the letter and a mark when the game's own cell is empty.
 - Nuzlocke no longer releases the last Pokémon that can fight when only eggs would stay in the party.
