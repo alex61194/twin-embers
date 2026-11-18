@@ -619,7 +619,7 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     if (sRows[selected].get == GetRoomKind && CtrSettings_PrivateRoom()) {
         const char *code = CtrSettings_RoomCode();
 
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.3s %.3s.", "C\xC3\xB3digo %.3s %.3s.", "Code %.3s %.3s."), code, code + 3);
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.3s %.3s.", "C\xC3\xB3" "digo %.3s %.3s.", "Code %.3s %.3s."), code, code + 3);
         snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Tap the row to change it.", "Toca la fila para cambiarlo.", "Zeile antippen: neu."));
     }
     memset(&v->optPad, 0, sizeof(v->optPad));
