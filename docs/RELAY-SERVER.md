@@ -24,11 +24,11 @@ pay-as-you-go (still free while only always-free resources are used) avoids that
    address" on and save the SSH key it offers.
 3. Open the relay's port in the cloud's network rules: the instance's subnet > Security List > Add Ingress Rule:
    source `0.0.0.0/0`, protocol TCP, destination port `47311`.
-4. Connect with SSH (`ssh -i the-key ubuntu@PUBLIC-ADDRESS`), copy `tools/wl_relay.py` and `tools/relay-server/install.sh`
+4. Connect with SSH (`ssh -i the-key ubuntu@PUBLIC-ADDRESS`), copy `tools/wl_relay.py` and `tools/relay-server/install.py`
    to it (for instance with `scp`, or `git clone` the repository), and run:
 
    ```sh
-   sudo sh install.sh 47311
+   sudo python3 install.py 47311
    ```
 
    The script installs the relay as the service `twinembers-relay` (it restarts by itself and starts with the machine), opens
@@ -48,7 +48,7 @@ can go into the build instead.
 ## Looking after it
 
 - `journalctl -u twinembers-relay -f` shows a line per console joining or leaving (rooms by their hashed name, no addresses).
-- `sudo sh install.sh 47311` again installs a newer `wl_relay.py`.
+- `sudo python3 install.py 47311` again installs a newer `wl_relay.py`.
 - Limits (arguments in the service file): 256 rooms, 1024 connections, 8 connections per address, 16 consoles per room; a
   console that stops reading is dropped before its queue grows past 256 KB, and one that sends nothing for 60 seconds is closed.
 - The public room's code is known to everyone, so its frames are sealed but not secret; private rooms (a code in online.cfg) are.
