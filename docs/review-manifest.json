@@ -7626,7 +7626,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "5dcca12e907f76eb50aabc9ddfa649789782a64012dd384d87f2a9a8c3db3c0d",
+   "sha256": "be5d3e93c460de4bc8506a017d229f5aa1e31dbe77d1e0d336703201faedec70",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -81,6 +81,18 @@ static int LastError(void)
 #endif
 }
 
+/* A connect that is still under way (each system says it its own way). */
+static bool ConnectPending(void)
+{
+#ifdef _WIN32
+    int e = WSAGetLastError();
+
+    return e == WSAEWOULDBLOCK || e == WSAEINPROGRESS || e == WSAEALREADY;
+#else
+    return errno == EINPROGRESS || errno == EAGAIN || errno == EWOULDBLOCK || errno == EALREADY;
+#endif
+}
+
 /* What a connection did, step by step (code, value), for a log: the console's socket service is not something a computer can show. */
 static void Trail(WlInet *net, int code, int value)
 {
@@ -337,9 +349,6 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     for (a = list; a && net->sock < 0; a = a->ai_next)
     {
         intptr_t s = (intptr_t)socket(a->ai_family, a->ai_socktype, a->ai_protocol);
-        fd_set wr;
-        struct timeval tv;
-        uint32_t left = timeoutMs > NowMs() - start ? timeoutMs - (NowMs() - start) : 0;
 
         Trail(net, 12, (int)s);
         if (s < 0)
@@ -347,46 +356,73 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
         SetNonBlocking(s, true);
         if (connect(SK(s), a->ai_addr, (int)a->ai_addrlen) != 0)
         {
-#ifdef _WIN32
-            bool pending = WSAGetLastError() == WSAEWOULDBLOCK;
-#else
-            bool pending = errno == EINPROGRESS;
-#endif
-            int err = 0, ready, rc;
-            socklen_t errLen = sizeof(err);
-
             Trail(net, 13, LastError());
-            if (!pending)
+            if (!ConnectPending())
             {
                 net->failStep = 2;
                 net->failErrno = LastError();
                 WL_CLOSE(s);
                 continue;
             }
-            FD_ZERO(&wr);
-            FD_SET(SK(s), &wr);
-            tv.tv_sec = (long)(left / 1000);
-            tv.tv_usec = (long)(left % 1000) * 1000;
-            /* Whether the connection came up is what the error of the socket says; a system that cannot say (getsockopt failing) is
-             * taken at the word of select: the first send tells. */
-            ready = select((int)s + 1, NULL, &wr, NULL, &tv);
-            Trail(net, 14, ready);
-            if (ready <= 0)
+#ifdef _WIN32
             {
-                net->failStep = 3;
-                net->failErrno = LastError();
-                WL_CLOSE(s);
-                continue;
+                fd_set wr;
+                struct timeval tv;
+                int err = 0, ready, rc;
+                int errLen = sizeof(err);
+                uint32_t left = timeoutMs > NowMs() - start ? timeoutMs - (NowMs() - start) : 0;
+
+                FD_ZERO(&wr);
+                FD_SET(SK(s), &wr);
+                tv.tv_sec = (long)(left / 1000);
+                tv.tv_usec = (long)(left % 1000) * 1000;
+                ready = select((int)s + 1, NULL, &wr, NULL, &tv);
+                Trail(net, 14, ready);
+                rc = ready > 0 ? getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen) : -1;
+                Trail(net, 15, err);
+                if (ready <= 0 || rc != 0 || err != 0)
+                {
+                    net->failStep = ready <= 0 ? 3 : 4;
+                    net->failErrno = ready <= 0 ? LastError() : err;
+                    WL_CLOSE(s);
+                    continue;
+                }
             }
-            rc = getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen);
-            Trail(net, 15, rc * 1000 + err);
-            if (rc == 0 && err != 0)
+#else
+            /* The console's socket service answers a connect that is under way with EAGAIN (not EINPROGRESS) and may not report the
+             * outcome through select and SO_ERROR: ask again until the answer is "connected" (0 or EISCONN) or a real error. */
             {
-                net->failStep = 4;
-                net->failErrno = err;
-                WL_CLOSE(s);
-                continue;
+                unsigned tries = 0;
+                bool up = false;
+
+                while (NowMs() - start < timeoutMs)
+                {
+                    fd_set wr;
+                    struct timeval tv = {0, 20000};
+
+                    FD_ZERO(&wr);
+                    FD_SET(SK(s), &wr);
+                    select((int)s + 1, NULL, &wr, NULL, &tv);
+                    ++tries;
+                    if (connect(SK(s), a->ai_addr, (int)a->ai_addrlen) == 0 || errno == EISCONN)
+                    {
+                        up = true;
+                        break;
+                    }
+                    if (!ConnectPending())
+                        break;
+                }
+                Trail(net, 14, (int)tries);
+                Trail(net, 15, up ? 0 : errno);
+                if (!up)
+                {
+                    net->failStep = NowMs() - start < timeoutMs ? 4 : 3;
+                    net->failErrno = errno;
+                    WL_CLOSE(s);
+                    continue;
+                }
             }
+#endif
         }
         net->sock = s;
     }
