@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "87782093388afe3bd0132bd1368c686d0c6b4b2a9e629621b31c0cc9008e4478",
+   "sha256": "901a75ea11923d707acc09fa5fb534de90c761b8238ad551e4787ec4e6383f81",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -3800,7 +3800,7 @@
   },
   {
    "path": "docs/LOCAL-WIRELESS-RESEARCH.md",
-   "sha256": "8e738ca52f1ce25d6bb1f4eb2679e3a8f9e36c46453c1007c1dbc5b86117e9c2",
+   "sha256": "b031845a7a0b7266199ca17a6eb08567c26b276adbed4c2891c559dd6916de15",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7603,6 +7603,30 @@
   {
    "path": "tools/test_wl_crypto.py",
    "sha256": "197cdc5a36b36c9d85b2149b5c023381f5c2b49fb13f7472aafb155af1b5f763",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_uds.h",
+   "sha256": "f3ec070c0028356dc1e5002d573d4c432d61bfa8b51a152450745f34c599f095",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_uds.c",
+   "sha256": "0d512cdeccbf2bdd12b237c7f8a858e1cf62af492ce6a8665ec03b2d2c1866b1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_uds_test.c",
+   "sha256": "7380c2342a52d794c30f3130abeee9cb30936c032818fb3eeb6ffc6e6e6d062e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
