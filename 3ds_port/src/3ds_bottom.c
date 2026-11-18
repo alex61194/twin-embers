@@ -5776,6 +5776,7 @@ void CtrBottom_Frame(void)
         sHome.dragging = 0;
         sHome.centered = 0;             /* and HOME comes back at the overview, on the player's own map */
         sHome.view = 0;
+        sHomePanel = 0;                 /* and its status panel closed (a battle or a menu can start with it open) */
     } else {
         ++sHome.frames;
     }
