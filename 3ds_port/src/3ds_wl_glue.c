@@ -14,6 +14,8 @@
 #ifdef __DEVKITARM__
 #include <3ds/os.h>
 #include <3ds/thread.h>
+#include <3ds/svc.h>
+#include <3ds/synchronization.h>
 #else
 #include <time.h>
 #endif
@@ -197,16 +199,26 @@ bool CtrWl_IsInternet(void)
 #ifdef __DEVKITARM__
 static FILE *sNetLog;
 static unsigned sNetLogLines;
+static LightLock sNetLogLock;
 
 static void NetLogOpen(unsigned node)
 {
     char path[64];
 
+    static bool lockReady;
+
+    if (!lockReady)
+    {
+        LightLock_Init(&sNetLogLock);
+        lockReady = true;
+    }
+    LightLock_Lock(&sNetLogLock);
     if (sNetLog)
         fclose(sNetLog);
     snprintf(path, sizeof(path), "sdmc:/3ds/twinembers/online-%u.log", node);
     sNetLog = fopen(path, "w");
     sNetLogLines = 0;
+    LightLock_Unlock(&sNetLogLock);
 }
 
 static void NetLog(const char *format, ...) __attribute__((format(printf, 1, 2)));
@@ -216,23 +228,82 @@ static void NetLog(const char *format, ...)
 
     if (!sNetLog || sNetLogLines++ > 4000)
         return;
+    LightLock_Lock(&sNetLogLock);
     fprintf(sNetLog, "[%10.3f] ", (double)(uint32_t)osGetTime() / 1000.0);
     va_start(args, format);
     vfprintf(sNetLog, format, args);
     va_end(args);
     fputc(10, sNetLog);
+    LightLock_Unlock(&sNetLogLock);
 }
 
 /* Written out every two seconds and when the link ends (each flush is a write to the card, too slow for every line). */
 static void NetLogFlush(void)
 {
-    if (sNetLog)
-        fflush(sNetLog);
+    if (!sNetLog)
+        return;
+    LightLock_Lock(&sNetLogLock);
+    fflush(sNetLog);
+    LightLock_Unlock(&sNetLogLock);
 }
+
+/* A watch on the game thread while in a room: when no frame has gone through CtrWl_Tick for a second, it writes down where the game was
+ * (WL_WHERE_*: in which of this file's calls, after which adapter command) and flushes the log, which a frozen game never would. It runs
+ * at a higher priority than the game so that a game thread that spins still lets it in. */
+enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL };
+static volatile uint32_t sWatchTicks;
+static volatile int sWhere;
+static volatile unsigned sWhereCommand;
+static Thread sWatchThread;
+
+static void WatchMain(void *unused)
+{
+    uint32_t last = sWatchTicks, stalledMs = 0;
+
+    (void)unused;
+    for (;;)
+    {
+        svcSleepThread(250000000LL);
+        if (sWatchTicks != last)
+        {
+            if (stalledMs >= 1000)
+            {
+                NetLog("game going again after %lu ms", (unsigned long)stalledMs);
+                NetLogFlush();
+            }
+            last = sWatchTicks;
+            stalledMs = 0;
+            continue;
+        }
+        stalledMs += 250;
+        if (stalledMs == 1000 || stalledMs % 10000 == 0)
+        {
+            NetLog("STALL: no frame for %lu ms; where %d, last adapter command %02x, frames %lu", (unsigned long)stalledMs, sWhere,
+                   sWhereCommand, (unsigned long)sWatchTicks);
+            NetLogFlush();
+        }
+    }
+}
+
+static void WatchStart(void)
+{
+    if (!sWatchThread)
+        sWatchThread = threadCreate(WatchMain, NULL, 0x2000, 0x28, -2, true);
+}
+#define WL_WHERE(place) (sWhere = (place))
+#define WL_TICKED() (++sWatchTicks)
+#define WL_COMMAND(c) (sWhereCommand = (c))
+static int sWhereSaved(void) { return sWhere; }
 #else
 #define NetLogOpen(node) ((void)(node))
 #define NetLog(...) ((void)0)
 #define NetLogFlush() ((void)0)
+#define WatchStart() ((void)0)
+#define WL_WHERE(place) ((void)(place))
+#define WL_TICKED() ((void)0)
+#define WL_COMMAND(c) ((void)(c))
+enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL };
+static int sWhereSaved(void) { return WL_WHERE_GAME; }
 #endif
 
 static int sNoteAvailable;
@@ -447,6 +518,8 @@ void CtrWl_Tick(void)
 
     if (!sSetup)
         return;
+    WL_TICKED();
+    WL_WHERE(WL_WHERE_TICK);
     now = NowMs();
     if (sState == CTR_WL_SEARCH)
     {
@@ -465,6 +538,7 @@ void CtrWl_Tick(void)
 #ifdef __DEVKITARM__
                     CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u (%s)", (unsigned)sInet.node, sTrail);
                     NetLogOpen(sInet.node);
+                    WatchStart();
                     NetLog("in the room as node %u, members %lx", (unsigned)sInet.node, (unsigned long)sInet.members);
 #endif
                 }
@@ -491,7 +565,9 @@ void CtrWl_Tick(void)
     }
     else if (sState == CTR_WL_ONLINE)
     {
+        WL_WHERE(WL_WHERE_PUMP);
         WlInet_Pump(&sInet);
+        WL_WHERE(WL_WHERE_TICK);
         while (WlInet_PopEvent(&sInet, &kind, &node))
         {
             NetLog("node %u %s", (unsigned)node, kind == WL_INET_EVENT_LEFT ? "left" : "joined");
@@ -503,8 +579,11 @@ void CtrWl_Tick(void)
         else
         {
             WlRfu_SetMembers(&sRfu, sInet.members);
+            WL_WHERE(WL_WHERE_NET);
             WlNet_Step(&sNet);
+            WL_WHERE(WL_WHERE_RFU);
             WlRfu_Step(&sRfu);
+            WL_WHERE(WL_WHERE_TICK);
             if (now - sStatAt >= 2000)
             {
                 sStatAt = now;
@@ -557,8 +636,10 @@ void CtrWl_Tick(void)
             }
         }
     }
+    WL_WHERE(WL_WHERE_SLAVE);
     if (CtrStwi_SlaveTick)
         CtrStwi_SlaveTick();
+    WL_WHERE(WL_WHERE_GAME);
 }
 
 /* ---- what the game's librfu calls ---- */
@@ -594,12 +675,25 @@ int CtrRfu_Command(const uint32_t *request, uint32_t *answer)
     default:
         break;
     }
-    return WlRfu_Command(&sRfu, request, answer);
+    {
+        int words, before = sWhereSaved();
+
+        WL_WHERE(WL_WHERE_COMMAND);
+        WL_COMMAND(request[0] & 0xffu);
+        words = WlRfu_Command(&sRfu, request, answer);
+        WL_WHERE(before);
+        return words;
+    }
 }
 
 int CtrRfu_PollSlave(uint32_t *request)
 {
-    return sSetup ? WlRfu_PollSlave(&sRfu, request) : 0;
+    int words, before = sWhereSaved();
+
+    WL_WHERE(WL_WHERE_POLL);
+    words = sSetup ? WlRfu_PollSlave(&sRfu, request) : 0;
+    WL_WHERE(before);
+    return words;
 }
 
 void CtrRfu_Reset(void)

@@ -51,7 +51,8 @@ static volatile int sExchange;
 /* Data both ways once linked, as link_rfu_2.c sets it up: the child sends 14 bytes on its slot, the parent 70 to its children (UNI);
  * the first byte counts frames, and each side counts the new values it reads. */
 static u8 sChildSend[14], sChildRecv[70], sParentSend[70], sParentRecv[4][14];
-static int sUniReady, sUniSlot, sUniGot;
+static int sUniReady, sUniSlot, sUniGot, sParentTurn;
+static u8 sNiSend = 0x5A, sNiRecv;                 /* one status byte the child sends reliably (NI), as link_rfu_2.c's partner statuses */
 static u8 sUniLast;
 
 static int FirstSlot(u8 mask)
@@ -84,11 +85,9 @@ static void Msc(u16 command)
         {
             UniCheck(sChildRecv);
             rfu_UNI_clearRecvNewDataFlag(sUniSlot);
-        }
-        if (sUniReady)
-        {
             ++sChildSend[0];
-            rfu_UNI_readySendData(sUniSlot);
+            if (!getenv("E2E_NI"))
+                rfu_UNI_readySendData(sUniSlot);    /* as link_rfu_2.c's child: it answers only what came */
         }
         rfu_LMAN_REQ_sendData(TRUE);
     }
@@ -112,6 +111,8 @@ static void Manager(u8 message, u8 param)
         sUniSlot = FirstSlot(lman.acceptSlot_flag);
         rfu_setRecvBuffer(TYPE_UNI, sUniSlot, sParentRecv[sUniSlot], sizeof(sParentRecv[0]));
         rfu_UNI_setSendData(lman.acceptSlot_flag, sParentSend, sizeof(sParentSend));
+        if (getenv("E2E_NI"))
+            rfu_setRecvBuffer(TYPE_NI, sUniSlot, &sNiRecv, sizeof(sNiRecv));
         sUniReady = 1;
         break;
     case LMAN_MSG_PARENT_FOUND:
@@ -135,7 +136,10 @@ static void Manager(u8 message, u8 param)
         sNameSent = 1;
         sUniSlot = FirstSlot(gRfuLinkStatus->connSlotFlag);
         rfu_setRecvBuffer(TYPE_UNI, sUniSlot, sChildRecv, sizeof(sChildRecv));
-        rfu_UNI_setSendData(1 << sUniSlot, sChildSend, sizeof(sChildSend));
+        if (getenv("E2E_NI"))
+            printf("NI set %x%c", (unsigned)rfu_NI_setSendData(1 << sUniSlot, 8, &sNiSend, 1), 10);   /* a child's frame holds the UNI or this */
+        else
+            rfu_UNI_setSendData(1 << sUniSlot, sChildSend, sizeof(sChildSend));
         sUniReady = 1;
         break;
     case LMAN_MSG_CONNECT_PARENT_FAILED:
@@ -166,10 +170,10 @@ static void Frame(void)
             UniCheck(sParentRecv[sUniSlot]);
             rfu_UNI_clearRecvNewDataFlag(sUniSlot);
         }
-        if (sUniReady)
+        if (sUniReady && (!getenv("E2E_SPARSE") || ++sParentTurn % 3 == 0))
         {
             ++sParentSend[0];
-            rfu_UNI_readySendData(sUniSlot);
+            rfu_UNI_readySendData(sUniSlot);    /* E2E_SPARSE: new data one turn in three, as the game's parent often has none */
         }
         rfu_LMAN_REQ_sendData(FALSE);
     }
@@ -253,7 +257,8 @@ int main(int argc, char **argv)
             Frame();                                /* a while more (a second unless E2E_HOLD says): the link stays up */
     }
     printf("STATE %d others %d%c", CtrWl_State(), CtrWl_Others(), 10);
-    printf("UNI got %d%c", sUniGot, 10);
+    printf("UNI got %d NI %02x%c", sUniGot, sNiRecv, 10);
+    printf("NI send state %04x fail %u err %04x phase %u | recv state %04x fail %u err %04x%c", gRfuSlotStatusNI[sUniSlot]->send.state, gRfuSlotStatusNI[sUniSlot]->send.failCounter, gRfuSlotStatusNI[sUniSlot]->send.errorCode, gRfuSlotStatusNI[sUniSlot]->send.phase, gRfuSlotStatusNI[sUniSlot]->recv.state, gRfuSlotStatusNI[sUniSlot]->recv.failCounter, gRfuSlotStatusNI[sUniSlot]->recv.errorCode, 10);
     puts("DONE");
     CtrWl_Shutdown();
     return 0;

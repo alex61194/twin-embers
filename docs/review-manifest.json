@@ -7562,7 +7562,7 @@
   },
   {
    "path": "3ds_port/tests/rfu_game_test.c",
-   "sha256": "26b19299d8264c0e8420d7a93e3923995821daf98eec0a07ccbdb5e62ebaa089",
+   "sha256": "e7de49fa84ce09584629ab4fdf53e0cd334d7ec221f73b5cc8f9f125d2342b5b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7594,7 +7594,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "f6f413ef60b2a9e9d191c861669fbef572396f7234a0cbc5c39342c08416d5dd",
+   "sha256": "0700e701e00c2b27a27dce83eb7488e323644ee2977de05ddacf4203afa84d48",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
