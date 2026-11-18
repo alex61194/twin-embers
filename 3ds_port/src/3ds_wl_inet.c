@@ -159,7 +159,10 @@ static void Handle(WlInet *net, const uint8_t *m, uint16_t len)
             net->in[at].src = m[1];
             net->in[at].len = n;
             ++net->inCount;
+            ++net->receivedFrames;
         }
+        else if (len >= 2 + WL_INET_SEAL_BYTES)
+            ++net->lostFrames;                  /* nobody was taking them: the queue of opened frames is full */
         break;
     default:
         break;                          /* PONG and anything unknown */
@@ -411,6 +414,7 @@ static bool BackendSend(void *user, uint16_t dest, const void *data, uint16_t le
     if (!Queue(net, T_DATA, body, (uint16_t)(1 + WL_INET_SEAL_BYTES + len)))
         return false;
     ++net->counter;
+    ++net->sentFrames;
     Flush(net);
     return true;
 }

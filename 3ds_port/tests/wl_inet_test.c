@@ -197,6 +197,49 @@ int main(int argc, char **argv)
     }
     assert(gotA == 40 && gotB == 40);
 
+    /* a flood of frames of every size, straight over the backends (no WlNet to resend): what is sent and fits the queue arrives whole, in order,
+     * and the stream never loses its place */
+    {
+        unsigned sent = 0, got = 0, next = 0;
+        uint8_t frame[170], back[256];
+
+        for (int round = 0; round < 4000 && got < 2000; ++round)
+        {
+            for (int burst = 0; burst < 8 && sent < 2000; ++burst)
+            {
+                unsigned size = 5 + sent % 150;
+
+                memset(frame, (int)(sent & 255), sizeof(frame));
+                frame[0] = 0xF7;                    /* the flood's mark: WlNet's acknowledgements may still be coming in */
+                frame[1] = (uint8_t)sent;
+                frame[2] = (uint8_t)(sent >> 8);
+                frame[3] = (uint8_t)size;
+                if (!ioA.send(ioA.user, 2, frame, (uint16_t)size))
+                    break;
+                ++sent;
+            }
+            for (;;)
+            {
+                uint16_t src, len;
+
+                if (!ioB.recv(ioB.user, &src, back, sizeof(back), &len))
+                    break;
+                assert(src == 1);
+                if (back[0] != 0xF7)
+                    continue;
+                {
+                    unsigned number = (unsigned)(back[1] | back[2] << 8);
+
+                    assert(len >= 5 && number >= next && len == back[3] && back[4] == (uint8_t)number);   /* in order, gaps only where the queue overflowed */
+                    next = number + 1;
+                    ++got;
+                }
+            }
+            Sleep10();
+        }
+        assert(sent == 2000 && got > 500 && b.dropped == 0);
+    }
+
     /* a frame to a node that is not there is dropped without harm */
     assert(ioA.send(ioA.user, 9, "x", 1));
     Pump(&a, &b, 5);

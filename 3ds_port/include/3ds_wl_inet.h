@@ -43,6 +43,7 @@ typedef struct WlInet {
     uint8_t session[8];             /* this connection's random half of every nonce */
     uint32_t counter;               /* the other half: frames sealed so far */
     uint32_t dropped;               /* frames that came and did not open (changed, or sealed with another key) */
+    uint32_t sentFrames, receivedFrames, lostFrames;   /* statistics: frames sent, frames opened, frames that found the queue full */
     struct { uint8_t kind, node; } events[32];
     uint8_t eventHead, eventCount;
     struct { uint16_t src, len; uint8_t data[WL_MAX_PAYLOAD + 16]; } in[48];   /* opened frames */

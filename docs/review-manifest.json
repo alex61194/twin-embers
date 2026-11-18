@@ -7529,8 +7529,32 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_wl_e2e.py",
+   "sha256": "78fb57649cdff3246c62fab9ff20c17dc18d5a9541da49433156a50c87611e11",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/uds_mock_unit.c",
+   "sha256": "3963e4b65007bc24386bd8d2c0b140d464bfd6894025e190c5d22633883af181",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/rfu_game_test.c",
+   "sha256": "568db075b6922cc690ad512a43f611bb9458c9b8c5f474d26c9c03787091e5b7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0272-rfu-emulated-adapter.json",
-   "sha256": "dc2d7277e9287485266dd3e6c3d341249243312095f2abd19ef0eb9c55532fbb",
+   "sha256": "6e6bf7cc0ae62bf127c31ea84dbbefe6575647b060422290a4de96f67112bdc1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7570,7 +7594,7 @@
   },
   {
    "path": "docs/WL-RELAY-PROTOCOL.md",
-   "sha256": "2999acabdefe6b6882d125b3d8b6935f9263d3066d4f2c853bb91332d04d844f",
+   "sha256": "46980809a695e731551b0b5b1d2dab2e32626c7a950bb754ada577daddc39332",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7594,7 +7618,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_inet.h",
-   "sha256": "4f9e29765ce5cfd24ce53fe6aeec5fe974133d336ecafc383036253a5e1a7e68",
+   "sha256": "a40b89c77b9071f7df3fea6144ab3874eaf26f15c308f7568b25490062e230b9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7602,7 +7626,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "a1fab51bbac6ff1c1b89d50e7fc93445a6a4519123a8a82785557493e20d408d",
+   "sha256": "88f8fefcbb858cbd58839ab3c2b9fee2a5bed09474aa0ab5b17b222a8a24ec90",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7610,7 +7634,7 @@
   },
   {
    "path": "3ds_port/tests/wl_inet_test.c",
-   "sha256": "4f3af3e3fe66dcd5d94d3e744ecfb843c076e31197059aab73723bbf5a7d9662",
+   "sha256": "d5bf87b7ebe3c7d91e973fc48a329296a9326ac3afd4c0cf5e1aebd2775ca280",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

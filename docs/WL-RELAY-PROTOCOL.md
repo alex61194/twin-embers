@@ -94,3 +94,26 @@ The set of nodes comes from WELCOME, JOINED and LEFT (`WlInet_Members`, `WlInet_
 
 The link layer exchanges a frame about every 17 ms. Trades, the Union Room and turn-based battles stay usable at
 100 to 150 ms round trips; the real-time minigames do not and should not be offered over the internet.
+
+## Using it
+
+Run a relay anywhere with Python 3 (it needs nothing else): `python3 tools/wl_relay.py --host 0.0.0.0 --port 4700`.
+It prints `LISTEN <port>` once it is ready. It sees only sealed frames and a room name derived from the code, never the code itself.
+
+Each console reads `sdmc:/3ds/twinembers/online.cfg`, two lines:
+
+```
+relay=example.org:4700
+code=a-room-code-both-players-know
+```
+
+Both players use the same relay, the same code and the same build of the game (the build is part of the key, so different builds never
+meet). Without that file the console uses its own radio (UDS) to find people nearby.
+
+Limits: a room holds at most 16 nodes; a relay refuses more rooms or connections than it was started with; the code is 1 to 64
+characters. The sealing is a construction written for this project (PBKDF2-HMAC-SHA256, ChaCha20-Poly1305) from the RFCs and checked
+against their test vectors, but it has not been reviewed by a cryptographer: treat a room code like a shared password for a game, not for
+anything that matters.
+
+`tools/test_wl_e2e.py` runs two consoles' worth of FireRed's own wireless library through a relay on a computer (it needs a workspace made
+by `tools/bootstrap.py`).
