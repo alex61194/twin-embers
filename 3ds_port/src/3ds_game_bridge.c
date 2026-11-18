@@ -19,6 +19,7 @@
 #include "3ds_audio.h"
 #include "3ds_audio_cadence.h"
 #include "3ds_input.h"
+#include "3ds_wl_glue.h"
 #include "3ds_bottom.h"
 #include "3ds_dma.h"
 #include "3ds_flash.h"
@@ -749,6 +750,7 @@ void CtrGameBridge_StopWatchdog(void)
 
 void VBlankIntrWait(void)
 {
+    CtrWl_Tick();                   /* the emulated Wireless Adapter and its radio: once a frame, at the point the game waits for the next one */
     CtrPerf_GameEnd();
     uintptr_t perfCallback = (uintptr_t)gMain.callback2, perfTask = 0;
     for (unsigned i = 0; i < NUM_TASKS; ++i)

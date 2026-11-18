@@ -5,6 +5,7 @@
  * logging goes once to sdmc:/3ds/twinembers/port.log (never per frame).
  */
 #include <3ds.h>
+#include <malloc.h>
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,9 @@
 #include "3ds_platform.h"
 #include "3ds_rex.h"
 #include "3ds_video.h"
+#include "3ds_wl_crypto.h"
+#include "3ds_wl_glue.h"
+#include "3ds_lang.h"
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "git_version.h"
@@ -69,6 +73,18 @@ void CtrPokeTouch_Shutdown(void);
 TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
 TRACED_EXIT(ExitPokeTouch, CtrPokeTouch_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
+TRACED_EXIT(ExitWireless, CtrWl_Shutdown())
+TRACED_EXIT(ExitSockets, socExit())
+
+/* Consoles link when they run the same release in the same language: that is what the link layer sends raw structures of. The optional
+ * pictures a player chose (looks, HD scenes) are not in it. */
+#if CTR_LANG_DE
+#define CTR_LINK_LANG "de"
+#elif CTR_LANG_ES
+#define CTR_LINK_LANG "es"
+#else
+#define CTR_LINK_LANG "en"
+#endif
 /* Leaving through the HOME Menu (aptMainLoop) is exit(0) from the VBlank bridge:
  * whatever is still pending reaches the card before the process ends. */
 TRACED_EXIT(ExitFlash, CtrFlash_Close())
@@ -225,6 +241,31 @@ int main(void)
     CtrAudio_Init();
     atexit(ExitAudio);
     CtrGameBridge_StartWatchdog();
+    {
+        static const char kLinkId[] = "TwinEmbers link v1|" CTR_BUILD_LABEL "|" CTR_LINK_LANG;
+        uint8_t digest[32];
+
+        WlSha256(kLinkId, sizeof(kLinkId) - 1, digest);
+        CtrWl_Setup(digest, (uint32_t)osGetTime() ^ (uint32_t)svcGetSystemTick());
+        atexit(ExitWireless);
+    }
+    /* Internet play: a file `sdmc:/3ds/twinembers/online.cfg` with `relay=host[:port]` and `code=...` lines turns the local radio into a room on
+     * that relay (docs/WL-RELAY-PROTOCOL.md). Without sockets the console stays on the local radio. */
+    if (CtrWl_LoadConfig("sdmc:/3ds/twinembers/online.cfg"))
+    {
+        void *socBuffer = memalign(0x1000, 0x20000);
+
+        if (socBuffer != NULL && R_SUCCEEDED(socInit(socBuffer, 0x20000)))
+        {
+            atexit(ExitSockets);
+            CtrLog_Write(CTR_LOG_GAME, "internet play: relay configured");
+        }
+        else
+        {
+            CtrWl_SetInternet(NULL, 0, NULL);
+            CtrLog_Write(CTR_LOG_GAME, "internet play: sockets unavailable, local radio only");
+        }
+    }
     CtrPerf_SetMemory(gGbaShadow.vram, gGbaShadow.pltt, gGbaShadow.oam);
     CtrPerf_Init(SYSCLOCK_ARM11, (uintptr_t)AgbMain);
     KeepGameAtStart();

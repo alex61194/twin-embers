@@ -32,6 +32,7 @@ typedef struct WlUdsHost {
     udsNetworkStruct network;               /* what WlUds_Join needs */
     char name[32];                          /* the host player's name (UTF-8) */
     uint8_t nodes, maxNodes;                /* how many are in it and how many it takes */
+    uint32_t token;                         /* the number its host drew when it made the network (see WlUds_Host) */
 } WlUdsHost;
 
 typedef struct WlUds {
@@ -52,8 +53,9 @@ typedef struct WlUds {
 /* Start UDS (shared memory, the name other consoles see: NULL for the system's, else up to 10 characters). */
 bool WlUds_Init(WlUds *uds, const uint8_t build[WL_UDS_BUILD_BYTES], const char *username);
 void WlUds_Exit(WlUds *uds);
-/* Make a network that takes `maxNodes` consoles (2 to 16, the host counted); this console becomes node 1. */
-bool WlUds_Host(WlUds *uds, uint8_t maxNodes);
+/* Make a network that takes `maxNodes` consoles (2 to 16, the host counted); this console becomes node 1. `token` goes in the beacon:
+ * two consoles that made a network at the same moment see each other's tokens and the one with the larger gives up and joins. */
+bool WlUds_Host(WlUds *uds, uint8_t maxNodes, uint32_t token);
 /* Look for hosts of this build: how many were found (at most `max`, WL_UDS_SCAN_HOSTS suits). Blocks for a second or two. */
 int WlUds_Scan(WlUds *uds, WlUdsHost *out, int max);
 /* Join a host WlUds_Scan found; this console becomes the node UDS gives it. */

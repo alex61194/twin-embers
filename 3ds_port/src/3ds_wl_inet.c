@@ -10,6 +10,19 @@ typedef int WlLen;
 #define WL_WOULD_BLOCK (WSAGetLastError() == WSAEWOULDBLOCK)
 #define SK(s) ((SOCKET)(s))
 #define WL_CLOSE(s) closesocket((SOCKET)(s))
+#elif defined(__3DS__)
+#include <3ds/os.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+typedef ssize_t WlLen;
+#define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK)
+#define SK(s) ((int)(s))
+#define WL_CLOSE(s) close((int)(s))
 #else
 #include <errno.h>
 #include <fcntl.h>
@@ -34,6 +47,8 @@ static uint32_t NowMs(void)
 {
 #ifdef _WIN32
     return (uint32_t)GetTickCount64();
+#elif defined(__3DS__)
+    return (uint32_t)osGetTime();
 #else
     struct timespec ts;
 

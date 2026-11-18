@@ -11,7 +11,7 @@
 
 #define BEACON_MAGIC0 'T'
 #define BEACON_MAGIC1 'E'
-#define BEACON_BYTES (2 + WL_UDS_BUILD_BYTES)
+#define BEACON_BYTES (2 + WL_UDS_BUILD_BYTES + 4)
 #define SCAN_BYTES 0x4000
 #define EVENT_MAX ((unsigned)(sizeof(((WlUds *)0)->events) / sizeof(((WlUds *)0)->events[0])))
 #define IN_MAX ((unsigned)(sizeof(((WlUds *)0)->in) / sizeof(((WlUds *)0)->in[0])))
@@ -119,7 +119,7 @@ void WlUds_Exit(WlUds *uds)
     uds->ready = false;
 }
 
-bool WlUds_Host(WlUds *uds, uint8_t maxNodes)
+bool WlUds_Host(WlUds *uds, uint8_t maxNodes, uint32_t token)
 {
     udsNetworkStruct network;
     char pass[64];
@@ -136,6 +136,8 @@ bool WlUds_Host(WlUds *uds, uint8_t maxNodes)
     beacon[0] = BEACON_MAGIC0;
     beacon[1] = BEACON_MAGIC1;
     memcpy(beacon + 2, uds->build, WL_UDS_BUILD_BYTES);
+    for (int i = 0; i < 4; ++i)
+        beacon[2 + WL_UDS_BUILD_BYTES + i] = (uint8_t)(token >> (8 * i));
     udsSetApplicationData(beacon, sizeof(beacon));          /* what a scan checks: a failure here only hides the host */
     uds->active = true;
     uds->hosting = true;
@@ -150,7 +152,7 @@ int WlUds_Scan(WlUds *uds, WlUdsHost *out, int max)
     size_t total = 0;
     int found = 0;
 
-    if (!uds->ready || max <= 0 || R_FAILED(udsScanBeacons(outbuf, sizeof(outbuf), &networks, &total, WL_UDS_WLANCOMM_ID, WL_UDS_ID8, NULL, false)))
+    if (!uds->ready || max <= 0 || R_FAILED(udsScanBeacons(outbuf, sizeof(outbuf), &networks, &total, WL_UDS_WLANCOMM_ID, WL_UDS_ID8, NULL, uds->active)))
         return 0;
     for (size_t i = 0; i < total && found < max; ++i)
     {
@@ -164,6 +166,7 @@ int WlUds_Scan(WlUds *uds, WlUdsHost *out, int max)
         out[found].network = networks[i].network;
         out[found].nodes = networks[i].network.total_nodes;
         out[found].maxNodes = networks[i].network.max_nodes;
+        out[found].token = (uint32_t)(data[18] | data[19] << 8 | data[20] << 16 | (uint32_t)data[21] << 24);
         if (R_FAILED(udsGetNodeInfoUsername(&networks[i].nodes[0], out[found].name)))
             out[found].name[0] = 0;
         out[found].name[sizeof(out[found].name) - 1] = 0;
