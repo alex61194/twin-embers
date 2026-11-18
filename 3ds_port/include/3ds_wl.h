@@ -88,6 +88,7 @@ uint16_t WlNet_Pending(const WlNet *net, uint16_t dest);
 #define WL_RFU_USER_BYTES 8
 #define WL_RFU_ACK_WORDS 29         /* an acknowledgement or a request: the header and up to 28 words */
 #define WL_RFU_PARENT_FRAME 87      /* the most a parent sends in one frame, in bytes */
+#define WL_RFU_RX_QUEUE 8           /* frames a slot keeps behind the one the game has not read yet */
 #define WL_RFU_CHILD_FRAME 31       /* and a child */
 
 enum { WL_STATE_IDLE = 0, WL_STATE_HOST_CLOSED = 1, WL_STATE_HOST_OPEN = 2, WL_STATE_SEARCHING = 3, WL_STATE_CONNECTING = 4, WL_STATE_CLIENT = 5 };
@@ -131,6 +132,13 @@ typedef struct WlRfu {
     uint8_t rxLen[WL_RFU_CHILD_MAX];
     bool rxNew[WL_RFU_CHILD_MAX];
     uint32_t rxHeader[WL_RFU_CHILD_MAX];
+    /* Frames that came while the one above was still unread, in order (a burst of the radio, as TCP delivers them over the internet):
+     * the next one takes its place when it is read, so none is overwritten. The oldest is dropped only past WL_RFU_RX_QUEUE. */
+    uint8_t rxq[WL_RFU_CHILD_MAX][WL_RFU_RX_QUEUE][WL_RFU_PARENT_FRAME + 4];
+    uint8_t rxqLen[WL_RFU_CHILD_MAX][WL_RFU_RX_QUEUE];
+    uint32_t rxqHeader[WL_RFU_CHILD_MAX][WL_RFU_RX_QUEUE];
+    uint8_t rxqHead[WL_RFU_CHILD_MAX], rxqCount[WL_RFU_CHILD_MAX];
+    uint32_t rxDropped;                 /* frames dropped from a full queue (none expected) */
     uint8_t txFrame[WL_RFU_PARENT_FRAME + 4];
     uint8_t txLen;
     uint32_t txHeader;

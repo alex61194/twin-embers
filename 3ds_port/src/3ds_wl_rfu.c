@@ -100,11 +100,14 @@ static void DropLink(WlRfu *rfu)
                 Farewell(rfu, rfu->childNode[i]);
     }
     memset(rfu->childUsed, 0, sizeof(rfu->childUsed));
+    memset(rfu->rxNew, 0, sizeof(rfu->rxNew));          /* and what came on it */
+    memset(rfu->rxqCount, 0, sizeof(rfu->rxqCount));
     rfu->parentNode = 0;
     rfu->parentId = 0;
     rfu->mySlot = 0;
     rfu->connectStatus = 3;
     memset(rfu->rxNew, 0, sizeof(rfu->rxNew));
+    memset(rfu->rxqCount, 0, sizeof(rfu->rxqCount));
     rfu->txOwed = false;
     rfu->dataReady = false;
 }
@@ -140,6 +143,54 @@ static void SeenAdd(WlRfu *rfu, uint16_t node, const uint8_t *m, uint16_t len)
     p->heardMs = rfu->nowMs;
 }
 
+/* A slot's received frames: the one the game reads next (rx, rxNew) and those behind it (rxq). */
+static void RxClear(WlRfu *rfu, unsigned slot)
+{
+    rfu->rxNew[slot] = false;
+    rfu->rxqCount[slot] = 0;
+    rfu->rxqHead[slot] = 0;
+}
+
+static void RxPut(WlRfu *rfu, unsigned slot, uint32_t header, const uint8_t *data, uint16_t bytes)
+{
+    if (!rfu->rxNew[slot]) {
+        rfu->rxHeader[slot] = header;
+        memcpy(rfu->rx[slot], data, bytes);
+        rfu->rxLen[slot] = (uint8_t)bytes;
+        rfu->rxNew[slot] = true;
+        return;
+    }
+    if (rfu->rxqCount[slot] == WL_RFU_RX_QUEUE) {
+        rfu->rxqHead[slot] = (uint8_t)((rfu->rxqHead[slot] + 1) % WL_RFU_RX_QUEUE);
+        --rfu->rxqCount[slot];
+        ++rfu->rxDropped;
+    }
+    {
+        unsigned at = (rfu->rxqHead[slot] + rfu->rxqCount[slot]) % WL_RFU_RX_QUEUE;
+
+        rfu->rxqHeader[slot][at] = header;
+        memcpy(rfu->rxq[slot][at], data, bytes);
+        rfu->rxqLen[slot][at] = (uint8_t)bytes;
+        ++rfu->rxqCount[slot];
+    }
+}
+
+/* The game read the slot's frame: the next one that came, if any, is now the one to read. */
+static void RxTaken(WlRfu *rfu, unsigned slot)
+{
+    rfu->rxNew[slot] = false;
+    if (rfu->rxqCount[slot]) {
+        unsigned at = rfu->rxqHead[slot];
+
+        rfu->rxHeader[slot] = rfu->rxqHeader[slot][at];
+        memcpy(rfu->rx[slot], rfu->rxq[slot][at], rfu->rxqLen[slot][at]);
+        rfu->rxLen[slot] = rfu->rxqLen[slot][at];
+        rfu->rxNew[slot] = true;
+        rfu->rxqHead[slot] = (uint8_t)((at + 1) % WL_RFU_RX_QUEUE);
+        --rfu->rxqCount[slot];
+    }
+}
+
 static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
 {
     const uint8_t *m = msg->data;
@@ -171,7 +222,7 @@ static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
                     rfu->childUsed[i] = true;
                     rfu->childNode[i] = src;
                     rfu->childId[i] = (uint16_t)(m[1] | m[2] << 8);
-                    rfu->rxNew[i] = false;
+                    RxClear(rfu, i);
                 }
         if (slot < 0)
             SendType(rfu, src, M_REJECT, 0);
@@ -186,6 +237,7 @@ static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
         if (rfu->state == WL_STATE_CONNECTING && src == rfu->parentNode && msg->len >= 2 && m[1] < WL_RFU_CHILD_MAX)
         {
             rfu->mySlot = m[1];
+            RxClear(rfu, 0);                        /* nothing of an earlier link */
             rfu->state = WL_STATE_CLIENT;
             rfu->connectStatus = 0;
         }
@@ -213,7 +265,7 @@ static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
                 if (rfu->childUsed[i] && rfu->childNode[i] == src)
                 {
                     rfu->childUsed[i] = false;
-                    rfu->rxNew[i] = false;
+                    RxClear(rfu, i);
                     rfu->lostSlots |= (uint8_t)(1u << i);
                 }
         break;
@@ -228,19 +280,13 @@ static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
             break;
         if (rfu->state == WL_STATE_CLIENT && src == rfu->parentNode)
         {
-            rfu->rxHeader[0] = (uint32_t)(m[2] | m[3] << 8 | m[4] << 16 | (uint32_t)m[5] << 24);
-            memcpy(rfu->rx[0], m + 6, bytes);
-            rfu->rxLen[0] = (uint8_t)bytes;
-            rfu->rxNew[0] = true;
+            RxPut(rfu, 0, (uint32_t)(m[2] | m[3] << 8 | m[4] << 16 | (uint32_t)m[5] << 24), m + 6, bytes);
         }
         else if (rfu->state == WL_STATE_HOST_OPEN || rfu->state == WL_STATE_HOST_CLOSED)
             for (unsigned i = 0; i < WL_RFU_CHILD_MAX; ++i)
                 if (rfu->childUsed[i] && rfu->childNode[i] == src)
                 {
-                    rfu->rxHeader[i] = (uint32_t)(m[2] | m[3] << 8 | m[4] << 16 | (uint32_t)m[5] << 24);
-                    memcpy(rfu->rx[i], m + 6, bytes);
-                    rfu->rxLen[i] = (uint8_t)bytes;
-                    rfu->rxNew[i] = true;
+                    RxPut(rfu, i, (uint32_t)(m[2] | m[3] << 8 | m[4] << 16 | (uint32_t)m[5] << 24), m + 6, bytes);
                     rfu->childHeard[i] = rfu->nowMs;
                 }
         break;
@@ -509,7 +555,7 @@ int WlRfu_Command(WlRfu *rfu, const uint32_t *req, uint32_t *ack)
                 n = MAX_PARAM_WORDS - 1;
             memset(ack + 2, 0, n * 4);
             memcpy(ack + 2, rfu->rx[0], rfu->rxLen[0] < n * 4 ? rfu->rxLen[0] : n * 4);
-            rfu->rxNew[0] = false;
+            RxTaken(rfu, 0);
             rfu->txOwed = false;
             return Answer(ack, command, 1 + n);
         }
@@ -533,7 +579,7 @@ int WlRfu_Command(WlRfu *rfu, const uint32_t *req, uint32_t *ack)
                 memcpy(out + bytes, rfu->rx[i], len);
                 bytes += len;
                 sizes |= (uint32_t)len << (8 + 5 * i);
-                rfu->rxNew[i] = false;
+                RxTaken(rfu, i);
             }
             if (sizes == 0 && bytes == 0)
                 return Answer(ack, command, 0);
@@ -563,7 +609,7 @@ int WlRfu_Command(WlRfu *rfu, const uint32_t *req, uint32_t *ack)
                 {
                     Farewell(rfu, rfu->childNode[i]);
                     rfu->childUsed[i] = false;
-                    rfu->rxNew[i] = false;
+                    RxClear(rfu, i);
                 }
         if (rfu->state == WL_STATE_HOST_CLOSED && CountChildren(rfu) == 0)
             rfu->state = WL_STATE_IDLE;

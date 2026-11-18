@@ -15,6 +15,8 @@ typedef int WlLen;
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -28,6 +30,8 @@ typedef ssize_t WlLen;
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -423,6 +427,13 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
                 }
             }
 #endif
+        }
+        {
+            /* Every frame goes out at once: TCP would otherwise hold a small one back until the last was acknowledged (Nagle), a
+             * round trip, and hand several over together. */
+            int one = 1;
+
+            setsockopt(SK(s), IPPROTO_TCP, TCP_NODELAY, (const char *)&one, sizeof(one));
         }
         net->sock = s;
     }
