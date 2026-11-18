@@ -7546,7 +7546,7 @@
   },
   {
    "path": "tools/test_wl_e2e.py",
-   "sha256": "82c6e7aaa92568fd9e3def05ac380bd67dfc3b106d58938a52cd5188b2a9ac18",
+   "sha256": "195ccb0519f81140c2eedd05c1ccf74d427b9549bfe14b91724d8b058fb6fd5c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7594,7 +7594,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "7faf500e4d3dbb52f62f4b4b5f46e330ea01a3ef8b8b543d46369d72cb5c7dfb",
+   "sha256": "8c8d9948d2af8e3cbfbe400165f36184a44743bc3ea13e99221d0dc0bba9f39e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7602,7 +7602,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_glue.h",
-   "sha256": "93f5eba78159258cbd914cc0e934495889ce5b373db2105cb59f76a686d59e19",
+   "sha256": "29eb70ee3a58afa9e83c2c824e53e53cfd2bb6a99ce793fcf30aca410bab3227",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -363,7 +363,17 @@ static void JobBody(void)
 {
     if (sInternet)
     {
-        sConnected = WlInet_Connect(&sInet, sRelayHost, sRelayPort, sCode, sBuild, 8000);
+        char code[sizeof(sCode)];
+
+        memcpy(code, sCode, sizeof(code));
+        for (int room = 1;; ++room)
+        {
+            sConnected = WlInet_Connect(&sInet, sRelayHost, sRelayPort, code, sBuild, 8000);
+            /* The public room is full: the next one (twinembers-public-2, -3...), so the rooms fill in order. */
+            if (sConnected || sInet.reject != WL_INET_REJECT_FULL || strcmp(sCode, CTR_WL_PUBLIC_ROOM) || room >= CTR_WL_PUBLIC_ROOMS)
+                break;
+            snprintf(code, sizeof(code), "%s-%d", CTR_WL_PUBLIC_ROOM, room + 1);
+        }
         sFailStep = sInet.failStep;
         sFailErrno = sInet.failErrno;
         sTrail[0] = 0;

@@ -5,10 +5,13 @@ Builds 3ds_port/tests/rfu_game_test.c against the patched sources of a bootstrap
 with the current recipes), starts tools/wl_relay.py, and runs a parent and a child as two processes: the child must find the parent, connect, and
 both must stay linked through a second of data exchange. Skipped when there is no such workspace or no C compiler with the console's headers.
 """
+import hashlib
 import os
 import pathlib
 import re
 import shutil
+import struct
+import socket
 import subprocess
 import sys
 import tempfile
@@ -74,6 +77,46 @@ class EndToEnd(unittest.TestCase):
             for parent, child, hold, extra in (('parent', 'child', '1', {}), ('pcparent', 'pcchild', '10', {}),
                                                ('parent', 'child', '5', {'E2E_PARENT_CHANGE': '1', 'E2E_IDLE': '1'})):
                 self.run_pair(exe, out, parent, child, hold, extra)
+            self.run_full_public_room(exe, out)
+
+    def run_full_public_room(self, exe, out):
+        """Sixteen consoles fill the public room: the next one goes to twinembers-public-2 (3ds_wl_glue.c, CTR_WL_PUBLIC_ROOMS)."""
+        build = bytes([7, 7, 7] + [0] * 13)                 # rfu_game_test's build id
+
+        def room_of(code):
+            key = hashlib.pbkdf2_hmac('sha256', code.encode(), b'TwinEmbers relay v1' + build, 4096, 32)
+            return hashlib.sha256(b'TwinEmbers room' + key).hexdigest()[:16].encode()
+
+        relay = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0',
+                                  '--max-per-address', '64', '--log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        held, console, log = [], None, None
+        try:
+            port = int(relay.stdout.readline().split()[1])
+            first = room_of('twinembers-public')
+            for _ in range(16):
+                s = socket.create_connection(('127.0.0.1', port), 5)
+                body = bytes([1]) + build + bytes([len(first)]) + first
+                s.sendall(struct.pack('<H', len(body) + 1) + bytes([1]) + body)
+                held.append(s)
+            time.sleep(0.5)
+            log = open(out / 'spill.txt', 'w')
+            console = subprocess.Popen([str(exe), 'parent', str(port), 'twinembers-public'], stdout=log, stderr=subprocess.STDOUT)
+            time.sleep(4)
+        finally:
+            if console:
+                console.kill()
+                console.wait()
+            if log:
+                log.close()
+            for s in held:
+                s.close()
+            relay.kill()
+            notes = relay.stderr.read()
+            relay.wait()
+            relay.stdout.close()
+            relay.stderr.close()
+        second = room_of('twinembers-public-2').decode()
+        self.assertIn('room %s node 1 joined' % second, notes, 'the 17th console did not go to the second public room:\n' + notes[-1500:])
 
     def run_pair(self, exe, out, parent, child, hold, extra):
         files = []

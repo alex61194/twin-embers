@@ -49,6 +49,7 @@ void CtrWl_SetLocal(bool local);
 bool CtrWl_HasRelay(void);
 /* The room everyone meets in when a relay is given without a code. */
 #define CTR_WL_PUBLIC_ROOM "twinembers-public"
+#define CTR_WL_PUBLIC_ROOMS 8           /* when it is full (16 consoles): twinembers-public-2 and on, up to this many rooms */
 /* A private room: the room of a six-digit code everyone in it types (the OPTIONS keypad), instead of the relay's public room or online.cfg's
  * code; NULL or "" for none. It counts from the next session on, like the rest. */
 #define CTR_WL_PRIVATE_ROOM "twinembers-private-"
