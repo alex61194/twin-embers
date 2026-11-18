@@ -38,7 +38,17 @@ static volatile int sJobState;              /* 0 none, 1 running, 2 done and not
 static volatile int sConnected;             /* the internet job's result */
 static uint32_t sScanAt;
 static uint32_t sInetRetryAt;
-static bool sInternet;
+static bool sInternet;                  /* this session's radio: the relay (true) or the console's own (false) */
+static bool sHaveRelay;                 /* a relay and a room code are known */
+static bool sLocal;                     /* the player chose local play (MULTIPLAYER: Local) */
+
+/* The radio the next session uses: the relay when one is known and the player did not choose local play. Changed only between sessions:
+ * a link that is up keeps its radio. */
+static void ApplyMode(void)
+{
+    if (sState == CTR_WL_OFF)
+        sInternet = sHaveRelay && !sLocal;
+}
 static char sRelayHost[64], sCode[WL_INET_CODE_MAX + 1];
 static uint16_t sRelayPort = WL_INET_PORT;
 
@@ -104,13 +114,26 @@ void CtrWl_SetInternet(const char *host, uint16_t port, const char *code)
 {
     if (!host || !code || !host[0] || !code[0] || strlen(host) >= sizeof(sRelayHost) || strlen(code) > WL_INET_CODE_MAX)
     {
-        sInternet = false;
+        sHaveRelay = false;
+        ApplyMode();
         return;
     }
     memcpy(sRelayHost, host, strlen(host) + 1);
     memcpy(sCode, code, strlen(code) + 1);
     sRelayPort = port ? port : WL_INET_PORT;
-    sInternet = true;
+    sHaveRelay = true;
+    ApplyMode();
+}
+
+void CtrWl_SetLocal(bool local)
+{
+    sLocal = local;
+    ApplyMode();
+}
+
+bool CtrWl_HasRelay(void)
+{
+    return sHaveRelay;
 }
 
 /* `src` into `dst`, or an empty string when it does not fit (a value that is cut is a wrong value). */
@@ -153,8 +176,10 @@ bool CtrWl_LoadConfig(const char *path)
             CopyOrEmpty(code, sizeof(code), line + 5);
     }
     fclose(f);
+    if (host[0] && !code[0])
+        CopyOrEmpty(code, sizeof(code), CTR_WL_PUBLIC_ROOM);      /* a relay without a code: its public room */
     CtrWl_SetInternet(host, (uint16_t)port, code);
-    return sInternet;
+    return sHaveRelay;
 }
 
 bool CtrWl_IsInternet(void)
@@ -359,6 +384,7 @@ static void BecomeHost(void)
 static void StartSession(void)
 {
     WL_NOTE(sNoteSession, "wireless: session start asked (state %d, internet %d, setup %d)", sState, (int)sInternet, (int)sSetup);
+    ApplyMode();                            /* the MULTIPLAYER choice counts from here */
     if (sState != CTR_WL_OFF || !CtrWl_Available())
         return;
     sState = CTR_WL_SEARCH;

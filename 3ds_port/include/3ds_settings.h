@@ -58,6 +58,8 @@ int CtrSettings_WildAggro(void);               /* AGGRESSIVE: 0 OFF, 1 RARE 10%,
 void CtrSettings_SetWildAggro(int aggro);
 int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
 void CtrSettings_SetRandomlocke(int on);
+int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consoles nearby (the 3DS radio), 0 online through the relay (the default) */
+void CtrSettings_SetLocalPlay(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */
 void CtrSettings_SetFreeHm(int on);
 /* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the

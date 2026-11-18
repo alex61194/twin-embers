@@ -26,6 +26,7 @@
 #include "3ds_video.h"
 #include "3ds_wl_crypto.h"
 #include "3ds_wl_glue.h"
+#include "3ds_settings.h"
 #include "3ds_lang.h"
 #include "gba_shadow.h"
 #include "3ds_perf.h"
@@ -75,6 +76,12 @@ TRACED_EXIT(ExitPokeTouch, CtrPokeTouch_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
 TRACED_EXIT(ExitWireless, CtrWl_Shutdown())
 TRACED_EXIT(ExitSockets, socExit())
+
+/* The OPTIONS screen's MULTIPLAYER row: the radio takes the choice from the next session on. */
+static void LocalPlayChanged(int local)
+{
+    CtrWl_SetLocal(local != 0);
+}
 
 /* Consoles link when they run the same release in the same language: that is what the link layer sends raw structures of. The optional
  * pictures a player chose (looks, HD scenes) are not in it. */
@@ -249,16 +256,33 @@ int main(void)
         CtrWl_Setup(digest, (uint32_t)osGetTime() ^ (uint32_t)svcGetSystemTick());
         atexit(ExitWireless);
     }
-    /* Internet play: a file `sdmc:/3ds/twinembers/online.cfg` with `relay=host[:port]` and `code=...` lines turns the local radio into a room on
-     * that relay (docs/WL-RELAY-PROTOCOL.md). Without sockets the console stays on the local radio. */
-    if (CtrWl_LoadConfig("sdmc:/3ds/twinembers/online.cfg"))
+    /* Internet play: the relay built in (CTR_WL_DEFAULT_RELAY, "host:port", empty for none) and its public room, or a file
+     * `sdmc:/3ds/twinembers/online.cfg` with `relay=host[:port]` and `code=...` lines for another relay or a private room
+     * (docs/WL-RELAY-PROTOCOL.md). The MULTIPLAYER option picks between it and the local radio; without sockets the console stays on the
+     * local radio. */
+    CtrWl_SetLocal(CtrSettings_LocalPlay() != 0);
+    CtrOptions_SetLocalPlayHook(LocalPlayChanged);
+    if (!CtrWl_LoadConfig("sdmc:/3ds/twinembers/online.cfg") && CTR_WL_DEFAULT_RELAY[0])
+    {
+        char host[64];
+        const char *colon = strrchr(CTR_WL_DEFAULT_RELAY, ':');
+        size_t n = colon ? (size_t)(colon - CTR_WL_DEFAULT_RELAY) : strlen(CTR_WL_DEFAULT_RELAY);
+
+        if (n < sizeof(host))
+        {
+            memcpy(host, CTR_WL_DEFAULT_RELAY, n);
+            host[n] = 0;
+            CtrWl_SetInternet(host, colon ? (uint16_t)strtoul(colon + 1, NULL, 10) : 0, CTR_WL_PUBLIC_ROOM);
+        }
+    }
+    if (CtrWl_HasRelay())
     {
         void *socBuffer = memalign(0x1000, 0x20000);
 
         if (socBuffer != NULL && R_SUCCEEDED(socInit(socBuffer, 0x20000)))
         {
             atexit(ExitSockets);
-            CtrLog_Write(CTR_LOG_GAME, "internet play: relay configured");
+            CtrLog_Write(CTR_LOG_GAME, "internet play: relay configured%s", CtrSettings_LocalPlay() ? " (local play chosen)" : "");
         }
         else
         {

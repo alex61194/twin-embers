@@ -43,6 +43,16 @@ void CtrWl_Setup(const uint8_t build[16], uint32_t seed);
 void CtrWl_SetInternet(const char *host, uint16_t port, const char *code);
 bool CtrWl_LoadConfig(const char *path);
 bool CtrWl_IsInternet(void);
+/* The player's MULTIPLAYER choice: local play uses the console's own radio even when a relay is known. Like the relay itself, it counts
+ * from the next session on (a link that is up keeps its radio). CtrWl_HasRelay: a relay and a room code are known. */
+void CtrWl_SetLocal(bool local);
+bool CtrWl_HasRelay(void);
+/* The room everyone meets in when a relay is given without a code. */
+#define CTR_WL_PUBLIC_ROOM "twinembers-public"
+/* The relay a build connects to by default, "host:port" (make TWIN_RELAY=...); empty: none, online play needs online.cfg. */
+#ifndef CTR_WL_DEFAULT_RELAY
+#define CTR_WL_DEFAULT_RELAY ""
+#endif
 /* Whether the radio can be used now (starts UDS if it is not started; false while it will not start). */
 uint8_t CtrWl_Available(void);
 /* One frame: radio, adapter, session. Cheap when nothing is going on. */

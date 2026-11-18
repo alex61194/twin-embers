@@ -36,6 +36,8 @@ static const char *const sEmbers[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Low", 
 static const char *const sRandTargetName[] = {CTR_TR("Both", "Ambos", "Beide"), CTR_TR("Wild", "Salvajes", "Wilde"), CTR_TR("Trainers", "Rivales", "Trainer")};
 static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half", "Mitad", "Halb"), CTR_TR("Full", "Toda", "Voll")};
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
+/* MULTIPLAYER: online through the relay, or the console's own radio with someone nearby. */
+static const char *const sMultiplayer[] = {CTR_TR("Online", "Online", "Online"), CTR_TR("Local", "Local", "Lokal")};
 static const char *const sCompanion[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
 
 /* WILD POKEMON, WILD DISPLAY and AGGRESSIVE (the Wilds page): the visible wild Pokemon of the overworld (3ds_wilds_core.h). */
@@ -103,6 +105,15 @@ static void SurfNamesFill(void)
 static int SurfCount(void) { SurfNamesFill(); return 1 + CtrSurf_Count(); }
 static int GetSurf(void) { SurfNamesFill(); return CtrSurf_Chosen() + 1; }
 static void SetSurf(int v) { CtrSurf_Choose(v - 1); }
+static void (*sLocalPlayHook)(int);
+void CtrOptions_SetLocalPlayHook(void (*hook)(int local)) { sLocalPlayHook = hook; }
+static int GetLocalPlay(void) { return CtrSettings_LocalPlay(); }
+static void SetLocalPlay(int v)
+{
+    CtrSettings_SetLocalPlay(v & 1);
+    if (sLocalPlayHook)
+        sLocalPlayHook(v & 1);              /* the radio takes it from the next session on */
+}
 static int GetFreeHm(void) { return !CtrSettings_FreeHm(); }
 static void SetFreeHm(int v) { CtrSettings_SetFreeHm(!(v & 1)); }
 static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
@@ -208,6 +219,8 @@ static const CtrOptionRow sRows[] = {
     {CTR_TR("Sound", "Sonido", "Ton"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo.", "Mono oder Stereo."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
     {CTR_TR("Button mode", "Modo botones", "Tastenmodus"), {CTR_TR("What L and R do:", "Qu\xC3\xA9 hacen L y R:", "Funktion von L und R:"), CTR_TR("Help, LR or L=A.", "Ayuda, LR o L=A.", "Hilfe, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
+    {CTR_TR("Multiplayer", "Multijugador", "Mehrspieler"), {CTR_TR("Online: on the internet.", "Online: por internet.", "Online: \xC3\xBC" "bers Internet."),
+     CTR_TR("Local: someone nearby.", "Local: alguien cerca.", "Lokal: jemand nahebei.")}, 0, sMultiplayer, NULL, GetLocalPlay, TwoCount, SetLocalPlay},
     /* Graphics, page 1: the screen and what moves on it. */
     {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menus, Yes/No", "Men\xC3\xBAs y S\xC3\xAD/No", "Men\xC3\xBC-Rahmen"), CTR_TR("box frame.", "su marco.", "und JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
     {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
@@ -226,7 +239,7 @@ static const CtrOptionRow sRows[] = {
      GetLookLeaf, LookCount, SetLookLeaf},
     {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
-    {CTR_TR("Surf Pokemon", "Pok\xC3\xA9mon surf", "Surf-Pok\xC3\xA9mon"), {CTR_TR("The Pokemon you surf on,", "El Pok\xC3\xA9mon sobre el que", "Das Pok\xC3\xA9mon, auf dem du"), CTR_TR("from the alternative ones.", "surfeas, de los extra.", "surfst, aus den Builder-Looks.")}, 0, sSurfNames, NULL,
+    {CTR_TR("Surf Pokemon", "Pok\xC3\xA9mon surf", "Surf-Pok\xC3\xA9mon"), {CTR_TR("The Pokemon you surf on,", "El Pok\xC3\xA9mon sobre el que", "Das Pok\xC3\xA9mon, auf dem du"), CTR_TR("from the extra ones.", "surfeas, de los extra.", "surfst, aus den Extras.")}, 0, sSurfNames, NULL,
      GetSurf, SurfCount, SetSurf},
     /* Graphics, page 3: the wild Pokemon that are seen in the overworld. */
     {CTR_TR("Wild Pokemon", "Salvajes", "Wilde Pok\xC3\xA9mon"), {CTR_TR("How many wild Pokemon", "Cu\xC3\xA1ntos Pok\xC3\xA9mon salvajes", "Wie viele wilde Pok\xC3\xA9mon"), CTR_TR("walk about the map.", "andan por el mapa.", "auf der Karte laufen.")}, 0,
@@ -261,7 +274,7 @@ static const CtrOptionRow sRows[] = {
      GetNuzSet, TwoCount, SetNuzSet},
     {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und gegnerische"), CTR_TR("are random species.", "con especies al azar.", "Pok\xC3\xA9mon sind zuf\xC3\xA4llig.")}, 0, sFps, NULL,
      GetRandomlocke, TwoCount, SetRandomlocke},
-    {CTR_TR("Random for", "Azar en", "Zufall f\xC3\xBCr"), {CTR_TR("Who is random: both,", "Qui\xC3\xA9n es aleatorio:", "Wer zuf\xC3\xA4llig ist: beide,"), CTR_TR("wild or trainers.", "ambos, salvajes o rivales.", "Wilde oder Trainer.")}, 0, sRandTargetName, NULL,
+    {CTR_TR("Random for", "Azar en", "Zufall f\xC3\xBCr"), {CTR_TR("Who is random: both,", "Qui\xC3\xA9n es aleatorio:", "Wer zuf\xC3\xA4llig ist: beide,"), CTR_TR("wild or trainers.", "ambos, salvajes, rivales", "Wilde oder Trainer.")}, 0, sRandTargetName, NULL,
      GetRandTarget, ThreeCount, SetRandTarget},
     {CTR_TR("Legendaries", "Legendarios", "Legend\xC3\xA4re"), {CTR_TR("Allow legendary species", "Permite especies", "Legend\xC3\xA4re Arten sind"), CTR_TR("among the random ones.", "legendarias al azar.", "unter den zuf\xC3\xA4lligen.")}, 0, sFps, NULL,
      GetRandLegend, TwoCount, SetRandLegend},
@@ -271,7 +284,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 15, PAGE5 = 18, PAGE6 = 24, PAGE7 = 29 };
+enum { PAGE1 = 0, PAGE2 = 6, PAGE3 = 12, PAGE4 = 16, PAGE5 = 19, PAGE6 = 25, PAGE7 = 30 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
 static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)

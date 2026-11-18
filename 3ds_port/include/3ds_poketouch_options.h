@@ -84,4 +84,7 @@ extern int CtrPokeTouch_OptionCount(int option);
 extern int CtrPokeTouch_OptionGet(int option);
 extern void CtrPokeTouch_OptionSet(int option, int value);
 
+/* Told when the player changes MULTIPLAYER (1: local play), so the radio takes it from the next session on (main_game_full.c sets it). */
+void CtrOptions_SetLocalPlayHook(void (*hook)(int local));
+
 #endif

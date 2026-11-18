@@ -34,6 +34,7 @@ static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE 
 static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
+static int sLocalPlay;      /* MULTIPLAYER: 0 Online (the relay), 1 Local (the console's own radio) (localplay=) */
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
 static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
 static int sWildAggro;      /* AGGRESSIVE: 0 OFF to 4 HIGH (wildaggro=) */
@@ -125,6 +126,8 @@ static void Load(void)
             sRandNoLegend = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
+        else if (sscanf(line, "localplay=%u", &value) == 1)
+            sLocalPlay = value != 0;
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
             wildRaw = value < 1000 ? (int)value : -1;       /* settled below: an old file's 1 is NORMAL */
         else if (sscanf(line, "wildsil=%u", &value) == 1)
@@ -194,6 +197,8 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "randnolegend=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
+    if (sLocalPlay && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "localplay=1\n");
     /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
      * wildaggro come first so that a visiblewilds that was read always had them (a lone 1 is the old format, NORMAL). */
     if ((sWildDensity || sWildSil) && length > 0 && (size_t)length < size)
@@ -416,6 +421,22 @@ void CtrSettings_SetFreeHm(int on)
     if (on == sFreeHm)
         return;
     sFreeHm = on;
+    Save();
+}
+
+int CtrSettings_LocalPlay(void)
+{
+    Load();
+    return sLocalPlay;
+}
+
+void CtrSettings_SetLocalPlay(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sLocalPlay)
+        return;
+    sLocalPlay = on;
     Save();
 }
 

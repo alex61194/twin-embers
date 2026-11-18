@@ -145,6 +145,20 @@ int main(void)
     CtrRfu_Reset();
     assert(Cmd(WLC_RESET, NULL, 0, ack) >= 1 && (ack[0] & 0xffu) == (0x80u | WLC_RESET));
 
+    /* MULTIPLAYER: a relay known and Online chosen means the relay; Local means the radio even with a relay; neither changes a session
+     * that is up, only the next one. */
+    assert(CtrWl_State() != CTR_WL_OFF && !CtrWl_IsInternet());
+    CtrWl_SetInternet("relay.example", 0, "room");
+    assert(CtrWl_HasRelay() && !CtrWl_IsInternet());          /* a session is up: it keeps its radio */
+    CtrWl_SetLocal(true);
+    sState = CTR_WL_OFF;
+    CtrWl_SetLocal(true);
+    assert(CtrWl_HasRelay() && !CtrWl_IsInternet());          /* local chosen: the radio */
+    CtrWl_SetLocal(false);
+    assert(CtrWl_IsInternet());                               /* online chosen and a relay known: the relay */
+    CtrWl_SetInternet(NULL, 0, NULL);
+    assert(!CtrWl_HasRelay() && !CtrWl_IsInternet());         /* no relay: the radio whatever was chosen */
+
     CtrWl_Shutdown();
     assert(M.exitCalls >= 1);
     puts("wl_glue_test ok");

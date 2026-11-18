@@ -16,6 +16,10 @@ TARGET := twinembers_bootstrap
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := $(ARCH) -O2 -g -std=gnu11 -Wall -Wextra -Werror -ffunction-sections -fdata-sections -DCTR_VOXEL_ENABLED=0 -DCTR_PERF_ENABLED=1 -Iinclude -Ibuild -I$(CTRULIB)/include
 CFLAGS += -DCTR_EXTERNAL_ASSETS=1
+# The relay for online play built in (host:port), e.g. make TWIN_RELAY=relay.example.org:47311; none by default.
+ifneq ($(TWIN_RELAY),)
+CFLAGS += -DCTR_WL_DEFAULT_RELAY='"$(TWIN_RELAY)"'
+endif
 # 0 keeps the sound engine on the game thread (A/B testing on hardware).
 CTR_AUDIO_WORKER ?= 1
 CFLAGS += -DCTR_AUDIO_WORKER=$(CTR_AUDIO_WORKER)
