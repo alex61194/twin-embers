@@ -1,4 +1,5 @@
 /* The game and the radio meet here (3ds_wl_glue.h). */
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +168,48 @@ bool CtrWl_IsInternet(void)
 #else
 #define WL_NOTE(counter, ...) do { (void)(counter); } while (0)
 #endif
+/* A log of its own per node of the room (sdmc:/3ds/twinembers/online-<node>.log): two emulators on one computer share port.log. */
+#ifdef __DEVKITARM__
+static FILE *sNetLog;
+static unsigned sNetLogLines;
+
+static void NetLogOpen(unsigned node)
+{
+    char path[64];
+
+    if (sNetLog)
+        fclose(sNetLog);
+    snprintf(path, sizeof(path), "sdmc:/3ds/twinembers/online-%u.log", node);
+    sNetLog = fopen(path, "w");
+    sNetLogLines = 0;
+}
+
+static void NetLog(const char *format, ...) __attribute__((format(printf, 1, 2)));
+static void NetLog(const char *format, ...)
+{
+    va_list args;
+
+    if (!sNetLog || sNetLogLines++ > 4000)
+        return;
+    fprintf(sNetLog, "[%10.3f] ", (double)(uint32_t)osGetTime() / 1000.0);
+    va_start(args, format);
+    vfprintf(sNetLog, format, args);
+    va_end(args);
+    fputc(10, sNetLog);
+}
+
+/* Written out every two seconds and when the link ends (each flush is a write to the card, too slow for every line). */
+static void NetLogFlush(void)
+{
+    if (sNetLog)
+        fflush(sNetLog);
+}
+#else
+#define NetLogOpen(node) ((void)(node))
+#define NetLog(...) ((void)0)
+#define NetLogFlush() ((void)0)
+#endif
+
 static int sNoteAvailable;
 
 uint8_t CtrWl_Available(void)
@@ -197,6 +240,7 @@ uint8_t CtrWl_Available(void)
 static int sNoteSession, sNoteCommand, sNoteState;
 
 static int sFailStep, sFailErrno, sFailReported;
+static uint32_t sStatAt;
 static char sTrail[160];
 
 static void JobBody(void)
@@ -269,6 +313,8 @@ static void Open(int state)
 
 static void Close(void)
 {
+    NetLog("session closed by the game");
+    NetLogFlush();
     WlBackend none = NullBackend();
 
     Reap();
@@ -352,6 +398,8 @@ int CtrWl_Others(void)
 /* The link is gone: the adapter is told every other console left, and the session starts over (the search, or the connection again after a pause). */
 static void LostLink(uint32_t now)
 {
+    NetLog("link lost (socket %d, welcomed %d, sent %lu got %lu)", (int)sInet.sock, (int)sInet.welcomed, (unsigned long)sInet.sentFrames, (unsigned long)sInet.receivedFrames);
+    NetLogFlush();
     WlBackend none = NullBackend();
 
     if (sInternet)
@@ -390,6 +438,8 @@ void CtrWl_Tick(void)
                     Open(CTR_WL_ONLINE);
 #ifdef __DEVKITARM__
                     CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u (%s)", (unsigned)sInet.node, sTrail);
+                    NetLogOpen(sInet.node);
+                    NetLog("in the room as node %u, members %lx", (unsigned)sInet.node, (unsigned long)sInet.members);
 #endif
                 }
                 else
@@ -417,8 +467,11 @@ void CtrWl_Tick(void)
     {
         WlInet_Pump(&sInet);
         while (WlInet_PopEvent(&sInet, &kind, &node))
+        {
+            NetLog("node %u %s", (unsigned)node, kind == WL_INET_EVENT_LEFT ? "left" : "joined");
             if (kind == WL_INET_EVENT_LEFT)
                 WlNet_Forget(&sNet, node);
+        }
         if (!WlInet_Connected(&sInet))
             LostLink(now);
         else
@@ -426,6 +479,16 @@ void CtrWl_Tick(void)
             WlRfu_SetMembers(&sRfu, sInet.members);
             WlNet_Step(&sNet);
             WlRfu_Step(&sRfu);
+            if (now - sStatAt >= 2000)
+            {
+                sStatAt = now;
+                NetLog("members %lx sent %lu got %lu full %lu bad %lu tx %u in %u pending %u,%u,%u rfu %d slave %d",
+                       (unsigned long)sInet.members, (unsigned long)sInet.sentFrames, (unsigned long)sInet.receivedFrames,
+                       (unsigned long)sInet.lostFrames, (unsigned long)sInet.dropped, (unsigned)sInet.txLen, (unsigned)sInet.inCount,
+                       (unsigned)WlNet_Pending(&sNet, 1), (unsigned)WlNet_Pending(&sNet, 2), (unsigned)WlNet_Pending(&sNet, 3),
+                       (int)sRfu.state, (int)sRfu.slave);
+                NetLogFlush();
+            }
         }
     }
     else if (sState == CTR_WL_HOST || sState == CTR_WL_JOINED)
@@ -482,6 +545,16 @@ int CtrRfu_Command(const uint32_t *request, uint32_t *answer)
         return 2;
     }
     WL_NOTE(sNoteCommand, "wireless: command %02x", (unsigned)(request[0] & 0xffu));
+    {
+        static unsigned last = 0x100, repeats;
+        unsigned c = request[0] & 0xffu;
+
+        if (c != last || ++repeats % 300 == 0)
+            NetLog("command %02x (x%u)", c, repeats + 1);
+        if (c != last)
+            repeats = 0;
+        last = c;
+    }
     switch (request[0] & 0xffu)
     {
     case WLC_SC_START:

@@ -2,7 +2,7 @@
  * the adapter emulation and the glue (3ds_wl_glue.c), the internet radio to a relay; tools/test_wl_e2e.py runs two of these (a parent and a
  * child) against tools/wl_relay.py and checks they find each other and connect, as two players do in the Union Room.
  *
- *   rfu_game_test parent|child <relay port> <room code>
+ *   rfu_game_test parent|child|pcparent|pcchild <relay port> <room code>   (pc: both in the parent-child switching mode)
  * Prints one line a step: "EVENT <name>"; ends with "DONE" (or "TIMEOUT"). */
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@ static u8 sGameName[RFU_GAME_NAME_LENGTH + 2];
 static u8 sUserName[RFU_USER_NAME_LENGTH];
 static u16 sSerials[] = {0x0002, 0xFFFF};
 static INIT_PARAM sConfig;
-static int sIsParent;
+static int sIsParent, sSwitch;              /* sSwitch: both search as parent and child in turn, as in the Union Room */
 static volatile int sConnected, sNameSent;
 
 static void Say(const char *what)
@@ -66,7 +66,7 @@ static void Manager(u8 message, u8 param)
     {
     case LMAN_MSG_INITIALIZE_COMPLETED:
         Say("initialized");
-        rfu_LMAN_establishConnection(sIsParent ? MODE_PARENT : MODE_CHILD, 0, 240, sSerials);
+        rfu_LMAN_establishConnection(sSwitch ? MODE_P_C_SWITCH : sIsParent ? MODE_PARENT : MODE_CHILD, 0, 240, sSerials);
         break;
     case LMAN_MSG_NEW_CHILD_CONNECT_DETECTED:
         Say("child detected");
@@ -81,6 +81,8 @@ static void Manager(u8 message, u8 param)
         int i = 0;
 
         Say("parent found");
+        if (sIsParent)
+            break;                                  /* in the switching mode the other one is the one who talks */
         while (i < 4 && !(param & (1 << i)))
             ++i;
         rfu_LMAN_CHILD_connectParent(gRfuLinkStatus->partner[i].id, 240);
@@ -107,6 +109,10 @@ static void Manager(u8 message, u8 param)
 
 static void Frame(void)
 {
+    static int n;
+
+    if (getenv("E2E_TRACE") && ++n % 30 == 0)
+        fprintf(stderr, "TICK %d state %d others %d ms %d%c", n, CtrWl_State(), CtrWl_Others(), (int)rfu_getMasterSlave(), 10);
     CtrWl_Tick();
     if (sIsParent && sExchange && rfu_getMasterSlave() == AGB_CLK_MASTER)
     {
@@ -131,7 +137,8 @@ int main(int argc, char **argv)
 
     if (argc < 4)
         return 2;
-    sIsParent = !strcmp(argv[1], "parent");
+    sSwitch = !strncmp(argv[1], "pc", 2);
+    sIsParent = !strcmp(argv[1] + (sSwitch ? 2 : 0), "parent");
 #ifdef _WIN32
     {
         WSADATA wsa;
@@ -187,8 +194,12 @@ int main(int argc, char **argv)
         puts("TIMEOUT");
         return 1;
     }
-    for (frames = 0; frames < 60; ++frames)
-        Frame();                                    /* a second more: the link stays up */
+    {
+        int hold = getenv("E2E_HOLD") ? atoi(getenv("E2E_HOLD")) : 1;
+
+        for (frames = 0; frames < 60 * hold; ++frames)
+            Frame();                                /* a while more (a second unless E2E_HOLD says): the link stays up */
+    }
     printf("STATE %d others %d%c", CtrWl_State(), CtrWl_Others(), 10);
     puts("DONE");
     CtrWl_Shutdown();

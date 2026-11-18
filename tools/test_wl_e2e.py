@@ -68,39 +68,45 @@ class EndToEnd(unittest.TestCase):
             link = ['-lws2_32', '-Wl,--disable-dynamicbase', '-Wl,--image-base=0x10000000', '-Wl,--disable-high-entropy-va'] if windows else []
             subprocess.run([cc] + flags + [str(s) for s in sources] + objs + link + ['-o', str(exe)], check=True)
 
-            files = []
-            relay = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0'],
-                                     stdout=subprocess.PIPE, text=True)
-            try:
-                port = relay.stdout.readline().split()[1]
-                logs, procs = {}, {}
-                # Output goes to files: a pipe nobody reads fills up and stops the console that writes to it.
-                for role in ('parent', 'child'):
-                    logs[role] = out / (role + '.txt')
-                    files.append(open(logs[role], 'w'))
-                    procs[role] = subprocess.Popen([str(exe), role, port, 'e2e-test-room'], stdout=files[-1], stderr=subprocess.STDOUT)
-                    time.sleep(0.5)
-                for role, proc in procs.items():
-                    try:
-                        proc.wait(timeout=60)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                text = {role: logs[role].read_text(errors='replace') for role in logs}
-                for role in text:
-                    self.assertIn('DONE', text[role], role + ' did not finish:\n' + text[role][-2000:])
-                    self.assertEqual(procs[role].returncode, 0, role)
-                self.assertIn('EVENT child detected', text['parent'])
-                self.assertIn('EVENT child accepted', text['parent'])
-                self.assertIn('EVENT parent found', text['child'])
-                self.assertIn('EVENT connected to parent', text['child'])
-                self.assertIn('EVENT name sent', text['child'])
-            finally:
-                relay.kill()
-                relay.wait()
-                relay.stdout.close()
-                for f in files:
-                    f.close()
+            # Fixed roles, then both searching as parent and child in turn as in the Union Room (the second holds the link 10 s).
+            for parent, child, hold in (('parent', 'child', '1'), ('pcparent', 'pcchild', '10')):
+                self.run_pair(exe, out, parent, child, hold)
 
+    def run_pair(self, exe, out, parent, child, hold):
+        files = []
+        relay = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0'],
+                                 stdout=subprocess.PIPE, text=True)
+        try:
+            port = relay.stdout.readline().split()[1]
+            logs, procs = {}, {}
+            env = dict(os.environ, E2E_HOLD=hold)
+            # Output goes to files: a pipe nobody reads fills up and stops the console that writes to it.
+            for role in (parent, child):
+                logs[role] = out / (role + '.txt')
+                files.append(open(logs[role], 'w'))
+                procs[role] = subprocess.Popen([str(exe), role, port, 'e2e-test-room'], stdout=files[-1], stderr=subprocess.STDOUT, env=env)
+                time.sleep(0.5)
+            for role, proc in procs.items():
+                try:
+                    proc.wait(timeout=120)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            text = {role: logs[role].read_text(errors='replace') for role in logs}
+            for role in text:
+                self.assertIn('DONE', text[role], role + ' did not finish: ' + text[role][-2000:])
+                self.assertEqual(procs[role].returncode, 0, role)
+                self.assertIn('others 1', text[role], role + ' lost the other one')
+            self.assertIn('EVENT child detected', text[parent])
+            self.assertIn('EVENT child accepted', text[parent])
+            self.assertIn('EVENT parent found', text[child])
+            self.assertIn('EVENT connected to parent', text[child])
+            self.assertIn('EVENT name sent', text[child])
+        finally:
+            relay.kill()
+            relay.wait()
+            relay.stdout.close()
+            for f in files:
+                f.close()
 
 if __name__ == '__main__':
     unittest.main()

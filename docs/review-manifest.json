@@ -7530,7 +7530,7 @@
   },
   {
    "path": "tools/test_wl_e2e.py",
-   "sha256": "78fb57649cdff3246c62fab9ff20c17dc18d5a9541da49433156a50c87611e11",
+   "sha256": "f1809034c47fff970db7b4270bf580d0ae306d75cfedb500373c881be9aebda4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7546,7 +7546,7 @@
   },
   {
    "path": "3ds_port/tests/rfu_game_test.c",
-   "sha256": "568db075b6922cc690ad512a43f611bb9458c9b8c5f474d26c9c03787091e5b7",
+   "sha256": "96fa5361c2b064a0fa65edbc705e02168dc62b94b4b2bb0319a45d2b5c30c4da",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7578,7 +7578,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "67e2a400b7819988099e13acd93053490add8289f2a6da9d727a403571fb64b0",
+   "sha256": "8c8475446f958cf1cd9e343100cad0a7d307ce856c3225d631e6c6490199de83",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
