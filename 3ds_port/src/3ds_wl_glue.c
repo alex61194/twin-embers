@@ -701,9 +701,19 @@ int CtrRfu_PollSlave(uint32_t *request)
  * a millisecond's sleep lets the system's threads bring what the other consoles sent. */
 void CtrRfu_Wait(void)
 {
+    CtrWl_Idle();
+#ifdef __DEVKITARM__
+    svcSleepThread(1000000LL);
+#endif
+}
+
+/* One turn of the radio and the adapter between frames, while the console has time to spare (3ds_game_bridge.c): the GBA's interrupts
+ * came while the game waited for the next frame, so a child answers its parent at once instead of at its next frame. */
+void CtrWl_Idle(void)
+{
     int before = sWhereSaved();
 
-    if (!sSetup)
+    if (!sSetup || sState == CTR_WL_OFF)
         return;
     WL_WHERE(WL_WHERE_WAIT);
     if (sState == CTR_WL_ONLINE && WlInet_Connected(&sInet))
@@ -722,9 +732,6 @@ void CtrRfu_Wait(void)
         WlRfu_Step(&sRfu);                  /* no link: the adapter still answers (the slots lost) */
     if (CtrStwi_SlaveTick)
         CtrStwi_SlaveTick();
-#ifdef __DEVKITARM__
-    svcSleepThread(1000000LL);
-#endif
     WL_WHERE(before);
 }
 

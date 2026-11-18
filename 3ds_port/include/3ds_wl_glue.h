@@ -69,5 +69,8 @@ int CtrRfu_PollSlave(uint32_t *request);
 void CtrRfu_Reset(void);
 /* The game waits in a loop for the adapter's request (it came by interrupt on the GBA): give the radio and the adapter a turn. */
 void CtrRfu_Wait(void);
+/* One turn of the radio and the adapter (and the adapter's request to the game when it has one), for the time between frames; nothing
+ * when no session is on. */
+void CtrWl_Idle(void);
 
 #endif

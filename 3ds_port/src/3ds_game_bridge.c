@@ -748,6 +748,24 @@ void CtrGameBridge_StopWatchdog(void)
     sWatchdog = NULL;
 }
 
+/* While a wireless session is on, the spare time of a frame (until 11 ms after the last one was shown; the frame pacing waits for the rest)
+ * goes to the radio and the emulated adapter, a turn a millisecond: on the GBA the adapter's requests came by interrupt while the game
+ * waited, so a child answers its parent within the frame instead of at its next one (a parent that waited a frame ran at 20 to 30 fps). */
+static uint64_t sFrameShownTick;
+
+static void WirelessIdle(void)
+{
+    const uint64_t budget = (uint64_t)SYSCLOCK_ARM11 / 1000u * 11u;
+
+    if (CtrWl_State() == CTR_WL_OFF || CtrFastForward_Speed(&sFastForward) > 1)
+        return;                         /* no session, or turbo: the frame has no time to spare */
+    while (svcGetSystemTick() - sFrameShownTick < budget)
+    {
+        CtrWl_Idle();
+        svcSleepThread(1000000LL);
+    }
+}
+
 void VBlankIntrWait(void)
 {
     CtrWl_Tick();                   /* the emulated Wireless Adapter and its radio: once a frame, at the point the game waits for the next one */
@@ -899,7 +917,9 @@ void VBlankIntrWait(void)
      * (a swap a frame would have written the shown one before the screen took the last). */
     if (shown) {
         CtrBottom_BlitFrameEnd();
+        WirelessIdle();
         CtrVideo_Present();
+        sFrameShownTick = svcGetSystemTick();
     }
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is

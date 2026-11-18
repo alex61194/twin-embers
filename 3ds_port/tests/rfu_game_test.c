@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -48,7 +49,8 @@ static void Say(const char *what)
 
 static volatile int sExchange;
 static volatile int sParentFinished;
-static int sParentWaits;                        /* turns the parent waited for its children in the E2E_PARENT_CHANGE mode */           /* link_rfu_2.c's gRfu.parentFinished: set by the parent's callback when the adapter is done */
+static int sParentWaits;
+static unsigned sFrames;                         /* frames run, for the frame rate at the end */                        /* turns the parent waited for its children in the E2E_PARENT_CHANGE mode */           /* link_rfu_2.c's gRfu.parentFinished: set by the parent's callback when the adapter is done */
 
 /* Data both ways once linked, as link_rfu_2.c sets it up: the child sends 14 bytes on its slot, the parent 70 to its children (UNI);
  * the first byte counts frames, and each side counts the new values it reads. */
@@ -215,11 +217,34 @@ static void Frame(void)
     }
     rfu_LMAN_manager_entity((u32)rand());
     rfu_LMAN_syncVBlank();
+    /* The rest of a 60 Hz frame: idle (as the console's frame pacing does), or (E2E_IDLE) given to the radio a millisecond at a time, as
+     * 3ds_game_bridge.c does while a session is on. */
+    {
+        static uint32_t frameStart;
+        uint32_t now = (uint32_t)clock() * (1000u / CLOCKS_PER_SEC);
+
+        if (getenv("E2E_IDLE"))
+            while ((uint32_t)clock() * (1000u / CLOCKS_PER_SEC) - frameStart < 15)
+            {
+                CtrWl_Idle();
 #ifdef _WIN32
-    Sleep(17);
+                Sleep(1);
 #else
-    usleep(17000);
+                usleep(1000);
 #endif
+            }
+        else
+        {
+#ifdef _WIN32
+            Sleep(17);
+#else
+            usleep(17000);
+#endif
+        }
+        (void)now;
+        frameStart = (uint32_t)clock() * (1000u / CLOCKS_PER_SEC);
+        ++sFrames;
+    }
 }
 
 int main(int argc, char **argv)
@@ -288,9 +313,12 @@ int main(int argc, char **argv)
     }
     {
         int hold = getenv("E2E_HOLD") ? atoi(getenv("E2E_HOLD")) : 1;
+        clock_t start = clock();
+        unsigned first = sFrames;
 
         for (frames = 0; frames < 60 * hold; ++frames)
             Frame();                                /* a while more (a second unless E2E_HOLD says): the link stays up */
+        printf("FPS %.1f%c", (double)(sFrames - first) * CLOCKS_PER_SEC / (double)(clock() - start + 1), 10);
     }
     printf("STATE %d others %d%c", CtrWl_State(), CtrWl_Others(), 10);
     printf("UNI got %d NI %02x waits %d%c", sUniGot, sNiRecv, sParentWaits, 10);

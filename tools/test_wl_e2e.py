@@ -72,7 +72,7 @@ class EndToEnd(unittest.TestCase):
             # the clock over and waits in a loop for its child's answer, as link_rfu_2.c's linked parent does (it froze the contacted console
             # in the Union Room until the glue gave the adapter a turn in that loop, CtrRfu_Wait).
             for parent, child, hold, extra in (('parent', 'child', '1', {}), ('pcparent', 'pcchild', '10', {}),
-                                               ('parent', 'child', '5', {'E2E_PARENT_CHANGE': '1'})):
+                                               ('parent', 'child', '5', {'E2E_PARENT_CHANGE': '1', 'E2E_IDLE': '1'})):
                 self.run_pair(exe, out, parent, child, hold, extra)
 
     def run_pair(self, exe, out, parent, child, hold, extra):
@@ -107,6 +107,11 @@ class EndToEnd(unittest.TestCase):
             for role in text:
                 got = re.search(r'UNI got (\d+)', text[role])
                 self.assertTrue(got and int(got.group(1)) > 20, role + ' received too little data: ' + (got.group(0) if got else 'none'))
+            if extra.get('E2E_IDLE'):
+                # Both keep the frame rate while linked: the child answers in its spare time, the parent waits a few milliseconds at most.
+                for role in text:
+                    fps = re.search(r'FPS ([0-9.]+)', text[role])
+                    self.assertTrue(fps and float(fps.group(1)) > 45, role + ' ran slowly: ' + (fps.group(0) if fps else 'no rate'))
             if extra.get('E2E_PARENT_CHANGE'):
                 waits = re.search(r'waits (\d+)', text[parent])
                 self.assertTrue(waits and int(waits.group(1)) > 20, 'the parent did not get through its waits')
