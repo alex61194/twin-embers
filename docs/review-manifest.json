@@ -7546,7 +7546,7 @@
   },
   {
    "path": "tools/test_wl_e2e.py",
-   "sha256": "f1809034c47fff970db7b4270bf580d0ae306d75cfedb500373c881be9aebda4",
+   "sha256": "34ae00420cd9c7387d86f768209c9293ba692cea377390d62aeabc472371ce9b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7562,7 +7562,7 @@
   },
   {
    "path": "3ds_port/tests/rfu_game_test.c",
-   "sha256": "e7de49fa84ce09584629ab4fdf53e0cd334d7ec221f73b5cc8f9f125d2342b5b",
+   "sha256": "a362ce27d512d4da6c4a57d9ca38003f400cd5d7097d2485b7821f460da2c3c9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7570,7 +7570,7 @@
   },
   {
    "path": "patches/pokefirered/0272-rfu-emulated-adapter.json",
-   "sha256": "6e6bf7cc0ae62bf127c31ea84dbbefe6575647b060422290a4de96f67112bdc1",
+   "sha256": "31c8f5076b7618cb81dcd7f8de57a17d0c49592b78c094618b31fad7e1da13e3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7594,7 +7594,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "0700e701e00c2b27a27dce83eb7488e323644ee2977de05ddacf4203afa84d48",
+   "sha256": "4cc31ce4af436f6bad0d11e4b6de02bd6f3e455611c7dda2f6e8b7d7e7ccd4de",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7602,7 +7602,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_glue.h",
-   "sha256": "47b4da406b38ef769b2da7e7492d3bdc857a8067d205157be047087c6233fce5",
+   "sha256": "4d0e3383097a86a45b31c9c4c7e325ea63ed9ddea612a2cf209d8c98173d4405",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

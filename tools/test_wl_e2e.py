@@ -68,18 +68,21 @@ class EndToEnd(unittest.TestCase):
             link = ['-lws2_32', '-Wl,--disable-dynamicbase', '-Wl,--image-base=0x10000000', '-Wl,--disable-high-entropy-va'] if windows else []
             subprocess.run([cc] + flags + [str(s) for s in sources] + objs + link + ['-o', str(exe)], check=True)
 
-            # Fixed roles, then both searching as parent and child in turn as in the Union Room (the second holds the link 10 s).
-            for parent, child, hold in (('parent', 'child', '1'), ('pcparent', 'pcchild', '10')):
-                self.run_pair(exe, out, parent, child, hold)
+            # Fixed roles; both searching as parent and child in turn as in the Union Room (holding the link 10 s); and a parent that hands
+            # the clock over and waits in a loop for its child's answer, as link_rfu_2.c's linked parent does (it froze the contacted console
+            # in the Union Room until the glue gave the adapter a turn in that loop, CtrRfu_Wait).
+            for parent, child, hold, extra in (('parent', 'child', '1', {}), ('pcparent', 'pcchild', '10', {}),
+                                               ('parent', 'child', '5', {'E2E_PARENT_CHANGE': '1'})):
+                self.run_pair(exe, out, parent, child, hold, extra)
 
-    def run_pair(self, exe, out, parent, child, hold):
+    def run_pair(self, exe, out, parent, child, hold, extra):
         files = []
         relay = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0'],
                                  stdout=subprocess.PIPE, text=True)
         try:
             port = relay.stdout.readline().split()[1]
             logs, procs = {}, {}
-            env = dict(os.environ, E2E_HOLD=hold)
+            env = dict(os.environ, E2E_HOLD=hold, **extra)
             # Output goes to files: a pipe nobody reads fills up and stops the console that writes to it.
             for role in (parent, child):
                 logs[role] = out / (role + '.txt')
@@ -95,12 +98,18 @@ class EndToEnd(unittest.TestCase):
             for role in text:
                 self.assertIn('DONE', text[role], role + ' did not finish: ' + text[role][-2000:])
                 self.assertEqual(procs[role].returncode, 0, role)
-                self.assertIn('others 1', text[role], role + ' lost the other one')
+                self.assertNotIn('STUCK', text[role], role + ' froze waiting for the adapter')
             self.assertIn('EVENT child detected', text[parent])
             self.assertIn('EVENT child accepted', text[parent])
             self.assertIn('EVENT parent found', text[child])
             self.assertIn('EVENT connected to parent', text[child])
             self.assertIn('EVENT name sent', text[child])
+            for role in text:
+                got = re.search(r'UNI got (\d+)', text[role])
+                self.assertTrue(got and int(got.group(1)) > 20, role + ' received too little data: ' + (got.group(0) if got else 'none'))
+            if extra.get('E2E_PARENT_CHANGE'):
+                waits = re.search(r'waits (\d+)', text[parent])
+                self.assertTrue(waits and int(waits.group(1)) > 20, 'the parent did not get through its waits')
         finally:
             relay.kill()
             relay.wait()

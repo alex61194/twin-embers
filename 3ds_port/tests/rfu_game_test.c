@@ -47,6 +47,8 @@ static void Say(const char *what)
 }
 
 static volatile int sExchange;
+static volatile int sParentFinished;
+static int sParentWaits;                        /* turns the parent waited for its children in the E2E_PARENT_CHANGE mode */           /* link_rfu_2.c's gRfu.parentFinished: set by the parent's callback when the adapter is done */
 
 /* Data both ways once linked, as link_rfu_2.c sets it up: the child sends 14 bytes on its slot, the parent 70 to its children (UNI);
  * the first byte counts frames, and each side counts the new values it reads. */
@@ -77,6 +79,8 @@ static void UniCheck(const u8 *data)
 static void Msc(u16 command)
 {
     (void)command;
+    if (sIsParent)
+        sParentFinished = 1;                       /* link_rfu_2.c, MSCCallback_Parent */
     if (!sIsParent)
     {
         rfu_REQ_recvData();
@@ -160,7 +164,39 @@ static void Frame(void)
     if (getenv("E2E_TRACE") && ++n % 30 == 0)
         fprintf(stderr, "TICK %d state %d others %d ms %d%c", n, CtrWl_State(), CtrWl_Others(), (int)rfu_getMasterSlave(), 10);
     CtrWl_Tick();
-    if (sIsParent && sExchange && rfu_getMasterSlave() == AGB_CLK_MASTER)
+    if (sIsParent && sUniReady && getenv("E2E_PARENT_CHANGE") && rfu_getMasterSlave() == AGB_CLK_MASTER
+        && (gRfuLinkStatus->connSlotFlag >> sUniSlot & 1))
+    {
+        /* As link_rfu_2.c's linked parent: send and hand the clock over (RfuMain1_Parent), then wait in a loop for the adapter's answer
+         * (RfuMain2_Parent); without CtrRfu_Wait that loop never ends here, as it froze the contacted console in the Union Room. */
+        unsigned spins = 0;
+
+        sParentFinished = 0;
+        ++sParentSend[0];
+        rfu_UNI_readySendData(sUniSlot);
+        rfu_LMAN_REQ_sendData(TRUE);
+        while (!sParentFinished && (gRfuLinkStatus->connSlotFlag >> sUniSlot & 1))
+        {
+            if (++spins > 2000000)
+            {
+                printf("PARENT WAIT STUCK ms %d stwi msMode %d sending %d state %d others %d%c", (int)rfu_getMasterSlave(), (int)gSTWIStatus->msMode,
+                       (int)gSTWIStatus->sending, (int)gSTWIStatus->state, CtrWl_Others(), 10);
+                fflush(stdout);
+                exit(6);
+            }
+            if (!getenv("E2E_NO_WAIT"))
+                CtrRfu_Wait();
+        }
+        ++sParentWaits;
+        rfu_REQ_recvData();
+        rfu_waitREQComplete();
+        if (gRfuSlotStatusUNI[sUniSlot]->recv.newDataFlag)
+        {
+            UniCheck(sParentRecv[sUniSlot]);
+            rfu_UNI_clearRecvNewDataFlag(sUniSlot);
+        }
+    }
+    else if (sIsParent && sExchange && rfu_getMasterSlave() == AGB_CLK_MASTER)
     {
         /* the parent's turn, once a frame (link_rfu_2.c, RfuMain1_Parent): read, then send and hand the clock over */
         rfu_REQ_recvData();
@@ -257,7 +293,7 @@ int main(int argc, char **argv)
             Frame();                                /* a while more (a second unless E2E_HOLD says): the link stays up */
     }
     printf("STATE %d others %d%c", CtrWl_State(), CtrWl_Others(), 10);
-    printf("UNI got %d NI %02x%c", sUniGot, sNiRecv, 10);
+    printf("UNI got %d NI %02x waits %d%c", sUniGot, sNiRecv, sParentWaits, 10);
     printf("NI send state %04x fail %u err %04x phase %u | recv state %04x fail %u err %04x%c", gRfuSlotStatusNI[sUniSlot]->send.state, gRfuSlotStatusNI[sUniSlot]->send.failCounter, gRfuSlotStatusNI[sUniSlot]->send.errorCode, gRfuSlotStatusNI[sUniSlot]->send.phase, gRfuSlotStatusNI[sUniSlot]->recv.state, gRfuSlotStatusNI[sUniSlot]->recv.failCounter, gRfuSlotStatusNI[sUniSlot]->recv.errorCode, 10);
     puts("DONE");
     CtrWl_Shutdown();

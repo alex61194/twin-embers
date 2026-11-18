@@ -250,7 +250,7 @@ static void NetLogFlush(void)
 /* A watch on the game thread while in a room: when no frame has gone through CtrWl_Tick for a second, it writes down where the game was
  * (WL_WHERE_*: in which of this file's calls, after which adapter command) and flushes the log, which a frozen game never would. It runs
  * at a higher priority than the game so that a game thread that spins still lets it in. */
-enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL };
+enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL, WL_WHERE_WAIT };
 static volatile uint32_t sWatchTicks;
 static volatile int sWhere;
 static volatile unsigned sWhereCommand;
@@ -302,7 +302,7 @@ static int sWhereSaved(void) { return sWhere; }
 #define WL_WHERE(place) ((void)(place))
 #define WL_TICKED() ((void)0)
 #define WL_COMMAND(c) ((void)(c))
-enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL };
+enum { WL_WHERE_GAME, WL_WHERE_TICK, WL_WHERE_PUMP, WL_WHERE_NET, WL_WHERE_RFU, WL_WHERE_SLAVE, WL_WHERE_COMMAND, WL_WHERE_POLL, WL_WHERE_WAIT };
 static int sWhereSaved(void) { return WL_WHERE_GAME; }
 #endif
 
@@ -694,6 +694,38 @@ int CtrRfu_PollSlave(uint32_t *request)
     words = sSetup ? WlRfu_PollSlave(&sRfu, request) : 0;
     WL_WHERE(before);
     return words;
+}
+
+/* The game waits in a loop for the adapter (link_rfu_2.c, a parent that handed the clock over waits for its children's answers): on the
+ * GBA the adapter's request came by interrupt during that loop. One turn of the radio and the adapter, and the request if there is one;
+ * a millisecond's sleep lets the system's threads bring what the other consoles sent. */
+void CtrRfu_Wait(void)
+{
+    int before = sWhereSaved();
+
+    if (!sSetup)
+        return;
+    WL_WHERE(WL_WHERE_WAIT);
+    if (sState == CTR_WL_ONLINE && WlInet_Connected(&sInet))
+    {
+        WlInet_Pump(&sInet);
+        WlRfu_SetMembers(&sRfu, sInet.members);
+        WlRfu_Step(&sRfu);
+    }
+    else if ((sState == CTR_WL_HOST || sState == CTR_WL_JOINED) && sUds.active)
+    {
+        WlUds_Pump(&sUds);
+        WlRfu_SetMembers(&sRfu, sUds.members);
+        WlRfu_Step(&sRfu);
+    }
+    else
+        WlRfu_Step(&sRfu);                  /* no link: the adapter still answers (the slots lost) */
+    if (CtrStwi_SlaveTick)
+        CtrStwi_SlaveTick();
+#ifdef __DEVKITARM__
+    svcSleepThread(1000000LL);
+#endif
+    WL_WHERE(before);
 }
 
 void CtrRfu_Reset(void)

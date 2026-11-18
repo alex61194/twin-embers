@@ -67,5 +67,7 @@ void CtrWl_Shutdown(void);
 int CtrRfu_Command(const uint32_t *request, uint32_t *answer);
 int CtrRfu_PollSlave(uint32_t *request);
 void CtrRfu_Reset(void);
+/* The game waits in a loop for the adapter's request (it came by interrupt on the GBA): give the radio and the adapter a turn. */
+void CtrRfu_Wait(void);
 
 #endif
