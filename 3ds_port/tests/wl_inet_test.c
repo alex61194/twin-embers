@@ -54,6 +54,48 @@ static int Expect(WlInet *net, int kind, uint16_t node)
     return 0;
 }
 
+/* "listen <port> <code>": for tools/test_wl_inet.py, which plays the other console in Python. Joins, prints its node, waits for one
+ * frame, prints it, answers it, then listens a while longer and prints how many frames did not open. */
+static int Listen(uint16_t port, const char *code)
+{
+    static WlInet net;
+    WlBackend io;
+    uint16_t src = 0, len = 0;
+    uint8_t data[256];
+    unsigned waited = 0;
+
+#ifdef _WIN32
+    WSADATA wsa;
+
+    assert(WSAStartup(MAKEWORD(2, 2), &wsa) == 0);
+#endif
+    assert(WlInet_Connect(&net, "127.0.0.1", port, code, kBuildA, 5000));
+    printf("READY %u%c", net.node, 10);
+    fflush(stdout);
+    io = WlInet_Backend(&net);
+    while (!io.recv(io.user, &src, data, sizeof(data), &len) && waited++ < 800)
+        Sleep10();
+    assert(len > 0);
+    printf("GOT %u ", src);
+    for (unsigned i = 0; i < len; ++i)
+        printf("%02x", data[i]);
+    printf("%c", 10);
+    assert(io.send(io.user, src, "reply from c", 12));
+    for (unsigned i = 0; i < 150; ++i)
+    {
+        uint16_t s2, l2;
+
+        WlInet_Pump(&net);
+        while (io.recv(io.user, &s2, data, sizeof(data), &l2))
+            printf("MORE %u%c", s2, 10);
+        Sleep10();
+    }
+    printf("DROPPED %u%c", (unsigned)net.dropped, 10);
+    fflush(stdout);
+    WlInet_Close(&net);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     uint16_t port;
@@ -63,6 +105,8 @@ int main(int argc, char **argv)
     int gotA = 0, gotB = 0;
 
     assert(argc >= 2);
+    if (argc >= 4 && !strcmp(argv[1], "listen"))
+        return Listen((uint16_t)atoi(argv[2]), argv[3]);
     port = (uint16_t)atoi(argv[1]);
 #ifdef _WIN32
     {
@@ -71,6 +115,21 @@ int main(int argc, char **argv)
         assert(WSAStartup(MAKEWORD(2, 2), &wsa) == 0);
     }
 #endif
+
+    /* the room name is a hash of the key: it differs with the code and with the build, is 16 hex characters, and is not the code */
+    {
+        char r1[WL_INET_ROOM_MAX + 1], r2[WL_INET_ROOM_MAX + 1], r3[WL_INET_ROOM_MAX + 1], r4[WL_INET_ROOM_MAX + 1];
+        uint8_t k1[32], k2[32], k3[32], k4[32];
+
+        WlInet_Derive("TESTROOM1", kBuildA, r1, k1);
+        WlInet_Derive("TESTROOM2", kBuildA, r2, k2);
+        WlInet_Derive("TESTROOM1", kBuildB, r3, k3);
+        WlInet_Derive("TESTROOM1", kBuildA, r4, k4);
+        assert(strlen(r1) == 16 && strcmp(r1, r2) && strcmp(r1, r3) && !strcmp(r1, r4));
+        assert(memcmp(k1, k2, 32) && memcmp(k1, k3, 32) && !memcmp(k1, k4, 32));
+        for (int i = 0; i < 16; ++i)
+            assert((r1[i] >= '0' && r1[i] <= '9') || (r1[i] >= 'a' && r1[i] <= 'f'));
+    }
 
     /* the first console makes the room and is node 1; the second is node 2 and finds the first */
     assert(WlInet_Connect(&a, "127.0.0.1", port, "TESTROOM1", kBuildA, 3000));
@@ -88,11 +147,12 @@ int main(int argc, char **argv)
         WlInet_Close(&other);
     }
 
-    /* the build id of the room decides */
-    assert(!WlInet_Connect(&c, "127.0.0.1", port, "TESTROOM1", kBuildB, 3000) && c.reject == WL_INET_REJECT_BUILD);
+    /* the build id is part of the key and of the room's name: the same code with another build is another room, which cannot be
+     * entered by mistake (the relay's own build check is tried on the wire by test_wl_inet.py) */
+    assert(WlInet_Connect(&c, "127.0.0.1", port, "TESTROOM1", kBuildB, 3000) && c.node == 1 && c.members == 0);
+    WlInet_Close(&c);
     assert(!WlInet_Connect(&c, "127.0.0.1", port, "", kBuildA, 3000));
-    assert(!WlInet_Connect(&c, "127.0.0.1", port, "A-ROOM-NAME-THAT-IS-TOO-LONG", kBuildA, 3000));
-    assert(!WlInet_Connect(&c, "127.0.0.1", port, "BAD ROOM", kBuildA, 3000) && c.reject == WL_INET_REJECT_HELLO);
+    assert(!WlInet_Connect(&c, "127.0.0.1", port, "0123456789012345678901234567890123456789012345678901234567890123456789", kBuildA, 3000));
 
     /* WlNet over the two connections: 40 messages each way, in order, whole */
     ioA = WlInet_Backend(&a);

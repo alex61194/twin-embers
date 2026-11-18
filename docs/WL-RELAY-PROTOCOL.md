@@ -1,15 +1,17 @@
 # Twin Embers relay protocol, version 1
 
 Status: written 2026-11-18 together with the reference relay (`tools/wl_relay.py`) and the console's client
-(`3ds_port/src/3ds_wl_inet.c`). Tried on a computer only (`tools/test_wl_inet.py`); nothing here has run on a console or
+(`3ds_port/src/3ds_wl_inet.c`, sealing in `3ds_wl_crypto.c`). Tried on a computer only (`tools/test_wl_inet.py`,
+`tools/test_wl_crypto.py`); nothing here has run on a console or
 inside the game yet. It carries the frames of the local-wireless layer (`WlNet`, see `3ds_port/include/3ds_wl.h`)
 over the internet, so people far apart can meet in a *room* as if they stood side by side. Anyone may run a relay:
 this file is all a compatible one needs.
 
 ## Model
 
-- A **room** is named by a short code the players agree on (1 to 16 characters from `A-Z a-z 0-9 - _`). The first
-  console that asks for a code creates the room; the room is gone when its last console leaves.
+- A **room** is named by a short name (1 to 16 characters from `A-Z a-z 0-9 - _`). The first console that asks for a name
+  creates the room; the room is gone when its last console leaves. A console does not choose the name: it is made from the
+  players' secret code (see *Sealing*), so the relay never sees the code.
 - A room holds up to **16 nodes**, numbered 1 to 16 as `WlNet` expects (the lowest free number is given).
 - The relay **forwards** frames to the node they are addressed to and tells the others when somebody joins or leaves.
   It never reads, repairs or reorders what a frame carries: reliability is `WlNet`'s job (it numbers, acknowledges and
@@ -17,11 +19,10 @@ this file is all a compatible one needs.
 - A room has a **build id** (16 bytes) that the first console sets and every later one must repeat. It stops two
   different builds, versions or languages from linking (the link code sends raw structures). The relay only compares
   it.
-- There are no accounts and the relay stores nothing about people. A room code is the only access control, so a code
+- There are no accounts and the relay stores nothing about people. The secret code is the only access control, so it
   should be long enough to guess badly and shared only with friends.
-- **Frames are not encrypted by this version.** A relay (and anybody on the path) sees every frame: Pokémon, names
-  and the trade offers. A later version will seal frames between consoles with a key from the room code; until then
-  say so to players and do not pretend otherwise.
+- The relay forwards **sealed frames**: it sees who talks to whom, when, and how much, but not what is said, and it
+  cannot change a frame without the receiver noticing (see *Sealing*).
 
 ## Transport
 
@@ -48,6 +49,30 @@ DATA carries 1 to 1500 bytes; `WlNet` sends at most 160 (`WL_MAX_PAYLOAD`) plus 
 that is not in the room is dropped without a word (a radio frame to nobody is lost the same way). A console never
 receives its own frames.
 
+## Sealing
+
+Everything a console sends in a DATA message is sealed between consoles with ChaCha20-Poly1305 (RFC 8439). The relay holds
+no key. `WlInet_Derive` (`3ds_port/src/3ds_wl_inet.c`) makes both the room name and the key from the players' secret code:
+
+- `key = PBKDF2-HMAC-SHA-256(code, "TwinEmbers relay v1" + build id, 4096 iterations, 32 bytes)` (a code is 1 to 64 bytes);
+- `room name = first 16 hex characters of SHA-256("TwinEmbers room" + key)`: a hash of the key, so the name tells the relay
+  nothing it can use to read the room, and it is the name sent in HELLO.
+
+The build id is in the key, so two different builds, versions or languages derive different rooms and never meet by mistake.
+
+A sealed DATA body (after the destination node, or the source node from the relay) is `nonce[12] ciphertext tag[16]`:
+
+- the nonce is a random 8-byte session value chosen by the console for each connection, then a 32-bit little-endian count
+  of frames sealed so far (a console stops sending before the count wraps);
+- the associated data is two bytes, the sender's node and the destination node, so the relay cannot move a frame to
+  another node or give it another sender: a frame that does not open is dropped and counted (`WlInet.dropped`).
+
+What this does not do: a relay can still drop, delay or repeat frames (`WlNet` numbers, acknowledges and resends, so
+repeats and gaps are survived, and a silent relay ends the session); anyone who learns the code can join and read the
+room; a short or common code can be guessed offline by whoever sees a room name, at the cost of the PBKDF2 rounds for each
+guess (about a second on a console, far less on a computer), so use a long random code. The same code with a different
+build is simply another room.
+
 ## Rules
 
 - The first message on a connection must be a HELLO within 10 seconds, or the relay closes it.
@@ -60,8 +85,8 @@ receives its own frames.
 
 ## What a console does with it
 
-`WlInet` (`3ds_port/src/3ds_wl_inet.c`) is a `WlBackend`: its `send` queues a DATA message to a node, its `recv`
-hands back the DATA messages that arrived, `now` is a millisecond clock. `WlNet` sits on top unchanged, and the
+`WlInet` (`3ds_port/src/3ds_wl_inet.c`) is a `WlBackend`: its `send` seals a frame and queues a DATA message to a node, its
+`recv` hands back the DATA messages that arrived and opened, `now` is a millisecond clock. `WlNet` sits on top unchanged, and the
 adapter emulation (`WlRfu`) on top of that, so the Union Room sees the room's players as people standing nearby.
 The set of nodes comes from WELCOME, JOINED and LEFT (`WlInet_Members`, `WlInet_PopEvent`).
 

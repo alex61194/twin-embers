@@ -164,7 +164,7 @@ The wire format is written down in [`WL-RELAY-PROTOCOL.md`](WL-RELAY-PROTOCOL.md
 - `3ds_port/src/3ds_wl_inet.c`, the console side as a `WlBackend` over a TCP socket;
 - `tools/test_wl_inet.py` with `3ds_port/tests/wl_inet_test.c`: the client against the relay (node numbers, build check, joins and leaves, a full room, and `WlNet`'s reliable stream across two real connections), plus byte-level checks of the relay.
 
-Not done: frames are not encrypted between consoles (the protocol says so plainly), the UDS backend, the game side (librfu hook and the Cable Club and Pokémon Center scripts) and any menu to enter a room code. Nothing of it is linked into the game or has run on a console.
+Frames are sealed between consoles with ChaCha20-Poly1305 (`3ds_port/src/3ds_wl_crypto.c`, from RFC 8439, SHA-256 and PBKDF2 for the key from the room's secret code; checked against the RFC's test vector, Python's hashlib and an independent Python implementation, and a Python console that talks to the C one and is refused when it changes, moves or forges a frame). Not done: the UDS backend, the game side (librfu hook and the Cable Club and Pokémon Center scripts) and any menu to enter a room code. Nothing of it is linked into the game or has run on a console.
 
 ## Sources
 

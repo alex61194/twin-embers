@@ -3800,7 +3800,7 @@
   },
   {
    "path": "docs/LOCAL-WIRELESS-RESEARCH.md",
-   "sha256": "37ffe97127dcd3aa0e43ccb24041a810bf9d07d7e7a2a0c1d9cc4659a1a9b997",
+   "sha256": "8e738ca52f1ce25d6bb1f4eb2679e3a8f9e36c46453c1007c1dbc5b86117e9c2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7530,7 +7530,7 @@
   },
   {
    "path": "docs/WL-RELAY-PROTOCOL.md",
-   "sha256": "97cbf6883f4e87003c9cb88416920d410092f2de4074236ae7b69c332b5ab0d3",
+   "sha256": "2999acabdefe6b6882d125b3d8b6935f9263d3066d4f2c853bb91332d04d844f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7546,7 +7546,7 @@
   },
   {
    "path": "tools/test_wl_inet.py",
-   "sha256": "7e152e1fc30793c5a279a1a58a239a5325636b0548ede40d6cbd4bf50af70476",
+   "sha256": "18206b5ad7bc0dcbbddb4f79d6847632f2538509f1478f76e361f12f2b8930cb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7554,7 +7554,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_inet.h",
-   "sha256": "9cc91fb73d205823a7037efd456491ded46ffe0ee63024e800ce289cb3180d93",
+   "sha256": "4f9e29765ce5cfd24ce53fe6aeec5fe974133d336ecafc383036253a5e1a7e68",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7562,7 +7562,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "4956d9116b83b822615ee85133daac9a51cfd2b4aeba6154969678cf2730c3e8",
+   "sha256": "a41520208a2c74f2e7194f51b5157a3695b8470b58cb1566fd2c955a352d0eb6",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7570,7 +7570,39 @@
   },
   {
    "path": "3ds_port/tests/wl_inet_test.c",
-   "sha256": "a22c7a13fbfe23152a11b4dfa521a66e7cdecc02b409c320814cd40a7de950a5",
+   "sha256": "4f3af3e3fe66dcd5d94d3e744ecfb843c076e31197059aab73723bbf5a7d9662",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_crypto.h",
+   "sha256": "8b2e1141e8f8a3fdd64b8b82b46e6ddd4f4eb2633140e9e63383b9f52cbf2683",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_crypto.c",
+   "sha256": "ca98d5994f4b323951cead54072072423957128ffb70f5e6303fdfc677e8b452",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_crypto_test.c",
+   "sha256": "f59daf8a71fa447ba6364035a9ec570cc39e4fbcbdd91698bcf04f81683a0e63",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_wl_crypto.py",
+   "sha256": "197cdc5a36b36c9d85b2149b5c023381f5c2b49fb13f7472aafb155af1b5f763",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

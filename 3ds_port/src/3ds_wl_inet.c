@@ -130,16 +130,20 @@ static void Handle(WlInet *net, const uint8_t *m, uint16_t len)
         }
         break;
     case T_DATA:
-        if (len >= 2 && net->inCount < sizeof(net->in) / sizeof(net->in[0]))
+        if (len >= 2 + WL_INET_SEAL_BYTES && net->inCount < sizeof(net->in) / sizeof(net->in[0]))
         {
-            unsigned at = (net->inHead + net->inCount++) % (sizeof(net->in) / sizeof(net->in[0]));
-            uint16_t n = (uint16_t)(len - 2);
+            unsigned at = (net->inHead + net->inCount) % (sizeof(net->in) / sizeof(net->in[0]));
+            uint16_t n = (uint16_t)(len - 2 - WL_INET_SEAL_BYTES);
+            uint8_t aad[2] = {m[1], (uint8_t)net->node};   /* the sender the relay names and this node: a frame cannot be moved */
 
-            if (n > sizeof(net->in[at].data))
-                n = sizeof(net->in[at].data);
+            if (n > sizeof(net->in[at].data) || !WlAeadOpen(net->key, m + 2, aad, 2, m + 14, n, m + 14 + n, net->in[at].data))
+            {
+                ++net->dropped;
+                break;
+            }
             net->in[at].src = m[1];
             net->in[at].len = n;
-            memcpy(net->in[at].data, m + 2, n);
+            ++net->inCount;
         }
         break;
     default:
@@ -203,19 +207,69 @@ void WlInet_Pump(WlInet *net)
     Flush(net);
 }
 
-bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *room, const uint8_t build[WL_INET_BUILD_BYTES],
+static uint8_t sPool[32];
+static uint32_t sConnections;
+
+void WlInet_Seed(const void *entropy, size_t len)
+{
+    uint8_t mix[64];
+
+    memcpy(mix, sPool, 32);
+    WlSha256(entropy, len, mix + 32);
+    WlSha256(mix, sizeof(mix), sPool);
+}
+
+void WlInet_Derive(const char *code, const uint8_t build[WL_INET_BUILD_BYTES], char room[WL_INET_ROOM_MAX + 1], uint8_t key[32])
+{
+    static const char kSalt[] = "TwinEmbers relay v1";
+    static const char kRoom[] = "TwinEmbers room";
+    uint8_t salt[sizeof(kSalt) - 1 + WL_INET_BUILD_BYTES], input[sizeof(kRoom) - 1 + 32], digest[32];
+
+    memcpy(salt, kSalt, sizeof(kSalt) - 1);
+    memcpy(salt + sizeof(kSalt) - 1, build, WL_INET_BUILD_BYTES);
+    WlPbkdf2Sha256(code, strlen(code), salt, sizeof(salt), WL_INET_ITERATIONS, key, 32);
+    memcpy(input, kRoom, sizeof(kRoom) - 1);
+    memcpy(input + sizeof(kRoom) - 1, key, 32);
+    WlSha256(input, sizeof(input), digest);
+    for (int i = 0; i < 8; ++i)
+    {
+        room[i * 2] = "0123456789abcdef"[digest[i] >> 4];
+        room[i * 2 + 1] = "0123456789abcdef"[digest[i] & 15];
+    }
+    room[16] = 0;
+}
+
+bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *code, const uint8_t build[WL_INET_BUILD_BYTES],
                     uint32_t timeoutMs)
 {
+    char room[WL_INET_ROOM_MAX + 1];
+    uint8_t key[32];
     struct addrinfo hints, *list = NULL, *a;
     char service[8];
     uint8_t hello[19 + WL_INET_ROOM_MAX];
-    size_t roomLen = room ? strlen(room) : 0;
-    uint32_t start = NowMs();
+    size_t roomLen = WL_INET_ROOM_MAX, codeLen = code ? strlen(code) : 0;
+    uint32_t start;
 
     memset(net, 0, sizeof(*net));
     net->sock = -1;
-    if (roomLen < 1 || roomLen > WL_INET_ROOM_MAX)
+    if (codeLen < 1 || codeLen > WL_INET_CODE_MAX)
         return false;
+    WlInet_Derive(code, build, room, key);
+    start = NowMs();               /* after the key: the time it takes is not the connection's */
+    {
+        uint8_t mix[32 + 4 + 4 + sizeof(void *)], digest[32];
+        uint32_t now = NowMs();
+        void *where = net;
+
+        memcpy(mix, sPool, 32);
+        memcpy(mix + 32, &now, 4);
+        ++sConnections;
+        memcpy(mix + 36, &sConnections, 4);
+        memcpy(mix + 40, &where, sizeof(where));
+        WlSha256(mix, sizeof(mix), digest);
+        memcpy(net->session, digest, sizeof(net->session));
+    }
+    memcpy(net->key, key, 32);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -322,19 +376,26 @@ void WlInet_Close(WlInet *net)
     if (net->sock >= 0)
         WL_CLOSE(net->sock);
     net->sock = -1;
+    memset(net->key, 0, sizeof(net->key));      /* the key is not kept once the connection is over */
 }
 
 static bool BackendSend(void *user, uint16_t dest, const void *data, uint16_t len)
 {
     WlInet *net = user;
-    uint8_t body[WL_MAX_PAYLOAD + 32];
+    uint8_t body[1 + WL_INET_SEAL_BYTES + WL_MAX_PAYLOAD + 16], aad[2];
 
-    if (net->sock < 0 || !net->welcomed || dest < 1 || dest > WL_MAX_NODES || len > sizeof(body) - 1)
+    if (net->sock < 0 || !net->welcomed || dest < 1 || dest > WL_MAX_NODES || len > WL_MAX_PAYLOAD + 16 || net->counter == 0xffffffffu)
         return false;
     body[0] = (uint8_t)dest;
-    memcpy(body + 1, data, len);
-    if (!Queue(net, T_DATA, body, (uint16_t)(len + 1)))
+    memcpy(body + 1, net->session, 8);
+    for (int i = 0; i < 4; ++i)
+        body[9 + i] = (uint8_t)(net->counter >> (8 * i));
+    aad[0] = (uint8_t)net->node;
+    aad[1] = (uint8_t)dest;
+    WlAeadSeal(net->key, body + 1, aad, 2, data, len, body + 13, body + 13 + len);
+    if (!Queue(net, T_DATA, body, (uint16_t)(1 + WL_INET_SEAL_BYTES + len)))
         return false;
+    ++net->counter;
     Flush(net);
     return true;
 }
