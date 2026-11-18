@@ -7578,7 +7578,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "a961646806cd2e3cca62100a3f7b29775f4349fd269ebec3c907f1419563cba1",
+   "sha256": "9d1ae6fbd3c5794c92a40ec3765aae1baa4ed3a151dd12a0addeb6046bd99ad0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

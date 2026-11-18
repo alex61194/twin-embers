@@ -161,6 +161,12 @@ bool CtrWl_IsInternet(void)
     return sInternet;
 }
 
+/* What the adapter does, for port.log: the first few of each kind. */
+#ifdef __DEVKITARM__
+#define WL_NOTE(counter, ...) do { if ((counter)++ < 40) CtrLog_Write(CTR_LOG_GAME, __VA_ARGS__); } while (0)
+#else
+#define WL_NOTE(counter, ...) do { (void)(counter); } while (0)
+#endif
 static int sNoteAvailable;
 
 uint8_t CtrWl_Available(void)
@@ -188,12 +194,6 @@ uint8_t CtrWl_Available(void)
 }
 
 /* ---- the scan and the connection, on a thread of its own on the console (each blocks for seconds) ---- */
-/* What the adapter does, for port.log: the first few of each kind. */
-#ifdef __DEVKITARM__
-#define WL_NOTE(counter, ...) do { if ((counter)++ < 40) CtrLog_Write(CTR_LOG_GAME, __VA_ARGS__); } while (0)
-#else
-#define WL_NOTE(counter, ...) do { (void)(counter); } while (0)
-#endif
 static int sNoteSession, sNoteCommand, sNoteState;
 
 static int sFailStep, sFailErrno, sFailReported;
