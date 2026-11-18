@@ -317,7 +317,7 @@ static void StartSession(void)
         return;
     sState = CTR_WL_SEARCH;
     sJobState = 0;
-    sInetRetryAt = 0;
+    sInetRetryAt = NowMs();                 /* not 0: the console clock counts from 1900, and a deadline far behind it reads as one ahead */
 }
 
 static void EndSession(void)
