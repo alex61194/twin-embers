@@ -510,6 +510,23 @@ int main(int argc, char **argv)
         s.optSelected=6; strcpy(s.bar[0],"Companion"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
         s.backVisible=1; s.backEnabled=1;
         SHOT("options2");
+        /* The keypad of the private room's code over the rows: three digits typed, then a key held, then six (OK lit); each a redraw. Every
+         * key is where the hit test finds it, and nowhere else. */
+        {
+            CtrPokeTouchView p=s;
+            p.optPad.on=1; p.optPad.len=3; p.optPad.pressed=-1; strcpy(p.optPad.code,"482");
+            strcpy(p.bar[0],"Private room"); strcpy(p.bar[1],"Type six digits; your"); strcpy(p.bar[2],"friend types the same.");
+            update(&old,&p); if(dir) ppm(dir,"opt_pad");
+            p.optPad.pressed=5; update(&old,&p); if(dir) ppm(dir,"opt_pad_pressed");
+            p.optPad.pressed=-1; p.optPad.len=6; strcpy(p.optPad.code,"482913"); update(&old,&p); if(dir) ppm(dir,"opt_pad_full");
+            for(int key=0;key<PT_PAD_KEYS;++key) {
+                int found=0;
+                for(int y=0;y<240 && !found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_PadHit(x,y)==key) { found=1; break; }
+                assert(found);
+            }
+            assert(CtrPokeTouch_PadHit(0,0)==-1 && CtrPokeTouch_PadHit(319,239)==-1);
+            update(&old,&s);
+        }
 #ifdef PT_WITH_OPTIONS
         /* The real OPTIONS pages (3ds_poketouch_options.c), for a look at the sections: each through the incremental path first. */
         for(int page=0;page<CtrOptions_PageCount();++page) {

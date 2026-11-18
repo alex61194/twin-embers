@@ -38,6 +38,8 @@ static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
 /* MULTIPLAYER: online through the relay, or the console's own radio with someone nearby. */
 static const char *const sMultiplayer[] = {CTR_TR("Online", "Online", "Online"), CTR_TR("Local", "Local", "Lokal")};
+/* ONLINE ROOM: the relay's public room, or the private room of a six-digit code (typed on the keypad). */
+static const char *const sRoomKind[] = {CTR_TR("Public", "P\xC3\xBA" "blica", "\xC3\x96" "ffentlich"), CTR_TR("Private", "Privada", "Privat")};
 static const char *const sCompanion[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
 
 /* WILD POKEMON, WILD DISPLAY and AGGRESSIVE (the Wilds page): the visible wild Pokemon of the overworld (3ds_wilds_core.h). */
@@ -114,6 +116,77 @@ static void SetLocalPlay(int v)
     if (sLocalPlayHook)
         sLocalPlayHook(v & 1);              /* the radio takes it from the next session on */
 }
+/* The keypad of the private room's code (CtrPokeTouchPad): what is typed and the key under a held touch. */
+static struct {
+    int on, len, down, key, inside;
+    char code[PT_PAD_DIGITS + 1];
+} sPad;
+
+static void MultiplayerChanged(void)
+{
+    if (sLocalPlayHook)
+        sLocalPlayHook(CtrSettings_LocalPlay());    /* the radio takes the room (and the radio) from the next session on */
+}
+
+static void PadOpen(void)
+{
+    memset(&sPad, 0, sizeof(sPad));
+    sPad.on = 1;
+    sPad.key = -1;
+}
+
+static int GetRoomKind(void) { return CtrSettings_PrivateRoom(); }
+/* PRIVATE with no code yet asks for one first (the keypad; the room is private once it is OK'd); PUBLIC is at once. */
+static void SetRoomKind(int v)
+{
+    if ((v & 1) && !CtrSettings_RoomCode()[0]) {
+        PadOpen();
+        return;
+    }
+    CtrSettings_SetPrivateRoom(v & 1);
+    MultiplayerChanged();
+}
+
+int CtrOptions_PadOn(void) { return sPad.on; }
+
+static void PadKey(int key)
+{
+    if (key >= 0 && key <= 9 && sPad.len < PT_PAD_DIGITS) {
+        sPad.code[sPad.len++] = (char)('0' + key);
+        sPad.code[sPad.len] = 0;
+    } else if (key == PT_PAD_KEY_DELETE && sPad.len > 0)
+        sPad.code[--sPad.len] = 0;
+    else if (key == PT_PAD_KEY_OK && sPad.len == PT_PAD_DIGITS) {
+        CtrSettings_SetRoomCode(sPad.code);
+        CtrSettings_SetPrivateRoom(1);
+        sPad.on = 0;
+        MultiplayerChanged();
+    } else if (key == PT_PAD_KEY_CANCEL)
+        sPad.on = 0;
+}
+
+void CtrOptions_PadTouch(int touchDown, int touchActive, int key)
+{
+    if (!sPad.on)
+        return;
+    if (touchDown) {
+        sPad.down = 1;
+        sPad.key = key;
+        sPad.inside = key >= 0;
+        return;
+    }
+    if (!sPad.down)
+        return;
+    if (touchActive) {
+        sPad.inside = key >= 0 && key == sPad.key;
+        return;
+    }
+    if (sPad.inside)
+        PadKey(sPad.key);           /* on release over the key that was touched, as the rows do */
+    sPad.down = sPad.inside = 0;
+    sPad.key = -1;
+}
+
 static int GetFreeHm(void) { return !CtrSettings_FreeHm(); }
 static void SetFreeHm(int v) { CtrSettings_SetFreeHm(!(v & 1)); }
 static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
@@ -221,6 +294,8 @@ static const CtrOptionRow sRows[] = {
      NULL, NULL, NULL},
     {CTR_TR("Multiplayer", "Multijugador", "Mehrspieler"), {CTR_TR("Online: on the internet.", "Online: por internet.", "Online: \xC3\xBC" "bers Internet."),
      CTR_TR("Local: someone nearby.", "Local: alguien cerca.", "Lokal: jemand nahebei.")}, 0, sMultiplayer, NULL, GetLocalPlay, TwoCount, SetLocalPlay},
+    {CTR_TR("Online room", "Sala online", "Online-Raum"), {CTR_TR("Public: everyone online.", "P\xC3\xBA" "blica: todos online.", "\xC3\x96" "ffentlich: alle online."),
+     CTR_TR("Private: a shared code.", "Privada: con un c\xC3\xB3" "digo.", "Privat: mit einem Code.")}, 0, sRoomKind, NULL, GetRoomKind, TwoCount, SetRoomKind},
     /* Graphics, page 1: the screen and what moves on it. */
     {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menus, Yes/No", "Men\xC3\xBAs y S\xC3\xAD/No", "Men\xC3\xBC-Rahmen"), CTR_TR("box frame.", "su marco.", "und JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
     {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
@@ -284,7 +359,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 6, PAGE3 = 12, PAGE4 = 16, PAGE5 = 19, PAGE6 = 25, PAGE7 = 30 };
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 13, PAGE4 = 17, PAGE5 = 20, PAGE6 = 26, PAGE7 = 31 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
 static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
@@ -540,4 +615,28 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);
     snprintf(v->bar[1], PT_BAR_LEN, "%s", sRows[selected].description[0]);
     snprintf(v->bar[2], PT_BAR_LEN, "%s", sRows[selected].description[1]);
+    /* ONLINE ROOM in a private room: the note says its code, and that a tap on the row changes it. */
+    if (sRows[selected].get == GetRoomKind && CtrSettings_PrivateRoom()) {
+        const char *code = CtrSettings_RoomCode();
+
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.3s %.3s.", "C\xC3\xB3digo %.3s %.3s.", "Code %.3s %.3s."), code, code + 3);
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Tap the row to change it.", "Toca la fila para cambiarlo.", "Zeile antippen: neu."));
+    }
+    memset(&v->optPad, 0, sizeof(v->optPad));
+    if (sPad.on) {
+        v->optPad.on = 1;
+        v->optPad.len = (uint8_t)sPad.len;
+        v->optPad.pressed = (int8_t)(sPad.down && sPad.inside ? sPad.key : -1);
+        memcpy(v->optPad.code, sPad.code, sizeof(v->optPad.code));
+        snprintf(v->bar[0], PT_BAR_LEN, "%s", CTR_TR("Private room", "Sala privada", "Privater Raum"));
+        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("Type six digits; your", "Escribe seis cifras; tu", "Sechs Ziffern; dein"));
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("friend types the same.", "amigo pone las mismas.", "Freund tippt dieselben."));
+    }
+}
+
+/* A tap on a row's label (it only selects it): ONLINE ROOM in a private room opens the keypad for a new code. */
+void CtrOptions_Activate(int row)
+{
+    if (row >= 0 && row < ROWS && sRows[row].get == GetRoomKind && CtrSettings_PrivateRoom())
+        PadOpen();
 }

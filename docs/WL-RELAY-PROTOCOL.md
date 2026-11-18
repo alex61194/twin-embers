@@ -110,7 +110,8 @@ code=a-room-code-both-players-know
 Both players use the same relay, the same code and the same build of the game (the build is part of the key, so different builds never
 meet). Without `code=` the console joins the relay's public room (`twinembers-public`). A build made with `TWIN_RELAY=host:port` has a
 relay built in and needs no file at all. The MULTIPLAYER option (OPTIONS, Settings page) picks Online (the relay) or Local (the
-console's own radio, UDS, to find people nearby); with no relay known the console plays locally. How to run a relay on a free
+console's own radio, UDS, to find people nearby); with no relay known the console plays locally. The ONLINE ROOM option next to it picks the relay's public room or a private room: PRIVATE asks for a six-digit code on a keypad, and
+everyone who types the same code meets in the room `twinembers-private-<code>` (sealed with that code), away from the public room. How to run a relay on a free
 always-on machine: [RELAY-SERVER.md](RELAY-SERVER.md).
 
 Limits: a room holds at most 16 nodes; a relay refuses more rooms or connections than it was started with; the code is 1 to 64

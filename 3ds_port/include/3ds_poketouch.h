@@ -92,6 +92,17 @@ typedef struct {
     uint8_t tiles[512];
     uint16_t palette[16];           /* 15-bit colours, 0 clear */
 } CtrPokeTouchLook;
+
+/* The keypad over the OPTIONS rows that takes the private room's code (3ds_poketouch_options.c): six boxes for the digits typed, the keys
+ * 1-9, DELETE, 0 and OK (OK lights when the six are there), and CANCEL. */
+enum { PT_PAD_KEY_DELETE = 10, PT_PAD_KEY_OK, PT_PAD_KEY_CANCEL, PT_PAD_KEYS };
+#define PT_PAD_DIGITS 6
+typedef struct {
+    uint8_t on;
+    uint8_t len;                /* digits typed */
+    int8_t pressed;             /* the key under a held touch, or -1 */
+    char code[PT_PAD_DIGITS + 1];
+} CtrPokeTouchPad;
 /* The SAVE screen (the facts come from FireRed's save window, ctr_poketouch.h CtrSave_*): the whole
  * viewport shows the game's save information, and the contextual bar becomes the dialogue: its two or
  * three text lines on the left and, on the right of the same bar, YES / NO (SAVE_CONFIRM), nothing
@@ -446,6 +457,7 @@ typedef struct {
     uint8_t optFrameShow;       /* the selected row is FRAME: the bar shows a sample of its type ... */
     uint8_t optFrameType;       /* ... 0..9 */
     CtrPokeTouchLook optLook;   /* a look row is selected: the preview panel */
+    CtrPokeTouchPad optPad;     /* the keypad for the private room's code, over the rows while it is open */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
     uint8_t optSwitch[PT_OPT_MAX];      /* an ON/OFF row, drawn as a switch: 0 not one, 1 off, 2 on */
@@ -494,6 +506,8 @@ bool CtrPokeTouch_HitOptPage(int x, int y);
 
 /* The OPTIONS row and zone (PT_OPT_ZONE_*) under a bottom-screen pixel; false when none. */
 bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone);
+/* The keypad of the private room's code: the key at (x, y), PT_PAD_KEY_* (0..9 the digits), or -1. */
+int CtrPokeTouch_PadHit(int x, int y);
 /* On a row of `count` levels, the one under bottom-screen column `x` (the zone was not LABEL). */
 int CtrPokeTouch_OptionSegment(int x, int count);
 

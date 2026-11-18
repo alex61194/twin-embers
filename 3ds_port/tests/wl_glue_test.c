@@ -156,6 +156,14 @@ int main(void)
     assert(CtrWl_HasRelay() && !CtrWl_IsInternet());          /* local chosen: the radio */
     CtrWl_SetLocal(false);
     assert(CtrWl_IsInternet());                               /* online chosen and a relay known: the relay */
+    assert(!strcmp(sCode, "room"));
+    CtrWl_SetPrivateRoom("123456");
+    assert(!strcmp(sCode, CTR_WL_PRIVATE_ROOM "123456"));    /* a private room: the room of its code */
+    CtrWl_SetPrivateRoom("12345x");
+    assert(!strcmp(sCode, "room"));                          /* not six digits: no private room */
+    CtrWl_SetPrivateRoom("654321");
+    CtrWl_SetPrivateRoom(NULL);
+    assert(!strcmp(sCode, "room"));
     CtrWl_SetInternet(NULL, 0, NULL);
     assert(!CtrWl_HasRelay() && !CtrWl_IsInternet());         /* no relay: the radio whatever was chosen */
 

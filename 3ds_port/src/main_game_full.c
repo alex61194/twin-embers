@@ -77,10 +77,11 @@ TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
 TRACED_EXIT(ExitWireless, CtrWl_Shutdown())
 TRACED_EXIT(ExitSockets, socExit())
 
-/* The OPTIONS screen's MULTIPLAYER row: the radio takes the choice from the next session on. */
+/* The OPTIONS screen's MULTIPLAYER and ONLINE ROOM rows: the radio takes them from the next session on. */
 static void LocalPlayChanged(int local)
 {
     CtrWl_SetLocal(local != 0);
+    CtrWl_SetPrivateRoom(CtrSettings_PrivateRoom() ? CtrSettings_RoomCode() : NULL);
 }
 
 /* Consoles link when they run the same release in the same language: that is what the link layer sends raw structures of. The optional
@@ -260,7 +261,7 @@ int main(void)
      * `sdmc:/3ds/twinembers/online.cfg` with `relay=host[:port]` and `code=...` lines for another relay or a private room
      * (docs/WL-RELAY-PROTOCOL.md). The MULTIPLAYER option picks between it and the local radio; without sockets the console stays on the
      * local radio. */
-    CtrWl_SetLocal(CtrSettings_LocalPlay() != 0);
+    LocalPlayChanged(CtrSettings_LocalPlay());     /* MULTIPLAYER and ONLINE ROOM as they were left */
     CtrOptions_SetLocalPlayHook(LocalPlayChanged);
     if (!CtrWl_LoadConfig("sdmc:/3ds/twinembers/online.cfg") && CTR_WL_DEFAULT_RELAY[0])
     {

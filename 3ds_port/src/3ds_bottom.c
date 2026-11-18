@@ -3732,6 +3732,10 @@ static void ProcessOptionsTouch(const CtrInput *in)
                                                        pageRows, &relRow, &zone);
     int globalRow = base + relRow;
 
+    if (CtrOptions_PadOn()) {               /* the private room's keypad takes the touches while it is open */
+        CtrOptions_PadTouch(in->touchDown, in->touchActive, in->touchActive ? CtrPokeTouch_PadHit((int)in->touchX, (int)in->touchY) : -1);
+        return;
+    }
     if (on && CtrOptions_IsLevels(globalRow) && zone != PT_OPT_ZONE_LABEL)
         zone = PT_OPT_ZONE_SEG + CtrPokeTouch_OptionSegment((int)in->touchX, CtrOptions_Count(globalRow));
     if (in->held & 0x3ffu) {
@@ -3772,6 +3776,8 @@ static void ProcessOptionsTouch(const CtrInput *in)
         CtrOptions_Set(sOpt.row, sOpt.zone - PT_OPT_ZONE_SEG);
     else if (sOpt.inside && sOpt.zone != PT_OPT_ZONE_LABEL)
         CtrOptions_Step(sOpt.row, sOpt.zone == PT_OPT_ZONE_PREV ? -1 : 1);
+    else if (sOpt.inside)
+        CtrOptions_Activate(sOpt.row);
     sOpt.down = sOpt.inside = 0;
 }
 

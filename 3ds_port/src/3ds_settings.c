@@ -34,6 +34,8 @@ static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE 
 static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
+static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
+static char sRoomCode[7];   /* the private room's code: six digits, "" when none was set (roomcode=) */
 static int sLocalPlay;      /* MULTIPLAYER: 0 Online (the relay), 1 Local (the console's own radio) (localplay=) */
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
 static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
@@ -73,6 +75,18 @@ static int LookLine(const char *line)
             return 1;
         }
     return 0;
+}
+
+/* A room code is six digits; anything else is no code. */
+static void RoomCodeSet(const char *text)
+{
+    size_t n = 0;
+
+    while (n < 6 && text[n] >= '0' && text[n] <= '9')
+        ++n;
+    if (n == 6)
+        memcpy(sRoomCode, text, 6);
+    sRoomCode[n == 6 ? 6 : 0] = 0;
 }
 
 static void Load(void)
@@ -128,6 +142,10 @@ static void Load(void)
             sFreeHm = value != 0;
         else if (sscanf(line, "localplay=%u", &value) == 1)
             sLocalPlay = value != 0;
+        else if (sscanf(line, "privroom=%u", &value) == 1)
+            sPrivateRoom = value != 0;
+        else if (strncmp(line, "roomcode=", 9) == 0)
+            RoomCodeSet(line + 9);
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
             wildRaw = value < 1000 ? (int)value : -1;       /* settled below: an old file's 1 is NORMAL */
         else if (sscanf(line, "wildsil=%u", &value) == 1)
@@ -199,6 +217,10 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
     if (sLocalPlay && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "localplay=1\n");
+    if (sPrivateRoom && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "privroom=1\n");
+    if (sRoomCode[0] && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "roomcode=%s\n", sRoomCode);
     /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
      * wildaggro come first so that a visiblewilds that was read always had them (a lone 1 is the old format, NORMAL). */
     if ((sWildDensity || sWildSil) && length > 0 && (size_t)length < size)
@@ -422,6 +444,39 @@ void CtrSettings_SetFreeHm(int on)
         return;
     sFreeHm = on;
     Save();
+}
+
+int CtrSettings_PrivateRoom(void)
+{
+    Load();
+    return sPrivateRoom && sRoomCode[0];
+}
+
+void CtrSettings_SetPrivateRoom(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sPrivateRoom)
+        return;
+    sPrivateRoom = on;
+    Save();
+}
+
+const char *CtrSettings_RoomCode(void)
+{
+    Load();
+    return sRoomCode;
+}
+
+void CtrSettings_SetRoomCode(const char *code)
+{
+    char before[7];
+
+    Load();
+    memcpy(before, sRoomCode, sizeof(before));
+    RoomCodeSet(code ? code : "");
+    if (strcmp(before, sRoomCode))
+        Save();
 }
 
 int CtrSettings_LocalPlay(void)

@@ -44,14 +44,22 @@ static bool sInternet;                  /* this session's radio: the relay (true
 static bool sHaveRelay;                 /* a relay and a room code are known */
 static bool sLocal;                     /* the player chose local play (MULTIPLAYER: Local) */
 
+static char sRelayHost[64], sCode[WL_INET_CODE_MAX + 1];
+static char sBaseCode[WL_INET_CODE_MAX + 1];    /* the room of online.cfg or the relay's public room */
+static char sPrivateCode[8];                    /* the private room's six digits, "" for none (CtrWl_SetPrivateRoom) */
+
 /* The radio the next session uses: the relay when one is known and the player did not choose local play. Changed only between sessions:
  * a link that is up keeps its radio. */
 static void ApplyMode(void)
 {
-    if (sState == CTR_WL_OFF)
-        sInternet = sHaveRelay && !sLocal;
+    if (sState != CTR_WL_OFF)
+        return;
+    sInternet = sHaveRelay && !sLocal;
+    if (sPrivateCode[0])
+        snprintf(sCode, sizeof(sCode), "%s%s", CTR_WL_PRIVATE_ROOM, sPrivateCode);
+    else
+        memcpy(sCode, sBaseCode, sizeof(sCode));
 }
-static char sRelayHost[64], sCode[WL_INET_CODE_MAX + 1];
 static uint16_t sRelayPort = WL_INET_PORT;
 
 static uint32_t NowMs(void)
@@ -121,9 +129,21 @@ void CtrWl_SetInternet(const char *host, uint16_t port, const char *code)
         return;
     }
     memcpy(sRelayHost, host, strlen(host) + 1);
-    memcpy(sCode, code, strlen(code) + 1);
+    memcpy(sBaseCode, code, strlen(code) + 1);
     sRelayPort = port ? port : WL_INET_PORT;
     sHaveRelay = true;
+    ApplyMode();
+}
+
+void CtrWl_SetPrivateRoom(const char *digits)
+{
+    size_t n = 0;
+
+    while (digits && n < 6 && digits[n] >= '0' && digits[n] <= '9')
+        ++n;
+    if (n == 6)
+        memcpy(sPrivateCode, digits, 6);
+    sPrivateCode[n == 6 ? 6 : 0] = 0;
     ApplyMode();
 }
 

@@ -86,5 +86,10 @@ extern void CtrPokeTouch_OptionSet(int option, int value);
 
 /* Told when the player changes MULTIPLAYER (1: local play), so the radio takes it from the next session on (main_game_full.c sets it). */
 void CtrOptions_SetLocalPlayHook(void (*hook)(int local));
+/* The keypad of the private room's code (ONLINE ROOM): open, and a touch on it (the phase of the touch and the key under it, from
+ * CtrPokeTouch_PadHit, -1 for none): a key acts on release over it. A tap on a row's label: CtrOptions_Activate. */
+int CtrOptions_PadOn(void);
+void CtrOptions_PadTouch(int touchDown, int touchActive, int key);
+void CtrOptions_Activate(int row);
 
 #endif

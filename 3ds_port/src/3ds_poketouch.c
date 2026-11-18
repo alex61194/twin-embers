@@ -1172,6 +1172,77 @@ static void OptRow(int row, const CtrPokeTouchView *v)
     LhValue(boxX, wy, ww, 16, v->optValue[row], zone == PT_OPT_ZONE_PREV ? 1 : zone == PT_OPT_ZONE_NEXT ? 2 : 0);
 }
 
+/* The keypad of the private room's code, over the rows (CtrPokeTouchPad): along the top the six boxes of the digits typed (the next one
+ * underlined) and CANCEL at their right; under them the keys in three columns, 1-9 and then DELETE, 0 and OK, OK lit (flame) once the six
+ * digits are there. Cream raised keys as the rows; the key under a held touch sinks. */
+#define PAD_BOX_X (OPT_X + 4)
+#define PAD_BOX_Y (OPT_Y + 2)
+#define PAD_BOX_W 24
+#define PAD_BOX_H 22
+#define PAD_BOX_GAP 4
+#define PAD_CANCEL_X (PAD_BOX_X + PT_PAD_DIGITS * (PAD_BOX_W + PAD_BOX_GAP) + 2)
+#define PAD_CANCEL_W (OPT_X + OPT_W - 4 - PAD_CANCEL_X)
+#define PAD_KEY_X (OPT_X + 4)
+#define PAD_KEY_Y (OPT_Y + 30)
+#define PAD_KEY_W 72
+#define PAD_KEY_H 26
+#define PAD_KEY_GAP 6
+#define PAD_KEY_STEP 30
+
+static CtrPokeTouchRect PadKeyRect(int key)
+{
+    /* the keys in reading order: 1..9, then DELETE, 0, OK */
+    int slot = key >= 1 && key <= 9 ? key - 1 : key == PT_PAD_KEY_DELETE ? 9 : key == 0 ? 10 : 11;
+    CtrPokeTouchRect r = {(int16_t)(PAD_KEY_X + (slot % 3) * (PAD_KEY_W + PAD_KEY_GAP)), (int16_t)(PAD_KEY_Y + (slot / 3) * PAD_KEY_STEP),
+                          PAD_KEY_W, PAD_KEY_H};
+
+    if (key == PT_PAD_KEY_CANCEL) {
+        r.x = PAD_CANCEL_X;
+        r.y = PAD_BOX_Y;
+        r.w = PAD_CANCEL_W;
+        r.h = PAD_BOX_H;
+    }
+    return r;
+}
+
+int CtrPokeTouch_PadHit(int x, int y)
+{
+    for (int key = 0; key < PT_PAD_KEYS; ++key) {
+        CtrPokeTouchRect r = PadKeyRect(key);
+
+        if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h)
+            return key;
+    }
+    return -1;
+}
+
+static void OptPad(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchPad *p = &v->optPad;
+
+    TsBgRect(OPT_X - 2, OPT_Y - 2, OPT_W + 4, PT_OPT_MAX * OPT_STEP + 4);
+    for (int i = 0; i < PT_PAD_DIGITS; ++i) {
+        int x = PAD_BOX_X + i * (PAD_BOX_W + PAD_BOX_GAP);
+        char digit[2] = {i < p->len ? p->code[i] : 0, 0};
+
+        LlWell(x, PAD_BOX_Y, PAD_BOX_W, PAD_BOX_H);
+        if (digit[0])
+            UiText(digit, x + (PAD_BOX_W - UiTextWidth(digit, 1)) / 2, PAD_BOX_Y + 5, LH_VAL, LH_VALSH, 1, x + PAD_BOX_W);
+        else if (i == p->len)
+            UiRoundFill(x + 6, PAD_BOX_Y + PAD_BOX_H - 6, PAD_BOX_W - 12, 2, 1, LH_VAL);   /* where the next digit goes */
+    }
+    for (int key = 0; key < PT_PAD_KEYS; ++key) {
+        static const char *const digits[10] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+        CtrPokeTouchRect r = PadKeyRect(key);
+        const EmPal *pal = key == PT_PAD_KEY_OK ? (p->len == PT_PAD_DIGITS ? &kEmFlame : &kEmGrey) : &kEmCream;
+        const char *label = key <= 9 ? digits[key] : key == PT_PAD_KEY_DELETE ? CTR_TR("Delete", "Borrar", "L\xC3\xB6schen")
+                          : key == PT_PAD_KEY_OK ? "OK" : CTR_TR("Cancel", "Cancelar", "Zur\xC3\xBC" "ck");
+        int fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, p->pressed == key);
+
+        EmLabel(label, r.x, r.w, fy, r.h - COL_DEPTH, pal);
+    }
+}
+
 static void BDescribeN(const char *text, int x, int y, int width, int maxLines, uint16_t color);
 static void BDescribeSh(const char *text, int x, int y, int width, int maxLines, uint16_t color, uint16_t shadow);
 
@@ -2396,11 +2467,14 @@ static void OptionsScreen(const CtrPokeTouchView *v)
     const char *body = v->bar[1][0] ? v->bar[1] : v->bar[2];
 
     MenuBegin(v);
-    for (int pass = 0; pass < 2; ++pass)                /* the chosen row last: its ring lies on the rows next to it */
-        for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
-            if ((pass == 1) == (v->optSelected == i))
-                OptRow(i, v);
-    if (v->optLook.on)
+    if (v->optPad.on)
+        OptPad(v);                                      /* the keypad of the private room's code covers the rows */
+    else
+        for (int pass = 0; pass < 2; ++pass)            /* the chosen row last: its ring lies on the rows next to it */
+            for (int i = 0; i < v->optCount && i < PT_OPT_MAX; ++i)
+                if ((pass == 1) == (v->optSelected == i))
+                    OptRow(i, v);
+    if (v->optLook.on && !v->optPad.on)
         OptLookPanel(v);
     MenuNoteBegin();
     MenuNote(v->bar[0], body, v->optFrameShow ? v->optFrameType : -1);
