@@ -22,7 +22,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def start_relay():
-    proc = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0'],
+    proc = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0',
+                             '--max-per-address', '64'],      # every test console comes from one address
                             stdout=subprocess.PIPE, text=True)
     line = proc.stdout.readline()
     assert line.startswith('LISTEN '), line

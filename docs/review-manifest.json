@@ -7602,7 +7602,7 @@
   },
   {
    "path": "tools/wl_relay.py",
-   "sha256": "98e24d397a417b6e5861887ce83c5f0a9f38ca37d41c4195fd0ce1f1d7d74041",
+   "sha256": "0038d416f4f0dcbdfcb9b0ef19ab2d8d1c07b2b5f5f2d1955889f787059b22d5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7610,7 +7610,7 @@
   },
   {
    "path": "tools/test_wl_inet.py",
-   "sha256": "18206b5ad7bc0dcbbddb4f79d6847632f2538509f1478f76e361f12f2b8930cb",
+   "sha256": "bfe0a17d9fc166adecf0eb7ee47710821fc037c247d1aa4dd8186be6374ea328",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -21,6 +21,7 @@ MAX_MESSAGE = 2048
 MAX_DATA = 1500
 HELLO_TIMEOUT = 10.0
 IDLE_TIMEOUT = 60.0
+MAX_BACKLOG = 256 * 1024      # bytes queued for one console before the relay gives up on it
 ROOM_RE = re.compile(rb'^[A-Za-z0-9_-]{1,16}$')
 
 
@@ -50,18 +51,29 @@ class Room:
 
 
 class Relay:
-    def __init__(self, max_rooms, max_connections):
+    def __init__(self, max_rooms, max_connections, max_per_address=8, log=False):
         self.rooms = {}
         self.connections = 0
         self.max_rooms = max_rooms
         self.max_connections = max_connections
+        self.max_per_address = max_per_address
+        self.per_address = {}
+        self.log = log
+
+    def note(self, *what):
+        """One line per room event on stderr when --log is given: rooms by their name (a hash of the code), never addresses."""
+        if self.log:
+            print(time.strftime('%Y-%m-%d %H:%M:%S'), *what, file=sys.stderr, flush=True)
 
     async def handle(self, reader, writer):
-        if self.connections >= self.max_connections:
+        peer = writer.get_extra_info('peername')
+        address = peer[0] if peer else None
+        if self.connections >= self.max_connections or self.per_address.get(address, 0) >= self.max_per_address:
             writer.write(frame(REJECT, bytes([RELAY_FULL])))
             await self.close(writer)
             return
         self.connections += 1
+        self.per_address[address] = self.per_address.get(address, 0) + 1
         room = None
         node = 0
         try:
@@ -95,6 +107,7 @@ class Relay:
                 room = None
                 return
             writer.write(frame(WELCOME, struct.pack('<BI', node, room.mask_without(node))))
+            self.note('room', code.decode(), 'node', node, 'joined;', len(room.nodes) + 1, 'in the room,', self.connections, 'connected')
             others = list(room.nodes.values())
             room.nodes[node] = writer
             for other in others:
@@ -114,6 +127,11 @@ class Relay:
             pass
         finally:
             self.connections -= 1
+            self.per_address[address] -= 1
+            if not self.per_address[address]:
+                del self.per_address[address]
+            if room is not None and node:
+                self.note('room', room.code.decode(), 'node', node, 'left')
             if room is not None and node and room.nodes.get(node) is writer:
                 del room.nodes[node]
                 for other in list(room.nodes.values()):
@@ -133,6 +151,9 @@ class Relay:
     @staticmethod
     def send(writer, data):
         if writer.is_closing():
+            return
+        if writer.transport.get_write_buffer_size() > MAX_BACKLOG:
+            writer.close()          # a console that stopped reading: its queue would grow without end
             return
         try:
             writer.write(data)
@@ -156,7 +177,7 @@ class Relay:
 
 
 async def serve(args):
-    relay = Relay(args.max_rooms, args.max_connections)
+    relay = Relay(args.max_rooms, args.max_connections, args.max_per_address, args.log)
     server = await asyncio.start_server(relay.handle, args.host, args.port)
     port = server.sockets[0].getsockname()[1]
     print('LISTEN %d' % port, flush=True)
@@ -170,6 +191,8 @@ def main():
     ap.add_argument('--port', type=int, default=47311, help='0 picks a free port (printed as LISTEN <port>)')
     ap.add_argument('--max-rooms', type=int, default=256)
     ap.add_argument('--max-connections', type=int, default=1024)
+    ap.add_argument('--max-per-address', type=int, default=8, help='connections one address may hold at once')
+    ap.add_argument('--log', action='store_true', help='a line on stderr per console joining or leaving (rooms by name, no addresses)')
     args = ap.parse_args()
     try:
         asyncio.run(serve(args))
