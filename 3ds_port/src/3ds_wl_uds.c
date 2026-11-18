@@ -3,7 +3,7 @@
 
 #include "3ds_wl_uds.h"
 
-#ifdef __3DS__
+#ifdef __DEVKITARM__
 #include <3ds/os.h>
 #else
 #include <time.h>
@@ -18,7 +18,7 @@
 
 static uint32_t NowMs(void)
 {
-#ifdef __3DS__
+#ifdef __DEVKITARM__
     return (uint32_t)osGetTime();
 #else
     struct timespec ts;

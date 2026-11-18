@@ -4,10 +4,13 @@
 #include <string.h>
 
 #include "3ds_wl_glue.h"
+#ifdef __DEVKITARM__
+#include "3ds_log.h"
+#endif
 #include "3ds_wl_inet.h"
 #include "3ds_wl_uds.h"
 
-#ifdef __3DS__
+#ifdef __DEVKITARM__
 #include <3ds/os.h>
 #include <3ds/thread.h>
 #else
@@ -40,7 +43,7 @@ static uint16_t sRelayPort = WL_INET_PORT;
 
 static uint32_t NowMs(void)
 {
-#ifdef __3DS__
+#ifdef __DEVKITARM__
     return (uint32_t)osGetTime();
 #else
     struct timespec ts;
@@ -182,16 +185,22 @@ uint8_t CtrWl_Available(void)
 }
 
 /* ---- the scan and the connection, on a thread of its own on the console (each blocks for seconds) ---- */
+static int sFailStep, sFailErrno, sFailReported;
+
 static void JobBody(void)
 {
     if (sInternet)
+    {
         sConnected = WlInet_Connect(&sInet, sRelayHost, sRelayPort, sCode, sBuild, 8000);
+        sFailStep = sInet.failStep;
+        sFailErrno = sInet.failErrno;
+    }
     else
         sFound = WlUds_Scan(&sUds, sHosts, WL_UDS_SCAN_HOSTS);
     sJobState = 2;
 }
 
-#ifdef __3DS__
+#ifdef __DEVKITARM__
 static Thread sThread;
 
 static void JobMain(void *unused)
@@ -214,7 +223,7 @@ static void StartJob(void)
 {
     Reap();
     sJobState = 1;
-    sThread = threadCreate(JobMain, NULL, 0x4000, 0x31, -2, false);
+    sThread = threadCreate(JobMain, NULL, 0x10000, 0x31, -2, false);
     if (!sThread)
         JobBody();                          /* no thread to be had: the frame waits */
 }
@@ -355,9 +364,21 @@ void CtrWl_Tick(void)
             if (sInternet)
             {
                 if (sConnected)
+                {
                     Open(CTR_WL_ONLINE);
+#ifdef __DEVKITARM__
+                    CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u", (unsigned)sInet.node);
+#endif
+                }
                 else
-                    sInetRetryAt = now + CTR_WL_RECONNECT_MS;       /* the relay is out of reach: again in a while, for as long as the game wants the adapter */
+                {
+                    sInetRetryAt = now + CTR_WL_RECONNECT_MS;
+#ifdef __DEVKITARM__
+                    if (sFailReported < 5)      /* the first few only: a relay that is down would fill the log */
+                        CtrLog_Write(CTR_LOG_GAME, "internet play: no connection (step %d, error %d)", sFailStep, sFailErrno);
+#endif
+                    ++sFailReported;
+                }       /* the relay is out of reach: again in a while, for as long as the game wants the adapter */
             }
             else
             {

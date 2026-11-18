@@ -10,7 +10,7 @@ typedef int WlLen;
 #define WL_WOULD_BLOCK (WSAGetLastError() == WSAEWOULDBLOCK)
 #define SK(s) ((SOCKET)(s))
 #define WL_CLOSE(s) closesocket((SOCKET)(s))
-#elif defined(__3DS__)
+#elif defined(__DEVKITARM__)
 #include <3ds/os.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -20,7 +20,8 @@ typedef int WlLen;
 #include <sys/time.h>
 #include <unistd.h>
 typedef ssize_t WlLen;
-#define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK)
+/* The console's socket service can answer a send right after a connect with "in progress" or "not connected yet": not an error. */
+#define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == ENOTCONN)
 #define SK(s) ((int)(s))
 #define WL_CLOSE(s) close((int)(s))
 #else
@@ -33,7 +34,8 @@ typedef ssize_t WlLen;
 #include <time.h>
 #include <unistd.h>
 typedef ssize_t WlLen;
-#define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK)
+/* The console's socket service can answer a send right after a connect with "in progress" or "not connected yet": not an error. */
+#define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == ENOTCONN)
 #define SK(s) ((int)(s))
 #define WL_CLOSE(s) close((int)(s))
 #endif
@@ -47,7 +49,7 @@ static uint32_t NowMs(void)
 {
 #ifdef _WIN32
     return (uint32_t)GetTickCount64();
-#elif defined(__3DS__)
+#elif defined(__DEVKITARM__)
     return (uint32_t)osGetTime();
 #else
     struct timespec ts;
@@ -67,6 +69,15 @@ static void SetNonBlocking(intptr_t s, bool on)
     int flags = fcntl(SK(s), F_GETFL, 0);
 
     fcntl(SK(s), F_SETFL, on ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK));
+#endif
+}
+
+static int LastError(void)
+{
+#ifdef _WIN32
+    return WSAGetLastError();
+#else
+    return errno;
 #endif
 }
 
@@ -115,7 +126,7 @@ static void Event(WlInet *net, uint8_t kind, uint8_t node)
     net->events[at].node = node;
 }
 
-static void Handle(WlInet *net, const uint8_t *m, uint16_t len)
+static void HandleMessage(WlInet *net, const uint8_t *m, uint16_t len)
 {
     switch (m[0])
     {
@@ -184,7 +195,7 @@ static void Parse(WlInet *net)
         }
         if ((unsigned)(net->rxLen - at) < 2u + length)
             break;
-        Handle(net, net->rx + at + 2, length);
+        HandleMessage(net, net->rx + at + 2, length);
         at = (uint16_t)(at + 2 + length);
     }
     if (at)
@@ -302,7 +313,10 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
         service[i] = 0;
     }
     if (getaddrinfo(host, service, &hints, &list) != 0)
+    {
+        net->failStep = 1;
         return false;
+    }
     for (a = list; a && net->sock < 0; a = a->ai_next)
     {
         intptr_t s = (intptr_t)socket(a->ai_family, a->ai_socktype, a->ai_protocol);
@@ -325,6 +339,8 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
 
             if (!pending)
             {
+                net->failStep = 2;
+                net->failErrno = LastError();
                 WL_CLOSE(s);
                 continue;
             }
@@ -332,9 +348,19 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
             FD_SET(SK(s), &wr);
             tv.tv_sec = (long)(left / 1000);
             tv.tv_usec = (long)(left % 1000) * 1000;
-            if (select((int)s + 1, NULL, &wr, NULL, &tv) <= 0 || getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen) != 0
-                || err != 0)
+            /* Whether the connection came up is what the error of the socket says; a system that cannot say (getsockopt failing) is
+             * taken at the word of select: the first send tells. */
+            if (select((int)s + 1, NULL, &wr, NULL, &tv) <= 0)
             {
+                net->failStep = 3;
+                net->failErrno = LastError();
+                WL_CLOSE(s);
+                continue;
+            }
+            if (getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen) == 0 && err != 0)
+            {
+                net->failStep = 4;
+                net->failErrno = err;
                 WL_CLOSE(s);
                 continue;
             }
@@ -343,7 +369,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     }
     freeaddrinfo(list);
     if (net->sock < 0)
-        return false;
+        return false;                   /* failStep says where */
     hello[0] = VERSION;
     memcpy(hello + 1, build, WL_INET_BUILD_BYTES);
     hello[17] = (uint8_t)roomLen;
@@ -357,6 +383,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
 
         if (NowMs() - start >= timeoutMs)
         {
+            net->failStep = 5;
             WlInet_Close(net);
             return false;
         }
@@ -367,6 +394,8 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     }
     if (net->reject || !net->welcomed)
     {
+        net->failStep = net->reject ? 6 : 7;     /* 7: the connection ended before the welcome */
+        net->failErrno = net->reject;
         WlInet_Close(net);
         return false;
     }

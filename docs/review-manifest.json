@@ -7578,7 +7578,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "4558e5d80ce5398e716bdf2c27e4356be8202bb72007d28c6b7e28439ee51022",
+   "sha256": "667672feec16b72f1ead7d0f158a65cfe0dcf61482671c028fe3322aa305b245",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7618,7 +7618,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_inet.h",
-   "sha256": "a40b89c77b9071f7df3fea6144ab3874eaf26f15c308f7568b25490062e230b9",
+   "sha256": "b9288269400818369a638d9585b3374bab42208608b76a5ab291bdfaa2b3cbd3",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7626,7 +7626,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "88f8fefcbb858cbd58839ab3c2b9fee2a5bed09474aa0ab5b17b222a8a24ec90",
+   "sha256": "01e547e2879039d374dd4806e5bbfe96cb191c32e8ee919044a1684401e04ecd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7682,7 +7682,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_uds.c",
-   "sha256": "eda78384e59f5cbed9b56c9759e89ebcef75ec40e627b0c922633ea15db3d153",
+   "sha256": "cec56e90b8572cf376149cd4fdd6b5b49f3463636155b9651d9e235d428273ea",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
