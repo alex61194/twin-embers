@@ -7529,6 +7529,22 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/relay-server/install.py",
+   "sha256": "a1ae98e210892e6f9d6974b3e1ab7512bdb5bff6b74ee75665c32c2a74487db5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/RELAY-SERVER.md",
+   "sha256": "a9909255b25944d6eeaa04b762e5ad6aa6d7a6b1e54693655374169f2a5ad033",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_wl_e2e.py",
    "sha256": "f1809034c47fff970db7b4270bf580d0ae306d75cfedb500373c881be9aebda4",
    "review_status": "reviewed",
@@ -7594,7 +7610,7 @@
   },
   {
    "path": "docs/WL-RELAY-PROTOCOL.md",
-   "sha256": "46980809a695e731551b0b5b1d2dab2e32626c7a950bb754ada577daddc39332",
+   "sha256": "53eadb64cc65364e3ba7c1a503e3509e7ef0259e32208860b227b6af4c26f984",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
