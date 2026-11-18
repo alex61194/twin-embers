@@ -156,6 +156,16 @@ internet with no code of ours. Only real consoles need the relay.
 **Suggested order.** Finish local play (UDS) first, test it in Azahar, then add the internet backend and a reference
 relay; the relay's wire format is worth writing down early so other people can host compatible ones.
 
+## Status of the internet backend (2026-11-18)
+
+The wire format is written down in [`WL-RELAY-PROTOCOL.md`](WL-RELAY-PROTOCOL.md). Three pieces exist and are tested on a computer only:
+
+- `tools/wl_relay.py`, a reference relay (rooms of up to 16 nodes, a build id per room, joins and leaves, keep-alive; standard library only);
+- `3ds_port/src/3ds_wl_inet.c`, the console side as a `WlBackend` over a TCP socket;
+- `tools/test_wl_inet.py` with `3ds_port/tests/wl_inet_test.c`: the client against the relay (node numbers, build check, joins and leaves, a full room, and `WlNet`'s reliable stream across two real connections), plus byte-level checks of the relay.
+
+Not done: frames are not encrypted between consoles (the protocol says so plainly), the UDS backend, the game side (librfu hook and the Cable Club and Pokémon Center scripts) and any menu to enter a room code. Nothing of it is linked into the game or has run on a console.
+
 ## Sources
 
 - Emerald 3DS pull request #76, "Local wireless play between 3DS systems":
