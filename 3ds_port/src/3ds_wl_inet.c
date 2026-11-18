@@ -81,6 +81,17 @@ static int LastError(void)
 #endif
 }
 
+/* What a connection did, step by step (code, value), for a log: the console's socket service is not something a computer can show. */
+static void Trail(WlInet *net, int code, int value)
+{
+    if (net->trailLen < (int)(sizeof(net->trail) / sizeof(net->trail[0])))
+    {
+        net->trail[net->trailLen][0] = code;
+        net->trail[net->trailLen][1] = value;
+        ++net->trailLen;
+    }
+}
+
 /* Queue one message (type and body) for sending. False when the queue cannot hold it. */
 static bool Queue(WlInet *net, uint8_t type, const void *body, uint16_t len)
 {
@@ -284,6 +295,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     if (codeLen < 1 || codeLen > WL_INET_CODE_MAX)
         return false;
     WlInet_Derive(code, build, room, key);
+    Trail(net, 10, 0);
     start = NowMs();               /* after the key: the time it takes is not the connection's */
     {
         uint8_t mix[32 + 4 + 4 + sizeof(void *)], digest[32];
@@ -312,10 +324,15 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
             service[i++] = (char)('0' + digits[--n]);
         service[i] = 0;
     }
-    if (getaddrinfo(host, service, &hints, &list) != 0)
     {
-        net->failStep = 1;
-        return false;
+        int rc = getaddrinfo(host, service, &hints, &list);
+
+        Trail(net, 11, rc);
+        if (rc != 0)
+        {
+            net->failStep = 1;
+            return false;
+        }
     }
     for (a = list; a && net->sock < 0; a = a->ai_next)
     {
@@ -324,6 +341,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
         struct timeval tv;
         uint32_t left = timeoutMs > NowMs() - start ? timeoutMs - (NowMs() - start) : 0;
 
+        Trail(net, 12, (int)s);
         if (s < 0)
             continue;
         SetNonBlocking(s, true);
@@ -334,9 +352,10 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
 #else
             bool pending = errno == EINPROGRESS;
 #endif
-            int err = 0;
+            int err = 0, ready, rc;
             socklen_t errLen = sizeof(err);
 
+            Trail(net, 13, LastError());
             if (!pending)
             {
                 net->failStep = 2;
@@ -350,14 +369,18 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
             tv.tv_usec = (long)(left % 1000) * 1000;
             /* Whether the connection came up is what the error of the socket says; a system that cannot say (getsockopt failing) is
              * taken at the word of select: the first send tells. */
-            if (select((int)s + 1, NULL, &wr, NULL, &tv) <= 0)
+            ready = select((int)s + 1, NULL, &wr, NULL, &tv);
+            Trail(net, 14, ready);
+            if (ready <= 0)
             {
                 net->failStep = 3;
                 net->failErrno = LastError();
                 WL_CLOSE(s);
                 continue;
             }
-            if (getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen) == 0 && err != 0)
+            rc = getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen);
+            Trail(net, 15, rc * 1000 + err);
+            if (rc == 0 && err != 0)
             {
                 net->failStep = 4;
                 net->failErrno = err;
@@ -376,6 +399,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     memcpy(hello + 18, room, roomLen);
     Queue(net, T_HELLO, hello, (uint16_t)(18 + roomLen));
     Flush(net);
+    Trail(net, 16, net->txLen * 1000 + (net->sock < 0 ? 1 : 0));
     while (net->sock >= 0 && !net->welcomed && !net->reject)
     {
         fd_set rd;
@@ -420,6 +444,8 @@ bool WlInet_Connected(const WlInet *net)
 
 void WlInet_Close(WlInet *net)
 {
+    if (net->sock >= 0)
+        Trail(net, 18, LastError());
     if (net->sock >= 0)
         WL_CLOSE(net->sock);
     net->sock = -1;

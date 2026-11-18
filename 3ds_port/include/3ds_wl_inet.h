@@ -48,6 +48,8 @@ typedef struct WlInet {
     uint8_t eventHead, eventCount;
     struct { uint16_t src, len; uint8_t data[WL_MAX_PAYLOAD + 16]; } in[48];   /* opened frames */
     uint8_t inHead, inCount;
+    int trail[12][2], trailLen;    /* the steps of the last connection (code, value): 10 key made, 11 lookup, 12 socket, 13 connect error, 14 select,
+                                       15 socket error, 16 hello sent (bytes left * 1000 + closed), 18 closed (error) */
     int failStep, failErrno;        /* why the last WlInet_Connect failed: 1 name lookup, 2 connect, 3 wait for the connection, 4 refused,
                                        5 no welcome in time, 6 the relay refused (failErrno: its reason), 7 closed before the welcome */
 } WlInet;

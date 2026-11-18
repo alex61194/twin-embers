@@ -186,6 +186,7 @@ uint8_t CtrWl_Available(void)
 
 /* ---- the scan and the connection, on a thread of its own on the console (each blocks for seconds) ---- */
 static int sFailStep, sFailErrno, sFailReported;
+static char sTrail[160];
 
 static void JobBody(void)
 {
@@ -194,6 +195,13 @@ static void JobBody(void)
         sConnected = WlInet_Connect(&sInet, sRelayHost, sRelayPort, sCode, sBuild, 8000);
         sFailStep = sInet.failStep;
         sFailErrno = sInet.failErrno;
+        sTrail[0] = 0;
+        for (int i = 0; i < sInet.trailLen; ++i)
+        {
+            size_t used = strlen(sTrail);
+
+            snprintf(sTrail + used, sizeof(sTrail) - used, "%d:%d ", sInet.trail[i][0], sInet.trail[i][1]);
+        }
     }
     else
         sFound = WlUds_Scan(&sUds, sHosts, WL_UDS_SCAN_HOSTS);
@@ -367,7 +375,7 @@ void CtrWl_Tick(void)
                 {
                     Open(CTR_WL_ONLINE);
 #ifdef __DEVKITARM__
-                    CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u", (unsigned)sInet.node);
+                    CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u (%s)", (unsigned)sInet.node, sTrail);
 #endif
                 }
                 else
@@ -375,7 +383,7 @@ void CtrWl_Tick(void)
                     sInetRetryAt = now + CTR_WL_RECONNECT_MS;
 #ifdef __DEVKITARM__
                     if (sFailReported < 5)      /* the first few only: a relay that is down would fill the log */
-                        CtrLog_Write(CTR_LOG_GAME, "internet play: no connection (step %d, error %d)", sFailStep, sFailErrno);
+                        CtrLog_Write(CTR_LOG_GAME, "internet play: no connection (step %d, error %d; %s)", sFailStep, sFailErrno, sTrail);
 #endif
                     ++sFailReported;
                 }       /* the relay is out of reach: again in a while, for as long as the game wants the adapter */
