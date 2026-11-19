@@ -476,18 +476,28 @@ int main(int argc, char **argv)
             strcpy(b3.bag.selName,"Potion"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
             update(&o3,&b3); if(dir) ppm(dir,"bag_list");
             /* The rail is a slider: the arrows are their buttons, the rail between them is hit anywhere, and its target never goes back. */
+            if(!sStyleBall) {
             assert( BagHit36(&b3,230,150)==PT_BAG_HIT_DOWN &&  BagHit36(&b3,230,40)==-1);
             assert( BagHit36(&b3,230,70)==PT_BAG_HIT_RAIL &&  BagHit36(&b3,230,130)==PT_BAG_HIT_RAIL);
             { int last=-1; for(int y=50;y<=145;++y){ int t= BagRail36(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
               assert( BagRail36(&b3.bag,40)==0 &&  BagRail36(&b3.bag,150)==b3.bag.count); }
+            } else {
+              /* Poke Ball: the Bag on the whole lower screen, its own rectangles (raw lower-screen coordinates). */
+              assert(CtrPokeTouch_BagHit(&b3,20,40)==PT_BAG_HIT_ROW && CtrPokeTouch_BagHit(&b3,20,134)==PT_BAG_HIT_ROW+4 && CtrPokeTouch_BagHit(&b3,60,12)==PT_BAG_HIT_TAB);
+              assert(CtrPokeTouch_BagHit(&b3,150,12)==PT_BAG_HIT_TAB+1 && CtrPokeTouch_BagHit(&b3,270,170)==PT_BAG_HIT_QTY_CANCEL);
+              assert(CtrPokeTouch_BagHit(&b3,260,130)==PT_BAG_HIT_DOWN && CtrPokeTouch_BagHit(&b3,260,40)==-1 && CtrPokeTouch_BagHit(&b3,260,90)==PT_BAG_HIT_RAIL);
+              assert(CtrPokeTouch_HitTest(10,100)==PT_NONE && CtrPokeTouch_HitBack(270,170) && !CtrPokeTouch_HitBack(10,10) && sBallFull);
+              { int last=-1; for(int y=58;y<=121;++y){ int t=CtrPokeTouch_BagRailTarget(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
+                assert(CtrPokeTouch_BagRailTarget(&b3.bag,58)==0 && CtrPokeTouch_BagRailTarget(&b3.bag,122)==b3.bag.count); }
+            }
             /* A mart's BUY list, the key items with a shortcut, and an item's menu: more states to look at (and to keep drawing without a fault). */
-            { CtrPokeTouchView b4=b3; b4.bag.kind=PT_BAG_KIND_SHOP; strcpy(b4.bag.title,"BUY"); b4.bag.money=12400; b4.bag.use=PT_BAG_USE_FIELD; b4.bag.showOwned=1; b4.bag.owned=3;
+            { const CtrPokeTouchView base=b3; CtrPokeTouchView b4=b3; b4.bag.kind=PT_BAG_KIND_SHOP; strcpy(b4.bag.title,"BUY"); b4.bag.money=12400; b4.bag.use=PT_BAG_USE_FIELD; b4.bag.showOwned=1; b4.bag.owned=3;
               for(int i=0;i<PT_BAG_ROWS;++i) b4.bag.row[i].price=(uint16_t)(300+i*400);
               update(&b3,&b4); if(dir) ppm(dir,"bag_shop");
-              b4=b3; b4.bag.pocket=1; b4.bag.regX=b4.bag.row[1].item; b4.bag.cursor=2; update(&b3,&b4); if(dir) ppm(dir,"bag_keys");
-              b4=b3; b4.bag.state=PT_BAG_STATE_ACTIONS; b4.bag.menuCount=4; b4.bag.menuCursor=1; strcpy(b4.bag.menuName[0],"USE"); strcpy(b4.bag.menuName[1],"GIVE"); strcpy(b4.bag.menuName[2],"TOSS"); strcpy(b4.bag.menuName[3],"CANCEL");
+              b4=base; b4.bag.pocket=1; b4.bag.regX=b4.bag.row[1].item; b4.bag.cursor=2; update(&b3,&b4); if(dir) ppm(dir,"bag_keys");
+              b4=base; b4.bag.state=PT_BAG_STATE_ACTIONS; b4.bag.menuCount=4; b4.bag.menuCursor=1; strcpy(b4.bag.menuName[0],"USE"); strcpy(b4.bag.menuName[1],"GIVE"); strcpy(b4.bag.menuName[2],"TOSS"); strcpy(b4.bag.menuName[3],"CANCEL");
               update(&b3,&b4); if(dir) ppm(dir,"bag_menu");
-              update(&b4,&b3); }
+              b3=base; update(&b4,&b3); }
             old=b3;      /* the canvas holds the Bag now: the next update's old view is the one on the screen */
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;

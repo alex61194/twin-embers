@@ -1730,6 +1730,8 @@ static void Button(int id, const CtrPokeTouchView *v)
 
 int CtrPokeTouch_HitTest(int x, int y)
 {
+    if (sBallFull)
+        return PT_NONE;                                 /* a whole-screen view has no side columns */
     for (int i = 0; i < PT_COUNT; ++i) {
         const CtrPokeTouchRect *r = &gCtrPokeTouchRects[i];
         if (x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h)
@@ -1769,6 +1771,15 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 
 /* Whether the view is HOME with nothing over the map: the layout with the map in the middle. */
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
+/* The Poke Ball Bag (and its cases, a mart, the item PC) takes the whole lower screen. */
+static int BallBagActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->bag.on && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on && !v->dex.on && !v->card.on
+        && !v->learn.on && !v->relearn.on && !v->mail.on && !v->choice.on && !v->box.on;
+}
+
+static void BallBagScreen(const CtrPokeTouchView *v);
+
 static int NewMenu(const CtrPokeTouchView *v)
 {
     return ((v->save || v->options || v->bag.on || v->dex.on || v->card.on || v->learn.on || v->relearn.on || v->mail.on || v->choice.on
@@ -2237,7 +2248,8 @@ static void BackTop(const CtrPokeTouchView *v)
 
 bool CtrPokeTouch_HitBack(int x, int y)
 {
-    const CtrPokeTouchRect *r = sLayoutHome ? &sHomeBack : &gCtrPokeTouchBack;
+    static const CtrPokeTouchRect ballExit = {238, 146, 76, 38};
+    const CtrPokeTouchRect *r = sBallFull ? &ballExit : sLayoutHome ? &sHomeBack : &gCtrPokeTouchBack;
 
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
 }
@@ -2540,6 +2552,12 @@ static void PictureScreen(const CtrPokeTouchView *v)
 static void MenuScreen(const CtrPokeTouchView *v, int full)
 {
     sMenuFull = full;
+    sBallFull = BallBagActive(v);
+    if (sBallFull) {
+        BallBagScreen(v);
+        sMenuFull = 1;
+        return;
+    }
     if (v->viewport)
         PictureScreen(v);
     else if (v->options)
@@ -2585,6 +2603,7 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
     sKeepBg = 0;
+    sBallFull = BallBagActive(v);
     if (NewMenu(v)) {
         static CtrPokeTouchView shown;
 
@@ -2652,10 +2671,16 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
+    sBallFull = BallBagActive(v);
     if (NewMenu(v)) {
         static CtrPokeTouchView a, b;
 
         MenuNormalize(&b, v);
+        if (BallBagActive(v) || BallBagActive(old)) {   /* a whole-screen view: drawn again as a whole when anything changes */
+            MenuScreen(&b, 1);
+            CtrDirty_Add(dirty, 0, 0, W, H);
+            return;
+        }
         if (!NewMenu(old) || MenuKind(old) != MenuKind(v)) {
             MenuScreen(&b, 1);
             CtrDirty_Add(dirty, 0, 0, W, H);

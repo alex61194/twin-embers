@@ -14,6 +14,7 @@ static uint16_t TsGet(int x, int y)
 static uint16_t sTsBg[W * H];
 static int sTsBgReady;
 static int sStyleBall;                              /* 1: the Poke Ball style (TsApplyStyle) */
+static int sBallFull;                               /* 1: a Poke Ball view of the whole lower screen is up: no HOME layout, no side columns, its own BACK */
 
 static void TsBgPrepare(void)
 {
@@ -149,6 +150,17 @@ static void TsDisc(int cx, int cy, int r, uint16_t c)
         if (w > 0 || dy == 0)
             UiRoundFill(cx - w, y, 2 * w + 1, 1, 0, c);
     }
+}
+
+/* The Poke Ball ground of a whole-screen view: the red backdrop above the band (y .. y + 8, dark), white under it, a disc at its middle. */
+static void TsBallGround(int by)
+{
+    TsBgRect(0, 0, W, by);
+    UiRoundFill(0, by - 1, W, 1, 0, UI_RGB(120, 20, 24));
+    UiRoundFill(0, by, W, 8, 0, BL_BAND);
+    UiRoundFill(0, by + 8, W, H - by - 8, 0, BL_WHITE);
+    TsDisc(W / 2, by + 4, 9, BL_WHITE);
+    TsDisc(W / 2, by + 4, 5, UI_RGB(226, 226, 224));
 }
 
 static void TsApplyStyle(int ball)
