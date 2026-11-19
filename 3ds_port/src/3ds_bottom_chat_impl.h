@@ -63,3 +63,38 @@ static uint16_t ChatTap(int code)
         return K_B;
     return 0;
 }
+
+/* The wireless screens (the leader's wait, the trade's cards, the chat's keyboard) have gaps of a few frames while the game waits for the
+ * link, with none of them up: the lower screen went to the title's logo and came back (blank embers first). The mode and the last picture
+ * are held across a gap of up to WL_HOLD_FRAMES frames; a choice of the game's own (a menu, its rows) ends the hold. */
+#define WL_HOLD_FRAMES 45
+
+static int sWlHold;
+
+static int WlHoldMode(int open)
+{
+    if (open) {
+        if (CtrUnionLeader_Active() || CtrTrade_Active() || CtrChat_Active())
+            sWlHold = WL_HOLD_FRAMES;
+        else
+            sWlHold = 0;
+        return MODE_CHOICE;
+    }
+    if (sWlHold > 0 && sHaveShown && sShown.mode == MODE_CHOICE) {
+        --sWlHold;
+        return MODE_CHOICE;
+    }
+    sWlHold = 0;
+    return MODE_OFF;
+}
+
+/* The held frame of the snapshot: what was shown last, taps ignored (the game's choice is not open, so nothing is ready). */
+static void WlHoldSnapshot(Snapshot *s, int rows)
+{
+    if (rows == 0 && sWlHold > 0 && sHaveShown && sShown.mode == MODE_CHOICE) {
+        s->touch.choice = sShown.touch.choice;
+        s->touch.trade = sShown.touch.trade;
+        s->touch.chat = sShown.touch.chat;
+        s->touch.choice.pressed = -1;
+    }
+}

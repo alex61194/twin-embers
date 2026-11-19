@@ -811,6 +811,8 @@ static const char *GbaViewTitle(void)
     return NULL;
 }
 
+static int WlHoldMode(int open);   /* 3ds_bottom_chat_impl.h */
+
 static int CurrentMode(void)
 {
     if (!sEnabled || !sInitDone)
@@ -858,7 +860,7 @@ static int CurrentMode(void)
         return MODE_MAILBOX;
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen() || CtrBattle_ChoiceIsOpen())
-        return MODE_CHOICE;
+        return WlHoldMode(1);
     /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
         || CtrBottomView_HallOfFame() || CtrBottomView_Relearner())
@@ -885,7 +887,7 @@ static int CurrentMode(void)
         return MODE_FIELD;
     if (sStorageSession)
         return MODE_STORAGE_CHILD; /* summary/box-name/PC item sub-screen */
-    return MODE_OFF;
+    return WlHoldMode(0);
 }
 
 /* The bar under the Party screen: the Pokemon under the cursor. */
@@ -1285,6 +1287,8 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         TradeFill(&s->touch);               /* the trade's choice of a Pokemon: both parties as cards */
     else if (CtrChat_Active())
         ChatFill(&s->touch);                /* the chat's keyboard */
+    else
+        WlHoldSnapshot(s, n);               /* a gap in the wireless screens: the last one stays */
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
