@@ -7530,7 +7530,7 @@
   },
   {
    "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
-   "sha256": "90887c9ae5b17913f233644df76f390106e748e6e31f6d83dcbb7e8619e82d1f",
+   "sha256": "c0cf156b64dbfa9093613ee0db131bf845f2583c5327e2726a364b10659999df",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
