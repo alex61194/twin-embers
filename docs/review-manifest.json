@@ -7529,6 +7529,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0277-trade-animation-native-view.json",
+   "sha256": "70f0dd1136b447c9ddf7d4886522a64d32db61d90a54d3c2bd34bbda2535fa3b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
    "sha256": "c0cf156b64dbfa9093613ee0db131bf845f2583c5327e2726a364b10659999df",
    "review_status": "reviewed",
