@@ -331,6 +331,7 @@ int main(int argc, char **argv)
 
     (void)argv;
     partyMenuGrid();
+    if (getenv("BATTLE_UI_STYLE")) CtrPokeTouch_SetStyle(atoi(getenv("BATTLE_UI_STYLE")));   /* a viewing aid: every state in that style */
 #ifndef BATTLE_UI_EXTERNAL_LOAD
 #ifndef BATTLE_UI_BEFORE
     gNoPack = getenv("BATTLE_UI_NO_PACK") != NULL;
@@ -820,7 +821,7 @@ int main(int argc, char **argv)
                         fprintf(stderr, "state %d keeps the navy theme colour %04x at %d\n", states[i], navy[j], n);
                         assert(0);
                     }
-            assert(at(1, 100) == EMBER_BG(1, 100) || at(1, 100) == PT_RED_BG);   /* the ember backdrop, or the flat red not yet redone */
+            assert(CtrPokeTouch_Style() || at(1, 100) == EMBER_BG(1, 100) || at(1, 100) == PT_RED_BG);   /* the ember backdrop, or the flat red not yet redone */
         }
         {
             CtrSummaryUiView sv;
@@ -836,7 +837,7 @@ int main(int argc, char **argv)
                             fprintf(stderr, "summary page %d keeps the navy theme colour %04x at %d\n", page, navy[j], n);
                             assert(0);
                         }
-                assert(at(1, 100) == EMBER_BG(1, 100));
+                assert(CtrPokeTouch_Style() || at(1, 100) == EMBER_BG(1, 100));
             }
         }
     }

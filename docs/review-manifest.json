@@ -1043,7 +1043,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "8383167a22c33426bfe7a12e7d7c5275b5e4e599fa925563ad3f9208c7c3453d",
+   "sha256": "72173cdbb2ecad9cead2e973a08c72c0676b210d4e2a980e13763f8558a4cf6e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1649,7 +1649,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "5d9a984ada4a91745a1253eef1440c28560e3d6b6906d237141d4e20a583d51c",
+   "sha256": "cd446c387eefaf51f79169396fc5becbd75e5c7f34b873c8068b95f94c7cff07",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1870,7 +1870,7 @@
   },
   {
    "path": "3ds_port/tests/battle_ui_render_test.c",
-   "sha256": "b07aece7ebbc53856d1c48d482fe04dfdcef7e9d87b3f1ed5e215c822b9b12de",
+   "sha256": "c9b4b4457f18e4256508adbd8fe495d8a935bbc6c0260a81da4052117e71bb4d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

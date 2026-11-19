@@ -1024,7 +1024,7 @@ static void BFightFace(const CtrPokeTouchRect *r, int fy, const CtrBattleView *v
             }
     } else
         BDiscIcon(BX_FIGHT, r->x + 41, fy + 36, 24, p);
-    UiText(word, left, fy + 7, EM_WHITE, p->inkSh, 2, r->x + r->w - 8);
+    UiText(word, left, fy + 7, sStyleBall ? p->ink : EM_WHITE, sStyleBall ? p->inkSh : p->inkSh, 2, r->x + r->w - 8);
     x = left + UiTextWidth(word, 2) + 12;
     for (int k = 0; k < 2; ++k)
         if (v->activeType[k] >= 0 && v->activeTypeName[k][0]) {

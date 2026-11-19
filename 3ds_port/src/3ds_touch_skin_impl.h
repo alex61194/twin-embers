@@ -113,9 +113,13 @@ static const EmPal kAscSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 20
                                      LL_EDGE, UI_RGB(208, 216, 240), UI_RGB(60, 72, 116), EM_WHITE, UI_RGB(32, 38, 63));
 static EmPal kEmSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 202), UI_RGB(112, 128, 182), UI_RGB(76, 90, 140), UI_RGB(44, 53, 88),
                                      LL_EDGE, UI_RGB(208, 216, 240), UI_RGB(60, 72, 116), EM_WHITE, UI_RGB(32, 38, 63));
-static const EmPal kEmPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
+static const EmPal kAscPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
                                          LL_EDGE, UI_RGB(232, 248, 255), UI_RGB(46, 120, 196), EM_WHITE, UI_RGB(24, 74, 134));
-static const EmPal kEmPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
+static EmPal kEmPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
+                                         LL_EDGE, UI_RGB(232, 248, 255), UI_RGB(46, 120, 196), EM_WHITE, UI_RGB(24, 74, 134));
+static const EmPal kAscPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
+                                        LL_EDGE, UI_RGB(255, 232, 228), UI_RGB(170, 62, 64), EM_WHITE, UI_RGB(106, 28, 34));
+static EmPal kEmPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
                                         LL_EDGE, UI_RGB(255, 232, 228), UI_RGB(170, 62, 64), EM_WHITE, UI_RGB(106, 28, 34));
 static const EmPal kEmTeal = EM_PAL(UI_RGB(184, 240, 234), UI_RGB(124, 214, 204), UI_RGB(70, 184, 174), UI_RGB(34, 144, 138), UI_RGB(20, 102, 94),
                                     UI_RGB(10, 58, 54), UI_RGB(220, 255, 250), UI_RGB(30, 128, 120), EM_WHITE, UI_RGB(10, 58, 54));
@@ -164,6 +168,12 @@ static void TsBallGround(int by)
     TsDisc(W / 2, by + 4, 5, UI_RGB(226, 226, 224));
 }
 
+/* Poke Ball party cards: a Pokemon that can fight is a dark-red card with white ink, one that cannot a darker one with muted ink. */
+static const EmPal kBallPartyOk = EM_PAL(UI_RGB(204, 40, 44), UI_RGB(200, 38, 42), UI_RGB(198, 36, 40), UI_RGB(192, 32, 36), UI_RGB(150, 22, 26),
+                                         UI_RGB(130, 18, 22), UI_RGB(218, 66, 64), UI_RGB(170, 26, 30), EM_WHITE, UI_RGB(120, 16, 20));
+static const EmPal kBallPartyOut = EM_PAL(UI_RGB(158, 28, 32), UI_RGB(154, 26, 30), UI_RGB(150, 24, 28), UI_RGB(144, 22, 26), UI_RGB(116, 16, 20),
+                                          UI_RGB(100, 12, 16), UI_RGB(170, 42, 44), UI_RGB(126, 18, 22), UI_RGB(226, 168, 162), UI_RGB(96, 12, 16));
+
 static void TsApplyStyle(int ball)
 {
     ball = ball != 0;
@@ -174,6 +184,8 @@ static void TsApplyStyle(int ball)
     kEmFlame = ball ? kBallFlame : kAscFlame;
     kEmGrey = ball ? kBallGrey : kAscGrey;
     kEmSlate = ball ? kBallSlate : kAscSlate;
+    kEmPartyBlue = ball ? kBallPartyOk : kAscPartyBlue;
+    kEmPartyRed = ball ? kBallPartyOut : kAscPartyRed;
     sTsBgReady = 0;                                 /* the backdrop is made again for the style */
 }
 
