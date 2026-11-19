@@ -183,8 +183,102 @@ static void FBPill(int x, int y, int w, const char *text)
     FBPillOn(x, y, w, text, 0);
 }
 
+/* Poke Ball: the pockets are words, the open one white and underlined; a case or a mart shows its title and, at a mart, the money in plain text. */
+static void FBBallTabs(const CtrPokeTouchBag *b)
+{
+    if (b->kind != PT_BAG_KIND_BAG) {
+        UiText(b->title, sFBTitle.x + 12, sFBTitle.y + 7, EM_WHITE, BL_DEEP, 1, sFBTitle.x + sFBTitle.w - 70);
+        if (b->kind == PT_BAG_KIND_SHOP) {
+            char money[16];
+
+            snprintf(money, sizeof(money), "\xc2\xa5%u", (unsigned)b->money);
+            UiText(money, sFBTitle.x + sFBTitle.w - 10 - UiTextWidth(money, 1), sFBTitle.y + 7, BL_PINK, BL_DEEP, 1, sFBTitle.x + sFBTitle.w);
+        }
+        Fill(sFBTitle.x + 4, sFBTitle.y + sFBTitle.h - 1, sFBTitle.w - 8, 1, BL_HAIR);
+        return;
+    }
+    for (int i = 0; i < 3; ++i) {
+        const CtrPokeTouchRect *r = &sFBTab[i];
+        const char *label = CtrUiText(sFBTabLabel[i]);
+        int on = b->pocket == i, tw = UiTextWidth(label, 1), x = r->x + (r->w - tw) / 2;
+
+        UiText(label, x, r->y + 6, on ? EM_WHITE : BL_PINK, BL_DEEP, 1, r->x + r->w);
+        if (on)
+            UiRoundFill(x, r->y + r->h - 4, tw, 3, 1, EM_WHITE);
+    }
+    Fill(sFBTab[0].x + 2, sFBTab[0].y + sFBTab[0].h, sFBTab[2].x + sFBTab[2].w - sFBTab[0].x - 4, 1, BL_HAIR);
+}
+
+/* Poke Ball: a row is its icon (on a white disc), name and count or price in plain text; the chosen one a white pill with a red dot. CLOSE is
+ * the exit piece (white, dark outline). */
+static void FBBallRow(const CtrPokeTouchBag *b, int i)
+{
+    CtrPokeTouchRect r = FBRow(i);
+    int index = b->first + i, selected = index == b->cursor, press = b->pressed == PT_BAG_HIT_ROW + i, nameX, nameRight = r.x + r.w - 10;
+    char text[12];
+
+    if (index > b->count)
+        return;
+    if (index == b->count) {
+        int fy = EmButton(r.x + 40, r.y, r.w - 80, FB_FACE + FB_DEPTH, selected ? &kEmFlame : &kEmSlate, FB_DEPTH, press);
+
+        EmLabel(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(UIS_BAG_CLOSE), r.x + 40, r.w - 80, fy, FB_FACE, selected ? &kEmFlame : &kEmSlate);
+        return;
+    }
+    if (selected)
+        UiRoundFill(r.x, r.y, r.w, FB_FACE + 2, 11, BL_WHITE);
+    else if (i)
+        Fill(r.x + 8, r.y - 1, r.w - 16, 1, BL_HAIR);
+    if (!selected)
+        TsDisc(r.x + 16, r.y + 12, 11, BL_WHITE);
+    BItemDraw(b->row[i].item, r.x + 4, r.y - 1, 1);
+    if (selected) {
+        TsDisc(r.x + 34, r.y + 12, 3, BL_REDTXT);
+        nameX = r.x + 44;
+    } else
+        nameX = r.x + 34;
+    if (b->kind == PT_BAG_KIND_SHOP) {
+        snprintf(text, sizeof(text), "\xc2\xa5%u", (unsigned)b->row[i].price);
+        UiText(text, nameRight - UiTextWidth(text, 1), r.y + 7, selected ? BL_REDTXT : EM_WHITE, selected ? BL_WHITE : BL_DEEP, 1, nameRight + 2);
+        nameRight -= UiTextWidth(text, 1) + 10;
+    } else if (b->kind == PT_BAG_KIND_BAG && b->pocket == 1 && b->row[i].item && (b->row[i].item == b->regX || b->row[i].item == b->regY)) {
+        const char *key = b->row[i].item == b->regX ? "X" : "Y";
+
+        TsDisc(nameRight - 6, r.y + 12, 8, selected ? BL_REDTXT : BL_WHITE);
+        UiText(key, nameRight - 6 - UiTextWidth(key, 1) / 2, r.y + 7, selected ? BL_WHITE : BL_REDTXT, selected ? BL_REDTXT : BL_WHITE, 1, nameRight + 4);
+        nameRight -= 20;
+    } else if (b->kind != PT_BAG_KIND_BAG ? b->row[i].qty != 0 : b->pocket != 1) {
+        snprintf(text, sizeof(text), "x%u", b->row[i].qty > 999 ? 999 : b->row[i].qty);
+        UiText(text, nameRight - UiTextWidth(text, 1), r.y + 7, selected ? UI_RGB(150, 140, 140) : BL_PINK, selected ? BL_WHITE : BL_DEEP, 1, nameRight + 2);
+        nameRight -= UiTextWidth(text, 1) + 10;
+    }
+    UiText(b->row[i].name, nameX, r.y + 7, selected ? BL_REDTXT : EM_WHITE, selected ? BL_WHITE : BL_DEEP, 1, nameRight);
+}
+
+/* Poke Ball: the rail is a thread with a white thumb; the two arrows (their zones are unchanged) are small triangles at its ends. */
+static void FBBallRail(const CtrPokeTouchBag *b)
+{
+    enum { RAIL_Y = 40, RAIL_H = 114 };
+    int total = b->count + 1, range = total - PT_BAG_ROWS, thumbH = RAIL_H * PT_BAG_ROWS / total, thumbY, cx = sFBUp.x + sFBUp.w / 2;
+    int upOn = b->first > 0, downOn = b->first + PT_BAG_ROWS <= b->count;
+
+    if (thumbH < 14)
+        thumbH = 14;
+    thumbY = range > 0 ? (RAIL_H - thumbH) * (b->first < range ? b->first : range) / range : 0;
+    UiRoundFill(cx - 1, RAIL_Y, 3, RAIL_H, 1, BL_DEEP);
+    UiRoundFill(cx - 1, RAIL_Y + thumbY, 3, thumbH, 1, EM_WHITE);
+    for (int k = 0; k < 5; ++k) {
+        UiRoundFill(cx - k, sFBUp.y + 4 + k, 2 * k + 1, 1, 0, upOn ? EM_WHITE : BL_HAIR);
+        UiRoundFill(cx - (4 - k), sFBDown.y + 14 + k, 2 * (4 - k) + 1, 1, 0, downOn ? EM_WHITE : BL_HAIR);
+    }
+}
+
 static void FBTabs(const CtrPokeTouchBag *b)
 {
+    if (sStyleBall) {
+        FBBallTabs(b);
+        return;
+    }
     if (b->kind != PT_BAG_KIND_BAG) {                   /* a case: its icon and name on the flame card the open pocket is */
         int w = 28 + UiTextWidth(b->title, 1), x = sFBTitle.x + (sFBTitle.w - w) / 2, fy;
 
@@ -291,6 +385,13 @@ static void FBRail(const CtrPokeTouchBag *b)
 static void FBList(const CtrPokeTouchBag *b)
 {
     FBTabs(b);
+    if (sStyleBall) {
+        for (int i = 0; i < PT_BAG_ROWS; ++i)
+            FBBallRow(b, i);
+        if (b->count + 1 > PT_BAG_ROWS)
+            FBBallRail(b);
+        return;
+    }
     for (int pass = 0; pass < 2; ++pass)                /* the chosen row last: its ring lies in the gaps its neighbours' cards leave */
         for (int i = 0; i < PT_BAG_ROWS; ++i)
             if ((pass == 1) == (b->first + i == b->cursor))

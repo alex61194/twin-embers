@@ -480,6 +480,14 @@ int main(int argc, char **argv)
             assert( BagHit36(&b3,230,70)==PT_BAG_HIT_RAIL &&  BagHit36(&b3,230,130)==PT_BAG_HIT_RAIL);
             { int last=-1; for(int y=50;y<=145;++y){ int t= BagRail36(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
               assert( BagRail36(&b3.bag,40)==0 &&  BagRail36(&b3.bag,150)==b3.bag.count); }
+            /* A mart's BUY list, the key items with a shortcut, and an item's menu: more states to look at (and to keep drawing without a fault). */
+            { CtrPokeTouchView b4=b3; b4.bag.kind=PT_BAG_KIND_SHOP; strcpy(b4.bag.title,"BUY"); b4.bag.money=12400; b4.bag.use=PT_BAG_USE_FIELD; b4.bag.showOwned=1; b4.bag.owned=3;
+              for(int i=0;i<PT_BAG_ROWS;++i) b4.bag.row[i].price=(uint16_t)(300+i*400);
+              update(&b3,&b4); if(dir) ppm(dir,"bag_shop");
+              b4=b3; b4.bag.pocket=1; b4.bag.regX=b4.bag.row[1].item; b4.bag.cursor=2; update(&b3,&b4); if(dir) ppm(dir,"bag_keys");
+              b4=b3; b4.bag.state=PT_BAG_STATE_ACTIONS; b4.bag.menuCount=4; b4.bag.menuCursor=1; strcpy(b4.bag.menuName[0],"USE"); strcpy(b4.bag.menuName[1],"GIVE"); strcpy(b4.bag.menuName[2],"TOSS"); strcpy(b4.bag.menuName[3],"CANCEL");
+              update(&b3,&b4); if(dir) ppm(dir,"bag_menu");
+              update(&b4,&b3); }
             old=b3;      /* the canvas holds the Bag now: the next update's old view is the one on the screen */
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;

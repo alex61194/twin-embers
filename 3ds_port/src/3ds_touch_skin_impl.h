@@ -130,6 +130,27 @@ static const EmPal kBallGrey = EM_PAL(UI_RGB(160, 30, 34), UI_RGB(156, 28, 32), 
 static const EmPal kBallSlate = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(250, 250, 248), UI_RGB(246, 246, 244), UI_RGB(238, 238, 236), UI_RGB(34, 32, 38),
                                        UI_RGB(34, 32, 38), UI_RGB(255, 255, 255), UI_RGB(220, 216, 216), UI_RGB(44, 40, 44), UI_RGB(236, 232, 232));
 
+/* The colours the Poke Ball views draw with themselves (white card, red ink, pink and hairline on the red). */
+#define BL_WHITE UI_RGB(248, 248, 246)
+#define BL_REDTXT UI_RGB(194, 32, 34)
+#define BL_PINK UI_RGB(252, 204, 198)
+#define BL_HAIR UI_RGB(240, 128, 120)
+#define BL_DEEP UI_RGB(150, 22, 26)
+#define BL_BAND UI_RGB(34, 32, 38)
+
+/* A disc of radius r centred on (cx, cy): one span a row. */
+static void TsDisc(int cx, int cy, int r, uint16_t c)
+{
+    for (int y = cy - r; y <= cy + r; ++y) {
+        int dy = y - cy, w = 0;
+
+        while ((w + 1) * (w + 1) + dy * dy <= r * r)
+            ++w;
+        if (w > 0 || dy == 0)
+            UiRoundFill(cx - w, y, 2 * w + 1, 1, 0, c);
+    }
+}
+
 static void TsApplyStyle(int ball)
 {
     ball = ball != 0;

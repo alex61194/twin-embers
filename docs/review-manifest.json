@@ -1208,7 +1208,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "f700f0d68f2e6a261dab659c05307bf48ccb18900d6a826fea023b4ffaa72658",
+   "sha256": "9086ba63663903a34a4dd4a388a2fe52fd548504276d1d6af007e387ca061bb9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1649,7 +1649,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "3b1b730484c75eb59390070cfd40d82d5fb2cff1ebdcaba14a9f5ac927288a9c",
+   "sha256": "83c51859a26d51e66d98b27abd822d35066ca4d156f183ba8e226a02769542a4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "c7ded6c14f45325331ea4d2fb9ff868a5d9e796882c8374174e8e0a527998f49"
+   "sha256": "a383dd43ebc3e41ffa474f23775fe8bbbe34510eb262244309bb54ada80417e4"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
