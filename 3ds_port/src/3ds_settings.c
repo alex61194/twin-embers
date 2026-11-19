@@ -20,6 +20,7 @@
 static unsigned sTurbo;
 static int sAutoRun;
 static int sEmbers = -1;
+static int sStyle;           /* the lower screen's look: 0 Ascuas, 1 Pokeball */
 static int sRepelAgain = 1;
 static int sCompanion;
 static char sLook[4][16];     /* look_red, look_leaf, look_blue, look_surf (the Pokemon to surf on) */
@@ -114,6 +115,8 @@ static void Load(void)
             sAutoRun = value != 0;
         else if (sscanf(line, "embers=%u", &value) == 1)
             sEmbers = value <= 2 ? (int)value : -1;
+        else if (sscanf(line, "style=%u", &value) == 1)
+            sStyle = value <= 1 ? (int)value : 0;
         else if (sscanf(line, "repel=%u", &value) == 1)
             sRepelAgain = value != 0;
         else if (sscanf(line, "companion=%u", &value) == 1)
@@ -191,6 +194,8 @@ static void Format(char *text, size_t size)
     {
         length += snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
     }
+    if (sStyle && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "style=%d\n", sStyle);
     if (sCompanion && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
     if (sExpShare && length > 0 && (size_t)length < size)
@@ -696,6 +701,21 @@ void CtrSettings_SetEmbers(int level)
     if (level < 0 || level > 2 || level == sEmbers)
         return;
     sEmbers = level;
+    Save();
+}
+
+int CtrSettings_Style(void)
+{
+    Load();
+    return sStyle;
+}
+
+void CtrSettings_SetStyle(int style)
+{
+    Load();
+    if (style < 0 || style > 1 || style == sStyle)
+        return;
+    sStyle = style;
     Save();
 }
 

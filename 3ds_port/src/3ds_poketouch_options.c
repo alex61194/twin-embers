@@ -40,7 +40,9 @@ static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half
 static const char *const sMultiplayer[] = {CTR_TR("Online", "Online", "Online"), CTR_TR("Local", "Local", "Lokal")};
 /* ONLINE ROOM: the relay's public room, or the private room of a six-digit code (typed on the keypad). */
 static const char *const sRoomKind[] = {CTR_TR("Public", "P\xC3\xBA" "blica", "\xC3\x96" "ffentlich"), CTR_TR("Private", "Privada", "Privat")};
-static const char *const sCompanion[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
+/* STYLE: the lower screen's look: Embers (the red one with sparks) or Poke Ball (flat red and white, a dark band between). */
+static const char *const sStyleName[] = {CTR_TR("Embers", "Ascuas", "Funken"), CTR_TR("Poke Ball", "Pok\xC3\xA9" "bola", "Pok\xC3\xA9" "ball")};
+static const char *const sCompanion[] ={CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
 
 /* WILD POKEMON, WILD DISPLAY and AGGRESSIVE (the Wilds page): the visible wild Pokemon of the overworld (3ds_wilds_core.h). */
 static const char *const sWildDensity[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Few", "Pocos", "Wenig"), CTR_TR("Normal", "Normal", "Normal"), CTR_TR("Many", "Muchos", "Viele")};
@@ -217,6 +219,8 @@ static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
+static int GetStyle(void) { return CtrSettings_Style(); }
+static void SetStyle(int v) { CtrSettings_SetStyle(v & 1); }     /* 3ds_bottom.c hands it to the drawer on the next frame */
 static int GetEmbers(void) { return sPortEmbers; }
 static void SetEmbers(int v)
 {
@@ -305,6 +309,8 @@ static const CtrOptionRow sRows[] = {
      GetHour, HourCount, SetHour},
     {CTR_TR("Embers", "Ascuas", "Funken"), {CTR_TR("Sparks behind the menus.", "Chispas tras los men\xC3\xBAs.", "Funken hinter den Men\xC3\xBCs."), CTR_TR("Low suits an Old 3DS.", "Bajo sirve en Old 3DS.", "Wenig passt f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
      GetEmbers, ThreeCount, SetEmbers},
+    {CTR_TR("Style", "Estilo", "Stil"), {CTR_TR("Embers: the red look.", "Ascuas: el aspecto rojo.", "Funken: der rote Look."), CTR_TR("Poke Ball: red, white.", "Pok\xC3\xA9" "bola: rojo y blanco.", "Pok\xC3\xA9" "ball: rot und wei\xC3\x9F" ".")}, 0, sStyleName, NULL,
+     GetStyle, TwoCount, SetStyle},
     {CTR_TR("Companion", "Acompa\xC3\xB1" "ante", "Begleiter"), {CTR_TR("A Pokemon follows you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you become one.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist es selbst.")}, 0, sCompanion, NULL,
      GetCompanion, ThreeCount, SetCompanion},
     /* Graphics, page 2: the looks (a preview card takes the rows it does not use). */
@@ -359,7 +365,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 13, PAGE4 = 17, PAGE5 = 20, PAGE6 = 26, PAGE7 = 31 };
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18, PAGE5 = 21, PAGE6 = 27, PAGE7 = 32 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
 static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)

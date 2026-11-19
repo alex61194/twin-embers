@@ -312,6 +312,7 @@ static void decoder(void)
 }
 int main(int argc, char **argv)
 {
+    if (getenv("PT_STYLE")) CtrPokeTouch_SetStyle(atoi(getenv("PT_STYLE")));   /* a viewing aid: every state drawn in that style */
     decoder(); fixtureFail=1; /* Exercise original fallbacks for the UI. */
 #ifndef PT_BASELINE
     const char *packPath=getenv("FIRERED_TEST_PAK");
@@ -1284,6 +1285,17 @@ int main(int argc, char **argv)
     /* The game's own picture in HOME's layout (the Pokedex's habitat map): into it, a note that changes, and out of it. */
     v.viewport=1; v.pictureHome=1; update(&old,&v); strcpy(v.bar[0],"Pokedex"); strcpy(v.bar[1],"Back goes a step."); update(&old,&v);
     v.pictureHome=0; v.viewport=0; update(&old,&v);
+    /* The Poke Ball style swaps the shared palettes and swaps them back exactly. */
+    if (!getenv("PT_STYLE")) {
+        EmPal flame = kEmFlame, cream = kEmCream, grey = kEmGrey, slate = kEmSlate;
+
+        CtrPokeTouch_SetStyle(1);
+        assert(CtrPokeTouch_Style() == 1 && kEmFlame.ink != flame.ink && kEmCream.ink == EM_WHITE && kEmSlate.edge != slate.edge && kEmGrey.top != grey.top);
+        CtrPokeTouch_SetStyle(1);
+        CtrPokeTouch_SetStyle(0);
+        assert(CtrPokeTouch_Style() == 0 && !memcmp(&kEmFlame, &flame, sizeof(flame)) && !memcmp(&kEmCream, &cream, sizeof(cream))
+               && !memcmp(&kEmGrey, &grey, sizeof(grey)) && !memcmp(&kEmSlate, &slate, sizeof(slate)));
+    }
     puts("PASS real renderer: decoder, 4bpp, geometry, viewport, incremental states, X/Y/RUN, save/back hit-tests");
     return 0;
 }

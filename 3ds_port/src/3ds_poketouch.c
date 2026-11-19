@@ -2832,8 +2832,20 @@ void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo)
         }
 }
 
+void CtrPokeTouch_SetStyle(int style)
+{
+    TsApplyStyle(style);
+}
+
+int CtrPokeTouch_Style(void)
+{
+    return sStyleBall;
+}
+
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, CtrDirtyList *dirty)
 {
+    if (sStyleBall)
+        return;                                     /* the Poke Ball style has no embers */
     static const CtrPokeTouchRect picture = {PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H};
     static const CtrPokeTouchRect homeMap = {PT_HOME_X, PT_HOME_Y, PT_VIEW_W, PT_VIEW_H};
 

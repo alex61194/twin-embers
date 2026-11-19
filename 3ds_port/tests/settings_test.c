@@ -222,6 +222,7 @@ int main(void)
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
+    CtrSettings_SetStyle(1);
     CtrSettings_SetRepelAgain(1);
     CtrSettings_SetCompanion(2);
     CtrSettings_SetExpShare(2);

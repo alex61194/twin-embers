@@ -23,6 +23,10 @@ void CtrSettings_SetAutoRun(int on);
 int CtrSettings_Embers(void);
 void CtrSettings_SetEmbers(int level);
 
+/* The lower screen's look (STYLE on the OPTIONS screen): 0 Ascuas (the default), 1 Pokeball. */
+int CtrSettings_Style(void);
+void CtrSettings_SetStyle(int style);
+
 /* Whether a Repel that wears off offers to use another (REPEL AGAIN on the OPTIONS screen): on by default. */
 int CtrSettings_RepelAgain(void);
 void CtrSettings_SetRepelAgain(int on);

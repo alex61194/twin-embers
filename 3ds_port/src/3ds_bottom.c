@@ -284,6 +284,7 @@ extern unsigned CtrSave_PlayHours(void);
 extern unsigned CtrSave_PlayMinutes(void);
 extern unsigned CtrSave_Money(void);
 extern unsigned CtrSettings_Turbo(void);
+extern int CtrSettings_Style(void);
 extern unsigned CtrNightWild_Second(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
@@ -5983,6 +5984,10 @@ void CtrBottom_Frame(void)
         if (state.touch.pictureHome)
             PlateFill(&state.touch);
         CtrVideo_SetBottomViewportOrigin(state.touch.pictureHome ? PT_HOME_X : PT_VIEW_X, state.touch.pictureHome ? PT_HOME_Y : PT_VIEW_Y);
+    }
+    if (CtrPokeTouch_Style() != CtrSettings_Style()) {
+        CtrPokeTouch_SetStyle(CtrSettings_Style());   /* OPTIONS > STYLE changed: every piece is drawn again */
+        sForceRedraw = 1;
     }
     if (sForceRedraw || !sHaveShown || memcmp(&state, &sShown, sizeof(state)) != 0) {
         int screenChange = sHaveShown && state.battleUi && sShown.battleUi && state.battle.state != sShown.battle.state

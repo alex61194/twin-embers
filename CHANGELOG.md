@@ -13,6 +13,8 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 - **Wireless screens on the lower screen (test)**: in the Union Room the lists (what to do with a player, which group to join, the board), the leader's wait (START and CANCEL, with how many players are missing), the trade's choice of a Pokémon (both parties as cards, one tab each) and the chat's keyboard (ABC, abc, symbols and saved phrases, Delete, Send, Quit) are drawn on the lower screen with buttons and chosen with a tap; the game's own windows stay on the upper screen. Checked on a computer only; not yet played on the emulator or a console.
 
+- **Poke Ball style (test)**: OPTIONS > Graphics has a new *Style* row, Embers (the red look with sparks, the default) or Poke Ball (a plain red, white pills for what is chosen, dark-red pills for the rest, white notes with a thin dark-red edge, exit keys in white with a dark outline, no embers). It changes every view at once and is kept in settings.cfg; the views are being given the Poke Ball layout (a dark band between a red upper half and a white note) one by one.
+
 ### Changed
 
 - **Lower screen HOME layout (test)**: on the plain field screen the map now sits in the middle of the lower screen, with POKéDEX, POKéMON, BAG and the trainer card in a column on its left and SAVE, OPTIONS and the X and Y items on its right. A band at the top holds the back key, a plate with your money and the turbo speed, a clock and the running switch; the note under the map keeps the place's name. Every other screen (bag, options, battle, PC...) keeps its layout. Checked on a computer only.
