@@ -838,7 +838,7 @@ int main(int argc, char **argv)
         s.save=0; s.saveState=0; s.viewport=0; s.backVisible=0; s.choice.on=1; s.choice.count=2; s.choice.cols=0; s.choice.cursor=0; s.choice.pressed=-1;
         strcpy(s.choice.label[0],"YES"); strcpy(s.choice.label[1],"NO"); strcpy(s.choice.prompt,"Would you like to buy this?");
         strcpy(s.bar[0],""); s.bar[1][0]=0;
-        update(&old,&s); SHOT("choice_yesno"); s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
+        update(&old,&s); SHOT("choice_yesno"); if(sStyleBall) { assert(sBallFull); assert((CtrPokeTouch_ChoiceHit)(&s,150,50)==PT_CHOICE_HIT_ROW); assert((CtrPokeTouch_ChoiceHit)(&s,150,100)==PT_CHOICE_HIT_ROW+1); assert((CtrPokeTouch_ChoiceHit)(&s,150,150)==-1); assert((CtrPokeTouch_ChoiceHit)(&s,10,50)==-1);   /* raw lower-screen coordinates */ } s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
         s.choice.count=6; for(int k=0;k<6;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"CHOICE %d",k+1);
         s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s);
         /* The Union Room's wait for the others (3ds_bottom_union_impl.h): START and CANCEL, then CANCEL alone; each text fits its button / the note. */
@@ -1004,7 +1004,7 @@ int main(int argc, char **argv)
     }
 #endif
 #ifndef PT_BASELINE
-    {
+    if(!sStyleBall) {      /* the Embers pieces' spot checks: Poke Ball draws them flat */
         /* Llama (the owner's mockup, llama2_mockup.html): the shared pieces of 3ds_ember2_impl.h. Each is drawn on a canvas of a marker colour
          * and must stay inside its rectangle plus the 2 px a piece owns (the canvas redraws only what changed); the ones that do not blend
          * must draw the same twice; colours and shapes are spot-checked against the mockup's CSS. PT_PREVIEW_DIR gets a sheet of them. */
@@ -1026,7 +1026,7 @@ int main(int argc, char **argv)
             {&kEmPartyRed,"party red",0xffd0c8,0xf8a498,0xe87c74,0xc85050,0x8a2c30,0xffe8e4,0x6a1c22},
         };
         /* The palettes are the mockup's .cr .fl .bl .go .gr .pu .sl .pb .pr, outline --o #2a2238 on every one. */
-        for(unsigned i=0;i<sizeof(pals)/sizeof(pals[0]);++i) {
+        for(unsigned i=0;i<sizeof(pals)/sizeof(pals[0]) && !sStyleBall;++i) {      /* the Embers palettes; Poke Ball swaps four of them */
             const EmPal *p=pals[i].p;
             if(pals[i].name[0]=='c' && pals[i].name[1]=='r') assert(p->inkSh==HEX(0xd0d0c8) && p->ink==HEX(0x484848));
             else assert(p->inkSh==HEX(pals[i].ts) && p->ink==EM_WHITE);
@@ -1303,6 +1303,19 @@ int main(int argc, char **argv)
     /* The game's own picture in HOME's layout (the Pokedex's habitat map): into it, a note that changes, and out of it. */
     v.viewport=1; v.pictureHome=1; update(&old,&v); strcpy(v.bar[0],"Pokedex"); strcpy(v.bar[1],"Back goes a step."); update(&old,&v);
     v.pictureHome=0; v.viewport=0; update(&old,&v);
+    /* Poke Ball OPTIONS: its hit zones (rows 20 apart from (8, 34), the value in the right half, the PAGE header, the exit piece). */
+    if (getenv("PT_STYLE")) {
+        int row = -1, zone = -1;
+
+        sBallFull = 1; sBallExitR = (CtrPokeTouchRect){240, 162, 74, 38};
+        assert(CtrPokeTouch_OptionHit(20, 40, 7, &row, &zone) && row == 0 && zone == PT_OPT_ZONE_LABEL);
+        assert(CtrPokeTouch_OptionHit(150, 95, 7, &row, &zone) && row == 3 && zone == PT_OPT_ZONE_PREV);
+        assert(CtrPokeTouch_OptionHit(200, 95, 7, &row, &zone) && row == 3 && zone == PT_OPT_ZONE_NEXT);
+        assert(!CtrPokeTouch_OptionHit(236, 40, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 53, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 40, 0, &row, &zone));
+        assert(CtrPokeTouch_OptionSegment(130, 3) == 0 && CtrPokeTouch_OptionSegment(180, 3) == 1 && CtrPokeTouch_OptionSegment(230, 3) == 2);
+        assert(CtrPokeTouch_HitOptPage(100, 10) && !CtrPokeTouch_HitOptPage(100, 40) && CtrPokeTouch_HitBack(280, 180) && !CtrPokeTouch_HitBack(100, 10));
+        sBallFull = 0;
+    }
     /* The Poke Ball style swaps the shared palettes and swaps them back exactly. */
     if (!getenv("PT_STYLE")) {
         EmPal flame = kEmFlame, cream = kEmCream, grey = kEmGrey, slate = kEmSlate;

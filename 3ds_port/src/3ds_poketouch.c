@@ -1087,6 +1087,16 @@ bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone)
 {
     int boxX = OPT_X + OPT_W - OPT_BOX_W;
 
+    if (sBallFull) {                                    /* Poke Ball: rows 20 apart from (8, 34), the value in the right half */
+        int r = (y - 34) / 20;
+
+        if (x < 8 || x >= 232 || y < 34 || r >= rows || r >= PT_OPT_MAX || (y - 34) % 20 >= 19)
+            return false;
+        *row = r;
+        *zone = x < 128 ? PT_OPT_ZONE_LABEL : x < 180 ? PT_OPT_ZONE_PREV : PT_OPT_ZONE_NEXT;
+        return true;
+    }
+
     if (x < OPT_X || x >= OPT_X + OPT_W || y < OPT_Y)
         return false;
     int r = (y - OPT_Y) / OPT_STEP;
@@ -1103,11 +1113,11 @@ bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone)
 
 int CtrPokeTouch_OptionSegment(int x, int count)
 {
-    int at = x - OPT_SEG_X(OPT_X + OPT_W - OPT_BOX_W), k;
+    int at = sBallFull ? x - 128 : x - OPT_SEG_X(OPT_X + OPT_W - OPT_BOX_W), k;
 
     if (count <= 0)
         return 0;
-    k = at < 0 ? 0 : at * count / OPT_SEG_W;
+    k = at < 0 ? 0 : at * count / (sBallFull ? 104 : OPT_SEG_W);
     return k >= count ? count - 1 : k;
 }
 
@@ -1779,6 +1789,27 @@ static int BallBagActive(const CtrPokeTouchView *v)
 }
 
 static void BallBagScreen(const CtrPokeTouchView *v);
+static void BallChoiceScreen(const CtrPokeTouchView *v);
+static void BallOptionsScreen(const CtrPokeTouchView *v);
+
+/* The Poke Ball OPTIONS (its rows of a page, the PAGE header) take the whole lower screen; the keypad of the private room's code and the look
+ * preview keep the Embers-shaped screen for now (the same pieces, in the Poke Ball colours). */
+static int BallOptionsActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->options && !v->viewport && !v->optPad.on && !v->optLook.on;
+}
+
+/* The Poke Ball choice of the field (not the trade's cards nor the chat's keyboard) takes the whole lower screen too. */
+static int BallChoiceActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->choice.on && !v->trade.on && !v->chat.on && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on
+        && !v->dex.on && !v->card.on && !v->learn.on && !v->relearn.on && !v->mail.on;
+}
+
+static int BallFullView(const CtrPokeTouchView *v)
+{
+    return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v);
+}
 
 static int NewMenu(const CtrPokeTouchView *v)
 {
@@ -2248,8 +2279,7 @@ static void BackTop(const CtrPokeTouchView *v)
 
 bool CtrPokeTouch_HitBack(int x, int y)
 {
-    static const CtrPokeTouchRect ballExit = {238, 146, 76, 38};
-    const CtrPokeTouchRect *r = sBallFull ? &ballExit : sLayoutHome ? &sHomeBack : &gCtrPokeTouchBack;
+    const CtrPokeTouchRect *r = sBallFull ? &sBallExitR : sLayoutHome ? &sHomeBack : &gCtrPokeTouchBack;
 
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
 }
@@ -2281,7 +2311,8 @@ static void OptPageTop(const CtrPokeTouchView *v)
 
 bool CtrPokeTouch_HitOptPage(int x, int y)
 {
-    const CtrPokeTouchRect *r = sLayoutHome ? &sHomeStatus : &gCtrPokeTouchOptPage;
+    static const CtrPokeTouchRect ballPage = {8, 4, 304, 26};
+    const CtrPokeTouchRect *r = sBallFull ? &ballPage : sLayoutHome ? &sHomeStatus : &gCtrPokeTouchOptPage;
 
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
 }
@@ -2552,9 +2583,14 @@ static void PictureScreen(const CtrPokeTouchView *v)
 static void MenuScreen(const CtrPokeTouchView *v, int full)
 {
     sMenuFull = full;
-    sBallFull = BallBagActive(v);
+    sBallFull = BallFullView(v);
     if (sBallFull) {
-        BallBagScreen(v);
+        if (BallOptionsActive(v))
+            BallOptionsScreen(v);
+        else if (BallChoiceActive(v))
+            BallChoiceScreen(v);
+        else
+            BallBagScreen(v);
         sMenuFull = 1;
         return;
     }
@@ -2603,7 +2639,7 @@ void CtrPokeTouch_Draw(uint16_t *canvas, const CtrPokeTouchView *v)
 {
     sCanvas = canvas;
     sKeepBg = 0;
-    sBallFull = BallBagActive(v);
+    sBallFull = BallFullView(v);
     if (NewMenu(v)) {
         static CtrPokeTouchView shown;
 
@@ -2671,12 +2707,17 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
     int newHasPage = v->options && !v->viewport && v->optPageCount > 1;
 
     sCanvas = canvas;
-    sBallFull = BallBagActive(v);
+    sBallFull = BallFullView(v);
+    if (BallFullView(old) && !sBallFull) {              /* out of a whole-screen view: nothing of it is kept, the screen is drawn again */
+        CtrPokeTouch_Draw(canvas, v);
+        CtrDirty_Add(dirty, 0, 0, W, H);
+        return;
+    }
     if (NewMenu(v)) {
         static CtrPokeTouchView a, b;
 
         MenuNormalize(&b, v);
-        if (BallBagActive(v) || BallBagActive(old)) {   /* a whole-screen view: drawn again as a whole when anything changes */
+        if (BallFullView(v) || BallFullView(old)) {   /* a whole-screen view: drawn again as a whole when anything changes */
             MenuScreen(&b, 1);
             CtrDirty_Add(dirty, 0, 0, W, H);
             return;
@@ -2890,4 +2931,5 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_box_impl.h"
 #include "3ds_field_trade_impl.h"
 #include "3ds_field_chat_impl.h"
+#include "3ds_ball_options_impl.h"
 #include "3ds_field_easychat_impl.h"

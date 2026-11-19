@@ -14,6 +14,7 @@ static uint16_t TsGet(int x, int y)
 static uint16_t sTsBg[W * H];
 static int sTsBgReady;
 static int sStyleBall;                              /* 1: the Poke Ball style (TsApplyStyle) */
+static CtrPokeTouchRect sBallExitR = {238, 146, 76, 38};   /* the exit piece of the whole-screen view shown (it is the view's BACK) */
 static int sBallFull;                               /* 1: a Poke Ball view of the whole lower screen is up: no HOME layout, no side columns, its own BACK */
 
 static void TsBgPrepare(void)

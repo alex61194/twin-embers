@@ -574,6 +574,7 @@ static void BallBagScreen(const CtrPokeTouchView *v)
     const CtrPokeTouchBag *b = &v->bag;
     uint16_t *base = sCanvas;
 
+    sBallExitR = sBLExit;
     EmSurface();
     TsBallGround(BL_BAND_Y);
     FBBallTabs(b);
