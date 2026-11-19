@@ -22,7 +22,14 @@
 #define WL_INET_PORT 47311
 #define WL_INET_CODE_MAX 64
 #define WL_INET_SEAL_BYTES 28       /* what sealing adds to a frame: 12 for the nonce, 16 for the tag */
-#define WL_INET_ITERATIONS 4096     /* of PBKDF2 for the key: about a second on the console, once per connection */
+/* PBKDF2 rounds for a room's key, once per connection. The public room's key hides nothing (its code is in the open), so it keeps the quick 4096 (about
+ * a second on the console). A private room's code is the only secret there is: its key takes 10000 rounds (a few seconds on the console, the time of
+ * joining), which on top of a code that cannot be guessed (WL_INET_PRIVATE_DIGITS random digits) puts the key beyond an offline search. */
+#define WL_INET_ITERATIONS 4096
+#define WL_INET_ITERATIONS_PRIVATE 10000
+/* A private room's code starts with this (the glue makes it from the digits the players share, CTR_WL_PRIVATE_ROOM) and has that many digits after it. */
+#define WL_INET_PRIVATE_PREFIX "twinembers-private-"
+#define WL_INET_PRIVATE_DIGITS 16
 
 enum { WL_INET_EVENT_JOINED = 1, WL_INET_EVENT_LEFT = 2 };
 enum { WL_INET_REJECT_NONE = 0, WL_INET_REJECT_HELLO = 1, WL_INET_REJECT_VERSION = 2, WL_INET_REJECT_FULL = 3,
@@ -57,8 +64,12 @@ typedef struct WlInet {
 /* Fresh randomness for the nonces of the connections that follow: the caller gives what the system has (on the console
  * PS_GenerateRandomBytes); time and addresses are mixed in too, but are not enough alone. Call it before WlInet_Connect. */
 void WlInet_Seed(const void *entropy, size_t len);
-/* The room name and key a code makes with a build id (the same on every console): `room` gets 16 characters and a
- * terminator. Takes WL_INET_ITERATIONS rounds of PBKDF2, so the time of a connection. */
+/* Whether `code` is a private room's (it starts with WL_INET_PRIVATE_PREFIX), and the PBKDF2 rounds its key takes. */
+bool WlInet_IsPrivateCode(const char *code);
+uint32_t WlInet_Iterations(const char *code);
+/* The room name and key a code makes with a build id (the same on every console): `room` gets 16 characters and a terminator. One PBKDF2 run
+ * (WlInet_Iterations rounds, so the time of a connection) makes 64 bytes: the first 32 are the key, the others only the room's name (through a
+ * hash), so that the name the relay sees is not made from the key that seals the frames. */
 void WlInet_Derive(const char *code, const uint8_t build[WL_INET_BUILD_BYTES], char room[WL_INET_ROOM_MAX + 1], uint8_t key[32]);
 /* Connect to the relay and join (or make) the room of `code` (1 to WL_INET_CODE_MAX characters); `build` must be what every
  * console of the room has. Waits up to `timeoutMs` for the welcome. False on failure: WlInet.reject says why when the relay

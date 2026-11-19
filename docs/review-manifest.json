@@ -7674,7 +7674,7 @@
   },
   {
    "path": "tools/test_wl_e2e.py",
-   "sha256": "195ccb0519f81140c2eedd05c1ccf74d427b9549bfe14b91724d8b058fb6fd5c",
+   "sha256": "a9fe53d800b766d29b88675253cd7d703690b2bafce0fcf62ad07d2a61e6b146",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7738,7 +7738,7 @@
   },
   {
    "path": "docs/WL-RELAY-PROTOCOL.md",
-   "sha256": "bd1b99e1b98fcd93e6a50a794d8091ea66fe75a76da3c9f3e5dc61913da2fec1",
+   "sha256": "3c92d5d3cada7ece4efc979798621bee39b06c07d93f379d0377bd783294271a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7754,7 +7754,7 @@
   },
   {
    "path": "tools/test_wl_inet.py",
-   "sha256": "bfe0a17d9fc166adecf0eb7ee47710821fc037c247d1aa4dd8186be6374ea328",
+   "sha256": "614be06891e27c166b37f9fb0c2e9dccbb04ee997819400e2d9f1e4147e63d4b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7762,7 +7762,7 @@
   },
   {
    "path": "3ds_port/include/3ds_wl_inet.h",
-   "sha256": "e38fb7496439501e70cdbf842c77a225ab8f3b979dec132410b358688f436df3",
+   "sha256": "79c92ec0cfdd86892e98d1b046a0c8f7e1f1a0842f3c71175ac710c3130d61fb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7770,7 +7770,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "b4048a6bc534e6d0d3d8dd3768d36c4d7a16e491ea4450558a22dccc0c6c6e5c",
+   "sha256": "a35d799598cf923d1d1e7bfe29253bb31bcf8644aaf2a4ac7f3949d350eca93d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7778,7 +7778,7 @@
   },
   {
    "path": "3ds_port/tests/wl_inet_test.c",
-   "sha256": "d5bf87b7ebe3c7d91e973fc48a329296a9326ac3afd4c0cf5e1aebd2775ca280",
+   "sha256": "228f56a9a7e3a76665701efb7e3717aa9ec83bf4a92d45d099f4a5e0b2a6b065",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -275,18 +275,30 @@ void WlInet_Seed(const void *entropy, size_t len)
     WlSha256(mix, sizeof(mix), sPool);
 }
 
+bool WlInet_IsPrivateCode(const char *code)
+{
+    return code && strncmp(code, WL_INET_PRIVATE_PREFIX, sizeof(WL_INET_PRIVATE_PREFIX) - 1) == 0;
+}
+
+uint32_t WlInet_Iterations(const char *code)
+{
+    return WlInet_IsPrivateCode(code) ? WL_INET_ITERATIONS_PRIVATE : WL_INET_ITERATIONS;
+}
+
 void WlInet_Derive(const char *code, const uint8_t build[WL_INET_BUILD_BYTES], char room[WL_INET_ROOM_MAX + 1], uint8_t key[32])
 {
-    static const char kSalt[] = "TwinEmbers relay v1";
-    static const char kRoom[] = "TwinEmbers room";
-    uint8_t salt[sizeof(kSalt) - 1 + WL_INET_BUILD_BYTES], input[sizeof(kRoom) - 1 + 32], digest[32];
+    static const char kSalt[] = "TwinEmbers relay v2";
+    static const char kRoom[] = "TwinEmbers room v2";
+    uint8_t salt[sizeof(kSalt) - 1 + WL_INET_BUILD_BYTES], input[sizeof(kRoom) - 1 + 32], digest[32], material[64];
 
     memcpy(salt, kSalt, sizeof(kSalt) - 1);
     memcpy(salt + sizeof(kSalt) - 1, build, WL_INET_BUILD_BYTES);
-    WlPbkdf2Sha256(code, strlen(code), salt, sizeof(salt), WL_INET_ITERATIONS, key, 32);
+    WlPbkdf2Sha256(code, strlen(code), salt, sizeof(salt), WlInet_Iterations(code), material, sizeof(material));
+    memcpy(key, material, 32);                              /* what seals the frames: never sent, never hashed into anything the relay sees */
     memcpy(input, kRoom, sizeof(kRoom) - 1);
-    memcpy(input + sizeof(kRoom) - 1, key, 32);
+    memcpy(input + sizeof(kRoom) - 1, material + 32, 32);   /* the room's name comes from the other half */
     WlSha256(input, sizeof(input), digest);
+    memset(material, 0, sizeof(material));
     for (int i = 0; i < 8; ++i)
     {
         room[i * 2] = "0123456789abcdef"[digest[i] >> 4];

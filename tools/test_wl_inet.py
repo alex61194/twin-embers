@@ -52,6 +52,14 @@ def read_message(sock):
     return body
 
 
+
+def derive(code, build):
+    """The key and the room name a code makes (docs/WL-RELAY-PROTOCOL.md, Sealing): one PBKDF2-HMAC-SHA-256 run of 64 bytes, 10000 rounds for a
+    private room's code (it starts with twinembers-private-) and 4096 for any other, the first 32 bytes the key, the room name from the other 32."""
+    rounds = 10000 if code.startswith(b'twinembers-private-') else 4096
+    material = hashlib.pbkdf2_hmac('sha256', code, b'TwinEmbers relay v2' + build, rounds, 64)
+    return material[:32], hashlib.sha256(b'TwinEmbers room v2' + material[32:]).hexdigest()[:16].encode()
+
 class Relay(unittest.TestCase):
     def setUp(self):
         self.proc, self.port = start_relay()
@@ -82,7 +90,8 @@ class Relay(unittest.TestCase):
 
     def test_interop_with_python_and_tampering(self):
         """A console written again in Python, from docs/WL-RELAY-PROTOCOL.md and the key rules in 3ds_wl_inet.h, talks to the C one:
-        what each seals the other opens, and a changed, moved or foreign frame is dropped."""
+        what each seals the other opens, and a changed, moved or foreign frame is dropped. Run for a public room's code (4096 rounds) and a private
+        room's (10000 rounds), whose key and name are made as the protocol says: two halves of one 64-byte PBKDF2 run."""
         exe_dir = tempfile.mkdtemp()
         exe = os.path.join(exe_dir, 'wl_inet_test.exe')
         cc = os.environ.get('CC', 'gcc')
@@ -90,10 +99,13 @@ class Relay(unittest.TestCase):
         subprocess.run([cc, '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / '3ds_port/include'),
                         str(ROOT / '3ds_port/tests/wl_inet_test.c'), str(ROOT / '3ds_port/src/3ds_wl_inet.c'),
                         str(ROOT / '3ds_port/src/3ds_wl_net.c'), str(ROOT / '3ds_port/src/3ds_wl_crypto.c'), '-o', exe] + libs, check=True)
-        code = b'a-secret-code-for-the-test'
+        for code in (b'a-secret-code-for-the-test', b'twinembers-private-4821907356120894'):
+            with self.subTest(code=code[:19]):
+                self.interop(exe, code)
+
+    def interop(self, exe, code):
         build = bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])      # kBuildA of the C test
-        key = hashlib.pbkdf2_hmac('sha256', code, b'TwinEmbers relay v1' + build, 4096, 32)
-        room = hashlib.sha256(b'TwinEmbers room' + key).hexdigest()[:16].encode()
+        key, room = derive(code, build)
         listener = subprocess.Popen([exe, 'listen', str(self.port), code.decode()], stdout=subprocess.PIPE, text=True)
         try:
             self.assertEqual(listener.stdout.readline().split(), ['READY', '1'])
@@ -118,7 +130,7 @@ class Relay(unittest.TestCase):
             s.sendall(bytes(bad))
             s.sendall(seal(1, b'for another node', aad_dest=5))           # sealed for a node that is not the receiver
             s.sendall(seal(1, b'from another node', src=7))               # the relay will name node 2 as the sender
-            wrong = hashlib.pbkdf2_hmac('sha256', b'another code', b'TwinEmbers relay v1' + build, 4096, 32)
+            wrong, _ = derive(b'another code', build)
             nonce = os.urandom(12)
             ct, tag = tc.aead(wrong, nonce, bytes([2, 1]), b'another key')
             s.sendall(message(6, bytes([1]) + nonce + ct + tag))

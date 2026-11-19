@@ -129,6 +129,30 @@ int main(int argc, char **argv)
         assert(memcmp(k1, k2, 32) && memcmp(k1, k3, 32) && !memcmp(k1, k4, 32));
         for (int i = 0; i < 16; ++i)
             assert((r1[i] >= '0' && r1[i] <= '9') || (r1[i] >= 'a' && r1[i] <= 'f'));
+        /* The name the relay sees is not made from the key that seals the frames: hashing the key the way version 1 did does not give it. */
+        {
+            uint8_t input[15 + 32], digest[32];
+            char old[17];
+
+            memcpy(input, "TwinEmbers room", 15);
+            memcpy(input + 15, k1, 32);
+            WlSha256(input, sizeof(input), digest);
+            for (int i = 0; i < 8; ++i)
+                sprintf(old + i * 2, "%02x", digest[i]);
+            assert(strcmp(old, r1));
+        }
+        /* A private room's key takes more rounds (WlInet_Iterations), is another key from the public one of the same words and a different room. */
+        {
+            char p1[WL_INET_ROOM_MAX + 1], p2[WL_INET_ROOM_MAX + 1], q1[WL_INET_ROOM_MAX + 1];
+            uint8_t pk1[32], pk2[32], qk1[32];
+
+            assert(WlInet_Iterations("TESTROOM1") == WL_INET_ITERATIONS && WlInet_Iterations(WL_INET_PRIVATE_PREFIX "4821907356120894") == WL_INET_ITERATIONS_PRIVATE);
+            assert(WL_INET_ITERATIONS_PRIVATE > WL_INET_ITERATIONS && !WlInet_IsPrivateCode(NULL) && !WlInet_IsPrivateCode(""));
+            WlInet_Derive(WL_INET_PRIVATE_PREFIX "4821907356120894", kBuildA, p1, pk1);
+            WlInet_Derive(WL_INET_PRIVATE_PREFIX "4821907356120895", kBuildA, p2, pk2);     /* one digit apart: nothing in common */
+            WlInet_Derive(WL_INET_PRIVATE_PREFIX "4821907356120894", kBuildB, q1, qk1);
+            assert(strcmp(p1, p2) && memcmp(pk1, pk2, 32) && strcmp(p1, q1) && memcmp(pk1, qk1, 32) && strcmp(p1, r1));
+        }
     }
 
     /* the first console makes the room and is node 1; the second is node 2 and finds the first */

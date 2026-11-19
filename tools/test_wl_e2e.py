@@ -84,8 +84,8 @@ class EndToEnd(unittest.TestCase):
         build = bytes([7, 7, 7] + [0] * 13)                 # rfu_game_test's build id
 
         def room_of(code):
-            key = hashlib.pbkdf2_hmac('sha256', code.encode(), b'TwinEmbers relay v1' + build, 4096, 32)
-            return hashlib.sha256(b'TwinEmbers room' + key).hexdigest()[:16].encode()
+            material = hashlib.pbkdf2_hmac('sha256', code.encode(), b'TwinEmbers relay v2' + build, 4096, 64)    # the public room's code: 4096 rounds
+            return hashlib.sha256(b'TwinEmbers room v2' + material[32:]).hexdigest()[:16].encode()
 
         relay = subprocess.Popen([sys.executable, '-u', str(ROOT / 'tools/wl_relay.py'), '--host', '127.0.0.1', '--port', '0',
                                   '--max-per-address', '64', '--log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
