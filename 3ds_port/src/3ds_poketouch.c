@@ -591,148 +591,24 @@ static void ItemArt(int slot, unsigned item, int x, int y, int on)
         Art(sIcons[slot].pixels, sIcons[slot].pal, 24, sIcons[slot].x0, sIcons[slot].y0, 20, 20, x, y, on);
 }
 
-/* The HOME map: the 240x160 screen of FireRed's Region Map (its tilemap, tiles and palette, decoded by the game bridge) is read once per map
- * and redrawn at 4x (3ds_home_map_impl.h builds the image over a few frames; the bridge is read no more once it has been). The viewport then
- * shows that image at one of its zooms round a centre; nothing is read from the game while the player walks. */
-extern int CtrPokeTouch_MapArt(int group, uint16_t *tilemap, uint8_t *tiles, uint16_t *palette, uint16_t *bgTilemap,
-                               uint8_t *bgTiles);
-
-#define MAP_TILEMAP_W 30
-#define MAP_TILEMAP_H 20
-#define MAP_TILES 320
-#define MAP_COLORS 80
-
-/* A GBA colour (15 bits, red lowest) as RGB565. */
-static uint16_t Gba(uint16_t c)
-{
-    unsigned r = c & 31, g = (c >> 5) & 31, b = (c >> 10) & 31;
-    return (uint16_t)(r << 11 | (g << 1 | g >> 4) << 5 | b);
-}
-
-/* The palette entry the Region Map's screen shows at its pixel (px, py): the map's layer over the
- * background's; index 0 is clear in both, and the screen shows the backdrop, colour 0 of palette 0,
- * only where both are. */
-static unsigned MapColor(const uint16_t *tilemap, const uint8_t *tiles, const uint16_t *bgTilemap, const uint8_t *bgTiles,
-                         int px, int py)
-{
-    int tx = px / 8, ty = py / 8, x = px % 8, y = py % 8;
-    unsigned entry[2] = {tilemap[ty * MAP_TILEMAP_W + tx], bgTilemap[ty * MAP_TILEMAP_W + tx]};
-
-    for (int layer = 0; layer < 2; ++layer) {
-        unsigned tile = entry[layer] & 0x3FF, bank = entry[layer] >> 12, index = 0;
-        int sx = entry[layer] & 0x400 ? 7 - x : x, sy = entry[layer] & 0x800 ? 7 - y : y;
-        if (tile < MAP_TILES) {
-            uint8_t byte = (layer ? bgTiles : tiles)[tile * 32 + sy * 4 + sx / 2];
-            index = (sx & 1 ? byte >> 4 : byte) & 15;
-        }
-        if (index && bank * 16 + index < MAP_COLORS)
-            return bank * 16 + index;
-    }
-    return 0;
-}
-
-#include "3ds_home_map_impl.h"
-
-static struct {
-    int group;                          /* the map being built or built, -1 none */
-    int version;                        /* and the version of its art */
-    int ok;                             /* it was usable */
-} sMap = {-1, 0, 0};
-
-static uint16_t sMapTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
-static uint8_t sMapTiles[MAP_TILES * 32];
-static uint16_t sMapBgTilemap[MAP_TILEMAP_W * MAP_TILEMAP_H];
-static uint8_t sMapBgTiles[MAP_TILES * 32];
-static uint16_t sMapGba[MAP_COLORS];
-
-/* The picture's 192x144 part, pixel by pixel, to the image's builder (from the copies of the game's art above). */
-static void MapFeedPixels(void)
-{
-    for (int y = 0; y < HM_SH; ++y)
-        for (int x = 0; x < HM_SW; ++x) {
-            unsigned c = sMapGba[MapColor(sMapTilemap, sMapTiles, sMapBgTilemap, sMapBgTiles, HM_X0 + x, HM_Y0 + y)], r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31;
-
-            HmFeed(x, y, (int)(r << 3 | r >> 2), (int)(g << 3 | g >> 2), (int)(b << 3 | b >> 2));
-        }
-}
-
-/* On the console the whole build (the feed, then every step) runs on a worker of the lowest priority: the game's thread has idle time in every
- * frame (it waits for the screen), and a step of the build is far more than one frame's budget on an Old 3DS, so doing the steps in the game's
- * frames slowed the whole game for as long as a map took (a second or two) each time the region changed. The host tests build in the frames,
- * one step each, as before. */
-#if defined(__3DS__)
-#include <3ds/thread.h>
-static Thread sMapThread;
-static volatile int sMapAbort;
-
-static void MapJoin(void)
-{
-    if (sMapThread) {
-        sMapAbort = 1;                      /* the worker stops after the step it is in */
-        threadJoin(sMapThread, U64_MAX);
-        threadFree(sMapThread);
-        sMapThread = NULL;
-    }
-    sMapAbort = 0;
-}
-
-static void MapWorker(void *arg)
-{
-    (void)arg;
-    MapFeedPixels();
-    while (!sMapAbort && !HmDone() && __atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) != HMS_FAILED)
-        HmStep();
-}
-#else
-#define MapJoin() ((void)0)
-#endif
-
-static int MapFeed(int group)
-{
-    if (group < 0 || group >= PT_MAP_COUNT || !CtrPokeTouch_MapArt(group, sMapTilemap, sMapTiles, sMapGba, sMapBgTilemap, sMapBgTiles))
-        return 0;
-    MapJoin();
-    HmBegin();
-#if defined(__3DS__)
-    sMapThread = threadCreate(MapWorker, NULL, 64 * 1024, 0x3F, -2, false);
-    if (sMapThread)
-        return 1;                           /* no worker (out of memory): the frames do it, as on the host */
-#endif
-    MapFeedPixels();
-    return 1;
-}
+/* The HOME map: its art, its image and the worker that builds it are in 3ds_home_map_job_impl.h. */
+#include "3ds_home_map_job_impl.h"
 
 /* The worker's stack is heap memory that libctru unmaps at exit and it reads the data pack: it is stopped before the process ends (atexit,
  * registered after the data's, so it runs before it). */
 void CtrPokeTouch_Shutdown(void)
 {
-    MapJoin();
+    MapJobShutdown();
 }
 
-/* One frame's work on the map's image; true once it is there (HOME calls it for the map it shows, every frame). */
 bool CtrPokeTouch_MapPrepare(int group, int version)
 {
-    if (sMap.group != group || sMap.version != version) {
-        sMap.group = group;
-        sMap.version = version;
-        sMap.ok = MapFeed(group);
-    }
-    if (!sMap.ok)
-        return false;
-    if (__atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) == HMS_FAILED) {
-        sMap.ok = 0;
-        return false;
-    }
-#if defined(__3DS__)
-    if (!sMapThread)
-#endif
-        HmStep();                           /* with a worker, the worker steps; this only asks whether it is done */
-    return HmDone() != 0;
+    return MapJobPrepare(group, version);
 }
 
 static int MapReady(const CtrPokeTouchView *v)
 {
-    return v->mapReady && sMap.ok && sMap.group == v->mapGroup && sMap.version == v->mapVersion && HmDone();
+    return v->mapReady && sMap.ok && sMap.group == v->mapGroup && sMap.version == v->mapVersion && MapJobImageReady();
 }
 
 /* The view being drawn (HOME's zoom and centre), so that a rectangle can be put back from the image. */
@@ -778,7 +654,7 @@ static int CellView(const CtrPokeTouchView *v, int cx, int cy, int *x, int *y)
 /* A cell's centre in the image (its town's orb where there is one); false when the cell is off the map or the image is not built. */
 bool CtrPokeTouch_HomeCellWorld(int cx, int cy, int *wx, int *wy)
 {
-    if (cx < 0 || cy < 0 || cx >= 22 || cy >= 15 || !HmDone())
+    if (cx < 0 || cy < 0 || cx >= 22 || cy >= 15 || !MapJobImageReady())
         return false;
     HmCellWorld(cx, cy, wx, wy);
     return true;
@@ -816,7 +692,7 @@ bool CtrPokeTouch_HomePick(int zoom, int cx, int cy, int vx, int vy, int *gx, in
     int wx, wy, s = HmScale(zoom), best = -1;
     long bestD = 14L * 14L;
 
-    if (!HmDone())
+    if (!MapJobImageReady())
         return false;
     HmViewToWorld(zoom, cx, cy, vx, vy, &wx, &wy);
     for (int i = 0; i < sHmOrbN; ++i) {
