@@ -520,6 +520,10 @@ static void LhValue(int x, int y, int w, int h, const char *value, int zone)
  * outside it: the slate outline, the sky blue and the light blue next to the picture. Nothing inside the picture's rectangle. */
 static void HomeFrame(int x, int y, int w, int h)
 {
+    if (sStyleBall) {                                   /* Poke Ball: a white frame, 3 px */
+        UiRoundFill(x - 3, y - 3, w + 6, h + 6, 5, BL_WHITE);
+        return;
+    }
     UiRoundFill(x - 3, y - 3, w + 6, h + 6, 5, LL_SLATE);
     UiRoundFill(x - 2, y - 2, w + 4, h + 4, 4, UI_RGB(122, 180, 216));
     UiRoundFill(x - 1, y - 1, w + 2, h + 2, 3, UI_RGB(200, 228, 240));
@@ -1778,6 +1782,7 @@ static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the m
 #define HN_Y 203
 #define HN_W 312
 #define HN_H 34
+static void NoteWindow(void);
 
 /* Whether the view is HOME with nothing over the map: the layout with the map in the middle. */
 /* A screen drawn in HOME's layout (the band on top, the columns at the sides, a floor in the middle, a note under it): the SAVE card. */
@@ -1957,8 +1962,7 @@ static void HomeNote(const CtrPokeTouchView *v)
 
     sFlyButton.w = 0;
     TsBgRect(sHomeNote.x, sHomeNote.y, sHomeNote.w, sHomeNote.h);
-    LlWindow(HN_X, HN_Y, HN_W, HN_H);
-    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    NoteWindow();
     for (int i = 1; i < PT_BAR_LINES && !line; ++i)
         if (v->bar[i][0] && !(v->flyOk && i == 1))
             line = v->bar[i];
@@ -2243,6 +2247,11 @@ static void MenuWrap(const char *s, int x, int top, int width, int maxLines, int
 /* The compact notes of the native screens, in the note's window under the floor: a title and two small lines, or only text (up to three small lines). */
 static void NoteWindow(void)
 {
+    if (sStyleBall) {                                   /* Poke Ball: a dark band, and the note on the white under it */
+        UiRoundFill(0, HN_Y, W, 4, 0, BL_BAND);
+        UiRoundFill(0, HN_Y + 4, W, H - HN_Y - 4, 0, BL_WHITE);
+        return;
+    }
     LlWindow(HN_X, HN_Y, HN_W, HN_H);
     Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
 }
@@ -2382,8 +2391,7 @@ static void MenuNote(const char *title, const char *body, int frame)
     int right = HN_X + HN_W - 10;
 
     sFlyButton.w = 0;
-    LlWindow(HN_X, HN_Y, HN_W, HN_H);
-    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    NoteWindow();
     if (frame >= 0 && FrameSampleH(frame, HN_X + HN_W - FRAME_W - 6, HN_Y + 2, HN_H - 4))
         right -= FRAME_W + 6;
     if (body && body[0]) {

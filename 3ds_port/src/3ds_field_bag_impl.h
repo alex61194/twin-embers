@@ -683,8 +683,7 @@ static void FBagNote(const CtrPokeTouchView *v, int w)
 
     (void)w;
     EmSurface();
-    LlWindow(HN_X, HN_Y, HN_W, HN_H);
-    Fill(HN_X + 5, HN_Y + 5, 2, HN_H - 10, UI_RGB(232, 112, 36));
+    NoteWindow();
     if (b->selItem) {
         int base = HN_X + HN_W - 12, right = base, room = HN_W - 30, nameW = UiTextWidth(b->selName, 1), count = FBSelectedCount(b), before;
         int ty = HN_Y + 2;
