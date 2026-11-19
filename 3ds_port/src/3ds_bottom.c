@@ -1248,6 +1248,7 @@ static void LearnSnapshot(Snapshot *s, int mode)
 #include "3ds_bottom_relearn_impl.h"
 #include "3ds_bottom_mail_impl.h"
 #include "3ds_bottom_easychat_impl.h"
+#include "3ds_bottom_union_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -1276,6 +1277,8 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         CtrBottomStorage_PCMessage(c->prompt, sizeof(c->prompt));
     else
         CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
+    if (CtrUnionLeader_Active())
+        UnionLeaderFill(c);                 /* the Union Room's wait for the others: its own rows and note */
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -4887,11 +4890,15 @@ static void ProcessChoiceTouch(const CtrInput *in)
         return;
     }
     if (sChoiceTap.inside) {
-        if (isBattle)
-            CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
-        else
-            CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
-        sRouteKey = K_A;
+        if (CtrUnionLeader_Active()) {
+            sRouteKey = UnionLeaderKey(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        } else {
+            if (isBattle)
+                CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+            else
+                CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+            sRouteKey = K_A;
+        }
     }
     sChoiceTap.down = sChoiceTap.inside = 0;
 }

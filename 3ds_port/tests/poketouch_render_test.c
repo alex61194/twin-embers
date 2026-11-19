@@ -821,7 +821,14 @@ int main(int argc, char **argv)
         strcpy(s.bar[0],""); s.bar[1][0]=0;
         update(&old,&s); SHOT("choice_yesno"); s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
         s.choice.count=6; for(int k=0;k<6;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"CHOICE %d",k+1);
-        s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s); s.choice.on=0;
+        s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s);
+        /* The Union Room's wait for the others (3ds_bottom_union_impl.h): START and CANCEL, then CANCEL alone; each text fits its button / the note. */
+        { const char *wait[2]={CTR_TR("START","EMPEZAR","START"),CTR_TR("CANCEL","CANCELAR","ABBRECHEN")}; s.choice.count=2; s.choice.cols=1; s.choice.cursor=0; s.choice.pressed=-1;
+          for(int k=0;k<2;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"%s",wait[k]);
+          snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("Everyone is here. START begins.","Ya est\xC3\xA1n todos. EMPEZAR comienza.","Alle sind da. START beginnt.")); update(&old,&s); SHOT("union_wait_start");
+          s.choice.count=1; snprintf(s.choice.label[0],sizeof(s.choice.label[0]),"%s",CTR_TR("CANCEL","CANCELAR","ABBRECHEN")); snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("1 player is missing.","Falta 1 jugador.","Es fehlt 1 Spieler."));
+          update(&old,&s); SHOT("union_wait_cancel"); }
+        s.choice.on=0;
         (void)before;
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
