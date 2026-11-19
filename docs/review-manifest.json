@@ -666,7 +666,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "1c8f243f913660c48b436eca0ce8694b259a864fc4f9f5772babfcd629b67dd7",
+   "sha256": "bdba91a142570dc49ff40beba89667842039cdc9ec41ac4fb6d9eeb72bb0f67e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "ced16b1cc3f21c4845a2d9b66a7a4ec3e6efc424bbb0ad5b353bfd5ad9401100",
+   "sha256": "0553418433436d7d189bc7d81eefe2b84c352ed9983920b91023bff7c384da53",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1232,7 +1232,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_choice_impl.h",
-   "sha256": "bc5ed269462e86be60602178a4a9e3b02b5a63d70e422bf92b0cfa85c4708482",
+   "sha256": "ffe44d2d9e1a0a4ff53403ff1fccc2d8dbca5027662af5b0b60d7608a1180b8e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "ca53986757a30cfe8e7ba85a5d4c63c73ea4c97f6cdb2c7214714f97dfe545fe",
+   "sha256": "8e4000970255129a20ecfa20ba0c58fa5ab75665a01075b9f9302c05f57717f9",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "cdcfb1e9f21638e2b186b7048efec95f4ef1441873089f37fc0a4a8d4b694da7"
+   "sha256": "a27f4516f22472508951af1044ecbf6bb93816ea44dca078c20b7ea762efe433"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -7523,6 +7523,30 @@
   {
    "path": "patches/pokefirered/0271-repel-kind-after-load.json",
    "sha256": "008cbf6a30a88226df7aa750ee0032c2f026e3ebd78bcb4c2b26cf552c3a59b0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
+   "sha256": "137471dff42414a835d2b8b55da36687be7f35febc9ed56efed11bde8f0dd429",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_field_chat_impl.h",
+   "sha256": "67af91c342670a820986f09a1e8878ab25cdd9116a99853909d9169467af12ab",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_chat_impl.h",
+   "sha256": "a733958175233180976af60ed55ed29f352ea93dccc534a7c76e72b738307d2c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

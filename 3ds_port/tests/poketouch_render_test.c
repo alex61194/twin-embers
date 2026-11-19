@@ -856,6 +856,28 @@ int main(int argc, char **argv)
             t->side=1; { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+5) { found=1; break; } assert(!found); }
             memset(&s.trade,0,sizeof(s.trade));
         }
+        /* The chat's keyboard (3ds_field_chat_impl.h): FireRed's 5 x 10 grid on its side, tabs, the message, three buttons; every key and button is found by its hit test. */
+        {
+            CtrPokeTouchChat *t=&s.chat;
+            memset(t,0xff,sizeof(*t)); t->on=1; t->page=0; t->length=5; s.choice.pressed=-1; s.choice.count=0;
+            for(int i=0;i<5;++i) t->msg[i]=(uint8_t)(0xBB+i);
+            t->msg[5]=0xff;
+            for(int row=0;row<10;++row) for(int col=0;col<5;++col) {
+                if(row==5 && col>0) continue;                                      /* the Z row has one key */
+                t->key[row][col][0]=(uint8_t)(0xBB+(row*5+col)%26); t->key[row][col][1]=0xff; t->key[row][col][2]=0xff;
+            }
+            update(&old,&s); SHOT("chat_keys");
+            s.choice.pressed=PT_CHOICE_HIT_ROW+7; update(&old,&s); s.choice.pressed=-1;
+            t->page=3; for(int row=0;row<10;++row) { memset(t->reg[row],0xff,sizeof(t->reg[row])); if(row<7) { for(int c=0;c<9;++c) t->reg[row][c]=(uint8_t)(0xD5+(row+c)%26); } }
+            update(&old,&s); SHOT("chat_saved");
+            t->page=0; t->length=0; t->msg[0]=0xff; update(&old,&s); SHOT("chat_empty");
+            for(int code=0;code<=PT_CHAT_QUIT;++code) { int found=0; if(code>=50 && code<PT_CHAT_TAB) continue; if(code<50 && (code/5==5) && code%5>0) continue;
+                for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+code) { found=1; break; }
+                if(!found) printf("CHAT hit %d missing\n",code);
+                assert(found); }
+            assert(CtrPokeTouch_ChoiceHit(&s,0,0)==-1);
+            memset(&s.chat,0,sizeof(s.chat));
+        }
         s.choice.on=0;
         (void)before;
     }

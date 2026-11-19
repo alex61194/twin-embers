@@ -1250,6 +1250,7 @@ static void LearnSnapshot(Snapshot *s, int mode)
 #include "3ds_bottom_easychat_impl.h"
 #include "3ds_bottom_union_impl.h"
 #include "3ds_bottom_trade_impl.h"
+#include "3ds_bottom_chat_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -1282,6 +1283,8 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         UnionLeaderFill(c);                 /* the Union Room's wait for the others: its own rows and note */
     else if (CtrTrade_Active())
         TradeFill(&s->touch);               /* the trade's choice of a Pokemon: both parties as cards */
+    else if (CtrChat_Active())
+        ChatFill(&s->touch);                /* the chat's keyboard */
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -4897,6 +4900,8 @@ static void ProcessChoiceTouch(const CtrInput *in)
             sRouteKey = UnionLeaderKey(sChoiceTap.code - PT_CHOICE_HIT_ROW);
         } else if (CtrTrade_Active()) {
             sRouteKey = TradeTap(sChoiceTap.code);
+        } else if (CtrChat_Active()) {
+            sRouteKey = ChatTap(sChoiceTap.code);
         } else {
             if (isBattle)
                 CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);

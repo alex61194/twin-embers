@@ -7,6 +7,8 @@
 /* The trade's choice of a Pokemon takes the place of the rows while it is on (3ds_field_trade_impl.h, included after the PC box). */
 static void FTradeFrame(const CtrPokeTouchView *v);
 static int FTradeHit(const CtrPokeTouchView *v, int x, int y);
+static void FChatFrame(const CtrPokeTouchView *v);
+static int FChatHit(const CtrPokeTouchView *v, int x, int y);
 
 static int FChColumns(const CtrPokeTouchChoice *c)
 {
@@ -35,6 +37,8 @@ int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *v, int x, int y)
 
     if (v->trade.on)
         return c->on ? FTradeHit(v, x, y) : -1;
+    if (v->chat.on)
+        return c->on ? FChatHit(v, x, y) : -1;
     x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
     y -= MENU_SHIFT;
     if (!c->on)
@@ -53,6 +57,10 @@ static void FChoiceFrame(const CtrPokeTouchView *v)
 
     if (v->trade.on) {
         FTradeFrame(v);
+        return;
+    }
+    if (v->chat.on) {
+        FChatFrame(v);
         return;
     }
     EmSurface();

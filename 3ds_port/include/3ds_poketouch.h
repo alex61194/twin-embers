@@ -344,6 +344,18 @@ typedef struct {
     uint8_t name[2][6][12];
     uint8_t partner[12];            /* the other player's name */
 } CtrPokeTouchTrade;
+
+/* The Union Room chat's keyboard (3ds_field_chat_impl.h), drawn instead of the choice's rows while the chat waits for input. FireRed's keys are
+ * 5 columns by 10 rows a page; here they are laid on their side (10 across, 5 down). A key's hit code is PT_CHOICE_HIT_ROW + row * 5 + column
+ * of FireRed's grid (0-49; on the registered page, row * 5), then the page tabs, Delete, Send and Quit. Texts are FireRed's codes, 0xff ended. */
+enum { PT_CHAT_TAB = 50, PT_CHAT_DELETE = 54, PT_CHAT_SEND = 55, PT_CHAT_QUIT = 56, PT_CHAT_PAGES = 4 };
+typedef struct {
+    uint8_t on, page;               /* page 3: the registered phrases */
+    uint8_t length;                 /* characters typed */
+    uint8_t msg[32];
+    uint8_t key[10][5][3];          /* [row][column]: 1 or 2 codes, then 0xff; 0xff first: no key */
+    uint8_t reg[10][21];
+} CtrPokeTouchChat;
 typedef struct {
     uint8_t on, state;
     int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
@@ -471,6 +483,7 @@ typedef struct {
     uint8_t optFrameType;       /* ... 0..9 */
     CtrPokeTouchLook optLook;   /* a look row is selected: the preview panel */
     CtrPokeTouchPad optPad;     /* the keypad for the private room's code, over the rows while it is open */
+    CtrPokeTouchChat chat;      /* the Union Room chat's keyboard: drawn instead of the choice's rows while on */
     CtrPokeTouchTrade trade;    /* the trade's choice of a Pokemon: drawn instead of the choice's rows while on */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
