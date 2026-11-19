@@ -4,6 +4,10 @@
  * on the embers, the cursor's flame with the select ring; the question of the message box in the note. Every word is FireRed's
  * (CtrFieldChoice_*). */
 
+/* The trade's choice of a Pokemon takes the place of the rows while it is on (3ds_field_trade_impl.h, included after the PC box). */
+static void FTradeFrame(const CtrPokeTouchView *v);
+static int FTradeHit(const CtrPokeTouchView *v, int x, int y);
+
 static int FChColumns(const CtrPokeTouchChoice *c)
 {
     return c->cols > 0 ? c->cols : c->count > 5 ? 2 : 1;
@@ -29,6 +33,8 @@ int CtrPokeTouch_ChoiceHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchChoice *c = &v->choice;
 
+    if (v->trade.on)
+        return c->on ? FTradeHit(v, x, y) : -1;
     x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
     y -= MENU_SHIFT;
     if (!c->on)
@@ -45,6 +51,10 @@ static void FChoiceFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchChoice *c = &v->choice;
 
+    if (v->trade.on) {
+        FTradeFrame(v);
+        return;
+    }
     EmSurface();
     TsBgRect(PT_VIEW_X - 4, PT_VIEW_Y - 4, PT_VIEW_W + 8, PT_VIEW_H + 8);
     for (int i = 0; i < c->count && i < PT_CHOICE_MAX; ++i) {

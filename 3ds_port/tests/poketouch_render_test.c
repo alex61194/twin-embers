@@ -828,6 +828,34 @@ int main(int argc, char **argv)
           snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("Everyone is here. START begins.","Ya est\xC3\xA1n todos. EMPEZAR comienza.","Alle sind da. START beginnt.")); update(&old,&s); SHOT("union_wait_start");
           s.choice.count=1; snprintf(s.choice.label[0],sizeof(s.choice.label[0]),"%s",CTR_TR("CANCEL","CANCELAR","ABBRECHEN")); snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("1 player is missing.","Falta 1 jugador.","Es fehlt 1 Spieler."));
           update(&old,&s); SHOT("union_wait_cancel"); }
+        /* The trade's choice of a Pokemon (3ds_field_trade_impl.h): the two parties as cards, a tab each, CANCEL; every card and button is where its hit test finds it. */
+        {
+            static const char *const nm[6]={"GROUDON","CHARIZARD","PIKACHU","ONIX","LAPRAS","SNORLAX"};
+            CtrPokeTouchTrade *t=&s.trade;
+            memset(t,0,sizeof(*t)); t->on=1; t->side=0; t->cursor=0;
+            for(int side=0;side<2;++side) for(int i=0;i<6;++i) {
+                memset(t->name[side][i],0xff,sizeof(t->name[side][i]));
+                if(side==1 && i>=4) continue;                                    /* the partner has four Pokemon */
+                t->mon[side][i].species=(uint16_t)(1+i+side*20); t->mon[side][i].personality=1234u+i;
+                t->mon[side][i].egg=(side==1 && i==3);
+                t->level[side][i]=(uint8_t)(100-i*12); t->hp[side][i]=(uint8_t)(i==3?0:100-i*20);
+                for(int c=0;c<8 && nm[i][c];++c) t->name[side][i][c]=(uint8_t)(0xBB+(nm[i][c]-'A'));   /* FireRed's capital letters */
+            }
+            memset(t->partner,0xff,sizeof(t->partner)); t->partner[0]=(uint8_t)(0xBB+'R'-'A'); t->partner[1]=(uint8_t)(0xD5+'i'-'a'); t->partner[2]=(uint8_t)(0xD5+'c'-'a'); t->partner[3]=(uint8_t)(0xD5+'k'-'a');
+            snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("Choose a Pokemon to trade.","Elige un PokÃ©mon para el intercambio.","WÃ¤hle ein PokÃ©mon zum Tauschen."));
+            s.choice.count=0; s.choice.pressed=-1;
+            update(&old,&s); SHOT("trade_yours");
+            t->cursor=2; s.choice.pressed=PT_CHOICE_HIT_ROW+2; update(&old,&s); s.choice.pressed=-1;
+            t->side=1; t->cursor=7; update(&old,&s); SHOT("trade_theirs");
+            t->cursor=12; update(&old,&s); SHOT("trade_cancel");
+            t->side=0; t->cursor=0; update(&old,&s);
+            /* hit tests: the cards where the Pokemon are, the tabs, CANCEL, nothing elsewhere or on an empty place of the partner's party */
+            for(int k=0;k<6;++k) { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+k) { found=1; break; } assert(found); }
+            for(int code=PT_TRADE_TAB_YOURS;code<=PT_TRADE_CANCEL;++code) { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+code) { found=1; break; } assert(found); }
+            assert(CtrPokeTouch_ChoiceHit(&s,0,0)==-1);
+            t->side=1; { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+5) { found=1; break; } assert(!found); }
+            memset(&s.trade,0,sizeof(s.trade));
+        }
         s.choice.on=0;
         (void)before;
     }

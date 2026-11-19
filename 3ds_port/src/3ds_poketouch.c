@@ -2851,4 +2851,5 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
 #include "3ds_field_box_impl.h"
+#include "3ds_field_trade_impl.h"
 #include "3ds_field_easychat_impl.h"

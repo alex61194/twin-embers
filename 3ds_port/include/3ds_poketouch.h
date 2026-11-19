@@ -331,6 +331,19 @@ typedef struct {
     uint8_t egg;
     uint32_t personality;
 } CtrPokeTouchBoxMon;
+
+/* The trade's choice of a Pokemon (3ds_field_trade_impl.h), drawn instead of the choice's rows while the trade menu waits for one: both
+ * parties as cards, one party at a time (the tabs), and CANCEL. `cursor` is FireRed's (0-5 yours, 6-11 the partner's, 12 CANCEL); a card's
+ * hit code is PT_CHOICE_HIT_ROW + its place (0-5) in the party shown, then the tabs and CANCEL. Texts are FireRed's own codes, 0xff ended. */
+enum { PT_TRADE_TAB_YOURS = 6, PT_TRADE_TAB_THEIRS = 7, PT_TRADE_CANCEL = 8 };
+typedef struct {
+    uint8_t on, side;               /* the party shown: 0 yours, 1 the partner's */
+    int8_t cursor;
+    CtrPokeTouchBoxMon mon[2][6];   /* species 0: no Pokemon there */
+    uint8_t level[2][6], hp[2][6];  /* HP left as a percentage */
+    uint8_t name[2][6][12];
+    uint8_t partner[12];            /* the other player's name */
+} CtrPokeTouchTrade;
 typedef struct {
     uint8_t on, state;
     int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
@@ -458,6 +471,7 @@ typedef struct {
     uint8_t optFrameType;       /* ... 0..9 */
     CtrPokeTouchLook optLook;   /* a look row is selected: the preview panel */
     CtrPokeTouchPad optPad;     /* the keypad for the private room's code, over the rows while it is open */
+    CtrPokeTouchTrade trade;    /* the trade's choice of a Pokemon: drawn instead of the choice's rows while on */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
     uint8_t optSwitch[PT_OPT_MAX];      /* an ON/OFF row, drawn as a switch: 0 not one, 1 off, 2 on */
