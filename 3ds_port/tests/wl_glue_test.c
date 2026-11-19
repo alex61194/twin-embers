@@ -157,11 +157,20 @@ int main(void)
     CtrWl_SetLocal(false);
     assert(CtrWl_IsInternet());                               /* online chosen and a relay known: the relay */
     assert(!strcmp(sCode, "room"));
+    assert(!strcmp(CTR_WL_PRIVATE_ROOM, WL_INET_PRIVATE_PREFIX));      /* the glue's prefix is the one the inet layer gives a stronger key for */
+    CtrWl_SetPrivateRoom("4821907356120894");
+    assert(!strcmp(sCode, CTR_WL_PRIVATE_ROOM "4821907356120894"));    /* a private room: the room of its code */
+    assert(WlInet_IsPrivateCode(sCode) && WlInet_Iterations(sCode) == WL_INET_ITERATIONS_PRIVATE && !WlInet_IsPrivateCode("room"));
     CtrWl_SetPrivateRoom("123456");
-    assert(!strcmp(sCode, CTR_WL_PRIVATE_ROOM "123456"));    /* a private room: the room of its code */
-    CtrWl_SetPrivateRoom("12345x");
-    assert(!strcmp(sCode, "room"));                          /* not six digits: no private room */
-    CtrWl_SetPrivateRoom("654321");
+    assert(!strcmp(sCode, "room"));                          /* the old six digits are no private room any more */
+    CtrWl_SetPrivateRoom("482190735612089x");
+    assert(!strcmp(sCode, "room"));                          /* not all digits */
+    CtrWl_SetPrivateRoom("48219073561208945");
+    assert(!strcmp(sCode, "room"));                          /* one digit too many (nothing is cut to fit) */
+    CtrWl_SetPrivateRoom("4821907356120894");
+    CtrWl_SetPrivateRoom("12345678123456789");
+    assert(!strcmp(sCode, "room"));
+    CtrWl_SetPrivateRoom("6543216543216543");
     CtrWl_SetPrivateRoom(NULL);
     assert(!strcmp(sCode, "room"));
     CtrWl_SetInternet(NULL, 0, NULL);

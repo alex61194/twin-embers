@@ -46,7 +46,9 @@ static bool sLocal;                     /* the player chose local play (MULTIPLA
 
 static char sRelayHost[64], sCode[WL_INET_CODE_MAX + 1];
 static char sBaseCode[WL_INET_CODE_MAX + 1];    /* the room of online.cfg or the relay's public room */
-static char sPrivateCode[8];                    /* the private room's six digits, "" for none (CtrWl_SetPrivateRoom) */
+static char sPrivateCode[WL_INET_PRIVATE_DIGITS + 1];   /* the private room's digits, "" for none (CtrWl_SetPrivateRoom) */
+_Static_assert(sizeof(CTR_WL_PRIVATE_ROOM) == sizeof(WL_INET_PRIVATE_PREFIX) && sizeof(CTR_WL_PRIVATE_ROOM) + WL_INET_PRIVATE_DIGITS <= WL_INET_CODE_MAX + 1,
+               "a private room's code is what the inet layer takes for one, and fits"); /* the strings are compared in wl_glue_test */
 
 /* The radio the next session uses: the relay when one is known and the player did not choose local play. Changed only between sessions:
  * a link that is up keeps its radio. */
@@ -139,11 +141,13 @@ void CtrWl_SetPrivateRoom(const char *digits)
 {
     size_t n = 0;
 
-    while (digits && n < 6 && digits[n] >= '0' && digits[n] <= '9')
+    while (digits && n < WL_INET_PRIVATE_DIGITS && digits[n] >= '0' && digits[n] <= '9')
         ++n;
-    if (n == 6)
-        memcpy(sPrivateCode, digits, 6);
-    sPrivateCode[n == 6 ? 6 : 0] = 0;
+    if (n == WL_INET_PRIVATE_DIGITS && digits[n] == 0)     /* exactly the digits of a code: nothing before, nothing after */
+        memcpy(sPrivateCode, digits, n);
+    else
+        n = 0;
+    sPrivateCode[n] = 0;
     ApplyMode();
 }
 

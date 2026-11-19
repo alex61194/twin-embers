@@ -36,7 +36,7 @@ static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 train
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
 static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
-static char sRoomCode[7];   /* the private room's code: six digits, "" when none was set (roomcode=) */
+static char sRoomCode[CTR_ROOM_CODE_DIGITS + 1];   /* the private room's code: its digits, "" when none was set (roomcode=) */
 static int sLocalPlay;      /* MULTIPLAYER: 0 Online (the relay), 1 Local (the console's own radio) (localplay=) */
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
 static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
@@ -78,16 +78,42 @@ static int LookLine(const char *line)
     return 0;
 }
 
-/* A room code is six digits; anything else is no code. */
-static void RoomCodeSet(const char *text)
+/* A room code is CTR_ROOM_CODE_DIGITS digits, at least six of them different; anything else (an older six-digit code too) is no code. */
+int CtrSettings_RoomCodeOk(const char *code)
 {
+    unsigned seen = 0, different = 0;
     size_t n = 0;
 
-    while (n < 6 && text[n] >= '0' && text[n] <= '9')
-        ++n;
-    if (n == 6)
-        memcpy(sRoomCode, text, 6);
-    sRoomCode[n == 6 ? 6 : 0] = 0;
+    if (!code)
+        return 0;
+    while (n < CTR_ROOM_CODE_DIGITS && code[n] >= '0' && code[n] <= '9')
+        seen |= 1u << (code[n++] - '0');
+    for (; seen; seen >>= 1)
+        different += seen & 1;
+    return n == CTR_ROOM_CODE_DIGITS && code[n] == 0 && different >= 6;
+}
+
+int CtrSettings_MakeRoomCode(char out[CTR_ROOM_CODE_DIGITS + 1], const uint8_t *random, size_t n)
+{
+    char code[CTR_ROOM_CODE_DIGITS + 1];
+    size_t made = 0;
+
+    for (size_t i = 0; i < n && made < CTR_ROOM_CODE_DIGITS; ++i)
+        if (random[i] < 250)
+            code[made++] = (char)('0' + random[i] % 10);
+    code[made] = 0;
+    if (made < CTR_ROOM_CODE_DIGITS || !CtrSettings_RoomCodeOk(code))
+        return 0;
+    memcpy(out, code, sizeof(code));
+    return 1;
+}
+
+static void RoomCodeSet(const char *text)
+{
+    if (CtrSettings_RoomCodeOk(text))
+        memcpy(sRoomCode, text, CTR_ROOM_CODE_DIGITS + 1);
+    else
+        sRoomCode[0] = 0;
 }
 
 static void Load(void)
@@ -475,7 +501,7 @@ const char *CtrSettings_RoomCode(void)
 
 void CtrSettings_SetRoomCode(const char *code)
 {
-    char before[7];
+    char before[sizeof(sRoomCode)];
 
     Load();
     memcpy(before, sRoomCode, sizeof(before));

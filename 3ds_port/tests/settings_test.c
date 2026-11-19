@@ -8,6 +8,17 @@
 
 int main(void)
 {
+    /* A file of an older build: its six-digit room code is dropped as it is read (the private room is off with it), the rest is kept. */
+    {
+        FILE *old = fopen(CTR_SETTINGS_PATH, "wb");
+
+        assert(old != NULL);
+        fputs("turbo=2\nroomcode=123456\nprivroom=1\n", old);
+        fclose(old);
+        assert(CtrSettings_Turbo() == 2 && !CtrSettings_PrivateRoom() && CtrSettings_RoomCode()[0] == 0);
+        CtrSettings_SetTurbo(0);
+        CtrSettings_SetPrivateRoom(0);
+    }
     remove(CTR_SETTINGS_PATH);
 
     /* No file: the defaults. */
@@ -217,12 +228,58 @@ int main(void)
                && strstr(big, "look_leaf") == NULL && strstr(big, "expshare=2\n") != NULL && strstr(big, "ball=3\n") != NULL);
     }
 
+    /* A private room's code: 16 digits with at least six different, made from random bytes without bias, kept in the file, and nothing else is a code. */
+    {
+        char code[CTR_ROOM_CODE_DIGITS + 1];
+        uint8_t run[20], few[20];
+        char read[256] = {0};
+
+        assert(CtrSettings_RoomCodeOk("4829137650218394") && CtrSettings_RoomCodeOk("0123456789012345") && CtrSettings_RoomCodeOk("1234567000000000"));
+        assert(!CtrSettings_RoomCodeOk("0000000000000000") && !CtrSettings_RoomCodeOk("1212121212121212") && !CtrSettings_RoomCodeOk("1234512345123451"));
+        assert(!CtrSettings_RoomCodeOk("482913765021839") && !CtrSettings_RoomCodeOk("48291376502183945") && !CtrSettings_RoomCodeOk("482913765021839x"));
+        assert(!CtrSettings_RoomCodeOk("123456") && !CtrSettings_RoomCodeOk("") && !CtrSettings_RoomCodeOk(NULL));
+        for (int i = 0; i < 20; ++i) {
+            run[i] = (uint8_t)(i % 2 ? 250 + i % 5 : (37 * i + 11) % 250);      /* every other byte is one a digit cannot be made of: skipped */
+            few[i] = (uint8_t)(i % 2);                                         /* 0101...: two different digits */
+        }
+        assert(!CtrSettings_MakeRoomCode(code, run, 20) && !CtrSettings_MakeRoomCode(code, few, 20));   /* ten digits from twenty bytes; and a plain one */
+        {
+            uint8_t more[40];
+            char want[CTR_ROOM_CODE_DIGITS + 1];
+            int d = 0;
+
+            for (int i = 0; i < 40; ++i)
+                more[i] = (uint8_t)(i % 3 == 2 ? 250 + i % 5 : (37 * i + 11) % 250);      /* every third byte is one a digit cannot be made of */
+            for (int i = 0; i < 40 && d < CTR_ROOM_CODE_DIGITS; ++i)
+                if (more[i] < 250)
+                    want[d++] = (char)('0' + more[i] % 10);
+            want[d] = 0;
+            code[0] = 'x';
+            assert(CtrSettings_MakeRoomCode(code, more, 40) && !strcmp(code, want) && CtrSettings_RoomCodeOk(code));
+        }
+        CtrSettings_SetRoomCode("4829137650218394");
+        CtrSettings_SetPrivateRoom(1);
+        assert(!strcmp(CtrSettings_RoomCode(), "4829137650218394") && CtrSettings_PrivateRoom());
+        file = fopen(CTR_SETTINGS_PATH, "rb");
+        assert(file != NULL);
+        assert(fread(read, 1, sizeof(read) - 1, file) > 0);
+        fclose(file);
+        assert(strstr(read, "roomcode=4829137650218394\n") != NULL);
+        CtrSettings_SetRoomCode("123456");                                      /* not a code: none is kept */
+        assert(!CtrSettings_RoomCode()[0] && !CtrSettings_PrivateRoom());
+        CtrSettings_SetRoomCode("4829137650218394");
+        CtrSettings_SetRoomCode("0000000000000000");
+        assert(!CtrSettings_RoomCode()[0]);
+    }
+
     /* The worst case (every key written, the longest values) must fit the fixed block with room to spare: Format stops
      * silently at the block's end, which would drop the last keys. The block is 512 bytes; keep the text under 320. */
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
     CtrSettings_SetStyle(1);
+    CtrSettings_SetRoomCode("4829137650218394");
+    CtrSettings_SetPrivateRoom(1);
     CtrSettings_SetRepelAgain(1);
     CtrSettings_SetCompanion(2);
     CtrSettings_SetExpShare(2);
@@ -255,7 +312,7 @@ int main(void)
         while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
-        assert(n < 360);   /* the file holds 512; the wild keys are before the looks and the ball */
+        assert(n < 400);   /* the file holds 512 (a private room's code and flag, 37 bytes, are in this worst case); the wild keys are before the looks and the ball */
         assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
         assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "look_surf=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }

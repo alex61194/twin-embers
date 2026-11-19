@@ -1062,35 +1062,34 @@ static void OptRow(int row, const CtrPokeTouchView *v)
     LhValue(boxX, wy, ww, 16, v->optValue[row], zone == PT_OPT_ZONE_PREV ? 1 : zone == PT_OPT_ZONE_NEXT ? 2 : 0);
 }
 
-/* The keypad of the private room's code, over the rows (CtrPokeTouchPad): along the top the six boxes of the digits typed (the next one
- * underlined) and CANCEL at their right; under them the keys in three columns, 1-9 and then DELETE, 0 and OK, OK lit (flame) once the six
- * digits are there. Cream raised keys as the rows; the key under a held touch sinks. */
+/* The keypad of the private room's code, over the rows (CtrPokeTouchPad): along the top four boxes of four digits (the next digit underlined); under
+ * them the keys in four columns, 1-4, 5-8, then 9, 0, DELETE and OK, OK lit (flame) once the code is a good one; and at the foot NEW (a code made
+ * at random) and CANCEL. Cream raised keys as the rows; the key under a held touch sinks. */
 #define PAD_BOX_X (OPT_X + 4)
 #define PAD_BOX_Y (OPT_Y + 2)
-#define PAD_BOX_W 24
+#define PAD_BOX_W 54
 #define PAD_BOX_H 22
 #define PAD_BOX_GAP 4
-#define PAD_CANCEL_X (PAD_BOX_X + PT_PAD_DIGITS * (PAD_BOX_W + PAD_BOX_GAP) + 2)
-#define PAD_CANCEL_W (OPT_X + OPT_W - 4 - PAD_CANCEL_X)
 #define PAD_KEY_X (OPT_X + 4)
 #define PAD_KEY_Y (OPT_Y + 30)
-#define PAD_KEY_W 72
+#define PAD_KEY_W 54
 #define PAD_KEY_H 26
-#define PAD_KEY_GAP 6
+#define PAD_KEY_GAP 4
 #define PAD_KEY_STEP 30
+#define PAD_WIDE_Y (OPT_Y + 120)
+#define PAD_WIDE_W 112
 
 static CtrPokeTouchRect PadKeyRect(int key)
 {
-    /* the keys in reading order: 1..9, then DELETE, 0, OK */
-    int slot = key >= 1 && key <= 9 ? key - 1 : key == PT_PAD_KEY_DELETE ? 9 : key == 0 ? 10 : 11;
-    CtrPokeTouchRect r = {(int16_t)(PAD_KEY_X + (slot % 3) * (PAD_KEY_W + PAD_KEY_GAP)), (int16_t)(PAD_KEY_Y + (slot / 3) * PAD_KEY_STEP),
+    /* the keys in reading order: 1..9, then 0, DELETE, OK (four to a row) */
+    int slot = key >= 1 && key <= 9 ? key - 1 : key == 0 ? 9 : key == PT_PAD_KEY_DELETE ? 10 : 11;
+    CtrPokeTouchRect r = {(int16_t)(PAD_KEY_X + (slot % 4) * (PAD_KEY_W + PAD_KEY_GAP)), (int16_t)(PAD_KEY_Y + (slot / 4) * PAD_KEY_STEP),
                           PAD_KEY_W, PAD_KEY_H};
 
-    if (key == PT_PAD_KEY_CANCEL) {
-        r.x = PAD_CANCEL_X;
-        r.y = PAD_BOX_Y;
-        r.w = PAD_CANCEL_W;
-        r.h = PAD_BOX_H;
+    if (key == PT_PAD_KEY_NEW || key == PT_PAD_KEY_CANCEL) {
+        r.x = (int16_t)(PAD_KEY_X + (key == PT_PAD_KEY_CANCEL ? PAD_WIDE_W + 4 : 0));
+        r.y = PAD_WIDE_Y;
+        r.w = PAD_WIDE_W;
     }
     return r;
 }
@@ -1111,22 +1110,27 @@ static void OptPad(const CtrPokeTouchView *v)
     const CtrPokeTouchPad *p = &v->optPad;
 
     TsBgRect(OPT_X - 2, OPT_Y - 2, OPT_W + 4, PT_OPT_MAX * OPT_STEP + 4);
-    for (int i = 0; i < PT_PAD_DIGITS; ++i) {
-        int x = PAD_BOX_X + i * (PAD_BOX_W + PAD_BOX_GAP);
-        char digit[2] = {i < p->len ? p->code[i] : 0, 0};
+    for (int g = 0; g < PT_PAD_DIGITS / 4; ++g) {
+        int x = PAD_BOX_X + g * (PAD_BOX_W + PAD_BOX_GAP);
 
         LlWell(x, PAD_BOX_Y, PAD_BOX_W, PAD_BOX_H);
-        if (digit[0])
-            UiText(digit, x + (PAD_BOX_W - UiTextWidth(digit, 1)) / 2, PAD_BOX_Y + 5, LH_VAL, LH_VALSH, 1, x + PAD_BOX_W);
-        else if (i == p->len)
-            UiRoundFill(x + 6, PAD_BOX_Y + PAD_BOX_H - 6, PAD_BOX_W - 12, 2, 1, LH_VAL);   /* where the next digit goes */
+        for (int k = 0; k < 4; ++k) {
+            int i = g * 4 + k, dx = x + 7 + k * 11;
+            char digit[2] = {i < p->len ? p->code[i] : 0, 0};
+
+            if (digit[0])
+                UiText(digit, dx, PAD_BOX_Y + 5, LH_VAL, LH_VALSH, 1, dx + 10);
+            else if (i == p->len)
+                UiRoundFill(dx, PAD_BOX_Y + PAD_BOX_H - 6, 8, 2, 1, LH_VAL);          /* where the next digit goes */
+        }
     }
     for (int key = 0; key < PT_PAD_KEYS; ++key) {
         static const char *const digits[10] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
         CtrPokeTouchRect r = PadKeyRect(key);
-        const EmPal *pal = key == PT_PAD_KEY_OK ? (p->len == PT_PAD_DIGITS ? &kEmFlame : &kEmGrey) : &kEmCream;
+        const EmPal *pal = key == PT_PAD_KEY_OK ? (p->ok ? &kEmFlame : &kEmGrey) : &kEmCream;
         const char *label = key <= 9 ? digits[key] : key == PT_PAD_KEY_DELETE ? CTR_TR("Delete", "Borrar", "L\xC3\xB6schen")
-                          : key == PT_PAD_KEY_OK ? "OK" : CTR_TR("Cancel", "Cancelar", "Zur\xC3\xBC" "ck");
+                          : key == PT_PAD_KEY_OK ? "OK" : key == PT_PAD_KEY_NEW ? CTR_TR("New code", "C\xC3\xB3" "digo nuevo", "Neuer Code")
+                          : CTR_TR("Cancel", "Cancelar", "Zur\xC3\xBC" "ck");
         int fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, p->pressed == key);
 
         EmLabel(label, r.x, r.w, fy, r.h - COL_DEPTH, pal);

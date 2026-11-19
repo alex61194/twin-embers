@@ -50,8 +50,8 @@ bool CtrWl_HasRelay(void);
 /* The room everyone meets in when a relay is given without a code. */
 #define CTR_WL_PUBLIC_ROOM "twinembers-public"
 #define CTR_WL_PUBLIC_ROOMS 8           /* when it is full (16 consoles): twinembers-public-2 and on, up to this many rooms */
-/* A private room: the room of a six-digit code everyone in it types (the OPTIONS keypad), instead of the relay's public room or online.cfg's
- * code; NULL or "" for none. It counts from the next session on, like the rest. */
+/* A private room: the room of a 16-digit code everyone in it types (the OPTIONS keypad; WL_INET_PRIVATE_DIGITS in 3ds_wl_inet.h), instead of the
+ * relay's public room or online.cfg's code; NULL, "" or anything but exactly that many digits for none. It counts from the next session on, like the rest. */
 #define CTR_WL_PRIVATE_ROOM "twinembers-private-"
 void CtrWl_SetPrivateRoom(const char *digits);
 /* The relay a build connects to by default, "host:port" (make TWIN_RELAY=...); empty: none, online play needs online.cfg. */

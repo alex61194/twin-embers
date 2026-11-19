@@ -70,6 +70,34 @@ int CtrSurf_Picture(int i, uint8_t tiles[CTR_LOOK_WALK_BYTES], uint16_t palette[
 int CtrSurf_Chosen(void) { return sSurfChoice; }
 void CtrSurf_Choose(int index) { sSurfChoice = index; }
 
+/* The random sources of NEW: a fixed run (byte i is (37 i + 11) mod 250, so every byte makes a digit), one of zeros, and none. */
+static int RunSource(uint8_t *out, size_t n)
+{
+    for (size_t i = 0; i < n; ++i)
+        out[i] = (uint8_t)((37 * i + 11) % 250);
+    return 1;
+}
+static int ZeroSource(uint8_t *out, size_t n)
+{
+    memset(out, 0, n);
+    return 1;
+}
+static int NoSource(uint8_t *out, size_t n)
+{
+    (void)out;
+    (void)n;
+    return 0;
+}
+static const char *RunCode(void)
+{
+    static char code[17];
+
+    for (int i = 0; i < 16; ++i)
+        code[i] = (char)('0' + (37 * i + 11) % 250 % 10);
+    code[16] = 0;
+    return code;
+}
+
 static int sLocalPlayTold = -1;
 static void LocalPlayHook(int local) { sLocalPlayTold = local; }
 
@@ -152,15 +180,15 @@ int main(void)
         CHECK(pv.optPad.on && pv.optPad.len == 0 && pv.optPad.pressed == -1, "the keypad is in the view, empty");
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_OK);
         CtrOptions_PadTouch(0, 0, -1);
-        CHECK(CtrOptions_PadOn(), "OK does nothing before six digits");
-        for (int k = 0; k < 7; ++k) {
+        CHECK(CtrOptions_PadOn(), "OK does nothing before sixteen digits");
+        for (int k = 0; k < 17; ++k) {
             CtrOptions_PadTouch(1, 1, (4 + k) % 10);
             CtrOptions_Fill(&pv, 6);
             CHECK(pv.optPad.pressed == (4 + k) % 10, "the key under the touch is pressed");
             CtrOptions_PadTouch(0, 0, -1);
         }
         CtrOptions_Fill(&pv, 6);
-        CHECK(pv.optPad.len == 6 && strcmp(pv.optPad.code, "456789") == 0, "six digits and no more (%s)", pv.optPad.code);
+        CHECK(pv.optPad.len == 16 && strcmp(pv.optPad.code, "4567890123456789") == 0 && pv.optPad.ok, "sixteen digits and no more (%s)", pv.optPad.code);
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_DELETE);
         CtrOptions_PadTouch(0, 0, -1);
         CtrOptions_PadTouch(1, 1, 3);
@@ -169,26 +197,66 @@ int main(void)
         CtrOptions_PadTouch(1, 1, 1);
         CtrOptions_PadTouch(0, 0, -1);
         CtrOptions_Fill(&pv, 6);
-        CHECK(strcmp(pv.optPad.code, "456781") == 0, "DELETE takes the last; a touch let go off its key types nothing (%s)", pv.optPad.code);
+        CHECK(strcmp(pv.optPad.code, "4567890123456781") == 0, "DELETE takes the last; a touch let go off its key types nothing (%s)", pv.optPad.code);
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_OK);
         CtrOptions_PadTouch(0, 0, -1);
-        CHECK(!CtrOptions_PadOn() && CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "456781") == 0 && sLocalPlayTold == 0,
-              "OK: the private room of 456781, and the radio told");
+        CHECK(!CtrOptions_PadOn() && CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0 && sLocalPlayTold == 0,
+              "OK: the private room of 4567890123456781, and the radio told");
         Text(6, "Private");
         CtrOptions_Fill(&pv, 6);
-        CHECK(strcmp(pv.bar[1], "Code 456 781.") == 0 && !pv.optPad.on, "the note says the code (%s)", pv.bar[1]);
+        CHECK(strcmp(pv.bar[1], "Code 4567 8901 2345 6781.") == 0 && !pv.optPad.on, "the note says the code (%s)", pv.bar[1]);
         CtrOptions_Activate(6);
         CHECK(CtrOptions_PadOn(), "a tap on the label opens the keypad again");
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_CANCEL);
         CtrOptions_PadTouch(0, 0, -1);
-        CHECK(!CtrOptions_PadOn() && strcmp(CtrSettings_RoomCode(), "456781") == 0, "CANCEL keeps the code");
+        CHECK(!CtrOptions_PadOn() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0, "CANCEL keeps the code");
         CtrOptions_Activate(5);
         CHECK(!CtrOptions_PadOn(), "another row's label opens nothing");
         CtrOptions_Step(6, 1);
-        CHECK(!CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "456781") == 0, "back to PUBLIC; the code is kept");
+        CHECK(!CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0, "back to PUBLIC; the code is kept");
         CtrOptions_Step(6, 1);
         CHECK(CtrSettings_PrivateRoom() && !CtrOptions_PadOn(), "PRIVATE again with a code: no keypad");
         CtrOptions_Step(6, 1);
+        /* NEW makes a code at random (from the source's bytes, here a fixed run), which OK then takes; a source with nothing, or a run that makes a refused code,
+         * leaves the boxes as they were. */
+        CtrOptions_SetRandomSource(RunSource);
+        CtrOptions_Step(6, 1);                                  /* PRIVATE again (the code is kept: no keypad) */
+        CtrOptions_Activate(6);
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_NEW);
+        CtrOptions_PadTouch(0, 0, -1);
+        CtrOptions_Fill(&pv, 6);
+        CHECK(pv.optPad.on && pv.optPad.len == 16 && strcmp(pv.optPad.code, RunCode()) == 0 && pv.optPad.ok, "NEW fills the boxes with the source's code (%s)", pv.optPad.code);
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_OK);
+        CtrOptions_PadTouch(0, 0, -1);
+        CHECK(!CtrOptions_PadOn() && strcmp(CtrSettings_RoomCode(), RunCode()) == 0, "OK takes it");
+        CtrOptions_Activate(6);
+        CtrOptions_SetRandomSource(ZeroSource);                 /* bytes that make 0000000000000000: refused, at every try */
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_NEW);
+        CtrOptions_PadTouch(0, 0, -1);
+        CtrOptions_Fill(&pv, 6);
+        CHECK(pv.optPad.on && pv.optPad.len == 0 && !pv.optPad.ok, "a refused run leaves the boxes empty (%s)", pv.optPad.code);
+        CtrOptions_SetRandomSource(NoSource);
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_NEW);
+        CtrOptions_PadTouch(0, 0, -1);
+        CtrOptions_Fill(&pv, 6);
+        CHECK(pv.optPad.len == 0, "no generator: nothing is made");
+        for (int k = 0; k < 4; ++k) {                           /* a weak code typed by hand is not taken: OK stays dead */
+            CtrOptions_PadTouch(1, 1, 7);
+            CtrOptions_PadTouch(0, 0, -1);
+        }
+        CtrOptions_Fill(&pv, 6);
+        for (int k = 0; k < 12; ++k) {
+            CtrOptions_PadTouch(1, 1, k % 2 ? 7 : 8);
+            CtrOptions_PadTouch(0, 0, -1);
+        }
+        CtrOptions_Fill(&pv, 6);
+        CHECK(pv.optPad.len == 16 && !pv.optPad.ok, "78787878... has too few different digits: OK is not lit");
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_OK);
+        CtrOptions_PadTouch(0, 0, -1);
+        CHECK(CtrOptions_PadOn() && strcmp(CtrSettings_RoomCode(), RunCode()) == 0, "and it takes nothing");
+        CtrOptions_PadTouch(1, 1, PT_PAD_KEY_CANCEL);
+        CtrOptions_PadTouch(0, 0, -1);
+        CtrOptions_SetRandomSource(NULL);
     }
     CtrOptions_SetLocalPlayHook(NULL);
     /* Page 2 port options. */

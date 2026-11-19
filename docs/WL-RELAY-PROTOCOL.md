@@ -130,5 +130,19 @@ characters. The sealing is a construction written for this project (PBKDF2-HMAC-
 against their test vectors, but it has not been reviewed by a cryptographer: treat a room code like a shared password for a game, not for
 anything that matters.
 
+## What was checked, and what needs a console
+
+- On a computer: the C and an independent Python console derive the same key and room name for a public and for a private code
+  (`tools/test_wl_inet.py`), the key and the name differ with the code and the build and the name is not a hash of the key
+  (`3ds_port/tests/wl_inet_test.c`), the code rules and the generator's bias-free digits (`3ds_port/tests/settings_test.c`), the keypad and NEW
+  (`3ds_port/tests/poketouch_options_test.c`, `poketouch_render_test.c`), the glue (`wl_glue_test.c`).
+- **Needs a console (or Azahar):** that the console's generator (`ps:ps`, `PS_GenerateRandomBytes`) is there and NEW makes a different code each
+  time (with no generator the key does nothing and the player can still type a code); the time of the 10000-round key on an Old 3DS and on a New 3DS
+  (about 2.5 times the old 4096, so a few seconds on joining a private room; time it from the join to the first welcome, it was not measured); that two
+  consoles with the same 16 digits meet and one with another digit does not.
+- Not done, on purpose: a password-authenticated key exchange (PAKE) so that a short PIN could be kept. The room name has to come from the code for
+  two strangers to find each other, which makes any short code testable offline by whoever sees it; a long random code is what the console can do
+  without more machinery, and it is checked by the tests above.
+
 `tools/test_wl_e2e.py` runs two consoles' worth of FireRed's own wireless library through a relay on a computer (it needs a workspace made
 by `tools/bootstrap.py`).

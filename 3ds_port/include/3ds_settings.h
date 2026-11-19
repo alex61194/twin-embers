@@ -7,6 +7,9 @@
  * damaged file means the defaults (turbo off, auto-run off, EMBERS not chosen, REPEL AGAIN on). Each setter writes the file only when
  * the value changes. */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifndef CTR_SETTINGS_PATH
 #define CTR_SETTINGS_PATH "sdmc:/3ds/twinembers/settings.cfg"
 #endif
@@ -68,6 +71,13 @@ int CtrSettings_PrivateRoom(void);
 void CtrSettings_SetPrivateRoom(int on);
 const char *CtrSettings_RoomCode(void);
 void CtrSettings_SetRoomCode(const char *code);
+/* A private room's code is CTR_ROOM_CODE_DIGITS digits (about 53 bits when chosen at random: the only secret of the room, see docs/WL-RELAY-PROTOCOL.md).
+ * RoomCodeOk: exactly that many digits and at least six different ones (the plainest codes, 0000000000000000 or 1212121212121212, are refused, whoever
+ * typed them). MakeRoomCode: a code from `n` random bytes (a byte of 250 or more is skipped so that no digit is likelier than another); 0, and `out`
+ * untouched, when the bytes run out or what they make is refused: ask for more. An older six-digit code in settings.cfg is dropped when it is read. */
+#define CTR_ROOM_CODE_DIGITS 16
+int CtrSettings_RoomCodeOk(const char *code);
+int CtrSettings_MakeRoomCode(char out[CTR_ROOM_CODE_DIGITS + 1], const uint8_t *random, size_t n);
 int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consoles nearby (the 3DS radio), 0 online through the relay (the default) */
 void CtrSettings_SetLocalPlay(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */

@@ -93,13 +93,14 @@ typedef struct {
     uint16_t palette[16];           /* 15-bit colours, 0 clear */
 } CtrPokeTouchLook;
 
-/* The keypad over the OPTIONS rows that takes the private room's code (3ds_poketouch_options.c): six boxes for the digits typed, the keys
- * 1-9, DELETE, 0 and OK (OK lights when the six are there), and CANCEL. */
-enum { PT_PAD_KEY_DELETE = 10, PT_PAD_KEY_OK, PT_PAD_KEY_CANCEL, PT_PAD_KEYS };
-#define PT_PAD_DIGITS 6
+/* The keypad over the OPTIONS rows that takes the private room's code (3ds_poketouch_options.c): four boxes of four digits for the code typed, the
+ * keys 1-9, DELETE, 0 and OK (OK lights when the code is a good one), NEW (a code made at random, to be read out to the friends) and CANCEL. */
+enum { PT_PAD_KEY_DELETE = 10, PT_PAD_KEY_OK, PT_PAD_KEY_CANCEL, PT_PAD_KEY_NEW, PT_PAD_KEYS };
+#define PT_PAD_DIGITS 16
 typedef struct {
     uint8_t on;
     uint8_t len;                /* digits typed */
+    uint8_t ok;                 /* the code in the boxes is one the room takes (OK is lit) */
     int8_t pressed;             /* the key under a held touch, or -1 */
     char code[PT_PAD_DIGITS + 1];
 } CtrPokeTouchPad;

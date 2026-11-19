@@ -1,4 +1,7 @@
 /* The native OPTIONS screen's rows (see 3ds_poketouch_options.h). */
+#ifdef __DEVKITARM__
+#include <3ds.h>                                  /* ps:ps, the console's random generator, for NEW */
+#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -151,6 +154,47 @@ static void SetRoomKind(int v)
 
 int CtrOptions_PadOn(void) { return sPad.on; }
 
+/* The random bytes of NEW: the console's generator (ps:ps); a test gives its own. None: no code is made (false). */
+static int (*sRandomSource)(uint8_t *out, size_t n);
+
+void CtrOptions_SetRandomSource(int (*source)(uint8_t *out, size_t n))
+{
+    sRandomSource = source;
+}
+
+static int RandomBytes(uint8_t *out, size_t n)
+{
+    if (sRandomSource)
+        return sRandomSource(out, n);
+#ifdef __DEVKITARM__
+    if (R_SUCCEEDED(psInit())) {
+        int ok = R_SUCCEEDED(PS_GenerateRandomBytes(out, n));
+
+        psExit();
+        return ok;
+    }
+#endif
+    return 0;
+}
+
+/* NEW: a code made of random bytes, put in the boxes (a few tries: the bytes can make a code that is refused, as rarely as one in a few hundred). */
+static void PadNewCode(void)
+{
+    for (int tries = 0; tries < 8; ++tries) {
+        uint8_t bytes[48];
+        char code[PT_PAD_DIGITS + 1];
+
+        if (!RandomBytes(bytes, sizeof(bytes)))
+            return;                                 /* no generator: the boxes stay as they were */
+        if (CtrSettings_MakeRoomCode(code, bytes, sizeof(bytes))) {
+            memcpy(sPad.code, code, sizeof(code));
+            sPad.len = PT_PAD_DIGITS;
+            memset(bytes, 0, sizeof(bytes));
+            return;
+        }
+    }
+}
+
 static void PadKey(int key)
 {
     if (key >= 0 && key <= 9 && sPad.len < PT_PAD_DIGITS) {
@@ -158,7 +202,9 @@ static void PadKey(int key)
         sPad.code[sPad.len] = 0;
     } else if (key == PT_PAD_KEY_DELETE && sPad.len > 0)
         sPad.code[--sPad.len] = 0;
-    else if (key == PT_PAD_KEY_OK && sPad.len == PT_PAD_DIGITS) {
+    else if (key == PT_PAD_KEY_NEW)
+        PadNewCode();
+    else if (key == PT_PAD_KEY_OK && sPad.len == PT_PAD_DIGITS && CtrSettings_RoomCodeOk(sPad.code)) {
         CtrSettings_SetRoomCode(sPad.code);
         CtrSettings_SetPrivateRoom(1);
         sPad.on = 0;
@@ -625,18 +671,19 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     if (sRows[selected].get == GetRoomKind && CtrSettings_PrivateRoom()) {
         const char *code = CtrSettings_RoomCode();
 
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.3s %.3s.", "C\xC3\xB3" "digo %.3s %.3s.", "Code %.3s %.3s."), code, code + 3);
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.4s %.4s %.4s %.4s.", "C\xC3\xB3" "digo %.4s %.4s %.4s %.4s.", "Code %.4s %.4s %.4s %.4s."), code, code + 4, code + 8, code + 12);
         snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Tap the row to change it.", "Toca la fila para cambiarlo.", "Zeile antippen: neu."));
     }
     memset(&v->optPad, 0, sizeof(v->optPad));
     if (sPad.on) {
         v->optPad.on = 1;
         v->optPad.len = (uint8_t)sPad.len;
+        v->optPad.ok = (uint8_t)CtrSettings_RoomCodeOk(sPad.code);
         v->optPad.pressed = (int8_t)(sPad.down && sPad.inside ? sPad.key : -1);
         memcpy(v->optPad.code, sPad.code, sizeof(v->optPad.code));
         snprintf(v->bar[0], PT_BAR_LEN, "%s", CTR_TR("Private room", "Sala privada", "Privater Raum"));
-        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("Type six digits; your", "Escribe seis cifras; tu", "Sechs Ziffern; dein"));
-        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("friend types the same.", "amigo pone las mismas.", "Freund tippt dieselben."));
+        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("NEW makes a code; your friends", "NUEVO crea un c\xC3\xB3" "digo; tus amigos", "NEU macht einen Code; Freunde"));
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("type the same 16 digits.", "ponen las mismas 16 cifras.", "tippen dieselben 16 Ziffern."));
     }
 }
 

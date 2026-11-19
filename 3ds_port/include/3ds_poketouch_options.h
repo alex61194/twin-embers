@@ -88,6 +88,9 @@ extern void CtrPokeTouch_OptionSet(int option, int value);
 void CtrOptions_SetLocalPlayHook(void (*hook)(int local));
 /* The keypad of the private room's code (ONLINE ROOM): open, and a touch on it (the phase of the touch and the key under it, from
  * CtrPokeTouch_PadHit, -1 for none): a key acts on release over it. A tap on a row's label: CtrOptions_Activate. */
+/* The private room's keypad's NEW key asks for random bytes: the console's generator by default; a test (or a host) gives a source, which returns 0
+ * when it has none. */
+void CtrOptions_SetRandomSource(int (*source)(uint8_t *out, size_t n));
 int CtrOptions_PadOn(void);
 void CtrOptions_PadTouch(int touchDown, int touchActive, int key);
 void CtrOptions_Activate(int row);
