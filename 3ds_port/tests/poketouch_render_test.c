@@ -605,14 +605,24 @@ int main(int argc, char **argv)
             strcpy(s.learn.desc,"A powerful fire attack that may burn the target.");
             s.learn.cursor=1; SHOT("learn");
             for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.cursor=(int8_t)i; update(&old,&s); s.learn.pressed=(int16_t)(PT_LEARN_HIT_ROW+i); update(&old,&s); s.learn.pressed=-1; update(&old,&s); }
-            s.learn.cursor=4; SHOT("learn_new"); s.learn.on=0;
+            s.learn.cursor=4; SHOT("learn_new");
+            {   /* the Poke Ball move to forget: rows in screen pixels */
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+                assert((CtrPokeTouch_LearnHit)(&s,150,40)==PT_LEARN_HIT_ROW && (CtrPokeTouch_LearnHit)(&s,150,34+25*4+5)==PT_LEARN_HIT_ROW+4);
+                assert((CtrPokeTouch_LearnHit)(&s,40,60)==-1 && (CtrPokeTouch_LearnHit)(&s,150,28)==-1 && (CtrPokeTouch_LearnHit)(&s,150,170)==-1);
+                s.learn.row[4].move=0; assert((CtrPokeTouch_LearnHit)(&s,150,34+25*4+5)==-1);   /* no new move, no row */
+                s.learn.row[4].move=5;
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+            }
+            s.learn.on=0;
         }
         /* The move relearner's list (Llama): eight moves and CANCEL, five rows shown; the cursor, the scroll and a press go through the incremental path. */
         {
             static const char *const mv[8]={"Ember","Flamethrower","Slash","Dragon Claw","Fire Spin","Wing Attack","Scary Face","Hyper Beam"};
             static const char *const ty[8]={"Fire","Fire","Normal","Dragon","Fire","Flying","Normal","Normal"};
             static const int8_t tn[8]={10,10,0,16,10,2,0,0};
-            CtrPokeTouchRelearn *r=&s.relearn;
+            CtrPokeTouchRelearn *r=&s.relearn; const int ball=getenv("PT_STYLE")!=NULL;   /* the rectangles below are the Embers ones; the Poke Ball ones are asserted after */
             s.options=0; s.backVisible=1; memset(&s.learn,0,sizeof(s.learn)); memset(r,0,sizeof(*r)); r->on=1; r->pressed=-1; r->species=6; r->count=8;
             strcpy(r->nickname,"Charizard"); strcpy(r->level,"50"); strcpy(r->question,"Teach which move to Charizard?");
             strcpy(r->desc,"A powerful fire attack that may burn the target.");
@@ -628,10 +638,10 @@ int main(int argc, char **argv)
                 if(first==2&&cur==4) SHOT("relearn_scroll");
                 if(first==4&&cur==8) SHOT("relearn_cancel");
             }
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==PT_RL_HIT_ROW && CtrPokeTouch_RelearnHit(&s,110,62)==PT_RL_HIT_ROW+1);
-            assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
-            assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
-            r->first=7; r->cursor=7; update(&old,&s); assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==PT_RL_HIT_ROW && CtrPokeTouch_RelearnHit(&s,110,62)==PT_RL_HIT_ROW+1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
+            r->first=7; r->cursor=7; update(&old,&s); if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
             /* Everything else FireRed shows in the relearner is the port's own picture over the dimmed list, never its viewport: the questions
              * (the cursor on YES or NO, a press), a long one, a message that waits for A, one that does not, and the bare backdrop while it is set up. */
             r->first=0; r->cursor=1;
@@ -641,22 +651,46 @@ int main(int argc, char **argv)
             }
             r->pressed=-1; update(&old,&s);
             r->panel=PT_RL_PANEL_YESNO; strcpy(r->message,"Teach Flamethrower?"); r->menuCursor=0; update(&old,&s); SHOT("relearn_teach");
-            assert(CtrPokeTouch_RelearnHit(&s,75,108)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,108)==PT_RL_HIT_NO);   /* one line of question: the buttons just under its window */
-            assert(CtrPokeTouch_RelearnHit(&s,75,60)==-1 && CtrPokeTouch_RelearnHit(&s,75,126)==-1);
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,210,10)==-1 && CtrPokeTouch_RelearnHit(&s,75,60)==-1);   /* the list behind answers nothing */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,108)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,108)==PT_RL_HIT_NO);   /* one line of question: the buttons just under its window */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,60)==-1 && CtrPokeTouch_RelearnHit(&s,75,126)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,210,10)==-1 && CtrPokeTouch_RelearnHit(&s,75,60)==-1);   /* the list behind answers nothing */
             r->menuCursor=1; update(&old,&s); SHOT("relearn_teach_no");
             r->pressed=PT_RL_HIT_NO; update(&old,&s); r->pressed=PT_RL_HIT_YES; update(&old,&s); r->pressed=-1; update(&old,&s);
             strcpy(r->message,"Charizard is trying to learn Flamethrower. But Charizard can't learn more than four moves. Delete an older move to make room for Flamethrower?");
             r->menuCursor=0; update(&old,&s); SHOT("relearn_make_room");
-            assert(CtrPokeTouch_RelearnHit(&s,75,135)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,135)==PT_RL_HIT_NO && CtrPokeTouch_RelearnHit(&s,75,108)==-1);   /* five lines: lower */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,135)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,135)==PT_RL_HIT_NO && CtrPokeTouch_RelearnHit(&s,75,108)==-1);   /* five lines: lower */
             strcpy(r->message,"Stop learning Flamethrower?"); r->menuCursor=1; update(&old,&s); SHOT("relearn_stop");
             r->panel=PT_RL_PANEL_MESSAGE; r->tap=1; strcpy(r->message,"Charizard forgot Slash. And... Charizard learned Flamethrower."); update(&old,&s); SHOT("relearn_learned");
-            assert(CtrPokeTouch_RelearnHit(&s,100,100)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,247,0)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,100,170)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,100,100)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,247,0)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,100,170)==-1);
             r->pressed=PT_RL_HIT_MESSAGE; update(&old,&s); r->pressed=-1; update(&old,&s);
             r->tap=0; strcpy(r->message,"Which move should be forgotten?"); update(&old,&s); SHOT("relearn_which");
-            assert(CtrPokeTouch_RelearnHit(&s,100,100)==-1);                    /* nothing to answer while it prints or fades */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,100,100)==-1);                    /* nothing to answer while it prints or fades */
             r->panel=PT_RL_PANEL_BLANK; r->message[0]=0; update(&old,&s); SHOT("relearn_blank");
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,75,108)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,75,108)==-1);
+            /* The Poke Ball relearner (3ds_ball_learn_impl.h): the whole screen, its hit zones in screen pixels (what the style in use is). */
+            {
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0; CtrPokeTouchRect y0,n0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+                r->on=1; r->panel=PT_RL_PANEL_LIST; r->first=0; r->cursor=1; r->count=8; r->pressed=-1; update(&old,&s);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,40)==PT_RL_HIT_ROW && (CtrPokeTouch_RelearnHit)(&s,150,62)==PT_RL_HIT_ROW+1);
+                assert((CtrPokeTouch_RelearnHit)(&s,270,10)==PT_RL_HIT_UP && (CtrPokeTouch_RelearnHit)(&s,300,10)==PT_RL_HIT_DOWN && (CtrPokeTouch_RelearnHit)(&s,40,60)==-1);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,34+25*4+5)==PT_RL_HIT_ROW+4 && (CtrPokeTouch_RelearnHit)(&s,150,30)==-1);
+                r->first=7; r->cursor=7; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,150,34+25*2+5)==-1 && (CtrPokeTouch_RelearnHit)(&s,150,34+25+5)==PT_RL_HIT_ROW+1);   /* CANCEL is the last row */
+                r->first=0; r->cursor=1;
+                strcpy(r->message,"Teach Flamethrower?"); r->panel=PT_RL_PANEL_YESNO; update(&old,&s);
+                y0=BlButton(r,0); n0=BlButton(r,1);
+                assert((CtrPokeTouch_RelearnHit)(&s,y0.x+5,y0.y+5)==PT_RL_HIT_YES && (CtrPokeTouch_RelearnHit)(&s,n0.x+5,n0.y+5)==PT_RL_HIT_NO);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,40)==-1 && (CtrPokeTouch_RelearnHit)(&s,270,10)==-1 && (CtrPokeTouch_RelearnHit)(&s,y0.x-3,y0.y+5)==-1);   /* the list behind answers nothing */
+                strcpy(r->message,"Charizard is trying to learn Flamethrower. But Charizard can't learn more than four moves. Delete an older move to make room for Flamethrower?"); update(&old,&s);
+                y0=BlButton(r,0); n0=BlButton(r,1); assert(y0.y>BlAsk(r).y+BlAsk(r).h && y0.y+y0.h<176);                   /* a longer question: lower, still above the band */
+                assert((CtrPokeTouch_RelearnHit)(&s,y0.x+5,y0.y+5)==PT_RL_HIT_YES && (CtrPokeTouch_RelearnHit)(&s,n0.x+5,n0.y+5)==PT_RL_HIT_NO);
+                r->panel=PT_RL_PANEL_MESSAGE; r->tap=1; update(&old,&s);
+                assert((CtrPokeTouch_RelearnHit)(&s,100,100)==PT_RL_HIT_MESSAGE && (CtrPokeTouch_RelearnHit)(&s,300,170)==PT_RL_HIT_MESSAGE && (CtrPokeTouch_RelearnHit)(&s,100,185)==-1);
+                r->tap=0; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,100,100)==-1);
+                r->panel=PT_RL_PANEL_BLANK; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,150,40)==-1);
+                r->panel=PT_RL_PANEL_LIST; r->message[0]=0;
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+            }
             r->panel=PT_RL_PANEL_LIST; r->message[0]=0; update(&old,&s);
             r->on=0; s.backVisible=0;
         }

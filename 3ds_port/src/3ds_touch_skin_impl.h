@@ -157,15 +157,13 @@ static void TsDisc(int cx, int cy, int r, uint16_t c)
     }
 }
 
-/* The Poke Ball ground of a whole-screen view: the red backdrop above the band (y .. y + 8, dark), white under it, a disc at its middle. */
+/* The Poke Ball ground of a whole-screen view: the red backdrop above the band (y .. y + 8, dark), white under it. The band is a plain line: no button at its middle. */
 static void TsBallGround(int by)
 {
     TsBgRect(0, 0, W, by);
     UiRoundFill(0, by - 1, W, 1, 0, UI_RGB(120, 20, 24));
     UiRoundFill(0, by, W, 8, 0, BL_BAND);
     UiRoundFill(0, by + 8, W, H - by - 8, 0, BL_WHITE);
-    TsDisc(W / 2, by + 4, 9, BL_WHITE);
-    TsDisc(W / 2, by + 4, 5, UI_RGB(226, 226, 224));
 }
 
 /* Poke Ball party cards: a Pokemon that can fight is a dark-red card with white ink, one that cannot a darker one with muted ink. */

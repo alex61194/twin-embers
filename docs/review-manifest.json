@@ -1256,7 +1256,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_learn_impl.h",
-   "sha256": "ab291105052e4f0d01108d1c6702c25352da407fc3a4fdcb1bb055b84c1c5ef1",
+   "sha256": "2bb8f97f08b4be7993ac161d4e9bb0cfe02c36540bcc2b799a093bb6f9fcbd9e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1280,7 +1280,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_relearn_impl.h",
-   "sha256": "77cb8f4c36727f9c798d9f01f2267cab8a5a5ae99f703220e24222bc37e8de55",
+   "sha256": "2ad36eca5cdea25b3a1b729960f9202f20c38474cad2e958eba1d9fc170bf3aa",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "8aa2f6ca630055b931ac64dd868c6b37dd925f2b8eea5d466ea2e27e87fdf8bc",
+   "sha256": "959dde8067253fefa875e5ae95459de07af4a9d2d650b4e86a222007d1aa2733",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1649,7 +1649,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "cd446c387eefaf51f79169396fc5becbd75e5c7f34b873c8068b95f94c7cff07",
+   "sha256": "188c56d76cc1837b3614d41231309a3d91bbff6ea46a86ebf113e2fca805a8d1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "160eca689ee1c6502f12a5c28615cf95351d4dad6a96a7cbbd2e7e0c057ee6dd"
+   "sha256": "37d905af4aa827dd23c22c54adcec8eb1dac38715ff0fbb964f5bcae7bd024ae"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "2188a86421d950a61c4e8757c19cb968fa767de4e3fa00acb0132ddaa41a6b14",
+   "sha256": "144eaaa297f1b4ae23273532f9556926ec62997035e297945a30560b097df8b2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7883,6 +7883,14 @@
   {
    "path": "tools/test_cheats_recipe.py",
    "sha256": "91017a8f71d6c75abb158e744e30b8fb78db3f455644ffaedc65f5dbc6e6fd4e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_learn_impl.h",
+   "sha256": "0db1f540b42253f8fe489a01ebeab3d088d38b43d77248fcaed1d92f2c663035",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

@@ -1736,9 +1736,23 @@ static int BallDexActive(const CtrPokeTouchView *v)
     return sStyleBall && v->dex.on && !v->viewport && !v->options && !v->save && !v->card.on;
 }
 
+/* The Poke Ball move to forget and move relearner take the whole lower screen (3ds_ball_learn_impl.h). */
+static void BallLearnScreen(const CtrPokeTouchView *v);
+static void BallRelearnScreen(const CtrPokeTouchView *v);
+static int BallLearnActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->learn.on && !v->viewport && !v->options && !v->save && !v->relearn.on;
+}
+
+static int BallRelearnActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->relearn.on && !v->viewport && !v->options && !v->save;
+}
+
 static int BallFullView(const CtrPokeTouchView *v)
 {
-    return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v) || BallSaveActive(v) || BallCardActive(v) || BallDexActive(v);
+    return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v) || BallSaveActive(v) || BallCardActive(v) || BallDexActive(v)
+        || BallLearnActive(v) || BallRelearnActive(v);
 }
 
 static int NewMenu(const CtrPokeTouchView *v)
@@ -2537,6 +2551,10 @@ static void MenuScreen(const CtrPokeTouchView *v, int full)
             BallCardScreen(v);
         else if (BallDexActive(v))
             BallDexScreen(v);
+        else if (BallLearnActive(v))
+            BallLearnScreen(v);
+        else if (BallRelearnActive(v))
+            BallRelearnScreen(v);
         else if (BallChoiceActive(v))
             BallChoiceScreen(v);
         else
@@ -2883,4 +2901,5 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_chat_impl.h"
 #include "3ds_ball_options_impl.h"
 #include "3ds_ball_menus_impl.h"
+#include "3ds_ball_learn_impl.h"
 #include "3ds_field_easychat_impl.h"

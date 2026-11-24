@@ -4,6 +4,7 @@
  * accuracy, the four moves and the new one (purple; the chosen one flame with the select ring) as rows with their types, and the move's description in the note.
  * Every word but the three labels is FireRed's (CtrBottomLearn_*). */
 
+static int BallLearnHit(const CtrPokeTouchView *v, int x, int y);   /* 3ds_ball_learn_impl.h */
 static const CtrPokeTouchRect sFLBand = {4, 4, 240, 22};
 static const CtrPokeTouchRect sFLSide = {4, 30, 96, 134};
 
@@ -17,6 +18,8 @@ int CtrPokeTouch_LearnHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchLearn *l = &v->learn;
 
+    if (l->on && BallLearnActive(v))
+        return BallLearnHit(v, x, y);                   /* the Poke Ball style: the whole screen, in screen pixels */
     x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
     y -= MENU_SHIFT;
     if (!l->on)

@@ -64,6 +64,7 @@ static CtrPokeTouchRect FRSay(const CtrPokeTouchRelearn *l)
     return r;
 }
 
+static int BallRelearnHit(const CtrPokeTouchView *v, int x, int y);   /* 3ds_ball_learn_impl.h */
 static const CtrPokeTouchRect sFRBand = {4, 4, 240, 22};
 static const CtrPokeTouchRect sFRSide = {4, 30, 96, 134};
 static const CtrPokeTouchRect sFRUp = {206, 4, 18, 22}, sFRDown = {224, 4, 18, 22};
@@ -78,6 +79,8 @@ int CtrPokeTouch_RelearnHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchRelearn *l = &v->relearn;
 
+    if (l->on && BallRelearnActive(v))
+        return BallRelearnHit(v, x, y);                 /* the Poke Ball style: the whole screen, in screen pixels */
     x -= MENU_SHIFT;                                    /* drawn on the floor of HOME's layout: its rectangles are at (4, 4) */
     y -= MENU_SHIFT;
     if (!l->on)
