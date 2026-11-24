@@ -2514,7 +2514,7 @@
   },
   {
    "path": "builder/firered3ds_builder/cli.py",
-   "sha256": "8ebde2f33887f12b787ebeb5169fdf5e3dcee1cdeda256d1d50b3a0e7bc51052",
+   "sha256": "ea64af84a2239e340b840e2472f73bc485b0802333f9f3623fbf9f4c25a60a5a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2560,7 +2560,7 @@
   },
   {
    "path": "builder/firered3ds_builder/gen4_sprites.py",
-   "sha256": "c2d8307b98fee8555d9f95aeda7dbb47db38af7d7fc13dcac92c1127ae1b4363",
+   "sha256": "b0637757f88b00815bbbc96187c339dad72cd2d9727fe8990e14ef883df67cde",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3127,7 +3127,7 @@
   },
   {
    "path": "builder/tests/test_browser.py",
-   "sha256": "6c6245dae84491b3c086e7e8cae8581a68a42422a4b45a353b9f24568d347c32",
+   "sha256": "d2f5c26b91f9e84618d202b7b2910d44270be47584100aeb8047b91d18caff6e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3148,7 +3148,7 @@
   },
   {
    "path": "builder/tests/test_gen4_sprites.py",
-   "sha256": "b60c1dbe7653c0a70b1c2bec8974494228af1c3bc47ed5c3c1a1d22a0ca3f9d2",
+   "sha256": "758f20a61dd3007ab7d6ee6f96b9f8ea45e6c019c31b03431cdfe75b529bb7c2",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

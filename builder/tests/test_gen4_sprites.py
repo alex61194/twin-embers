@@ -144,7 +144,7 @@ class DownloadTest(unittest.TestCase):
         files, info = gen4_sprites.pack_files(gen4_sprites.Downloader(cache, get=self.get, threads=2))
         self.assertEqual([path for path, _ in files], ["graphics/gen4/battle/%03d.bin" % d for d in (1, 2, 3)])
         self.assertEqual(info, {"species": 3, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "player": 0, "downloaded": 8})
+                                "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "skipped": [], "player": 0, "downloaded": 8})
         entries = dict(files)
         self.assertEqual(entries["graphics/gen4/battle/002.bin"][4], 1)
         self.assertEqual(entries["graphics/gen4/battle/003.bin"][4], 0)
@@ -983,6 +983,18 @@ class LookTest(unittest.TestCase):
         self.assertEqual(sorted(files), ["graphics/gen4/look/test/bike.bin", "graphics/gen4/look/test/surf.bin",
                                          "graphics/gen4/look/test/walk.bin"])
         self.assertEqual((files["graphics/gen4/look/test/walk.bin"][4], files["graphics/gen4/look/test/bike.bin"][4]), (20, 9))
+
+    def test_a_sheet_the_game_cannot_read_is_left_out_not_fatal(self):
+        """An HGSS-style fishing sheet on 44-wide frames (Hilda's, Nate's) is not a shape the game reads: the look keeps its other sheets and
+        FireRed's own fishing picture, the sheet is reported, and the pack is still made. A look whose walking sheet is bad is left out whole."""
+        gen4_sprites.looks_skipped.clear()
+        files = dict(gen4_sprites.look_entries("test", {"walk": self.sheet(16, 20), "fishing": self.sheet(44, 12), "bike": self.sheet(32, 9)}))
+        self.assertEqual(sorted(files), ["graphics/gen4/look/test/bike.bin", "graphics/gen4/look/test/walk.bin"])
+        self.assertEqual(len(gen4_sprites.looks_skipped), 1)
+        self.assertTrue(gen4_sprites.looks_skipped[0].startswith("test/fishing: "))
+        with self.assertRaises(gen4_sprites.Gen4Error):
+            gen4_sprites.look_entries("test", {"walk": self.sheet(44, 20)})
+        gen4_sprites.looks_skipped.clear()
 
     def test_the_group_adds_each_look_that_has_a_walking_sheet(self):
         walk, bike = self.sheet(16, 20), self.sheet(16, 9)
