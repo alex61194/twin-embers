@@ -1946,9 +1946,11 @@ static void HomeNote(const CtrPokeTouchView *v)
         if (pw < 40)
             pw = 40;
         px = right - pw;
-        fy = EmButton(px, HN_Y + 8 + dy, pw, 18, &kEmFlame, 1, 0);
+        const EmPal *flyPal = sStyleBall ? &kEmCream : &kEmFlame;      /* Poke Ball: a red button with a white word */
+
+        fy = EmButton(px, HN_Y + 8 + dy, pw, 18, flyPal, 1, 0);
         sFlyButton = (CtrPokeTouchRect){(int16_t)px, (int16_t)(HN_Y + 8 + dy), (int16_t)pw, 18};
-        EmLabel(fly, px, pw, fy + (sStyleBall ? 1 : 0), 17, &kEmFlame);   /* the flat pill's text was a pixel high */
+        EmLabel(fly, px, pw, fy + (sStyleBall ? 1 : 0), 17, flyPal);   /* the flat pill's text was a pixel high */
         titleRight = px - 4;
     }
     if (zones && !v->flyOk) {
