@@ -53,6 +53,12 @@ static const char *const sWildDisplay[] = {CTR_TR("Pokemon", "Pok\xC3\xA9mon", "
 static const char *const sWildAggro[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Rare", "Raro", "Selten"), CTR_TR("Low", "Bajo", "Wenig"), CTR_TR("Moderate", "Medio", "Mittel"),
                                          CTR_TR("High", "Alto", "Viel")};
 
+/* TRUCOS: the page of cheats. Each row is a small number kept by CtrSettings_Cheat (off until chosen). */
+static const char *const sShinyOdds[] = {CTR_TR("Normal", "Normal", "Normal"), "1/4096", "1/1024", "1/256", "1/64", "1/16", CTR_TR("Always", "Siempre", "Immer")};
+static const char *const sExpRate[] = {"x1", "x2", "x4", "x8"};
+/* The shiny odds a SHINY row value stands for, as the denominator of "1 in N" (the game's own are 8 in 65536, which is 1 in 8192). */
+static const unsigned kShinyDenominator[] = {0, 4096, 1024, 256, 64, 16, 1};
+
 static int sPortTypeMatchup;
 static int sPortMoveDetails;
 static int sPortDayNight;
@@ -263,6 +269,28 @@ static void SetWildDisplay(int v) { CtrSettings_SetWildSilhouette(v); }
 static int GetWildAggro(void) { return CtrSettings_WildAggro(); }
 static int WildAggroCount(void) { return CTRW_AGGROS; }
 static void SetWildAggro(int v) { CtrSettings_SetWildAggro(v); }
+static int CheatCount(int id) { return CtrSettings_CheatMax(id) + 1; }
+static int GetCheatCatch(void) { return !CtrSettings_Cheat(CTR_CHEAT_CATCH); }      /* 0 is ON, as in the other switches */
+static void SetCheatCatch(int v) { CtrSettings_SetCheat(CTR_CHEAT_CATCH, !(v & 1)); }
+static int CheatCatchCount(void) { return CheatCount(CTR_CHEAT_CATCH); }
+static int GetCheatShiny(void) { return CtrSettings_Cheat(CTR_CHEAT_SHINY); }
+static void SetCheatShiny(int v) { CtrSettings_SetCheat(CTR_CHEAT_SHINY, v); }
+static int CheatShinyCount(void) { return CheatCount(CTR_CHEAT_SHINY); }
+static int GetCheatNoEnc(void) { return !CtrSettings_Cheat(CTR_CHEAT_NOENC); }      /* 0 is ON, as in the other switches */
+static void SetCheatNoEnc(int v) { CtrSettings_SetCheat(CTR_CHEAT_NOENC, !(v & 1)); }
+static int CheatNoEncCount(void) { return CheatCount(CTR_CHEAT_NOENC); }
+static int GetCheatWalls(void) { return !CtrSettings_Cheat(CTR_CHEAT_WALLS); }      /* 0 is ON, as in the other switches */
+static void SetCheatWalls(int v) { CtrSettings_SetCheat(CTR_CHEAT_WALLS, !(v & 1)); }
+static int CheatWallsCount(void) { return CheatCount(CTR_CHEAT_WALLS); }
+static int GetCheatExp(void) { return CtrSettings_Cheat(CTR_CHEAT_EXP); }
+static void SetCheatExp(int v) { CtrSettings_SetCheat(CTR_CHEAT_EXP, v); }
+static int CheatExpCount(void) { return CheatCount(CTR_CHEAT_EXP); }
+static int GetCheatPp(void) { return !CtrSettings_Cheat(CTR_CHEAT_PP); }      /* 0 is ON, as in the other switches */
+static void SetCheatPp(int v) { CtrSettings_SetCheat(CTR_CHEAT_PP, !(v & 1)); }
+static int CheatPpCount(void) { return CheatCount(CTR_CHEAT_PP); }
+static int GetCheatFlee(void) { return !CtrSettings_Cheat(CTR_CHEAT_FLEE); }      /* 0 is ON, as in the other switches */
+static void SetCheatFlee(int v) { CtrSettings_SetCheat(CTR_CHEAT_FLEE, !(v & 1)); }
+static int CheatFleeCount(void) { return CheatCount(CTR_CHEAT_FLEE); }
 static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
@@ -298,6 +326,47 @@ int CtrOptions_RandomWild(void) { return CtrSettings_Randomlocke() && CtrSetting
 int CtrOptions_RandomTrainers(void) { return CtrSettings_Randomlocke() && CtrSettings_RandomTarget() != 1; }
 int CtrOptions_NuzSetMode(void) { return CtrSettings_Nuzlocke() && CtrSettings_NuzSet(); }
 int CtrOptions_FreeHm(void) { return CtrSettings_FreeHm(); }
+int CtrOptions_SureCatch(void) { return CtrSettings_Cheat(CTR_CHEAT_CATCH); }
+int CtrOptions_NoEncounters(void) { return CtrSettings_Cheat(CTR_CHEAT_NOENC); }
+int CtrOptions_WalkThroughWalls(void) { return CtrSettings_Cheat(CTR_CHEAT_WALLS); }
+int CtrOptions_InfinitePp(void) { return CtrSettings_Cheat(CTR_CHEAT_PP); }
+int CtrOptions_AlwaysFlee(void) { return CtrSettings_Cheat(CTR_CHEAT_FLEE); }
+int CtrOptions_ShinyOdds(void) { return CtrSettings_Cheat(CTR_CHEAT_SHINY); }
+
+unsigned CtrOptions_ScaleExp(unsigned exp)
+{
+    unsigned scaled = exp << CtrSettings_Cheat(CTR_CHEAT_EXP);      /* x1, x2, x4, x8 */
+
+    return scaled > 0xFFFFu ? 0xFFFFu : scaled;                     /* the game keeps experience gains in 16 bits */
+}
+
+/* SHINY ODDS: a creature that was not shiny gets a personality that is, with the chance the row says. The game's own odds stay: a shiny one is
+ * left as it is. The new personality keeps the low byte (the gender and the ability's bit) and the nature (personality mod 25) of the old one, and
+ * is found by trying the 65536 high halves of the personality with the 8 low halves that make a shiny one of each; about 80 of the 524288 fit, so
+ * the first one is found after a few thousand tries. `roll` is 32 random bits, used both for the chance and for where the search starts. */
+uint32_t CtrOptions_ShinyPersonality(uint32_t personality, uint32_t otId, uint32_t roll)
+{
+    int odds = CtrSettings_Cheat(CTR_CHEAT_SHINY);
+    uint32_t ids = ((otId >> 16) ^ otId) & 0xFFFFu;
+
+    if (odds < 1 || odds >= (int)(sizeof(kShinyDenominator) / sizeof(kShinyDenominator[0])))
+        return personality;
+    if (((((personality >> 16) ^ personality) & 0xFFFFu) ^ ids) < 8)
+        return personality;                         /* already shiny */
+    if ((roll >> 16) % kShinyDenominator[odds] != 0)
+        return personality;
+    for (uint32_t n = 0; n < 0x10000u; ++n) {
+        uint32_t high = ((roll & 0xFFFFu) + n) & 0xFFFFu;
+
+        for (uint32_t k = 0; k < 8; ++k) {
+            uint32_t candidate = (high << 16) | ((high ^ ids ^ k) & 0xFFFFu);
+
+            if ((candidate & 0xFFu) == (personality & 0xFFu) && candidate % 25u == personality % 25u)
+                return candidate;
+        }
+    }
+    return personality;
+}
 
 /* The legendary and mythical species of the pool (FireRed's numbers): the birds, Mewtwo, Mew, the beasts, Lugia, Ho-Oh, Celebi and Hoenn's
  * Regis, Kyogre, Groudon, Rayquaza, Latias, Latios, Jirachi and Deoxys. */
@@ -407,21 +476,36 @@ static const CtrOptionRow sRows[] = {
      GetRandTarget, ThreeCount, SetRandTarget},
     {CTR_TR("Legendaries", "Legendarios", "Legend\xC3\xA4re"), {CTR_TR("Allow legendary species", "Permite especies", "Legend\xC3\xA4re Arten sind"), CTR_TR("among the random ones.", "legendarias al azar.", "unter den zuf\xC3\xA4lligen.")}, 0, sFps, NULL,
      GetRandLegend, TwoCount, SetRandLegend},
+    /* Cheats: a page of its own, off until chosen. */
+    {CTR_TR("Sure catch", "Captura segura", "Sicherer Fang"), {CTR_TR("Every Poke Ball catches", "Toda bola captura al", "Jeder Ball f\xC3\xA4ngt das"), CTR_TR("the wild Pokemon.", "Pok\xC3\xA9mon salvaje.", "wilde Pok\xC3\xA9mon.")}, 0, sFps, NULL,
+     GetCheatCatch, CheatCatchCount, SetCheatCatch},
+    {CTR_TR("Shiny odds", "Prob. shiny", "Shiny-Chance"), {CTR_TR("The chance that a new", "La probabilidad de que", "Chance, dass ein neues"), CTR_TR("Pokemon is shiny.", "un Pok\xC3\xA9mon sea shiny.", "Pok\xC3\xA9mon schillert.")}, 0, sShinyOdds, NULL,
+     GetCheatShiny, CheatShinyCount, SetCheatShiny},
+    {CTR_TR("No encounters", "Sin encuentros", "Keine Begegn."), {CTR_TR("No wild Pokemon appear", "No aparecen Pok\xC3\xA9mon", "Keine wilden Pok\xC3\xA9mon"), CTR_TR("in grass or caves.", "en hierba ni cuevas.", "in Gras und H\xC3\xB6hlen.")}, 0, sFps, NULL,
+     GetCheatNoEnc, CheatNoEncCount, SetCheatNoEnc},
+    {CTR_TR("Through walls", "Atrav. paredes", "Durch W\xC3\xA4nde"), {CTR_TR("Walk through walls and", "Camina a trav\xC3\xA9s de", "Durch W\xC3\xA4nde und"), CTR_TR("objects, not the edge.", "paredes y objetos.", "Objekte laufen.")}, 0, sFps, NULL,
+     GetCheatWalls, CheatWallsCount, SetCheatWalls},
+    {CTR_TR("EXP rate", "Ritmo EXP", "EP-Rate"), {CTR_TR("The experience of a won", "La EXP de un combate", "Die EP eines Kampfes"), CTR_TR("battle, times 1 to 8.", "ganado, por 1 a 8.", "mal 1 bis 8.")}, 0, sExpRate, NULL,
+     GetCheatExp, CheatExpCount, SetCheatExp},
+    {CTR_TR("Infinite PP", "PP infinitos", "Unendl. PP"), {CTR_TR("Your moves never lose", "Tus ataques nunca", "Deine Attacken verlieren"), CTR_TR("PP in battle.", "pierden PP.", "keine AP.")}, 0, sFps, NULL,
+     GetCheatPp, CheatPpCount, SetCheatPp},
+    {CTR_TR("Always flee", "Huida segura", "Immer fliehen"), {CTR_TR("Running away from a wild", "Huir de un Pok\xC3\xA9mon", "Die Flucht vor einem"), CTR_TR("Pokemon always works.", "salvaje siempre sale.", "wilden Pok\xC3\xA9mon klappt.")}, 0, sFps, NULL,
+     GetCheatFlee, CheatFleeCount, SetCheatFlee},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18, PAGE5 = 21, PAGE6 = 27, PAGE7 = 32 };
-static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
-static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18, PAGE5 = 21, PAGE6 = 27, PAGE7 = 32, PAGE8 = 35 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, PAGE8, ROWS};
+static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3, 4};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
-#define SECTIONS 4
-_Static_assert(PAGE7 < ROWS, "the last page has rows");
+#define SECTIONS 5
+_Static_assert(PAGE8 < ROWS, "the last page has rows");
 _Static_assert(sizeof(sPageSection) == PAGES, "a section for each page");
 _Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX
-               && PAGE6 - PAGE5 <= PT_OPT_MAX && PAGE7 - PAGE6 <= PT_OPT_MAX && ROWS - PAGE7 <= PT_OPT_MAX,
+               && PAGE6 - PAGE5 <= PT_OPT_MAX && PAGE7 - PAGE6 <= PT_OPT_MAX && PAGE8 - PAGE7 <= PT_OPT_MAX && ROWS - PAGE8 <= PT_OPT_MAX,
                "a page holds up to PT_OPT_MAX rows");
 
 int CtrOptions_PageCount(void) { return PAGES; }
@@ -431,7 +515,7 @@ const char *CtrOptions_PageName(int page)
     /* A page's own short name (it has to fit the PAGE button's 64 px): the looks page is a page of the Graphics section, and says so with its dot. */
     static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Optionen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
                                         CTR_TR("Looks", "Aspectos", "Looks"), CTR_TR("Wilds", "Salvajes", "Wilde"), CTR_TR("QoL", "QoL", "QoL"),
-                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Random", "Azar", "Zufall")};
+                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Random", "Azar", "Zufall"), CTR_TR("Cheats", "Trucos", "Cheats")};
 
     _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
     return page >= 0 && page < PAGES ? names[page] : "";
@@ -625,6 +709,8 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     v->options = 1;
     v->optPage = (uint8_t)page;
     v->optPageCount = (uint8_t)PAGES;
+    for (int i = 0; i < PAGES && i < (int)sizeof(v->optDotSection); ++i)
+        v->optDotSection[i] = sPageSection[i];
     {
         v->optSection = (uint8_t)CtrOptions_SectionOf(page);
         v->optSectionCount = SECTIONS;

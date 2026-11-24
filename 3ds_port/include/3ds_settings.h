@@ -88,6 +88,13 @@ int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consol
 void CtrSettings_SetLocalPlay(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */
 void CtrSettings_SetFreeHm(int on);
+/* TRUCOS (cheats, a page of OPTIONS): each is a small number kept as cheatN=value, off (0) until chosen, written only when not 0. CTR_CHEAT_CATCH
+ * 0/1 every ball catches; SHINY 0..6 the odds (CtrOptions_ShinyOdds); NOENC 0/1 no random encounters; WALLS 0/1 the player walks through walls;
+ * EXP 0..3 the experience of a won battle times 1, 2, 4 or 8; PP 0/1 the player's moves never lose PP; FLEE 0/1 running away always works. */
+enum { CTR_CHEAT_CATCH, CTR_CHEAT_SHINY, CTR_CHEAT_NOENC, CTR_CHEAT_WALLS, CTR_CHEAT_EXP, CTR_CHEAT_PP, CTR_CHEAT_FLEE, CTR_CHEAT_COUNT };
+int CtrSettings_Cheat(int id);
+void CtrSettings_SetCheat(int id, int value);       /* the value is clamped to what the cheat has (CtrSettings_CheatMax) */
+int CtrSettings_CheatMax(int id);
 /* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the
  * Builder's --alt-looks), "" for none: the picture that was there before. Only [a-z0-9_] and 15 characters are kept. */
 enum { CTR_LOOK_RED, CTR_LOOK_LEAF, CTR_LOOK_BLUE, CTR_LOOK_SURF, CTR_LOOK_SLOTS };   /* SURF: the Pokemon to surf on, a folder of graphics/gen4/surfmon */

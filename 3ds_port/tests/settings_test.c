@@ -160,6 +160,32 @@ int main(void)
     fclose(file);
     assert(strstr(text, "visiblewilds") == NULL && strstr(text, "wildsil") == NULL && strstr(text, "wildaggro") == NULL);
 
+    /* TRUCOS: every cheat is off until chosen, kept as cheatN=value when not 0, clamped to what it has, and gone from the file when off. */
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        assert(CtrSettings_Cheat(i) == 0);
+    assert(CtrSettings_CheatMax(CTR_CHEAT_SHINY) == 6 && CtrSettings_CheatMax(CTR_CHEAT_EXP) == 3 && CtrSettings_CheatMax(CTR_CHEAT_CATCH) == 1
+           && CtrSettings_CheatMax(-1) == 0 && CtrSettings_CheatMax(CTR_CHEAT_COUNT) == 0);
+    CtrSettings_SetCheat(CTR_CHEAT_CATCH, 1);
+    CtrSettings_SetCheat(CTR_CHEAT_SHINY, 4);
+    CtrSettings_SetCheat(CTR_CHEAT_EXP, 99);                    /* past the last: the last */
+    CtrSettings_SetCheat(CTR_CHEAT_FLEE, -3);                   /* below the first: off */
+    CtrSettings_SetCheat(CTR_CHEAT_COUNT, 1);                   /* no such cheat: nothing */
+    assert(CtrSettings_Cheat(CTR_CHEAT_CATCH) == 1 && CtrSettings_Cheat(CTR_CHEAT_SHINY) == 4 && CtrSettings_Cheat(CTR_CHEAT_EXP) == 3
+           && CtrSettings_Cheat(CTR_CHEAT_FLEE) == 0 && CtrSettings_Cheat(-1) == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "cheat0=1\n") != NULL && strstr(big, "cheat1=4\n") != NULL && strstr(big, "cheat4=3\n") != NULL && strstr(big, "cheat6") == NULL);
+    CtrSettings_SetCheat(CTR_CHEAT_CATCH, 0);
+    CtrSettings_SetCheat(CTR_CHEAT_SHINY, 0);
+    CtrSettings_SetCheat(CTR_CHEAT_EXP, 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "cheat") == NULL);
+
     /* FREE HMS: off until chosen, written only when on. */
     assert(CtrSettings_FreeHm() == 0);
     CtrSettings_SetFreeHm(1);
@@ -265,7 +291,7 @@ int main(void)
     }
 
     /* The worst case (every key written, the longest values) must fit the fixed block with room to spare: Format stops
-     * silently at the block's end, which would drop the last keys. The block is 512 bytes; keep the text under 320. */
+     * silently at the block's end, which would drop the last keys. The block is 640 bytes; keep the text under 480. */
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
@@ -294,6 +320,8 @@ int main(void)
     CtrSettings_SetLook(CTR_LOOK_BLUE, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_SURF, "abcdefghijklmno");
     CtrSettings_SetLastBall(65535);
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        CtrSettings_SetCheat(i, CtrSettings_CheatMax(i));         /* the cheats are written too */
     {
         static char worst[4096];
         size_t n;
@@ -305,7 +333,7 @@ int main(void)
         while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
-        assert(n < 400);   /* the file holds 512 (a private room's code and flag, 37 bytes, are in this worst case); the wild keys are before the looks and the ball */
+        assert(n < 480);   /* the file holds 640 (a private room's code and flag, 37 bytes, and the seven cheats, 63, are in this worst case); the wild keys are before the looks and the ball */
         assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
         assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "look_surf=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }

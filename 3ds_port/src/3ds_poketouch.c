@@ -1011,6 +1011,8 @@ static uint16_t OptPageColor(int page)
         return UI_RGB(56, 168, 104);
     if (page == 2)
         return UI_RGB(168, 112, 208);
+    if (page == 4)
+        return EM2_PAGE_E;
     return UI_RGB(216, 90, 80);
 }
 
@@ -1350,29 +1352,41 @@ static void Back(const CtrPokeTouchView *v)
     UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck"), r->x + 24, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 3);
 }
 
+/* The dots of the PAGE button: one for each page up to 8 (a view that does not say its pages has one for each section), and the colour of the section
+ * the page is in: Settings blue, Graphics green, QoL purple, Nuzlocke red, Cheats gold. More than six dots are packed 8 px apart to fit the button. */
+static int OptDotCount(const CtrPokeTouchView *v)
+{
+    return v->optPageCount > 8 ? 8 : (v->optPageCount > 0 ? v->optPageCount : v->optSectionCount);
+}
+
+static uint16_t OptDotColour(const CtrPokeTouchView *v, int dot)
+{
+    static const uint16_t sections[] = {EM2_PAGE_A, EM2_PAGE_B, EM2_PAGE_C, EM2_PAGE_D, EM2_PAGE_E};
+
+    if (v->optPageCount > 0)
+        return sections[v->optDotSection[dot] < 5 ? v->optDotSection[dot] : 3];
+    return sections[dot < 5 ? dot : 3];                     /* no page list: one dot for each section, in order */
+}
+
 /* PAGE: switches between OPTIONS pages (PAGE 2/4) right above BACK: a dot for each page in that page's colour, the shown one larger with a ring. */
 static void OptPageButton(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchOptPage;
-    int dots = v->optPageCount > 6 ? 6 : (v->optPageCount > 0 ? v->optPageCount : v->optSectionCount);
+    int dots = OptDotCount(v), step = dots > 6 ? 8 : 10;
     int fy, x0;
     char label[40];
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
-    x0 = r->x + (r->w - ((dots - 1) * 10 + 7)) / 2;
+    x0 = r->x + (r->w - ((dots - 1) * step + 7)) / 2;
     for (int i = 0; i < dots; ++i) {
-        uint16_t colour;
-        if (dots == 6)
-            colour = i == 0 ? EM2_PAGE_A : (i <= 3) ? EM2_PAGE_B : i == 4 ? EM2_PAGE_C : EM2_PAGE_D;
-        else
-            colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
+        uint16_t colour = OptDotColour(v, i);
 
         if (i == v->optPage)
-            Em2Dot(x0 + i * 10, fy + 3, colour, 1);
+            Em2Dot(x0 + i * step, fy + 3, colour, 1);
         else
-            Em2Dot(x0 + i * 10 + 1, fy + 4, colour, 0);
+            Em2Dot(x0 + i * step + 1, fy + 4, colour, 0);
     }
     snprintf(label, sizeof(label), "%s", v->optPageName);
     EmLabel(label, r->x, r->w, fy + 12, 11, &kEmCream);
@@ -2208,23 +2222,19 @@ bool CtrPokeTouch_HitBack(int x, int y)
 static void OptPageTop(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &sHomeStatus;
-    int dots = v->optPageCount > 6 ? 6 : (v->optPageCount > 0 ? v->optPageCount : v->optSectionCount);
+    int dots = OptDotCount(v), step = dots > 6 ? 8 : 10;
     int fy, x0;
 
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, COL_DEPTH, v->optPagePressed);
-    x0 = r->x + (r->w - ((dots - 1) * 10 + 7)) / 2;
+    x0 = r->x + (r->w - ((dots - 1) * step + 7)) / 2;
     for (int i = 0; i < dots; ++i) {
-        uint16_t colour;
+        uint16_t colour = OptDotColour(v, i);
 
-        if (dots == 6)
-            colour = i == 0 ? EM2_PAGE_A : (i <= 3) ? EM2_PAGE_B : i == 4 ? EM2_PAGE_C : EM2_PAGE_D;
-        else
-            colour = i == 0 ? EM2_PAGE_A : i == 1 ? EM2_PAGE_B : i == 2 ? EM2_PAGE_C : EM2_PAGE_D;
         if (i == v->optPage)
-            Em2Dot(x0 + i * 10, fy + 4, colour, 1);
+            Em2Dot(x0 + i * step, fy + 4, colour, 1);
         else
-            Em2Dot(x0 + i * 10 + 1, fy + 5, colour, 0);
+            Em2Dot(x0 + i * step + 1, fy + 5, colour, 0);
     }
     EmLabel(v->optPageName, r->x, r->w, fy + 14, 13, &kEmCream);
 }

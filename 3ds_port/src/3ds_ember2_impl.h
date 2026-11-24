@@ -65,6 +65,7 @@
 #define EM2_PAGE_B UI_RGB(56, 168, 104)
 #define EM2_PAGE_C UI_RGB(168, 112, 208)
 #define EM2_PAGE_D UI_RGB(216, 90, 80)
+#define EM2_PAGE_E UI_RGB(224, 160, 48)            /* the Cheats page */
 #define EM2_DEX UI_RGB(224, 72, 58)                 /* the sections: DEX, POKEMON, BAG, CARD, SAVE / PC, OPTIONS */
 #define EM2_MON UI_RGB(60, 174, 88)
 #define EM2_BAG UI_RGB(60, 126, 224)

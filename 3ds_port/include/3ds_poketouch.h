@@ -473,7 +473,8 @@ typedef struct {
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */
-    uint8_t optSection, optSectionCount;   /* the section the page is in (Settings, Graphics, QoL, Nuzlocke) and how many there are */
+    uint8_t optSection, optSectionCount;   /* the section the page is in (Settings, Graphics, QoL, Nuzlocke, Cheats) and how many there are */
+    uint8_t optDotSection[8];              /* the section of each page (up to 8), for the colours of the PAGE button's dots */
     char optPageName[20];       /* the section's name, "Graphics 1/2" when it has two pages, for the PAGE button */
     uint8_t optPagePressed;     /* the PAGE button is under a held touch */
     uint8_t optCount;           /* its rows on the current page */

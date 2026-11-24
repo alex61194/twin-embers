@@ -35,6 +35,8 @@ static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE 
 static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
+static int sCheat[CTR_CHEAT_COUNT];      /* TRUCOS: cheatN= */
+static const uint8_t kCheatMax[CTR_CHEAT_COUNT] = {1, 6, 1, 1, 3, 1, 1};
 static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
 static int sRoomNote;       /* a code from an older build was dropped and the player was not told yet (roomnote=) */
 static char sRoomCode[CTR_ROOM_CODE_DIGITS + 1];   /* the private room's code: its digits, "" when none was set (roomcode=) */
@@ -49,7 +51,7 @@ static int sLoaded;
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 512     /* was 256: the file grew to about 232 bytes in the worst case; a shorter old file reads as before */
+#define SETTINGS_FILE_BYTES 640     /* was 256, then 512: the file grew to about 232 bytes in the worst case, then 430 with the cheats; a shorter old file reads as before */
 static FILE *sFile;
 
 static const char *const kLookKey[4] = {"look_red=", "look_leaf=", "look_blue=", "look_surf="};
@@ -172,6 +174,8 @@ static void Load(void)
             sRandNoLegend = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
+        else if (strncmp(line, "cheat", 5) == 0 && line[5] >= '0' && line[5] < '0' + CTR_CHEAT_COUNT && sscanf(line + 6, "=%u", &value) == 1)
+            sCheat[line[5] - '0'] = value <= kCheatMax[line[5] - '0'] ? (int)value : 0;
         else if (sscanf(line, "localplay=%u", &value) == 1)
             sLocalPlay = value != 0;
         else if (sscanf(line, "privroom=%u", &value) == 1)
@@ -268,6 +272,9 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "randnolegend=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        if (sCheat[i] && length > 0 && (size_t)length < size)
+            length += snprintf(text + length, size - (size_t)length, "cheat%d=%d\n", i, sCheat[i]);
     if (sLocalPlay && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "localplay=1\n");
     if (sPrivateRoom && length > 0 && (size_t)length < size)
@@ -498,6 +505,29 @@ void CtrSettings_SetFreeHm(int on)
     if (on == sFreeHm)
         return;
     sFreeHm = on;
+    Save();
+}
+
+int CtrSettings_CheatMax(int id)
+{
+    return id >= 0 && id < CTR_CHEAT_COUNT ? kCheatMax[id] : 0;
+}
+
+int CtrSettings_Cheat(int id)
+{
+    Load();
+    return id >= 0 && id < CTR_CHEAT_COUNT ? sCheat[id] : 0;
+}
+
+void CtrSettings_SetCheat(int id, int value)
+{
+    Load();
+    if (id < 0 || id >= CTR_CHEAT_COUNT)
+        return;
+    value = value < 0 ? 0 : value > kCheatMax[id] ? kCheatMax[id] : value;
+    if (value == sCheat[id])
+        return;
+    sCheat[id] = value;
     Save();
 }
 

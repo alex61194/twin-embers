@@ -149,7 +149,7 @@ int main(void)
     }
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
-    CHECK(CtrOptions_RowCount() == 35, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
+    CHECK(CtrOptions_RowCount() == 42, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * CtrOptions_PageCount(), "more rows than the pages hold");
     CHECK(strcmp(CtrOptions_Row(8)->label, "FPS counter") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(21)->label, "Type matchup") == 0, "TYPE MATCHUP is row 7");
@@ -372,19 +372,19 @@ int main(void)
     CHECK(CtrOptions_ExpShare() == 0, "EXP SHARE wraps to OFF");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 24);
-    CHECK(view.optPage == 4 && view.optPageCount == 7 && view.optCount == 6 && view.optSection == 2 && view.optSectionCount == 4,
-          "the QoL page holds six rows and is the third section of four");
-    /* The pages: Settings (7 rows), Graphics (6: the screen; 4: the looks; 3: the wild Pokemon), QoL (6) and Nuzlocke (6), Randomlocke (3), in four sections. */
-    CHECK(CtrOptions_PageCount() == 7 && CtrOptions_SectionCount() == 4
+    CHECK(view.optPage == 4 && view.optPageCount == 8 && view.optCount == 6 && view.optSection == 2 && view.optSectionCount == 5,
+          "the QoL page holds six rows and is the third section of five");
+    /* The pages: Settings (7 rows), Graphics (6: the screen; 4: the looks; 3: the wild Pokemon), QoL (6) and Nuzlocke (6), Randomlocke (3), Cheats (7), in five sections. */
+    CHECK(CtrOptions_PageCount() == 8 && CtrOptions_SectionCount() == 5
           && CtrOptions_PageBase(0) == 0 && CtrOptions_PageRows(0) == 7 && CtrOptions_PageBase(1) == 7 && CtrOptions_PageRows(1) == 7
           && CtrOptions_PageBase(2) == 14 && CtrOptions_PageRows(2) == 4 && CtrOptions_PageBase(3) == 18 && CtrOptions_PageRows(3) == 3
           && CtrOptions_PageBase(4) == 21 && CtrOptions_PageRows(4) == 6 && CtrOptions_PageBase(5) == 27 && CtrOptions_PageRows(5) == 5
-          && CtrOptions_PageBase(6) == 32 && CtrOptions_PageRows(6) == 3,
-          "seven pages in four sections");
+          && CtrOptions_PageBase(6) == 32 && CtrOptions_PageRows(6) == 3 && CtrOptions_PageBase(7) == 35 && CtrOptions_PageRows(7) == 7,
+          "eight pages in five sections");
     CHECK(strcmp(CtrOptions_PageName(0), "Settings") == 0 && strcmp(CtrOptions_PageName(1), "Graphics") == 0
           && strcmp(CtrOptions_PageName(2), "Looks") == 0 && strcmp(CtrOptions_PageName(3), "Wilds") == 0 && strcmp(CtrOptions_PageName(4), "QoL") == 0
           && strcmp(CtrOptions_PageName(5), "Nuzlocke") == 0 && strcmp(CtrOptions_PageName(6), "Random") == 0
-          && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(7)[0] == 0,
+          && strcmp(CtrOptions_PageName(7), "Cheats") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(8)[0] == 0,
           "each page has its own short name (the PAGE button is 64 px of text), none past the last");
     {
         int of = 0;
@@ -392,11 +392,69 @@ int main(void)
         CHECK(CtrOptions_SectionPage(1, &of) == 1 && of == 3 && CtrOptions_SectionPage(2, &of) == 2 && of == 3 && CtrOptions_SectionPage(3, &of) == 3 && of == 3
               && CtrOptions_SectionPage(0, &of) == 1 && of == 1 && CtrOptions_SectionPage(5, &of) == 1 && of == 2 && CtrOptions_SectionPage(6, &of) == 2 && of == 2
               && CtrOptions_SectionOf(0) == 0 && CtrOptions_SectionOf(1) == 1 && CtrOptions_SectionOf(2) == 1 && CtrOptions_SectionOf(3) == 1
-              && CtrOptions_SectionOf(4) == 2 && CtrOptions_SectionOf(5) == 3 && CtrOptions_SectionOf(6) == 3, "Graphics has three pages, Nuzlocke two, the rest one");
+              && CtrOptions_SectionOf(4) == 2 && CtrOptions_SectionOf(5) == 3 && CtrOptions_SectionOf(6) == 3 && CtrOptions_SectionOf(7) == 4
+              && CtrOptions_SectionPage(7, &of) == 1 && of == 1, "Graphics has three pages, Nuzlocke two, the rest one");
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 14);
     CHECK(strcmp(view.optPageName, "Looks") == 0 && view.optPage == 2 && view.optSection == 1, "the looks page is named Looks and is in the Graphics section");
+    /* TRUCOS: the Cheats page holds seven rows, all off at first; each is kept and read by the game's accessors. */
+    memset(&view, 0, sizeof(view));
+    CtrOptions_Fill(&view, 35);
+    CHECK(view.optPage == 7 && view.optPageCount == 8 && view.optCount == 7 && view.optSection == 4 && view.optSectionCount == 5
+          && strcmp(view.optPageName, "Cheats") == 0 && strcmp(view.optLabel[0], "Sure catch") == 0 && strcmp(view.optLabel[1], "Shiny odds") == 0,
+          "the Cheats page: seven rows, the fifth section");
+    CHECK(!CtrOptions_SureCatch() && !CtrOptions_NoEncounters() && !CtrOptions_WalkThroughWalls() && !CtrOptions_InfinitePp()
+          && !CtrOptions_AlwaysFlee() && CtrOptions_ShinyOdds() == 0 && CtrOptions_ScaleExp(100) == 100, "every cheat is off until chosen");
+    for (int i = 0; i < CtrOptions_PageRows(7); ++i) {
+        const CtrOptionRow *row = CtrOptions_Row(35 + i);
+
+        CHECK(row->get != NULL && row->set != NULL && row->count != NULL && row->count() >= 2, "cheat row %d has its own accessors and two values or more", i);
+    }
+    CtrOptions_Row(35)->set(0);                                   /* 0 is ON in a switch row */
+    CtrOptions_Row(37)->set(0);                                   /* 0 is ON in a switch row */
+    CtrOptions_Row(38)->set(0);                                   /* 0 is ON in a switch row */
+    CtrOptions_Row(40)->set(0);                                   /* 0 is ON in a switch row */
+    CtrOptions_Row(41)->set(0);                                   /* 0 is ON in a switch row */
+    CHECK(CtrOptions_SureCatch() && CtrOptions_NoEncounters() && CtrOptions_WalkThroughWalls() && CtrOptions_InfinitePp() && CtrOptions_AlwaysFlee(),
+          "the switches reach the game's accessors");
+    CtrOptions_Row(39)->set(2);
+    CHECK(CtrOptions_ScaleExp(100) == 400 && CtrOptions_ScaleExp(30000) == 0xFFFF, "EXP x4, and no more than the 16 bits the game keeps");
+    CtrOptions_Row(39)->set(9);
+    CHECK(CtrOptions_Row(39)->get() == 3 && CtrOptions_ScaleExp(1) == 8, "a value past the last is the last");
+    CtrOptions_Row(39)->set(0);
+    /* SHINY ODDS: normal leaves every personality alone; "always" makes a shiny one that keeps the gender byte and the nature; a shiny one is not touched. */
+    {
+        const uint32_t otId = 0x1234ABCDu;
+        int shinies = 0;
+
+        CtrOptions_Row(36)->set(0);
+        CHECK(CtrOptions_ShinyPersonality(0x89ABCDEFu, otId, 0) == 0x89ABCDEFu, "Normal odds keep the personality");
+        CtrOptions_Row(36)->set(6);
+        for (uint32_t pid = 0x01010101u, n = 0; n < 2000; ++n, pid = pid * 1664525u + 1013904223u) {
+            uint32_t made = CtrOptions_ShinyPersonality(pid, otId, pid * 2654435761u);
+
+            CHECK((((made >> 16) ^ made ^ (otId >> 16) ^ otId) & 0xFFFFu) < 8, "Always: %08X is shiny", (unsigned)made);
+            CHECK((made & 0xFFu) == (pid & 0xFFu) && made % 25u == pid % 25u, "Always: gender byte and nature of %08X are kept", (unsigned)pid);
+            ++shinies;
+        }
+        CHECK(shinies == 2000, "every one was made shiny");
+        CHECK(CtrOptions_ShinyPersonality(0x0000B9F9u, otId, 77) == 0x0000B9F9u, "a personality that is already shiny is left as it is");
+        /* 1/16: about one in sixteen rolls makes one. */
+        CtrOptions_Row(36)->set(5);
+        {
+            int made = 0;
+
+            for (uint32_t n = 0; n < 16000; ++n) {
+                uint32_t pid = 0x01010101u + n * 7919u, roll = n * 2654435761u + 12345u;
+
+                if (CtrOptions_ShinyPersonality(pid, otId, roll) != pid)
+                    ++made;
+            }
+            CHECK(made > 800 && made < 1200, "1/16 makes about a sixteenth shiny (%d of 16000)", made);
+        }
+        CtrOptions_Row(36)->set(0);
+    }
     /* SURF POKEMON: the looks page's fourth row: DEFAULT, then the pack's Pokemon; a preview like the looks'. */
     CHECK(strcmp(CtrOptions_Row(17)->label, "Surf Pokemon") == 0 && CtrOptions_Count(17) == 3 && CtrOptions_PageOf(17) == 2,
           "SURF POKEMON is the fourth row of the looks page, with DEFAULT and two more");
@@ -419,7 +477,7 @@ int main(void)
     CHECK(view.optLook.on == 1 && strcmp(view.optLook.name, "Default") == 0 && view.optLook.credit[0], "the other look rows still preview their own");
     CtrOptions_Fill(&view, 27);
     CHECK(strcmp(view.optPageName, "Nuzlocke") == 0 && view.optPage == 5 && view.optSection == 3, "the Nuzlocke page is named alone");
-    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(7) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(7) == 0,
+    CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(8) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(8) == 0,
           "a page that does not exist has no rows");
     {
         int total = 0;
@@ -434,12 +492,12 @@ int main(void)
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, CtrOptions_RowCount() - 2);
-    CHECK(view.optPage == 6 && view.optCount == 3 && view.optSelected == 1 && view.optLabel[3][0] == 0,
-          "the last page: its three rows, the second selected, no fourth");
+    CHECK(view.optPage == 7 && view.optCount == 7 && view.optSelected == 5,
+          "the last page: its seven rows, the sixth selected");
     CHECK(CtrOptions_PageOf(0) == 0 && CtrOptions_PageOf(4) == 0 && CtrOptions_PageOf(7) == 1 && CtrOptions_PageOf(13) == 1
           && CtrOptions_PageOf(14) == 2 && CtrOptions_PageOf(17) == 2 && CtrOptions_PageOf(18) == 3 && CtrOptions_PageOf(20) == 3
           && CtrOptions_PageOf(21) == 4 && CtrOptions_PageOf(26) == 4 && CtrOptions_PageOf(27) == 5 && CtrOptions_PageOf(31) == 5
-          && CtrOptions_PageOf(32) == 6 && CtrOptions_PageOf(34) == 6 && CtrOptions_PageOf(100) == 6, "a row's page");
+          && CtrOptions_PageOf(32) == 6 && CtrOptions_PageOf(34) == 6 && CtrOptions_PageOf(35) == 7 && CtrOptions_PageOf(100) == 7, "a row's page");
     /* FREE HMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_FreeHm() == 0 && CtrSettings_FreeHm() == 0 && CtrOptions_Count(26) == 2, "FREE HMS starts off");
     Text(26, "Off");
@@ -595,7 +653,7 @@ int main(void)
     CtrOptions_Set(20, 0);
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 19);
-    CHECK(view.optPage == 3 && view.optPageCount == 7 && view.optCount == 3 && view.optSelected == 1 && view.optSection == 1 && view.optSectionCount == 4
+    CHECK(view.optPage == 3 && view.optPageCount == 8 && view.optCount == 3 && view.optSelected == 1 && view.optSection == 1 && view.optSectionCount == 5
           && strcmp(view.optPageName, "Wilds") == 0 && strcmp(view.optLabel[0], "Wild Pokemon") == 0 && view.optLabel[3][0] == 0,
           "the Wilds page: three rows, the third page of Graphics");
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
@@ -676,7 +734,7 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 22);
-    CHECK(view.optPage == 4 && view.optPageCount == 7 && view.optCount == 6 && view.optSelected == 1
+    CHECK(view.optPage == 4 && view.optPageCount == 8 && view.optCount == 6 && view.optSelected == 1
           && strcmp(view.optLabel[1], "Move details") == 0, "QoL Fill");
     /* ON/OFF rows are switches (on, off), the others text: EXP SHARE's levels are words, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 2 && view.optSwitch[3] == 0, "QoL switches");
