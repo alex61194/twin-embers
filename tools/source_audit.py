@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST='docs/review-manifest.json'
 LIMIT=256*1024
-MANIFEST_LIMIT=1024*1024
+MANIFEST_LIMIT=2*1024*1024
 REFERENCE='96f95e015af9f5f38e4a8aefca7cab29a78b030d'
 EXTENSIONS={'.c','.h','.py','.md','.txt','.json','.toml','.lock','.yml'}
 NAMES={'Makefile','.gitignore','.gitattributes'}
