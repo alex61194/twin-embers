@@ -265,40 +265,7 @@ static uint32_t FESig(const CtrPokeTouchEasy *e, int region)
 
 /* ---- the pieces ---- */
 
-/* The Poke Ball style draws the same regions with the same rectangles (so the hit zones are the ones above) in its own pieces: a button is a pill
- * (the selected one white with a red word, an action pink, CANCEL and BACK near black, the rest dark red), a window a white card, a slot a pale inset. */
-static void FEBallPill(const CtrPokeTouchRect *r, const char *label, uint16_t face, uint16_t ink, int bright, int pressed)
-{
-    char fit[48];
-    int tw;
-
-    if (pressed)
-        face = bright ? BM_PRESSED : BM_CARD_EDGE;
-    UiRoundFill(r->x, r->y, r->w, r->h, 8, bright ? BM_CARD_EDGE : BM_PILL_EDGE);
-    UiRoundFill(r->x + 2, r->y + 2, r->w - 4, r->h - 4, 6, face);
-    Em2Fit(label, r->w - 12, fit, sizeof(fit));
-    tw = UiTextWidth(fit, 1);
-    UiText(fit, r->x + (r->w - tw) / 2, r->y + (r->h - UI_TEXT_H) / 2, pressed && !bright ? EM_WHITE : ink, face, 1, r->x + r->w - 4);
-}
-
-static void FEBallButton(const CtrPokeTouchRect *r, const EmPal *p, const char *label, int pressed, int ring)
-{
-    int chosen = p == &kEmFlame || ring;
-    uint16_t face = chosen ? BL_WHITE : p == &kEmSlate ? BL_BAND : p == &kEmGold ? BL_PINK : p == &kEmBlue ? BM_STRIP : BM_PILL;
-
-    FEBallPill(r, label, face, chosen || p == &kEmGold ? BL_REDTXT : EM_WHITE, chosen, pressed);
-}
-
-static void FEBallRail(int x, int y, int w, int h, int top, int thumb)
-{
-    UiRoundFill(x + w / 2 - 4, y, 8, h, 4, BM_PILL_EDGE);
-    UiRoundFill(x + w / 2 - 2, y + 2, 4, h - 4, 2, BM_PILL);
-    if (thumb > 0 && thumb < h) {
-        UiRoundFill(x + 1, y + top, w - 2, thumb, 6, BM_CARD_EDGE);
-        UiRoundFill(x + 3, y + top + 2, w - 6, thumb - 4, 4, BL_WHITE);
-    }
-}
-
+/* The Poke Ball style draws the same regions with the same rectangles (so the hit zones are the ones above) in its own pieces (3ds_ball_pieces_impl.h). */
 static void FEButton(const CtrPokeTouchRect *r, const EmPal *p, const char *label, int pressed, int ring)
 {
     char fit[48];

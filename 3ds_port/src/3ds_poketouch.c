@@ -1749,10 +1749,24 @@ static int BallRelearnActive(const CtrPokeTouchView *v)
     return sStyleBall && v->relearn.on && !v->viewport && !v->options && !v->save;
 }
 
+/* The Poke Ball PC box, the trade's cards, the chat's keyboard (they keep their layout, in the middle of the screen) and the letter. */
+static void BallShiftedScreen(const CtrPokeTouchView *v);
+static void BallMailScreen(const CtrPokeTouchView *v);
+static int BallShiftedActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on && !v->learn.on && !v->relearn.on && !v->mail.on
+        && (v->box.on || (v->choice.on && (v->trade.on || v->chat.on)));
+}
+
+static int BallMailActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->mail.on && !v->viewport && !v->options && !v->save && !v->ec.on && !v->name.on;
+}
+
 static int BallFullView(const CtrPokeTouchView *v)
 {
     return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v) || BallSaveActive(v) || BallCardActive(v) || BallDexActive(v)
-        || BallLearnActive(v) || BallRelearnActive(v);
+        || BallLearnActive(v) || BallRelearnActive(v) || BallShiftedActive(v) || BallMailActive(v);
 }
 
 static int NewMenu(const CtrPokeTouchView *v)
@@ -2551,6 +2565,10 @@ static void MenuScreen(const CtrPokeTouchView *v, int full)
             BallCardScreen(v);
         else if (BallDexActive(v))
             BallDexScreen(v);
+        else if (BallShiftedActive(v))
+            BallShiftedScreen(v);
+        else if (BallMailActive(v))
+            BallMailScreen(v);
         else if (BallLearnActive(v))
             BallLearnScreen(v);
         else if (BallRelearnActive(v))
@@ -2896,11 +2914,12 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_mail_impl.h"
 #include "3ds_field_choice_impl.h"
 #include "3ds_field_naming_impl.h"
-#include "3ds_field_box_impl.h"
-#include "3ds_field_trade_impl.h"
-#include "3ds_field_chat_impl.h"
 #include "3ds_ball_options_impl.h"
 #include "3ds_ball_menus_impl.h"
 #include "3ds_ball_learn_impl.h"
 #include "3ds_ball_naming_impl.h"
+#include "3ds_ball_pieces_impl.h"
+#include "3ds_field_box_impl.h"
+#include "3ds_field_trade_impl.h"
+#include "3ds_field_chat_impl.h"
 #include "3ds_field_easychat_impl.h"

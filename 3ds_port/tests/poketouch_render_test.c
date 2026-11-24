@@ -180,8 +180,8 @@ static int BagRail36(const CtrPokeTouchBag *b,int y) { return CtrPokeTouch_BagRa
 #define CtrPokeTouch_DexHit(v,x,y) (CtrPokeTouch_DexHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))   /* the Poke Ball Pokedex is in screen pixels */
 #define CtrPokeTouch_LearnHit(v,x,y) (CtrPokeTouch_LearnHit)((v),(x)+36,(y)+36)
 #define CtrPokeTouch_RelearnHit(v,x,y) (CtrPokeTouch_RelearnHit)((v),(x)+36,(y)+36)
-#define CtrPokeTouch_ChoiceHit(v,x,y) (CtrPokeTouch_ChoiceHit)((v),(x)+36,(y)+36)
-#define CtrPokeTouch_BoxHit(v,x,y) (CtrPokeTouch_BoxHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_ChoiceHit(v,x,y) (CtrPokeTouch_ChoiceHit)((v),(x)+36,(y)+(sBallFull&&((v)->trade.on||(v)->chat.on)?0:36))   /* the Poke Ball trade and chat sit 36 px right of their rectangles and no lower */
+#define CtrPokeTouch_BoxHit(v,x,y) (CtrPokeTouch_BoxHit)((v),(x)+36,(y)+(sBallFull?0:36))   /* so does the Poke Ball PC box */
 #define CtrPokeTouch_CardHit(v,x,y) (CtrPokeTouch_CardHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))
 static void update_at(int line, CtrPokeTouchView *old, const CtrPokeTouchView *vRaw)
 {

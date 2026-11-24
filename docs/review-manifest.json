@@ -1216,7 +1216,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "c44d2551be91308f6cfd7ef9ba5ab9602809fe581dea84922caef09382a6d22e",
+   "sha256": "bb7531f201ff9b5a061a712da2f09290ea941b7b8620b4c1b0f6f6a70db579f8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1248,7 +1248,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_easychat_impl.h",
-   "sha256": "0cdeb45f61dfbc8d42cf6829bbb69f5cc1decab70be4c7cc62a93ba607d1021e",
+   "sha256": "0ec9fc986094090c7ddf04064c33292b8fb0159b140f2bd1d38b9d22ac2ef03a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "819fc1ecc0e5839ef2bb7ab70785445066e016369e150d86dea461ce326867cc",
+   "sha256": "15fa9b972b33bb5b313be1e473989a500e899f8a5483d89cfa8b4b24a8f0edfa",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "a296121443b014c0cc8db35accd314ac236d295876ad874a48730c046985ee06"
+   "sha256": "ac5b8513e2aa5d741eccac28a46981fa740b36a87fa5ecc6d7c1d3f1679ce0ad"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "e16ef56dae86421af47ca9afbaea526e85ff17c44de2bcde4d7abd9a65e0ab8a",
+   "sha256": "eba6ac0f152a8b2b4ea6c235f9bd2505848cdbbaee040ffa9d4467440f927fff",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7626,7 +7626,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_chat_impl.h",
-   "sha256": "67af91c342670a820986f09a1e8878ab25cdd9116a99853909d9169467af12ab",
+   "sha256": "aedf899135514330e3f3fd676e38f54241738d448ae1af8da0a6bacc73295cf7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7650,7 +7650,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_trade_impl.h",
-   "sha256": "542407dc23794ee25ca8dbc606c68eef369257afff017dc7368d876d9dfb27a3",
+   "sha256": "2cbb917c2d39175bed0d1e965994267e48fa9fb37a861867646d2f8a59498223",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7899,6 +7899,14 @@
   {
    "path": "3ds_port/src/3ds_ball_naming_impl.h",
    "sha256": "9dd090fd0a948d35b01f3e238fa0c2a4ff206492ddcd7e637aacc24c0b6db968",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_pieces_impl.h",
+   "sha256": "b482dd1b4e9640d36a99c180534fc94076583e646342fc8befdd4cce53bac5eb",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
