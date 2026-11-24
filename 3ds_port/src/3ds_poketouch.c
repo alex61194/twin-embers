@@ -816,7 +816,14 @@ static void ZoomButton(int plus, int enabled)
 {
     CtrPokeTouchRect r = ZoomRect(plus);
     uint16_t rim = enabled ? LL_SLATE : UI_RGB(150, 158, 180), face = enabled ? UI_RGB(255, 255, 250) : UI_RGB(226, 230, 240);
-    uint16_t sign = enabled ? LL_SLATE : UI_RGB(170, 176, 196);
+    uint16_t sign = enabled ? LL_SLATE : UI_RGB(170, 176, 196), ring = UI_RGB(122, 180, 216);
+
+    if (sStyleBall) {                                   /* Poke Ball: white, its rim and sign red; pale at its limit */
+        rim = enabled ? UI_RGB(150, 22, 26) : UI_RGB(214, 170, 170);
+        face = enabled ? BL_WHITE : UI_RGB(244, 234, 234);
+        sign = enabled ? BL_REDTXT : UI_RGB(214, 170, 170);
+        ring = enabled ? UI_RGB(244, 226, 226) : face;
+    }
 
     for (int row = 0; row < ZOOM_D; ++row)
         for (int col = 0; col < ZOOM_D; ++col) {
@@ -824,7 +831,7 @@ static void ZoomButton(int plus, int enabled)
 
             if (d2 > ZOOM_D * ZOOM_D)
                 continue;
-            Px(r.x + col, r.y + row, d2 > (ZOOM_D - 2) * (ZOOM_D - 2) ? rim : d2 > (ZOOM_D - 4) * (ZOOM_D - 4) ? UI_RGB(122, 180, 216) : face);
+            Px(r.x + col, r.y + row, d2 > (ZOOM_D - 2) * (ZOOM_D - 2) ? rim : d2 > (ZOOM_D - 4) * (ZOOM_D - 4) ? ring : face);
         }
     Fill(r.x + 6, r.y + ZOOM_D / 2 - 1, 8, 2, sign);
     if (plus)
@@ -916,9 +923,13 @@ static void HomeOverlay(const CtrPokeTouchView *v)
     const char *name = RegionName(v->mapGroup);
     int multi = (v->mapOpen & (v->mapOpen - 1)) != 0, textW = UiTextWidth(name, 1), w = textW + 18 + (multi ? 9 : 0);
 
-    LlRibbonBox(PT_HOME_X, PT_HOME_Y, w, 13, 7, 0, LL_RIB_TOP, LL_RIB_BOT, name);
+    if (sStyleBall) {                                   /* Poke Ball: a white ribbon, the region's name and its arrow red */
+        LlRibbonBox(PT_HOME_X, PT_HOME_Y, w, 13, 7, 0, BL_WHITE, UI_RGB(244, 236, 236), "");
+        UiText(name, PT_HOME_X + 6, PT_HOME_Y + 1, BL_REDTXT, BL_WHITE, 1, PT_HOME_X + w);
+    } else
+        LlRibbonBox(PT_HOME_X, PT_HOME_Y, w, 13, 7, 0, LL_RIB_TOP, LL_RIB_BOT, name);
     if (multi)
-        LlArrow(PT_HOME_X + 6 + textW + 4, PT_HOME_Y + 3, 4, 7, 3, EM_WHITE);
+        LlArrow(PT_HOME_X + 6 + textW + 4, PT_HOME_Y + 3, 4, 7, 3, sStyleBall ? BL_REDTXT : EM_WHITE);
     sHomeShown = 1;
     sHomeRibbon = multi ? (CtrPokeTouchRect){PT_HOME_X, PT_HOME_Y, (int16_t)w, 13} : (CtrPokeTouchRect){0, 0, 0, 0};
     ZoomButton(1, v->mapZoom < HM_ZOOMS - 1);
@@ -1807,13 +1818,19 @@ static void HomeBack(void)
 
     TsBgRect(r->x, r->y, r->w, r->h + 2);
     Em2CardShadow(r->x, r->y, r->w, r->h);
-    fy = EmButton(r->x, r->y, r->w, r->h, &kEmGrey, BTN_DEPTH, 0);
+    if (sStyleBall) {                                   /* Poke Ball: a dimmed red key (nothing to go back from), its word pale */
+        UiRoundFill(r->x, r->y, r->w, r->h, 8, UI_RGB(120, 16, 20));
+        UiRoundFill(r->x + 2, r->y + 2, r->w - 4, r->h - 4, 6, UI_RGB(156, 40, 44));
+        fy = r->y + BTN_DEPTH / 2;
+    } else
+        fy = EmButton(r->x, r->y, r->w, r->h, &kEmGrey, BTN_DEPTH, 0);
     {
+        const uint16_t ink = sStyleBall ? UI_RGB(226, 160, 160) : kEmGrey.ink, inkSh = sStyleBall ? UI_RGB(156, 40, 44) : kEmGrey.inkSh;
         const char *word = CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck");
         int x = sStyleBall ? r->x + (r->w - (10 + UiTextWidth(word, 1))) / 2 : r->x + 8;    /* Poke Ball: the arrow and the word centred */
 
-        LlArrow(x, fy + (fh - 10) / 2, 6, 10, 2, kEmGrey.ink);
-        UiText(word, x + 10, fy + (fh - UI_TEXT_H) / 2, kEmGrey.ink, kEmGrey.inkSh, 1, r->x + r->w - 2);
+        LlArrow(x, fy + (fh - 10) / 2, 6, 10, 2, ink);
+        UiText(word, x + 10, fy + (fh - UI_TEXT_H) / 2, ink, inkSh, 1, r->x + r->w - 2);
     }
 }
 
@@ -1832,7 +1849,7 @@ static void HomeStatus(const CtrPokeTouchView *v)
         int cx = r->x + r->w / 2;
 
         for (int i = 0; i < 3; ++i)
-            Fill(cx - 3 + i, r->y + r->h - 5 + i, 7 - 2 * i, 1, UI_RGB(120, 172, 232));
+            Fill(cx - 3 + i, r->y + r->h - 5 + i, 7 - 2 * i, 1, sStyleBall ? BL_REDTXT : UI_RGB(120, 172, 232));
     }
     if (v->homeRepelSteps) {
         /* What is in force: the Repel in use, the steps it has left and a bar of how much is left of its length. */
@@ -1848,7 +1865,7 @@ static void HomeStatus(const CtrPokeTouchView *v)
         fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
         if (fill > barW)
             fill = barW;
-        UiRoundFill(r->x + 28, r->y + 27, barW, 3, 1, LL_SLATE);
+        UiRoundFill(r->x + 28, r->y + 27, barW, 3, 1, sStyleBall ? UI_RGB(120, 16, 20) : LL_SLATE);
         if (fill > 0)
             Fill(r->x + 28 + 1, r->y + 28, fill > 2 ? fill - 2 : fill, 1, UI_RGB(96, 214, 120));
         return;
@@ -1880,10 +1897,11 @@ static void HomeClock(const CtrPokeTouchView *v)
             int d2 = dx * dx + dy * dy;
 
             if (d2 <= 36)
-                Px(cx + dx, cy + dy, d2 > 25 ? LL_SLATE : d2 > 16 ? UI_RGB(255, 226, 150) : UI_RGB(255, 250, 230));
+                Px(cx + dx, cy + dy, sStyleBall ? (d2 > 25 ? UI_RGB(150, 22, 26) : d2 > 16 ? UI_RGB(244, 226, 226) : BL_WHITE)
+                                                : d2 > 25 ? LL_SLATE : d2 > 16 ? UI_RGB(255, 226, 150) : UI_RGB(255, 250, 230));
         }
-    Fill(cx, cy - 4, 1, 4, LL_SLATE);
-    Fill(cx, cy, 3, 1, UI_RGB(214, 70, 28));
+    Fill(cx, cy - 4, 1, 4, sStyleBall ? UI_RGB(150, 22, 26) : LL_SLATE);     /* Poke Ball: a white dial, its rim and hands red */
+    Fill(cx, cy, 3, 1, sStyleBall ? BL_REDTXT : UI_RGB(214, 70, 28));
     if (v->homeClock < 0)
         return;
     snprintf(t, sizeof(t), "%02d:%02d", v->homeClock / 60 % 24, v->homeClock % 60);
@@ -1911,7 +1929,7 @@ static void ZoneSlot(int x, int species, int flags)
     static unsigned short pal[16];
     static uint8_t px[32 * 32];
     static uint16_t pal565[16];
-    int dy = sStyleBall ? 3 : 0, y = HN_Y + 3 + dy;     /* the Poke Ball note is the white under a dark band: its middle is lower */
+    int dy = sStyleBall ? 5 : 0, y = HN_Y + 3 + dy;     /* the Poke Ball note is the white under an 8 px dark band: its middle is lower */
 
     UiRoundFill(x, y, 32, 28, 5, UI_RGB(196, 184, 158));
     UiRoundFill(x + 1, y + 1, 30, 26, 4, UI_RGB(238, 230, 212));
@@ -1936,11 +1954,13 @@ static void HomeNote(const CtrPokeTouchView *v)
     int right = HN_X + HN_W - (sStyleBall ? 12 : 10), titleRight = right;   /* Poke Ball: FLY as far from the right edge as the name from the left */
     const char *line = NULL;
     int zones = v->zoneN > PT_ZONE_MAX ? PT_ZONE_MAX : v->zoneN;
-    const int dy = sStyleBall ? 3 : 0;                  /* the Poke Ball note is the white under a dark band: what is in it sits lower */
+    const int dy = sStyleBall ? 5 : 0;                  /* the Poke Ball note is the white under an 8 px dark band: what is in it sits lower */
 
     sFlyButton.w = 0;
     TsBgRect(sHomeNote.x, sHomeNote.y, sHomeNote.w, sHomeNote.h);
     NoteWindow();
+    if (sStyleBall)
+        UiRoundFill(0, HN_Y + 4, W, 4, 0, BL_BAND);     /* HOME's band is 8 px, as on the whole-screen views */
     for (int i = 1; i < PT_BAR_LINES && !line; ++i)
         if (v->bar[i][0] && !(v->flyOk && i == 1))
             line = v->bar[i];
@@ -1996,7 +2016,7 @@ static void HomeNote(const CtrPokeTouchView *v)
         SmallText(line, HN_X + 12, HN_Y + 17 + dy + (sStyleBall ? 2 : 0), EM_DIM, EM_DARK_SH, titleRight);
     } else if (v->bar[0][0]) {
         /* the name alone: in the middle of the note (the Poke Ball one starts under its 4 px band) */
-        Em2Text(v->bar[0], HN_X + 12, sStyleBall ? HN_Y + 4 + (H - HN_Y - 4 - UI_TEXT_H) / 2 : HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
+        Em2Text(v->bar[0], HN_X + 12, sStyleBall ? HN_Y + 8 + (H - HN_Y - 8 - UI_TEXT_H) / 2 : HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
     }
 }
 

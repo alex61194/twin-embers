@@ -362,7 +362,8 @@ int main(int argc, char **argv)
             if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_HOME_X+PT_VIEW_W-26,PT_HOME_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
             assert(at(x,y)==UI_RGB(164,180,255) || at(x,y)==UI_RGB(156,213,255));
         }
-        assert(at(PT_HOME_X,PT_HOME_Y)==LL_RIB_TOP && at(PT_HOME_X,PT_HOME_Y+13)!=LL_RIB_TOP);      /* the ribbon: red from its top, 13 rows */
+        { uint16_t top=sStyleBall?BL_WHITE:LL_RIB_TOP;   /* the ribbon: red from its top (white in the Poke Ball style), 13 rows */
+          assert(at(PT_HOME_X,PT_HOME_Y)==top && at(PT_HOME_X,PT_HOME_Y+13)!=top); }
         v.mapReady=0; v.mapZoom=0; sMap.group=-1; CtrPokeTouch_Draw(canvas,&v);
     }
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
