@@ -57,6 +57,24 @@ static void FEBallRail(int x, int y, int w, int h, int top, int thumb)
     }
 }
 
+/* HOME's layout in the Poke Ball style (and every other screen drawn in it that is not a whole-screen view): EmButton draws a flat pill (BallHomeButton). */
+static int BallHomeSkin(void)
+{
+    return sStyleBall && sLayoutHome && !sBallFull;
+}
+
+static int BallHomeButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
+{
+    uint16_t face = BxFaceColour(p);
+    int bright = BxBright(p), radius = h < 20 ? 6 : 8;
+
+    if (pressed)
+        face = bright ? BM_PRESSED : BM_CARD_EDGE;
+    UiRoundFill(x, y, w, h, radius, bright ? BM_CARD_EDGE : BM_PILL_EDGE);
+    UiRoundFill(x + 2, y + 2, w - 4, h - 4, radius - 2, face);
+    return y + depth / 2;
+}
+
 /* EmButton: a pill whose face top is where its label's box starts (the Ascuas button's depth is the bevel under it, so the face is `depth` shorter). */
 static int BxFace(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
 {

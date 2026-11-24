@@ -1599,7 +1599,7 @@ static void Button(int id, const CtrPokeTouchView *v)
     case PT_BIKE: {
         const char *key = id == PT_REGISTERED ? "X" : "Y";
 
-        LlRibbonBox(r->x + 1, fy + 1, UiTextWidth(key, 1) + 18, 11, 7, LL_TL, LL_BLUE_TOP, LL_BLUE_BOT, key);
+        LlRibbonBox(r->x + 1, fy + 1, UiTextWidth(key, 1) + 18, 11, 7, LL_TL, sStyleBall ? UI_RGB(190, 32, 38) : LL_BLUE_TOP, sStyleBall ? UI_RGB(150, 22, 26) : LL_BLUE_BOT, key);
         {
             int wellY = fy + (sLayoutHome ? 13 : 15), wellH = fh - (sLayoutHome ? 14 : 18);
 

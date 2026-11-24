@@ -282,11 +282,18 @@ static void EmFramedRows(int x, int y, int w, int h, int radius, int inner, uint
 
 #include "3ds_ember2_impl.h"
 
+/* The Poke Ball style draws the buttons of HOME's layout flat (3ds_ball_pieces_impl.h): a pill with a dark-red edge, no lip. */
+static int BallHomeSkin(void);
+static int BallHomeButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed);
+
 /* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
  * caller has put the backdrop back under it. Returns where the face starts (for its label). */
 static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
 {
     int face = h - depth, fy = pressed ? y + depth : y;
+
+    if (BallHomeSkin())
+        return BallHomeButton(x, y, w, h, p, depth, pressed);
 
     if (!pressed) {
         /* The lip is seen only below the face and in its two bottom corners (and the top rows of its own corners, left of the face's); the
