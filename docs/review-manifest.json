@@ -7602,7 +7602,7 @@
   },
   {
    "path": "3ds_port/src/3ds_ball_options_impl.h",
-   "sha256": "1f12abe953e548204e08ab82391fb44ce924dc22084b73c50be0ac46c8ecdef7",
+   "sha256": "40af9e3d2b373f8234ec37e3968d091c370b75332ecf220b296908e95babe239",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

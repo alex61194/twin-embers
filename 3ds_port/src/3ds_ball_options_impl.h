@@ -94,7 +94,7 @@ static void BallLookPanel(const CtrPokeTouchView *v)
 static void BallOptionsScreen(const CtrPokeTouchView *v)
 {
     const char *body = v->bar[1][0] ? v->bar[1] : v->bar[2];
-    int dots = v->optPageCount > 7 ? 7 : v->optPageCount;
+    int dots = v->optPageCount > 8 ? 8 : v->optPageCount;      /* eight pages now: the title keeps its 200 px, the dots start at 216 */
 
     sBallExitR = (CtrPokeTouchRect){240, 162, 74, 38};
     EmSurface();
