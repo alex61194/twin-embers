@@ -284,7 +284,6 @@ extern unsigned CtrSave_PlayHours(void);
 extern unsigned CtrSave_PlayMinutes(void);
 extern unsigned CtrSave_Money(void);
 extern unsigned CtrSettings_Turbo(void);
-extern int CtrSettings_Style(void);
 extern unsigned CtrNightWild_Second(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
@@ -5986,7 +5985,7 @@ void CtrBottom_Frame(void)
         CtrVideo_SetBottomViewportOrigin(state.touch.pictureHome ? PT_HOME_X : PT_VIEW_X, state.touch.pictureHome ? PT_HOME_Y : PT_VIEW_Y);
     }
     if (CtrPokeTouch_Style() != 1) {
-        CtrPokeTouch_SetStyle(1);                     /* the Poke Ball style is the only one (a style=0 kept by an older build is not read) */
+        CtrPokeTouch_SetStyle(1);                     /* the Poke Ball style: the only one */
         sForceRedraw = 1;
     }
     if (sForceRedraw || !sHaveShown || memcmp(&state, &sShown, sizeof(state)) != 0) {
