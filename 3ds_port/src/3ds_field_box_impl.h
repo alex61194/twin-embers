@@ -19,7 +19,7 @@ static const CtrPokeTouchRect sFXParty = {184, 32, 60, 38}, sFXClose = {184, 74,
 static const CtrPokeTouchRect sFXHand = {184, 116, 60, 46};
 static const CtrPokeTouchRect sFXGrid = {4, 32, 176, 132};
 static const CtrPokeTouchRect sFXSlot0 = {10, 38, 70, 74}, sFXCancel = {10, 118, 70, 40};
-static const CtrPokeTouchRect sFXYes = {20, 96, 70, 30}, sFXNo = {94, 96, 70, 30};
+static const CtrPokeTouchRect sFXYes = {20, 100, 70, 30}, sFXNo = {94, 100, 70, 30};   /* the card (56 to 138) holds the icon (64 to 96) and these: 8 px above and below */
 static const CtrPokeTouchRect sFXAsk = {12, 56, 160, 82};
 static const CtrPokeTouchRect sFXChoosePrev = {22, 86, 30, 32}, sFXChooseNext = {132, 86, 30, 32};
 static const CtrPokeTouchRect sFXChooseName = {56, 86, 72, 32};
@@ -378,7 +378,7 @@ static void FXYesNo(const CtrPokeTouchBox *b)
 
     UiDim(&dim);
     BxWindow(sFXAsk.x, sFXAsk.y, sFXAsk.w, sFXAsk.h);
-    FXIcon(&b->mon, sFXAsk.x + sFXAsk.w / 2, sFXAsk.y + 22);
+    FXIcon(&b->mon, sFXAsk.x + sFXAsk.w / 2, sFXAsk.y + 26);
     BxLlButton(&sFXYes, LlPick(b->menuCursor == 0, &kEmCream), CtrUiText(UIS_YES), b->pressed == ST_HIT_MENU_BASE, b->menuCursor == 0);
     BxLlButton(&sFXNo, LlPick(b->menuCursor == 1, &kEmSlate), CtrUiText(UIS_NO), b->pressed == ST_HIT_MENU_BASE + 1, b->menuCursor == 1);
 }

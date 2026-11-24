@@ -1216,7 +1216,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_box_impl.h",
-   "sha256": "bb7531f201ff9b5a061a712da2f09290ea941b7b8620b4c1b0f6f6a70db579f8",
+   "sha256": "773779f5aa64820d02729430ab530084adbcf0726de830b3c263b65230ae9576",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "b7ab5aa14ffccbbbe17b069b0b80de90ec488d9b818f0fd0f70905921e5c98b5",
+   "sha256": "ed950ba79eb08cf77260782aef0ac69e299c857d9d89b089a853263e44bbfbd8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
