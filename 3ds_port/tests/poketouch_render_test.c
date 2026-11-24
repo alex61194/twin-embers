@@ -516,6 +516,16 @@ int main(int argc, char **argv)
             for(int r=0;r<3;++r) for(int c=0;c<8;++c) b2.name.key[r][c]=(uint8_t)(0xbb+r*8+c);
             b2.name.text[0]=0xbb; b2.name.text[1]=0xc5; b2.name.text[2]=0xbf; memset(b2.name.title,0xff,sizeof(b2.name.title));
             update(&old,&b2); if(dir) ppm(dir,"naming");
+            {   /* the Poke Ball keyboard (3ds_ball_naming_impl.h): keys, tabs, DELETE and OK in screen pixels (cols 8: keys 37 wide from x 5, rows 22 apart from y 64) */
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&b2); if(dir && !getenv("PT_STYLE")) ppm(dir,"naming_ball");
+                assert(CtrPokeTouch_NameHit(&b2,10,70)==PT_NAME_HIT_KEY && CtrPokeTouch_NameHit(&b2,90,70)==PT_NAME_HIT_KEY+2);
+                assert(CtrPokeTouch_NameHit(&b2,285,115)==PT_NAME_HIT_KEY+2*PT_NAME_COLS+7 && CtrPokeTouch_NameHit(&b2,130,95)==PT_NAME_HIT_KEY+PT_NAME_COLS+3);
+                assert(CtrPokeTouch_NameHit(&b2,42,70)==-1 && CtrPokeTouch_NameHit(&b2,318,70)==-1 && CtrPokeTouch_NameHit(&b2,10,135)==-1);   /* a gap, past the last column, the empty fourth row */
+                assert(CtrPokeTouch_NameHit(&b2,30,45)==PT_NAME_HIT_TAB+1 && CtrPokeTouch_NameHit(&b2,100,45)==PT_NAME_HIT_TAB+2 && CtrPokeTouch_NameHit(&b2,160,45)==PT_NAME_HIT_TAB);
+                assert(CtrPokeTouch_NameHit(&b2,200,45)==PT_NAME_HIT_DELETE && CtrPokeTouch_NameHit(&b2,290,45)==PT_NAME_HIT_OK && CtrPokeTouch_NameHit(&b2,100,20)==-1);
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&b2);
+            }
             b2.name.curCol=8; b2.name.curRow=0; update(&old,&b2); b2.name.curRow=2; update(&old,&b2); b2.name.pressed=PT_NAME_HIT_KEY; update(&old,&b2);
             b2.name.on=0; update(&old,&b2);
         }

@@ -2902,4 +2902,5 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_ball_options_impl.h"
 #include "3ds_ball_menus_impl.h"
 #include "3ds_ball_learn_impl.h"
+#include "3ds_ball_naming_impl.h"
 #include "3ds_field_easychat_impl.h"

@@ -1248,7 +1248,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_easychat_impl.h",
-   "sha256": "dce6ee434cb89b4a659533a885ed32ad35a74739a8e54ae7eed9d58bf5af3d73",
+   "sha256": "0cdeb45f61dfbc8d42cf6829bbb69f5cc1decab70be4c7cc62a93ba607d1021e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1272,7 +1272,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_naming_impl.h",
-   "sha256": "1a20071a39d8a8ac98428c66de6d651651e46e8ea5d9ffd2facd4375490e11fc",
+   "sha256": "b5b9f6d3892f69324735a6da1a7aebd55bb0083d5ae0aa121c7232b0a4c42df0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1545,7 +1545,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "959dde8067253fefa875e5ae95459de07af4a9d2d650b4e86a222007d1aa2733",
+   "sha256": "819fc1ecc0e5839ef2bb7ab70785445066e016369e150d86dea461ce326867cc",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "37d905af4aa827dd23c22c54adcec8eb1dac38715ff0fbb964f5bcae7bd024ae"
+   "sha256": "a296121443b014c0cc8db35accd314ac236d295876ad874a48730c046985ee06"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "144eaaa297f1b4ae23273532f9556926ec62997035e297945a30560b097df8b2",
+   "sha256": "e16ef56dae86421af47ca9afbaea526e85ff17c44de2bcde4d7abd9a65e0ab8a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7891,6 +7891,14 @@
   {
    "path": "3ds_port/src/3ds_ball_learn_impl.h",
    "sha256": "0db1f540b42253f8fe489a01ebeab3d088d38b43d77248fcaed1d92f2c663035",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_naming_impl.h",
+   "sha256": "9dd090fd0a948d35b01f3e238fa0c2a4ff206492ddcd7e637aacc24c0b6db968",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

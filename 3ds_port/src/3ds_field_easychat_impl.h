@@ -265,11 +265,49 @@ static uint32_t FESig(const CtrPokeTouchEasy *e, int region)
 
 /* ---- the pieces ---- */
 
+/* The Poke Ball style draws the same regions with the same rectangles (so the hit zones are the ones above) in its own pieces: a button is a pill
+ * (the selected one white with a red word, an action pink, CANCEL and BACK near black, the rest dark red), a window a white card, a slot a pale inset. */
+static void FEBallPill(const CtrPokeTouchRect *r, const char *label, uint16_t face, uint16_t ink, int bright, int pressed)
+{
+    char fit[48];
+    int tw;
+
+    if (pressed)
+        face = bright ? BM_PRESSED : BM_CARD_EDGE;
+    UiRoundFill(r->x, r->y, r->w, r->h, 8, bright ? BM_CARD_EDGE : BM_PILL_EDGE);
+    UiRoundFill(r->x + 2, r->y + 2, r->w - 4, r->h - 4, 6, face);
+    Em2Fit(label, r->w - 12, fit, sizeof(fit));
+    tw = UiTextWidth(fit, 1);
+    UiText(fit, r->x + (r->w - tw) / 2, r->y + (r->h - UI_TEXT_H) / 2, pressed && !bright ? EM_WHITE : ink, face, 1, r->x + r->w - 4);
+}
+
+static void FEBallButton(const CtrPokeTouchRect *r, const EmPal *p, const char *label, int pressed, int ring)
+{
+    int chosen = p == &kEmFlame || ring;
+    uint16_t face = chosen ? BL_WHITE : p == &kEmSlate ? BL_BAND : p == &kEmGold ? BL_PINK : p == &kEmBlue ? BM_STRIP : BM_PILL;
+
+    FEBallPill(r, label, face, chosen || p == &kEmGold ? BL_REDTXT : EM_WHITE, chosen, pressed);
+}
+
+static void FEBallRail(int x, int y, int w, int h, int top, int thumb)
+{
+    UiRoundFill(x + w / 2 - 4, y, 8, h, 4, BM_PILL_EDGE);
+    UiRoundFill(x + w / 2 - 2, y + 2, 4, h - 4, 2, BM_PILL);
+    if (thumb > 0 && thumb < h) {
+        UiRoundFill(x + 1, y + top, w - 2, thumb, 6, BM_CARD_EDGE);
+        UiRoundFill(x + 3, y + top + 2, w - 6, thumb - 4, 4, BL_WHITE);
+    }
+}
+
 static void FEButton(const CtrPokeTouchRect *r, const EmPal *p, const char *label, int pressed, int ring)
 {
     char fit[48];
     int fy;
 
+    if (sStyleBall) {
+        FEBallButton(r, p, label, pressed, ring);
+        return;
+    }
     if (ring)
         LlSelectRing(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, pressed);
@@ -279,12 +317,21 @@ static void FEButton(const CtrPokeTouchRect *r, const EmPal *p, const char *labe
 
 static void FESlot(const CtrPokeTouchRect *r)
 {
+    if (sStyleBall) {
+        UiRoundFill(r->x, r->y, r->w, r->h, 8, BM_RULE);
+        UiRoundFill(r->x + 2, r->y + 2, r->w - 4, r->h - 4, 6, UI_RGB(244, 238, 238));
+        return;
+    }
     UiRoundFill(r->x, r->y, r->w, r->h, 5, FE_SLOT_EDGE);
     EmGradFill(r->x + 1, r->y + 1, r->w - 2, r->h - 2, 4, FE_SLOT_TOP, FE_SLOT_BOT);
 }
 
 static void FEArrowButton(const CtrPokeTouchRect *r, int dir, int on, int pressed)
 {
+    if (sStyleBall) {
+        BlScrollArrow(r, dir, on, pressed);
+        return;
+    }
     int fy = EmButton(r->x, r->y, r->w, r->h, &kEmCream, FB_DEPTH, pressed);
 
     LlArrow(r->x + (r->w - 8) / 2, fy + (r->h - FB_DEPTH - 5) / 2, 8, 5, dir, on ? LL_CURSOR : FB_IDLE_ARROW);
@@ -317,6 +364,13 @@ static void FEHeader(const CtrPokeTouchEasy *e)
         snprintf(right, sizeof(right), "%s", CTR_TR("Order: A-Z", "Orden: A-Z", "Reihenfolge: A-Z"));
         snprintf(left, sizeof(left), "%.19s", e->listTitle);
     }
+    if (sStyleBall) {                                   /* a dark-red strip: the screen's title in white, the count at the right in pink */
+        UiRoundFill(4, 4, 312, 22, 8, BM_PILL_EDGE);
+        UiRoundFill(6, 6, 308, 18, 6, BM_STRIP);
+        UiText(left, 14, 4 + (22 - UI_TEXT_H) / 2, EM_WHITE, BM_PILL_EDGE, 1, 160);
+        UiTextRight(right, 306, 4 + (22 - UI_TEXT_H) / 2, BL_PINK, BM_PILL_EDGE, 1);
+        return;
+    }
     fy = EmButton(4, 4, 312, 22, &kEmCream, FB_DEPTH, 0);
     LlRibbonBox(5, fy + 1, 150, 18, 7, LL_TL | LL_BL, LL_RIB_TOP, LL_RIB_BOT, left);
     Em2Text(right, 164, fy + (20 - UI_TEXT_H) / 2, EM_DIM, EM_DARK_SH, 312);
@@ -326,8 +380,16 @@ static void FEChips(const CtrPokeTouchEasy *e)
 {
     int n = e->numWords < 1 ? 1 : e->numWords > PT_EC_WORDS ? PT_EC_WORDS : e->numWords, per = (n + 1) / 2;
 
-    LlWindow(4, 30, 312, 78);
-    LlRibbon(5, 31, CTR_TR("Message", "Mensaje", "Nachricht"), LL_RIB_TOP, LL_RIB_BOT);
+    if (sStyleBall) {
+        const char *tag = CTR_TR("Message", "Mensaje", "Nachricht");
+
+        BmCard(4, 30, 312, 78);
+        UiRoundFill(6, 32, UiTextWidth(tag, 1) + 16, 15, 6, BM_STRIP);
+        UiText(tag, 14, 34, EM_WHITE, BM_PILL_EDGE, 1, 100);
+    } else {
+        LlWindow(4, 30, 312, 78);
+        LlRibbon(5, 31, CTR_TR("Message", "Mensaje", "Nachricht"), LL_RIB_TOP, LL_RIB_BOT);
+    }
     for (int i = 0; i < 2 * per; ++i) {
         CtrPokeTouchRect r = FEChip(e, i);
         const char *word = i < n ? e->chip[i] : "";
@@ -360,7 +422,12 @@ static void FENote(const CtrPokeTouchEasy *e)
         a = CTR_TR("Tap a group to see its words.", "Toca un grupo para ver sus palabras.", "Tippe eine Gruppe, um ihre W\xC3\xB6rter zu sehen.");
     else
         a = CTR_TR("Tap a letter to see its words.", "Toca una letra para ver sus palabras.", "Tippe einen Buchstaben, um die W\xC3\xB6rter zu sehen.");
-    if (b) {
+    if (sStyleBall) {
+        BmCard(4, b ? 160 : 204, 312, b ? 38 : 30);
+        UiText(a, 16, b ? 166 : 213, b ? BM_INK : BM_DIM, BM_CARD_FACE, 1, 306);
+        if (b)
+            UiText(b, 16, 181, BM_DIM, BM_CARD_FACE, 1, 306);
+    } else if (b) {
         LlWindow(4, 160, 312, 38);
         Em2Text(a, 16, 166, EM_DARK, EM_DARK_SH, 308);
         Em2Text(b, 16, 181, EM_DIM, EM_DARK_SH, 308);
@@ -412,6 +479,19 @@ static void FERowsDraw(const CtrPokeTouchEasy *e)
 
             if (!e->list[k][0] || (pass == 1) != sel)
                 continue;
+            if (sStyleBall) {                                   /* a pill: the chosen word white with the red triangle */
+                uint16_t face = sel ? BL_WHITE : BM_PILL;
+
+                if (e->pressed == PT_EC_HIT_ROW + k)
+                    face = sel ? BM_PRESSED : BM_CARD_EDGE;
+                UiRoundFill(r.x, r.y, r.w, r.h, 8, sel ? BM_CARD_EDGE : BM_PILL_EDGE);
+                UiRoundFill(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 6, face);
+                if (sel)
+                    LlArrow(r.x + 7, r.y + (r.h - 10) / 2, 6, 10, 3, BL_REDTXT);
+                Em2Fit(e->list[k], r.w - (sel ? 24 : 18), fit, sizeof(fit));
+                UiText(fit, r.x + (sel ? 17 : 10), r.y + (r.h - UI_TEXT_H) / 2, sel ? BL_REDTXT : EM_WHITE, face, 1, r.x + r.w - 5);
+                continue;
+            }
             if (sel)
                 LlSelectRing(r.x, r.y, r.w, r.h);
             fy = EmButton(r.x, r.y, r.w, r.h, p, FB_DEPTH, e->pressed == PT_EC_HIT_ROW + k);
@@ -429,17 +509,25 @@ static void FERailDraw(const CtrPokeTouchEasy *e)
     FEThumb(e, &top, &h);
     FEArrowButton(&sFEUp, 0, e->first > 0, e->pressed == PT_EC_HIT_UP);
     FEArrowButton(&sFEDown, 1, rows > PT_EC_ROWS && e->first + PT_EC_ROWS < rows, e->pressed == PT_EC_HIT_DOWN);
-    LlScrollRail(sFERail.x, sFERail.y, sFERail.w, sFERail.h, top, h);
+    if (sStyleBall)
+        FEBallRail(sFERail.x, sFERail.y, sFERail.w, sFERail.h, top, h);
+    else
+        LlScrollRail(sFERail.x, sFERail.y, sFERail.w, sFERail.h, top, h);
 }
 
 static void FEStripDraw(const CtrPokeTouchEasy *e)
 {
-    LlScrollRail(sFEStrip.x, sFEStrip.y, sFEStrip.w, sFEStrip.h, 0, 0);
+    if (sStyleBall) {                                                   /* a dark strip: the letters pink, the one in use white */
+        UiRoundFill(sFEStrip.x, sFEStrip.y, sFEStrip.w, sFEStrip.h, 8, BM_PILL_EDGE);
+        UiRoundFill(sFEStrip.x + 2, sFEStrip.y + 2, sFEStrip.w - 4, sFEStrip.h - 4, 6, BM_PILL);
+    } else
+        LlScrollRail(sFEStrip.x, sFEStrip.y, sFEStrip.w, sFEStrip.h, 0, 0);
     for (int i = 0; i < PT_EC_LETTERS; ++i) {
         char one[2] = {(char)('A' + i), 0};
         int cx = sFEStrip.x + 8 + 16 * (i / 13), lit = !e->alpha && e->letter == i;
+        uint16_t ink = sStyleBall ? (lit ? BL_WHITE : e->alpha ? BM_PILL_EDGE : BL_PINK) : lit ? FE_LIT : e->alpha ? EM_DIM : EM_WHITE;
 
-        UiText(one, cx - UiTextWidth(one, 1) / 2, 32 + 10 * (i % 13), lit ? FE_LIT : e->alpha ? EM_DIM : EM_WHITE, FE_LETTER_SH, 1, cx + 8);
+        UiText(one, cx - UiTextWidth(one, 1) / 2, 32 + 10 * (i % 13), ink, sStyleBall ? BM_PILL : FE_LETTER_SH, 1, cx + 8);
     }
 }
 
@@ -468,8 +556,13 @@ static void FERegion(const CtrPokeTouchEasy *e, int id)
     case FER_STRIP: FEStripDraw(e); break;
     case FER_PREVIEW:
         FEPhrase(e, line, sizeof(line));
-        LlWindow(4, 174, 312, 24);
-        Em2Text(line, 14, 180, EM_DARK, EM_DARK_SH, 308);
+        if (sStyleBall) {
+            BmCard(4, 174, 312, 24);
+            UiText(line, 14, 180, BM_INK, BM_CARD_FACE, 1, 306);
+        } else {
+            LlWindow(4, 174, 312, 24);
+            Em2Text(line, 14, 180, EM_DARK, EM_DARK_SH, 308);
+        }
         break;
     default: FEButtons(e); break;
     }
@@ -501,12 +594,24 @@ static void FEAsk(const CtrPokeTouchEasy *e)
         for (int x = 0; x < W; ++x)
             EmBlend(x, y, FE_DIM, 153);
     EmSurface();
-    LlWindow(w->x, w->y, w->w, w->h);
+    if (sStyleBall)
+        BmCard(w->x, w->y, w->w, w->h);
+    else
+        LlWindow(w->x, w->y, w->w, w->h);
     Em2Fit(e->ask1, w->w - 20, fit, sizeof(fit));
-    Em2Text(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 14, EM_DARK, EM_DARK_SH, w->x + w->w - 6);
-    LlRule(w->x + 16, w->y + 34, w->w - 32);
+    if (sStyleBall)
+        UiText(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 14, BM_INK, BM_CARD_FACE, 1, w->x + w->w - 6);
+    else
+        Em2Text(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 14, EM_DARK, EM_DARK_SH, w->x + w->w - 6);
+    if (sStyleBall)
+        Fill(w->x + 16, w->y + 34, w->w - 32, 1, BM_RULE);
+    else
+        LlRule(w->x + 16, w->y + 34, w->w - 32);
     Em2Fit(sub, w->w - 20, fit, sizeof(fit));
-    Em2Text(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 42, EM_DIM, EM_DARK_SH, w->x + w->w - 6);
+    if (sStyleBall)
+        UiText(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 42, BM_DIM, BM_CARD_FACE, 1, w->x + w->w - 6);
+    else
+        Em2Text(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 42, EM_DIM, EM_DARK_SH, w->x + w->w - 6);
     FEButton(&sFEYes, e->askCursor ? &kEmCream : &kEmFlame, CTR_TR("Yes", "S\xC3\xAD", "Ja"), e->pressed == PT_EC_HIT_YES, !e->askCursor);
     FEButton(&sFENo, e->askCursor ? &kEmFlame : &kEmCream, CTR_TR("No", "No", "Nein"), e->pressed == PT_EC_HIT_NO, e->askCursor);
     sUiS = &sUiNavy;
