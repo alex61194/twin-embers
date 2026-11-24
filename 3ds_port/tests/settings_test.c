@@ -8,17 +8,9 @@
 
 int main(void)
 {
-    /* A file of an older build: its six-digit room code is dropped as it is read (the private room is off with it), the rest is kept. */
-    {
-        FILE *old = fopen(CTR_SETTINGS_PATH, "wb");
-
-        assert(old != NULL);
-        fputs("turbo=2\nroomcode=123456\nprivroom=1\n", old);
-        fclose(old);
-        assert(CtrSettings_Turbo() == 2 && !CtrSettings_PrivateRoom() && CtrSettings_RoomCode()[0] == 0);
-        CtrSettings_SetTurbo(0);
-        CtrSettings_SetPrivateRoom(0);
-    }
+    /* Settings are read once per process, so a file made here after the first read would not be read at all, and a file removed while the settings
+     * hold it open is gone on Linux and macOS (not on Windows): the older build's files, CR LF and every restart are in settings_reload_test.c, one
+     * process per session. This file starts from nothing, before the first read. */
     remove(CTR_SETTINGS_PATH);
 
     /* No file: the defaults. */
@@ -277,7 +269,8 @@ int main(void)
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
-    CtrSettings_SetStyle(1);
+    assert(CtrSettings_Style() == 1);               /* Poke Ball is the default: no style= line is written for it */
+    CtrSettings_SetStyle(0);                        /* the choice of Ascuas is the one that is kept (style=0), so it is in the worst case */
     CtrSettings_SetRoomCode("4829137650218394");
     CtrSettings_SetPrivateRoom(1);
     CtrSettings_SetRepelAgain(1);

@@ -24,6 +24,7 @@ typedef struct { int width,height; float left,top,right,bottom; } Tex3DS_SubText
 typedef struct { void *tex; const Tex3DS_SubTexture *subtex; } C2D_Image;
 static int sChrome,sSurface,sBottom;
 static bool sBottomPcField;
+static int sBottomPicX = PT_VIEW_X, sBottomPicY = PT_VIEW_Y;   /* where RenderBottom draws the picture: the classic place, as these origins below are its own */
 static Tex3DS_SubTexture captured;
 static void BlendForget(void) {}
 static unsigned C2D_Color32(int r,int g,int b,int a) { return r+g+b+a; }

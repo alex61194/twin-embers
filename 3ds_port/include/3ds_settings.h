@@ -26,7 +26,8 @@ void CtrSettings_SetAutoRun(int on);
 int CtrSettings_Embers(void);
 void CtrSettings_SetEmbers(int level);
 
-/* The lower screen's look (STYLE on the OPTIONS screen): 0 Ascuas (the default), 1 Pokeball. */
+/* The lower screen's look (STYLE on the OPTIONS screen): 1 Pokeball (the default), 0 Ascuas. A file with no style= line is the default; the
+ * choice of Ascuas is kept as style=0. */
 int CtrSettings_Style(void);
 void CtrSettings_SetStyle(int style);
 
@@ -78,6 +79,11 @@ void CtrSettings_SetRoomCode(const char *code);
 #define CTR_ROOM_CODE_DIGITS 16
 int CtrSettings_RoomCodeOk(const char *code);
 int CtrSettings_MakeRoomCode(char out[CTR_ROOM_CODE_DIGITS + 1], const uint8_t *random, size_t n);
+/* When settings.cfg held a private room's code that is no longer one (an older build's six digits, or a damaged line), Load switches the private
+ * room off in the file and RoomCodeDropped is 1 (and kept in the file as roomnote=1) until the player chooses a room again (a new code, or
+ * AckRoomCodeDropped): the OPTIONS screen says that online play is in the public room and why. */
+int CtrSettings_RoomCodeDropped(void);
+void CtrSettings_AckRoomCodeDropped(void);
 int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consoles nearby (the 3DS radio), 0 online through the relay (the default) */
 void CtrSettings_SetLocalPlay(int on);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */

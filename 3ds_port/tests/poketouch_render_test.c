@@ -177,12 +177,12 @@ static void timing(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
 static int BagHit36(const CtrPokeTouchView *v,int x,int y) { return CtrPokeTouch_BagHit(v,x+36,y+36); }
 static int BagRail36(const CtrPokeTouchBag *b,int y) { return CtrPokeTouch_BagRailTarget(b,y+36); }
 /* The native screens are drawn on the floor of HOME's layout, 36 px right and down of where their rectangles are: the tests give the rectangles' own coordinates. */
-#define CtrPokeTouch_DexHit(v,x,y) (CtrPokeTouch_DexHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_DexHit(v,x,y) (CtrPokeTouch_DexHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))   /* the Poke Ball Pokedex is in screen pixels */
 #define CtrPokeTouch_LearnHit(v,x,y) (CtrPokeTouch_LearnHit)((v),(x)+36,(y)+36)
 #define CtrPokeTouch_RelearnHit(v,x,y) (CtrPokeTouch_RelearnHit)((v),(x)+36,(y)+36)
 #define CtrPokeTouch_ChoiceHit(v,x,y) (CtrPokeTouch_ChoiceHit)((v),(x)+36,(y)+36)
 #define CtrPokeTouch_BoxHit(v,x,y) (CtrPokeTouch_BoxHit)((v),(x)+36,(y)+36)
-#define CtrPokeTouch_CardHit(v,x,y) (CtrPokeTouch_CardHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_CardHit(v,x,y) (CtrPokeTouch_CardHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))
 static void update_at(int line, CtrPokeTouchView *old, const CtrPokeTouchView *vRaw)
 {
     CtrDirtyList dirty; CtrDirty_Clear(&dirty);
@@ -394,8 +394,13 @@ int main(int argc, char **argv)
     for(int state=SAVE_CONFIRM;state<=SAVE_ERROR;++state) {
         v.saveState=state; update(&old,&v);
         v.saveSel=1; update(&old,&v); v.savePressed=PT_SAVE_FIRST; update(&old,&v);
-        assert(CtrPokeTouch_SaveHit(240,state==SAVE_CONFIRM?157:157,state)==
+        /* The classic buttons (240, 157); in the Poke Ball style (a viewing aid, PT_STYLE) YES is at (277, 93) and NO at (277, 129). */
+        assert(CtrPokeTouch_SaveHit(getenv("PT_STYLE")?277:240,getenv("PT_STYLE")?93:157,state)==
                (state==SAVE_WRITING?PT_SAVE_NONE:PT_SAVE_FIRST));
+        if(getenv("PT_STYLE")) {
+            assert(CtrPokeTouch_SaveHit(277,129,state)==(state==SAVE_CONFIRM?PT_SAVE_SECOND:PT_SAVE_NONE));
+            assert(CtrPokeTouch_SaveHit(240,157,state)==PT_SAVE_NONE && CtrPokeTouch_SaveHit(277,170,state)==PT_SAVE_NONE);
+        }
         v.savePressed=PT_SAVE_NONE; update(&old,&v);
     }
 #ifndef PT_BASELINE
@@ -778,23 +783,42 @@ int main(int argc, char **argv)
             d->menu[7].id=2; d->menu[7].locked=1; strcpy(d->menu[7].name,"WATER'S EDGE POK\xC3\xA9MON");
             strcpy(s.bar[0],"Kanto"); strcpy(s.bar[1],"Your Pokemon by number");
             SHOT("dex_menu");
+            if(getenv("PT_STYLE")) {   /* the Poke Ball Pokedex: tabs across the top, in screen pixels */
+                assert(CtrPokeTouch_DexHit(&s,50,15)==PT_DEX_HIT_TAB && CtrPokeTouch_DexHit(&s,160,15)==PT_DEX_HIT_TAB+1 && CtrPokeTouch_DexHit(&s,260,15)==PT_DEX_HIT_TAB+2);
+                assert(CtrPokeTouch_DexHit(&s,5,15)==-1 && CtrPokeTouch_DexHit(&s,160,175)==-1);
+            }
             d->menuCursor=2; update(&old,&s); d->pressed=PT_DEX_HIT_ITEM+2; update(&old,&s); d->pressed=-1; d->menuCursor=3; update(&old,&s); SHOT("dex_menu_close");
+            if(getenv("PT_STYLE"))
+                assert(CtrPokeTouch_DexHit(&s,100,148)==PT_DEX_HIT_ITEM+3 && CtrPokeTouch_DexHit(&s,260,148)==-1);   /* CLOSE: the bar under the cards */
             d->menuCursor=5; SHOT("dex_habitats"); d->menuCursor=7; update(&old,&s); d->menuCursor=6; update(&old,&s);
             d->state=PT_DEX_STATE_LIST; d->listCount=151; d->listFirst=1; d->listCursor=3; d->order=0;
             static const char *const nm[PT_DEX_ROWS]={"IVYSAUR","VENUSAUR","CHARMANDER","CHARMELEON","CHARIZARD"};
             for(int i=0;i<PT_DEX_ROWS;++i) { d->row[i].number=(uint16_t)(2+i); d->row[i].species=(uint16_t)(2+i); d->row[i].flags=(uint8_t)(i==4?1:3); strcpy(d->row[i].name,nm[i]); }
             d->sel=d->row[2]; d->type[0]=9; d->type[1]=-1; strcpy(d->typeName[0],"FIRE");
             SHOT("dex_list");
+            if(getenv("PT_STYLE")) {   /* five rows from y 32, 25 apart; the arrows beside them; the side panel is not a button */
+                assert(CtrPokeTouch_DexHit(&s,100,40)==PT_DEX_HIT_ROW && CtrPokeTouch_DexHit(&s,100,140)==PT_DEX_HIT_ROW+4);
+                assert(CtrPokeTouch_DexHit(&s,210,50)==PT_DEX_HIT_UP && CtrPokeTouch_DexHit(&s,210,120)==PT_DEX_HIT_DOWN && CtrPokeTouch_DexHit(&s,270,60)==-1);
+            }
             d->listCursor=4; d->type[1]=2; strcpy(d->typeName[1],"FLYING"); d->sel=d->row[3]; update(&old,&s);
             d->pressed=PT_DEX_HIT_ROW+1; update(&old,&s); d->pressed=-1; d->listFirst=0; update(&old,&s);
             d->state=PT_DEX_STATE_CATEGORY; d->slots=4; d->slot=1; d->canPrev=0; d->canNext=1; d->page=1; d->pages=2;
             for(int i=0;i<4;++i) { d->mon[i]=d->row[i]; }
-            SHOT("dex_category"); d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
+            SHOT("dex_category");
+            if(getenv("PT_STYLE")) {   /* four slots in two columns, the arrows at the right (PREV off here) */
+                assert(CtrPokeTouch_DexHit(&s,50,40)==PT_DEX_HIT_SLOT && CtrPokeTouch_DexHit(&s,180,40)==PT_DEX_HIT_SLOT+1);
+                assert(CtrPokeTouch_DexHit(&s,50,120)==PT_DEX_HIT_SLOT+2 && CtrPokeTouch_DexHit(&s,180,120)==PT_DEX_HIT_SLOT+3);
+                assert(CtrPokeTouch_DexHit(&s,270,120)==PT_DEX_HIT_NEXT && CtrPokeTouch_DexHit(&s,270,40)==-1);
+            }
+            d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
             d->state=PT_DEX_STATE_PAGE; d->sel=d->row[4]; d->sel.flags=3; d->height=17; d->weight=905; strcpy(d->kind,"FLAME POK\xC3\xA9MON");
             strcpy(d->desc,"Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.");
             SHOT("dex_page");
-            assert(CtrPokeTouch_DexHit(&s,170,132)==PT_DEX_HIT_AREA && CtrPokeTouch_DexHit(&s,215,132)==PT_DEX_HIT_CRY);
-            assert(CtrPokeTouch_DexHit(&s,170,150)==-1 && CtrPokeTouch_DexHit(&s,100,132)==-1 && CtrPokeTouch_DexHit(&s,170,176)==-1);
+            {   /* AREA and CRY: lower right of the card (the Poke Ball card is wider: its buttons are further right) */
+                int ax=getenv("PT_STYLE")?228:170, cx=getenv("PT_STYLE")?278:215, by=getenv("PT_STYLE")?135:132;
+                assert(CtrPokeTouch_DexHit(&s,ax,by)==PT_DEX_HIT_AREA && CtrPokeTouch_DexHit(&s,cx,by)==PT_DEX_HIT_CRY);
+                assert(CtrPokeTouch_DexHit(&s,ax,getenv("PT_STYLE")?160:150)==-1 && CtrPokeTouch_DexHit(&s,100,by)==-1 && CtrPokeTouch_DexHit(&s,ax,176)==-1);
+            }
             d->pressed=PT_DEX_HIT_CRY; update(&old,&s); d->pressed=PT_DEX_HIT_AREA; update(&old,&s); d->pressed=-1; d->added=1; update(&old,&s); d->added=0;
         }
         s.dex.on=0;
@@ -1316,7 +1340,13 @@ int main(int argc, char **argv)
         assert(!CtrPokeTouch_OptionHit(236, 40, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 53, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 40, 0, &row, &zone));
         assert(CtrPokeTouch_OptionSegment(130, 3) == 0 && CtrPokeTouch_OptionSegment(180, 3) == 1 && CtrPokeTouch_OptionSegment(230, 3) == 2);
         assert(CtrPokeTouch_HitOptPage(100, 10) && !CtrPokeTouch_HitOptPage(100, 40) && CtrPokeTouch_HitBack(280, 180) && !CtrPokeTouch_HitBack(100, 10));
+        /* The page dots: 12 px zones, one for each page, at the right of the header; a tap elsewhere on the header is no dot (it goes to the next page). */
+        assert(CtrPokeTouch_OptPageDot(230,15,7)==0 && CtrPokeTouch_OptPageDot(237,15,7)==0 && CtrPokeTouch_OptPageDot(238,15,7)==1);
+        assert(CtrPokeTouch_OptPageDot(302,15,7)==6 && CtrPokeTouch_OptPageDot(309,15,7)==6 && CtrPokeTouch_OptPageDot(310,15,7)==-1);
+        assert(CtrPokeTouch_OptPageDot(100,15,7)==-1 && CtrPokeTouch_OptPageDot(230,40,7)==-1 && CtrPokeTouch_OptPageDot(230,2,7)==-1);
+        assert(CtrPokeTouch_OptPageDot(300,15,4)==3 && CtrPokeTouch_OptPageDot(260,15,4)==-1);   /* four pages: four dots from the right */
         sBallFull = 0;
+        assert(CtrPokeTouch_OptPageDot(230,15,7)==-1);                              /* the classic header has the one PAGE button */
     }
     /* The Poke Ball style swaps the shared palettes and swaps them back exactly. */
     if (!getenv("PT_STYLE")) {

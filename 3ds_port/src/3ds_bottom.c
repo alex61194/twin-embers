@@ -636,12 +636,12 @@ static int sSaveAfterMenu;         /* SAVE asked for with START open: frames lef
  * the live field, with no hidden FireRed menu behind it, so no session. sScreen
  * is PT_OPTIONS while it is up (a route that unwinds a real menu to the field
  * sets it there, and the session's end leaves it). `sel` is the row the bar
- * describes; `down` a touch that began on a row (`row`, `zone`), `inside` while
- * it is still on it. */
+ * describes; `down`: a touch began on a row (`row`, `zone`), `inside`: still on it. */
 static struct {
     int sel;
     int down, row, zone, inside;
     int pageDown, pageInside;
+    int pageTarget;             /* page dot touched, or -1 */
 } sOpt;
 /* The native roots: PokeTouch screens over the live field with no real menu
  * behind them. (The TRAINER CARD and the POKeDEX are real FireRed screens, sessions
@@ -3730,10 +3730,9 @@ static int FieldEnabled(int id)
     return 1;
 }
 
-/* A touch on an OPTIONS row or the PAGE switcher button (the viewport shows no map then): selected on
- * touch-down, one step on release over the same zone ("<" back, the value or
- * ">" forward; the label only selects; on a row of levels, the level touched). Moving off cancels it; a held
- * physical button cancels it too. */
+/* A touch on an OPTIONS row or the PAGE header: selected on touch-down, one step on release over the same zone
+ * ("<" back, the value or ">" forward; the label only selects; on levels, the level touched; a page dot: that
+ * page, the rest of the header: the next). Moving off or a held button cancels it. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
     int page = CtrOptions_PageOf(sOpt.sel);
@@ -3741,6 +3740,7 @@ static void ProcessOptionsTouch(const CtrInput *in)
     int pageCount = CtrOptions_PageCount();
     int pageRows = CtrOptions_PageRows(page);
     int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
+    int dot = hitPage ? CtrPokeTouch_OptPageDot((int)in->touchX, (int)in->touchY, pageCount) : -1;
     int relRow = 0, zone = PT_OPT_ZONE_NONE;
     int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
                                                        pageRows, &relRow, &zone);
@@ -3759,6 +3759,7 @@ static void ProcessOptionsTouch(const CtrInput *in)
     }
     if (in->touchDown) {
         sOpt.pageDown = sOpt.pageInside = hitPage;
+        sOpt.pageTarget = dot;
         sOpt.down = sOpt.inside = on;
         if (on) {
             sOpt.row = globalRow;
@@ -3769,14 +3770,13 @@ static void ProcessOptionsTouch(const CtrInput *in)
     }
     if (sOpt.pageDown) {
         if (in->touchActive) {
-            sOpt.pageInside = hitPage;
+            sOpt.pageInside = hitPage && dot == sOpt.pageTarget;
             return;
         }
         int pageInside = sOpt.pageInside;
         sOpt.pageDown = sOpt.pageInside = 0;
         if (pageInside) {
-            int next = CtrOptions_PageBase((page + 1) % pageCount);
-            sOpt.sel = next;
+            sOpt.sel = CtrOptions_PageBase(sOpt.pageTarget >= 0 && sOpt.pageTarget < pageCount ? sOpt.pageTarget : (page + 1) % pageCount);
         }
         return;
     }

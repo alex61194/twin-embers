@@ -1003,6 +1003,20 @@ class LookTest(unittest.TestCase):
                 None, get=lambda url: urls.append(url) or b""), groups=())
             self.assertEqual((files, urls, info["looks"]), ([], [], 0))
 
+    def test_the_game_can_list_every_pinned_look_and_surf_pokemon(self):
+        # The game's index reader stops at CTR_LOOKS_MAX / CTR_SURFMONS_MAX: a look past it would be in the pack and never offered
+        # (Emerald Lens 1.2.0 took the looks to 26, over the old limit of 24).
+        header = (Path(__file__).resolve().parents[2] / "3ds_port" / "include" / "3ds_looks.h").read_text(encoding="utf-8")
+        looks_max = int(re.search(r"#define CTR_LOOKS_MAX (\d+)", header).group(1))
+        surf_max = int(re.search(r"#define CTR_SURFMONS_MAX (\d+)", header).group(1))
+        credit_len = int(re.search(r"#define CTR_LOOK_CREDIT_LEN (\d+)", header).group(1))
+        name_len = int(re.search(r"#define CTR_LOOK_NAME_LEN (\d+)", header).group(1))
+        self.assertLessEqual(len(gen4_looks.LOOKS), looks_max)
+        self.assertLessEqual(len(gen4_looks.SURFMONS), surf_max)
+        for folder, name, character, gender, credit in gen4_looks.LOOKS:
+            self.assertLess(len(name), name_len, folder)
+            self.assertLess(len(credit), credit_len, folder)
+
     def test_the_pinned_surf_pokemon(self):
         self.assertEqual(len({mon[0] for mon in gen4_looks.SURFMONS}), len(gen4_looks.SURFMONS))
         for number, (folder, name, credit) in enumerate(gen4_looks.SURFMONS):

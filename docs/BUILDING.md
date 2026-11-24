@@ -39,6 +39,22 @@ the second compiles, links and checks the executable. The result is:
 If the bootstrap says the inputs changed, delete the `build/upstream` folder and
 run it again. Add `-j4` (or your CPU's core count) to `make` to build faster.
 
+## Release builds (maintainers)
+
+A public release is built from a clean checkout with the real art and the relay it is meant to use; the build stops when either is missing:
+
+```sh
+make -C build/upstream/3ds_port CLEAN_RELEASE=1 TWIN_EMBERS_VERSION=X.Y.Z PYTHON="$PY" \
+     TWIN_RELAY=PUBLIC-ADDRESS:47311 REQUIRE_RELAY=1 \
+     ICON_SRC=/path/to/icon48.png ICON_CROP=0 REQUIRE_ART=1 \
+     FIRERED_ROM_REFERENCE=/path/to/your-rom.gba verify-clean-release
+```
+
+- `TWIN_RELAY=host:port` puts the relay of [RELAY-SERVER.md](RELAY-SERVER.md) into the build, so *Online* works with nothing set up on the console; `REQUIRE_RELAY=1` refuses to build without it (a build without a relay has nobody to reach online). Check that the relay answers (step 5 of RELAY-SERVER.md) before publishing.
+- `ICON_SRC` with `REQUIRE_ART=1`: the Homebrew Launcher icon; without them the placeholder flames ship. `TWIN_LANG=es` or `de` makes the Spanish and German 3DSX (`twinembers-es.3dsx`, `twinembers-de.3dsx`).
+- `verify-clean-release` ends with `CLEAN RELEASE: PASS` when the executable carries no game data. The `BINARY RELEASE BLOCKED` line that follows only reports that `docs/release-decision.json` names v0.1.0-beta.1 (see [DISTRIBUTION.md](DISTRIBUTION.md)). `python3 tools/source_audit.py` must pass; `--history` is a separate gate.
+- Keep `twinembers.3dsx`, `SHA256SUMS.txt` and the notes together; the CHANGELOG's *Unreleased* section becomes the version's section.
+
 ## 3. Install
 
 Build the data pack with the Twin Embers Builder from your own ROM (see the README),

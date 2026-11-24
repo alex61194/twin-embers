@@ -22,11 +22,18 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 - **Game:** Pokémon FireRed, USA, Revision 0, Pokémon Edición Rojo Fuego, Spain, Revision 0 (the Spanish game), or Pokémon Feuerrote Edition, Germany, Revision 0 (the German game). Nothing else is accepted.
 - **You provide:** your own ROM dump, an SD card, a Windows PC for a one-time setup step.
 - **You get:** a wide overworld that follows the 3DS clock from day to night, a touch-driven lower screen, native battles with optional HeartGold sprites, LeafGreen's exclusives and night-time Pokémon in the wild, optional visible wild Pokémon, Nuzlocke and Randomlocke options, turbo, and a save file that lives next to the game.
-- **Status:** alpha (v0.6.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested.
+- **Status:** alpha (v0.7.0). Author-tested on a New 3DS-family console and in the Azahar emulator. Other models are untested. Online play is a **test** feature: checked on a computer and in two Azahar emulators, not yet on two real consoles.
 
 ---
 
 ## What's new
+
+**In v0.7.0 (online play and the Poke Ball look; what was and was not tested is in the [CHANGELOG](CHANGELOG.md)):**
+
+- **Online play (test).** The Union Room and the Wireless Club (trades, battles, chat) work between consoles over the internet, through a relay that only passes sealed frames on, or nearby with the 3DS radio. OPTIONS, Settings: *Multiplayer* (Online or Local) and *Online room* (the public room, or a private room of a 16-digit code for playing with your friends only). See [Playing online](#playing-online-test).
+- **Wireless screens on the lower screen.** The Union Room lists, the trade's choice of a Pokémon and the chat keyboard are drawn on the lower screen; the trade itself plays on the upper one.
+- **A choice of lower-screen look.** OPTIONS, Graphics, *Style*: Poke Ball (a plain red with white pills; the default) or Embers (the red look with sparks). The Bag, shops, choices, OPTIONS, SAVE, the Trainer Card and the Pokédex use the whole lower screen.
+- **HOME, rebuilt.** The map sits in the middle of the lower screen with the menu in columns on both sides; the menus share that layout.
 
 **In v0.6.0:**
 
@@ -41,7 +48,7 @@ The full list, with the known issues, is in the [CHANGELOG](CHANGELOG.md).
 
 **In v0.5.2:**
 
-- **Choose who you are.** A new Builder option, *More characters to be*, adds 21 looks for you, for Leaf and for your rival (Ash in four versions, Gary, Silver, Gold, Brendan, May, Green, Kris, Harmony, Peach, Aang), from [Emerald Lens](https://github.com/ElvieBlooms/emerald_lens) by its artists, used with its author's permission. In OPTIONS, page 3, RED LOOK, LEAF LOOK and RIVAL LOOK change the map sprite, your back in battle, the trainer card, the intro picture and the map icon at once, with a preview card (the walking picture, the name and the artists) under the rows. The default stays FireRed's Red and Leaf.
+- **Choose who you are.** A new Builder option, *More characters to be*, adds 26 looks for you, for Leaf and for your rival (Ash in four versions, Gary, Silver, Gold, Brendan, May, Green, Kris, Harmony, Peach, Aang, Hilbert, Hilda, Nate, Rosa, Red RGBY), from [Emerald Lens](https://github.com/ElvieBlooms/emerald_lens) by its artists, used with its author's permission. In OPTIONS, page 3, RED LOOK, LEAF LOOK and RIVAL LOOK change the map sprite, your back in battle, the trainer card, the intro picture and the map icon at once, with a preview card (the walking picture, the name and the artists) under the rows. The default stays FireRed's Red and Leaf.
 - **EXP SHARE** in OPTIONS (OFF, HALF, FULL), **IV, EV and Hidden Power** on the Summary's STATS page, and **HEAL** in the party menu (heal the whole party anywhere for 250 per badge plus one).
 - **Accuracy on the battle move cards**, beside the PP (the PP pips are now five).
 - **HD battle scenes**, a new Builder option: painted scenes that fill the top screen, by Bentley734 ([HD Dynamic Battlefields](https://github.com/Bentley734/HD-Dynamic-Battlefields)), used with his permission and reduced for the 3DS (125 files, about 13 MB).
@@ -236,6 +243,25 @@ Copy `twinembers.sav` somewhere safe first. Replace the `.3dsx`, rebuild the pac
 Turbo works while exploring and in battle. It skips drawing frames, not game logic, so the game still plays correctly at speed.
 
 ---
+
+## Playing online (test)
+
+Online play needs no setup beyond the game when the release you downloaded has its relay built in (the release notes say which relay). Every player needs the **same release and the same language** of `twinembers.3dsx` (and the pack made from the ROM of that language): different builds never meet, on purpose.
+
+1. Put the console on Wi-Fi.
+2. OPTIONS, Settings page, *Multiplayer*: **Online** (the default).
+3. *Online room*: **Public** puts you in the relay's public room, with whoever else is there. **Private** is for friends: it asks for a 16-digit code on a keypad. Press **NEW** to make one at random and read it to your friends, who choose Private and type the same 16 digits; only people with that code meet in your room.
+4. Go to the second floor of a Pokémon Center: the Union Room (Wireless Club) lists the players in your room. Trades and battles are chosen on the lower screen.
+
+*Local* in *Multiplayer* uses the 3DS's own radio to find consoles nearby (not tested yet). For a relay of your own, or one console on another relay, write `sdmc:/3ds/twinembers/online.cfg` with `relay=host:port` (and, for a private room set by hand, `code=...`); how to run a relay is in [docs/RELAY-SERVER.md](docs/RELAY-SERVER.md).
+
+What to know:
+
+- The relay is a server run by the author; it can be offline, and its operator sees your console's internet address like any server would. It sees no room codes and no game data, only sealed frames and a hashed room name.
+- The **public room's** code is known to everyone, so its frames are sealed but not secret. A **private** room is sealed with its 16-digit code: treat it like a shared password for a game, not for anything that matters (the sealing is our own construction, checked against the standard test vectors but not reviewed by a cryptographer).
+- Tested on a computer and in two Azahar emulators over the internet. **Not yet tested on two real consoles, on an Old 3DS, or with the local radio.** Joining a private room does more work than a public one and may take a few seconds on an Old 3DS (not measured).
+- A six-digit private code made with an earlier test build is dropped: OPTIONS says so and the room is the public one until you choose Private again.
+- Over the internet the link rooms (walking to the trade PC) are as slow as the round trip between the consoles.
 
 ## When something goes wrong
 

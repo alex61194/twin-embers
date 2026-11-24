@@ -1065,18 +1065,21 @@ static void OptRow(int row, const CtrPokeTouchView *v)
 /* The keypad of the private room's code, over the rows (CtrPokeTouchPad): along the top four boxes of four digits (the next digit underlined); under
  * them the keys in four columns, 1-4, 5-8, then 9, 0, DELETE and OK, OK lit (flame) once the code is a good one; and at the foot NEW (a code made
  * at random) and CANCEL. Cream raised keys as the rows; the key under a held touch sinks. */
-#define PAD_BOX_X (OPT_X + 4)
-#define PAD_BOX_Y (OPT_Y + 2)
+/* The keypad's origin: where the OPTIONS rows start in HOME's layout, or (8, 26) on the Poke Ball style's whole screen (sBallFull). */
+#define PAD_OX (sBallFull ? 8 : OPT_X)
+#define PAD_OY (sBallFull ? 26 : OPT_Y)
+#define PAD_BOX_X (PAD_OX + 4)
+#define PAD_BOX_Y (PAD_OY + 2)
 #define PAD_BOX_W 54
 #define PAD_BOX_H 22
 #define PAD_BOX_GAP 4
-#define PAD_KEY_X (OPT_X + 4)
-#define PAD_KEY_Y (OPT_Y + 30)
+#define PAD_KEY_X (PAD_OX + 4)
+#define PAD_KEY_Y (PAD_OY + 30)
 #define PAD_KEY_W 54
 #define PAD_KEY_H 26
 #define PAD_KEY_GAP 4
 #define PAD_KEY_STEP 30
-#define PAD_WIDE_Y (OPT_Y + 120)
+#define PAD_WIDE_Y (PAD_OY + 120)
 #define PAD_WIDE_W 112
 
 static CtrPokeTouchRect PadKeyRect(int key)
@@ -1109,7 +1112,8 @@ static void OptPad(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchPad *p = &v->optPad;
 
-    TsBgRect(OPT_X - 2, OPT_Y - 2, OPT_W + 4, PT_OPT_MAX * OPT_STEP + 4);
+    if (!sBallFull)
+        TsBgRect(OPT_X - 2, OPT_Y - 2, OPT_W + 4, PT_OPT_MAX * OPT_STEP + 4);
     for (int g = 0; g < PT_PAD_DIGITS / 4; ++g) {
         int x = PAD_BOX_X + g * (PAD_BOX_W + PAD_BOX_GAP);
 
@@ -1200,8 +1204,13 @@ static const CtrPokeTouchRect sSaveButtons = {200, 142, 80, 58};   /* both, with
 static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler"), CTR_TR("Badges", "Medallas", "Orden"), CTR_TR("Poké" "dex", "Poké" "dex", "Poké" "dex"), CTR_TR("Time", "Tiempo", "Zeit")};
 
 /* The dialogue's buttons: YES over NO, or a lone OK on YES's place. */
+static const CtrPokeTouchRect sBallSaveYes = {242, 78, 70, 30};   /* the Poke Ball SAVE's buttons (3ds_ball_menus_impl.h) */
+static const CtrPokeTouchRect sBallSaveNo = {242, 114, 70, 30};
+
 static CtrPokeTouchRect SaveButtonRect(int which, int state)
 {
+    if (sBallFull)
+        return state == SAVE_CONFIRM && which == PT_SAVE_SECOND ? sBallSaveNo : sBallSaveYes;
     return state == SAVE_CONFIRM && which == PT_SAVE_SECOND ? sSaveNo : sSaveYes;
 }
 
@@ -1677,11 +1686,11 @@ static void BallBagScreen(const CtrPokeTouchView *v);
 static void BallChoiceScreen(const CtrPokeTouchView *v);
 static void BallOptionsScreen(const CtrPokeTouchView *v);
 
-/* The Poke Ball OPTIONS (its rows of a page, the PAGE header) take the whole lower screen; the keypad of the private room's code and the look
- * preview keep the Embers-shaped screen for now (the same pieces, in the Poke Ball colours). */
+/* The Poke Ball OPTIONS (its rows of a page, the PAGE header, under the look rows the look's preview, and the keypad of the private room's code in
+ * place of the rows) take the whole lower screen. */
 static int BallOptionsActive(const CtrPokeTouchView *v)
 {
-    return sStyleBall && v->options && !v->viewport && !v->optPad.on && !v->optLook.on;
+    return sStyleBall && v->options && !v->viewport;
 }
 
 /* The Poke Ball choice of the field (not the trade's cards nor the chat's keyboard) takes the whole lower screen too. */
@@ -1691,9 +1700,31 @@ static int BallChoiceActive(const CtrPokeTouchView *v)
         && !v->dex.on && !v->card.on && !v->learn.on && !v->relearn.on && !v->mail.on;
 }
 
+/* The Poke Ball SAVE takes the whole lower screen (3ds_ball_menus_impl.h). */
+static void BallSaveScreen(const CtrPokeTouchView *v);
+static int BallSaveActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->save && !v->viewport && !v->options;
+}
+
+/* The Poke Ball Trainer Card takes the whole lower screen too (a tap on its card turns it over). */
+static const CtrPokeTouchRect sBallCardR = {8, 8, 304, 148};
+static void BallCardScreen(const CtrPokeTouchView *v);
+static int BallCardActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->card.on && !v->viewport && !v->options && !v->save;
+}
+
+/* The Poke Ball Pokedex takes the whole lower screen as well (its AREA page, FireRed's own picture, is the viewport and stays as it is). */
+static void BallDexScreen(const CtrPokeTouchView *v);
+static int BallDexActive(const CtrPokeTouchView *v)
+{
+    return sStyleBall && v->dex.on && !v->viewport && !v->options && !v->save && !v->card.on;
+}
+
 static int BallFullView(const CtrPokeTouchView *v)
 {
-    return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v);
+    return BallBagActive(v) || BallChoiceActive(v) || BallOptionsActive(v) || BallSaveActive(v) || BallCardActive(v) || BallDexActive(v);
 }
 
 static int NewMenu(const CtrPokeTouchView *v)
@@ -2206,6 +2237,21 @@ bool CtrPokeTouch_HitOptPage(int x, int y)
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h;
 }
 
+int CtrPokeTouch_OptPageDot(int x, int y, int pageCount)
+{
+    int dots = pageCount > 7 ? 7 : pageCount;
+
+    if (!sBallFull || y < 4 || y >= 30)
+        return -1;
+    for (int d = 0; d < dots; ++d) {
+        int left = 312 - (dots - d) * 12 - 2;           /* the dot is 7 px at 312 - (dots - d) * 12 (BallOptionsScreen): 2 px of air each side, 12 in all */
+
+        if (x >= left && x < left + 12)
+            return d;
+    }
+    return -1;
+}
+
 #define MN_X PT_HOME_X
 #define MN_Y PT_HOME_Y
 #define MN_W PT_VIEW_W
@@ -2475,6 +2521,12 @@ static void MenuScreen(const CtrPokeTouchView *v, int full)
     if (sBallFull) {
         if (BallOptionsActive(v))
             BallOptionsScreen(v);
+        else if (BallSaveActive(v))
+            BallSaveScreen(v);
+        else if (BallCardActive(v))
+            BallCardScreen(v);
+        else if (BallDexActive(v))
+            BallDexScreen(v);
         else if (BallChoiceActive(v))
             BallChoiceScreen(v);
         else
@@ -2820,4 +2872,5 @@ void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, Ct
 #include "3ds_field_trade_impl.h"
 #include "3ds_field_chat_impl.h"
 #include "3ds_ball_options_impl.h"
+#include "3ds_ball_menus_impl.h"
 #include "3ds_field_easychat_impl.h"

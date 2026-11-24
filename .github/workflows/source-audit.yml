@@ -29,6 +29,8 @@ jobs:
         run: |
           python3 -m unittest discover -s tools -p test_source_audit.py -v
           python3 -m unittest discover -s tools -p test_audit_clean_release.py -v
+      - name: Release gate refuses a build without its relay (nine cases, the Makefile ones need make)
+        run: python3 -m unittest discover -s tools -p test_release_relay.py -v
       - name: REX transformation, actual ARM link and C runtime
         run: python3 -m unittest discover -s tools -p test_rex_pipeline.py -v
       - name: Synthetic save migration and injected I/O failures

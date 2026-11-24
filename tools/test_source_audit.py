@@ -277,4 +277,121 @@ class Rejections(unittest.TestCase):
             result=self.run_gate(root,'--asset',str(good))
             self.assertEqual(result.returncode,2); self.assertIn('not the binary named',result.stderr)
 
+def conflicted(files,paths,extra_line=False):
+    """The snapshot's manifest as a merge left it: a hunk where an entry's sha256 line was, on both sides a hash the file does not have."""
+    doc=json.loads(files[audit.MANIFEST]); text=json.dumps(doc,indent=1)
+    for name in paths:
+        line='   "sha256": "%s",\n'%hashlib.sha256(files[name]).hexdigest()
+        self_ours='   "sha256": "%s",\n'%('1'*64)+('   "note": "extra",\n' if extra_line else '')
+        hunk='<<<<<<< HEAD\n'+self_ours+'=======\n   "sha256": "%s",\n>>>>>>> side\n'%('2'*64)
+        assert line in text
+        text=text.replace(line,hunk,1)
+    return dict(files,**{audit.MANIFEST:text.encode()})
+
+def repair_row(files,paths,**changes):
+    row={'commit':'0'*40,'manifest_sha256':hashlib.sha256(files[audit.MANIFEST]).hexdigest(),
+         'resolutions':[{'path':n,'sha256':hashlib.sha256(files[n]).hexdigest()} for n in paths],
+         'decided_by':'Synthetic owner','basis':'Synthetic repair of a merge that kept its conflict markers'}
+    return dict(row,**changes)
+
+class ManifestRepair(unittest.TestCase):
+    """The one repair of a historical snapshot whose manifest is not JSON: explicit, bound to the commit and the manifest's bytes, and
+    every file of the snapshot is still audited."""
+    FILES={'README.md':b'a\n','fix.py':b'print(1)\n','more.py':b'print(2)\n'}
+
+    def setUp(self):
+        self.good=reviewed(self.FILES)
+        self.paths=['fix.py','more.py']
+        self.broken=conflicted(self.good,self.paths)
+
+    def test_a_conflicted_manifest_is_not_audited_without_a_repair(self):
+        with self.assertRaises(ValueError): audit.check(self.broken)
+
+    def test_the_repair_gives_back_a_manifest_that_is_audited_in_full(self):
+        row=repair_row(self.broken,self.paths)
+        files=dict(self.broken,**{audit.MANIFEST:audit.repair_manifest(self.broken,row)})
+        self.assertEqual(audit.check(files),4)
+        # The repaired manifest is the original one: the same entries, the real hashes.
+        self.assertEqual(json.loads(files[audit.MANIFEST]),json.loads(self.good[audit.MANIFEST]))
+
+    def test_other_files_still_have_to_prove_their_bytes(self):
+        row=repair_row(self.broken,self.paths)
+        files=dict(self.broken); files['README.md']=b'changed after its review\n'
+        files[audit.MANIFEST]=audit.repair_manifest(files,dict(row,manifest_sha256=hashlib.sha256(files[audit.MANIFEST]).hexdigest()))
+        with self.assertRaisesRegex(ValueError,'Changed without review'): audit.check(files)
+
+    def test_the_conflicted_files_still_get_the_content_checks(self):
+        for raw,windows in ((b'.incbin "game.bin"\n',None),(b'print(2)\n'.ljust(70,b' '),{b'print(2)\n'.ljust(64,b' ')})):
+            files=reviewed(dict(self.FILES,**{'more.py':raw})); broken=conflicted(files,self.paths)
+            fixed=dict(broken,**{audit.MANIFEST:audit.repair_manifest(broken,repair_row(broken,self.paths))})
+            with self.assertRaises(ValueError): audit.check(fixed,windows=windows)
+
+    def test_the_record_must_be_exact(self):
+        row=repair_row(self.broken,self.paths)
+        bad_rows=[dict(row,manifest_sha256='0'*64),                                    # not this snapshot's manifest
+                  dict(row,resolutions=row['resolutions'][:1]),                         # a hunk left out
+                  dict(row,resolutions=row['resolutions']+row['resolutions'][:1]),      # a hunk too many
+                  dict(row,resolutions=row['resolutions'][::-1]),                       # the wrong entry for a hunk
+                  dict(row,resolutions=[dict(row['resolutions'][0],sha256='3'*64)]+row['resolutions'][1:]),   # a hash the tree does not have
+                  dict(row,resolutions=[dict(row['resolutions'][0],path='README.md')]+row['resolutions'][1:])]
+        for bad in bad_rows:
+            with self.assertRaises(ValueError,msg=str(bad)): audit.repair_manifest(self.broken,bad)
+
+    def test_only_a_disagreement_about_one_sha256_line_is_repaired(self):
+        extra=conflicted(self.good,self.paths,extra_line=True)
+        with self.assertRaisesRegex(ValueError,'sha256 line'): audit.repair_manifest(extra,repair_row(extra,self.paths))
+        other=dict(self.broken); other[audit.MANIFEST]=self.broken[audit.MANIFEST].replace(b'"basis"',b'"basis" ',1)
+        with self.assertRaises(ValueError): audit.repair_manifest(other,repair_row(self.broken,self.paths))
+
+    def test_a_manifest_that_parses_is_never_repaired(self):
+        with self.assertRaisesRegex(ValueError,'not valid JSON'):
+            audit.repair_manifest(self.good,repair_row(self.good,[],resolutions=[{'path':'fix.py','sha256':'0'*64}]))
+
+    def history_repo(self,tmp,records,second_broken=False):
+        root=Path(tmp)
+        def git(*args): return audit.git(root,*args)
+        git('init','-q'); git('config','user.name','Synthetic'); git('config','user.email','synthetic@example.invalid')
+        def write(files):
+            for name,raw in files.items():
+                p=root/name; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(raw)
+        write(self.broken); git('add','.'); git('commit','-qm','merge with its conflict markers')
+        first=git('rev-parse','HEAD').decode().strip()
+        write(self.broken if second_broken else self.good)
+        doc=json.loads(self.good[audit.MANIFEST]); doc['historical_manifest_repairs']=records(first)
+        (root/audit.MANIFEST).write_text(json.dumps(doc))
+        git('add','.'); git('commit','-qm','present day')
+        return root,first
+
+    def test_history_repairs_that_one_commit_and_nothing_else(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root,first=self.history_repo(tmp,lambda c:[repair_row(self.broken,self.paths,commit=c)])
+            self.assertEqual(audit.history(root),2)
+
+    def test_history_without_the_record_or_with_a_wrong_one_still_fails(self):
+        records=[lambda c:[],
+                 lambda c:[repair_row(self.broken,self.paths,commit='0'*40)],                          # not a reachable commit
+                 lambda c:[repair_row(self.broken,self.paths,commit=c,manifest_sha256='0'*64)],        # other manifest bytes
+                 lambda c:[repair_row(self.broken,self.paths,commit=c)]*2,                             # twice
+                 lambda c:[dict(repair_row(self.broken,self.paths,commit=c),extra='x')],               # a field that is not part of the record
+                 lambda c:[repair_row(self.broken,self.paths,commit=c,basis='')],                      # no basis
+                 lambda c:[repair_row(self.broken,self.paths,commit=c,resolutions=[])]]                # nothing resolved
+        for make in records:
+            with tempfile.TemporaryDirectory() as tmp:
+                root,first=self.history_repo(tmp,make)
+                with self.assertRaises(ValueError): audit.history(root)
+
+    def test_the_same_damage_in_another_commit_is_not_covered(self):
+        # The record is bound to one commit: a later commit with the same broken manifest bytes is a different snapshot and fails.
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def git(*args): return audit.git(root,*args)
+            git('init','-q'); git('config','user.name','Synthetic'); git('config','user.email','synthetic@example.invalid')
+            for name,raw in self.broken.items():
+                p=root/name; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(raw)
+            git('add','.'); git('commit','-qm','broken one'); first=git('rev-parse','HEAD').decode().strip()
+            (root/'extra.txt').write_text('another commit with the same manifest\n'); git('add','.'); git('commit','-qm','broken two')
+            doc=json.loads(self.good[audit.MANIFEST]); doc['historical_manifest_repairs']=[repair_row(self.broken,self.paths,commit=first)]
+            (root/audit.MANIFEST).write_text(json.dumps(doc))
+            with self.assertRaises(ValueError): audit.history(root)
+
 if __name__=='__main__': unittest.main()

@@ -8,6 +8,8 @@ static const CtrPokeTouchRect sFCCard = {4, 4, 240, 160};
 
 int CtrPokeTouch_CardHit(const CtrPokeTouchView *v, int x, int y)
 {
+    if (sBallFull)
+        return v->card.on && UiIn(&sBallCardR, x, y);                        /* the Poke Ball card: on the whole screen */
     return v->card.on && UiIn(&sFCCard, x - MENU_SHIFT, y - MENU_SHIFT);   /* drawn on the floor of HOME's layout */
 }
 

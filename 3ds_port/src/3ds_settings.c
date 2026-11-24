@@ -20,7 +20,7 @@
 static unsigned sTurbo;
 static int sAutoRun;
 static int sEmbers = -1;
-static int sStyle;           /* the lower screen's look: 0 Ascuas, 1 Pokeball */
+static int sStyle = 1;       /* the lower screen's look: 1 Pokeball (the default), 0 Ascuas; only the choice of Ascuas is written (style=0) */
 static int sRepelAgain = 1;
 static int sCompanion;
 static char sLook[4][16];     /* look_red, look_leaf, look_blue, look_surf (the Pokemon to surf on) */
@@ -36,6 +36,7 @@ static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 train
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
 static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
+static int sRoomNote;       /* a code from an older build was dropped and the player was not told yet (roomnote=) */
 static char sRoomCode[CTR_ROOM_CODE_DIGITS + 1];   /* the private room's code: its digits, "" when none was set (roomcode=) */
 static int sLocalPlay;      /* MULTIPLAYER: 0 Online (the relay), 1 Local (the console's own radio) (localplay=) */
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
@@ -116,11 +117,13 @@ static void RoomCodeSet(const char *text)
         sRoomCode[0] = 0;
 }
 
+static void Save(void);
+
 static void Load(void)
 {
     char line[64];
     FILE *file;
-    int wildRaw = 0, haveSil = 0, haveAggro = 0;
+    int wildRaw = 0, haveSil = 0, haveAggro = 0, sawBadCode = 0;
 
     if (sLoaded)
         return;
@@ -142,7 +145,7 @@ static void Load(void)
         else if (sscanf(line, "embers=%u", &value) == 1)
             sEmbers = value <= 2 ? (int)value : -1;
         else if (sscanf(line, "style=%u", &value) == 1)
-            sStyle = value <= 1 ? (int)value : 0;
+            sStyle = value <= 1 ? (int)value : 1;           /* a damaged value is the default */
         else if (sscanf(line, "repel=%u", &value) == 1)
             sRepelAgain = value != 0;
         else if (sscanf(line, "companion=%u", &value) == 1)
@@ -174,7 +177,18 @@ static void Load(void)
         else if (sscanf(line, "privroom=%u", &value) == 1)
             sPrivateRoom = value != 0;
         else if (strncmp(line, "roomcode=", 9) == 0)
+        {
+            /* fgets keeps the line end: LF, or CR LF in a file that was edited on a computer. Those are not part of the code. */
+            size_t n = strlen(line + 9);
+
+            while (n > 0 && (line[9 + n - 1] == '\n' || line[9 + n - 1] == '\r'))
+                line[9 + --n] = 0;
             RoomCodeSet(line + 9);
+            if (n > 0 && !sRoomCode[0])
+                sawBadCode = 1;     /* a code was there and it is not one (the six digits of an older build, or damage) */
+        }
+        else if (sscanf(line, "roomnote=%u", &value) == 1)
+            sRoomNote = value != 0;
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
             wildRaw = value < 1000 ? (int)value : -1;       /* settled below: an old file's 1 is NORMAL */
         else if (sscanf(line, "wildsil=%u", &value) == 1)
@@ -193,6 +207,14 @@ static void Load(void)
             sBall = value <= 0xffff ? value : 0;
     }
     sWildDensity = CtrWildsCore_MigrateDensity(wildRaw, haveSil, haveAggro);
+    /* A private room whose code is gone (an older six-digit code, or a damaged line) must not turn into the public room unseen: the
+     * private mode is switched off in the file itself, and the OPTIONS screen says why until the player chooses a room again. */
+    if (sawBadCode || (sPrivateRoom && !sRoomCode[0]))
+    {
+        sPrivateRoom = 0;
+        sRoomNote = 1;
+        Save();
+    }
 }
 
 static void WriteText(const char *text)
@@ -220,8 +242,8 @@ static void Format(char *text, size_t size)
     {
         length += snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
     }
-    if (sStyle && length > 0 && (size_t)length < size)
-        length += snprintf(text + length, size - (size_t)length, "style=%d\n", sStyle);
+    if (!sStyle && length > 0 && (size_t)length < size)      /* Poke Ball is the default: only the choice of Ascuas is written */
+        length += snprintf(text + length, size - (size_t)length, "style=0\n");
     if (sCompanion && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
     if (sExpShare && length > 0 && (size_t)length < size)
@@ -252,6 +274,8 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "privroom=1\n");
     if (sRoomCode[0] && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "roomcode=%s\n", sRoomCode);
+    if (sRoomNote && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "roomnote=1\n");
     /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
      * wildaggro come first so that a visiblewilds that was read always had them (a lone 1 is the old format, NORMAL). */
     if ((sWildDensity || sWildSil) && length > 0 && (size_t)length < size)
@@ -502,12 +526,32 @@ const char *CtrSettings_RoomCode(void)
 void CtrSettings_SetRoomCode(const char *code)
 {
     char before[sizeof(sRoomCode)];
+    int wasNote;
 
     Load();
+    wasNote = sRoomNote;
     memcpy(before, sRoomCode, sizeof(before));
     RoomCodeSet(code ? code : "");
-    if (strcmp(before, sRoomCode))
+    if (sRoomCode[0])
+        sRoomNote = 0;      /* a new code: the player has chosen a room again */
+    if (strcmp(before, sRoomCode) || (!sRoomNote && wasNote))
         Save();
+}
+
+int CtrSettings_RoomCodeDropped(void)
+{
+    Load();
+    return sRoomNote;
+}
+
+void CtrSettings_AckRoomCodeDropped(void)
+{
+    Load();
+    if (sRoomNote)
+    {
+        sRoomNote = 0;
+        Save();
+    }
 }
 
 int CtrSettings_LocalPlay(void)

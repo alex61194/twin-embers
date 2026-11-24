@@ -168,6 +168,41 @@ def snapshot(root,commit=None,excluded=()):
             files[name]=path.read_bytes(); modes.setdefault(name,'100644')
     return files,modes
 
+CONFLICT=re.compile(r'<<<<<<< [^\n]*\n(.*?)=======\n(.*?)>>>>>>> [^\n]*\n',re.S)
+SHA_LINE=re.compile(r'^( *)"sha256": "([0-9a-f]{64})"(,?)\n$')
+
+def repair_manifest(files,row):
+    """The one repair of a historical snapshot whose manifest is not JSON: a merge that was committed with its conflict markers.
+
+    It is explicit and bound: the record names the commit and the SHA-256 of that snapshot's exact manifest bytes, and for every conflict hunk
+    the path of the entry it sits in and the SHA-256 that entry takes. Each hunk must be a plain disagreement about one `"sha256"` line (both
+    sides have one), the entry's path must be the one named, and the hash named must be the real SHA-256 of that path's bytes in the snapshot's
+    own Git tree (LF-normalised text, exact bytes for images): the record can never state a hash the tree does not have. Nothing else changes:
+    the repaired manifest then goes through check() like any other, so every file of the snapshot is still audited (path, type, mode, size,
+    payload patterns, ROM windows) and every other entry still has to prove its bytes. The four entries of a hunk are accepted on those
+    content checks only; no review of those exact bytes is claimed. A manifest that already parses is never repaired."""
+    raw=files[MANIFEST]
+    if hashlib.sha256(raw).hexdigest()!=row['manifest_sha256']: raise ValueError('Manifest repair does not match this snapshot')
+    try: json.loads(raw)
+    except ValueError: pass
+    else: raise ValueError('Manifest repair applies only to a manifest that is not valid JSON')
+    text=raw.decode('utf-8'); hunks=list(CONFLICT.finditer(text)); done=[]; last=0
+    if len(hunks)!=len(row['resolutions']): raise ValueError('Manifest repair must resolve every conflict, and only those')
+    for hunk,res in zip(hunks,row['resolutions']):
+        paths=re.findall(r'"path": "([^"]+)"',text[:hunk.start()])
+        name=res['path']
+        if not paths or paths[-1]!=name or name not in files or name==MANIFEST: raise ValueError('Manifest repair names the wrong entry')
+        ours=SHA_LINE.match(hunk.group(1)); theirs=[l for l in hunk.group(2).splitlines() if l.lstrip().startswith('"sha256":')]
+        if not ours or len(theirs)!=1: raise ValueError('Manifest repair covers only a disagreement about a sha256 line')
+        data=files[name]
+        real=hashlib.sha256(data if is_media(name) else data.replace(b'\r\n',b'\n')).hexdigest()
+        if res['sha256']!=real or not re.fullmatch('[0-9a-f]{64}',real): raise ValueError('Manifest repair hash is not the hash of the tree')
+        done.append(text[last:hunk.start()]+ours.group(1)+'"sha256": "'+real+'"'+ours.group(3)+'\n'); last=hunk.end()
+    repaired=''.join(done)+text[last:]
+    if re.search(r'^(<<<<<<<|=======|>>>>>>>)',repaired,re.M): raise ValueError('Manifest repair left a conflict marker')
+    json.loads(repaired)
+    return repaired.encode('utf-8')
+
 def history(root,windows=None):
     if git(root,'rev-parse','--is-shallow-repository').strip()!=b'false': raise ValueError('Full history required')
     commits=git(root,'rev-list','--all').decode().splitlines()
@@ -197,8 +232,25 @@ def history(root,windows=None):
         if not re.fullmatch('[0-9a-f]{64}',row.get('sha256','')) or not row.get('basis'):
             raise ValueError('Incomplete historical exclusion')
         seen.add((commit,name)); excluded.setdefault(commit,{})[name]=row['sha256']
+    # A manifest repair is the owner's record for one snapshot whose manifest is not JSON (see repair_manifest): reachable commit, the exact
+    # manifest bytes, the named hash of every conflicted entry. At most one per commit, nothing else accepted in a record.
+    repairs={}
+    for row in json.loads(current[MANIFEST]).get('historical_manifest_repairs',[]):
+        commit=row.get('commit','')
+        if set(row)!={'commit','manifest_sha256','resolutions','decided_by','basis'}:
+            raise ValueError('Incomplete manifest repair')
+        if not re.fullmatch('[0-9a-f]{40}',commit) or commit not in commits:
+            raise ValueError('Manifest repair must name a reachable full commit')
+        if commit in repairs: raise ValueError('Duplicate manifest repair')
+        if not re.fullmatch('[0-9a-f]{64}',row['manifest_sha256']) or not row['decided_by'] or not row['basis']:
+            raise ValueError('Incomplete manifest repair')
+        res=row['resolutions']
+        if not isinstance(res,list) or not res or not all(isinstance(r,dict) and set(r)=={'path','sha256'} for r in res):
+            raise ValueError('Incomplete manifest repair')
+        repairs[commit]=row
     for commit in commits:
         files,modes=snapshot(root,commit,excluded.get(commit,{}))
+        if commit in repairs: files[MANIFEST]=repair_manifest(files,repairs[commit])
         for name,digest in excluded.get(commit,{}).items():
             raw=files.pop(name,None); modes.pop(name,None)
             if raw is None or hashlib.sha256(raw).hexdigest()!=digest:

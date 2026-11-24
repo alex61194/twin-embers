@@ -126,6 +126,27 @@ int main(void)
               i, row && row->label ? row->label : "?", row && row->label ? (int)strlen(row->label) : 0, PT_OPT_LABEL_LEN - 1);
     }
 
+    {   /* An older build's settings: the private room on with a six-digit code. It is dropped as the settings are first read; the OPTIONS
+         * screen says so on the ONLINE ROOM row (and the room is public on purpose), until PUBLIC or a new code is chosen. */
+        FILE *old = fopen(CTR_SETTINGS_PATH, "wb");
+        CtrPokeTouchView nv;
+        int row;
+
+        CHECK(old != NULL, "no settings file");
+        if (old) {
+            fputs("privroom=1\nroomcode=123456\n", old);
+            fclose(old);
+        }
+        CHECK(!CtrSettings_PrivateRoom() && CtrSettings_RoomCodeDropped(), "the old six-digit code is dropped and the player is to be told");
+        row = 6;                        /* ONLINE ROOM */
+        memset(&nv, 0, sizeof(nv));
+        CtrOptions_Fill(&nv, row);
+        CHECK(nv.bar[1][0] && nv.bar[2][0] && nv.bar[1][strlen(nv.bar[1]) - 1] == '.' && nv.bar[2][strlen(nv.bar[2]) - 1] == '.',
+              "the ONLINE ROOM row says the code was removed, whole (%s / %s)", nv.bar[1], nv.bar[2]);
+        CtrOptions_Fill(&nv, 0);
+        CHECK(!nv.bar[1][0] || strstr(nv.bar[1], "6") == NULL, "another row does not carry the note");
+        CtrSettings_AckRoomCodeDropped();
+    }
     remove(CTR_SETTINGS_PATH);      /* no EMBERS choice kept from an earlier run */
 
     CHECK(CtrOptions_RowCount() == 35, "the OPTIONS screen has %d rows", CtrOptions_RowCount());

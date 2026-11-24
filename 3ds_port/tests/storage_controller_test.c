@@ -20,6 +20,7 @@ static struct Storage {
     struct { u8 tilemapLeft, tilemapTop, width; } menuWindow;
 } storage, *gStorage;
 static int sCursorArea, sCursorPosition, sInMultiMoveMode, menuCursor;
+static int sLayoutHome;                 /* the touch transform reads which layout is up: the classic one here, as the controller's geometry below is its own */
 static int Menu_GetCursorPos(void) { return menuCursor; }
 static void CB2_PokeStorage(void) {}
 #define TASK(name) static void name(u8 id) { (void)id; }

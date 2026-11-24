@@ -70,6 +70,22 @@ room (the NEW key of the keypad, from the console's random generator) and typed 
 10000 rounds, searching for them from a room name or from sealed frames is beyond what anyone will spend on a game (about 10^20 hashes), which a six-digit
 PIN never was (a million codes: seconds on a computer with the old 4096 rounds, less with a graphics card).
 
+**Cost of the derivation.** PBKDF2 makes its output in blocks of 32 bytes (the size of HMAC-SHA-256), and each block repeats the `rounds` iterations
+on its own. Asking for 64 bytes is therefore **two blocks**: about twice the work of the 32 bytes the earlier derivation made with the same rounds.
+
+| room | rounds | blocks | work, in units of the earlier derivation (4096 rounds, 1 block) |
+| --- | --- | --- | --- |
+| public (and online.cfg's rooms) | 4096 | 2 | 8192 / 4096 = **2.0** |
+| private (`twinembers-private-` + 16 digits) | 10000 | 2 | 20000 / 4096 = **about 4.9** |
+
+These are counts of HMAC iterations, not times: how long a console takes (Old 3DS and New 3DS, run on the game thread at join time or not) is
+not measured, and only a console can say it. The second block buys no extra protection against someone who tests guesses: one guess against a room
+name needs only block 2 and one guess against a sealed frame only block 1, each at `rounds` iterations, so the attacker's cost per guess stays at the
+rounds and the doubling is paid by the players alone. It is the price of making the name from other output than the key; a name made from the key
+by a one-way hash (`SHA-256("TwinEmbers room v2" + key)`, 32 bytes of output, one block) would keep the name and the key apart in the same way
+and halve the players' work, but it changes the derivation again, so it is left as a decision to take with measured join times on an Old 3DS. The
+rounds are unchanged here for that reason: no data yet justifies a different number, and 10000 rounds against 16 random digits does not depend on it.
+
 A sealed DATA body (after the destination node, or the source node from the relay) is `nonce[12] ciphertext tag[16]`:
 
 - the nonce is a random 8-byte session value chosen by the console for each connection, then a 32-bit little-endian count
@@ -138,7 +154,8 @@ anything that matters.
   (`3ds_port/tests/poketouch_options_test.c`, `poketouch_render_test.c`), the glue (`wl_glue_test.c`).
 - **Needs a console (or Azahar):** that the console's generator (`ps:ps`, `PS_GenerateRandomBytes`) is there and NEW makes a different code each
   time (with no generator the key does nothing and the player can still type a code); the time of the 10000-round key on an Old 3DS and on a New 3DS
-  (about 2.5 times the old 4096, so a few seconds on joining a private room; time it from the join to the first welcome, it was not measured); that two
+  (see "Cost of the derivation" below: 64 bytes of output are two HMAC-SHA-256 blocks, so a private room's key is about 4.9 times the work of the old
+  one-block 4096-round key and the public room's about 2 times; nothing of this was measured on a console: time it from the join to the first welcome); that two
   consoles with the same 16 digits meet and one with another digit does not.
 - Not done, on purpose: a password-authenticated key exchange (PAKE) so that a short PIN could be kept. The room name has to come from the code for
   two strangers to find each other, which makes any short code testable offline by whoever sees it; a long random code is what the console can do

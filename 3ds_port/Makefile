@@ -19,6 +19,15 @@ CFLAGS += -DCTR_EXTERNAL_ASSETS=1
 # The relay for online play built in (host:port), e.g. make TWIN_RELAY=relay.example.org:47311; none by default.
 ifneq ($(TWIN_RELAY),)
 CFLAGS += -DCTR_WL_DEFAULT_RELAY='"$(TWIN_RELAY)"'
+else ifneq ($(REQUIRE_RELAY),)
+# A public release must carry the relay: without it the console plays Online with nobody to reach (it falls back to the radio) unless the player writes online.cfg.
+$(error REQUIRE_RELAY is set but TWIN_RELAY is not: pass TWIN_RELAY=host:port, the address of the relay the release is meant to use)
+endif
+# The release gate (verify-clean-release) never lets a build go out without a relay by oversight: TWIN_RELAY=host:port, or ALLOW_NO_RELAY=1 as a decision.
+ifneq ($(filter verify-clean-release clean-game-3dsx,$(MAKECMDGOALS)),)
+ifeq ($(TWIN_RELAY)$(ALLOW_NO_RELAY),)
+$(error no relay for this release: pass TWIN_RELAY=host:port (and REQUIRE_RELAY=1), or ALLOW_NO_RELAY=1 to ship a build without one on purpose)
+endif
 endif
 # 0 keeps the sound engine on the game thread (A/B testing on hardware).
 CTR_AUDIO_WORKER ?= 1
@@ -55,7 +64,7 @@ build/%.o: src/%.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # The version this checkout builds, shown on the title screen as v$(TWIN_EMBERS_VERSION). Change it here when a release starts.
-TWIN_EMBERS_VERSION := 0.6.0
+TWIN_EMBERS_VERSION := 0.7.0
 .PHONY: force-git-version
 build/git_version.h: force-git-version ../tools/gen_git_version.py
 	$(PYTHON) ../tools/gen_git_version.py ../../.. $@ --version $(TWIN_EMBERS_VERSION)
@@ -79,7 +88,7 @@ verify: all verify-host verify-game-core build/gpu_regs_probe.o build/main_game_
 	$(DEVKITARM)/bin/arm-none-eabi-readelf -h $(TARGET).elf | grep -q 'Machine:.*ARM'
 	@test -s $(TARGET).3dsx
 
-verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/text_case_test.exe build/dirty_rect_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/looks_test.exe build/wl_test.exe build/wl_crypto_test.exe build/wl_uds_test.exe build/wl_glue_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe build/shake_pointer_test.exe build/wilds_core_test.exe build/wilds_settings_test.exe build/party_grid_test.exe build/follower_trail_test.exe build/bag_pockets_test.exe
+verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_alias_test.exe build/input_test.exe build/bios_test.exe build/bios_semantics_test.exe build/bios_math_test.exe build/dma_test.exe build/flash_test.exe build/rex_test.exe build/obj_window_test.exe build/map_edge_test.exe build/poketouch_options_test.exe build/forwarder_test.exe build/type_chart_test.exe build/text_case_test.exe build/dirty_rect_test.exe build/leafgreen_test.exe build/night_wild_test.exe build/audio_cadence_test.exe build/audio_catchup_test.exe build/vram_track_test.exe build/fast_forward_test.exe build/settings_test.exe build/settings_reload_test.exe build/looks_test.exe build/wl_test.exe build/wl_crypto_test.exe build/wl_uds_test.exe build/wl_glue_test.exe build/palette_fade_test.exe build/day_night_test.exe build/data_error_text_test.exe build/cgb_audio_test.exe build/cgb_blep_test.exe build/audio_mix_test.exe build/battle_gen4_test.exe build/battle_hud_test.exe build/shake_pointer_test.exe build/wilds_core_test.exe build/wilds_settings_test.exe build/party_grid_test.exe build/follower_trail_test.exe build/bag_pockets_test.exe
 	./build/gba_shadow_test.exe
 	./build/video_decode_test.exe
 	./build/gba_alias_test.exe
@@ -112,6 +121,7 @@ verify-host: build/gba_shadow_test.exe build/video_decode_test.exe build/gba_ali
 	./build/vram_track_test.exe
 	./build/fast_forward_test.exe
 	./build/settings_test.exe
+	./build/settings_reload_test.exe
 	./build/looks_test.exe
 	./build/wl_test.exe
 	./build/wl_crypto_test.exe
@@ -355,6 +365,7 @@ verify-clean-release:
 	$(MAKE) CLEAN_RELEASE=1 verify-game-3dsx
 	$(PYTHON) ../tools/audit_clean_release.py --recipe $(REX_RECIPE) --tree .. --elf build/firered_game.elf --map build/firered_game.map \
 		--3dsx $(IMAGE_3DSX) --release --coverage $(if $(FIRERED_ROM_REFERENCE),--rom "$(FIRERED_ROM_REFERENCE)")
+	$(PYTHON) ../tools/check_release_relay.py $(IMAGE_3DSX) $(if $(TWIN_RELAY),--relay "$(TWIN_RELAY)") $(if $(ALLOW_NO_RELAY),--allow-none)
 	$(PYTHON) ../tools/source_audit.py --release
 
 # Execute the real optimized intro consumers from cold asset storage.
@@ -465,6 +476,10 @@ build/wl_glue_test.exe: tests/wl_glue_test.c tests/uds_mock.h src/3ds_wl_glue.c 
 build/wl_uds_test.exe: tests/wl_uds_test.c tests/uds_mock.h src/3ds_wl_uds.c include/3ds_wl_uds.h include/3ds_wl.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Iinclude -Itests -I$(CTRULIB)/include tests/wl_uds_test.c src/3ds_wl_uds.c -o $@
+
+build/settings_reload_test.exe: tests/settings_reload_test.c src/3ds_settings.c include/3ds_settings.h include/3ds_wilds_core.h
+	@mkdir -p build
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -DCTR_SETTINGS_PATH='"build/settings_reload_test.cfg"' -Iinclude tests/settings_reload_test.c src/3ds_settings.c -o $@
 
 build/looks_test.exe: tests/looks_test.c src/3ds_looks.c src/3ds_settings.c include/3ds_looks.h include/3ds_settings.h include/3ds_data.h include/3ds_battle_gen4.h
 	@mkdir -p build

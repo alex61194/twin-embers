@@ -51,4 +51,5 @@ can go into the build instead.
 - `sudo python3 install.py 47311` again installs a newer `wl_relay.py`.
 - Limits (arguments in the service file): 256 rooms, 1024 connections, 8 connections per address, 16 consoles per room; a
   console that stops reading is dropped before its queue grows past 256 KB, and one that sends nothing for 60 seconds is closed.
-- The public room's code is known to everyone, so its frames are sealed but not secret; private rooms (a code in online.cfg) are.
+- The public room's code is known to everyone, so its frames are sealed but not secret. A private room (OPTIONS, Online room, PRIVATE: a 16-digit code made on the console, or `code=` in online.cfg) is sealed with its code; the relay only sees a hash of its name.
+- Before a release: build the 3DSX with `TWIN_RELAY=PUBLIC-ADDRESS:47311` (add `REQUIRE_RELAY=1` and the build stops when it is missing), check the port from another computer (step 5 above) and from a console that is not on your network, and keep the address in the release notes.

@@ -17,15 +17,22 @@ typedef struct ShimThread {
     void *arg;
 } *Thread;
 
-static volatile int gShimStartDelayMs;
-static volatile int gShimThreadsCreated, gShimThreadsFreed;
+/* Shared between the test's thread and the threads it makes: every access below is atomic, so that a thread sanitizer sees only what the
+ * code under test does and not the stand-in's own bookkeeping. */
+static int gShimStartDelayMs;
+static int gShimThreadsCreated, gShimThreadsFreed;
+#define SHIM_GET(v) __atomic_load_n(&(v), __ATOMIC_ACQUIRE)
+#define SHIM_SET(v, x) __atomic_store_n(&(v), (x), __ATOMIC_RELEASE)
+#define SHIM_INC(v) __atomic_add_fetch(&(v), 1, __ATOMIC_ACQ_REL)
 
 static void *ShimMain(void *p)
 {
     struct ShimThread *t = p;
 
-    if (gShimStartDelayMs > 0) {
-        struct timespec d = {gShimStartDelayMs / 1000, (long)(gShimStartDelayMs % 1000) * 1000000L};
+    int delay = SHIM_GET(gShimStartDelayMs);
+
+    if (delay > 0) {
+        struct timespec d = {delay / 1000, (long)(delay % 1000) * 1000000L};
 
         nanosleep(&d, NULL);
     }
@@ -44,7 +51,7 @@ static Thread threadCreate(ThreadFunc entry, void *arg, size_t stackSize, int pr
         free(t);
         return NULL;
     }
-    ++gShimThreadsCreated;
+    SHIM_INC(gShimThreadsCreated);
     return t;
 }
 
@@ -57,6 +64,6 @@ static int threadJoin(Thread t, uint64_t timeout)
 static void threadFree(Thread t)
 {
     free(t);
-    ++gShimThreadsFreed;
+    SHIM_INC(gShimThreadsFreed);
 }
 #endif

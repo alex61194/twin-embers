@@ -149,6 +149,8 @@ static void SetRoomKind(int v)
         return;
     }
     CtrSettings_SetPrivateRoom(v & 1);
+    if (!(v & 1))
+        CtrSettings_AckRoomCodeDropped();       /* PUBLIC chosen on purpose: the note about the dropped code has been read */
     MultiplayerChanged();
 }
 
@@ -673,6 +675,11 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
 
         snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.4s %.4s %.4s %.4s.", "C\xC3\xB3" "digo %.4s %.4s %.4s %.4s.", "Code %.4s %.4s %.4s %.4s."), code, code + 4, code + 8, code + 12);
         snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Tap the row to change it.", "Toca la fila para cambiarlo.", "Zeile antippen: neu."));
+    }
+    /* ONLINE ROOM after an older build's code was dropped: say so, so that the public room is never entered without the player knowing. */
+    if (sRows[selected].get == GetRoomKind && !CtrSettings_PrivateRoom() && CtrSettings_RoomCodeDropped()) {
+        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("Old code removed: now PUBLIC.", "C\xC3\xB3" "digo viejo quitado: P\xC3\x9A" "BLICA.", "Alter Code entfernt: \xC3\x96" "FFENTLICH."));
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Pick PRIVATE for a new code.", "Elige PRIVADA: c\xC3\xB3" "digo nuevo.", "PRIVAT w\xC3\xA4" "hlen: neuer Code."));
     }
     memset(&v->optPad, 0, sizeof(v->optPad));
     if (sPad.on) {

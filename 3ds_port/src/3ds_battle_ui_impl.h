@@ -1255,44 +1255,90 @@ static void BColorBand(int x, int y, int h, uint16_t c)
     LlGradSlab(x, y, 6, h, 0, 0, LL_TL | LL_BL, Em2Lerp(c, EM_WHITE, 72, 255), Em2Lerp(c, UI_RGB(0, 0, 0), 52, 255));
 }
 
+/* Poke Ball style, the move cards: the card is the colour of the move's type (flat, a darker lip and edge, a white edge while the cursor is on it),
+ * its words dark on a light type and cream on a dark one, and the type's pill is white with the type's own dark colour for its word. */
+static unsigned BLuma(uint16_t c)
+{
+    unsigned r = (c >> 11) & 31, g = (c >> 5) & 63, b = c & 31;
+
+    return (77 * (r * 255 / 31) + 150 * (g * 255 / 63) + 29 * (b * 255 / 31)) >> 8;
+}
+
+static EmPal BTypePal(uint16_t c, int focused, int dark)
+{
+    uint16_t black = UI_RGB(0, 0, 0);
+    EmPal p = EM_PAL(Em2Lerp(c, EM_WHITE, 20, 255), c, Em2Lerp(c, black, 8, 255), Em2Lerp(c, black, 16, 255), Em2Lerp(c, black, 72, 255),
+                     focused ? EM_WHITE : Em2Lerp(c, black, 100, 255), Em2Lerp(c, EM_WHITE, 60, 255), Em2Lerp(c, black, 40, 255),
+                     dark ? UI_RGB(255, 246, 232) : UI_RGB(42, 18, 8), dark ? Em2Lerp(c, black, 130, 255) : Em2Lerp(c, EM_WHITE, 90, 255));
+
+    return p;
+}
+
+/* A type's pill on a card of that type: white, the word in the type's colour darkened. */
+static int BTypePill(int x, int y, const char *text, uint16_t c)
+{
+    int w = UiTextWidth(text, 1) + 12;
+    uint16_t ink = Em2Lerp(c, UI_RGB(0, 0, 0), 120, 255);
+
+    UiRoundFill(x, y, w, 13, 4, Em2Lerp(c, UI_RGB(0, 0, 0), 90, 255));
+    UiRoundFill(x + 1, y + 1, w - 2, 11, 3, UI_RGB(250, 248, 244));
+    UiText(text, x + 6, y + 2, ink, UI_RGB(236, 232, 226), 1, x + w - 1);
+    return w;
+}
+
 static void BMoveCard(int i, const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleMove *m = &v->move[i];
-    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber;
-    uint16_t c;
+    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber, dark = 0;
+    uint16_t c, ink = EM_DARK, dim = EM_DIM, sh = EM_DARK_SH, low = UI_RGB(224, 56, 40), lowSh = UI_RGB(248, 200, 184);
+    EmPal typePal;
     char text[16];
 
     if (!m->present) {
         BHollow(r, BL_CARD_H - B_DEPTH, NULL);
         return;
     }
-    fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     c = UiTypeColor(m->type);
+    if (sStyleBall) {
+        dark = BLuma(c) < 120;
+        typePal = BTypePal(c, focused, dark);
+        ink = typePal.ink;
+        sh = typePal.inkSh;
+        dim = dark ? UI_RGB(236, 214, 190) : UI_RGB(96, 48, 22);
+        low = dark ? UI_RGB(255, 196, 184) : UI_RGB(160, 16, 16);
+        lowSh = sh;
+        fy = BLCard(r, BL_CARD_H, &typePal, focused, v->pressed == i, 1);
+    } else
+        fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     badgeW = UiTextWidth(m->typeName, 1) + 12;
     power = m->power[0] && m->power[0] != '-';
     accNumber = m->accuracy[0] && m->accuracy[0] != '-';
-    BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
+    if (!sStyleBall)
+        BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
     if (focused)
-        LlCursor(r->x + 11, fy + 6, LL_CURSOR);
-    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, EM_DARK, EM_DARK_SH, r->x + r->w - 5 - badgeW - 4);
-    LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+        LlCursor(r->x + 11, fy + 6, sStyleBall ? ink : LL_CURSOR);
+    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, ink, sh, r->x + r->w - 5 - badgeW - 4);
+    if (sStyleBall)
+        BTypePill(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+    else
+        LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
     if (power) {
-        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 40);
-        UiText(m->power, r->x + 35, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4"), r->x + 13, fy + 22, dim, sh, 1, r->x + 40);
+        UiText(m->power, r->x + 35, fy + 22, ink, sh, 1, r->x + 64);
     } else
-        UiText(CTR_TR("Status", "Estado", "Status"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Status", "Estado", "Status"), r->x + 13, fy + 22, dim, sh, 1, r->x + 64);
     if (accNumber) {
-        UiText(CTR_TR("Acc", "Pre", "Gen"), r->x + 66, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 88);
-        UiText(m->accuracy, r->x + 88, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 120);
+        UiText(CTR_TR("Acc", "Pre", "Gen"), r->x + 66, fy + 22, dim, sh, 1, r->x + 88);
+        UiText(m->accuracy, r->x + 88, fy + 22, ink, sh, 1, r->x + 120);
     }
     BFxBadge(m->matchup, r->x + 13, fy + 34, 70, 0);
-    UiText("PP", r->x + 88, fy + 36, EM_DIM, EM_DARK_SH, 1, r->x + 104);
+    UiText("PP", r->x + 88, fy + 36, dim, sh, 1, r->x + 104);
     snprintf(text, sizeof(text), "%u/%u", m->pp, m->maxPp);
     if (m->pp * 4 <= m->maxPp)       /* a quarter or less left, or none: the game's red */
-        UiText(text, r->x + 104, fy + 36, UI_RGB(224, 56, 40), UI_RGB(248, 200, 184), 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, low, lowSh, 1, r->x + r->w - 4);
     else
-        UiText(text, r->x + 104, fy + 36, EM_DARK, EM_DARK_SH, 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, ink, sh, 1, r->x + r->w - 4);
 }
 
 /* The text window under the cards (and CANCEL beside it): the move under FireRed's cursor, its name, "STAB" on a slanted ribbon when it gets the

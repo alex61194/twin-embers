@@ -22,9 +22,11 @@
 #define WL_INET_PORT 47311
 #define WL_INET_CODE_MAX 64
 #define WL_INET_SEAL_BYTES 28       /* what sealing adds to a frame: 12 for the nonce, 16 for the tag */
-/* PBKDF2 rounds for a room's key, once per connection. The public room's key hides nothing (its code is in the open), so it keeps the quick 4096 (about
- * a second on the console). A private room's code is the only secret there is: its key takes 10000 rounds (a few seconds on the console, the time of
- * joining), which on top of a code that cannot be guessed (WL_INET_PRIVATE_DIGITS random digits) puts the key beyond an offline search. */
+/* PBKDF2 rounds for a room's key, once per connection. The public room's key hides nothing (its code is in the open), so it keeps 4096. A private
+ * room's code is the only secret there is: its key takes 10000 rounds, which on top of a code that cannot be guessed (WL_INET_PRIVATE_DIGITS random
+ * digits) puts the key beyond an offline search. The derivation asks for 64 bytes, which is two HMAC-SHA-256 blocks of `rounds` each: the work is
+ * twice the rounds (public 2.0 times, private about 4.9 times the earlier one-block 4096 derivation). Not measured on a console: see
+ * docs/WL-RELAY-PROTOCOL.md, "Cost of the derivation". */
 #define WL_INET_ITERATIONS 4096
 #define WL_INET_ITERATIONS_PRIVATE 10000
 /* A private room's code starts with this (the glue makes it from the digits the players share, CTR_WL_PRIVATE_ROOM) and has that many digits after it. */

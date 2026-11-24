@@ -281,7 +281,7 @@ static void FBRowDraw(const CtrPokeTouchBag *b, int i)
         if (selected)
             LlSelectRing(r.x, r.y, r.w, FB_FACE + FB_DEPTH);
         fy = EmButton(r.x, r.y, r.w, FB_FACE + FB_DEPTH, p, FB_DEPTH, press);
-        LlArrow(r.x + 10, fy + (FB_FACE - 10) / 2, 6, 10, 2, EM_WHITE);
+        LlArrow(r.x + 10, fy + (FB_FACE - 10) / 2, 6, 10, 2, p->ink);
         EmLabel(b->kind != PT_BAG_KIND_BAG ? b->closeName : CtrUiText(UIS_BAG_CLOSE), r.x, r.w, fy, FB_FACE, p);
         return;
     }

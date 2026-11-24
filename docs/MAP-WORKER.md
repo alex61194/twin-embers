@@ -34,16 +34,33 @@ runs, and by the worker only while it runs; `threadJoin` orders the hand-over.
 - `tools/test_map_worker.py` (`3ds_port/tests/map_worker_test.c`): the console's own code on a computer, with POSIX threads behind
   `3ds_port/tests/shim/3ds/thread.h`. It checks that a worker's image equals a plain single-threaded build, that a stop asked of a worker that has not
   begun costs the game's thread no wait, 600 frames with the region changing at random moments (every ready image is the one of the map last asked
-  for; the slowest frame is under a millisecond), a map with no art, a new version of a map, and 40 ends of the process at different points of a build
+  for; the slowest frame is about a millisecond), a map with no art, a new version of a map, and 40 ends of the process at different points of a build
   (every worker joined and freed, the job able to start again). A mutation that makes the game's thread join the worker to cancel it fails the test.
-- The same test under a thread sanitizer (`-fsanitize=thread`) when the compiler has one; this MinGW build does not, so it was **not run here**: run
-  `python3 tools/test_map_worker.py` on Linux or macOS.
+  Three checks were added after the first review:
+  - **The art is not written while a worker still reads it.** The test holds a worker part way through its feed (`MAP_FEED_ROW_HOOK`, empty in the game:
+    the test's hook waits at row 40 until it is released), changes the region 300 times while it is held, and checks on every frame that the art buffers
+    are byte for byte the ones the worker is reading, that the art was not copied (`CtrPokeTouch_MapArt` not called), and that nothing is shown; the stub
+    that stands for the art counts any copy made while `sMapRunning` is 1 and the count must stay 0 for the whole test. A worker that is held and then
+    released with nothing asked of it ends with its own map's image. What this does **not** show is a race inside the worker's reads (that is for a
+    thread sanitizer): only that the game's thread does not write what the worker reads, and when it is allowed to. Taking the idle check out of
+    `MapJobStart` (so the art is copied while the old worker runs) makes the whole test stop with a crash, not with a message of this check: it is
+    caught, but this check was not the one shown to fail.
+  - **After `MapJobShutdown`:** it does nothing, twice, with no worker; with a worker held part way (one that obeys a stop at its next row) it stops it,
+    joins and frees it (every created thread freed) in a few milliseconds, leaves nothing running, nothing shown (`MapJobImageReady` 0), and the next
+    frame of the same map and version builds it again whole; and it joins a worker that had already ended but not been joined.
+  - The shim keeps its own counters and delay with atomic operations, so that a sanitizer would report the code under test and not the stand-in.
+- **Thread sanitizer: not run, and not claimed.** `test_worker_under_a_thread_sanitizer` builds the same test with `-fsanitize=thread` when the compiler
+  can; the MinGW used here cannot (no libtsan), the test is then skipped, and there is no Linux, macOS, WSL or container on this machine to run it
+  in. The stand-in is *suited* to it (pthread create and join give the sanitizer the ordering it needs; the shared words are atomic) but that is a
+  design, not a result: nobody has seen it pass. Run `python3 tools/test_map_worker.py` on Linux or macOS with gcc or clang and read the skip as "not
+  checked". It also cannot say anything of the console's own scheduler, priorities or cores.
 - The renderer's own test (`poketouch_render_test`, in both styles) still builds the map frame by frame on the host and compares incremental redraws
   with full ones.
 
 ## What needs a console or an emulator
 
-- That the worker (priority 0x3F, on the second core of a New 3DS, time-shared on an Old 3DS) really runs beside the game and ends when asked: change
+- That the worker (created with priority 0x3F and affinity -2, which is meant to put it on the second core of a New 3DS and time-share it on an Old 3DS; where
+  libctru really runs it was **not verified**) runs beside the game and ends when asked: change
   the region on HOME's map (the key at its top left) several times in a second and see that the game does not stall, and the map shown is the last one.
 - Quit the game (HOME menu) in the middle of a region change: it must close at once and leave no hung process.
 - On an Old 3DS, how long a map takes to appear and whether the stop is as quick as on the host (a step there is longer).

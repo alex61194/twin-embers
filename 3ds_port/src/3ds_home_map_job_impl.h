@@ -84,11 +84,18 @@ static int sMapAbort;                   /* shared: the game's thread asks the wo
 #define MAP_ABORTED() 0
 #endif
 
+/* Called by the feed before each row with the row's number; nothing in the game. tests/map_worker_test.c defines it to hold the worker part way through the
+ * art (to show the art is not written while a worker still reads it). */
+#ifndef MAP_FEED_ROW_HOOK
+#define MAP_FEED_ROW_HOOK(row) ((void)(row))
+#endif
+
 /* The picture's 192x144 part, pixel by pixel, to the image's builder (from the copies of the game's art above); false when a stop was asked, between
  * two rows, so that a worker told to stop does not first read the whole of a map nobody wants now. */
 static int MapFeedPixels(void)
 {
     for (int y = 0; y < HM_SH; ++y) {
+        MAP_FEED_ROW_HOOK(y);
         if (MAP_ABORTED())
             return 0;
         for (int x = 0; x < HM_SW; ++x) {

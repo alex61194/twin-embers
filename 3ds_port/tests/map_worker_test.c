@@ -20,10 +20,16 @@
 #include "3ds_poketouch.h"
 #pragma GCC diagnostic ignored "-Wunused-function"      /* the viewport half of the map header is not used here */
 static void Px(int x, int y, uint16_t c) { (void)x; (void)y; (void)c; }   /* its drawing helper: the test draws nothing */
+/* The feed calls this before each row (MAP_FEED_ROW_HOOK in the job header): a test arms it to hold the worker part way through the art, where it is
+ * reading it. A held worker lets go when released, and also when a stop is asked, as a worker between two rows would. All of it is atomic. */
+static void FeedHook(int row);
+#define MAP_FEED_ROW_HOOK(row) FeedHook(row)
 #include "3ds_home_map_job_impl.h"
 
 static int gArtCalls;
 static int gArtFail = -1;               /* a group whose art is not there */
+static int gArtWhileRunning;            /* times the art was copied while a worker still ran (it must stay 0: the worker reads that art) */
+static int gHookRow = -1, gHookReached, gHookRelease, gHookHonourAbort;   /* the feed's hold: the row to wait at (-1 none), reached, let go */
 
 /* Art that differs from one group to the next: tiles and colours from a small generator seeded by the group. */
 int CtrPokeTouch_MapArt(int group, uint16_t *tilemap, uint8_t *tiles, uint16_t *palette, uint16_t *bgTilemap, uint8_t *bgTiles)
@@ -31,6 +37,8 @@ int CtrPokeTouch_MapArt(int group, uint16_t *tilemap, uint8_t *tiles, uint16_t *
     uint32_t seed = 0x9e3779b9u * (uint32_t)(group + 1);
 
     ++gArtCalls;
+    if (__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE))
+        ++gArtWhileRunning;
     if (group == gArtFail)
         return 0;
     for (int i = 0; i < MAP_TILEMAP_W * MAP_TILEMAP_H; ++i) {
@@ -101,6 +109,56 @@ static void SleepUs(long us)
     nanosleep(&d, NULL);
 }
 
+static void FeedHook(int row)
+{
+    if (SHIM_GET(gHookRow) != row)
+        return;
+    SHIM_SET(gHookReached, 1);
+    while (!SHIM_GET(gHookRelease) && !(SHIM_GET(gHookHonourAbort) && __atomic_load_n(&sMapAbort, __ATOMIC_RELAXED)))
+        SleepUs(200);
+}
+
+/* Holds the next worker part way through its feed (at `row`); WaitHeld returns when it is there. It lets go only when released, or also when a stop is asked
+ * (honourAbort): the first is a worker busy in one long row that the stop request has not reached yet, the second a worker that obeys at once. */
+static void ArmHold(int row, int honourAbort)
+{
+    SHIM_SET(gHookHonourAbort, honourAbort);
+    SHIM_SET(gHookReached, 0);
+    SHIM_SET(gHookRelease, 0);
+    SHIM_SET(gHookRow, row);
+}
+
+static void Disarm(int release)
+{
+    SHIM_SET(gHookRow, -1);
+    SHIM_SET(gHookRelease, release);
+}
+
+static int WaitHeld(int ms)
+{
+    double end = NowMs() + ms;
+
+    while (NowMs() < end) {
+        if (SHIM_GET(gHookReached))
+            return 1;
+        SleepUs(200);
+    }
+    return 0;
+}
+
+/* The art the worker reads, as one number: it must not change while a worker is reading it. */
+static uint64_t ArtHash(void)
+{
+    uint64_t h = 1469598103934665603ull;
+    const uint8_t *parts[5] = {(const uint8_t *)sMapTilemap, sMapTiles, (const uint8_t *)sMapBgTilemap, sMapBgTiles, (const uint8_t *)sMapGba};
+    const size_t sizes[5] = {sizeof(sMapTilemap), sizeof(sMapTiles), sizeof(sMapBgTilemap), sizeof(sMapBgTiles), sizeof(sMapGba)};
+
+    for (int k = 0; k < 5; ++k)
+        for (size_t i = 0; i < sizes[k]; ++i)
+            h = (h ^ parts[k][i]) * 1099511628211ull;
+    return h;
+}
+
 /* The game's thread's frames, until the image of (group, version) is there; false when it takes longer than `ms`. */
 static int WaitReady(int group, int version, int ms)
 {
@@ -130,7 +188,7 @@ int main(void)
     puts("ok  a worker builds the image a plain build gives");
 
     /* A stop asked of a worker that has not begun: it ends at once, without the game's thread waiting, and nothing is shown of its map. */
-    gShimStartDelayMs = 60;
+    SHIM_SET(gShimStartDelayMs, 60);
     {
         double t0 = NowMs(), took;
 
@@ -140,7 +198,7 @@ int main(void)
         assert(took < 30 && !MapJobImageReady());                /* no wait: the game's thread went on */
         assert(WaitReady(2, 0, 20000) && ImageHash() == want[2]);
     }
-    gShimStartDelayMs = 0;
+    SHIM_SET(gShimStartDelayMs, 0);
     puts("ok  a stop in front of a worker that has not begun costs no wait and shows nothing wrong");
 
     /* The region changed again and again, at random moments: the image reported ready is always the one of the map last asked for. */
@@ -187,18 +245,104 @@ int main(void)
 
     /* The end of the process during a build: the worker is joined, nothing keeps running, and the job can begin again. */
     for (int round = 0; round < 40; ++round) {
-        gShimStartDelayMs = round % 3 ? 0 : 5;
+        SHIM_SET(gShimStartDelayMs, round % 3 ? 0 : 5);
         MapJobPrepare(round % 4, 100 + round);                  /* a build starts ... */
         SleepUs((long)(round % 7) * 400);                        /* ... and is somewhere in its feed or its steps ... */
         MapJobShutdown();                                        /* ... when the process ends */
         assert(!sMapThread && !__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && !sMapStarted);
-        assert(gShimThreadsCreated == gShimThreadsFreed);        /* every worker joined and freed */
+        assert(SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed));        /* every worker joined and freed */
     }
-    gShimStartDelayMs = 0;
+    SHIM_SET(gShimStartDelayMs, 0);
     assert(WaitReady(2, 0, 20000) && ImageHash() == want[2]);
     MapJobShutdown();
-    assert(gShimThreadsCreated == gShimThreadsFreed);
+    assert(SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed));
     puts("ok  the end of the process joins the worker wherever it is, and the job starts again");
+
+    /* The art is not written while a worker still reads it. The worker of group 1 is held at row 40 of its feed (reading the art); the region changes to
+     * group 2 while it is held, again and again: the game's thread must neither copy the new art over it nor show anything, until the worker is gone. */
+    assert(WaitReady(0, 0, 20000));
+    {
+        int calls, held = 0;
+        uint64_t art;
+
+        ArmHold(40, 0);
+        MapJobPrepare(1, 0);
+        assert(WaitHeld(5000));
+        assert(__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && sMapThread);
+        art = ArtHash();
+        calls = gArtCalls;
+        for (int i = 0; i < 300; ++i) {
+            assert(!MapJobPrepare(2, 0) || !__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE));
+            assert(!MapJobImageReady());
+            if (__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE)) {
+                ++held;
+                assert(ArtHash() == art && gArtCalls == calls);      /* still group 1's art, never copied over */
+            }
+            if (i == 150)
+                SleepUs(2000);
+        }
+        assert(held > 0);
+        Disarm(1);
+        assert(WaitReady(2, 0, 20000) && ImageHash() == want[2]);
+        assert(gArtWhileRunning == 0);                               /* and no copy of art, in the whole run so far, happened under a running worker */
+        printf("ok  the art is not copied while a worker still reads it (%d frames asked for another map while one was held)\n", held);
+    }
+    /* The same kind of worker, held and then let go with nothing asked of it: it ends with its own map's image (its art was never touched). */
+    {
+        ArmHold(40, 0);
+        MapJobPrepare(3, 0);
+        assert(WaitHeld(5000));
+        for (int i = 0; i < 100; ++i) {
+            MapJobPrepare(3, 0);
+            SleepUs(100);
+        }
+        Disarm(1);
+        assert(WaitReady(3, 0, 20000) && ImageHash() == want[3] && gArtWhileRunning == 0);
+        puts("ok  a worker held while the game's frames go on ends with its own map's image");
+    }
+
+    /* After MapJobShutdown. With no worker it does nothing, twice; with a worker held part way it stops it (a stop reaches a worker between rows),
+     * joins and frees it without a long wait; what was built is not shown; and the job starts again by itself, with a fresh build of the same map. */
+    MapJobShutdown();
+    MapJobShutdown();
+    assert(!sMapThread && !__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && !sMapStarted && !MapJobImageReady());
+    assert(SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed));
+    {
+        double t0, took;
+        int calls;
+
+        ArmHold(60, 1);
+        MapJobPrepare(3, 500);
+        assert(WaitHeld(5000));
+        assert(sMapThread && __atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE));
+        t0 = NowMs();
+        MapJobShutdown();
+        took = NowMs() - t0;
+        Disarm(0);
+        assert(took < 500);
+        assert(!sMapThread && !__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && !sMapStarted && !MapJobImageReady());
+        assert(SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed));
+        calls = gArtCalls;
+        assert(WaitReady(3, 500, 20000) && ImageHash() == want[3] && gArtCalls > calls);   /* the same map and version builds again, whole */
+        printf("ok  Shutdown with a worker held part way: stopped and joined in %.2f ms, nothing shown, and the same map builds again\n", took);
+    }
+    /* Shutdown when the worker has ended but was not joined yet (the game's thread had not asked again). */
+    {
+        double end = NowMs() + 20000;
+
+        MapJobShutdown();
+        MapJobPrepare(0, 600);                                       /* starts the build; no further frame joins it */
+        assert(sMapThread);
+        while (__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && NowMs() < end)
+            SleepUs(500);
+        assert(!__atomic_load_n(&sMapRunning, __ATOMIC_ACQUIRE) && sMapThread);
+        MapJobShutdown();
+        assert(!sMapThread && !sMapStarted && !MapJobImageReady() && SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed));
+        assert(WaitReady(1, 600, 20000) && ImageHash() == want[1]);
+        MapJobShutdown();
+        assert(SHIM_GET(gShimThreadsCreated) == SHIM_GET(gShimThreadsFreed) && gArtWhileRunning == 0);
+        puts("ok  Shutdown joins a worker that had ended, is safe twice, and a later frame starts the job again");
+    }
 
     puts("PASS map worker");
     return 0;

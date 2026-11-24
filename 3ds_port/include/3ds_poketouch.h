@@ -531,6 +531,9 @@ extern const CtrPokeTouchRect gCtrPokeTouchOptPage;
 /* Whether a bottom-screen pixel is on BACK's or OPTIONS PAGE's rectangle. */
 bool CtrPokeTouch_HitBack(int x, int y);
 bool CtrPokeTouch_HitOptPage(int x, int y);
+/* The page whose dot is under a bottom-screen point in the Poke Ball OPTIONS header (0 ..), or -1 anywhere else (a tap elsewhere on the header goes to
+ * the next page): the dots are 12 px zones, one for each page, at the right of the header. */
+int CtrPokeTouch_OptPageDot(int x, int y, int pageCount);
 
 /* The OPTIONS row and zone (PT_OPT_ZONE_*) under a bottom-screen pixel; false when none. */
 bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone);
