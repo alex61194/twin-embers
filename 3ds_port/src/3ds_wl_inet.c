@@ -47,6 +47,11 @@ typedef ssize_t WlLen;
 #include "3ds_wl_inet.h"
 
 enum { T_HELLO = 1, T_WELCOME, T_REJECT, T_JOINED, T_LEFT, T_DATA, T_PING, T_PONG };
+/* A connection that has heard nothing at all (not even a PONG, which every PING asks for) for this long is dead: Wi-Fi gone, or a relay that hung.
+ * Closing it lets the game say so, where TCP alone would wait for minutes. */
+#ifndef WL_INET_DEAD_MS
+#define WL_INET_DEAD_MS 45000
+#endif
 enum { VERSION = 1, KEEPALIVE_MS = 15000, MAX_MESSAGE = 2048 };
 
 static uint32_t NowMs(void)
@@ -163,6 +168,7 @@ static void HandleMessage(WlInet *net, const uint8_t *m, uint16_t len)
             net->node = m[1];
             net->members = (uint32_t)(m[2] | m[3] << 8 | m[4] << 16 | (uint32_t)m[5] << 24);
             net->welcomed = true;
+            net->lastRx = NowMs();
         }
         break;
     case T_REJECT:
@@ -172,6 +178,7 @@ static void HandleMessage(WlInet *net, const uint8_t *m, uint16_t len)
         if (len >= 2 && m[1] >= 1 && m[1] <= WL_MAX_NODES)
         {
             net->members |= 1u << m[1];
+            memset(&net->peer[m[1]], 0, sizeof(net->peer[m[1]]));      /* a new console in that seat: a new session */
             Event(net, WL_INET_EVENT_JOINED, m[1]);
         }
         break;
@@ -179,6 +186,7 @@ static void HandleMessage(WlInet *net, const uint8_t *m, uint16_t len)
         if (len >= 2 && m[1] >= 1 && m[1] <= WL_MAX_NODES)
         {
             net->members &= ~(1u << m[1]);
+            memset(&net->peer[m[1]], 0, sizeof(net->peer[m[1]]));
             Event(net, WL_INET_EVENT_LEFT, m[1]);
         }
         break;
@@ -189,10 +197,28 @@ static void HandleMessage(WlInet *net, const uint8_t *m, uint16_t len)
             uint16_t n = (uint16_t)(len - 2 - WL_INET_SEAL_BYTES);
             uint8_t aad[2] = {m[1], (uint8_t)net->node};   /* the sender the relay names and this node: a frame cannot be moved */
 
-            if (n > sizeof(net->in[at].data) || !WlAeadOpen(net->key, m + 2, aad, 2, m + 14, n, m + 14 + n, net->in[at].data))
+            if (n > sizeof(net->in[at].data) || m[1] < 1 || m[1] > WL_MAX_NODES ||
+                !WlAeadOpen(net->key, m + 2, aad, 2, m + 14, n, m + 14 + n, net->in[at].data))
             {
                 ++net->dropped;
                 break;
+            }
+            /* A sealed frame is genuine but could be sent again by whoever carries it (the relay): each sender's frames count up in one session,
+             * so a frame that does not count above the last one opened, or comes from another session while the sender is still in the room, is dropped. */
+            {
+                uint32_t counter = (uint32_t)(m[10] | m[11] << 8 | m[12] << 16 | (uint32_t)m[13] << 24);
+
+                if (!net->peer[m[1]].bound)
+                {
+                    net->peer[m[1]].bound = true;
+                    memcpy(net->peer[m[1]].session, m + 2, 8);
+                }
+                else if (memcmp(net->peer[m[1]].session, m + 2, 8) != 0 || counter <= net->peer[m[1]].last)
+                {
+                    ++net->dropped;
+                    break;
+                }
+                net->peer[m[1]].last = counter;
             }
             net->in[at].src = m[1];
             net->in[at].len = n;
@@ -256,10 +282,25 @@ void WlInet_Pump(WlInet *net)
             break;
         }
         net->rxLen = (uint16_t)(net->rxLen + n);
+        net->lastRx = NowMs();
         Parse(net);
     }
-    if (net->sock >= 0 && net->welcomed && NowMs() - net->lastTx >= KEEPALIVE_MS && !net->txLen)
-        Queue(net, T_PING, NULL, 0);
+    if (net->sock >= 0 && net->welcomed)
+    {
+        uint32_t now = NowMs();
+
+        if (now - net->lastRx >= WL_INET_DEAD_MS)
+        {
+            WlInet_Close(net);
+            return;
+        }
+        /* Ask the relay for a sign of life when it has been quiet, even while this console sends: its PONG is what proves the line is up. */
+        if (!net->txLen && (now - net->lastTx >= KEEPALIVE_MS || (now - net->lastRx >= KEEPALIVE_MS && now - net->lastPing >= KEEPALIVE_MS)))
+        {
+            Queue(net, T_PING, NULL, 0);
+            net->lastPing = now;
+        }
+    }
     Flush(net);
 }
 

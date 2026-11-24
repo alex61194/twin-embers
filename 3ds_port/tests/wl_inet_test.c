@@ -80,6 +80,7 @@ static int Listen(uint16_t port, const char *code)
     for (unsigned i = 0; i < len; ++i)
         printf("%02x", data[i]);
     printf("%c", 10);
+    fflush(stdout);                     /* the other console waits for this line, then sends more */
     assert(io.send(io.user, src, "reply from c", 12));
     for (unsigned i = 0; i < 150; ++i)
     {
@@ -96,6 +97,30 @@ static int Listen(uint16_t port, const char *code)
     return 0;
 }
 
+/* "silent <port> <code>": for tools/test_wl_inet.py, whose relay welcomes this console and then says nothing. Prints whether the link was up
+ * right after the welcome and whether the console has closed it by itself within a few seconds (the test sets WL_INET_DEAD_MS small). */
+static int Silent(uint16_t port, const char *code)
+{
+    static WlInet net;
+
+#ifdef _WIN32
+    WSADATA wsa;
+
+    assert(WSAStartup(MAKEWORD(2, 2), &wsa) == 0);
+#endif
+    assert(WlInet_Connect(&net, "127.0.0.1", port, code, kBuildA, 5000));
+    printf("UP %d ", WlInet_Connected(&net));
+    for (unsigned i = 0; i < 500 && WlInet_Connected(&net); ++i)
+    {
+        WlInet_Pump(&net);
+        Sleep10();
+    }
+    printf("DOWN %d%c", !WlInet_Connected(&net), 10);
+    fflush(stdout);
+    WlInet_Close(&net);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     uint16_t port;
@@ -107,6 +132,8 @@ int main(int argc, char **argv)
     assert(argc >= 2);
     if (argc >= 4 && !strcmp(argv[1], "listen"))
         return Listen((uint16_t)atoi(argv[2]), argv[3]);
+    if (argc >= 4 && !strcmp(argv[1], "silent"))
+        return Silent((uint16_t)atoi(argv[2]), argv[3]);
     port = (uint16_t)atoi(argv[1]);
 #ifdef _WIN32
     {

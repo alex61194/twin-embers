@@ -147,14 +147,43 @@ class Relay(unittest.TestCase):
             expected_ct, expected_tag = tc.aead(key, nonce, bytes([1, 2]), b'reply from c')
             self.assertEqual((ct, tag), (expected_ct, expected_tag))     # what the C console sealed is what Python would
             self.assertEqual(len(rest), 12 + 16)
+            s.sendall(good)                                                # the same sealed frame again, as a relay could: dropped
+            s.sendall(seal(1, b'a later frame'))                           # a frame that counts on is still opened
             lines = listener.stdout.read().splitlines()
-            self.assertIn('DROPPED 4', lines)       # the too short one is ignored, not counted
-            self.assertFalse([l for l in lines if l.startswith('MORE')])
+            self.assertIn('DROPPED 5', lines)       # the too short one is ignored, not counted; the replay is
+            self.assertEqual([l for l in lines if l.startswith('MORE')], ['MORE 2'])
             s.close()
         finally:
             listener.kill()
             listener.wait()
             listener.stdout.close()
+
+    def test_silent_relay_is_given_up_on(self):
+        """A relay that welcomes a console and then says nothing at all is given up on: the connection closes by itself (here after 1.5 s,
+        WL_INET_DEAD_MS set small for the test; 45 s in the game), so the game can tell the player."""
+        exe = os.path.join(tempfile.mkdtemp(), 'wl_inet_silent.exe')
+        cc = os.environ.get('CC', 'gcc')
+        libs = ['-lws2_32'] if os.name == 'nt' else []
+        subprocess.run([cc, '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-DWL_INET_DEAD_MS=1500', '-I', str(ROOT / '3ds_port/include'),
+                        str(ROOT / '3ds_port/tests/wl_inet_test.c'), str(ROOT / '3ds_port/src/3ds_wl_inet.c'),
+                        str(ROOT / '3ds_port/src/3ds_wl_net.c'), str(ROOT / '3ds_port/src/3ds_wl_crypto.c'), '-o', exe] + libs, check=True)
+        server = socket.socket()
+        server.bind(('127.0.0.1', 0))
+        server.listen(1)
+        listener = subprocess.Popen([exe, 'silent', str(server.getsockname()[1]), 'any-code'], stdout=subprocess.PIPE, text=True)
+        try:
+            conn, _ = server.accept()
+            conn.settimeout(3)
+            self.assertEqual(read_message(conn)[0], 1)                      # HELLO
+            conn.sendall(message(2, struct.pack('<BI', 1, 0)))              # WELCOME, node 1, nobody else
+            out = listener.stdout.read().split()
+            self.assertEqual(out, ['UP', '1', 'DOWN', '1'])                  # connected at first, closed after the silence
+            conn.close()
+        finally:
+            listener.kill()
+            listener.wait()
+            listener.stdout.close()
+            server.close()
 
     def test_wire(self):
         a = self.connect()

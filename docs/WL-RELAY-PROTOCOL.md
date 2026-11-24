@@ -104,7 +104,11 @@ different build is simply another room.
 
 - The first message on a connection must be a HELLO within 10 seconds, or the relay closes it.
 - A console that has sent nothing for 15 seconds sends a PING; the relay answers with a PONG. A relay closes a
-  connection that has sent nothing for 60 seconds.
+  connection that has sent nothing for 60 seconds. A console also sends a PING when nothing at all has come from the relay for 15
+  seconds, and closes the connection when nothing has come for 45 (the PONG is the sign of life), so a dead line is noticed at once.
+- The nonce of a sealed frame is the sender's 8-byte session and a 4-byte counter that only goes up. A console keeps, for each node, the
+  session and the highest counter it has opened and drops a frame that is not above it, or that names another session while the node is
+  still in the room (JOINED and LEFT forget it), so a frame sent again by whoever carries it is not delivered twice.
 - When a connection closes the relay sends LEFT for its node to the others and frees the number. A console that
   reconnects with the same room code gets a new node (and `WlNet` of the others forgets the old one on LEFT).
 - A relay should keep the number of rooms and connections bounded and may refuse more with reason 5.

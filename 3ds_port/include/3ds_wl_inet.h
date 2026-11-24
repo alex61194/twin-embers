@@ -48,6 +48,8 @@ typedef struct WlInet {
     uint8_t tx[4096];
     uint16_t txLen;
     uint32_t lastTx;                /* when something was last sent, for the keep-alive */
+    uint32_t lastRx, lastPing;      /* when something last came, and when a PING last went: a relay that stays silent is given up on */
+    struct { bool bound; uint8_t session[8]; uint32_t last; } peer[WL_MAX_NODES + 1];   /* per sender: its session and the highest counter opened */
     uint8_t key[32];                /* the room's key */
     uint8_t session[8];             /* this connection's random half of every nonce */
     uint32_t counter;               /* the other half: frames sealed so far */

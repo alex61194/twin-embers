@@ -246,7 +246,7 @@ Turbo works while exploring and in battle. It skips drawing frames, not game log
 
 ## Playing online (test)
 
-Online play needs no setup beyond the game when the release you downloaded has its relay built in (the release notes say which relay). Every player needs the **same release and the same language** of `twinembers.3dsx` (and the pack made from the ROM of that language): different builds never meet, on purpose.
+Online play needs no setup beyond the game when the release you downloaded has its relay built in. The releases use the author's public relay, `82.70.228.148:47311` (TCP; a small server in Marseille, France). Every player needs the **same release and the same language** of `twinembers.3dsx` (and the pack made from the ROM of that language): different builds never meet, on purpose.
 
 1. Put the console on Wi-Fi.
 2. OPTIONS, Settings page, *Multiplayer*: **Online** (the default).

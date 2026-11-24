@@ -2,7 +2,7 @@
 
 Online play needs one relay that every console can reach: `tools/wl_relay.py`, a small Python 3 program with no
 dependencies (protocol: [WL-RELAY-PROTOCOL.md](WL-RELAY-PROTOCOL.md)). It forwards sealed frames between the consoles of a room
-and never sees a room code, only a hash of it. A build made with `TWIN_RELAY=host:port` connects to that relay by default
+and never sees a room code, only a hash of it. The author runs a public one at `82.70.228.148:47311` (TCP; the releases are built with it, or one console can point at it with `relay=82.70.228.148:47311` in `online.cfg`). A build made with `TWIN_RELAY=host:port` connects to that relay by default
 and puts everyone in its public room; the MULTIPLAYER option (OPTIONS, Settings page) switches between Online and Local.
 
 ## What it costs to run

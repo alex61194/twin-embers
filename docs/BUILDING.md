@@ -45,7 +45,7 @@ A public release is built from a clean checkout with the real art and the relay 
 
 ```sh
 make -C build/upstream/3ds_port CLEAN_RELEASE=1 TWIN_EMBERS_VERSION=X.Y.Z PYTHON="$PY" \
-     TWIN_RELAY=PUBLIC-ADDRESS:47311 REQUIRE_RELAY=1 \
+     TWIN_RELAY=82.70.228.148:47311 REQUIRE_RELAY=1 \
      ICON_SRC=/path/to/icon48.png ICON_CROP=0 REQUIRE_ART=1 \
      FIRERED_ROM_REFERENCE=/path/to/your-rom.gba verify-clean-release
 ```
