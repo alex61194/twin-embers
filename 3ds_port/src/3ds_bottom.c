@@ -160,6 +160,7 @@ extern void CtrBattle_ChoiceAsk(int row);
 extern void CtrBattle_ChoicePrompt(char *out, int size);
 extern int CtrBattle_ChoiceWindowRect(int *x, int *y, int *w, int *h);
 extern int CtrOak_NamingHold(void);    /* the new game's naming screens (oak_speech.c, recipe 0263) */
+extern int CtrNaming_Hold(void);
 extern int CtrBattle_PartyPending(void);
 extern int CtrBottomParty_InBattle(void);
 extern int CtrBottomParty_Action(void);
@@ -5903,7 +5904,7 @@ void CtrBottom_Frame(void)
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold();   /* SAVE keeps TOP on the frozen frame */
+        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;

@@ -38,8 +38,9 @@ unsigned CtrTwinFontWidth(unsigned code) { return code < 256 && fontWidths[code]
 const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]) { (void)code; memset(out, 0, 64); return out; }
 unsigned CtrTwinJapaneseFontWidth(unsigned code) { (void)code; return 8; }
 static uint8_t smallFont[256 * 32];
+static uint8_t smallWidths[256];   /* the game's small font and its widths with PT_PREVIEW_SMALLFONT / PT_PREVIEW_SMALLWIDTHS (a viewing aid); else blank glyphs 5 wide */
 const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
-unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 5; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { return code < 256 && smallWidths[code] ? smallWidths[code] : 5; }
 
 /* Literal-only GBA LZ stream, freshly synthesized from the fixture bytes. */
 void *CtrData_Load(const char *path, uint32_t *len)
@@ -461,6 +462,8 @@ int main(int argc, char **argv)
         const char *dir=getenv("PT_PREVIEW_DIR"), *fp=getenv("PT_PREVIEW_FONT"), *wp=getenv("PT_PREVIEW_WIDTHS");
         if(dir && fp) { FILE *ff=fopen(fp,"rb"); assert(ff); assert(fread(font,1,sizeof(font),ff)==sizeof(font)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
         if(dir && wp) { FILE *ff=fopen(wp,"rb"); assert(ff); assert(fread(fontWidths,1,sizeof(fontWidths),ff)==sizeof(fontWidths)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
+        if(dir && getenv("PT_PREVIEW_SMALLFONT")) { FILE *ff=fopen(getenv("PT_PREVIEW_SMALLFONT"),"rb"); assert(ff); assert(fread(smallFont,1,sizeof(smallFont),ff)==sizeof(smallFont)); fclose(ff); }
+        if(dir && getenv("PT_PREVIEW_SMALLWIDTHS")) { FILE *ff=fopen(getenv("PT_PREVIEW_SMALLWIDTHS"),"rb"); assert(ff); assert(fread(smallWidths,1,sizeof(smallWidths),ff)==sizeof(smallWidths)); fclose(ff); }
         CtrPokeTouchView s={0}; CtrPokeTouchView before; s.selected=s.pressed=PT_NONE; s.optPressed=-1;
         for(int i=0;i<PT_COUNT;++i) s.enabled[i]=1;
         s.registeredItem=1; s.bikeItem=2; strcpy(s.playerName,"Rick"); s.playerX=s.playerY=-1;
@@ -507,11 +510,26 @@ int main(int argc, char **argv)
             old=b3;      /* the canvas holds the Bag now: the next update's old view is the one on the screen */
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
-            b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
+            {   /* the box's menu with FireRed's words (the last row, EXIT, is the dark one), the cursor on a middle row and on the last */
+                static const char *const w[4]={"Move","Summary","Release","Exit"};
+                memset(b2.box.menu,0xff,sizeof(b2.box.menu));
+                for(int i=0;i<4;++i) for(int n=0;w[i][n];++n) b2.box.menu[i][n]=(uint8_t)(w[i][n]>='a'?0xD5+(w[i][n]-'a'):0xBB+(w[i][n]-'A'));
+                b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
+                b2.box.menuCursor=3; update(&old,&b2); if(dir) ppm(dir,"box_menu_exit");
+                b2.box.pressed=ST_HIT_MENU_BASE+3; update(&old,&b2); if(dir) ppm(dir,"box_menu_exit_pressed"); b2.box.pressed=-1;
+            }
             b2.box.menuCursor=3; update(&old,&b2);
             b2.box.state=PT_BOX_STATE_YESNO; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_yesno");
             b2.box.state=PT_BOX_STATE_CHOOSE; b2.box.chooseCount=12; update(&old,&b2); if(dir) ppm(dir,"box_choose");
             b2.box.state=PT_BOX_STATE_MARKS; b2.box.marks=5; b2.box.menuCursor=1; update(&old,&b2); b2.box.menuCursor=5; update(&old,&b2); if(dir) ppm(dir,"box_marks");
+            {   /* the box's own words in the note (what pressing CLOSE BOX asks, a message that waits for a tap): readable on the white under the band */
+                const char *q="Continue Box operations"; int n=0;
+                memset(b2.box.message,0xff,sizeof(b2.box.message));
+                for(;q[n];++n) b2.box.message[n]=(uint8_t)(q[n]==' '?0x00:q[n]>='a'?0xD5+(q[n]-'a'):0xBB+(q[n]-'A'));
+                b2.box.state=PT_BOX_STATE_MESSAGE; update(&old,&b2); if(dir) ppm(dir,"box_message");
+                b2.box.state=PT_BOX_STATE_YESNO; b2.box.menuCursor=0; update(&old,&b2); if(dir) ppm(dir,"box_message_yesno");
+                b2.box.message[0]=0xff;
+            }
             b2.box.state=PT_BOX_STATE_BOX; b2.box.on=0; b2.name.on=1; b2.name.page=1; b2.name.cols=8; b2.name.maxChars=7; b2.name.len=3; b2.name.curCol=4; b2.name.curRow=1; b2.name.pressed=-1;
             memset(b2.name.key,0xff,sizeof(b2.name.key)); memset(b2.name.text,0xff,sizeof(b2.name.text));
             for(int r=0;r<3;++r) for(int c=0;c<8;++c) b2.name.key[r][c]=(uint8_t)(0xbb+r*8+c);

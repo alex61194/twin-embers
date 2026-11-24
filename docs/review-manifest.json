@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "e6d9f88c283d63ccb906c05e4d7177e9a1e6b2aae44f257ccf7203d5efdba2d5",
+   "sha256": "31ed481c70ab8e3d5e43e418faf0e1e683fc73788348388fa4c90ecdf1e81e1c",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2199,7 +2199,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "2519b6c2fbdd8a71e370b003c54bb63793db7be0b195ad29bc2c38aa6695e266"
+   "sha256": "e893e6fdf7d69161e6fb6bf83a33b06e01ab93ead40b474e2131c453445ae8c4"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "e28dd4c23eb34487a8dea29e8afcdf059f8fb59ad810d75789fba22eddc05d90",
+   "sha256": "b7ab5aa14ffccbbbe17b069b0b80de90ec488d9b818f0fd0f70905921e5c98b5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7907,6 +7907,22 @@
   {
    "path": "3ds_port/src/3ds_ball_pieces_impl.h",
    "sha256": "c2eb70525fee385975862d5b487116778c888b36c9d97155681467dedf32eda8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0279-naming-screen-holds-the-top.json",
+   "sha256": "f5b2a855ca7f904c506933c5ad5e18f82c4c9af7361bd7b1d85d150f2e96cff3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_naming_recipe.py",
+   "sha256": "ea02ec92faaa42b28e8874caf2a8f92346b8273b5b06e1ba96378104ebd455cd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
