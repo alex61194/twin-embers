@@ -11,6 +11,7 @@
 
 static CtrDataBackend sBackend = CTR_DATA_NONE;
 static const char *sIndex;
+static const char *sSurfIndex;          /* graphics/gen4/surfmon/index.bin of the synthetic pack, NULL: the pack has none */
 static unsigned sLoads, sChanged, sWalkLoads;
 
 CtrDataBackend CtrData_GetBackend(void)
@@ -37,6 +38,13 @@ void *CtrData_Load(const char *path, uint32_t *outSize)
         *outSize = 40 + 2 * CTR_LOOK_WALK_BYTES;
         ++sWalkLoads;
         return entry;
+    }
+    if (strcmp(path, "graphics/gen4/surfmon/index.bin") == 0 && sSurfIndex)
+    {
+        copy = malloc(strlen(sSurfIndex));
+        memcpy(copy, sSurfIndex, strlen(sSurfIndex));
+        *outSize = (uint32_t)strlen(sSurfIndex);
+        return copy;
     }
     if (strcmp(path, "graphics/gen4/look/index.bin") == 0)
         ++sLoads;                       /* the index is read once; the pictures are counted apart */
@@ -96,6 +104,25 @@ int main(void)
     CtrSettings_SetLook(CTR_LOOK_RED, "gone");
     assert(CtrLooks_Chosen(CTR_LOOK_RED) == -1 && strcmp(CtrSettings_Look(CTR_LOOK_RED), "gone") == 0);
 
+    /* The Pokemon to surf on, read from graphics/gen4/surfmon/index.bin (once, so this is the pack that has them: a pack made without them has none, and
+     * OPTIONS' row says "No data"): the list in its order, the choice kept in the settings, told to the drawing code, and a name the pack lacks is none. */
+    sSurfIndex = "G4S1\nlapras\tLAPRAS\tBy eMMe97\nlatias\tLATIAS\tBy Nolo33LP\nbroken\n";
+    assert(CtrSurf_Count() == 2 && strcmp(CtrSurf_Id(1), "latias") == 0 && strcmp(CtrSurf_Name(0), "LAPRAS") == 0 && strcmp(CtrSurf_Credit(1), "By Nolo33LP") == 0);
+    assert(CtrSurf_Chosen() == -1 && CtrSettings_Look(CTR_LOOK_SURF)[0] == 0);
+    {
+        unsigned before = sChanged;
+
+        CtrSurf_Choose(1);
+        assert(CtrSurf_Chosen() == 1 && strcmp(CtrSettings_Look(CTR_LOOK_SURF), "latias") == 0 && sChanged == before + 1);
+        CtrSurf_Choose(0);
+        assert(CtrSurf_Chosen() == 0 && sChanged == before + 2);
+        CtrSurf_Choose(-1);
+        assert(CtrSurf_Chosen() == -1 && CtrSettings_Look(CTR_LOOK_SURF)[0] == 0);
+        CtrSurf_Choose(7);                                                   /* not one the pack has: none */
+        assert(CtrSurf_Chosen() == -1);
+        CtrSettings_SetLook(CTR_LOOK_SURF, "gone");
+        assert(CtrSurf_Chosen() == -1);
+    }
     remove(CTR_SETTINGS_PATH);
     puts("looks_test ok");
     return 0;

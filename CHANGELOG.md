@@ -42,6 +42,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 ### Fixed
 
 - **Online play**: a sealed frame that the relay (or anyone on the way) sends a second time is no longer delivered twice, and a console whose line to the relay has gone silent for 45 seconds (Wi-Fi lost, a relay that hung) now closes the link by itself so the game can say so, instead of waiting for minutes.
+- OPTIONS' *Surf Pokemon* row says **No data** when the pack was made without the Builder's surf blobs (*More characters to be*), instead of showing *Default* and ignoring every touch as if it were broken; a pack made with them lists them as before. The choice itself is now covered by a host test.
 - In the Poke Ball style the Summary's BACK button (and the arrows of the Bag's and the Pokédex's close buttons) were white on a white pill and could not be read; they take the pill's own ink now.
 
 - HOME's status panel no longer stays open when a battle or a menu starts while it is up. After loading a game with a Repel in force, the plate and the bar read the right kind (before it always read the plain Repel, so a Super or Max Repel showed a full bar).

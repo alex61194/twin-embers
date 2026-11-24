@@ -108,7 +108,8 @@ static void SurfNamesFill(void)
 {
     int n = CtrSurf_Count();
 
-    sSurfNames[0] = CTR_TR("Default", "Normal", "Standard");
+    /* A pack made without the Builder's surf blobs has none to choose: the row says so instead of looking as if a touch did nothing. */
+    sSurfNames[0] = n ? CTR_TR("Default", "Normal", "Standard") : CTR_TR("No data", "Sin datos", "Keine Daten");
     for (int i = 0; i < n; ++i)
         sSurfNames[1 + i] = CtrSurf_Name(i);
 }
