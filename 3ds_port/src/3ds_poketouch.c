@@ -1808,8 +1808,13 @@ static void HomeBack(void)
     TsBgRect(r->x, r->y, r->w, r->h + 2);
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, &kEmGrey, BTN_DEPTH, 0);
-    LlArrow(r->x + 8, fy + (fh - 10) / 2, 6, 10, 2, kEmGrey.ink);
-    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck"), r->x + 18, fy + (fh - UI_TEXT_H) / 2, kEmGrey.ink, kEmGrey.inkSh, 1, r->x + r->w - 2);
+    {
+        const char *word = CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck");
+        int x = sStyleBall ? r->x + (r->w - (10 + UiTextWidth(word, 1))) / 2 : r->x + 8;    /* Poke Ball: the arrow and the word centred */
+
+        LlArrow(x, fy + (fh - 10) / 2, 6, 10, 2, kEmGrey.ink);
+        UiText(word, x + 10, fy + (fh - UI_TEXT_H) / 2, kEmGrey.ink, kEmGrey.inkSh, 1, r->x + r->w - 2);
+    }
 }
 
 /* The status plate: the money, and the turbo on a chip at its right. */
@@ -1928,7 +1933,7 @@ static void ZoneSlot(int x, int species, int flags)
 
 static void HomeNote(const CtrPokeTouchView *v)
 {
-    int right = HN_X + HN_W - 10, titleRight = right;
+    int right = HN_X + HN_W - (sStyleBall ? 12 : 10), titleRight = right;   /* Poke Ball: FLY as far from the right edge as the name from the left */
     const char *line = NULL;
     int zones = v->zoneN > PT_ZONE_MAX ? PT_ZONE_MAX : v->zoneN;
     const int dy = sStyleBall ? 3 : 0;                  /* the Poke Ball note is the white under a dark band: what is in it sits lower */
