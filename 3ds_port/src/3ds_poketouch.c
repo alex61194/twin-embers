@@ -1588,8 +1588,6 @@ static void Button(int id, const CtrPokeTouchView *v)
     const EmPal *pal = !on ? &kEmGrey : id == PT_RUN ? &kEmCream : LlPick(selected, &kEmCream);
     int fy, fh = r->h - COL_DEPTH;
 
-    if (sStyleBall && on && (id == PT_REGISTERED || id == PT_BIKE))
-        pal = &kEmFlame;                                /* Poke Ball: the X and Y keys are white, their letter red */
 
     TsBgRect(area.x, area.y, area.w, area.h);
     if (selected && id != PT_RUN && on)
@@ -1602,9 +1600,10 @@ static void Button(int id, const CtrPokeTouchView *v)
     case PT_BIKE: {
         const char *key = id == PT_REGISTERED ? "X" : "Y";
 
-        if (sStyleBall)
-            UiText(key, r->x + 8, fy + 3, BL_REDTXT, BL_WHITE, 1, r->x + r->w - 3);
-        else
+        if (sStyleBall) {                               /* Poke Ball: the key is red; only the tab that was blue is white, its letter red */
+            LlRibbonBox(r->x + 1, fy + 1, UiTextWidth(key, 1) + 18, 11, 7, LL_TL, BL_WHITE, UI_RGB(244, 236, 236), "");
+            UiText(key, r->x + 1 + (UiTextWidth(key, 1) + 18 - UiTextWidth(key, 1)) / 2 - 2, fy + 1, BL_REDTXT, BL_WHITE, 1, r->x + r->w - 3);
+        } else
             LlRibbonBox(r->x + 1, fy + 1, UiTextWidth(key, 1) + 18, 11, 7, LL_TL, LL_BLUE_TOP, LL_BLUE_BOT, key);
         {
             int wellY = fy + (sLayoutHome ? 13 : 15), wellH = fh - (sLayoutHome ? 14 : 18);
@@ -1893,7 +1892,7 @@ static void ZoneSlot(int x, int species, int flags)
     static unsigned short pal[16];
     static uint8_t px[32 * 32];
     static uint16_t pal565[16];
-    int y = HN_Y + 3;
+    int dy = sStyleBall ? 3 : 0, y = HN_Y + 3 + dy;     /* the Poke Ball note is the white under a dark band: its middle is lower */
 
     UiRoundFill(x, y, 32, 28, 5, UI_RGB(196, 184, 158));
     UiRoundFill(x + 1, y + 1, 30, 26, 4, UI_RGB(238, 230, 212));
@@ -1904,7 +1903,7 @@ static void ZoneSlot(int x, int species, int flags)
     if (CtrPokeTouch_MonIcon((unsigned)species, 0, 0, tiles, pal)) {
         FDTiles(tiles, 32, 32, px);
         FDPal(pal, pal565);
-        UiImage(px, pal565, 32, 32, 32, x, HN_Y + 1, 1, 1);
+        UiImage(px, pal565, 32, 32, 32, x, HN_Y + 1 + dy, 1, 1);
     }
     if (flags & 2) {
         UiRoundFill(x + 24, y + 1, 7, 7, 3, UI_RGB(90, 20, 14));
@@ -1918,6 +1917,7 @@ static void HomeNote(const CtrPokeTouchView *v)
     int right = HN_X + HN_W - 10, titleRight = right;
     const char *line = NULL;
     int zones = v->zoneN > PT_ZONE_MAX ? PT_ZONE_MAX : v->zoneN;
+    const int dy = sStyleBall ? 3 : 0;                  /* the Poke Ball note is the white under a dark band: what is in it sits lower */
 
     sFlyButton.w = 0;
     TsBgRect(sHomeNote.x, sHomeNote.y, sHomeNote.w, sHomeNote.h);
@@ -1932,8 +1932,8 @@ static void HomeNote(const CtrPokeTouchView *v)
         if (pw < 40)
             pw = 40;
         px = right - pw;
-        fy = EmButton(px, HN_Y + 8, pw, 18, &kEmFlame, 1, 0);
-        sFlyButton = (CtrPokeTouchRect){(int16_t)px, HN_Y + 8, (int16_t)pw, 18};
+        fy = EmButton(px, HN_Y + 8 + dy, pw, 18, &kEmFlame, 1, 0);
+        sFlyButton = (CtrPokeTouchRect){(int16_t)px, (int16_t)(HN_Y + 8 + dy), (int16_t)pw, 18};
         EmLabel(fly, px, pw, fy, 17, &kEmFlame);
         titleRight = px - 4;
     }
@@ -1962,19 +1962,20 @@ static void HomeNote(const CtrPokeTouchView *v)
 
             line = CTR_TR("National Poké" "dex", "Poké" "dex Nacional", "Nationaler Poké" "dex");
             snprintf(count, sizeof(count), "%u / 386", dex);
-            SmallText(CTR_TR("Caught", "Capturados", "Gefangen"), bx, HN_Y + 1, EM_DIM, EM_DARK_SH, right);
-            SmallText(count, right - SmallWidth(count), HN_Y + 1, EM_DARK, EM_DARK_SH, right);
-            UiRoundFill(bx, HN_Y + 20, bw, 6, 3, LL_SLATE);
+            SmallText(CTR_TR("Caught", "Capturados", "Gefangen"), bx, HN_Y + 1 + dy, EM_DIM, EM_DARK_SH, right);
+            SmallText(count, right - SmallWidth(count), HN_Y + 1 + dy, EM_DARK, EM_DARK_SH, right);
+            UiRoundFill(bx, HN_Y + 20 + dy, bw, 6, 3, LL_SLATE);
             if (dex)
-                Fill(bx + 2, HN_Y + 22, (bw - 4) * (int)dex / 386, 2, UI_RGB(96, 214, 120));
+                Fill(bx + 2, HN_Y + 22 + dy, (bw - 4) * (int)dex / 386, 2, UI_RGB(96, 214, 120));
             titleRight = bx - 6;
         }
     }
     if (line) {
-        Em2Text(v->bar[0], HN_X + 12, HN_Y + 5, EM_DARK, EM_DARK_SH, titleRight);
-        SmallText(line, HN_X + 12, HN_Y + 17, EM_DIM, EM_DARK_SH, titleRight);
+        Em2Text(v->bar[0], HN_X + 12, HN_Y + 5 + dy + (sStyleBall ? 2 : 0), EM_DARK, EM_DARK_SH, titleRight);
+        SmallText(line, HN_X + 12, HN_Y + 17 + dy + (sStyleBall ? 2 : 0), EM_DIM, EM_DARK_SH, titleRight);
     } else if (v->bar[0][0]) {
-        Em2Text(v->bar[0], HN_X + 12, HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
+        /* the name alone: in the middle of the note (the Poke Ball one starts under its 4 px band) */
+        Em2Text(v->bar[0], HN_X + 12, sStyleBall ? HN_Y + 4 + (H - HN_Y - 4 - UI_TEXT_H) / 2 : HN_Y + (HN_H - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, titleRight);
     }
 }
 
