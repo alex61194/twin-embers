@@ -27,8 +27,8 @@ file's size and SHA-256 against the list pinned in `builder/firered3ds_builder/`
   and Aang were added on 2026-11-16 from Emerald Lens 1.1.1; their artists are named in their credit, and Elvie's
   permission covers these three too (reported by alex61194, 2026-11-17).
   Hilbert, Hilda, Nate and Rosa (HGSS style, by DiegoWT) and Red RGBY (by hyo, based on Poffin_Case's overworlds) were added on
-  2026-11-23 from Emerald Lens 1.2.0 (commit 67a25e2); nothing already pinned changed. **Elvie's permission for these five is not
-  recorded yet: it has to be asked and written here before a release carries them.** The two LIBERTY looks of 1.2.0 (by tebited15, from
+  2026-11-23 from Emerald Lens 1.2.0 (commit 67a25e2); nothing already pinned changed. Elvie's permission covers these five too
+  (reported by alex61194, 2026-11-24). The two LIBERTY looks of 1.2.0 (by tebited15, from
   LibertyTwins) are not included.
 - **What the Builder does:** with `--alt-looks` it downloads each look's FireRed/LeafGreen sheets at the pinned commit,
   checks them by size and SHA-256 and puts them in the user's own pack (`graphics/gen4/look/<look>/`), for the player to
