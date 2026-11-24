@@ -1789,15 +1789,10 @@ static int IsHome(const CtrPokeTouchView *v)
         && !v->relearn.on && !v->mail.on && !v->choice.on && !v->box.on && !v->bag.on;
 }
 
-/* The RUN shoe on the Poke Ball style's dark-red pill: its dark blue-grey body is white, its laces dark red and its red parts yellow, so that it shows. */
+/* The RUN shoe on the Poke Ball style's dark-red pill: only its red parts are yellow (its blue-grey body and white laces are as they were). */
 static uint16_t BallShoeColour(uint16_t c)
 {
     switch (c) {
-    case 0x424d: return UI_RGB(248, 244, 240);          /* the body */
-    case 0x6bb1: return UI_RGB(214, 196, 196);          /* the sole's shade */
-    case 0x52ad: return UI_RGB(176, 150, 150);
-    case 0xc63b: return UI_RGB(236, 220, 220);
-    case 0xffdf: return UI_RGB(150, 22, 26);            /* the laces */
     case 0xe1c6: return UI_RGB(255, 214, 64);           /* red: yellow */
     case 0xfc0d: return UI_RGB(255, 232, 120);
     case 0xa904: return UI_RGB(200, 150, 10);
@@ -1862,17 +1857,8 @@ static void HomeStatus(const CtrPokeTouchView *v)
     SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 2);
     Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, chipX - 2);
     snprintf(turbo, sizeof(turbo), "x%u", v->homeTurbo > 1 ? (unsigned)v->homeTurbo : 1u);
-    if (sStyleBall) {                                   /* Poke Ball: a yellow chip, its word dark red (brighter while the turbo is on) */
-        uint16_t face = v->homeTurbo > 1 ? UI_RGB(255, 232, 120) : UI_RGB(255, 208, 52);
-        int tw = UiTextWidth(turbo, 1);
-
-        UiRoundFill(chipX, r->y + 9, chipW, 17, 6, UI_RGB(176, 124, 8));
-        UiRoundFill(chipX + 2, r->y + 11, chipW - 4, 13, 4, face);
-        UiText(turbo, chipX + (chipW - tw) / 2, r->y + 9 + (17 - UI_TEXT_H) / 2, UI_RGB(130, 20, 24), face, 1, chipX + chipW - 2);
-    } else {
-        fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
-        EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
-    }
+    fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
+    EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
 }
 
 /* The clock plate: a small dial and the time of day. */
