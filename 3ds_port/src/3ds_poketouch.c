@@ -1697,6 +1697,10 @@ static void MapRestoreRect(const CtrPokeTouchRect *r, CtrDirtyList *dirty);
  * plate (the money and the turbo), the clock and RUN in the top band, the column split in the two side bands, the note under the map. */
 static const CtrPokeTouchRect sHomeBack = {4, 2, 58, 33};
 static const CtrPokeTouchRect sHomeStatus = {65, 2, 116, 33};
+/* The Poke Ball style's HOME has no BACK (there is nothing to go back from there): its plate takes BACK's place too and shows the money and the turbo
+ * and, while one is in force, the Repel at the same time. sHomeWide says that HOME, with this plate, is what is on the screen (for its touch). */
+static const CtrPokeTouchRect sHomeStatusWide = {4, 2, 177, 33};
+static int sHomeWide;
 static const CtrPokeTouchRect sHomeClock = {184, 2, 58, 33};
 static const CtrPokeTouchRect sHomeMapArea = {PT_HOME_X - 3, PT_HOME_Y - 3, PT_VIEW_W + 6, PT_VIEW_H + 6};
 static const CtrPokeTouchRect sHomeNote = {0, 203, W, H - 203};   /* below the map's frame (its last row is 202) */
@@ -1883,6 +1887,54 @@ static void HomeStatus(const CtrPokeTouchView *v)
     EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
 }
 
+/* The Poke Ball HOME's wide plate: the money on the left, the Repel in force (its icon, the steps it has left and a bar) in the middle, the turbo's chip
+ * at the right; with no Repel the money has the plate to itself. A tap on it opens the panel, as on the narrow one. */
+static void HomeStatusWide(const CtrPokeTouchView *v)
+{
+    const CtrPokeTouchRect *r = &sHomeStatusWide;
+    char money[24], turbo[8], steps[24];
+    unsigned m = v->homeMoney;
+    int chipW = 26, chipX = r->x + r->w - chipW - 5, moneyRight = v->homeRepelSteps ? r->x + 62 : chipX - 2, fy;
+
+    TsBgRect(r->x, r->y, r->w, r->h + 2);
+    LlWindow(r->x, r->y, r->w, r->h);
+    {
+        int cx = v->homeRepelSteps ? r->x + 32 : r->x + r->w / 2;   /* the plate opens the panel: the chevron at its lower edge, under the money when the Repel's bar is there */
+
+        for (int i = 0; i < 3; ++i)
+            Fill(cx - 3 + i, r->y + r->h - 5 + i, 7 - 2 * i, 1, BL_REDTXT);
+    }
+    if (m >= 1000000)
+        snprintf(money, sizeof(money), "%u.%03u.%03u", m / 1000000, m / 1000 % 1000, m % 1000);
+    else if (m >= 1000)
+        snprintf(money, sizeof(money), "%u.%03u", m / 1000, m % 1000);
+    else
+        snprintf(money, sizeof(money), "%u", m);
+    SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, moneyRight);
+    Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, moneyRight);
+    if (v->homeRepelSteps) {
+        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
+                                              CTR_TR("Max Repel", "M\xC3\xA1x. Rep.", "Top-Schutz")};
+        int kind = v->homeRepelKind > 2 ? 0 : v->homeRepelKind, x = r->x + 68, textX = x + 24, barW = chipX - 4 - textX;
+        int total = v->homeRepelTotal ? v->homeRepelTotal : v->homeRepelSteps, fill;
+
+        Fill(r->x + 64, r->y + 6, 1, r->h - 12, UI_RGB(230, 224, 224));      /* a hairline between the money and the Repel */
+        ItemArt(ICON_REPEL + kind, v->homeRepelItem[kind], x, r->y + 6, 1);
+        SmallText(kName[kind], textX, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 4);
+        snprintf(steps, sizeof(steps), CTR_TR("%u steps", "%u pasos", "%u Schritte"), (unsigned)v->homeRepelSteps);
+        Em2Text(steps, textX, r->y + 13, EM_DARK, EM_DARK_SH, chipX - 4);
+        fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
+        if (fill > barW)
+            fill = barW;
+        UiRoundFill(textX, r->y + 27, barW, 3, 1, UI_RGB(120, 16, 20));
+        if (fill > 0)
+            Fill(textX + 1, r->y + 28, fill > 2 ? fill - 2 : fill, 1, UI_RGB(96, 214, 120));
+    }
+    snprintf(turbo, sizeof(turbo), "x%u", v->homeTurbo > 1 ? (unsigned)v->homeTurbo : 1u);
+    fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
+    EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
+}
+
 /* The clock plate: a small dial and the time of day. */
 static void HomeClock(const CtrPokeTouchView *v)
 {
@@ -2045,7 +2097,7 @@ bool CtrPokeTouch_HomeLayout(void)
 
 bool CtrPokeTouch_HomeStatusHit(int x, int y)
 {
-    const CtrPokeTouchRect *r = &sHomeStatus;
+    const CtrPokeTouchRect *r = sHomeWide ? &sHomeStatusWide : &sHomeStatus;
 
     return x >= r->x && y >= r->y && x < r->x + r->w && y < r->y + r->h + 2;
 }
@@ -2128,8 +2180,13 @@ static void HomeDraw(const CtrPokeTouchView *v)
 {
     SetLayout(1);
     Frame();
-    HomeBack();
-    HomeStatus(v);
+    sHomeWide = sStyleBall;
+    if (sHomeWide)
+        HomeStatusWide(v);                              /* Poke Ball: no BACK on HOME, the plate takes its place */
+    else {
+        HomeBack();
+        HomeStatus(v);
+    }
     HomeClock(v);
     HomeMapDraw(v);
     HomeNote(v);
@@ -2183,9 +2240,12 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
     }
     if (old->homeMoney != v->homeMoney || old->homeTurbo != v->homeTurbo || old->homeRepelSteps != v->homeRepelSteps
         || old->homeRepelKind != v->homeRepelKind) {
-        CtrPokeTouchRect r = Under(&sHomeStatus);
+        CtrPokeTouchRect r = Under(sHomeWide ? &sHomeStatusWide : &sHomeStatus);
 
-        HomeStatus(v);
+        if (sHomeWide)
+            HomeStatusWide(v);
+        else
+            HomeStatus(v);
         Mark(dirty, &r);
     }
     if (old->homeClock != v->homeClock) {
@@ -2356,6 +2416,7 @@ static void MenuChrome(const CtrPokeTouchView *v)
 {
     SetLayout(1);
     Frame();
+    sHomeWide = 0;
     if (v->backVisible)
         BackTop(v);
     else

@@ -1010,7 +1010,7 @@ int main(int argc, char **argv)
         { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"ROUTE 24"); z.homeMoney=8200; z.homeTurbo=2;
           for(int k=0;k<3;++k){ z.homeRepelItem[k]=(uint16_t)(1+k); z.homeRepelHave[k]=(uint16_t)(4-2*k); }
           update(&old,&z); assert(CtrPokeTouch_HomeLayout());
-          assert(CtrPokeTouch_HomeStatusHit(70,10) && !CtrPokeTouch_HomeStatusHit(10,10));
+          assert(CtrPokeTouch_HomeStatusHit(70,10) && CtrPokeTouch_HomeStatusHit(10,10)==(sStyleBall!=0) && !CtrPokeTouch_HomeStatusHit(190,10));   /* the Poke Ball plate takes BACK's place on HOME */
           z.homePanel=1; update(&old,&z); if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_panel");
           assert(CtrPokeTouch_HomePanelHit(100,60)==PT_PANEL_NONE && CtrPokeTouch_HomePanelHit(20,120)==PT_PANEL_OUT);
           { int seen[7]={0}; for(int y=44;y<192;++y) for(int x=44;x<276;++x){ int t=CtrPokeTouch_HomePanelHit(x,y);
