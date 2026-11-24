@@ -1578,6 +1578,8 @@ static int ColumnIcon(int id)
 /* A button: cream, flame and ringed when selected (the screen shown, or the running mode on), sunk when pressed, grey when it cannot be used.
  * The column's carry their icon and label (the Trainer Card the player's name), the shortcuts their key on a blue ribbon and their item in
  * its well, RUN its switch. */
+static uint16_t BallShoeColour(uint16_t c);
+
 static void Button(int id, const CtrPokeTouchView *v)
 {
     const CtrPokeTouchRect *r = &gCtrPokeTouchRects[id];
@@ -1619,7 +1621,8 @@ static void Button(int id, const CtrPokeTouchView *v)
         for (int v2 = 0; v2 < FLATSHOESMALL_H; ++v2)
             for (int u = 0; u < FLATSHOESMALL_W; ++u)
                 if (kFlatShoeSmall[v2 * FLATSHOESMALL_W + u])
-                    Px(r->x + 5 + u, fy + (fh - FLATSHOESMALL_H) / 2 + v2, kFlatShoeSmall[v2 * FLATSHOESMALL_W + u]);
+                    Px(r->x + 5 + u, fy + (fh - FLATSHOESMALL_H) / 2 + v2,
+                       sStyleBall ? BallShoeColour(kFlatShoeSmall[v2 * FLATSHOESMALL_W + u]) : kFlatShoeSmall[v2 * FLATSHOESMALL_W + u]);
         LhSwitch(r->x + 34, fy + (fh - 15) / 2, selected);
         break;
     default: {
@@ -1786,6 +1789,22 @@ static int IsHome(const CtrPokeTouchView *v)
         && !v->relearn.on && !v->mail.on && !v->choice.on && !v->box.on && !v->bag.on;
 }
 
+/* The RUN shoe on the Poke Ball style's dark-red pill: its dark blue-grey body is white, its laces dark red and its red parts yellow, so that it shows. */
+static uint16_t BallShoeColour(uint16_t c)
+{
+    switch (c) {
+    case 0x424d: return UI_RGB(248, 244, 240);          /* the body */
+    case 0x6bb1: return UI_RGB(214, 196, 196);          /* the sole's shade */
+    case 0x52ad: return UI_RGB(176, 150, 150);
+    case 0xc63b: return UI_RGB(236, 220, 220);
+    case 0xffdf: return UI_RGB(150, 22, 26);            /* the laces */
+    case 0xe1c6: return UI_RGB(255, 214, 64);           /* red: yellow */
+    case 0xfc0d: return UI_RGB(255, 232, 120);
+    case 0xa904: return UI_RGB(200, 150, 10);
+    default: return c;
+    }
+}
+
 static void HomeBack(void)
 {
     const CtrPokeTouchRect *r = &sHomeBack;
@@ -1843,8 +1862,17 @@ static void HomeStatus(const CtrPokeTouchView *v)
     SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 2);
     Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, chipX - 2);
     snprintf(turbo, sizeof(turbo), "x%u", v->homeTurbo > 1 ? (unsigned)v->homeTurbo : 1u);
-    fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
-    EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
+    if (sStyleBall) {                                   /* Poke Ball: a yellow chip, its word dark red (brighter while the turbo is on) */
+        uint16_t face = v->homeTurbo > 1 ? UI_RGB(255, 232, 120) : UI_RGB(255, 208, 52);
+        int tw = UiTextWidth(turbo, 1);
+
+        UiRoundFill(chipX, r->y + 9, chipW, 17, 6, UI_RGB(176, 124, 8));
+        UiRoundFill(chipX + 2, r->y + 11, chipW - 4, 13, 4, face);
+        UiText(turbo, chipX + (chipW - tw) / 2, r->y + 9 + (17 - UI_TEXT_H) / 2, UI_RGB(130, 20, 24), face, 1, chipX + chipW - 2);
+    } else {
+        fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
+        EmLabel(turbo, chipX, chipW, fy, 15, v->homeTurbo > 1 ? &kEmFlame : &kEmCream);
+    }
 }
 
 /* The clock plate: a small dial and the time of day. */
@@ -1934,7 +1962,7 @@ static void HomeNote(const CtrPokeTouchView *v)
         px = right - pw;
         fy = EmButton(px, HN_Y + 8 + dy, pw, 18, &kEmFlame, 1, 0);
         sFlyButton = (CtrPokeTouchRect){(int16_t)px, (int16_t)(HN_Y + 8 + dy), (int16_t)pw, 18};
-        EmLabel(fly, px, pw, fy, 17, &kEmFlame);
+        EmLabel(fly, px, pw, fy + (sStyleBall ? 1 : 0), 17, &kEmFlame);   /* the flat pill's text was a pixel high */
         titleRight = px - 4;
     }
     if (zones && !v->flyOk) {
