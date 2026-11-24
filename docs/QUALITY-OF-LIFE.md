@@ -132,6 +132,8 @@ player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
 
 ## The touch screen's ember look
 
+(History: this was the lower screen's look until 0.7.0. Since then the Poke Ball style is the only one: OPTIONS has no STYLE or EMBERS row, and the sparks are not drawn. The code below still draws pieces the Poke Ball style reuses.)
+
 The lower screen's field menus wear the owner's modern design (DS/3DS-era raised buttons on a red ember
 backdrop, from the mockups the owner approved): the START column as cream buttons with an icon
 and FireRed's lettering (amber and glowing for the screen shown), the X and Y tiles with their badge, RUN

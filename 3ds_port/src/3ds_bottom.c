@@ -5985,8 +5985,8 @@ void CtrBottom_Frame(void)
             PlateFill(&state.touch);
         CtrVideo_SetBottomViewportOrigin(state.touch.pictureHome ? PT_HOME_X : PT_VIEW_X, state.touch.pictureHome ? PT_HOME_Y : PT_VIEW_Y);
     }
-    if (CtrPokeTouch_Style() != CtrSettings_Style()) {
-        CtrPokeTouch_SetStyle(CtrSettings_Style());   /* OPTIONS > STYLE changed: every piece is drawn again */
+    if (CtrPokeTouch_Style() != 1) {
+        CtrPokeTouch_SetStyle(1);                     /* the Poke Ball style is the only one (a style=0 kept by an older build is not read) */
         sForceRedraw = 1;
     }
     if (sForceRedraw || !sHaveShown || memcmp(&state, &sShown, sizeof(state)) != 0) {

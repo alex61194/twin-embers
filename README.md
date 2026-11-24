@@ -32,7 +32,7 @@ It is a native ARM11 program, not a GBA emulator wrapped in a launcher. It has n
 
 - **Online play (test).** The Union Room and the Wireless Club (trades, battles, chat) work between consoles over the internet, through a relay that only passes sealed frames on, or nearby with the 3DS radio. OPTIONS, Settings: *Multiplayer* (Online or Local) and *Online room* (the public room, or a private room of a 16-digit code for playing with your friends only). See [Playing online](#playing-online-test).
 - **Wireless screens on the lower screen.** The Union Room lists, the trade's choice of a Pokémon and the chat keyboard are drawn on the lower screen; the trade itself plays on the upper one.
-- **A choice of lower-screen look.** OPTIONS, Graphics, *Style*: Poke Ball (a plain red with white pills; the default) or Embers (the red look with sparks). The Bag, shops, choices, OPTIONS, SAVE, the Trainer Card and the Pokédex use the whole lower screen.
+- **The Poke Ball look on the lower screen.** A plain red with white and dark-red pills and white notes under a dark band. The Bag, shops, choices, OPTIONS, SAVE, the Trainer Card, the Pokédex, the PC boxes, the naming keyboard and the move screens use the whole lower screen; HOME keeps the map in the middle. (The earlier Embers look, with its sparks, is no longer offered.)
 - **HOME, rebuilt.** The map sits in the middle of the lower screen with the menu in columns on both sides; the menus share that layout.
 
 **In v0.6.0:**
@@ -155,7 +155,7 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 ### Settings
 
-OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the rising EMBERS, the optional looks, the visible wild Pokémon and the Nuzlocke rules.
+OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the optional looks, the visible wild Pokémon and the Nuzlocke rules.
 
 <img src="docs/media/17-options-1.png" width="300" alt="Options, Settings: FireRed's own options"> <img src="docs/media/18-options-2.png" width="300" alt="Options, Graphics: frame, FPS counter, day and night, hour, embers and companion">
 

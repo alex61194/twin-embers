@@ -33,7 +33,6 @@ static const char *const sHourName[HOUR_COUNT] = {
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
     "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
 };
-static const char *const sEmbers[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Low", "Bajo", "Wenig"), CTR_TR("High", "Alto", "Viel")};     /* CTR_EMBERS_* */
 /* EXP SHARE: who gets experience (HALF: the whole team shares as if each held an EXP. SHARE; FULL: every Pokemon that can
  * still fight gets the share of one that fought). */
 static const char *const sRandTargetName[] = {CTR_TR("Both", "Ambos", "Beide"), CTR_TR("Wild", "Salvajes", "Wilde"), CTR_TR("Trainers", "Rivales", "Trainer")};
@@ -43,8 +42,6 @@ static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half
 static const char *const sMultiplayer[] = {CTR_TR("Online", "Online", "Online"), CTR_TR("Local", "Local", "Lokal")};
 /* ONLINE ROOM: the relay's public room, or the private room of a six-digit code (typed on the keypad). */
 static const char *const sRoomKind[] = {CTR_TR("Public", "P\xC3\xBA" "blica", "\xC3\x96" "ffentlich"), CTR_TR("Private", "Privada", "Privat")};
-/* STYLE: the lower screen's look: Embers (the red one with sparks) or Poke Ball (flat red and white, a dark band between). */
-static const char *const sStyleName[] = {CTR_TR("Embers", "Ascuas", "Funken"), CTR_TR("Poke Ball", "Pok\xC3\xA9" "bola", "Pok\xC3\xA9" "ball")};
 static const char *const sCompanion[] ={CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
 
 /* WILD POKEMON, WILD DISPLAY and AGGRESSIVE (the Wilds page): the visible wild Pokemon of the overworld (3ds_wilds_core.h). */
@@ -295,14 +292,6 @@ static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
-static int GetStyle(void) { return CtrSettings_Style(); }
-static void SetStyle(int v) { CtrSettings_SetStyle(v & 1); }     /* 3ds_bottom.c hands it to the drawer on the next frame */
-static int GetEmbers(void) { return sPortEmbers; }
-static void SetEmbers(int v)
-{
-    sPortEmbers = v < 0 || v >= CTR_EMBERS_COUNT ? CTR_EMBERS_HIGH : v;
-    CtrSettings_SetEmbers(sPortEmbers);     /* kept for the next session; the file is written only on a change */
-}
 
 int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
 int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
@@ -417,17 +406,13 @@ static const CtrOptionRow sRows[] = {
      CTR_TR("Local: someone nearby.", "Local: alguien cerca.", "Lokal: jemand nahebei.")}, 0, sMultiplayer, NULL, GetLocalPlay, TwoCount, SetLocalPlay},
     {CTR_TR("Online room", "Sala online", "Online-Raum"), {CTR_TR("Public: everyone online.", "P\xC3\xBA" "blica: todos online.", "\xC3\x96" "ffentlich: alle online."),
      CTR_TR("Private: a shared code.", "Privada: con un c\xC3\xB3" "digo.", "Privat: mit einem Code.")}, 0, sRoomKind, NULL, GetRoomKind, TwoCount, SetRoomKind},
-    /* Graphics, page 1: the screen and what moves on it. */
+    /* Graphics, page 1: the screen and what moves on it (the Poke Ball style is the only one: no STYLE row, and no EMBERS, which only it had). */
     {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menus, Yes/No", "Men\xC3\xBAs y S\xC3\xAD/No", "Men\xC3\xBC-Rahmen"), CTR_TR("box frame.", "su marco.", "und JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
     {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
     {CTR_TR("Day/Night", "D\xC3\xAD" "a/Noche", "Tag/Nacht"), {CTR_TR("The 3DS clock, the Hour", "Hora de la 3DS, la Hora", "3DS-Uhrzeit, die Stunde"), CTR_TR("below, or Off.", "de abajo, u Off.", "unten, oder Aus.")}, 0, sDayNight, NULL,
      GetDayNight, DayNightCount, SetDayNight},
     {CTR_TR("Hour", "Hora", "Stunde"), {CTR_TR("The hour outdoors when", "La hora fuera si", "Uhrzeit in der Oberwelt,"), CTR_TR("Day/Night is Fixed.", "D\xC3\xAD" "a/Noche est\xC3\xA1 en Fija.", "bei TAG/NACHT FEST.")}, 0, sHourName, NULL,
      GetHour, HourCount, SetHour},
-    {CTR_TR("Embers", "Ascuas", "Funken"), {CTR_TR("Sparks behind the menus.", "Chispas tras los men\xC3\xBAs.", "Funken hinter den Men\xC3\xBCs."), CTR_TR("Low suits an Old 3DS.", "Bajo sirve en Old 3DS.", "Wenig passt f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
-     GetEmbers, ThreeCount, SetEmbers},
-    {CTR_TR("Style", "Estilo", "Stil"), {CTR_TR("Embers: the red look.", "Ascuas: el aspecto rojo.", "Funken: der rote Look."), CTR_TR("Poke Ball: red, white.", "Pok\xC3\xA9" "bola: rojo y blanco.", "Pok\xC3\xA9" "ball: rot und wei\xC3\x9F" ".")}, 0, sStyleName, NULL,
-     GetStyle, TwoCount, SetStyle},
     {CTR_TR("Companion", "Acompa\xC3\xB1" "ante", "Begleiter"), {CTR_TR("A Pokemon follows you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you become one.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist es selbst.")}, 0, sCompanion, NULL,
      GetCompanion, ThreeCount, SetCompanion},
     /* Graphics, page 2: the looks (a preview card takes the rows it does not use). */
@@ -497,7 +482,7 @@ static const CtrOptionRow sRows[] = {
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 14, PAGE4 = 18, PAGE5 = 21, PAGE6 = 27, PAGE7 = 32, PAGE8 = 35 };
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 12, PAGE4 = 16, PAGE5 = 19, PAGE6 = 25, PAGE7 = 30, PAGE8 = 33 };
 static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, PAGE8, ROWS};
 static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3, 4};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
@@ -615,7 +600,7 @@ int CtrOptions_IsLevels(int row)
 {
     const CtrOptionRow *r = CtrOptions_Row(row);
 
-    return r != NULL && (r->names == sEmbers || r->names == sCompanion || r->names == sExpShare);
+    return r != NULL && (r->names == sCompanion || r->names == sExpShare);
 }
 
 void CtrOptions_Set(int row, int value)
