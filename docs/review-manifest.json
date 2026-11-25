@@ -7426,7 +7426,7 @@
   },
   {
    "path": "web/de.html",
-   "sha256": "e4ff3a6274280f8cdb40abda28302dc3fa2fbc5caa27c0bf22a275d4f86089a8",
+   "sha256": "8df9e6f207b9cbfbd1444f24f88343adee77ee8eeb9f7f120fb945eea4b07a6f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7434,7 +7434,7 @@
   },
   {
    "path": "web/es.html",
-   "sha256": "7cf8aa333b73c39b1057fb948bd320fba8f816da9966a264e78da6a1ff8e7a56",
+   "sha256": "998d0b9cf5e8440546839ac2a90b2fbe3448290105dc299ea731f7f04d21ce73",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7442,7 +7442,7 @@
   },
   {
    "path": "web/index.html",
-   "sha256": "27aeba75f44f4d6df7f2ecd64d0f25e00007537087fe9ca543ef778e1e258838",
+   "sha256": "de258b5ed7ab4167a0bf62af1c91fd98e22444e4a618badad0a744230503b378",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
