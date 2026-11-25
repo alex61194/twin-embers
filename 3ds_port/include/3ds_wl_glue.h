@@ -38,7 +38,8 @@ enum { CTR_WL_OFF = 0, CTR_WL_SEARCH, CTR_WL_HOST, CTR_WL_JOINED, CTR_WL_ONLINE 
 void CtrWl_Setup(const uint8_t build[16], uint32_t seed);
 /* The internet radio instead of the local one: the relay (docs/WL-RELAY-PROTOCOL.md) and the secret code of the room. A session then connects
  * to the relay instead of looking for a host nearby, and everyone who uses the same code, relay and build is in one room. NULL or an empty
- * string for either turns it off. CtrWl_LoadConfig reads `relay=host[:port]` and `code=...` lines from a text file (false when there is none).
+ * string for either turns it off. CtrWl_LoadConfig reads `relay=host[:port]` and `code=...` lines from a text file (false when there is none
+ * or it names no relay; a code too long turns internet play off and answers true, so the built-in relay is not used instead).
  * The caller starts the console's sockets (socInit) before a session. */
 void CtrWl_SetInternet(const char *host, uint16_t port, const char *code);
 bool CtrWl_LoadConfig(const char *path);

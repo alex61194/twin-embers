@@ -74,10 +74,13 @@ bool WlNet_Send(WlNet *net, uint16_t dest, const void *data, uint16_t len);
 void WlNet_Step(WlNet *net);
 /* The next message that arrived (in order for its sender); false when none. */
 bool WlNet_Pop(WlNet *net, uint16_t *src, WlMessage *msg);
-/* A node found silent for WL_SILENT_MS with messages unacknowledged (or one that WlNet_Forget was told of); false when none. */
+/* A node found silent for WL_SILENT_MS with messages unacknowledged (or one that WlNet_Lose was told of); false when none. */
 bool WlNet_PopLost(WlNet *net, uint16_t *node);
-/* The node left: its queue and numbers are cleared. */
+/* Its queue and numbers are cleared (a console that joins starts from nothing); nobody is told the node is gone. */
 void WlNet_Forget(WlNet *net, uint16_t node);
+/* The node left: cleared as by WlNet_Forget, and reported by WlNet_PopLost so the link above frees its slot at once. Without the report
+ * a dead partner's slot stays linked, for good when a newcomer is given the same seat and acknowledges in its place. */
+void WlNet_Lose(WlNet *net, uint16_t node);
 /* How many messages to `dest` still wait for their acknowledgement. */
 uint16_t WlNet_Pending(const WlNet *net, uint16_t dest);
 

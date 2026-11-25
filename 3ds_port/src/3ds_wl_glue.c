@@ -178,6 +178,7 @@ bool CtrWl_LoadConfig(const char *path)
     FILE *f = fopen(path, "rb");
     char line[160], host[64] = "", code[WL_INET_CODE_MAX + 1] = "";
     unsigned port = 0;
+    bool codeTooLong = false;
 
     if (!f)
         return false;
@@ -199,13 +200,22 @@ bool CtrWl_LoadConfig(const char *path)
             CopyOrEmpty(host, sizeof(host), line + 6);
         }
         else if (!strncmp(line, "code=", 5))
+        {
             CopyOrEmpty(code, sizeof(code), line + 5);
+            codeTooLong = line[5] && !code[0];
+        }
     }
     fclose(f);
-    if (host[0] && !code[0])
-        CopyOrEmpty(code, sizeof(code), CTR_WL_PUBLIC_ROOM);      /* a relay without a code: its public room */
+    /* A relay without a code: its public room. A code that does not fit means no relay at all: the player asked for a private room,
+     * and the public one (anyone can read it) is the last place to put them; nor would they meet the friend who shares the code. */
+    if (host[0] && !code[0] && !codeTooLong)
+        CopyOrEmpty(code, sizeof(code), CTR_WL_PUBLIC_ROOM);
+#ifdef __DEVKITARM__
+    if (codeTooLong)
+        CtrLog_Write(CTR_LOG_GAME, "online.cfg: code longer than %d characters, internet play off", WL_INET_CODE_MAX);
+#endif
     CtrWl_SetInternet(host, (uint16_t)port, code);
-    return sHaveRelay;
+    return sHaveRelay || codeTooLong;     /* true for a code that did not fit too, or the caller would put in the built-in relay's public room */
 }
 
 bool CtrWl_IsInternet(void)
@@ -621,7 +631,9 @@ void CtrWl_Tick(void)
         while (WlInet_PopEvent(&sInet, &kind, &node))
         {
             NetLog("node %u %s", (unsigned)node, kind == WL_INET_EVENT_LEFT ? "left" : "joined");
-            if (kind == WL_INET_EVENT_LEFT || kind == WL_INET_EVENT_JOINED)
+            if (kind == WL_INET_EVENT_LEFT)
+                WlNet_Lose(&sNet, node);            /* reported to the adapter: its slot is freed and the game hears the partner left */
+            else if (kind == WL_INET_EVENT_JOINED)
                 WlNet_Forget(&sNet, node);          /* a console that joins starts its counting from nothing, whether or not the seat's last one left */
         }
         if (!WlInet_Connected(&sInet))
@@ -651,7 +663,7 @@ void CtrWl_Tick(void)
         WlUds_Pump(&sUds);
         while (WlUds_PopEvent(&sUds, &kind, &node))
             if (kind == WL_UDS_EVENT_LEFT)
-                WlNet_Forget(&sNet, node);
+                WlNet_Lose(&sNet, node);    /* reported to the adapter, as on the relay */
         if (!sUds.active)
             LostLink(now);                  /* the host left, or the radio was lost */
         else

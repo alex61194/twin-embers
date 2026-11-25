@@ -1,5 +1,6 @@
 /* The port's healthboxes (src/3ds_battle_hud.c) on the host: which OAM tiles are a box's, the boxes' sizes and
- * anchors, their bars and redraws. The font is synthetic: every glyph a 4x7 block of ink, 5 pixels wide. */
+ * anchors, their bars and redraws. The font is synthetic: every glyph a 4x7 block of ink, 5 pixels wide, but the digits
+ * and '/' 6, as FireRed's, so "hp/max" takes the room it takes in the game. */
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -10,7 +11,10 @@
 
 static uint8_t sFont[512 * 64], sSmall[512 * 32];
 const uint8_t *CtrTwinFontData(void) { return sFont; }
-unsigned CtrTwinFontWidth(unsigned code) { return code == 0 ? 3 : 5; }
+unsigned CtrTwinFontWidth(unsigned code)
+{
+    return code == 0 ? 3 : (code >= 0xA1 && code <= 0xAA) || code == 0xBA ? 6 : 5;
+}
 const uint8_t *CtrTwinSmallFontData(void) { return sSmall; }
 unsigned CtrTwinSmallFontWidth(unsigned code) { return code == 0 ? 3 : 5; }
 
@@ -139,6 +143,18 @@ int main(void)
     assert(fabsf(sx - 260) < 0.01f && fabsf(sy - 164) < 0.01f);
     sx = 0 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + sImage(3)->dx;
     assert(fabsf(sx - 6) < 0.01f);
+    /* A status and "999/999" beside the bar still leave it a track to read: at full HP, its fill's third row (y 18) is
+     * green for at least 18 pixels. */
+    CtrHud_Name(2, NAME, CTR_HUD_MALE, false);
+    CtrHud_Level(2, 50);
+    CtrHud_Hp(2, 999, false);
+    CtrHud_Hp(2, 999, true);
+    CtrHud_HpBar(2, CTR_HUD_HP_PIXELS);
+    CtrHud_Status(2, CTR_HUD_PSN);
+    low = sImage(2);
+    unsigned green = 0;
+    for (unsigned x = 0; x < low->width; ++x) green += Rgb(Pixel(low, x, 18)) == 0x30C848;
+    assert(green >= 18);
 
     /* The Safari Zone after it: the right-hand battlers go, the player's box is the Safari Zone's, with no HP bar
      * sprite. */

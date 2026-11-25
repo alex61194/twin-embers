@@ -175,6 +175,9 @@ static void TestSilent(void)
             break;
     }
     CHECK(lost == 2, "a silent node is reported lost (%u)", lost);
+    WlNet_Lose(&a.net, 3);
+    WlNet_Lose(&a.net, 0);                                  /* not a node: nothing */
+    CHECK(WlNet_PopLost(&a.net, &lost) && lost == 3 && !WlNet_PopLost(&a.net, &lost), "a node that left is reported lost at once");
     CHECK(!WlNet_Send(&a.net, 1, &m, 1) && WlNet_Pending(&a.net, 1) == 0, "no sending to oneself");
     for (unsigned i = 0; i < WL_WINDOW + 4; ++i)
     {

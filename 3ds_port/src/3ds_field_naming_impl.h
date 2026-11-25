@@ -237,8 +237,9 @@ static void FNKeys(const CtrPokeTouchName *n)
             else
                 EmLabel(FNChar(code, g), r.x, r.w, fy, r.h - FB_DEPTH, p);
         }
-    /* The chosen key's ring last: its neighbours are 2 px away and would cover it. */
-    if (n->curCol < n->cols && n->curCol < PT_NAME_COLS && n->curRow < PT_NAME_ROWS && n->key[n->curRow][n->curCol] != 0xff) {
+    /* The chosen key's ring last: its neighbours are 2 px away and would cover it. An empty cell gets it too, as an
+     * outline in the gap: FireRed's D-pad stops there (DOWN from ',', RIGHT from 's'), and no ring would lose the cursor. */
+    if (n->curCol < n->cols && n->curCol < PT_NAME_COLS && n->curRow < PT_NAME_ROWS) {
         CtrPokeTouchRect r = FNKey(n, n->curRow, n->curCol);
 
         LlSelectRing(r.x, r.y, r.w, r.h);

@@ -56,28 +56,26 @@ static const char *const sExpRate[] = {"x1", "x2", "x4", "x8"};
 /* The shiny odds a SHINY row value stands for, as the denominator of "1 in N" (the game's own are 8 in 65536, which is 1 in 8192). */
 static const unsigned kShinyDenominator[] = {0, 4096, 1024, 256, 64, 16, 1};
 
-static int sPortTypeMatchup;
-static int sPortMoveDetails;
-static int sPortDayNight;
-static int sPortHour = HOUR_DEFAULT;
 static int sPortEmbers = CTR_EMBERS_HIGH;
 
 static int TwoCount(void) { return 2; }
-static int GetTypeMatchup(void) { return sPortTypeMatchup; }
-static void SetTypeMatchup(int v) { sPortTypeMatchup = v & 1; }
-static int GetMoveDetails(void) { return sPortMoveDetails; }
-static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
-static int GetDayNight(void) { return sPortDayNight; }
+/* TYPE MATCHUP, MOVE DETAILS, DAY/NIGHT and HOUR are kept in settings.cfg as the other port rows are: a player who turned them off or
+ * fixed the hour must not find them back at their defaults on the next start. The values are the rows' own (0 is ON, as in the switches). */
+static int GetTypeMatchup(void) { return CtrSettings_TypeMatchup(); }
+static void SetTypeMatchup(int v) { CtrSettings_SetTypeMatchup(v & 1); }
+static int GetMoveDetails(void) { return CtrSettings_MoveDetails(); }
+static void SetMoveDetails(int v) { CtrSettings_SetMoveDetails(v & 1); }
+static int GetDayNight(void) { return CtrSettings_DayNight(); }
 static int DayNightCount(void) { return DAY_NIGHT_COUNT; }
-static void SetDayNight(int v) { sPortDayNight = v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v; }
-static int GetHour(void) { return sPortHour; }
+static void SetDayNight(int v) { CtrSettings_SetDayNight(v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v); }
+static int GetHour(void) { return CtrSettings_Hour(); }
 static int HourCount(void) { return HOUR_COUNT; }
 /* Choosing an hour is choosing to use it: DAY/NIGHT moves to FIXED unless it is OFF. */
 static void SetHour(int v)
 {
-    sPortHour = v < 0 || v >= HOUR_COUNT ? HOUR_DEFAULT : v;
-    if (sPortDayNight == DAY_NIGHT_CLOCK)
-        sPortDayNight = DAY_NIGHT_FIXED;
+    CtrSettings_SetHour(v < 0 || v >= HOUR_COUNT ? HOUR_DEFAULT : v);
+    if (CtrSettings_DayNight() == DAY_NIGHT_CLOCK)
+        CtrSettings_SetDayNight(DAY_NIGHT_FIXED);
 }
 static int ThreeCount(void) { return 3; }
 /* 0 is ON, as in the other switches' tables; kept in settings.cfg. */
@@ -159,6 +157,13 @@ static void SetRoomKind(int v)
 }
 
 int CtrOptions_PadOn(void) { return sPad.on; }
+
+/* OPTIONS left without OK or CANCEL (the sidebar, a battle): the keypad must not come back with the old digits. */
+void CtrOptions_PadClose(void)
+{
+    memset(&sPad, 0, sizeof(sPad));
+    sPad.key = -1;
+}
 
 /* The random bytes of NEW: the console's generator (ps:ps); a test gives its own. None: no code is made (false). */
 static int (*sRandomSource)(uint8_t *out, size_t n);
@@ -294,10 +299,10 @@ static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
 
-int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
-int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
-int CtrOptions_DayNight(void) { return sPortDayNight != DAY_NIGHT_OFF; }
-int CtrOptions_DayNightSecond(void) { return sPortDayNight == DAY_NIGHT_FIXED ? sPortHour * HOUR_STEP_SECONDS : -1; }
+int CtrOptions_TypeMatchup(void) { return CtrSettings_TypeMatchup() == 0; }
+int CtrOptions_MoveDetails(void) { return CtrSettings_MoveDetails() == 0; }
+int CtrOptions_DayNight(void) { return CtrSettings_DayNight() != DAY_NIGHT_OFF; }
+int CtrOptions_DayNightSecond(void) { return CtrSettings_DayNight() == DAY_NIGHT_FIXED ? CtrSettings_Hour() * HOUR_STEP_SECONDS : -1; }
 int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
 int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }

@@ -203,6 +203,31 @@ int main(void)
     fclose(file);
     assert(strstr(text, "freehm") == NULL);
 
+    /* DAY/NIGHT, HOUR, TYPE MATCHUP and MOVE DETAILS: CLOCK, 12:00 and both shown until chosen, written only when not the default,
+     * and a value out of range is the default. */
+    assert(CtrSettings_DayNight() == 0 && CtrSettings_Hour() == 24 && CtrSettings_TypeMatchup() == 0 && CtrSettings_MoveDetails() == 0);
+    CtrSettings_SetDayNight(1);
+    CtrSettings_SetHour(40);
+    CtrSettings_SetTypeMatchup(1);
+    CtrSettings_SetMoveDetails(5);
+    assert(CtrSettings_DayNight() == 1 && CtrSettings_Hour() == 40 && CtrSettings_TypeMatchup() == 1 && CtrSettings_MoveDetails() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "daynight=1\n") != NULL && strstr(big, "hour=40\n") != NULL && strstr(big, "typematchup=1\n") != NULL
+           && strstr(big, "movedetails=1\n") != NULL);
+    CtrSettings_SetDayNight(3);
+    CtrSettings_SetHour(48);
+    assert(CtrSettings_DayNight() == 0 && CtrSettings_Hour() == 24);
+    CtrSettings_SetTypeMatchup(0);
+    CtrSettings_SetMoveDetails(0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "daynight") == NULL && strstr(big, "hour") == NULL && strstr(big, "typematchup") == NULL && strstr(big, "movedetails") == NULL);
+
     /* RANDOMLOCKE: off until chosen, written only when on. */
     assert(CtrSettings_Randomlocke() == 0);
     CtrSettings_SetRandomlocke(1);
@@ -291,7 +316,7 @@ int main(void)
     }
 
     /* The worst case (every key written, the longest values) must fit the fixed block with room to spare: Format stops
-     * silently at the block's end, which would drop the last keys. The block is 640 bytes; keep the text under 480. */
+     * silently at the block's end, which would drop the last keys. The block is 640 bytes; keep the text under 540. */
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
@@ -312,6 +337,10 @@ int main(void)
     CtrSettings_SetRandomTarget(2);
     CtrSettings_SetRandomNoLegendary(1);
     CtrSettings_SetFreeHm(1);
+    CtrSettings_SetDayNight(2);
+    CtrSettings_SetHour(47);
+    CtrSettings_SetTypeMatchup(1);
+    CtrSettings_SetMoveDetails(1);
     CtrSettings_SetWildDensity(3);
     CtrSettings_SetWildSilhouette(1);
     CtrSettings_SetWildAggro(4);
@@ -333,7 +362,8 @@ int main(void)
         while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
-        assert(n < 480);   /* the file holds 640 (a private room's code and flag, 37 bytes, and the seven cheats, 63, are in this worst case); the wild keys are before the looks and the ball */
+        assert(n < 540);   /* the file holds 640 (DAY/NIGHT and its three rows, 47 bytes, a private room's code and flag, 37 bytes, and the seven cheats, 63, are in this worst case); the wild keys are before the looks and the ball */
+        assert(strstr(worst, "daynight=2\n") && strstr(worst, "hour=47\n") && strstr(worst, "typematchup=1\n") && strstr(worst, "movedetails=1\n"));
         assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
         assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "look_surf=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }

@@ -259,6 +259,18 @@ int main(void)
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_CANCEL);
         CtrOptions_PadTouch(0, 0, -1);
         CHECK(!CtrOptions_PadOn() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0, "CANCEL keeps the code");
+        /* OPTIONS left with the keypad up (the sidebar, not CANCEL): the lower screen closes it when OPTIONS opens again, so the
+         * rows are back and the half-typed digits are not; the room's code is untouched. */
+        CtrOptions_Activate(6);
+        CtrOptions_PadTouch(1, 1, 9);
+        CtrOptions_PadTouch(0, 0, -1);
+        CtrOptions_PadClose();
+        CtrOptions_Fill(&pv, 6);
+        CHECK(!CtrOptions_PadOn() && !pv.optPad.on && CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0,
+              "PadClose closes the keypad and keeps the code");
+        CtrOptions_PadTouch(1, 1, 3);
+        CtrOptions_PadTouch(0, 0, -1);
+        CHECK(!CtrOptions_PadOn(), "a closed keypad takes no key");
         CtrOptions_Activate(5);
         CHECK(!CtrOptions_PadOn(), "another row's label opens nothing");
         CtrOptions_Step(6, 1);

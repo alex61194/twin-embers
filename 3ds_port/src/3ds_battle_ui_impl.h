@@ -1376,8 +1376,13 @@ static void BMoveNote(const CtrBattleView *v)
     }
     if (m->effectChance)
         snprintf(chance, sizeof(chance), "%s %u%%", CTR_TR("Effect", "Efecto", "Effekt"), m->effectChance);
+    /* With move details off there is no description, so the note names the category; a move with
+       no power is a status move whatever its type, as the card beside it says. */
     BNoteWindow(n, m->name, m->stab, chance,
-                m->desc[0] ? m->desc : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff") : CTR_TR("Special move", "Ataque especial", "Spezialangriff"));
+                m->desc[0] ? m->desc
+                : !m->power[0] || m->power[0] == '-' ? CTR_TR("Status move", "Movimiento de estado", "Statusattacke")
+                : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff")
+                : CTR_TR("Special move", "Ataque especial", "Spezialangriff"));
 }
 
 /* ---- A double battle's targets: the opposing battlers on top, the player's below, as the move cards ---- */

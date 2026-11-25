@@ -128,8 +128,11 @@ static void BallNameScreen(const CtrPokeTouchView *v)
             int cursor = n->curCol == col && n->curRow == row;
             uint16_t face = cursor ? BL_WHITE : BM_PILL, ink = cursor ? BL_REDTXT : EM_WHITE;
 
-            if (code == 0xff)
+            if (code == 0xff) {                               /* an empty cell: a bare white pill only when the cursor stops on it */
+                if (cursor)
+                    BnPill(&r, "", face, ink, 1, 0);
                 continue;
+            }
             if (code == 0) {                                  /* the space key: the flat open bracket under its middle */
                 BnPill(&r, "", face, ink, cursor, n->pressed == PT_NAME_HIT_KEY + row * PT_NAME_COLS + col);
                 FNSpaceMark(r.x + r.w / 2, r.y + 5, cursor ? BL_REDTXT : EM_WHITE);

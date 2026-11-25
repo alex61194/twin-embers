@@ -2,7 +2,7 @@
  * Party and Bag screens, shown in its viewport by the GPU, over the real
  * FireRed state.
  *
- * Architecture (Zallax 3ds_bottom_ui.c as reference, scoped to this milestone):
+ * Architecture (Zallax 3ds_bottom_ui.c as reference):
  * - FireRed is authoritative; this is a lower-screen view/controller.
  * - No Party/Bag rules duplicated: a touch in the viewport is mapped back to
  *   the GBA picture (0.85 inverse) and FireRed's own windows say what is
@@ -149,6 +149,7 @@ extern void CtrSummary_AskPage(int page);
 extern int CtrBattle_TargetLegal(int target);
 extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
+extern int CtrBattle_ChooserPartySlot(void);
 extern int CtrBattle_TargetInfo(int target, char *name, int size, int *level, int *hp, int *maxHp);
 extern int CtrBattle_BagPending(void);
 extern int CtrBattle_NickHold(void);
@@ -1531,6 +1532,7 @@ static struct {
     int centered;               /* the map has been centred since HOME came back (it starts at the overview, on the player's town) */
     int zoom, panX, panY;       /* the zoom (0..2) and the image point at the viewport's centre */
     int dragging, prevX, prevY; /* a touch that has moved: it pans the map instead of picking a town */
+    int panX0, panY0;           /* the pan when the drag began */
 } sHome;
 
 /* FLY chosen in the Party: FireRed's Fly map is not opened, the Party goes back to the field and HOME's map is where the
@@ -1808,14 +1810,17 @@ static unsigned sBatAnim;           /* counts the frames of a battle, for the le
 static int sBatHold, sBatHoldFrames; /* BAG was picked: the upper screen keeps the battle until the Bag shows */
 static int sPouchHold;              /* the battle Bag's Berry Pouch was opened: the upper screen keeps the battle until it is back */
 
-/* The party slot of the Pokemon in the field. The party keeps its order in a battle (a switch changes only which
- * slot the battle points at), so the slot is found by what the battle knows of its left battler: its level, its
- * maximum HP and its name; the closest HP breaks a tie. Slot 0 when nothing matches. */
+/* The party slot of the Pokemon in the field: the one choosing (a double battle's right one in its turn); else, as the
+ * party keeps its order in a battle, the one matching the left battler's level, maximum HP and name, the closest HP
+ * breaking a tie. Slot 0 when nothing matches. */
 static int BattleActiveSlot(void)
 {
     char name[32], mine[32];
-    int level = 0, hp = 0, maxHp = 0, best = 0, bestScore = -1;
+    int level = 0, hp = 0, maxHp = 0, best = CtrBattle_ChooserPartySlot(), bestScore = -1;
 
+    if (best >= 0 && best < 6)
+        return best;
+    best = 0;
     for (int b = 0; b < CtrBattle_TargetCount() && b < 4; ++b)
         if (CtrBattle_TargetPosition(b) == 0)
             if (CtrBattle_TargetInfo(b, name, (int)sizeof(name), &level, &hp, &maxHp))
@@ -2911,13 +2916,10 @@ static int ProcessBagTouch(const ListScreen *list, const CtrInput *in)
     return HIT_NONE;
 }
 
-/* Summary plan: presses for the real Summary's input. PAGE flips pages one
- * LEFT/RIGHT at a time (B first out of the move details) toward a page, MOVE
- * walks the move cursor to a row (A first into the details from the moves
- * page), PRESS sends one button. Each press waits for the Summary to take
- * input again (no page flip running) and expects the page it leads to; a
- * different page, Pokemon or Summary, physical input or the step limit drops
- * the plan. */
+/* Summary plan: presses for the real Summary's input. PAGE flips one LEFT/RIGHT at a time (B first out of the move
+ * details) toward a page, MOVE walks the move cursor to a row (A first into the details), PRESS sends one button. Each
+ * press waits for the Summary to take input again and expects the page it leads to; a different page, Pokemon or
+ * Summary, physical input or the step limit drops the plan. */
 enum { SUMPLAN_NONE = 0, SUMPLAN_PAGE, SUMPLAN_MOVE, SUMPLAN_PRESS };
 #define SUMMARY_MOVES 2
 #define SUMMARY_MOVES_INFO 3
@@ -3398,6 +3400,7 @@ static void OpenDestination(int target)
         sScreen = target;
         sOpt.sel = 0;
         sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
+        CtrOptions_PadClose();
         CtrLog_Write(CTR_LOG_VIDEO, "bottom: route reached the field: %s", RootName(target));
         return;
     }
@@ -3685,6 +3688,7 @@ static void PokeTouchActivate(int id)
             sScreen = id;
             sOpt.sel = 0;
             sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
+            CtrOptions_PadClose();
             CtrLog_Write(CTR_LOG_VIDEO, "bottom: %s opened", RootName(id));
         }
         break;
@@ -3917,8 +3921,8 @@ static void ProcessPokeTouch(const CtrInput *in)
 
                 if (hit >= PT_PANEL_TURBO && hit < PT_PANEL_TURBO + 4)
                     CtrGameBridge_SetTurbo(hit == PT_PANEL_TURBO ? 0u : (unsigned)(hit - PT_PANEL_TURBO) + 1u);
-                else if (hit >= PT_PANEL_REPEL && hit < PT_PANEL_REPEL + 3)
-                    CtrBottomRepel_Use(hit - PT_PANEL_REPEL);
+                else if (hit >= PT_PANEL_REPEL && hit < PT_PANEL_REPEL + 3 && CtrPokeTouch_Enabled(PT_BAG))
+                    CtrBottomRepel_Use(hit - PT_PANEL_REPEL);   /* as the Bag: not in a script */
                 else if (hit == PT_PANEL_OUT)
                     sHomePanel = 0;
                 sPoke.id = PT_NONE;
@@ -3981,13 +3985,18 @@ static void ProcessPokeTouch(const CtrInput *in)
                 sHome.lastX = gx;
                 sHome.lastY = gy;
                 if (!sHome.dragging && (sHome.lastX - sHome.downX > MAP_TAP_SLOP || sHome.downX - sHome.lastX > MAP_TAP_SLOP
-                                        || sHome.lastY - sHome.downY > MAP_TAP_SLOP || sHome.downY - sHome.lastY > MAP_TAP_SLOP))
-                    sHome.dragging = 1;
-                if (sHome.dragging) {               /* the map follows the finger */
+                                        || sHome.lastY - sHome.downY > MAP_TAP_SLOP || sHome.downY - sHome.lastY > MAP_TAP_SLOP)) {
+                    sHome.dragging = 1;             /* down becomes the anchor */
+                    sHome.downX = sHome.prevX;
+                    sHome.downY = sHome.prevY;
+                    sHome.panX0 = sHome.panX;
+                    sHome.panY0 = sHome.panY;
+                }
+                if (sHome.dragging) {               /* the map follows the finger (from the anchor: steps lose small moves) */
                     int scale = CtrPokeTouch_HomeScale(sHome.zoom);
 
-                    sHome.panX -= (gx - sHome.prevX) * 256 / scale;
-                    sHome.panY -= (gy - sHome.prevY) * 256 / scale;
+                    sHome.panX = sHome.panX0 - (gx - sHome.downX) * 256 / scale;
+                    sHome.panY = sHome.panY0 - (gy - sHome.downY) * 256 / scale;
                     CtrPokeTouch_HomeClamp(sHome.zoom, &sHome.panX, &sHome.panY);
                 }
                 sHome.prevX = gx;
@@ -4019,7 +4028,7 @@ static void ProcessPokeTouch(const CtrInput *in)
 
 /* The battle screen's touch: press, track, release, one action. A button puts the controller's own cursor on
  * it (CtrBattle_AskCursor) and then sends its A; CANCEL sends its B. The buttons exist only while the controller
- * waits at the screen they belong to, so nothing is taken during a message, an animation, a command being taken or the battle's end; a held
+ * waits at the screen they belong to, so nothing is taken during a message, an animation or the battle's end; a held
  * physical button cancels it. */
 static struct {
     int active, target, state, steps, release;
@@ -4174,12 +4183,11 @@ static void ProcessBattleTouch(const CtrInput *in)
     sBat.down = sBat.inside = 0;
 }
 
-/* The battle Bag's touch: the same press, track, release, and the same Bag plans as every Bag (walk the Bag's own
- * list cursor to an item, send A / B, walk its menu), so FireRed's Bag decides everything: a tap on another item
- * selects it, a tap on the selected one sends A and then A again on the first row of the menu that opens (USE, or
- * CANCEL for an item with no use here); a tab presses LEFT / RIGHT until the Bag is in that pocket; CANCEL is B.
- * An invalid use stays in the Bag with the Bag's own message (shown, A to continue). A held physical button
- * cancels it all, except the horizontal D-pad that shares the pocket router. */
+/* The battle Bag's touch: the same press, track, release and Bag plans as every Bag, so FireRed's Bag decides
+ * everything: a tap on another item selects it, a tap on the selected one sends A and then A on the first row of the
+ * menu that opens (USE, or CANCEL for an item with no use here); a tab presses LEFT / RIGHT until the Bag is in that
+ * pocket; CANCEL is B. An invalid use stays in the Bag with its own message. A held physical button cancels it all,
+ * except the horizontal D-pad that shares the pocket router. */
 static struct {
     int pocketTarget, pocketWait;   /* the pocket the Bag is being walked to (-1 none), frames left to get there */
     int autoWait;                   /* frames left to confirm USE once the item's menu opens */
@@ -4193,8 +4201,8 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
-    /* The naming keyboard's buttons are a row above the keys here (the tabs, DELETE, OK), FireRed's a column beside
-     * them: the cursor crosses between keys and buttons only through NameDirection, never through FireRed's own D-pad. */
+    /* The naming keyboard's buttons are a row above the keys here, FireRed's a column beside them: the cursor
+     * crosses between keys and buttons only through NameDirection, not FireRed's D-pad. */
     if (CurrentMode() == MODE_NAMING && CtrBottomNaming_IsOpen()) {
         int col, row, cols = CtrBottomNaming_Columns();
 
@@ -4365,7 +4373,7 @@ static void ProcessBattleBagTouch(const CtrInput *in)
  * A row selects its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the
  * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
  * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
- * Bag's own keys, so FireRed decides what each does. A held physical button cancels it. */
+ * Bag's own keys, so FireRed decides. A held physical button cancels it. */
 static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
 {
     const ListScreen *list = f->list;
@@ -4648,10 +4656,9 @@ static void ProcessDexTouch(const CtrInput *in)
     sDexTap.down = sDexTap.inside = 0;
 }
 
-/* The habitat/group page (up to four Pokemon, "PAGE 01/10"): a tap on a slot (its picture, number and name)
- * puts FireRed's cursor on it and sends its A (CHECK); a swipe across the viewport flips the page with the same LEFT/RIGHT at the edge of the page (the page
- * flips by LEFT/RIGHT whatever the button mode, and L/R only in some modes), once, and only toward a page
- * that exists. A tap moves at most DEX_TAP_SLOP pixels; a swipe at least DEX_SWIPE_MIN, mostly sideways.
+/* The habitat/group page (up to four Pokemon, "PAGE 01/10"): a tap on a slot puts FireRed's cursor on it and
+ * sends A (CHECK); a swipe flips the page once with LEFT/RIGHT (L/R flip it only in some button modes), only toward
+ * a page that exists. A tap moves at most DEX_TAP_SLOP pixels; a swipe at least DEX_SWIPE_MIN, mostly sideways.
  * Nothing on touch-down or while held; sliding off the slot cancels; physical input wins. */
 #define DEX_TAP_SLOP 8
 #define DEX_SWIPE_MIN 24
@@ -4980,9 +4987,9 @@ static void RunNamePlan(void)
     sNamePlan.release = 1;
 }
 
-/* The keyboard's cursor as the lower screen draws it: the keys, and above them the row of buttons (FireRed's button
- * column from the top: the page's tab, DELETE, OK, left to right). UP from the first row climbs to the buttons, LEFT and
- * RIGHT walk along them, DOWN returns to the key it left; LEFT and RIGHT at the keys' ends wrap to the other end. */
+/* The keyboard's cursor as the lower screen draws it: the keys, and above them FireRed's button column (tab, DELETE,
+ * OK) as a row. UP from the first row climbs to it, LEFT and RIGHT walk along it, DOWN returns to the key it left;
+ * at the keys' ends LEFT and RIGHT wrap, LEFT past empty cells. */
 static void NameDirection(const CtrInput *in)
 {
     static int sKeyCol;
@@ -5002,9 +5009,11 @@ static void NameDirection(const CtrInput *in)
     } else if (d & K_UP && row == 0) {
         sKeyCol = col;
         CtrBottomNaming_Touch(cols, 0);
-    } else if (d & K_LEFT && col == 0)
-        CtrBottomNaming_Touch(cols - 1, row);
-    else if (d & K_RIGHT && col == cols - 1)
+    } else if (d & K_LEFT && col == 0) {
+        while (--cols > 0 && CtrBottomNaming_Key(row, cols) == 0xff)
+            ;
+        CtrBottomNaming_Touch(cols, row);
+    } else if (d & K_RIGHT && col == cols - 1)
         CtrBottomNaming_Touch(0, row);
 }
 
@@ -5583,13 +5592,12 @@ static int ModePresentationReady(int mode)
     }
 }
 
-/* Between two screens of one session FireRed shows neither: the Party closing for its Summary (its exit callback), the
- * Summary returning to the Party (CB2_ReturnToPartyMenuFromSummaryScreen), a Bag, Party or Summary that is still setting
- * up, the battle that has not taken its action menu back. Those frames belong to the session, so the lower screen keeps
- * what it showed (the battle's UI, the Party, the Summary) rather than the PokeTouch frame, an empty screen or black, until
- * the screen that follows can be presented. The battle keeps its Party, Bag or Summary past the session's end (TOP is
- * the battle's again by then) until it has a state to show. One bound for all of it: BRIDGE_MAX frames, the session's own
- * grace; a field transition shows HOME as ever, and the field's own menus keep their setups as they were. */
+/* Between two screens of one session FireRed shows neither: the Party closing for its Summary, the Summary returning
+ * to the Party, a Bag, Party or Summary still setting up, the battle that has not taken its action menu back. Those
+ * frames belong to the session, so the lower screen keeps what it showed rather than the PokeTouch frame, an empty
+ * screen or black, until the next screen can be presented. The battle keeps its Party, Bag or Summary past the
+ * session's end until it has a state to show. One bound for all of it: BRIDGE_MAX frames, the session's own grace; a
+ * field transition shows HOME as ever, and the field's own menus keep their setups as they were. */
 /* The PC has a separate lifetime from the field Party/Bag session. Keep
  * its last lower picture through loading callbacks, fades and null VBlank;
  * display only the child whose own controller has finished setup. */
@@ -6055,11 +6063,10 @@ uint16_t CtrBottom_InjectedKeys(void)
 }
 
 /* The turbo runs in two places, each only while FireRed says it is stable. The plain field (its own CB2, nothing fading,
- * no battle or battle transition) with PokeTouch having no screen of its own up: no hidden session, no native OPTIONS or
- * SAVE (SAVE also locks the field), no route in flight. And the battle itself (its own main callback, nothing fading, no
- * transition) with the lower screen on the battle's own UI: its messages, animations, turns and choices; never the Bag,
- * the Party or the Summary opened from it (a session), a loading screen or a fade. The chosen multiplier is kept
- * everywhere else and comes back with the battle. */
+ * no battle or transition) with no PokeTouch screen of its own up: no hidden session, no native OPTIONS or SAVE, no
+ * route in flight. And the battle itself (its own main callback, nothing fading, no transition) with the lower screen on
+ * the battle's own UI; never a Bag, Party or Summary opened from it, a loading screen or a fade. The chosen multiplier
+ * is kept everywhere else and comes back with the battle. */
 bool CtrBottom_TurboApplies(void)
 {
     int battle = CtrTurbo_BattleStable();

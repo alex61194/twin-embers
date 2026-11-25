@@ -86,6 +86,17 @@ int CtrSettings_RoomCodeDropped(void);
 void CtrSettings_AckRoomCodeDropped(void);
 int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consoles nearby (the 3DS radio), 0 online through the relay (the default) */
 void CtrSettings_SetLocalPlay(int on);
+/* DAY/NIGHT, HOUR, TYPE MATCHUP and MOVE DETAILS (the OPTIONS screen), kept here so they outlive a session as the other rows do. DayNight:
+ * 0 CLOCK (the default), 1 FIXED, 2 OFF; Hour: FIXED's half hour, 0..47 (24, 12:00, by default); TypeMatchup and MoveDetails: 0 shown (the
+ * default), 1 hidden, as the rows count them. Each key is written only when it is not the default. */
+int CtrSettings_DayNight(void);
+void CtrSettings_SetDayNight(int mode);
+int CtrSettings_Hour(void);
+void CtrSettings_SetHour(int half);
+int CtrSettings_TypeMatchup(void);
+void CtrSettings_SetTypeMatchup(int hidden);
+int CtrSettings_MoveDetails(void);
+void CtrSettings_SetMoveDetails(int hidden);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */
 void CtrSettings_SetFreeHm(int on);
 /* TRUCOS (cheats, a page of OPTIONS): each is a small number kept as cheatN=value, off (0) until chosen, written only when not 0. CTR_CHEAT_CATCH

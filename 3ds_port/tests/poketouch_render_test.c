@@ -543,6 +543,12 @@ int main(int argc, char **argv)
                 assert(CtrPokeTouch_NameHit(&b2,42,70)==-1 && CtrPokeTouch_NameHit(&b2,318,70)==-1 && CtrPokeTouch_NameHit(&b2,10,135)==-1);   /* a gap, past the last column, the empty fourth row */
                 assert(CtrPokeTouch_NameHit(&b2,30,45)==PT_NAME_HIT_TAB+1 && CtrPokeTouch_NameHit(&b2,100,45)==PT_NAME_HIT_TAB+2 && CtrPokeTouch_NameHit(&b2,160,45)==PT_NAME_HIT_TAB);
                 assert(CtrPokeTouch_NameHit(&b2,200,45)==PT_NAME_HIT_DELETE && CtrPokeTouch_NameHit(&b2,290,45)==PT_NAME_HIT_OK && CtrPokeTouch_NameHit(&b2,100,20)==-1);
+                {   /* an empty cell ("mnopqrs" leaves the eighth one EOS): FireRed's D-pad stops there, and the cursor must still show */
+                    uint16_t gap;
+                    b2.name.key[2][7]=0xff; b2.name.curCol=0; b2.name.curRow=0; update(&old,&b2); gap=at(296,118);
+                    b2.name.curCol=7; b2.name.curRow=2; update(&old,&b2); assert(at(296,118)!=gap);
+                    b2.name.key[2][7]=(uint8_t)(0xbb+2*8+7); b2.name.curCol=4; b2.name.curRow=1;
+                }
                 CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&b2);
             }
             b2.name.curCol=8; b2.name.curRow=0; update(&old,&b2); b2.name.curRow=2; update(&old,&b2); b2.name.pressed=PT_NAME_HIT_KEY; update(&old,&b2);
@@ -1082,6 +1088,11 @@ int main(int argc, char **argv)
         h.mapGroup=PT_MAP_SEVII123; h.mapReady=1; h.cursorX=4; h.cursorY=4; update(&old,&h);   /* another map: SEVII on the ribbon */
         h.mapOpen=1; update(&old,&h);                                                    /* no other map: no arrow on the ribbon */
         assert(!CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        h.mapOpen=3; update(&old,&h); assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        sMap.ok=0; CtrPokeTouch_Draw(canvas,&h);                                          /* the image failed: an empty panel, so neither ribbon nor zoom answers */
+        assert(!CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        { CtrPokeTouchRect plus=ZoomRect(1); assert(CtrPokeTouch_HomeZoomHit(plus.x+10,plus.y+10)==0); }
+        sMap.ok=1; CtrPokeTouch_Draw(canvas,&h); assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
         /* A pick: the town whose orb is near the touch, else the cell it is in. */
         {
             int gx, gy, wx = 0, wy = 0, vx, vy;

@@ -35,6 +35,10 @@ static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE 
 static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
+static int sDayNight;       /* DAY/NIGHT: 0 CLOCK, 1 FIXED, 2 OFF (daynight=) */
+static int sHour = 24;      /* HOUR: FIXED's half hour, 24 is 12:00 (hour=) */
+static int sTypeMatchup;    /* TYPE MATCHUP: 0 shown, 1 hidden (typematchup=) */
+static int sMoveDetails;    /* MOVE DETAILS: 0 shown, 1 hidden (movedetails=) */
 static int sCheat[CTR_CHEAT_COUNT];      /* TRUCOS: cheatN= */
 static const uint8_t kCheatMax[CTR_CHEAT_COUNT] = {1, 6, 1, 1, 3, 1, 1};
 static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
@@ -51,7 +55,7 @@ static int sLoaded;
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 640     /* was 256, then 512: the file grew to about 232 bytes in the worst case, then 430 with the cheats; a shorter old file reads as before */
+#define SETTINGS_FILE_BYTES 640     /* was 256, then 512: the file grew to about 232 bytes in the worst case, then 430 with the cheats, about 480 with DAY/NIGHT and its rows; a shorter old file reads as before */
 static FILE *sFile;
 
 static const char *const kLookKey[4] = {"look_red=", "look_leaf=", "look_blue=", "look_surf="};
@@ -174,6 +178,14 @@ static void Load(void)
             sRandNoLegend = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
+        else if (sscanf(line, "daynight=%u", &value) == 1)
+            sDayNight = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "hour=%u", &value) == 1)
+            sHour = value < 48 ? (int)value : 24;
+        else if (sscanf(line, "typematchup=%u", &value) == 1)
+            sTypeMatchup = value != 0;
+        else if (sscanf(line, "movedetails=%u", &value) == 1)
+            sMoveDetails = value != 0;
         else if (strncmp(line, "cheat", 5) == 0 && line[5] >= '0' && line[5] < '0' + CTR_CHEAT_COUNT && sscanf(line + 6, "=%u", &value) == 1)
             sCheat[line[5] - '0'] = value <= kCheatMax[line[5] - '0'] ? (int)value : 0;
         else if (sscanf(line, "localplay=%u", &value) == 1)
@@ -272,6 +284,14 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "randnolegend=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
+    if (sDayNight && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "daynight=%d\n", sDayNight);
+    if (sHour != 24 && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "hour=%d\n", sHour);
+    if (sTypeMatchup && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "typematchup=1\n");
+    if (sMoveDetails && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "movedetails=1\n");
     for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
         if (sCheat[i] && length > 0 && (size_t)length < size)
             length += snprintf(text + length, size - (size_t)length, "cheat%d=%d\n", i, sCheat[i]);
@@ -505,6 +525,72 @@ void CtrSettings_SetFreeHm(int on)
     if (on == sFreeHm)
         return;
     sFreeHm = on;
+    Save();
+}
+
+int CtrSettings_DayNight(void)
+{
+    Load();
+    return sDayNight;
+}
+
+void CtrSettings_SetDayNight(int mode)
+{
+    Load();
+    if (mode < 0 || mode > 2)
+        mode = 0;
+    if (mode == sDayNight)
+        return;
+    sDayNight = mode;
+    Save();
+}
+
+int CtrSettings_Hour(void)
+{
+    Load();
+    return sHour;
+}
+
+void CtrSettings_SetHour(int half)
+{
+    Load();
+    if (half < 0 || half >= 48)
+        half = 24;
+    if (half == sHour)
+        return;
+    sHour = half;
+    Save();
+}
+
+int CtrSettings_TypeMatchup(void)
+{
+    Load();
+    return sTypeMatchup;
+}
+
+void CtrSettings_SetTypeMatchup(int hidden)
+{
+    Load();
+    hidden = hidden != 0;
+    if (hidden == sTypeMatchup)
+        return;
+    sTypeMatchup = hidden;
+    Save();
+}
+
+int CtrSettings_MoveDetails(void)
+{
+    Load();
+    return sMoveDetails;
+}
+
+void CtrSettings_SetMoveDetails(int hidden)
+{
+    Load();
+    hidden = hidden != 0;
+    if (hidden == sMoveDetails)
+        return;
+    sMoveDetails = hidden;
     Save();
 }
 

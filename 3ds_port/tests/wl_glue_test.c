@@ -141,6 +141,18 @@ int main(void)
     CtrWl_Tick();
     assert(CtrWl_State() == CTR_WL_HOST && sJobState == 0 && M.connected == 0);
 
+    /* the child on slot 0 leaves: the adapter frees the slot and reports it lost at once (no waiting for a silence that a newcomer on
+     * the same seat would never let happen) */
+    sRfu.childUsed[0] = true;
+    sRfu.childNode[0] = 2;
+    sRfu.lostSlots = 0;
+    M.scanN = 0;
+    sScanAt = NowMs();
+    SetStatus(1, 1);
+    M.statusEvent = true;
+    CtrWl_Tick();
+    assert(CtrWl_State() == CTR_WL_HOST && !sRfu.childUsed[0] && (sRfu.lostSlots & 1u));
+
     /* the game can reset the adapter at any time, and the answer to a reset is the usual one */
     CtrRfu_Reset();
     assert(Cmd(WLC_RESET, NULL, 0, ack) >= 1 && (ack[0] & 0xffu) == (0x80u | WLC_RESET));
@@ -175,6 +187,39 @@ int main(void)
     assert(!strcmp(sCode, "room"));
     CtrWl_SetInternet(NULL, 0, NULL);
     assert(!CtrWl_HasRelay() && !CtrWl_IsInternet());         /* no relay: the radio whatever was chosen */
+
+    /* online.cfg: a relay alone is its public room; a code is its own room; a code too long is no relay at all (never the public room),
+     * and still answers true so that the built-in relay's public room is not put in instead */
+    {
+        static const char cfg[] = "wl_glue_test_online.cfg";
+        char longCode[WL_INET_CODE_MAX + 2];
+        FILE *f;
+
+        memset(longCode, 'k', sizeof(longCode) - 1);
+        longCode[sizeof(longCode) - 1] = 0;
+        assert(!CtrWl_LoadConfig("wl_glue_test_missing.cfg"));
+        f = fopen(cfg, "wb");
+        assert(f);
+        fputs("relay=relay.example:5000\r\n", f);
+        fclose(f);
+        assert(CtrWl_LoadConfig(cfg) && CtrWl_IsInternet() && !strcmp(sCode, CTR_WL_PUBLIC_ROOM) && sRelayPort == 5000);
+        f = fopen(cfg, "wb");
+        assert(f);
+        fputs("relay=relay.example\ncode=friends\n", f);
+        fclose(f);
+        assert(CtrWl_LoadConfig(cfg) && CtrWl_IsInternet() && !strcmp(sCode, "friends"));
+        f = fopen(cfg, "wb");
+        assert(f);
+        fprintf(f, "relay=relay.example\ncode=%s\n", longCode);
+        fclose(f);
+        assert(CtrWl_LoadConfig(cfg) && !CtrWl_HasRelay() && !CtrWl_IsInternet());
+        f = fopen(cfg, "wb");
+        assert(f);
+        fprintf(f, "code=%s\n", longCode);
+        fclose(f);
+        assert(CtrWl_LoadConfig(cfg) && !CtrWl_HasRelay());
+        remove(cfg);
+    }
 
     CtrWl_Shutdown();
     assert(M.exitCalls >= 1);

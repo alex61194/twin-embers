@@ -787,7 +787,7 @@ bool CtrPokeTouch_HomeRibbonHit(int x, int y)
 {
     const CtrPokeTouchRect *r = &sHomeRibbon;
 
-    return r->w && x >= r->x - 3 && y >= r->y - 3 && x < r->x + r->w + 3 && y < r->y + r->h + 3;
+    return sHomeShown && r->w && x >= r->x - 3 && y >= r->y - 3 && x < r->x + r->w + 3 && y < r->y + r->h + 3;
 }
 
 static CtrPokeTouchRect ZoomRect(int plus)
@@ -950,8 +950,11 @@ static void HomeOverlay(const CtrPokeTouchView *v)
 /* HOME's picture: the map (or the sea's blue while it is built), the player and the selection on it. */
 static int HomeShow(const CtrPokeTouchView *v)
 {
-    if (!sMap.ok || sMap.group != v->mapGroup || sMap.version != v->mapVersion)
+    if (!sMap.ok || sMap.group != v->mapGroup || sMap.version != v->mapVersion) {
+        sHomeShown = 0;                             /* an empty panel: the old ribbon and zoom buttons must not answer touches */
+        sHomeRibbon.w = 0;
         return 0;
+    }
     HomeSetView(v);
     MapRestore(0, 0, PT_VIEW_W, PT_VIEW_H);
     HomeOverlay(v);

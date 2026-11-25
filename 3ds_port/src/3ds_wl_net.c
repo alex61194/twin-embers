@@ -200,6 +200,12 @@ void WlNet_Forget(WlNet *net, uint16_t node)
         memset(&net->peer[node], 0, sizeof(net->peer[node]));
 }
 
+void WlNet_Lose(WlNet *net, uint16_t node)
+{
+    if (node >= 1 && node <= WL_MAX_NODES)
+        Lose(net, node);
+}
+
 uint16_t WlNet_Pending(const WlNet *net, uint16_t dest)
 {
     return dest >= 1 && dest <= WL_MAX_NODES ? net->peer[dest].count : 0;

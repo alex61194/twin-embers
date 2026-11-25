@@ -112,6 +112,18 @@ static int Session(const char *name)
         PutFile("style=7\n");
     } else if (!strcmp(name, "style-bad-kept")) {
         assert(CtrSettings_Style() == 1);
+    } else if (!strcmp(name, "daynight")) {        /* DAY/NIGHT, HOUR, TYPE MATCHUP and MOVE DETAILS chosen in one run ... */
+        remove(CTR_SETTINGS_PATH);
+        CtrSettings_SetDayNight(1);
+        CtrSettings_SetHour(40);
+        CtrSettings_SetTypeMatchup(1);
+        CtrSettings_SetMoveDetails(1);
+    } else if (!strcmp(name, "daynight-kept")) {   /* ... are what the next run starts with */
+        assert(CtrSettings_DayNight() == 1 && CtrSettings_Hour() == 40 && CtrSettings_TypeMatchup() == 1 && CtrSettings_MoveDetails() == 1);
+    } else if (!strcmp(name, "daynight-bad")) {    /* damaged values are the defaults */
+        PutFile("daynight=7\nhour=48\n");
+    } else if (!strcmp(name, "daynight-bad-kept")) {
+        assert(CtrSettings_DayNight() == 0 && CtrSettings_Hour() == 24 && CtrSettings_TypeMatchup() == 0 && CtrSettings_MoveDetails() == 0);
     } else if (!strcmp(name, "codeoff")) {          /* a valid code with the private room off stays a code, with no note */
         PutFile("roomcode=" CODE "\n");
     } else if (!strcmp(name, "codeoff-kept")) {
@@ -166,6 +178,8 @@ int main(int argc, char **argv)
         { "style-embers", "style-embers-kept", "style-back-kept", NULL },
         { "style-old1", "style-old1-kept", NULL, NULL },
         { "style-bad", "style-bad-kept", NULL, NULL },
+        { "daynight", "daynight-kept", NULL, NULL },
+        { "daynight-bad", "daynight-bad-kept", NULL, NULL },
     };
 
     if (argc > 1)

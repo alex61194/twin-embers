@@ -422,7 +422,8 @@ static void ExpBar(Canvas *c, int x, int y, int w, unsigned pixels)
             if (fillMask.m[j][i]) Put(c, tx + i, ty + j, blue[j]);
 }
 
-/* A status as a pill: light top, the status colour, a darker base, an outline in its own dark, a white icon. */
+/* A status as a pill: light top, the status colour, a darker base, an outline in its own dark, a white icon; with
+ * `label`, its three letters after the icon. */
 static const struct {
     const char *label;
     Rgb light, base, dark, outline;
@@ -445,10 +446,10 @@ static const struct {
                       ".##...##.", "..#####.."}},
 };
 
-static int Status(Canvas *c, int x, int y, unsigned s)
+static int Status(Canvas *c, int x, int y, unsigned s, bool label)
 {
     static Mask m, in;
-    int w = 4 + 9 + 3 + (int)AsciiWidth(false, STATUS[s].label) + 4, h = 13;
+    int w = label ? 4 + 9 + 3 + (int)AsciiWidth(false, STATUS[s].label) + 4 : 4 + 9 + 4, h = 13;
     Stop stops[3] = {{1, STATUS[s].light}, {5, STATUS[s].base}, {h - 2, STATUS[s].dark}};
 
     Shape(&m, w, h, END_ROUND, END_ROUND, 5, 1);
@@ -473,7 +474,7 @@ static int Status(Canvas *c, int x, int y, unsigned s)
                 if (j == 8 || STATUS[s].icon[j + 1][k] != '#') Put(c, x + 4 + k + 1, y + 2 + j + 1, STATUS[s].dark);
                 Put(c, x + 4 + k, y + 2 + j, (Rgb){255, 255, 255});
             }
-    Ascii(c, false, x + 16, y + 10, STATUS[s].label, (Rgb){255, 255, 255}, &STATUS[s].dark);
+    if (label) Ascii(c, false, x + 16, y + 10, STATUS[s].label, (Rgb){255, 255, 255}, &STATUS[s].dark);
     return w;
 }
 
@@ -547,7 +548,7 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 12, s);
     Level(c, w - 20, 12, s->level);
     int hx = nx;
-    if (HasStatus(s)) hx += Status(c, hx, 19, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 19, s->status, true) + 3;
     HpBar(c, hx, 21, w - 20 - hx, s->hpPixels);
 }
 
@@ -563,7 +564,7 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 10, s);
     Level(c, end - 2, 10, s->level);
     int hx = nx - 4;
-    if (HasStatus(s)) hx += Status(c, hx, 16, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 16, s->status, true) + 3;
     HpBar(c, hx, 17, end - hx, s->hpPixels);
     /* "hp/max", right-aligned to the bar's end, under it. */
     Numbers(s, numbers);
@@ -586,7 +587,8 @@ static void PlayerDoubleBox(Canvas *c, const CtrHudState *s)
     int nw = (int)AsciiWidth(false, numbers);
     Ascii(c, false, end - nw, 23, numbers, INK, &INK_SHADOW);
     int hx = 16;
-    if (HasStatus(s)) hx += Status(c, hx, 12, s->status) + 3;
+    /* The icon alone: with its label and "999/999" beside it, the bar would keep 2 pixels of track. */
+    if (HasStatus(s)) hx += Status(c, hx, 12, s->status, false) + 3;
     HpBar(c, hx, 14, end - nw - 4 - hx, s->hpPixels);
 }
 

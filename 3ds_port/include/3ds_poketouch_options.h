@@ -102,6 +102,8 @@ void CtrOptions_SetLocalPlayHook(void (*hook)(int local));
  * when it has none. */
 void CtrOptions_SetRandomSource(int (*source)(uint8_t *out, size_t n));
 int CtrOptions_PadOn(void);
+/* Closes the keypad and forgets what was typed: OPTIONS opens without it, however it was last left. */
+void CtrOptions_PadClose(void);
 void CtrOptions_PadTouch(int touchDown, int touchActive, int key);
 void CtrOptions_Activate(int row);
 
