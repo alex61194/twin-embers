@@ -7288,6 +7288,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_trade_cards_recipe.py",
+   "sha256": "de237fc46539597d744b4b784e313bf2881da90e24cf4b818c1144a72b483d37",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_wilds_recipe.py",
    "sha256": "fa14e9e1f1a272fc84278357fbd14c79d86d860fffe0db1ab54664336d9e92e4",
    "review_status": "reviewed",
@@ -7915,6 +7923,14 @@
   {
    "path": "patches/pokefirered/0279-naming-screen-holds-the-top.json",
    "sha256": "f5b2a855ca7f904c506933c5ad5e18f82c4c9af7361bd7b1d85d150f2e96cff3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0280-trade-cards-stay-up-while-the-link-is-slow.json",
+   "sha256": "5a0f4cb7512a26fc8c21d1a6f9f96ebb35a421f22dcad2e0839298606bca3b0a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
