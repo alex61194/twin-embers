@@ -549,6 +549,8 @@ void WlInet_Close(WlInet *net)
     if (net->sock >= 0)
         WL_CLOSE(net->sock);
     net->sock = -1;
+    net->welcomed = false;
+    net->members = 0;                           /* nobody is in a room that is not joined: the leader's wait counted ghosts after a lost link */
     memset(net->key, 0, sizeof(net->key));      /* the key is not kept once the connection is over */
 }
 

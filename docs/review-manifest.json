@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "ff8c98f7c5415dfdaafad0c09410e3ab9eca1b388fda3ef02378c0b21db286b2",
+   "sha256": "a3146a0fef925587cafed4678d1c8620bed5195ec0629662720478a467a4655c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7289,7 +7289,7 @@
   },
   {
    "path": "tools/test_trade_cards_recipe.py",
-   "sha256": "c98a5721bd169bd39ab8b04b16c6806c6504c19aa2821364368e03d4781b16e5",
+   "sha256": "db4d7442d0094865f2869f5d5fc2c13c835d511f3b5beec0ddc1808e1a66dfe1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7810,7 +7810,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "564c40a67dc852bc5dae26c9c70382ede769c6aedc594b420c9266e652fada2d",
+   "sha256": "f45d3733352a6e05f8d71332877926b1f2242df45160164101de09b85715f976",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7939,6 +7939,14 @@
   {
    "path": "patches/pokefirered/0281-trade-menu-pointer-cleared-when-freed.json",
    "sha256": "0449e19b5b21eb518e3fdb1fba2939d2554caa3366149d168b2b2963d48a6f2e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0282-link-menu-frame-age-read-signed.json",
+   "sha256": "942bf6dae08ee1ad001f867e82b5fe4b49b99b9f3205bc85d9b85a85cdad56a0",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

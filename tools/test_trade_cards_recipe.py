@@ -30,6 +30,12 @@ class TradeCardsTest(unittest.TestCase):
         self.assertIn('sTradeMenu->callbackId != CB_MAIN_MENU', added)
         self.assertEqual(doc['files'][0]['before_sha256'], self.doc['files'][0]['after_sha256'] if self.doc['files'][0]['path'] == 'src/trade.c' else None)
 
+    def test_the_age_of_a_frame_is_read_signed(self):
+        doc = json.loads((PATCHES / '0282-link-menu-frame-age-read-signed.json').read_text(encoding='utf-8'))
+        added = {f['path']: ''.join(l['port'] for l in f['lines'] if 'port' in l) for f in doc['files']}
+        self.assertEqual(added['src/trade.c'].count('(s32)(gMain.vblankCounter2 - sCtrTradeFrame) <= 60 * 60'), 2)
+        self.assertIn('(s32)(gMain.vblankCounter2 - sCtrLeaderFrame) <= 30', added['src/union_room.c'])
+
     def test_it_starts_from_what_0276_leaves(self):
         last = json.loads((PATCHES / '0276-union-room-chat-for-lower-screen.json').read_text(encoding='utf-8'))
         after = {f['path']: f['after_sha256'] for f in last['files']}
