@@ -417,6 +417,7 @@ static void Reap(void)
 static void StartJob(void)
 {
     Reap();
+    WlInet_Abort(false);                    /* cleared here, before the thread exists: an abort asked for after this point is not lost */
     sJobState = 1;
     sThread = threadCreate(JobMain, NULL, 0x10000, 0x31, -2, false);
     if (!sThread)
@@ -429,6 +430,7 @@ static void Reap(void)
 
 static void StartJob(void)
 {
+    WlInet_Abort(false);
     sJobState = 1;
     JobBody();
 }
@@ -449,6 +451,9 @@ static void Close(void)
     NetLogFlush();
     WlBackend none = NullBackend();
 
+    /* A connection under way waits up to its timeout for each room it tries: told to give up, it ends within its next wait, so the
+     * game (leaving a session, or quitting) is not frozen for seconds while Reap waits for the thread. */
+    WlInet_Abort(true);
     Reap();
     sJobState = 0;
     if (sInternet)
@@ -578,6 +583,7 @@ void CtrWl_Tick(void)
             {
                 if (sConnected)
                 {
+                    sFailReported = 0;          /* a relay that comes back and goes down again is worth logging anew */
                     Open(CTR_WL_ONLINE);
 #ifdef __DEVKITARM__
                     CtrLog_Write(CTR_LOG_GAME, "internet play: in the room as node %u (%s)", (unsigned)sInet.node, sTrail);

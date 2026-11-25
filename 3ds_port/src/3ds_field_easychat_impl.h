@@ -332,9 +332,14 @@ static void FEHeader(const CtrPokeTouchEasy *e)
         snprintf(left, sizeof(left), "%.19s", e->listTitle);
     }
     if (sStyleBall) {                                   /* a dark-red strip: the screen's title in white, the count at the right in pink */
+        /* The title has the strip up to the count, with a small gap: a long one (a German screen's) ends in "..." instead of being cut in a word. */
+        int titleRight = 306 - UiTextWidth(right, 1) - 8;
+        char fit[sizeof(left)];
+
+        Em2Fit(left, titleRight - 14, fit, sizeof(fit));
         UiRoundFill(4, 4, 312, 22, 8, BM_PILL_EDGE);
         UiRoundFill(6, 6, 308, 18, 6, BM_STRIP);
-        UiText(left, 14, 4 + (22 - UI_TEXT_H) / 2, EM_WHITE, BM_PILL_EDGE, 1, 160);
+        UiText(fit, 14, 4 + (22 - UI_TEXT_H) / 2, EM_WHITE, BM_PILL_EDGE, 1, titleRight);
         UiTextRight(right, 306, 4 + (22 - UI_TEXT_H) / 2, BL_PINK, BM_PILL_EDGE, 1);
         return;
     }

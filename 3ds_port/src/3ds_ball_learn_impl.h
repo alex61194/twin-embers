@@ -69,9 +69,13 @@ static void BlSidePanel(unsigned species, const char *nickname, const char *leve
     Fill(s->x + 8, s->y + 83, s->w - 16, 1, BM_RULE);
     if (have)
         for (int k = 0; k < 3; ++k) {
-            int y = s->y + 88 + 12 * k;
+            /* The label has the room up to its value, less a 4 px gap: German "Genauigkeit" beside "100" stays whole, and a label that is still
+             * too long ends in "..." rather than losing letters. */
+            int y = s->y + 88 + 12 * k, labelRight = s->x + s->w - 10 - UiTextWidth(value[k], 1) - 4;
+            char fit[32];
 
-            UiText(label[k], s->x + 10, y, BM_DIM, BM_CARD_FACE, 1, s->x + s->w - 14 - UiTextWidth(value[k], 1));
+            Em2Fit(label[k], labelRight - (s->x + 10), fit, sizeof(fit));
+            UiText(fit, s->x + 10, y, BM_DIM, BM_CARD_FACE, 1, labelRight);
             UiTextRight(value[k], s->x + s->w - 10, y, BL_REDTXT, BM_CARD_FACE, 1);
         }
 }

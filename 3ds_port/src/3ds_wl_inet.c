@@ -10,6 +10,7 @@ typedef int WlLen;
 #define WL_WOULD_BLOCK (WSAGetLastError() == WSAEWOULDBLOCK)
 #define SK(s) ((SOCKET)(s))
 #define WL_CLOSE(s) closesocket((SOCKET)(s))
+#define WL_SEND_FLAGS 0
 #elif defined(__DEVKITARM__)
 #include <3ds/os.h>
 #include <errno.h>
@@ -42,6 +43,15 @@ typedef ssize_t WlLen;
 #define WL_WOULD_BLOCK (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == ENOTCONN)
 #define SK(s) ((int)(s))
 #define WL_CLOSE(s) close((int)(s))
+#endif
+#ifndef WL_SEND_FLAGS
+/* A send on a connection the relay has closed must come back as an error, not raise SIGPIPE, which ends a computer's process; where
+ * the system has no such flag (Windows; libctru defines it as 0, having no signals) a send is left as it was. */
+#ifdef MSG_NOSIGNAL
+#define WL_SEND_FLAGS MSG_NOSIGNAL
+#else
+#define WL_SEND_FLAGS 0
+#endif
 #endif
 
 #include "3ds_wl_inet.h"
@@ -133,7 +143,7 @@ static void Flush(WlInet *net)
 {
     while (net->sock >= 0 && net->txLen)
     {
-        WlLen n = send(SK(net->sock), (const char *)net->tx, net->txLen, 0);
+        WlLen n = send(SK(net->sock), (const char *)net->tx, net->txLen, WL_SEND_FLAGS);
 
         if (n <= 0)
         {
@@ -306,6 +316,15 @@ void WlInet_Pump(WlInet *net)
 
 static uint8_t sPool[32];
 static uint32_t sConnections;
+/* Set from the game thread (WlInet_Abort), read by the connection's thread between its waits: volatile so that every check reads it anew. */
+static volatile bool sAbort;
+/* The longest a wait of WlInet_Connect lasts before it looks at sAbort again. */
+enum { ABORT_SLICE_MS = 100 };
+
+void WlInet_Abort(bool on)
+{
+    sAbort = on;
+}
 
 void WlInet_Seed(const void *entropy, size_t len)
 {
@@ -363,6 +382,11 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
     net->sock = -1;
     if (codeLen < 1 || codeLen > WL_INET_CODE_MAX)
         return false;
+    if (sAbort)
+    {
+        net->failStep = 8;
+        return false;
+    }
     WlInet_Derive(code, build, room, key);
     Trail(net, 10, 0);
     start = NowMs();               /* after the key: the time it takes is not the connection's */
@@ -403,7 +427,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
             return false;
         }
     }
-    for (a = list; a && net->sock < 0; a = a->ai_next)
+    for (a = list; a && net->sock < 0 && !sAbort; a = a->ai_next)
     {
         intptr_t s = (intptr_t)socket(a->ai_family, a->ai_socktype, a->ai_protocol);
 
@@ -425,15 +449,24 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
             {
                 fd_set wr;
                 struct timeval tv;
-                int err = 0, ready, rc;
+                int err = 0, ready = 0, rc;
                 int errLen = sizeof(err);
-                uint32_t left = timeoutMs > NowMs() - start ? timeoutMs - (NowMs() - start) : 0;
 
-                FD_ZERO(&wr);
-                FD_SET(SK(s), &wr);
-                tv.tv_sec = (long)(left / 1000);
-                tv.tv_usec = (long)(left % 1000) * 1000;
-                ready = select((int)s + 1, NULL, &wr, NULL, &tv);
+                /* The wait goes in slices of at most ABORT_SLICE_MS, so that a session that ends does not wait out the whole timeout. */
+                while (!sAbort)
+                {
+                    uint32_t spent = NowMs() - start, left = timeoutMs > spent ? timeoutMs - spent : 0;
+
+                    if (left > ABORT_SLICE_MS)
+                        left = ABORT_SLICE_MS;
+                    FD_ZERO(&wr);
+                    FD_SET(SK(s), &wr);
+                    tv.tv_sec = 0;
+                    tv.tv_usec = (long)left * 1000;
+                    ready = select((int)s + 1, NULL, &wr, NULL, &tv);
+                    if (ready != 0 || NowMs() - start >= timeoutMs)
+                        break;
+                }
                 Trail(net, 14, ready);
                 rc = ready > 0 ? getsockopt(SK(s), SOL_SOCKET, SO_ERROR, (char *)&err, &errLen) : -1;
                 Trail(net, 15, err);
@@ -452,7 +485,7 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
                 unsigned tries = 0;
                 bool up = false;
 
-                while (NowMs() - start < timeoutMs)
+                while (!sAbort && NowMs() - start < timeoutMs)
                 {
                     fd_set wr;
                     struct timeval tv = {0, 20000};
@@ -491,6 +524,12 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
         net->sock = s;
     }
     freeaddrinfo(list);
+    if (sAbort)
+    {
+        net->failStep = 8;              /* asked to give up: whatever the last attempt did is not why it ended */
+        WlInet_Close(net);
+        return false;
+    }
     if (net->sock < 0)
         return false;                   /* failStep says where */
     hello[0] = VERSION;
@@ -505,9 +544,9 @@ bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *co
         fd_set rd;
         struct timeval tv = {0, 20000};
 
-        if (NowMs() - start >= timeoutMs)
+        if (sAbort || NowMs() - start >= timeoutMs)
         {
-            net->failStep = 5;
+            net->failStep = sAbort ? 8 : 5;
             WlInet_Close(net);
             return false;
         }

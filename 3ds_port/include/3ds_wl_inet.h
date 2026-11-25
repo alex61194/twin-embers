@@ -62,7 +62,8 @@ typedef struct WlInet {
     int trail[12][2], trailLen;    /* the steps of the last connection (code, value): 10 key made, 11 lookup, 12 socket, 13 connect error, 14 select,
                                        15 socket error, 16 hello sent (bytes left * 1000 + closed), 18 closed (error) */
     int failStep, failErrno;        /* why the last WlInet_Connect failed: 1 name lookup, 2 connect, 3 wait for the connection, 4 refused,
-                                       5 no welcome in time, 6 the relay refused (failErrno: its reason), 7 closed before the welcome */
+                                       5 no welcome in time, 6 the relay refused (failErrno: its reason), 7 closed before the welcome,
+                                       8 given up because WlInet_Abort asked */
 } WlInet;
 
 /* Fresh randomness for the nonces of the connections that follow: the caller gives what the system has (on the console
@@ -80,6 +81,11 @@ void WlInet_Derive(const char *code, const uint8_t build[WL_INET_BUILD_BYTES], c
  * refused (0 when it could not be reached). */
 bool WlInet_Connect(WlInet *net, const char *host, uint16_t port, const char *code, const uint8_t build[WL_INET_BUILD_BYTES],
                     uint32_t timeoutMs);
+/* Ask a WlInet_Connect under way on another thread to give up (true), or let the next ones run (false). A connection waits up to
+ * its timeout for the relay, and the game thread that ends a session waits for it: with this set, Connect returns false (failStep 8)
+ * within about 100 ms of its waits, though not during the name lookup or the key's derivation, which cannot be cut short. It stays
+ * set until it is cleared, so a Connect that starts after it gives up at once. */
+void WlInet_Abort(bool on);
 /* Read what has arrived, send what waits, keep the connection alive. Cheap when idle: call it every frame. */
 void WlInet_Pump(WlInet *net);
 /* A room event (joined or left) not yet taken; false when none. */

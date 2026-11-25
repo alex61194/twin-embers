@@ -1921,7 +1921,8 @@ static void HomeStatusWide(const CtrPokeTouchView *v)
         Fill(r->x + 64, r->y + 6, 1, r->h - 12, UI_RGB(230, 224, 224));      /* a hairline between the money and the Repel */
         ItemArt(ICON_REPEL + kind, v->homeRepelItem[kind], x, r->y + 6, 1);
         SmallText(kName[kind], textX, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 4);
-        snprintf(steps, sizeof(steps), CTR_TR("%u steps", "%u pasos", "%u Schritte"), (unsigned)v->homeRepelSteps);
+        /* German "Schritte" leaves no room beside the Repel's icon on this plate, so it is shortened there; English and Spanish fit whole. */
+        snprintf(steps, sizeof(steps), CTR_TR("%u steps", "%u pasos", "%u Schr."), (unsigned)v->homeRepelSteps);
         Em2Text(steps, textX, r->y + 13, EM_DARK, EM_DARK_SH, chipX - 4);
         fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
         if (fill > barW)

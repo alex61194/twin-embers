@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "3ds_lang.h"
 #include "3ds_poketouch_options.h"
 #include "3ds_looks.h"
 #include "3ds_settings.h"
@@ -110,6 +111,22 @@ static void Text(int row, const char *expect)
     CHECK(strcmp(out, expect) == 0, "row %d shows \"%s\", expected \"%s\"", row, out, expect);
 }
 
+/* A value that is a word of the port's (CTR_TR in 3ds_poketouch_options.c): the English build checks the very word; a Spanish
+ * or German build (-DCTR_LANG_ES=1 / -DCTR_LANG_DE=1) has its own word there, so it checks only that the row shows a whole,
+ * valid value, which every language must, and the English word stays in the message to name the value meant. */
+static void TextWord(int row, const char *english)
+{
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    Text(row, english);
+#else
+    char out[PT_OPT_VALUE_LEN];
+
+    memset(out, 'x', sizeof(out));
+    CtrOptions_ValueText(row, out, (int)sizeof(out));
+    CHECK(memchr(out, 0, sizeof(out)) != NULL && out[0] && strcmp(out, "?") != 0, "row %d shows no valid value for \"%s\"", row, english);
+#endif
+}
+
 int main(void)
 {
     static const char *const valid[][3] = {{"Slow", "Mid", "Fast"}, {"On", "Off"}, {"Shift", "Set"},
@@ -151,6 +168,8 @@ int main(void)
 
     CHECK(CtrOptions_RowCount() == 40, "the OPTIONS screen has %d rows", CtrOptions_RowCount());
     CHECK(CtrOptions_RowCount() <= PT_OPT_MAX * CtrOptions_PageCount(), "more rows than the pages hold");
+    /* The rows' English labels name them; the other languages have their own words, so only the English build compares them. */
+#if !CTR_LANG_ES && !CTR_LANG_DE
     CHECK(strcmp(CtrOptions_Row(8)->label, "FPS counter") == 0, "FPS COUNTER is row 6");
     CHECK(strcmp(CtrOptions_Row(19)->label, "Type matchup") == 0, "TYPE MATCHUP is row 7");
     CHECK(strcmp(CtrOptions_Row(20)->label, "Move details") == 0, "MOVE DETAILS is row 8");
@@ -158,6 +177,7 @@ int main(void)
     CHECK(strcmp(CtrOptions_Row(10)->label, "Hour") == 0, "HOUR is row 10");
     CHECK(strcmp(CtrOptions_Row(21)->label, "Repel again") == 0, "REPEL AGAIN is row 12");
     CHECK(strcmp(CtrOptions_Row(11)->label, "Companion") == 0, "COMPANION is row 13");
+#endif
 
     /* Valid values: the names FireRed uses, FRAME as Type1..Type10. */
     for (int row = 0; row < 9; ++row) {
@@ -171,27 +191,33 @@ int main(void)
 
             sStored[game] = v;
             snprintf(frame, sizeof(frame), "Type%d", v + 1);
-            Text(row, game == PT_OPT_FRAME ? frame : valid[game][v]);
+            TextWord(row, game == PT_OPT_FRAME ? frame : valid[game][v]);
         }
         sStored[game] = 0;
     }
     /* MULTIPLAYER (row 5): Online until chosen, then Local, kept in the settings; the radio is told through the hook. */
-    CHECK(strcmp(CtrOptions_Row(5)->label, "Multiplayer") == 0 && CtrOptions_Count(5) == 2 && CtrOptions_PageOf(5) == 0, "MULTIPLAYER is the last row of Settings");
-    Text(5, "Online");
+    CHECK(CtrOptions_Count(5) == 2 && CtrOptions_PageOf(5) == 0, "MULTIPLAYER is the last row of Settings");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(CtrOptions_Row(5)->label, "Multiplayer") == 0, "MULTIPLAYER is row 5");
+#endif
+    TextWord(5, "Online");
     CtrOptions_SetLocalPlayHook(LocalPlayHook);
     CtrOptions_Step(5, 1);
-    Text(5, "Local");
+    TextWord(5, "Local");
     CHECK(CtrSettings_LocalPlay() == 1 && sLocalPlayTold == 1, "LOCAL is kept and the radio is told");
     CtrOptions_Step(5, 1);
-    Text(5, "Online");
+    TextWord(5, "Online");
     CHECK(CtrSettings_LocalPlay() == 0 && sLocalPlayTold == 0, "back to ONLINE");
     /* ONLINE ROOM (row 6): Public; PRIVATE with no code opens the keypad and stays public until OK; the keys type, delete, and OK takes the
      * six digits (the room is private, the note says the code, the radio is told); a tap on the label changes the code; CANCEL leaves it. */
     {
         CtrPokeTouchView pv;
 
-        CHECK(strcmp(CtrOptions_Row(6)->label, "Online room") == 0 && CtrOptions_PageOf(6) == 0, "ONLINE ROOM is the last row of Settings");
-        Text(6, "Public");
+        CHECK(CtrOptions_PageOf(6) == 0, "ONLINE ROOM is the last row of Settings");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+        CHECK(strcmp(CtrOptions_Row(6)->label, "Online room") == 0, "ONLINE ROOM is row 6");
+#endif
+        TextWord(6, "Public");
         sLocalPlayTold = -1;
         CtrOptions_Step(6, 1);
         CHECK(CtrOptions_PadOn() && !CtrSettings_PrivateRoom(), "PRIVATE with no code asks for one, still public");
@@ -222,9 +248,12 @@ int main(void)
         CtrOptions_PadTouch(0, 0, -1);
         CHECK(!CtrOptions_PadOn() && CtrSettings_PrivateRoom() && strcmp(CtrSettings_RoomCode(), "4567890123456781") == 0 && sLocalPlayTold == 0,
               "OK: the private room of 4567890123456781, and the radio told");
-        Text(6, "Private");
+        TextWord(6, "Private");
         CtrOptions_Fill(&pv, 6);
-        CHECK(strcmp(pv.bar[1], "Code 4567 8901 2345 6781.") == 0 && !pv.optPad.on, "the note says the code (%s)", pv.bar[1]);
+        CHECK(strstr(pv.bar[1], " 4567 8901 2345 6781.") != NULL && !pv.optPad.on, "the note says the code (%s)", pv.bar[1]);
+#if !CTR_LANG_ES && !CTR_LANG_DE
+        CHECK(strcmp(pv.bar[1], "Code 4567 8901 2345 6781.") == 0, "the note says the code in English (%s)", pv.bar[1]);
+#endif
         CtrOptions_Activate(6);
         CHECK(CtrOptions_PadOn(), "a tap on the label opens the keypad again");
         CtrOptions_PadTouch(1, 1, PT_PAD_KEY_CANCEL);
@@ -284,15 +313,15 @@ int main(void)
           && CtrOptions_DayNight() == 1
           && CtrOptions_Embers() == 1, "default port options");
     CtrOptions_Step(19, 1);
-    Text(19, "Off");
+    TextWord(19, "Off");
     CHECK(CtrOptions_TypeMatchup() == 0, "TYPE MATCHUP stepped to OFF");
     CtrOptions_Step(19, -1);
-    Text(19, "On");
-    Text(9, "Clock");
+    TextWord(19, "On");
+    TextWord(9, "Clock");
     CHECK(CtrOptions_DayNightSecond() == -1, "DAY/NIGHT on CLOCK follows the 3DS clock");
     /* FIXED takes the HOUR row's half hour: 12:00 until changed, any of the 48 after. */
     CtrOptions_Step(9, 1);
-    Text(9, "Fixed");
+    TextWord(9, "Fixed");
     Text(10, "12:00");
     CHECK(CtrOptions_DayNight() == 1 && CtrOptions_DayNightSecond() == 43200, "FIXED at 12:00 is second 43200");
     CtrOptions_Step(10, 1);
@@ -307,44 +336,44 @@ int main(void)
     CtrOptions_Set(10, 12);
     CHECK(CtrOptions_DayNightSecond() == 21600, "HOUR 06:00 is second 21600");
     CtrOptions_Step(9, 1);
-    Text(9, "Off");
+    TextWord(9, "Off");
     CtrOptions_Set(10, 24);
     CHECK(CtrOptions_DayNight() == 0 && CtrOptions_DayNightSecond() == -1, "choosing an hour keeps OFF off");
     CtrOptions_Step(9, 1);
-    Text(9, "Clock");
+    TextWord(9, "Clock");
     CtrOptions_Set(10, 24);
-    Text(9, "Fixed");
+    TextWord(9, "Fixed");
     CtrOptions_Step(9, 1);
-    Text(9, "Off");
+    TextWord(9, "Off");
     CHECK(CtrOptions_DayNight() == 0 && CtrOptions_DayNightSecond() == -1, "DAY/NIGHT stepped to OFF");
     CtrOptions_Step(9, 1);
-    Text(9, "Clock");
+    TextWord(9, "Clock");
     CtrOptions_Step(9, -1);
-    Text(9, "Off");
+    TextWord(9, "Off");
     CtrOptions_Step(9, 1);
-    Text(9, "Clock");
+    TextWord(9, "Clock");
     /* COMPANION: none until chosen, then TRAIL, then BE IT; a row of levels, kept in the settings. */
-    Text(11, "Off");
+    TextWord(11, "Off");
     CHECK(CtrOptions_Companion() == 0 && CtrSettings_Companion() == 0, "COMPANION starts off");
     CtrOptions_Step(11, 1);
-    Text(11, "Follow");
+    TextWord(11, "Follow");
     CHECK(CtrOptions_Companion() == 1 && CtrSettings_Companion() == 1, "COMPANION stepped to TRAIL");
     CtrOptions_Step(11, 1);
-    Text(11, "Be it");
+    TextWord(11, "Be it");
     CHECK(CtrOptions_Companion() == 2 && CtrSettings_Companion() == 2, "COMPANION stepped to BE IT");
     CtrOptions_Step(11, 1);
-    Text(11, "Off");
+    TextWord(11, "Off");
     CtrOptions_Set(11, 2);
     CtrOptions_Set(11, 3);
     CHECK(CtrOptions_Companion() == 2, "a value that is not a level is refused");
     /* EXP SHARE, alone on page 3: the game's own until chosen, then HALF, then FULL; levels, kept in the settings. */
-    Text(22, "Off");
+    TextWord(22, "Off");
     CHECK(CtrOptions_ExpShare() == 0 && CtrSettings_ExpShare() == 0, "EXP SHARE starts off");
     CtrOptions_Step(22, 1);
-    Text(22, "Half");
+    TextWord(22, "Half");
     CHECK(CtrOptions_ExpShare() == 1 && CtrSettings_ExpShare() == 1, "EXP SHARE stepped to HALF");
     CtrOptions_Step(22, 1);
-    Text(22, "Full");
+    TextWord(22, "Full");
     CHECK(CtrOptions_ExpShare() == 2, "EXP SHARE stepped to FULL");
     CtrOptions_Set(22, 3);
     CHECK(CtrOptions_ExpShare() == 2 && CtrOptions_IsLevels(22), "a value that is not a level is refused; a row of levels");
@@ -361,11 +390,16 @@ int main(void)
           && CtrOptions_PageBase(4) == 19 && CtrOptions_PageRows(4) == 6 && CtrOptions_PageBase(5) == 25 && CtrOptions_PageRows(5) == 5
           && CtrOptions_PageBase(6) == 30 && CtrOptions_PageRows(6) == 3 && CtrOptions_PageBase(7) == 33 && CtrOptions_PageRows(7) == 7,
           "eight pages in five sections");
+    for (int page = 0; page < CtrOptions_PageCount(); ++page)
+        CHECK(CtrOptions_PageName(page)[0] != 0, "page %d has a name", page);
+    CHECK(CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(8)[0] == 0, "no page name past the last");
+#if !CTR_LANG_ES && !CTR_LANG_DE
     CHECK(strcmp(CtrOptions_PageName(0), "Settings") == 0 && strcmp(CtrOptions_PageName(1), "Graphics") == 0
           && strcmp(CtrOptions_PageName(2), "Looks") == 0 && strcmp(CtrOptions_PageName(3), "Wilds") == 0 && strcmp(CtrOptions_PageName(4), "QoL") == 0
           && strcmp(CtrOptions_PageName(5), "Nuzlocke") == 0 && strcmp(CtrOptions_PageName(6), "Random") == 0
-          && strcmp(CtrOptions_PageName(7), "Cheats") == 0 && CtrOptions_PageName(-1)[0] == 0 && CtrOptions_PageName(8)[0] == 0,
-          "each page has its own short name (the PAGE button is 64 px of text), none past the last");
+          && strcmp(CtrOptions_PageName(7), "Cheats") == 0,
+          "each page has its own short name (the PAGE button is 64 px of text)");
+#endif
     {
         int of = 0;
 
@@ -377,13 +411,19 @@ int main(void)
     }
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 12);
-    CHECK(strcmp(view.optPageName, "Looks") == 0 && view.optPage == 2 && view.optSection == 1, "the looks page is named Looks and is in the Graphics section");
+    CHECK(view.optPage == 2 && view.optSection == 1, "the looks page is in the Graphics section");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optPageName, "Looks") == 0, "the looks page is named Looks");
+#endif
     /* TRUCOS: the Cheats page holds seven rows, all off at first; each is kept and read by the game's accessors. */
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 33);
-    CHECK(view.optPage == 7 && view.optPageCount == 8 && view.optCount == 7 && view.optSection == 4 && view.optSectionCount == 5
-          && strcmp(view.optPageName, "Cheats") == 0 && strcmp(view.optLabel[0], "Sure catch") == 0 && strcmp(view.optLabel[1], "Shiny odds") == 0,
+    CHECK(view.optPage == 7 && view.optPageCount == 8 && view.optCount == 7 && view.optSection == 4 && view.optSectionCount == 5,
           "the Cheats page: seven rows, the fifth section");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optPageName, "Cheats") == 0 && strcmp(view.optLabel[0], "Sure catch") == 0 && strcmp(view.optLabel[1], "Shiny odds") == 0,
+          "the Cheats page's name and first rows");
+#endif
     CHECK(!CtrOptions_SureCatch() && !CtrOptions_NoEncounters() && !CtrOptions_WalkThroughWalls() && !CtrOptions_InfinitePp()
           && !CtrOptions_AlwaysFlee() && CtrOptions_ShinyOdds() == 0 && CtrOptions_ScaleExp(100) == 100, "every cheat is off until chosen");
     for (int i = 0; i < CtrOptions_PageRows(7); ++i) {
@@ -436,12 +476,17 @@ int main(void)
         CtrOptions_Row(34)->set(0);
     }
     /* SURF POKEMON: the looks page's fourth row: DEFAULT, then the pack's Pokemon; a preview like the looks'. */
-    CHECK(strcmp(CtrOptions_Row(15)->label, "Surf Pokemon") == 0 && CtrOptions_Count(15) == 3 && CtrOptions_PageOf(15) == 2,
-          "SURF POKEMON is the fourth row of the looks page, with DEFAULT and two more");
-    Text(15, "Default");
+    CHECK(CtrOptions_Count(15) == 3 && CtrOptions_PageOf(15) == 2, "SURF POKEMON is the fourth row of the looks page, with DEFAULT and two more");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(CtrOptions_Row(15)->label, "Surf Pokemon") == 0, "SURF POKEMON is row 15");
+#endif
+    TextWord(15, "Default");
     CtrOptions_Fill(&view, 15);
-    CHECK(view.optPage == 2 && view.optCount == 4 && view.optLook.on == 1 && view.optLook.has == 0 && strcmp(view.optLook.name, "Default") == 0,
+    CHECK(view.optPage == 2 && view.optCount == 4 && view.optLook.on == 1 && view.optLook.has == 0 && view.optLook.name[0],
           "DEFAULT: the preview names it and has no picture");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optLook.name, "Default") == 0, "DEFAULT: the preview's name");
+#endif
     CtrOptions_Step(15, 1);
     Text(15, "LAPRAS");
     CHECK(sSurfChoice == 0, "the first step chooses the first Pokemon");
@@ -454,7 +499,10 @@ int main(void)
     CtrOptions_Step(15, 1);
     CHECK(sSurfChoice == -1, "one more step is back to DEFAULT");
     CtrOptions_Fill(&view, 13);
-    CHECK(view.optLook.on == 1 && strcmp(view.optLook.name, "Default") == 0 && view.optLook.credit[0], "the other look rows still preview their own");
+    CHECK(view.optLook.on == 1 && view.optLook.name[0] && view.optLook.credit[0], "the other look rows still preview their own");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optLook.name, "Default") == 0, "the other look rows' preview is DEFAULT");
+#endif
     CtrOptions_Fill(&view, 25);
     CHECK(strcmp(view.optPageName, "Nuzlocke") == 0 && view.optPage == 5 && view.optSection == 3, "the Nuzlocke page is named alone");
     CHECK(CtrOptions_PageBase(-1) == 0 && CtrOptions_PageBase(8) == 0 && CtrOptions_PageRows(-1) == 0 && CtrOptions_PageRows(8) == 0,
@@ -480,18 +528,18 @@ int main(void)
           && CtrOptions_PageOf(30) == 6 && CtrOptions_PageOf(32) == 6 && CtrOptions_PageOf(33) == 7 && CtrOptions_PageOf(98) == 7, "a row's page");
     /* FREE HMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_FreeHm() == 0 && CtrSettings_FreeHm() == 0 && CtrOptions_Count(24) == 2, "FREE HMS starts off");
-    Text(24, "Off");
+    TextWord(24, "Off");
     CtrOptions_Step(24, 1);
     CHECK(CtrOptions_FreeHm() == 1 && CtrSettings_FreeHm() == 1, "FREE HMS on, kept in the settings");
-    Text(24, "On");
+    TextWord(24, "On");
     CtrOptions_Step(24, 1);
     CHECK(CtrOptions_FreeHm() == 0, "FREE HMS back off");
     /* RANDOMLOCKE: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_Randomlocke() == 0 && CtrSettings_Randomlocke() == 0 && CtrOptions_Count(30) == 2, "RANDOMLOCKE starts off");
-    Text(30, "Off");
+    TextWord(30, "Off");
     CtrOptions_Step(30, 1);
     CHECK(CtrOptions_Randomlocke() == 1 && CtrSettings_Randomlocke() == 1, "RANDOMLOCKE on, kept in the settings");
-    Text(30, "On");
+    TextWord(30, "On");
     CtrOptions_Step(30, 1);
     CHECK(CtrOptions_Randomlocke() == 0, "RANDOMLOCKE back off");
     /* Its species: a real one always, the same for the same seed, place and species, and not the same for every seed or place. */
@@ -518,21 +566,21 @@ int main(void)
     }
     /* NUZLOCKE: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_Nuzlocke() == 0 && CtrSettings_Nuzlocke() == 0 && CtrOptions_Count(25) == 2, "NUZLOCKE starts off");
-    Text(25, "Off");
+    TextWord(25, "Off");
     CtrOptions_Step(25, 1);
     CHECK(CtrOptions_Nuzlocke() == 1 && CtrSettings_Nuzlocke() == 1, "NUZLOCKE on, kept in the settings");
-    Text(25, "On");
+    TextWord(25, "On");
     CtrOptions_Step(25, 1);
     CHECK(CtrOptions_Nuzlocke() == 0, "NUZLOCKE back off");
     /* The three optional rules (page 6, rows 24 to 26): off by default, each its own switch kept in the settings. */
     CHECK(CtrOptions_NuzDuplicates() == 0 && CtrOptions_NuzShiny() == 0 && CtrOptions_NuzLevelCap() == 0
           && CtrOptions_Count(26) == 2 && CtrOptions_Count(27) == 2 && CtrOptions_Count(28) == 2, "the NUZLOCKE options start off");
-    Text(26, "Off");
+    TextWord(26, "Off");
     CtrOptions_Step(26, 1);
     CtrOptions_Step(28, 1);
     CHECK(CtrOptions_NuzDuplicates() == 1 && CtrSettings_NuzDuplicates() == 1 && CtrOptions_NuzShiny() == 0
           && CtrOptions_NuzLevelCap() == 1 && CtrSettings_NuzLevelCap() == 1, "DUPLICATES and LEVEL CAPS on, SHINY CLAUSE still off");
-    Text(26, "On");
+    TextWord(26, "On");
     CtrOptions_Step(27, 1);
     CHECK(CtrOptions_NuzShiny() == 1 && CtrSettings_NuzShiny() == 1, "SHINY CLAUSE on, kept in the settings");
     CtrOptions_Step(26, 1);
@@ -544,7 +592,7 @@ int main(void)
     CHECK(view.optPage == 5 && view.optCount == 5 && view.optLabel[0][0] && view.optLabel[4][0] && view.optLabel[5][0] == 0, "the Nuzlocke page holds five rows");
     /* SET MODE (row 27): off, and only counts while NUZLOCKE is on. */
     CHECK(CtrOptions_NuzSetMode() == 0 && CtrOptions_Count(29) == 2, "SET MODE starts off");
-    Text(29, "Off");
+    TextWord(29, "Off");
     CtrOptions_Step(29, 1);
     CHECK(CtrSettings_NuzSet() == 1 && CtrOptions_NuzSetMode() == 0, "SET MODE is kept but counts only with NUZLOCKE on");
     CtrOptions_Step(25, 1);
@@ -591,39 +639,41 @@ int main(void)
     CHECK(CtrSettings_RandomNoLegendary() == 0, "LEGENDARIES allowed again");
     /* The Wilds page (Graphics, page 3: rows 14 to 16): WILD POKEMON, WILD DISPLAY and AGGRESSIVE, all off or plain until chosen, kept in the settings. */
     CHECK(CtrOptions_WildDensity() == 0 && CtrSettings_WildDensity() == 0 && CtrOptions_Count(16) == 4, "WILD POKEMON starts off, with four values");
+#if !CTR_LANG_ES && !CTR_LANG_DE
     CHECK(strcmp(CtrOptions_Row(16)->label, "Wild Pokemon") == 0 && strcmp(CtrOptions_Row(17)->label, "Wild display") == 0
           && strcmp(CtrOptions_Row(18)->label, "Aggressive") == 0, "the three rows of the Wilds page");
-    Text(16, "Off");
+#endif
+    TextWord(16, "Off");
     CtrOptions_Step(16, 1);
-    Text(16, "Few");
+    TextWord(16, "Few");
     CtrOptions_Step(16, 1);
-    Text(16, "Normal");
+    TextWord(16, "Normal");
     CtrOptions_Step(16, 1);
-    Text(16, "Many");
+    TextWord(16, "Many");
     CHECK(CtrOptions_WildDensity() == 3 && CtrSettings_WildDensity() == 3, "WILD POKEMON stepped to MANY, kept in the settings");
     CtrOptions_Step(16, 1);
-    Text(16, "Off");
+    TextWord(16, "Off");
     CtrOptions_Set(16, 4);
     CHECK(CtrOptions_WildDensity() == 0, "a value that does not exist is refused");
     CtrOptions_Set(16, 2);
     CHECK(CtrOptions_WildDensity() == 2 && !CtrOptions_IsLevels(16), "NORMAL picked outright; the row is a value between arrows");
     CHECK(CtrOptions_WildSilhouette() == 0 && CtrOptions_Count(17) == 2, "WILD DISPLAY starts with Pokemon");
-    Text(17, "Pokemon");
+    TextWord(17, "Pokemon");
     CtrOptions_Step(17, 1);
-    Text(17, "Silhouette");
+    TextWord(17, "Silhouette");
     CHECK(CtrOptions_WildSilhouette() == 1 && CtrSettings_WildSilhouette() == 1, "WILD DISPLAY on silhouettes, kept in the settings");
     CtrOptions_Step(17, 1);
     CHECK(CtrOptions_WildSilhouette() == 0, "WILD DISPLAY back to Pokemon");
     CHECK(CtrOptions_WildAggro() == 0 && CtrOptions_Count(18) == 5, "AGGRESSIVE starts off, with five values");
-    Text(18, "Off");
+    TextWord(18, "Off");
     CtrOptions_Step(18, 1);
-    Text(18, "Rare");
+    TextWord(18, "Rare");
     CtrOptions_Step(18, 1);
-    Text(18, "Low");
+    TextWord(18, "Low");
     CtrOptions_Step(18, 1);
-    Text(18, "Moderate");
+    TextWord(18, "Moderate");
     CtrOptions_Step(18, 1);
-    Text(18, "High");
+    TextWord(18, "High");
     CHECK(CtrOptions_WildAggro() == 4 && CtrSettings_WildAggro() == 4, "AGGRESSIVE stepped to HIGH, kept in the settings");
     CtrOptions_Step(18, 1);
     CHECK(CtrOptions_WildAggro() == 0, "AGGRESSIVE wraps to OFF");
@@ -634,20 +684,23 @@ int main(void)
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 17);
     CHECK(view.optPage == 3 && view.optPageCount == 8 && view.optCount == 3 && view.optSelected == 1 && view.optSection == 1 && view.optSectionCount == 5
-          && strcmp(view.optPageName, "Wilds") == 0 && strcmp(view.optLabel[0], "Wild Pokemon") == 0 && view.optLabel[3][0] == 0,
+          && view.optLabel[0][0] && view.optLabel[3][0] == 0,
           "the Wilds page: three rows, the third page of Graphics");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optPageName, "Wilds") == 0 && strcmp(view.optLabel[0], "Wild Pokemon") == 0, "the Wilds page's name and first row");
+#endif
     /* REUSABLE TMS: off by default, a switch that is kept in the settings. */
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0 && CtrOptions_Count(23) == 2, "REUSABLE TMS starts off");
-    Text(23, "Off");
+    TextWord(23, "Off");
     CtrOptions_Step(23, 1);
     CHECK(CtrOptions_ReusableTm() == 1 && CtrSettings_TmReuse() == 1, "REUSABLE TMS on, kept in the settings");
-    Text(23, "On");
+    TextWord(23, "On");
     CtrOptions_Set(23, 2);
     CHECK(CtrOptions_ReusableTm() == 1, "a value that is not a switch position is refused");
     CtrOptions_Step(23, 1);
     CHECK(CtrOptions_ReusableTm() == 0 && CtrSettings_TmReuse() == 0, "REUSABLE TMS back off");
     /* The looks of Red, Leaf and the rival: DEFAULT, then the pack's (here three); the choice goes to the game's looks. */
-    Text(12, "Default");
+    TextWord(12, "Default");
     CHECK(CtrOptions_Count(12) == 4 && CtrOptions_Count(14) == 4, "the look rows have DEFAULT and three looks");
     CtrOptions_Step(12, 1);
     Text(12, "ASH");
@@ -656,7 +709,7 @@ int main(void)
     CtrOptions_Set(12, 3);
     Text(12, "GREEN");
     CtrOptions_Step(12, 1);
-    Text(12, "Default");
+    TextWord(12, "Default");
     CtrOptions_Step(12, -1);
     Text(12, "GREEN");
     CtrOptions_Set(13, 1);
@@ -681,8 +734,11 @@ int main(void)
     CtrOptions_Set(13, 0);
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 13);
-    CHECK(view.optLook.on && !view.optLook.has && strcmp(view.optLook.name, "Default") == 0 && view.optLook.credit[0],
+    CHECK(view.optLook.on && !view.optLook.has && view.optLook.name[0] && view.optLook.credit[0],
           "the default: its name and no picture");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optLook.name, "Default") == 0, "the default's name");
+#endif
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 22);
     CHECK(!view.optLook.on && view.optLook.name[0] == 0, "no preview on another row");
@@ -690,8 +746,11 @@ int main(void)
     CHECK(!view.optLook.on, "no preview on the first page");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 11);
-    CHECK(view.optSegCount[4] == 3 && view.optSegValue[4] == 2 && strcmp(view.optSegName[4][1], "Follow") == 0
-          && strcmp(view.optSegName[4][2], "Be it") == 0, "COMPANION shown as levels (the fifth row of Graphics)");
+    CHECK(view.optSegCount[4] == 3 && view.optSegValue[4] == 2 && view.optSegName[4][1][0] && view.optSegName[4][2][0],
+          "COMPANION shown as levels (the fifth row of Graphics)");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optSegName[4][1], "Follow") == 0 && strcmp(view.optSegName[4][2], "Be it") == 0, "COMPANION's level names");
+#endif
     CtrOptions_Set(11, 0);
     /* The choice outlives the session (settings.cfg); without one the console decides. */
     CtrSettings_SetEmbers(CTR_EMBERS_HIGH);
@@ -715,8 +774,10 @@ int main(void)
     CtrOptions_Fill(&view, 0);
     CHECK(view.optFrameShow == 0, "no sample on other rows");
     CtrOptions_Fill(&view, 20);
-    CHECK(view.optPage == 4 && view.optPageCount == 8 && view.optCount == 6 && view.optSelected == 1
-          && strcmp(view.optLabel[1], "Move details") == 0, "QoL Fill");
+    CHECK(view.optPage == 4 && view.optPageCount == 8 && view.optCount == 6 && view.optSelected == 1 && view.optLabel[1][0], "QoL Fill");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optLabel[1], "Move details") == 0, "QoL Fill: MOVE DETAILS is its second row");
+#endif
     /* ON/OFF rows are switches (on, off), the others text: EXP SHARE's levels are words, not a switch. */
     CHECK(view.optSwitch[0] == 2 && view.optSwitch[1] == 2 && view.optSwitch[2] == 2 && view.optSwitch[3] == 0, "QoL switches");
     CtrOptions_Set(20, 1);
@@ -724,14 +785,17 @@ int main(void)
     CtrOptions_Fill(&view, 20);
     CHECK(view.optSwitch[1] == 1, "MOVE DETAILS off is an off switch");
     CtrOptions_Fill(&view, 9);
-    CHECK(view.optSwitch[2] == 0 && strcmp(view.optValue[2], "Off") == 0, "DAY/NIGHT OFF stays text");
+    CHECK(view.optSwitch[2] == 0 && view.optValue[2][0] && strcmp(view.optValue[2], "?") != 0, "DAY/NIGHT OFF stays text");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optValue[2], "Off") == 0, "DAY/NIGHT OFF reads Off");
+#endif
     CtrOptions_Set(20, 0);
     CtrOptions_Step(9, 1);
     /* REPEL AGAIN: on by default, kept in settings.cfg. */
-    Text(21, "On");
+    TextWord(21, "On");
     CHECK(CtrOptions_RepelAgain() == 1, "REPEL AGAIN starts on");
     CtrOptions_Step(21, 1);
-    Text(21, "Off");
+    TextWord(21, "Off");
     CHECK(CtrOptions_RepelAgain() == 0 && CtrSettings_RepelAgain() == 0, "REPEL AGAIN off, kept in the settings");
     CtrOptions_Step(21, 1);
     CHECK(CtrOptions_RepelAgain() == 1 && CtrSettings_RepelAgain() == 1, "REPEL AGAIN back on");
@@ -759,8 +823,11 @@ int main(void)
     Text(8, "?");
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 0);
-    CHECK(strcmp(view.optValue[0], "?") == 0 && strcmp(view.optValue[4], "?") == 0 && strcmp(view.optValue[1], "On") == 0,
+    CHECK(strcmp(view.optValue[0], "?") == 0 && strcmp(view.optValue[4], "?") == 0 && view.optValue[1][0] && strcmp(view.optValue[1], "?") != 0,
           "Fill with bad values");
+#if !CTR_LANG_ES && !CTR_LANG_DE
+    CHECK(strcmp(view.optValue[1], "On") == 0, "Fill with bad values: the good row beside them reads On");
+#endif
     CtrOptions_Fill(&view, 7);
     CHECK(strcmp(view.optValue[0], "?") == 0 && strcmp(view.optValue[1], "?") == 0, "Fill with bad values (the Graphics page)");
     CtrOptions_Fill(&view, 0);
@@ -794,7 +861,10 @@ int main(void)
     CHECK(small[0] == 'x', "a zero-size buffer was written for a bad row");
     sStored[PT_OPT_BATTLE_STYLE] = 0;
     CtrOptions_ValueText(2, small, (int)sizeof(small));
+    CHECK(strlen(small) == sizeof(small) - 1, "a short buffer is filled and ends in its NUL (\"%s\")", small);
+#if !CTR_LANG_ES && !CTR_LANG_DE
     CHECK(strcmp(small, "Shi") == 0, "a short buffer holds \"%s\"", small);
+#endif
     memset(&view, 0, sizeof(view));
     CtrOptions_Fill(&view, 44);
     CHECK(view.optSelected == 0 && view.optCount == 7, "Fill with a bad selection");
