@@ -506,6 +506,14 @@ static void EndSession(void)
         Close();
 }
 
+/* One line of the lower screen's wireless state into the net log (3ds_bottom_chat_impl.h: written when it changes, to find where a trade or the
+ * leader's wait gets stuck). Nothing without a log (an ordinary build outside a room). */
+void CtrWl_Trace(const char *what, int a, int b, int c, int d, int e)
+{
+    (void)what; (void)a; (void)b; (void)c; (void)d; (void)e;        /* unused where there is no net log */
+    NetLog("screen %s %d %d %d %d %d", what, a, b, c, d, e);
+}
+
 void CtrWl_Shutdown(void)
 {
     Close();

@@ -75,7 +75,7 @@ TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
 TRACED_EXIT(ExitPokeTouch, CtrPokeTouch_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
 TRACED_EXIT(ExitWireless, CtrWl_Shutdown())
-TRACED_EXIT(ExitSockets, socExit())
+TRACED_EXIT(ExitSockets, (CtrWl_Shutdown(), socExit()))   /* atexit runs this before ExitWireless: the socket is closed before the soc service goes (close() on it afterwards crashed) */
 
 /* The OPTIONS screen's MULTIPLAYER and ONLINE ROOM rows: the radio takes them from the next session on. */
 static void LocalPlayChanged(int local)

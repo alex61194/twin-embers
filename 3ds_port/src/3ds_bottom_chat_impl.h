@@ -71,8 +71,28 @@ static uint16_t ChatTap(int code)
 
 static int sWlHold;
 
+extern int CtrTrade_InMenu(void);
+extern void CtrWl_Trace(const char *what, int a, int b, int c, int d, int e);
+
+/* Written to the net log when it changes: the choice open, the hold left, the leader's wait, the trade (active, in its menu, the cursor), the chat. */
+static void WlTrace(int open)
+{
+    static int last[6] = {-9, -9, -9, -9, -9, -9}, lines;
+    int now[6] = {open, sWlHold, CtrUnionLeader_Active(), CtrTrade_Active() | CtrTrade_InMenu() << 1, CtrTrade_Cursor(), CtrChat_Active()};
+
+    if (!CtrUnionLeader_Active() && !CtrTrade_InMenu() && !CtrChat_Active() && last[2] == 0 && last[3] == 0 && last[5] == 0)
+        return;                             /* no wireless screen now or just before: nothing to say */
+    if (memcmp(last, now, sizeof(last)) == 0)
+        return;
+    memcpy(last, now, sizeof(last));
+    if (lines++ >= 400)
+        return;                             /* a flicker every frame would fill the log the link lines share */
+    CtrWl_Trace("open/hold/leader/trade/cursor/chat", now[0], now[1], now[2], now[3] * 100 + now[4], now[5]);
+}
+
 static int WlHoldMode(int open)
 {
+    WlTrace(open);
     if (open) {
         if (CtrUnionLeader_Active() || CtrTrade_Active() || CtrChat_Active())
             sWlHold = WL_HOLD_FRAMES;
