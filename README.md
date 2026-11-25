@@ -259,7 +259,7 @@ What to know:
 
 - The relay is a server run by the author; it can be offline, and its operator sees your console's internet address like any server would. It sees no room codes and no game data, only sealed frames and a hashed room name.
 - The **public room's** code is known to everyone, so its frames are sealed but not secret. A **private** room is sealed with its 16-digit code: treat it like a shared password for a game, not for anything that matters (the sealing is our own construction, checked against the standard test vectors but not reviewed by a cryptographer).
-- Tested on a computer and in two Azahar emulators over the internet. **Not yet tested on two real consoles, on an Old 3DS, or with the local radio.** Joining a private room does more work than a public one and may take a few seconds on an Old 3DS (not measured).
+- Tested on a computer, in two Azahar emulators over the internet, and between a New 3DS and Azahar over the internet (Union Room, trade picker). **Not yet tested on two real consoles, on an Old 3DS, or with the local radio.** Joining a private room does more work than a public one and may take a few seconds on an Old 3DS (not measured).
 - A six-digit private code made with an earlier test build is dropped: OPTIONS says so and the room is the public one until you choose Private again.
 - Over the internet the link rooms (walking to the trade PC) are as slow as the round trip between the consoles.
 
