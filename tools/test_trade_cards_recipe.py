@@ -22,6 +22,14 @@ class TradeCardsTest(unittest.TestCase):
     def test_old_menu_rows_are_cleared_while_the_trade_is_active(self):
         self.assertIn('if (CtrTrade_Active())\n            sCtrMenuLabels = 0;', self.added['src/menu.c'])
 
+    def test_the_trade_menu_pointer_is_cleared_when_freed_and_asks_are_only_for_the_main_menu(self):
+        doc = json.loads((PATCHES / '0281-trade-menu-pointer-cleared-when-freed.json').read_text(encoding='utf-8'))
+        self.assertEqual([f['path'] for f in doc['files']], ['src/trade.c'])
+        added = ''.join(l['port'] for l in doc['files'][0]['lines'] if 'port' in l)
+        self.assertEqual(added.count('FREE_AND_SET_NULL(sTradeMenu);'), 4)          # the four places FireRed frees the menu
+        self.assertIn('sTradeMenu->callbackId != CB_MAIN_MENU', added)
+        self.assertEqual(doc['files'][0]['before_sha256'], self.doc['files'][0]['after_sha256'] if self.doc['files'][0]['path'] == 'src/trade.c' else None)
+
     def test_it_starts_from_what_0276_leaves(self):
         last = json.loads((PATCHES / '0276-union-room-chat-for-lower-screen.json').read_text(encoding='utf-8'))
         after = {f['path']: f['after_sha256'] for f in last['files']}

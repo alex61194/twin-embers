@@ -2385,7 +2385,7 @@ bool CtrPokeTouch_HitOptPage(int x, int y)
 
 int CtrPokeTouch_OptPageDot(int x, int y, int pageCount)
 {
-    int dots = pageCount > 7 ? 7 : pageCount;
+    int dots = pageCount > 8 ? 8 : pageCount;          /* as many as BallOptionsScreen draws (up to eight pages) */
 
     if (!sBallFull || y < 4 || y >= 30)
         return -1;

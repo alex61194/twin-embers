@@ -155,7 +155,7 @@ The party list, Pokémon Summary and Trainer Card each get a full lower-screen p
 
 ### Settings
 
-OPTIONS is split into sections (Settings, Graphics, Quality of life and Nuzlocke), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the optional looks, the visible wild Pokémon and the Nuzlocke rules.
+OPTIONS is split into sections (Settings, Graphics, Quality of life, Nuzlocke and Cheats), each with its own pages. Settings holds FireRed's own options plus an on-screen FPS counter; the others hold the port's own: type matchups and move details on the battle cards, the time of day, the optional looks, the visible wild Pokémon, the Nuzlocke rules and the cheats (off until chosen).
 
 <img src="docs/media/17-options-1.png" width="300" alt="Options, Settings: FireRed's own options"> <img src="docs/media/18-options-2.png" width="300" alt="Options, Graphics: frame, FPS counter, day and night, hour, embers and companion">
 

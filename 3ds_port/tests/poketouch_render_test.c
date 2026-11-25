@@ -1408,6 +1408,9 @@ int main(int argc, char **argv)
         assert(CtrPokeTouch_OptPageDot(302,15,7)==6 && CtrPokeTouch_OptPageDot(309,15,7)==6 && CtrPokeTouch_OptPageDot(310,15,7)==-1);
         assert(CtrPokeTouch_OptPageDot(100,15,7)==-1 && CtrPokeTouch_OptPageDot(230,40,7)==-1 && CtrPokeTouch_OptPageDot(230,2,7)==-1);
         assert(CtrPokeTouch_OptPageDot(300,15,4)==3 && CtrPokeTouch_OptPageDot(260,15,4)==-1);   /* four pages: four dots from the right */
+        /* Eight pages: the zones are where the eight dots are drawn (312 - (8 - d) * 12), the first at 216, and a ninth count is still eight. */
+        assert(CtrPokeTouch_OptPageDot(216,15,8)==0 && CtrPokeTouch_OptPageDot(222,15,8)==0 && CtrPokeTouch_OptPageDot(228,15,8)==1);
+        assert(CtrPokeTouch_OptPageDot(302,15,8)==7 && CtrPokeTouch_OptPageDot(214,15,8)==-1 && CtrPokeTouch_OptPageDot(216,15,9)==0);
         sBallFull = 0;
         assert(CtrPokeTouch_OptPageDot(230,15,7)==-1);                              /* the classic header has the one PAGE button */
     }

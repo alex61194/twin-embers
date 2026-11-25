@@ -615,8 +615,8 @@ void CtrWl_Tick(void)
         while (WlInet_PopEvent(&sInet, &kind, &node))
         {
             NetLog("node %u %s", (unsigned)node, kind == WL_INET_EVENT_LEFT ? "left" : "joined");
-            if (kind == WL_INET_EVENT_LEFT)
-                WlNet_Forget(&sNet, node);
+            if (kind == WL_INET_EVENT_LEFT || kind == WL_INET_EVENT_JOINED)
+                WlNet_Forget(&sNet, node);          /* a console that joins starts its counting from nothing, whether or not the seat's last one left */
         }
         if (!WlInet_Connected(&sInet))
             LostLink(now);
