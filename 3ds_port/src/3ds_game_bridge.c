@@ -13,6 +13,8 @@
 #include "dma3.h"
 #include "palette.h"
 #include "task.h"
+#include "link.h"
+#include "link_rfu.h"
 #include "overworld.h"
 #include "fieldmap.h"
 #include "constants/map_types.h"
@@ -605,6 +607,8 @@ static void ProbeScene(unsigned frame)
  * VBlankIntrWait at all, which no per-frame log could show. */
 static volatile uint32_t sHeartbeat;
 
+static void LogLink(const char *tag);
+
 static void LogField(const char *tag, uint32_t beat)
 {
     const CtrVideoStats *video = CtrVideo_GetStats();
@@ -631,6 +635,7 @@ static void LogField(const char *tag, uint32_t beat)
         regs[8], regs[9], regs[10], regs[11], regs[12], regs[13], regs[14], regs[15],
         (unsigned long)video->tiles, (unsigned long)video->sprites,
         (unsigned long)video->errors, video->fps);
+    LogLink(tag);
 }
 
 static void LogTasks(void)
@@ -638,6 +643,27 @@ static void LogTasks(void)
     for (unsigned i = 0; i < NUM_TASKS; ++i)
         if (gTasks[i].isActive)
             CtrLog_Write(CTR_LOG_GAME, "STALL task[%u]=%p", i, (void *)gTasks[i].func);
+}
+
+/* The wireless link as the game sees it, for a screen that stays black while the link is alive (the wait for the other console after a
+ * trade: its callback, which of the others said "ready to exit standby", the queues, the tasks). Written with the FIELD line, and only
+ * while the game has a link callback or a link task going, so an ordinary game adds nothing. */
+static void LogLink(const char *tag)
+{
+    if (gRfu.callback == NULL && !gReceivedRemoteLinkPlayers)
+        return;
+    CtrLog_Write(CTR_LOG_GAME,
+        "%s LINK rfu.callback=%p state=%u players=%u me=%u ready_exit=%u%u%u%u%u ready_close=%u%u%u%u%u recvQ=%u sendQ=%u resend=%u/%u err=%u recvd=%u shutting=%u",
+        tag, (void *)gRfu.callback, (unsigned)gRfu.state, (unsigned)GetLinkPlayerCount(), (unsigned)GetMultiplayerId(),
+        gRfu.readyExitStandby[0], gRfu.readyExitStandby[1], gRfu.readyExitStandby[2], gRfu.readyExitStandby[3], gRfu.readyExitStandby[4],
+        gRfu.readyCloseLink[0], gRfu.readyCloseLink[1], gRfu.readyCloseLink[2], gRfu.readyCloseLink[3], gRfu.readyCloseLink[4],
+        (unsigned)gRfu.recvQueue.count, (unsigned)gRfu.sendQueue.count, (unsigned)gRfu.resendExitStandbyTimer,
+        (unsigned)gRfu.resendExitStandbyCount, (unsigned)gRfu.errorState, (unsigned)gReceivedRemoteLinkPlayers,
+        (unsigned)gRfu.isShuttingDown);
+    for (unsigned i = 0; i < NUM_TASKS; ++i)
+        if (gTasks[i].isActive)
+            CtrLog_Write(CTR_LOG_GAME, "%s LINK task[%u]=%p data0=%d data1=%d", tag, i, (void *)gTasks[i].func,
+                         (int)gTasks[i].data[0], (int)gTasks[i].data[1]);
 }
 
 static Thread sWatchdog;
