@@ -7977,6 +7977,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0286-trade-menu-stops-the-frame-after-it-is-freed.json",
+   "sha256": "dc8ac4187e46077afd56a765bb3cc1323a092d837adbb5ce2f693b82dcb4b532",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_naming_recipe.py",
    "sha256": "ea02ec92faaa42b28e8874caf2a8f92346b8273b5b06e1ba96378104ebd455cd",
    "review_status": "reviewed",
