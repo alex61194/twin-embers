@@ -41,6 +41,19 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Fixed
 
+- Save backup: starting the game again without saving no longer rotates the same save into .prev, so two starts in a row keep the last good save copy.
+- Fixed garbled letters on the German wrong-ROM error screen (the console font cannot show UTF-8, so the text is now plain ASCII like the English and Spanish messages).
+- Summary: the status badge (PSN, PAR, SLP, FRZ, BRN, FNT) and the bottom bar's status name now show in the Spanish and German builds too; they compared the game's English status code against translated ones.
+- Pokedex: Spanish and German builds show height in metres and weight in kilograms (they showed pounds labelled "kg" and feet/inches).
+- Summary: while moving a move, one tap on the destination row now swaps it (as the "Tap where to move it." hint says) instead of only moving the cursor there.
+- Summary: tapping a page tab (or pressing RIGHT to TRAINER) while a move swap is pending now cancels the swap and still opens that page, instead of needing a second tap.
+- Fixed FLY chosen on a Pokemon in the party menu flying with the first Fly-capable Pokemon instead of the one picked (also with FREE HMS).
+- Companion follow: the companion no longer appears standing on the water when the player stops surfing; it shows up at the first step taken from land.
+- Field Bag: SELECT no longer starts FireRed's invisible item-move mode, which froze the lower screen and ignored touch until A or B.
+- The PC's DEPOSIT ITEM Bag now shows only its open pocket on the lower screen, instead of KEY ITEMS and POKé BALLS tabs that did nothing when tapped.
+- Desktop Builder: replacing an existing pack no longer asks for room for the new pack twice, so it stops refusing with "drive is full" on cards that have enough space for the backup.
+- Desktop builder: ROM and pack paths pasted with Windows "Copy as path" quotes are now accepted instead of failing with WinError 123 or a misleading ".pak" error.
+- Desktop Builder: the "More characters to be" option now gives the real number of looks (26) and of files it downloads (241), both read from the looks table instead of a stale "18 looks / about 180 files".
 - **Online play**: a sealed frame that the relay (or anyone on the way) sends a second time is no longer delivered twice, and a console whose line to the relay has gone silent for 45 seconds (Wi-Fi lost, a relay that hung) now closes the link by itself so the game can say so, instead of waiting for minutes.
 - **The upper screen no longer shows FireRed's keyboard when a Pokémon is given a nickname**: after a catch, a gift or any other naming screen, the upper screen kept the frame it had only once the keyboard was already up, so the frozen picture was FireRed's own naming screen. It now holds the frame from the moment the naming screen is made until it is gone (recipe 0279).
 - Fixed: in double battles the FIGHT card and POKEMON button follow the Pokemon that is choosing; the OPTIONS private-room keypad no longer comes back with old digits after leaving; the HOME map follows slow drags when zoomed in; HOME's Repel buttons do nothing while a script or quest-log replay has the field.

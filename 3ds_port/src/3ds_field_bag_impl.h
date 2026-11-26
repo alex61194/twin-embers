@@ -64,9 +64,15 @@ static const CtrPokeTouchRect sFBYes = {30, 100, 90, 30}, sFBNo = {128, 100, 90,
 static const CtrPokeTouchRect sFBQtyDown = {30, 64, 40, 32}, sFBQtyUp = {178, 64, 40, 32};
 static const CtrPokeTouchRect sFBMessage = {14, 40, 220, 88};
 
+/* The item PC's Bag cannot change pockets (FireRed sets pocketSwitchMode and ignores LEFT / RIGHT): it has no tabs to tap. */
+static int FBTabsTappable(const CtrPokeTouchBag *b)
+{
+    return b->kind == PT_BAG_KIND_BAG && b->use != PT_BAG_USE_DEPOSIT;
+}
+
 static int FBBallListHit(const CtrPokeTouchBag *b, int x, int y)
 {
-    for (int i = 0; i < 3 && b->kind == PT_BAG_KIND_BAG; ++i) {
+    for (int i = 0; i < 3 && FBTabsTappable(b); ++i) {
         CtrPokeTouchRect r = BLTab(i);
 
         if (UiIn(&r, x, y))
@@ -120,7 +126,7 @@ int CtrPokeTouch_BagHit(const CtrPokeTouchView *v, int x, int y)
         return UiIn(&sFBQtyUp, x, y) ? PT_BAG_HIT_QTY_UP : UiIn(&sFBQtyDown, x, y) ? PT_BAG_HIT_QTY_DOWN
              : UiIn(&sFBYes, x, y) ? PT_BAG_HIT_QTY_OK : UiIn(&sFBNo, x, y) ? PT_BAG_HIT_QTY_CANCEL : -1;
     case PT_BAG_STATE_LIST:
-        for (int i = 0; i < 3 && b->kind == PT_BAG_KIND_BAG; ++i)
+        for (int i = 0; i < 3 && FBTabsTappable(b); ++i)
             if (UiIn(&sFBTab[i], x, y))
                 return PT_BAG_HIT_TAB + i;
         if (b->count + 1 > PT_BAG_ROWS) {
@@ -261,8 +267,11 @@ static void FBTabs(const CtrPokeTouchBag *b)
     for (int i = 0; i < 3; ++i) {
         const CtrPokeTouchRect *r = &sFBTab[i];
         const EmPal *p = LlPick(b->pocket == i, &kEmCream);
-        int fy = EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, b->pressed == PT_BAG_HIT_TAB + i);
+        int fy;
 
+        if (!FBTabsTappable(b) && i != b->pocket)       /* the item PC's Bag: only the pocket it is locked in, so no tab looks live */
+            continue;
+        fy = EmButton(r->x, r->y, r->w, r->h, p, FB_DEPTH, b->pressed == PT_BAG_HIT_TAB + i);
         EmLabel(CtrUiText(sFBTabLabel[i]), r->x, r->w, fy, r->h - FB_DEPTH, p);
     }
 }
@@ -456,6 +465,8 @@ static void FBBallTabs(const CtrPokeTouchBag *b)
         const char *label = CtrUiText(sFBTabLabel[i]);
         int on = b->pocket == i, tw = UiTextWidth(label, 1), x = r.x + (r.w - tw) / 2;
 
+        if (!FBTabsTappable(b) && !on)                  /* the item PC's Bag: only the pocket it is locked in, so no word looks tappable */
+            continue;
         UiText(label, x, r.y + 8, on ? EM_WHITE : BL_PINK, BL_DEEP, 1, r.x + r.w);
         if (on)
             UiRoundFill(x, r.y + r.h - 3, tw, 3, 1, EM_WHITE);

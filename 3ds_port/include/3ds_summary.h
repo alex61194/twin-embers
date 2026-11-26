@@ -55,6 +55,8 @@ int CtrBottomSummary_Page(void);
 int CtrBottomSummary_Mon(void);
 unsigned CtrBottomSummary_Serial(void);
 int CtrBottomSummary_MoveCursor(void);
+/* A move picked for moving (live, not the view's copy): B then only cancels the swap and stays on the move details. */
+int CtrBottomSummary_Swapping(void);
 int CtrBottomSummary_HitAt(int x, int y);
 /* The Pokemon shown, its icon (FireRed's, the first frame, as CtrPokeTouch_MonIcon gives it): its icon species, 0 with
  * none, and the picture. A box's Pokemon are not the party's, so the Summary's own Pokemon is asked, not a slot. */

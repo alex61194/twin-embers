@@ -121,18 +121,20 @@ static void SGender(char gender, int x, int y)
             }
 }
 
-/* The status badge's colours (the Summary's codes). */
-static uint16_t SStatusColor(const char *status)
-{
-    static const struct { const char *code; uint16_t color; } sColors[] = {
-        {CTR_TR("Psn", "Env", "Gft"), UI_RGB(170, 80, 190)}, {CTR_TR("Prz", "Par", "Par"), UI_RGB(214, 170, 30)}, {CTR_TR("Slp", "Dor", "Slf"), UI_RGB(120, 128, 150)},
-        {CTR_TR("Frz", "Con", "Efr"), UI_RGB(80, 170, 220)}, {CTR_TR("Brn", "Que", "Brn"), UI_RGB(226, 96, 48)}, {CTR_TR("PKR", "PKR", "PKR"), UI_RGB(200, 90, 160)}, {CTR_TR("Fnt", "Deb", "Bes"), UI_DANGER},
-    };
+/* The status badge: the bridge's code (English in every language, so it is
+ * the key), the label drawn for it in this build's language and its colour. */
+static const struct { const char *code, *label; uint16_t color; } sSStatus[] = {
+    {"PSN", CTR_TR("Psn", "Env", "Gft"), UI_RGB(170, 80, 190)}, {"PRZ", CTR_TR("Prz", "Par", "Par"), UI_RGB(214, 170, 30)}, {"SLP", CTR_TR("Slp", "Dor", "Slf"), UI_RGB(120, 128, 150)},
+    {"FRZ", CTR_TR("Frz", "Con", "Efr"), UI_RGB(80, 170, 220)}, {"BRN", CTR_TR("Brn", "Que", "Brn"), UI_RGB(226, 96, 48)}, {"PKR", "PKR", UI_RGB(200, 90, 160)}, {"FNT", CTR_TR("Fnt", "Deb", "Bes"), UI_DANGER},
+};
 
-    for (unsigned i = 0; i < sizeof(sColors) / sizeof(sColors[0]); ++i)
-        if (CtrTextCase_Eq(status, sColors[i].code))
-            return sColors[i].color;
-    return 0;
+/* The badge's row for the bridge's `status`, or -1 when it shows none. */
+static int SStatusIndex(const char *status)
+{
+    for (int i = 0; i < (int)(sizeof(sSStatus) / sizeof(sSStatus[0])); ++i)
+        if (CtrTextCase_Eq(status, sSStatus[i].code))
+            return i;
+    return -1;
 }
 
 /* The Pokemon's icon (FireRed's 32x32 icon of the Pokemon shown, a box's too) at `scale`, decoded once per icon. */
@@ -275,8 +277,10 @@ static void SHeader(const CtrSummaryUiView *v)
 
             UiTextRight(level, 238, 8, S_INK, EM_DARK_SH, 1);
             UiText(lv, 238 - lw - UiTextWidth(lv, 1) - 1, 8, EM_VALUE, UI_RGB(248, 200, 184), 1, 238);
-            if (SStatusColor(d->status))
-                LlTypeBadge(238 - UiTextWidth(d->status, 1) - 12, 22, d->status, SStatusColor(d->status));
+            /* Sized by the label it draws, which is not the bridge's code outside English. */
+            int st = SStatusIndex(d->status);
+            if (st >= 0)
+                LlTypeBadge(238 - UiTextWidth(sSStatus[st].label, 1) - 12, 22, sSStatus[st].label, sSStatus[st].color);
         }
     }
     for (int i = 0; i < 2; ++i) {
