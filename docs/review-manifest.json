@@ -7961,6 +7961,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0284-german-keyboard-without-the-cartridge-table.json",
+   "sha256": "7f1215874dbf024a587c49d70c6de6fa6b939caeab8a5c06919aa7dd439a7a4a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_naming_recipe.py",
    "sha256": "ea02ec92faaa42b28e8874caf2a8f92346b8273b5b06e1ba96378104ebd455cd",
    "review_status": "reviewed",
