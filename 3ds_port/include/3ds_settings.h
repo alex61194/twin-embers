@@ -7,6 +7,9 @@
  * damaged file means the defaults (turbo off, auto-run off, EMBERS not chosen, REPEL AGAIN on). Each setter writes the file only when
  * the value changes. */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifndef CTR_SETTINGS_PATH
 #define CTR_SETTINGS_PATH "sdmc:/3ds/twinembers/settings.cfg"
 #endif
@@ -22,6 +25,11 @@ void CtrSettings_SetAutoRun(int on);
 /* The EMBERS level the player chose (CTR_EMBERS_*, 0..2), or -1 when none was: the console's default then. */
 int CtrSettings_Embers(void);
 void CtrSettings_SetEmbers(int level);
+
+/* The lower screen's look (STYLE on the OPTIONS screen): 1 Pokeball (the default), 0 Ascuas. A file with no style= line is the default; the
+ * choice of Ascuas is kept as style=0. */
+int CtrSettings_Style(void);
+void CtrSettings_SetStyle(int style);
 
 /* Whether a Repel that wears off offers to use another (REPEL AGAIN on the OPTIONS screen): on by default. */
 int CtrSettings_RepelAgain(void);
@@ -58,8 +66,46 @@ int CtrSettings_WildAggro(void);               /* AGGRESSIVE: 0 OFF, 1 RARE 10%,
 void CtrSettings_SetWildAggro(int aggro);
 int CtrSettings_Randomlocke(void);           /* wild and trainer Pokemon are random species (RANDOMLOCKE, off by default) */
 void CtrSettings_SetRandomlocke(int on);
+/* ONLINE ROOM: the private room of a six-digit code instead of the relay's public room. PrivateRoom is on only with a code; RoomCode is
+ * the six digits or "" (anything but six digits is no code). */
+int CtrSettings_PrivateRoom(void);
+void CtrSettings_SetPrivateRoom(int on);
+const char *CtrSettings_RoomCode(void);
+void CtrSettings_SetRoomCode(const char *code);
+/* A private room's code is CTR_ROOM_CODE_DIGITS digits (about 53 bits when chosen at random: the only secret of the room, see docs/WL-RELAY-PROTOCOL.md).
+ * RoomCodeOk: exactly that many digits and at least six different ones (the plainest codes, 0000000000000000 or 1212121212121212, are refused, whoever
+ * typed them). MakeRoomCode: a code from `n` random bytes (a byte of 250 or more is skipped so that no digit is likelier than another); 0, and `out`
+ * untouched, when the bytes run out or what they make is refused: ask for more. An older six-digit code in settings.cfg is dropped when it is read. */
+#define CTR_ROOM_CODE_DIGITS 16
+int CtrSettings_RoomCodeOk(const char *code);
+int CtrSettings_MakeRoomCode(char out[CTR_ROOM_CODE_DIGITS + 1], const uint8_t *random, size_t n);
+/* When settings.cfg held a private room's code that is no longer one (an older build's six digits, or a damaged line), Load switches the private
+ * room off in the file and RoomCodeDropped is 1 (and kept in the file as roomnote=1) until the player chooses a room again (a new code, or
+ * AckRoomCodeDropped): the OPTIONS screen says that online play is in the public room and why. */
+int CtrSettings_RoomCodeDropped(void);
+void CtrSettings_AckRoomCodeDropped(void);
+int CtrSettings_LocalPlay(void);             /* MULTIPLAYER: 1 plays with consoles nearby (the 3DS radio), 0 online through the relay (the default) */
+void CtrSettings_SetLocalPlay(int on);
+/* DAY/NIGHT, HOUR, TYPE MATCHUP and MOVE DETAILS (the OPTIONS screen), kept here so they outlive a session as the other rows do. DayNight:
+ * 0 CLOCK (the default), 1 FIXED, 2 OFF; Hour: FIXED's half hour, 0..47 (24, 12:00, by default); TypeMatchup and MoveDetails: 0 shown (the
+ * default), 1 hidden, as the rows count them. Each key is written only when it is not the default. */
+int CtrSettings_DayNight(void);
+void CtrSettings_SetDayNight(int mode);
+int CtrSettings_Hour(void);
+void CtrSettings_SetHour(int half);
+int CtrSettings_TypeMatchup(void);
+void CtrSettings_SetTypeMatchup(int hidden);
+int CtrSettings_MoveDetails(void);
+void CtrSettings_SetMoveDetails(int hidden);
 int CtrSettings_FreeHm(void);                /* an HM in the Bag works in the field with no Pokemon that knows it (FREE HMS, off by default) */
 void CtrSettings_SetFreeHm(int on);
+/* TRUCOS (cheats, a page of OPTIONS): each is a small number kept as cheatN=value, off (0) until chosen, written only when not 0. CTR_CHEAT_CATCH
+ * 0/1 every ball catches; SHINY 0..6 the odds (CtrOptions_ShinyOdds); NOENC 0/1 no random encounters; WALLS 0/1 the player walks through walls;
+ * EXP 0..3 the experience of a won battle times 1, 2, 4 or 8; PP 0/1 the player's moves never lose PP; FLEE 0/1 running away always works. */
+enum { CTR_CHEAT_CATCH, CTR_CHEAT_SHINY, CTR_CHEAT_NOENC, CTR_CHEAT_WALLS, CTR_CHEAT_EXP, CTR_CHEAT_PP, CTR_CHEAT_FLEE, CTR_CHEAT_COUNT };
+int CtrSettings_Cheat(int id);
+void CtrSettings_SetCheat(int id, int value);       /* the value is clamped to what the cheat has (CtrSettings_CheatMax) */
+int CtrSettings_CheatMax(int id);
 /* The look chosen for Red (slot 0), Leaf (1) and the rival Blue (2): the name of a folder of the pack's graphics/gen4/look/ (the
  * Builder's --alt-looks), "" for none: the picture that was there before. Only [a-z0-9_] and 15 characters are kept. */
 enum { CTR_LOOK_RED, CTR_LOOK_LEAF, CTR_LOOK_BLUE, CTR_LOOK_SURF, CTR_LOOK_SLOTS };   /* SURF: the Pokemon to surf on, a folder of graphics/gen4/surfmon */

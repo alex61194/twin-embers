@@ -5,15 +5,35 @@
  * (3ds_bottom.c walks them with its keys); every picture and word is FireRed's (CtrPokeTouch_Dex*, the bridge's text),
  * but for the port's few labels (3ds_ui_strings.h). */
 
-static const CtrPokeTouchRect sFDTab[3] = {{4, 4, 78, 24}, {85, 4, 78, 24}, {166, 4, 78, 24}};
+/* The geometry twice: the floor of HOME's layout (the k... rectangles, at (4, 4) in a floor of 248 x 168 that the menu shifts into place) and the
+ * Poke Ball style's whole lower screen (the kb... ones, in screen pixels: the tabs and the page's window at the top, the exit piece on the band
+ * under them). sBallFull chooses. */
+static const CtrPokeTouchRect kFDTab[3] = {{4, 4, 78, 24}, {85, 4, 78, 24}, {166, 4, 78, 24}};
+static const CtrPokeTouchRect kbFDTab[3] = {{8, 6, 98, 22}, {111, 6, 98, 22}, {214, 6, 98, 22}};
 static const CtrUiString sFDTabLabel[3] = {UIS_DEX_LISTS, UIS_DEX_HABITATS, UIS_DEX_SEARCH};
-static const CtrPokeTouchRect sFDClose = {4, 140, 240, 24};
-static const CtrPokeTouchRect sFDGridUp = {230, 34, 14, 63}, sFDGridDown = {230, 101, 14, 63};
-static const CtrPokeTouchRect sFDListHead = {4, 4, 150, 24};
-static const CtrPokeTouchRect sFDListUp = {135, 34, 20, 63}, sFDListDown = {135, 101, 20, 63};
-static const CtrPokeTouchRect sFDSide = {158, 4, 86, 160};
-static const CtrPokeTouchRect sFDPrev = {220, 4, 24, 80}, sFDNext = {220, 86, 24, 80};
-static const CtrPokeTouchRect sFDArea = {156, 124, 38, 18}, sFDCry = {200, 124, 38, 18};   /* on the card, lower right: face + depth */
+static const CtrPokeTouchRect kFDClose = {4, 140, 240, 24}, kbFDClose = {8, 136, 226, 22};
+static const CtrPokeTouchRect kFDGridUp = {230, 34, 14, 63}, kFDGridDown = {230, 101, 14, 63};
+static const CtrPokeTouchRect kbFDGridUp = {296, 30, 16, 62}, kbFDGridDown = {296, 96, 16, 62};
+static const CtrPokeTouchRect kFDListHead = {4, 4, 150, 24}, kbFDListHead = {8, 6, 212, 22};
+static const CtrPokeTouchRect kFDListUp = {135, 34, 20, 63}, kFDListDown = {135, 101, 20, 63};
+static const CtrPokeTouchRect kbFDListUp = {202, 32, 16, 60}, kbFDListDown = {202, 96, 16, 60};
+static const CtrPokeTouchRect kFDSide = {158, 4, 86, 160}, kbFDSide = {224, 6, 88, 150};
+static const CtrPokeTouchRect kFDPrev = {220, 4, 24, 80}, kFDNext = {220, 86, 24, 80};
+static const CtrPokeTouchRect kbFDPrev = {240, 4, 72, 80}, kbFDNext = {240, 86, 72, 72};
+static const CtrPokeTouchRect kFDArea = {156, 124, 38, 18}, kFDCry = {200, 124, 38, 18};   /* on the card, lower right: face + depth */
+static const CtrPokeTouchRect kbFDArea = {212, 124, 44, 22}, kbFDCry = {260, 124, 44, 22};
+#define sFDTab (sBallFull ? kbFDTab : kFDTab)
+#define sFDClose (*(sBallFull ? &kbFDClose : &kFDClose))
+#define sFDGridUp (*(sBallFull ? &kbFDGridUp : &kFDGridUp))
+#define sFDGridDown (*(sBallFull ? &kbFDGridDown : &kFDGridDown))
+#define sFDListHead (*(sBallFull ? &kbFDListHead : &kFDListHead))
+#define sFDListUp (*(sBallFull ? &kbFDListUp : &kFDListUp))
+#define sFDListDown (*(sBallFull ? &kbFDListDown : &kFDListDown))
+#define sFDSide (*(sBallFull ? &kbFDSide : &kFDSide))
+#define sFDPrev (*(sBallFull ? &kbFDPrev : &kFDPrev))
+#define sFDNext (*(sBallFull ? &kbFDNext : &kFDNext))
+#define sFDArea (*(sBallFull ? &kbFDArea : &kFDArea))
+#define sFDCry (*(sBallFull ? &kbFDCry : &kFDCry))
 #define FD_GRID_PAGE 6
 
 /* ---- Pictures (decoded once, kept by species or row id) ---- */
@@ -285,6 +305,12 @@ static int FDGridPage(const CtrPokeTouchDex *d, int k, int *first, int *count, i
 static CtrPokeTouchRect FDGridCard(int i)
 {
     CtrPokeTouchRect r = {(int16_t)(4 + (i % 3) * 76), (int16_t)(34 + (i / 3) * 66), 74, 64};
+
+    if (sBallFull) {
+        r.x = (int16_t)(8 + (i % 3) * 96);
+        r.y = (int16_t)(30 + (i / 3) * 64);
+        r.w = 92;
+    }
     return r;
 }
 
@@ -297,18 +323,36 @@ static CtrPokeTouchRect FDListCard(const CtrPokeTouchDex *d, int i, int n)
         r.x = (int16_t)(i == 0 ? 4 : 126);
         r.w = 118;
     }
+    if (sBallFull) {
+        r.x = (int16_t)(n > 1 ? (i == 0 ? 8 : 163) : 8);
+        r.y = 32;
+        r.w = (int16_t)(n > 1 ? 149 : 304);
+        r.h = 100;
+    }
     return r;
 }
 
 static CtrPokeTouchRect FDListRow(int i)
 {
     CtrPokeTouchRect r = {4, (int16_t)(34 + 26 * i), 128, 25};
+
+    if (sBallFull) {
+        r.x = 8;
+        r.y = (int16_t)(32 + 25 * i);
+        r.w = 190;
+        r.h = 24;
+    }
     return r;
 }
 
 static CtrPokeTouchRect FDSlot(int i)
 {
     CtrPokeTouchRect r = {(int16_t)(4 + (i % 2) * 108), (int16_t)(4 + (i / 2) * 82), 104, 80};
+
+    if (sBallFull) {
+        r.x = (int16_t)(8 + (i % 2) * 116);
+        r.w = 112;
+    }
     return r;
 }
 
@@ -335,7 +379,12 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
 {
     const CtrPokeTouchDex *d = &v->dex;
 
-    if (!d->on || x >= 248)
+    int absY = y, shift = sBallFull ? 0 : MENU_SHIFT;   /* the Pokedex is drawn on the floor of HOME's layout: its rectangles are at (4, 4); in the
+                                                         * Poke Ball style they are in screen pixels */
+
+    x -= shift;
+    y -= shift;
+    if (!d->on || x < 0 || (!sBallFull && x >= 248))
         return -1;
     switch (d->state) {
     case PT_DEX_STATE_MENU: {
@@ -393,9 +442,7 @@ int CtrPokeTouch_DexHit(const CtrPokeTouchView *v, int x, int y)
     case PT_DEX_STATE_PAGE:
         if (d->added) {
             /* The page a catch added: anywhere on it or its note goes on with the battle (its A). */
-            CtrPokeTouchRect note = {NOTE_X, NOTE_Y, NOTE_W_SIDE, NOTE_H};
-
-            return UiIn(&sFBArea, x, y) || UiIn(&note, x, y) ? PT_DEX_HIT_CONTINUE : -1;
+            return sBallFull || UiIn(&sFBArea, x, y) || absY >= HN_Y ? PT_DEX_HIT_CONTINUE : -1;
         }
         if (UiIn(&sFDArea, x, y))
             return PT_DEX_HIT_AREA;
@@ -474,7 +521,7 @@ static void FDMenu(const CtrPokeTouchDex *d, int pressed)
             const EmPal *p = LlPick(sel, &kEmSlate);
             int fy = FDCard(&sFDClose, p, sel, pressed == PT_DEX_HIT_ITEM + cancel);
 
-            LlArrow(sFDClose.x + 10, fy + (sFDClose.h - FB_DEPTH - 10) / 2, 6, 10, 2, EM_WHITE);
+            LlArrow(sFDClose.x + 10, fy + (sFDClose.h - FB_DEPTH - 10) / 2, 6, 10, 2, p->ink);
             EmLabel(d->menu[cancel].name, sFDClose.x, sFDClose.w, fy, sFDClose.h - FB_DEPTH, p);
         }
         return;
@@ -614,29 +661,30 @@ static void FDCategory(const CtrPokeTouchDex *d, int pressed)
 static void FDPage(const CtrPokeTouchDex *d)
 {
     char no[12], text[32];
-    int x = 88;
+    /* The classic window is (4, 4, 240, 146); the Poke Ball one (8, 6, 304, 150): everything at the right goes on by the 64 px more, the rest by (dx, dy). */
+    int dx = sBallFull ? 4 : 0, dy = sBallFull ? 2 : 0, ew = sBallFull ? 64 : 0, x = 88 + dx;
 
-    LlWindow(4, 4, 240, 146);
+    LlWindow(4 + dx, 4 + dy, 240 + ew, 146 + (sBallFull ? 4 : 0));
     FDNumber(d->sel.number, no, sizeof(no));
-    LlRibbon(5, 5, no, LL_RIB_TOP, LL_RIB_BOT);
-    LlPlate(14, 26, 64, EM2_SLATE, 0, 0);
-    FDPicDrawBig(d->sel.species, 14, 26);
-    Em2Text(d->sel.name, x, 12, EM_DARK, EM_DARK_SH, 212);
-    Em2Text(d->sel.flags & 2 ? d->kind : "?????", x, 26, EM_DIM, EM_DARK_SH, 212);
-    FDFootprint(d->sel.species, 218, 10);
+    LlRibbon(5 + dx, 5 + dy, no, LL_RIB_TOP, LL_RIB_BOT);
+    LlPlate(14 + dx, 26 + dy, 64, EM2_SLATE, 0, 0);
+    FDPicDrawBig(d->sel.species, 14 + dx, 26 + dy);
+    Em2Text(d->sel.name, x, 12 + dy, EM_DARK, EM_DARK_SH, 212 + dx + ew);
+    Em2Text(d->sel.flags & 2 ? d->kind : "?????", x, 26 + dy, EM_DIM, EM_DARK_SH, 212 + dx + ew);
+    FDFootprint(d->sel.species, 218 + dx + ew, 10 + dy);
     if (d->type[0] >= 0) {
-        int tx = x + LlTypeBadge(x, 48, d->typeName[0], UiTypeColor(d->type[0])) + 4;
+        int tx = x + LlTypeBadge(x, 48 + dy, d->typeName[0], UiTypeColor(d->type[0])) + 4;
 
         if (d->type[1] >= 0)
-            LlTypeBadge(tx, 48, d->typeName[1], UiTypeColor(d->type[1]));
+            LlTypeBadge(tx, 48 + dy, d->typeName[1], UiTypeColor(d->type[1]));
     }
-    LlRule(14, 98, 224);
-    Em2Text(CtrUiText(UIS_DEX_HT), 14, 106, EM_DIM, EM_DARK_SH, 60);
+    LlRule(14 + dx, 98 + dy, 224 + ew);
+    Em2Text(CtrUiText(UIS_DEX_HT), 14 + dx, 106 + dy, EM_DIM, EM_DARK_SH, 60 + dx);
     FDHeight(d, text, sizeof(text));
-    UiTextRight(text, 140, 106, EM_DARK, EM_DARK_SH, 1);
-    Em2Text(CtrUiText(UIS_DEX_WT), 14, 124, EM_DIM, EM_DARK_SH, 60);
+    UiTextRight(text, 140 + dx, 106 + dy, EM_DARK, EM_DARK_SH, 1);
+    Em2Text(CtrUiText(UIS_DEX_WT), 14 + dx, 124 + dy, EM_DIM, EM_DARK_SH, 60 + dx);
     FDWeight(d, text, sizeof(text));
-    UiTextRight(text, 140, 124, EM_DARK, EM_DARK_SH, 1);
+    UiTextRight(text, 140 + dx, 124 + dy, EM_DARK, EM_DARK_SH, 1);
     if (!d->added) {
         const EmPal *pa = &kEmFlame, *pc = &kEmCream;
         int fa = EmButton(sFDArea.x, sFDArea.y, sFDArea.w, sFDArea.h, pa, FB_DEPTH, d->pressed == PT_DEX_HIT_AREA);
@@ -665,43 +713,53 @@ static void FDexFrame(const CtrPokeTouchView *v)
     sUiS = &sUiNavy;
 }
 
-/* The note under the Pokedex, FireRed's window: what the selection is (a Pokemon's page has its AREA and CRY buttons there). */
-static void FDexNote(const CtrPokeTouchView *v, int w)
+/* What the note under the Pokedex says: its title and body (a Pokemon's entry on its page, `entry` set, is the body of its own). */
+static void FDexNoteWords(const CtrPokeTouchDex *d, char *title, size_t titleSize, char *body, size_t bodySize, const char **entry)
 {
-    const CtrPokeTouchDex *d = &v->dex;
-    char title[40], body[96];
-
-    EmSurface();
+    *entry = NULL;
     if (d->state == PT_DEX_STATE_PAGE && !d->added) {
-        /* The entry in FireRed's text window (the buttons are on the card); BDescribeN ends it with "..." if it runs on. */
-        LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-        BDescribeN(d->desc[0] ? d->desc : "", NOTE_X + 13, NOTE_Y + 9, w - 26, 3, EM_DIM);
-        sUiS = &sUiNavy;
+        *entry = d->desc[0] ? d->desc : "";
+        title[0] = body[0] = 0;
         return;
     }
     title[0] = body[0] = 0;
     if (d->state == PT_DEX_STATE_MENU && d->menuCursor >= 0 && d->menuCursor < d->menuCount) {
         int id = d->menu[d->menuCursor].id;
 
-        snprintf(title, sizeof(title), "%s", d->menu[d->menuCursor].name);
-        snprintf(body, sizeof(body), "%s", CtrUiText(id == PT_DEX_ID_CANCEL ? UIS_DEX_NOTE_CLOSE
+        snprintf(title, titleSize, "%s", d->menu[d->menuCursor].name);
+        snprintf(body, bodySize, "%s", CtrUiText(id == PT_DEX_ID_CANCEL ? UIS_DEX_NOTE_CLOSE
                                                    : id == PT_DEX_ID_KANTO || id == PT_DEX_ID_NATIONAL ? UIS_DEX_NOTE_LIST
                                                    : id >= 0 && id < 9 ? (d->menu[d->menuCursor].locked ? UIS_DEX_NOTE_LOCKED
                                                                                                        : UIS_DEX_NOTE_HABITAT)
                                                    : UIS_DEX_NOTE_SEARCH));
     } else if (d->state == PT_DEX_STATE_PAGE) {
-        snprintf(title, sizeof(title), "%s", d->sel.name);
-        snprintf(body, sizeof(body), "%s", CtrUiText(UIS_DEX_NOTE_ADDED));
+        snprintf(title, titleSize, "%s", d->sel.name);
+        snprintf(body, bodySize, "%s", CtrUiText(UIS_DEX_NOTE_ADDED));
     } else if (d->state == PT_DEX_STATE_LIST || d->state == PT_DEX_STATE_CATEGORY) {
-        snprintf(title, sizeof(title), "%s", d->sel.flags & 1 ? d->sel.name : "-----");
+        snprintf(title, titleSize, "%s", d->sel.flags & 1 ? d->sel.name : "-----");
         if (d->state == PT_DEX_STATE_CATEGORY)
-            snprintf(body, sizeof(body), "%s %u/%u", CtrUiText(UIS_DEX_PAGE), d->page, d->pages);
+            snprintf(body, bodySize, "%s %u/%u", CtrUiText(UIS_DEX_PAGE), d->page, d->pages);
         else
-            snprintf(body, sizeof(body), "%s", CtrUiText(d->sel.flags & 1 ? UIS_DEX_NOTE_OPEN : UIS_DEX_NOTE_UNSEEN));
+            snprintf(body, bodySize, "%s", CtrUiText(d->sel.flags & 1 ? UIS_DEX_NOTE_OPEN : UIS_DEX_NOTE_UNSEEN));
     }
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    Em2Text(title, NOTE_X + 13, NOTE_Y + 8, EM_DARK, EM_DARK_SH, NOTE_X + w - 13);
-    LlRule(NOTE_X + 13, NOTE_Y + 21, w - 26);
-    BDescribeN(body, NOTE_X + 13, NOTE_Y + 25, w - 26, 3, EM_DIM);
+}
+
+/* The note under the Pokedex, FireRed's window: what the selection is (a Pokemon's page has its AREA and CRY buttons there). */
+static void FDexNote(const CtrPokeTouchView *v, int w)
+{
+    const CtrPokeTouchDex *d = &v->dex;
+    char title[40], body[96];
+    const char *entry;
+
+    (void)w;
+    EmSurface();
+    FDexNoteWords(d, title, sizeof(title), body, sizeof(body), &entry);
+    if (entry) {
+        /* The entry (the buttons are on the card): up to three small lines. */
+        NoteText(entry, EM_DIM);
+        sUiS = &sUiNavy;
+        return;
+    }
+    NoteTitleBody(title, body);
     sUiS = &sUiNavy;
 }

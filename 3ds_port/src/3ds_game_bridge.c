@@ -19,6 +19,7 @@
 #include "3ds_audio.h"
 #include "3ds_audio_cadence.h"
 #include "3ds_input.h"
+#include "3ds_wl_glue.h"
 #include "3ds_bottom.h"
 #include "3ds_dma.h"
 #include "3ds_flash.h"
@@ -647,6 +648,12 @@ static LightEvent sWatchdogStop;
  * watchdog stays quiet while suspended, and the game thread resyncs input
  * and the audio clock when it gets back (VBlankIntrWait). */
 static CtrFastForward sFastForward;
+static unsigned sTurboRequest = 0xFFFFu;    /* a speed asked for by HOME's status panel (0, 2-4), taken at the next frame */
+
+void CtrGameBridge_SetTurbo(unsigned turbo)
+{
+    sTurboRequest = turbo;
+}
 static unsigned sFlashFailures;   /* consecutive frames whose save flush failed */
 
 /* A VBlank span (input, lower screen, field state, keys) over 100 ms is logged part by part. */
@@ -741,8 +748,27 @@ void CtrGameBridge_StopWatchdog(void)
     sWatchdog = NULL;
 }
 
+/* While a wireless session is on, the spare time of a frame (until 11 ms after the last one was shown; the frame pacing waits for the rest)
+ * goes to the radio and the emulated adapter, a turn a millisecond: on the GBA the adapter's requests came by interrupt while the game
+ * waited, so a child answers its parent within the frame instead of at its next one (a parent that waited a frame ran at 20 to 30 fps). */
+static uint64_t sFrameShownTick;
+
+static void WirelessIdle(void)
+{
+    const uint64_t budget = (uint64_t)SYSCLOCK_ARM11 / 1000u * 11u;
+
+    if (CtrWl_State() == CTR_WL_OFF || CtrFastForward_Speed(&sFastForward) > 1)
+        return;                         /* no session, or turbo: the frame has no time to spare */
+    while (svcGetSystemTick() - sFrameShownTick < budget)
+    {
+        CtrWl_Idle();
+        svcSleepThread(1000000LL);
+    }
+}
+
 void VBlankIntrWait(void)
 {
+    CtrWl_Tick();                   /* the emulated Wireless Adapter and its radio: once a frame, at the point the game waits for the next one */
     CtrPerf_GameEnd();
     uintptr_t perfCallback = (uintptr_t)gMain.callback2, perfTask = 0;
     for (unsigned i = 0; i < NUM_TASKS; ++i)
@@ -857,6 +883,11 @@ void VBlankIntrWait(void)
         turboRestored = true;
         sFastForward.turbo = CtrSettings_Turbo();   /* the speed chosen in an earlier session */
     }
+    if (sTurboRequest != 0xFFFFu)
+    {
+        sFastForward.turbo = sTurboRequest == 0 || (sTurboRequest >= CTR_TURBO_MIN && sTurboRequest <= CTR_TURBO_MAX) ? sTurboRequest : 0;
+        sTurboRequest = 0xFFFFu;
+    }
     CtrFastForward_Turbo(&sFastForward, (CtrInput_Get()->physicalDown & CTR_KEY_START) != 0,
                          CtrBottom_TurboCanCycle() != 0, CtrBottom_TurboApplies() != 0, CtrBottom_MenuChangingOver() != 0);
     {
@@ -886,7 +917,9 @@ void VBlankIntrWait(void)
      * (a swap a frame would have written the shown one before the screen took the last). */
     if (shown) {
         CtrBottom_BlitFrameEnd();
+        WirelessIdle();
         CtrVideo_Present();
+        sFrameShownTick = svcGetSystemTick();
     }
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is

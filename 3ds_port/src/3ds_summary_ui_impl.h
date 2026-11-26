@@ -11,7 +11,7 @@ static const CtrPokeTouchRect sSFooter = {3, 213, 230, 24};
 static const CtrPokeTouchRect sSBack = {236, 213, 81, 24};
 /* The switch in the corner of STATS' right card: EXP and the ability, or the IVs, EVs and Hidden Power. */
 static const CtrPokeTouchRect sSIvSwitch = {252, 79, 58, 14};   /* Llama: the ribbon grew 10 px to the left so that "IV / EV" fits whole */
-static const char *const sSTabLabel[SUI_TABS] = {CTR_TR("Info", "Info", "Info", "Infos"), CTR_TR("Stats", "Stats", "Status", "Stats"), CTR_TR("Moves", "Ataques", "Attacken", "Capacit" "\xC3" "\xA9" "s"), CTR_TR("Trainer", "Entren.", "Trainer", "Dresseur")};
+static const char *const sSTabLabel[SUI_TABS] = {CTR_TR("Info", "Info", "Info", "Infos"), CTR_TR("Stats", "Stats", "Status", "Stats"), CTR_TR("Moves", "Ataques", "Attacken", "Capacit\xC3\xA9s"), CTR_TR("Trainer", "Entren.", "Trainer", "Dresseur")};
 
 /* The moves page's cards (2x2) and the details' rows (four moves, then CANCEL) and panel. */
 static CtrPokeTouchRect SCard(int i)
@@ -126,7 +126,7 @@ static uint16_t SStatusColor(const char *status)
 {
     static const struct { const char *code; uint16_t color; } sColors[] = {
         {CTR_TR("Psn", "Env", "Gft", "Poi"), UI_RGB(170, 80, 190)}, {CTR_TR("Prz", "Par", "Par", "Par"), UI_RGB(214, 170, 30)}, {CTR_TR("Slp", "Dor", "Slf", "Dor"), UI_RGB(120, 128, 150)},
-        {CTR_TR("Frz", "Con", "Efr", "Gel"), UI_RGB(80, 170, 220)}, {CTR_TR("Brn", "Que", "Brn", "Br" "\xC3" "\xBB"), UI_RGB(226, 96, 48)}, {CTR_TR("PKR", "PKR", "PKR", "PKR"), UI_RGB(200, 90, 160)}, {CTR_TR("Fnt", "Deb", "Bes", "K.O."), UI_DANGER},
+        {CTR_TR("Frz", "Con", "Efr", "Gel"), UI_RGB(80, 170, 220)}, {CTR_TR("Brn", "Que", "Brn", "Br\xC3\xBB"), UI_RGB(226, 96, 48)}, {CTR_TR("PKR", "PKR", "PKR", "PKR"), UI_RGB(200, 90, 160)}, {CTR_TR("Fnt", "Deb", "Bes", "K.O."), UI_DANGER},
     };
 
     for (unsigned i = 0; i < sizeof(sColors) / sizeof(sColors[0]); ++i)
@@ -343,7 +343,7 @@ static void SInfo(const CtrSummaryUiView *v)
             w = UiTextWidth(d->types[1], 1) + 12;
             LlTypeBadge(7 + (84 - w) / 2, 183, d->types[1], UiTypeColor(d->typeIds[1]));
         }
-        SRowText(107, 85, 194, CTR_TR("Species", "Especie", "Spezies", "Esp" "\xC3" "\xA8" "ce"), d->species, 1);
+        SRowText(107, 85, 194, CTR_TR("Species", "Especie", "Spezies", "Esp\xC3\xA8" "ce"), d->species, 1);
         SRowText(107, 102, 194, CTR_TR("Item", "Objeto", "Item", "Objet"), d->item[0] ? d->item : CTR_TR("None", "Ninguno", "Keines", "Aucun"), 1);
         SRowText(107, 119, 194, CTR_TR("Nature", "Naturaleza", "Wesen", "Nature"), d->nature, 1);
         SRowText(107, 136, 194, CTR_TR("Ability", "Habilidad", "F\xC3\xA4higkeit", "Talent"), d->ability, 1);
@@ -358,8 +358,8 @@ static void SInfo(const CtrSummaryUiView *v)
 /* The right window's other view: each stat's IV as a bar and a number, its EV as a number, and Hidden Power's type and power. */
 static void SIvEv(const CtrSummaryUiView *v)
 {
-    static const char *const sShort[6] = {CTR_TR("HP", "PS", "KP", "PV"), CTR_TR("Atk", "Atq", "Ang", "Att"), CTR_TR("Def", "Def", "Ver", "D" "\xC3" "\xA9" "f"),
-                                          CTR_TR("Sp.A", "A.Esp", "SpA", "Att. Sp" "\xC3" "\xA9" "."), CTR_TR("Sp.D", "D.Esp", "SpV", "D" "\xC3" "\xA9" "f. Sp" "\xC3" "\xA9" "."), CTR_TR("Spe", "Vel", "Ini", "Vit")};
+    static const char *const sShort[6] = {CTR_TR("HP", "PS", "KP", "PV"), CTR_TR("Atk", "Atq", "Ang", "Att"), CTR_TR("Def", "Def", "Ver", "D\xC3\xA9" "f"),
+                                          CTR_TR("Sp.A", "A.Esp", "SpA", "Att. Sp\xC3\xA9."), CTR_TR("Sp.D", "D.Esp", "SpV", "D\xC3\xA9" "f. Sp\xC3\xA9."), CTR_TR("Spe", "Vel", "Ini", "Vit")};
     const CtrSummaryView *d = &v->data;
     char text[8];
     int bw;
@@ -381,7 +381,7 @@ static void SIvEv(const CtrSummaryUiView *v)
     UiTextRight(text, 303, 187, S_INK, EM_DARK_SH, 1);
     bw = UiTextWidth(d->hpTypeName, 1) + 12;
     LlTypeBadge(303 - UiTextWidth(text, 1) - 6 - bw, 185, d->hpTypeName, UiTypeColor(d->hpType));
-    Em2Text(CTR_TR("Hidden power", "Poder oculto", "Kraftreserve", "Puissance cach" "\xC3" "\xA9" "e"), 172, 187, S_LABEL, EM_DARK_SH, 303 - UiTextWidth(text, 1) - 10 - bw);
+    Em2Text(CTR_TR("Hidden power", "Poder oculto", "Kraftreserve", "Puissance cach\xC3\xA9" "e"), 172, 187, S_LABEL, EM_DARK_SH, 303 - UiTextWidth(text, 1) - 10 - bw);
 }
 
 /* ---- The EXP bar of STATS (the battle HUD's look: a dark track, a glossy blue fill) ---- */
@@ -453,7 +453,7 @@ static void SExpBar(int x, int y, int w, int pct)
 
 static void SStats(const CtrSummaryUiView *v)
 {
-    static const char *const sLabels[5] = {CTR_TR("Attack", "Ataque", "Angriff", "Attaque"), CTR_TR("Defense", "Defensa", "Vert.", "D" "\xC3" "\xA9" "fense"), CTR_TR("Sp. atk", "At. esp.", "Sp. Ang.", "Att. Sp" "\xC3" "\xA9" "."), CTR_TR("Sp. def", "Def. esp.", "Sp. Ver.", "D" "\xC3" "\xA9" "f. Sp" "\xC3" "\xA9" "."), CTR_TR("Speed", "Velocidad", "Init.", "Vitesse")};
+    static const char *const sLabels[5] = {CTR_TR("Attack", "Ataque", "Angriff", "Attaque"), CTR_TR("Defense", "Defensa", "Vert.", "D\xC3\xA9" "fense"), CTR_TR("Sp. atk", "At. esp.", "Sp. Ang.", "Att. Sp\xC3\xA9."), CTR_TR("Sp. def", "Def. esp.", "Sp. Ver.", "D\xC3\xA9" "f. Sp\xC3\xA9."), CTR_TR("Speed", "Velocidad", "Init.", "Vitesse")};
     const CtrSummaryView *d = &v->data;
     char hp[16];
 
@@ -515,7 +515,7 @@ static void SMoveCard(const CtrSummaryUiView *v, int i)
 
         UiText(CTR_TR("Pwr", "Pot", "St\xC3\xA4", "Pui"), r.x + 14, fy + 25, S_LABEL, EM_DARK_SH, 1, r.x + 40);
         UiText(d->power[i], r.x + 40, fy + 25, S_INK, EM_DARK_SH, 1, r.x + r.w - 6 - bw - 2);
-        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr" "\xC3" "\xA9"), r.x + 14, fy + 41, S_LABEL, EM_DARK_SH, 1, r.x + 40);
+        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr\xC3\xA9"), r.x + 14, fy + 41, S_LABEL, EM_DARK_SH, 1, r.x + 40);
         UiText(d->accuracy[i], r.x + 40, fy + 41, S_INK, EM_DARK_SH, 1, r.x + 84);
         UiText("PP", r.x + 86, fy + 41, S_LABEL, EM_DARK_SH, 1, r.x + 104);
         UiText(d->pp[i], r.x + 104, fy + 41, SPpColor(pp, max), EM_DARK_SH, 1, r.x + r.w - 4);
@@ -564,7 +564,7 @@ static void SMoveDetail(const CtrSummaryUiView *v)
     if (i < 0 || i >= 4 || !d->moves[i]) {
         CtrPokeTouchRect in = {(int16_t)(p->x + 5), p->y, (int16_t)(p->w - 10), p->h};
 
-        UiTextCentered(CTR_TR("Back to the moves", "Volver a los ataques", "Zur\xC3\xBC" "ck zu den Attacken", "Retour aux capacit" "\xC3" "\xA9" "s"), &in, -1, S_LABEL, EM_DARK_SH, 1);
+        UiTextCentered(CTR_TR("Back to the moves", "Volver a los ataques", "Zur\xC3\xBC" "ck zu den Attacken", "Retour aux capacit\xC3\xA9s"), &in, -1, S_LABEL, EM_DARK_SH, 1);
         return;
     }
     {
@@ -575,7 +575,7 @@ static void SMoveDetail(const CtrSummaryUiView *v)
         LlTypeBadge(x, p->y + 27, d->moveTypes[i], UiTypeColor(d->moveTypeIds[i]));
         UiText(CTR_TR("Pwr", "Pot", "St\xC3\xA4", "Pui"), x + 62, p->y + 28, S_LABEL, EM_DARK_SH, 1, right);
         UiTextRight(d->power[i], right, p->y + 28, S_INK, EM_DARK_SH, 1);
-        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr" "\xC3" "\xA9"), x + 62, p->y + 42, S_LABEL, EM_DARK_SH, 1, right);
+        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr\xC3\xA9"), x + 62, p->y + 42, S_LABEL, EM_DARK_SH, 1, right);
         UiTextRight(d->accuracy[i], right, p->y + 42, S_INK, EM_DARK_SH, 1);
         SRule(x, p->y + 57, p->w - 20);
         BDescribeN(d->moveDesc, x, p->y + 62, p->w - 20, 5, S_LABEL);
@@ -597,12 +597,12 @@ static void STrainer(const CtrSummaryUiView *v)
 {
     const CtrSummaryView *d = &v->data;
     char ribbons[8];
-    const char *memo = CTR_TR("Trainer memo", "Notas entrenador", "Trainer-Memo", "M" "\xC3" "\xA9" "mo dresseur");
+    const char *memo = CTR_TR("Trainer memo", "Notas entrenador", "Trainer-Memo", "M\xC3\xA9mo dresseur");
 
     LlWindow(7, 76, 306, 130);
     snprintf(ribbons, sizeof(ribbons), "%u", d->ribbons);
     SRowText(19, 83, 282, "OT", d->ot, 1);
-    SRowText(19, 98, 282, CTR_TR("ID No.", "N.\xC2\xBA ID", "ID-Nr.", "N" "\xC2" "\xB0" " ID"), d->id, 1);
+    SRowText(19, 98, 282, CTR_TR("ID No.", "N.\xC2\xBA ID", "ID-Nr.", "N\xC2\xB0 ID"), d->id, 1);
     if (!d->egg) {
         SRowText(19, 113, 282, CTR_TR("Nature", "Naturaleza", "Wesen", "Nature"), d->nature, 1);
         SRowText(19, 128, 282, CTR_TR("Ribbons", "Cintas", "B\xC3\xA4nder", "Rubans"), ribbons, 1);
@@ -630,9 +630,9 @@ static void SBody(const CtrSummaryUiView *v)
  * the Summary), violet. */
 static const char *SHint(const CtrSummaryUiView *v)
 {
-    return v->loading ? "" : v->data.page == SUI_PAGE_MOVES ? CTR_TR("Tap a move for its details.", "Toca un ataque para ver sus datos.", "Attacke antippen f\xC3\xBCr Details.", "Touchez pour voir les d" "\xC3" "\xA9" "tails.")
-         : v->data.page == SUI_PAGE_MOVES_INFO ? (v->data.swapping ? CTR_TR("Tap where to move it.", "Toca d\xC3\xB3nde moverlo.", "Neuen Platz antippen.", "Touchez son nouvel emplacement.") : CTR_TR("Tap the selected move to move it.", "Toca el ataque elegido para moverlo.", "Ausgew\xC3\xA4hlte Attacke antippen zum Tauschen.", "Touchez la capacit" "\xC3" "\xA9" " " "\xC3" "\xA0" " d" "\xC3" "\xA9" "placer."))
-         : v->data.egg ? "" : CTR_TR("Up / down: another Pok\xC3\xA9mon", "Arriba / abajo: otro Pok\xC3\xA9mon", "Hoch / Runter: anderes Pok\xc3\xa9mon", "Haut / bas : autre Pok" "\xC3" "\xA9" "mon");
+    return v->loading ? "" : v->data.page == SUI_PAGE_MOVES ? CTR_TR("Tap a move for its details.", "Toca un ataque para ver sus datos.", "Attacke antippen f\xC3\xBCr Details.", "Touchez pour voir les d\xC3\xA9tails.")
+         : v->data.page == SUI_PAGE_MOVES_INFO ? (v->data.swapping ? CTR_TR("Tap where to move it.", "Toca d\xC3\xB3nde moverlo.", "Neuen Platz antippen.", "Touchez son nouvel emplacement.") : CTR_TR("Tap the selected move to move it.", "Toca el ataque elegido para moverlo.", "Ausgew\xC3\xA4hlte Attacke antippen zum Tauschen.", "Touchez la capacit\xC3\xA9 \xC3\xA0 d\xC3\xA9placer."))
+         : v->data.egg ? "" : CTR_TR("Up / down: another Pok\xC3\xA9mon", "Arriba / abajo: otro Pok\xC3\xA9mon", "Hoch / Runter: anderes Pok\xc3\xa9mon", "Haut / bas : autre Pok\xC3\xA9mon");
 }
 
 static void SFooter(const CtrSummaryUiView *v)
@@ -645,8 +645,8 @@ static void SFooter(const CtrSummaryUiView *v)
     Em2Text(hint, sSFooter.x + 12, sSFooter.y + (sSFooter.h - UI_TEXT_H) / 2, S_LABEL, EM_DARK_SH, sSFooter.x + sSFooter.w - 10);
     fy = EmButton(sSBack.x, sSBack.y, sSBack.w, sSBack.h, &kEmSlate, 2, pressed);
     x = sSBack.x + (sSBack.w - w - 12) / 2;
-    LlArrow(x, fy + (sSBack.h - 2 - 10) / 2, 6, 10, 2, EM_WHITE);
-    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck", "Retour"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
+    LlArrow(x, fy + (sSBack.h - 2 - 10) / 2, 6, 10, 2, kEmSlate.ink);   /* the palette's own ink: white on Embers' slate, dark on Poke Ball's white pill */
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck", "Retour"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, kEmSlate.ink, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
 }
 
 void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)

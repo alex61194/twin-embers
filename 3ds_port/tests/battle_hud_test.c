@@ -1,5 +1,6 @@
 /* The port's healthboxes (src/3ds_battle_hud.c) on the host: which OAM tiles are a box's, the boxes' sizes and
- * anchors, their bars and redraws. The font is synthetic: every glyph a 4x7 block of ink, 5 pixels wide. */
+ * anchors, their bars and redraws. The font is synthetic: every glyph a 4x7 block of ink, 5 pixels wide, but the digits
+ * and '/' 6, as FireRed's, so "hp/max" takes the room it takes in the game. */
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -10,7 +11,10 @@
 
 static uint8_t sFont[512 * 64], sSmall[512 * 32];
 const uint8_t *CtrTwinFontData(void) { return sFont; }
-unsigned CtrTwinFontWidth(unsigned code) { return code == 0 ? 3 : 5; }
+unsigned CtrTwinFontWidth(unsigned code)
+{
+    return code == 0 ? 3 : (code >= 0xA1 && code <= 0xAA) || code == 0xBA ? 6 : 5;
+}
 const uint8_t *CtrTwinSmallFontData(void) { return sSmall; }
 unsigned CtrTwinSmallFontWidth(unsigned code) { return code == 0 ? 3 : 5; }
 
@@ -79,13 +83,20 @@ int main(void)
     assert(Pixel(player, 0, 0) == 0);
     assert((Pixel(player, 136, 43) & 255) == 107);
     assert((Pixel(player, 80, 10) & 255) == 255);
-    /* The look: a cream body with a glass band on top, a flame line under the name, a flame-red cap ringed in dark
-     * red at the right end, and the EXP bar's dark slate base from row 39 down. */
+    /* The look: a white body with a glass band on top, a red line under the name, a flame-red cap at the right end with a
+     * black outline, and the EXP bar's black base from row 39 down, where the cap stops and no red is left. */
     assert(Rgb(Pixel(player, 60, 2)) == 0xFEFEFE);
-    assert((Pixel(player, 40, 14) >> 24) >= 248 && ((Pixel(player, 40, 14) >> 16) & 255) < 200);
-    assert(Rgb(Pixel(player, 128, 20)) == 0x8A1610);
+    assert((Pixel(player, 40, 14) >> 24) >= 200 && ((Pixel(player, 40, 14) >> 16) & 255) < 100);
+    assert(Rgb(Pixel(player, 60, 0)) == 0x221C20);                       /* the outline is black, not red */
+    assert(Rgb(Pixel(player, 128, 20)) == 0x221C20);                     /* and so is the cap's */
     assert(Rgb(Pixel(player, 131, 18)) != 0xE8382C);                     /* no Poke Ball on the player's cap */
-    assert(Rgb(Pixel(player, 5, 39)) == 0x4C547C);
+    assert(Rgb(Pixel(player, 5, 39)) == 0x3A3236);
+    for (unsigned y = 39; y < 48; ++y)                                   /* the EXP zone has no red at all */
+        for (unsigned x = 2; x < 134; ++x)
+        {
+            unsigned px = Rgb(Pixel(player, x, y));
+            if (Pixel(player, x, y) & 255) assert(((px >> 16) & 255) < ((px >> 8) & 255) + 60 || x > 100);
+        }
 
     /* A full HP bar is green to its end; a fifth is red. The capsule is at (16, 17); its track starts 16 past its left and
      * 2 rows down, 6 rows tall. */
@@ -94,8 +105,8 @@ int main(void)
     CtrHud_HpBar(0, 9);
     player = sImage(0);
     assert(player->version != version);
-    assert(Rgb(Pixel(player, 16 + 16 + 2, 17 + 2 + 2)) == 0xE84030);
-    assert(Rgb(Pixel(player, 16 + 16 + 60, 17 + 2 + 2)) == 0x586080);  /* the empty track */
+    assert(Rgb(Pixel(player, 16 + 16 + 3, 17 + 2 + 2)) == 0xE84030);
+    assert(Rgb(Pixel(player, 16 + 16 + 60, 17 + 2 + 2)) == 0x221C20);  /* the empty track */
     /* Nothing changed, nothing redrawn. */
     version = player->version;
     CtrHud_HpBar(0, 9);
@@ -132,6 +143,18 @@ int main(void)
     assert(fabsf(sx - 260) < 0.01f && fabsf(sy - 164) < 0.01f);
     sx = 0 * CTR_BATTLE_ZOOM + 200 - 120 * CTR_BATTLE_ZOOM + sImage(3)->dx;
     assert(fabsf(sx - 6) < 0.01f);
+    /* A status and "999/999" beside the bar still leave it a track to read: at full HP, its fill's third row (y 18) is
+     * green for at least 18 pixels. */
+    CtrHud_Name(2, NAME, CTR_HUD_MALE, false);
+    CtrHud_Level(2, 50);
+    CtrHud_Hp(2, 999, false);
+    CtrHud_Hp(2, 999, true);
+    CtrHud_HpBar(2, CTR_HUD_HP_PIXELS);
+    CtrHud_Status(2, CTR_HUD_PSN);
+    low = sImage(2);
+    unsigned green = 0;
+    for (unsigned x = 0; x < low->width; ++x) green += Rgb(Pixel(low, x, 18)) == 0x30C848;
+    assert(green >= 18);
 
     /* The Safari Zone after it: the right-hand battlers go, the player's box is the Safari Zone's, with no HP bar
      * sprite. */

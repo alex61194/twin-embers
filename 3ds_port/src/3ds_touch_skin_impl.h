@@ -13,18 +13,33 @@ static uint16_t TsGet(int x, int y)
  * it is then a copy per column instead of a lookup per pixel, which every screen pays more than once a redraw. */
 static uint16_t sTsBg[W * H];
 static int sTsBgReady;
+static int sStyleBall;                              /* 1: the Poke Ball style (TsApplyStyle) */
+static CtrPokeTouchRect sBallExitR = {238, 146, 76, 38};   /* the exit piece of the whole-screen view shown (it is the view's BACK) */
+static int sBallFull;                               /* 1: a Poke Ball view of the whole lower screen is up: no HOME layout, no side columns, its own BACK */
 
 static void TsBgPrepare(void)
 {
     for (int cx = 0; cx < W; ++cx)
-        for (int cy = 0; cy < H; ++cy)
-            sTsBg[(size_t)cx * H + (H - 1 - (size_t)cy)] = EMBER_BG(cx, cy);
+        for (int cy = 0; cy < H; ++cy) {
+            uint16_t c;
+
+            if (sStyleBall)     /* a plain red, a little darker towards the bottom */
+                c = UI_RGB(228 - cy * 46 / H, 54 - cy * 26 / H, 46 - cy * 14 / H);
+            else
+                c = EMBER_BG(cx, cy);
+            sTsBg[(size_t)cx * H + (H - 1 - (size_t)cy)] = c;
+        }
     sTsBgReady = 1;
 }
+
+/* While a menu in HOME's layout is drawn over its own floor, the backdrop must not be put back under its pieces. */
+static int sKeepBg;
 
 /* The backdrop back over a rectangle. */
 static void TsBgRect(int x, int y, int w, int h)
 {
+    if (sKeepBg)
+        return;
     int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y, x1 = x + w > W ? W : x + w, y1 = y + h > H ? H : y + h;
 
     if (x0 >= x1 || y0 >= y1)
@@ -68,9 +83,13 @@ typedef struct { uint16_t top, bottom, lip, edge, ink, inkSh, g1, f1, hl, sd; } 
 #define EM_VALUE UI_RGB(208, 48, 32)                /* a value on a light piece (the game's red) */
 static const EmPal kEmAmber = EM_PAL(UI_RGB(255, 233, 168), UI_RGB(255, 207, 106), UI_RGB(251, 170, 68), UI_RGB(236, 116, 32), UI_RGB(170, 70, 14),
                                     UI_RGB(110, 40, 6), UI_RGB(255, 244, 204), UI_RGB(214, 96, 26), EM_WHITE, UI_RGB(122, 44, 8));
-static const EmPal kEmCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 253, 244), UI_RGB(250, 244, 226), UI_RGB(236, 226, 198), UI_RGB(184, 168, 136),
+static const EmPal kAscCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 253, 244), UI_RGB(250, 244, 226), UI_RGB(236, 226, 198), UI_RGB(184, 168, 136),
                                      LL_EDGE, UI_RGB(255, 255, 255), UI_RGB(218, 205, 184), EM_DARK, EM_DARK_SH);
-static const EmPal kEmGrey = EM_PAL(UI_RGB(220, 214, 218), UI_RGB(203, 196, 201), UI_RGB(186, 178, 184), UI_RGB(151, 141, 149), UI_RGB(108, 98, 104),
+static EmPal kEmCream = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(255, 253, 244), UI_RGB(250, 244, 226), UI_RGB(236, 226, 198), UI_RGB(184, 168, 136),
+                                     LL_EDGE, UI_RGB(255, 255, 255), UI_RGB(218, 205, 184), EM_DARK, EM_DARK_SH);
+static const EmPal kAscGrey = EM_PAL(UI_RGB(220, 214, 218), UI_RGB(203, 196, 201), UI_RGB(186, 178, 184), UI_RGB(151, 141, 149), UI_RGB(108, 98, 104),
+                                    UI_RGB(70, 60, 68), UI_RGB(236, 230, 234), UI_RGB(138, 128, 136), UI_RGB(133, 122, 130), EM_DARK_SH);
+static EmPal kEmGrey = EM_PAL(UI_RGB(220, 214, 218), UI_RGB(203, 196, 201), UI_RGB(186, 178, 184), UI_RGB(151, 141, 149), UI_RGB(108, 98, 104),
                                     UI_RGB(70, 60, 68), UI_RGB(236, 230, 234), UI_RGB(138, 128, 136), UI_RGB(133, 122, 130), EM_DARK_SH);
 static const EmPal kEmViolet = EM_PAL(UI_RGB(180, 164, 212), UI_RGB(152, 134, 192), UI_RGB(128, 108, 176), UI_RGB(92, 72, 134), UI_RGB(58, 42, 92),
                                       UI_RGB(30, 22, 52), UI_RGB(212, 200, 236), UI_RGB(78, 60, 116), EM_WHITE, UI_RGB(30, 22, 52));
@@ -86,16 +105,87 @@ static const EmPal kEmPurple = EM_PAL(UI_RGB(230, 216, 255), UI_RGB(198, 172, 25
                                       LL_EDGE, UI_RGB(242, 234, 255), UI_RGB(108, 76, 200), EM_WHITE, UI_RGB(44, 28, 96));
 /* The Llama palettes (the mockup's .fl, .sl, .pb, .pr). Flame is what a chosen piece wears now (kEmAmber stays for the screens not converted yet);
  * slate is CANCEL / BACK / CLOSE; party blue is a party card, party red a fainted one. */
-static const EmPal kEmFlame = EM_PAL(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), UI_RGB(138, 22, 16),
+static const EmPal kAscFlame = EM_PAL(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), UI_RGB(138, 22, 16),
                                      LL_EDGE, UI_RGB(255, 233, 168), UI_RGB(176, 36, 22), EM_WHITE, UI_RGB(122, 20, 16));
-static const EmPal kEmSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 202), UI_RGB(112, 128, 182), UI_RGB(76, 90, 140), UI_RGB(44, 53, 88),
+static EmPal kEmFlame = EM_PAL(UI_RGB(255, 196, 90), UI_RGB(255, 154, 56), UI_RGB(248, 100, 42), UI_RGB(216, 48, 30), UI_RGB(138, 22, 16),
+                                     LL_EDGE, UI_RGB(255, 233, 168), UI_RGB(176, 36, 22), EM_WHITE, UI_RGB(122, 20, 16));
+static const EmPal kAscSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 202), UI_RGB(112, 128, 182), UI_RGB(76, 90, 140), UI_RGB(44, 53, 88),
                                      LL_EDGE, UI_RGB(208, 216, 240), UI_RGB(60, 72, 116), EM_WHITE, UI_RGB(32, 38, 63));
-static const EmPal kEmPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
+static EmPal kEmSlate = EM_PAL(UI_RGB(170, 182, 220), UI_RGB(140, 154, 202), UI_RGB(112, 128, 182), UI_RGB(76, 90, 140), UI_RGB(44, 53, 88),
+                                     LL_EDGE, UI_RGB(208, 216, 240), UI_RGB(60, 72, 116), EM_WHITE, UI_RGB(32, 38, 63));
+static const EmPal kAscPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
                                          LL_EDGE, UI_RGB(232, 248, 255), UI_RGB(46, 120, 196), EM_WHITE, UI_RGB(24, 74, 134));
-static const EmPal kEmPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
+static EmPal kEmPartyBlue = EM_PAL(UI_RGB(196, 236, 255), UI_RGB(142, 212, 250), UI_RGB(96, 184, 240), UI_RGB(60, 146, 220), UI_RGB(30, 94, 166),
+                                         LL_EDGE, UI_RGB(232, 248, 255), UI_RGB(46, 120, 196), EM_WHITE, UI_RGB(24, 74, 134));
+static const EmPal kAscPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
+                                        LL_EDGE, UI_RGB(255, 232, 228), UI_RGB(170, 62, 64), EM_WHITE, UI_RGB(106, 28, 34));
+static EmPal kEmPartyRed = EM_PAL(UI_RGB(255, 208, 200), UI_RGB(248, 164, 152), UI_RGB(232, 124, 116), UI_RGB(200, 80, 80), UI_RGB(138, 44, 48),
                                         LL_EDGE, UI_RGB(255, 232, 228), UI_RGB(170, 62, 64), EM_WHITE, UI_RGB(106, 28, 34));
 static const EmPal kEmTeal = EM_PAL(UI_RGB(184, 240, 234), UI_RGB(124, 214, 204), UI_RGB(70, 184, 174), UI_RGB(34, 144, 138), UI_RGB(20, 102, 94),
                                     UI_RGB(10, 58, 54), UI_RGB(220, 255, 250), UI_RGB(30, 128, 120), EM_WHITE, UI_RGB(10, 58, 54));
+
+/* The lower screen's style (OPTIONS > STYLE): 0 Embers, 1 Poke Ball. In Poke Ball the palettes of the four pieces every view shares are
+ * swapped for flat ones: a chosen piece is a white pill with red ink, the others dark-red pills with white ink, a disabled one a muted red, and
+ * the exit pieces (slate) white with a dark outline; the backdrop is a plain red, no embers. Pieces drawn with their own colours keep them. */
+static const EmPal kBallCream = EM_PAL(UI_RGB(204, 40, 44), UI_RGB(200, 38, 42), UI_RGB(198, 36, 40), UI_RGB(192, 32, 36), UI_RGB(150, 22, 26),
+                                       UI_RGB(130, 18, 22), UI_RGB(218, 66, 64), UI_RGB(170, 26, 30), EM_WHITE, UI_RGB(120, 16, 20));
+static const EmPal kBallFlame = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(252, 252, 250), UI_RGB(248, 248, 246), UI_RGB(240, 240, 238), UI_RGB(206, 200, 200),
+                                       UI_RGB(214, 208, 208), UI_RGB(255, 255, 255), UI_RGB(222, 218, 218), UI_RGB(194, 32, 34), UI_RGB(238, 232, 232));
+static const EmPal kBallGrey = EM_PAL(UI_RGB(160, 30, 34), UI_RGB(156, 28, 32), UI_RGB(152, 26, 30), UI_RGB(148, 24, 28), UI_RGB(120, 18, 22),
+                                      UI_RGB(104, 14, 18), UI_RGB(172, 44, 46), UI_RGB(130, 20, 24), UI_RGB(214, 146, 140), UI_RGB(100, 14, 18));
+static const EmPal kBallSlate = EM_PAL(UI_RGB(255, 255, 255), UI_RGB(250, 250, 248), UI_RGB(246, 246, 244), UI_RGB(238, 238, 236), UI_RGB(34, 32, 38),
+                                       UI_RGB(34, 32, 38), UI_RGB(255, 255, 255), UI_RGB(220, 216, 216), UI_RGB(44, 40, 44), UI_RGB(236, 232, 232));
+
+/* The colours the Poke Ball views draw with themselves (white card, red ink, pink and hairline on the red). */
+#define BL_WHITE UI_RGB(248, 248, 246)
+#define BL_REDTXT UI_RGB(194, 32, 34)
+#define BL_PINK UI_RGB(252, 204, 198)
+#define BL_HAIR UI_RGB(240, 128, 120)
+#define BL_DEEP UI_RGB(150, 22, 26)
+#define BL_BAND UI_RGB(34, 32, 38)
+
+/* A disc of radius r centred on (cx, cy): one span a row. */
+static void TsDisc(int cx, int cy, int r, uint16_t c)
+{
+    for (int y = cy - r; y <= cy + r; ++y) {
+        int dy = y - cy, w = 0;
+
+        while ((w + 1) * (w + 1) + dy * dy <= r * r)
+            ++w;
+        if (w > 0 || dy == 0)
+            UiRoundFill(cx - w, y, 2 * w + 1, 1, 0, c);
+    }
+}
+
+/* The Poke Ball ground of a whole-screen view: the red backdrop above the band (y .. y + 8, dark), white under it. The band is a plain line: no button at its middle. */
+static void TsBallGround(int by)
+{
+    TsBgRect(0, 0, W, by);
+    UiRoundFill(0, by - 1, W, 1, 0, UI_RGB(120, 20, 24));
+    UiRoundFill(0, by, W, 8, 0, BL_BAND);
+    UiRoundFill(0, by + 8, W, H - by - 8, 0, BL_WHITE);
+}
+
+/* Poke Ball party cards: a Pokemon that can fight is a dark-red card with white ink, one that cannot a darker one with muted ink. */
+static const EmPal kBallPartyOk = EM_PAL(UI_RGB(204, 40, 44), UI_RGB(200, 38, 42), UI_RGB(198, 36, 40), UI_RGB(192, 32, 36), UI_RGB(150, 22, 26),
+                                         UI_RGB(130, 18, 22), UI_RGB(218, 66, 64), UI_RGB(170, 26, 30), EM_WHITE, UI_RGB(120, 16, 20));
+static const EmPal kBallPartyOut = EM_PAL(UI_RGB(158, 28, 32), UI_RGB(154, 26, 30), UI_RGB(150, 24, 28), UI_RGB(144, 22, 26), UI_RGB(116, 16, 20),
+                                          UI_RGB(100, 12, 16), UI_RGB(170, 42, 44), UI_RGB(126, 18, 22), UI_RGB(226, 168, 162), UI_RGB(96, 12, 16));
+
+static void TsApplyStyle(int ball)
+{
+    ball = ball != 0;
+    if (ball == sStyleBall)
+        return;
+    sStyleBall = ball;
+    kEmCream = ball ? kBallCream : kAscCream;
+    kEmFlame = ball ? kBallFlame : kAscFlame;
+    kEmGrey = ball ? kBallGrey : kAscGrey;
+    kEmSlate = ball ? kBallSlate : kAscSlate;
+    kEmPartyBlue = ball ? kBallPartyOk : kAscPartyBlue;
+    kEmPartyRed = ball ? kBallPartyOut : kAscPartyRed;
+    sTsBgReady = 0;                                 /* the backdrop is made again for the style */
+}
 
 /* Rows [y, y + h) of a rounded rectangle, each row the colour `colour[row - r0]` gives (r0 the first row on the canvas). */
 static void EmFillRows(int x, int y, int w, int h, int radius, const uint16_t *colour, int r0, int r1)
@@ -192,11 +282,18 @@ static void EmFramedRows(int x, int y, int w, int h, int radius, int inner, uint
 
 #include "3ds_ember2_impl.h"
 
+/* The Poke Ball style draws the buttons of HOME's layout flat (3ds_ball_pieces_impl.h): a pill with a dark-red edge, no lip. */
+static int BallHomeSkin(void);
+static int BallHomeButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed);
+
 /* A raised piece: the lip `depth` pixels under the face, both outlined; pressed, the face sinks onto the lip. The
  * caller has put the backdrop back under it. Returns where the face starts (for its label). */
 static int EmButton(int x, int y, int w, int h, const EmPal *p, int depth, int pressed)
 {
     int face = h - depth, fy = pressed ? y + depth : y;
+
+    if (BallHomeSkin())
+        return BallHomeButton(x, y, w, h, p, depth, pressed);
 
     if (!pressed) {
         /* The lip is seen only below the face and in its two bottom corners (and the top rows of its own corners, left of the face's); the

@@ -38,6 +38,16 @@ typedef struct { int16_t x, y, w, h; } CtrPokeTouchRect;
 #define PT_VIEW_Y 4
 #define PT_VIEW_W 240
 #define PT_VIEW_H 160
+/* HOME's layout: the map in the middle of the screen, the buttons round it (the 40 px band left on each side). */
+#define PT_HOME_X 40
+#define PT_HOME_Y 40
+/* HOME's status panel: the taps it gives (CtrPokeTouch_HomePanelHit). */
+enum { PT_REPEL_PLAIN, PT_REPEL_SUPER, PT_REPEL_MAX };
+enum { PT_PANEL_NONE = -1, PT_PANEL_OUT = 0, PT_PANEL_TURBO = 10, PT_PANEL_REPEL = 20 };
+bool CtrPokeTouch_HomeLayout(void);           /* HOME's layout is the one on the screen */
+bool CtrPokeTouch_HomeStatusHit(int x, int y);
+int CtrPokeTouch_HomePanelHit(int x, int y);
+#define PT_ZONE_MAX 5          /* the Pokemon the note under HOME's map has room for */
 /* The HOME map: FireRed's own Region Map art, drawn passively over the field's
  * live state (CtrPokeTouch_Map* in the game, patch 0064). The maps are its
  * REGIONMAP_* values. */
@@ -82,6 +92,18 @@ typedef struct {
     uint8_t tiles[512];
     uint16_t palette[16];           /* 15-bit colours, 0 clear */
 } CtrPokeTouchLook;
+
+/* The keypad over the OPTIONS rows that takes the private room's code (3ds_poketouch_options.c): four boxes of four digits for the code typed, the
+ * keys 1-9, DELETE, 0 and OK (OK lights when the code is a good one), NEW (a code made at random, to be read out to the friends) and CANCEL. */
+enum { PT_PAD_KEY_DELETE = 10, PT_PAD_KEY_OK, PT_PAD_KEY_CANCEL, PT_PAD_KEY_NEW, PT_PAD_KEYS };
+#define PT_PAD_DIGITS 16
+typedef struct {
+    uint8_t on;
+    uint8_t len;                /* digits typed */
+    uint8_t ok;                 /* the code in the boxes is one the room takes (OK is lit) */
+    int8_t pressed;             /* the key under a held touch, or -1 */
+    char code[PT_PAD_DIGITS + 1];
+} CtrPokeTouchPad;
 /* The SAVE screen (the facts come from FireRed's save window, ctr_poketouch.h CtrSave_*): the whole
  * viewport shows the game's save information, and the contextual bar becomes the dialogue: its two or
  * three text lines on the left and, on the right of the same bar, YES / NO (SAVE_CONFIRM), nothing
@@ -310,6 +332,31 @@ typedef struct {
     uint8_t egg;
     uint32_t personality;
 } CtrPokeTouchBoxMon;
+
+/* The trade's choice of a Pokemon (3ds_field_trade_impl.h), drawn instead of the choice's rows while the trade menu waits for one: both
+ * parties as cards, one party at a time (the tabs), and CANCEL. `cursor` is FireRed's (0-5 yours, 6-11 the partner's, 12 CANCEL); a card's
+ * hit code is PT_CHOICE_HIT_ROW + its place (0-5) in the party shown, then the tabs and CANCEL. Texts are FireRed's own codes, 0xff ended. */
+enum { PT_TRADE_TAB_YOURS = 6, PT_TRADE_TAB_THEIRS = 7, PT_TRADE_CANCEL = 8 };
+typedef struct {
+    uint8_t on, side;               /* the party shown: 0 yours, 1 the partner's */
+    int8_t cursor;
+    CtrPokeTouchBoxMon mon[2][6];   /* species 0: no Pokemon there */
+    uint8_t level[2][6], hp[2][6];  /* HP left as a percentage */
+    uint8_t name[2][6][12];
+    uint8_t partner[12];            /* the other player's name */
+} CtrPokeTouchTrade;
+
+/* The Union Room chat's keyboard (3ds_field_chat_impl.h), drawn instead of the choice's rows while the chat waits for input. FireRed's keys are
+ * 5 columns by 10 rows a page; here they are laid on their side (10 across, 5 down). A key's hit code is PT_CHOICE_HIT_ROW + row * 5 + column
+ * of FireRed's grid (0-49; on the registered page, row * 5), then the page tabs, Delete, Send and Quit. Texts are FireRed's codes, 0xff ended. */
+enum { PT_CHAT_TAB = 50, PT_CHAT_DELETE = 54, PT_CHAT_SEND = 55, PT_CHAT_QUIT = 56, PT_CHAT_PAGES = 4 };
+typedef struct {
+    uint8_t on, page;               /* page 3: the registered phrases */
+    uint8_t length;                 /* characters typed */
+    uint8_t msg[32];
+    uint8_t key[10][5][3];          /* [row][column]: 1 or 2 codes, then 0xff; 0xff first: no key */
+    uint8_t reg[10][21];
+} CtrPokeTouchChat;
 typedef struct {
     uint8_t on, state;
     int8_t area, pos;               /* FireRed's cursor (ST_AREA_*) */
@@ -408,10 +455,26 @@ typedef struct {
     int8_t cursorX, cursorY;    /* the selected cell (FireRed's cursor icon), -1: none */
     uint8_t cursorFrame;        /* which of the cursor's two blink frames (0 with none) */
     uint8_t flyOk;              /* the selected destination can be Flown to now: the note says so on a pill */
+    uint32_t homeMoney;         /* HOME's status plate: the money, */
+    uint8_t homeTurbo;          /* the turbo speed (0 or 1: off, 2-4), */
+    int16_t homeClock;          /* and its clock plate the time of day in minutes (-1: none) */
+    uint8_t zoneN;              /* HOME's note: the Pokemon this zone's tables can give (0: none, the note has only its name) */
+    uint8_t zoneWater;          /* all of them are met in water or fishing: the note says so */
+    uint16_t zoneSpecies[PT_ZONE_MAX];
+    uint8_t zoneFlags[PT_ZONE_MAX];     /* what the Pokedex knows: seen (1), caught (2); none: a question mark */
+    uint8_t homeStage;          /* HOME's note where no wild Pokemon live: the postgame's step (1-4; 0 none) */
+    uint16_t homeDex;           /* and the national Pokedex's caught count for the last */
+    uint8_t homePanel;          /* HOME's status panel is open over the map: the turbo, the Repels and the money */
+    uint16_t homeRepelSteps;    /* a Repel in force: its steps left (0: none) */
+    uint16_t homeRepelTotal;    /* and the length it began with */
+    uint8_t homeRepelKind;      /* PT_REPEL_*: which one it is */
+    uint16_t homeRepelItem[3];  /* the three Repels' item numbers */
+    uint16_t homeRepelHave[3];  /* and how many of each the Bag holds */
     uint8_t options;            /* the OPTIONS screen fills the viewport (no GBA picture, no map) */
     uint8_t optPage;            /* 0-based page index in OPTIONS */
     uint8_t optPageCount;       /* total pages in OPTIONS */
-    uint8_t optSection, optSectionCount;   /* the section the page is in (Settings, Graphics, QoL, Nuzlocke) and how many there are */
+    uint8_t optSection, optSectionCount;   /* the section the page is in (Settings, Graphics, QoL, Nuzlocke, Cheats) and how many there are */
+    uint8_t optDotSection[8];              /* the section of each page (up to 8), for the colours of the PAGE button's dots */
     char optPageName[20];       /* the section's name, "Graphics 1/2" when it has two pages, for the PAGE button */
     uint8_t optPagePressed;     /* the PAGE button is under a held touch */
     uint8_t optCount;           /* its rows on the current page */
@@ -421,6 +484,9 @@ typedef struct {
     uint8_t optFrameShow;       /* the selected row is FRAME: the bar shows a sample of its type ... */
     uint8_t optFrameType;       /* ... 0..9 */
     CtrPokeTouchLook optLook;   /* a look row is selected: the preview panel */
+    CtrPokeTouchPad optPad;     /* the keypad for the private room's code, over the rows while it is open */
+    CtrPokeTouchChat chat;      /* the Union Room chat's keyboard: drawn instead of the choice's rows while on */
+    CtrPokeTouchTrade trade;    /* the trade's choice of a Pokemon: drawn instead of the choice's rows while on */
     char optLabel[PT_OPT_MAX][PT_OPT_LABEL_LEN];
     char optValue[PT_OPT_MAX][PT_OPT_VALUE_LEN];
     uint8_t optSwitch[PT_OPT_MAX];      /* an ON/OFF row, drawn as a switch: 0 not one, 1 off, 2 on */
@@ -428,6 +494,7 @@ typedef struct {
     uint8_t optSegValue[PT_OPT_MAX];    /* ... the one chosen, and their names */
     char optSegName[PT_OPT_MAX][PT_OPT_SEGS][PT_OPT_SEG_LEN];
     uint8_t save;               /* the SAVE screen fills the viewport (no GBA picture, no map) */
+    uint8_t pictureHome;        /* the GBA picture (viewport) is shown in HOME's layout: at (PT_HOME_X, PT_HOME_Y), the band and the columns round it */
     uint8_t saveState;          /* SAVE_* */
     uint8_t saveSel;            /* the selected button: 0 YES, 1 NO */
     uint8_t savePressed;        /* PT_SAVE_* under a held touch */
@@ -456,7 +523,8 @@ typedef struct {
     CtrPokeTouchChoice choice;  /* a choice of the field, when choice.on */
 } CtrPokeTouchView;
 
-extern const CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
+/* The buttons' rectangles as last drawn: the classic column, or HOME's layout round the map. */
+extern CtrPokeTouchRect gCtrPokeTouchRects[PT_COUNT];
 /* BACK: a shell control in the bar's bottom-right corner, outside the viewport. It
  * stands for the B button of the open screen (3ds_bottom.c sends the real B). */
 extern const CtrPokeTouchRect gCtrPokeTouchBack;
@@ -464,9 +532,14 @@ extern const CtrPokeTouchRect gCtrPokeTouchOptPage;
 /* Whether a bottom-screen pixel is on BACK's or OPTIONS PAGE's rectangle. */
 bool CtrPokeTouch_HitBack(int x, int y);
 bool CtrPokeTouch_HitOptPage(int x, int y);
+/* The page whose dot is under a bottom-screen point in the Poke Ball OPTIONS header (0 ..), or -1 anywhere else (a tap elsewhere on the header goes to
+ * the next page): the dots are 12 px zones, one for each page, at the right of the header. */
+int CtrPokeTouch_OptPageDot(int x, int y, int pageCount);
 
 /* The OPTIONS row and zone (PT_OPT_ZONE_*) under a bottom-screen pixel; false when none. */
 bool CtrPokeTouch_OptionHit(int x, int y, int rows, int *row, int *zone);
+/* The keypad of the private room's code: the key at (x, y), PT_PAD_KEY_* (0..9 the digits), or -1. */
+int CtrPokeTouch_PadHit(int x, int y);
 /* On a row of `count` levels, the one under bottom-screen column `x` (the zone was not LABEL). */
 int CtrPokeTouch_OptionSegment(int x, int count);
 
@@ -541,6 +614,9 @@ void CtrPokeTouch_Update(uint16_t *canvas, const CtrPokeTouchView *old, const Ct
  * Summary): drawn only where the backdrop shows and, with `pictureShown`, off the GBA picture; with `on` false they
  * are only taken away. What changed is added to `dirty`. */
 void CtrPokeTouch_Embers(uint16_t *canvas, int on, int low, int pictureShown, CtrDirtyList *dirty);
+/* The lower screen's style (OPTIONS > STYLE): 0 Embers, 1 Poke Ball: the palettes and the backdrop of the pieces every view shares change; the caller redraws. */
+void CtrPokeTouch_SetStyle(int style);
+int CtrPokeTouch_Style(void);
 /* The lower screen with nothing to show for FireRed's screen above (its title, naming, a shop, an evolution, a trade):
  * the ember backdrop, and the project's logo when `logo`. */
 void CtrPokeTouch_DrawIdle(uint16_t *canvas, int logo);
@@ -665,6 +741,8 @@ typedef struct {
     uint8_t activeLevel;
     uint8_t activeSlot;             /* its slot in the party */
     uint16_t activeIcon;            /* its party icon (a species number, as CtrBottomParty_IconSpecies gives it) */
+    uint8_t nextSlot;               /* the first other Pokemon that can still fight (not an egg): its icon is the POKEMON button's */
+    uint16_t nextIcon;              /* its party icon, 0 when there is none */
     int8_t activeType[2];           /* its types (FireRed's numbers), -1 for none: the badges of the FIGHT banner */
     char activeTypeName[2][12];
     uint8_t activeFrame;            /* 0 or 1, the icon's bounce: it flips about four times a second */

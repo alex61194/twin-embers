@@ -1,5 +1,5 @@
-/* Twin Embers web Builder: the "ascuas" look (red ember background, rounded glossy buttons,
-   flat icons with a slate outline). One font for everything. */
+/* Twin Embers web Builder: the Poke Ball look (plain red ground, dark-red pills, white cards and notes, a dark band
+   for the footer). It is the last block of this file and overrides the earlier "ascuas" layers. One font. */
 :root {
   --slate: rgb(64, 72, 104);
   --slate-soft: rgba(64, 72, 104, 0.18);
@@ -809,3 +809,156 @@ footer { padding: 10px 12px 28px; line-height: 1.6; }
 }
 .release[open] summary { border-bottom: 2px solid var(--slate-soft); margin-bottom: 8px; }
 .release ul { padding-bottom: 6px; }
+
+/* ---- Poke Ball look (approved mockup): plain red ground #d42a2f, dark-red pills #8e141b with a thin #5c0b11 edge,
+   the chosen/primary one white with red text, white cards and notes, section titles as dark-red pills, the header a
+   dark-red strip, a dark band #2b1d21 under the page. The rising embers are hidden. ---- */
+:root {
+  --ground: #d42a2f;
+  --pill: #8e141b;
+  --edge: #5c0b11;
+  --band: #2b1d21;
+  --pink: #f5b4bf;
+  --red-text: #c8202a;
+  --card-white: #fdf8f6;
+  --dim: #6e4f54;
+  --sel: var(--pill);
+  --sel-low: var(--pill);
+  --box-edge: var(--edge);
+  --box-inner: #f0d6d9;
+  --on: var(--pill);
+  --on-top: var(--pill);
+}
+html, body { background: var(--ground); }
+body { background-attachment: scroll; }
+#embers { display: none; }
+
+header.hero .tagline { color: #fff; text-shadow: none; }
+header.hero .banner { animation: none; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); }
+header.hero p { color: #fff; }
+
+/* Top bar: the dark-red strip, links as pills, the page's language the white one. */
+.topbar {
+  background: var(--pill); backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom: 2px solid var(--edge); box-shadow: none;
+}
+.topbar .links a { color: #fff; border: 2px solid var(--edge); background: var(--pill); }
+.topbar .links a:hover, .topbar .links a:focus-visible { background: #fff; color: var(--red-text); border-color: var(--edge); }
+.topbar .links a:focus-visible { outline: 3px solid var(--poke-yellow); outline-offset: 2px; }
+.topbar .lang-switch { background: var(--pill); border: 2px solid var(--edge); }
+.topbar .lang-switch a { color: #fff; border: 0; background: transparent; }
+.topbar .lang-switch a:hover { background: #fff; color: var(--red-text); }
+.topbar .lang-switch a[aria-current="page"] { background: #fff; color: var(--red-text); text-shadow: none; }
+.topbar .x-link, .topbar .x-link:hover { background: #000; border-color: var(--edge); color: #fff; }
+.brand { color: #fff; }
+
+/* Cards: white, thin dark-red edge, no shadows; the title a dark-red pill with white text. */
+.card {
+  background: var(--card-white); border: 2px solid var(--edge); border-radius: 16px;
+  box-shadow: none; padding: 16px 20px 20px; overflow: visible;
+}
+.card > h2 {
+  display: inline-flex; width: fit-content; max-width: 100%;
+  margin: 0 0 12px; padding: 4px 16px; border-radius: 999px;
+  background: var(--pill); border: 2px solid var(--edge); box-shadow: none;
+  color: #fff; text-shadow: none; font-size: 20px; line-height: 28px;
+}
+.card > h2::before { display: none; }
+.card > h2 .icon { box-shadow: none; border-color: var(--edge); }
+.card a:not(.btn) { color: var(--red-text); }
+.card > p.lead, .status, .switch .label small, .gallery figcaption, .lightbox p, .qr-panel > .mono { color: var(--dim); }
+
+/* Buttons: primary white with red text, secondary a dark-red pill. */
+.btn {
+  --face: #fff; color: var(--red-text); text-shadow: none;
+  border: 2px solid var(--edge); border-radius: 999px; box-shadow: none;
+}
+.btn:hover, .btn:not(.secondary):not(.x):not(.kofi):hover { --face: #fff0f1; transform: none; box-shadow: none; }
+.btn:active { transform: translateY(1px); box-shadow: none; }
+.btn:not(.secondary):not(.x):not(.kofi)::before { border-left-color: var(--red-text); }
+.btn.secondary, .btn.secondary:hover { --face: var(--pill); color: #fff; text-shadow: none; }
+.btn.secondary:hover { --face: #a51b23; }
+.btn.kofi { --face: #fff; color: var(--red-text); }
+.btn.kofi:hover { --face: #fff0f1; }
+.btn.x, .btn.x:hover { --face: #000; color: #fff; border-color: var(--edge); }
+.btn[disabled], .btn[aria-disabled="true"] { --face: #e6d3d5; color: #7b5a5f; box-shadow: none; }
+.btn:focus-visible { outline: 3px solid var(--poke-yellow); outline-offset: 3px; }
+
+/* Pills, step numbers, tags. */
+.pill { background: #fff; border: 2px solid var(--edge); border-radius: 999px; }
+.pill.ok { background: #d8f2e1; color: #1d6b3c; }
+.pill.bad { background: #fadcd9; color: #8e1b1b; }
+.pill.busy { background: #fff0cf; color: #7a4d00; }
+.step { border-top: 2px solid #ecd9d9; }
+.step .num {
+  background: var(--pill); border: 2px solid var(--edge); border-radius: 50%; box-shadow: none; text-shadow: none; color: #fff;
+}
+.qr-tag { background: var(--pill); border: 2px solid var(--edge); border-radius: 999px; color: #fff; }
+
+/* Switches: a white row, the track a dark-red pill when on. */
+.switch { background: #fff; border: 2px solid var(--edge); box-shadow: none; }
+.switch:hover { background: #fff0f1; }
+.switch:has(input:checked) { background: #fff; box-shadow: inset 6px 0 0 var(--pill); }
+.switch:has(input:focus-visible) { outline: 3px solid var(--poke-yellow); outline-offset: 2px; }
+.switch .track { border: 2px solid var(--edge); background: #e6d3d5; box-shadow: none; }
+.switch .track::after { top: 3px; left: 3px; background: #fff; border: 2px solid var(--edge); box-shadow: none; }
+.switch input:checked + .track { background: var(--pill); }
+.switch input:focus-visible + .track { outline: 3px solid var(--poke-yellow); }
+
+/* Progress: a white track, the fill dark red. */
+.progress { background: #fff; border: 2px solid var(--edge); box-shadow: none; }
+.progress .fill { background: var(--pill); box-shadow: none; }
+
+/* Notes, results, errors: white with the thin dark-red edge. */
+.note, .result, .error { background: #fff; border: 2px solid var(--edge); box-shadow: none; color: var(--ink); }
+.result { background: #f1fbf4; }
+.error { background: #fff1ef; color: #6e1515; border-color: var(--edge); box-shadow: none; }
+
+/* Feature boxes, releases. */
+.features li {
+  background: #fff; border: 2px solid var(--edge); box-shadow: none; padding-left: 16px; color: var(--dim);
+}
+.features li:hover { box-shadow: none; transform: none; }
+.features .type { background: var(--pill); border: 0; box-shadow: none; text-shadow: none; color: #fff; border-radius: 999px; padding: 2px 12px; }
+.feat { background: #fff; border: 2px solid var(--edge); }
+.feat h3, .gallery-group {
+  background: var(--pill); border: 2px solid var(--edge); box-shadow: none; text-shadow: none; color: #fff;
+}
+.gallery-group { border-radius: 999px; }
+.gallery-group::before { border-left-color: #fff; }
+.release { background: #fff; border: 2px solid var(--edge); }
+.release summary { color: var(--red-text); }
+.release[open] summary { border-bottom: 2px solid #ecd9d9; }
+
+/* Gallery and lightbox. */
+.gallery .shot, .gallery .shot:hover {
+  background: #fff; border: 2px solid var(--edge); box-shadow: none; transform: none;
+}
+.gallery .shot:hover { background: #fff0f1; }
+.gallery .shot:focus-visible { outline: 3px solid var(--poke-yellow); outline-offset: 3px; }
+.gallery { scrollbar-color: var(--pill) #fff; }
+.gallery::-webkit-scrollbar-track { background: #fff; border: 2px solid var(--edge); }
+.gallery::-webkit-scrollbar-thumb { background: var(--pill); border: 2px solid var(--edge); }
+.lightbox { background: var(--card-white); border: 2px solid var(--edge); box-shadow: none; }
+.lightbox::backdrop { background: rgba(43, 29, 33, 0.8); }
+.lightbox .close { background: var(--pill); border: 2px solid var(--edge); color: #fff; }
+.lightbox .close:hover { background: #a51b23; }
+.lightbox .close:focus-visible { outline: 3px solid var(--poke-yellow); }
+.qr-panel { background: #fff; border: 2px solid var(--edge); box-shadow: none; }
+.qr-panel:hover { transform: none; }
+.qr-box { border: 2px solid var(--edge); box-shadow: none; }
+
+/* Follow panel: the dark band. */
+.follow-panel { background: var(--band); border: 2px solid var(--edge); box-shadow: none; color: #fff; }
+
+/* Footer: on the dark band, which runs the window's whole width. */
+footer {
+  color: #fff; background: var(--band); box-shadow: 0 0 0 100vmax var(--band);
+  clip-path: inset(0 -100vmax -100vmax -100vmax); padding: 14px 12px 28px;
+}
+footer a { color: #fff; }
+
+@media (max-width: 560px) {
+  .card { padding: 14px 14px 16px; }
+  .card > h2 { margin: 0 0 12px; padding: 4px 14px; font-size: 18px; }
+}

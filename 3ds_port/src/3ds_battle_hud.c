@@ -1,11 +1,11 @@
 /* The battle's healthboxes, drawn by the port (see include/3ds_battle_hud.h).
  *
- * The look ("Llama", proposal A): a cream body (FireRed's) with a glass band over its top and a slate outline, FireRed's
- * cap at one end in flame red with the Poke Ball mark (the foe's red when its species is caught, grey until then, none
- * for a trainer's Pokemon), a thin flame line under the name, a small red "Lv"/"Nv" before the level, the HP bar as a
- * slate capsule with its label in orange and a glossy green, yellow or red fill, and under the player's HP numbers its
- * EXP bar on a dark slate base. A status is a coloured pill with its own icon. Every pixel is drawn here, at the
- * screen's own resolution; text is the game's font. */
+ * The look: a white body with a glass band over its top and a black outline, a flame-red cap at one end with the
+ * Poke Ball mark (the foe's red when its species is caught, grey until then, none for a trainer's Pokemon), a thin red
+ * line under the name, a small red "Lv"/"Nv" before the level, the HP bar as a black capsule with its label in white and
+ * a glossy green, yellow or red fill (ticks at half and a fifth, and a striped fill when low, so the bar reads without
+ * its colour), and under the player's HP numbers its EXP bar on a black base that has no red in it. A status is a
+ * coloured pill with its own icon. Every pixel is drawn here, at the screen's own resolution; text is the game's font. */
 #include <math.h>
 #include <string.h>
 
@@ -30,8 +30,8 @@ typedef struct {
     int w, h;
 } Canvas;
 
-static const Rgb SLATE = {64, 72, 104}, OUTLINE = {44, 50, 84}, FLAME_RING = {138, 22, 16}, INK = {72, 72, 72},
-                 INK_SHADOW = {216, 216, 196};
+static const Rgb SLATE = {40, 34, 38}, OUTLINE = {30, 24, 28}, EDGE = {34, 28, 32}, INK = {20, 16, 18},
+                 INK_SHADOW = {236, 222, 222};
 
 static void Put(Canvas *c, int x, int y, Rgb v)
 {
@@ -256,19 +256,19 @@ static void Inset(const Mask *in, Mask *out)
 enum { CAP_LEFT, CAP_RIGHT };
 
 /*
- * A plate w x h: a slate outline, a cream body (a glass band over the top two fifths, a step down to the cream
- * below), FireRed's cap at one end in flame red with a dark ring and a lit top, and from row `strip` down (0: none) a
- * dark slate base under the body, the player's EXP bar housing. `slant` is the slanted end's one pixel in so many rows.
+ * A plate w x h: a black outline, a white body (a glass band over the top two fifths, a step down to the white
+ * below), a flame-red cap at one end with a lit top, and from row `strip` down (0: none) a black base under the body
+ * (the player's EXP bar housing: the cap stops where it starts, so no red is left there). `slant` is the slanted end's one pixel in so many rows.
  */
 static void Plate(Canvas *c, int x, int y, int w, int h, int left, int right, int capSide, int capW, int slant,
                   int strip)
 {
     static Mask m, in, cap, capIn;
     const int glass = h * 2 / 5;
-    const Stop top[2] = {{1, {255, 255, 255}}, {glass, {255, 255, 240}}};
-    const Stop low[2] = {{glass + 1, {246, 246, 220}}, {h - 2, {230, 230, 196}}};
-    const Stop base[2] = {{strip, {76, 84, 124}}, {h - 2, {52, 60, 98}}};
-    const Stop flame[4] = {{1, {255, 196, 90}}, {glass, {255, 154, 56}}, {glass + 1, {248, 100, 42}}, {h - 2, {216, 48, 30}}};
+    const Stop top[2] = {{1, {255, 255, 255}}, {glass, {255, 250, 250}}};
+    const Stop low[2] = {{glass + 1, {253, 251, 251}}, {h - 2, {240, 236, 238}}};
+    const Stop base[2] = {{strip, {58, 50, 54}}, {h - 2, {30, 26, 30}}};
+    const Stop flame[4] = {{1, {246, 112, 108}}, {glass, {226, 60, 66}}, {glass + 1, {210, 44, 52}}, {h - 2, {158, 24, 32}}};
 
     Shape(&m, w, h, left, right, 2, slant);
     Shadow(c, x, y, &m);
@@ -278,7 +278,7 @@ static void Plate(Canvas *c, int x, int y, int w, int h, int left, int right, in
         for (int i = 0; i < w; ++i)
         {
             if (!m.m[j][i]) continue;
-            Put(c, x + i, y + j, SLATE);
+            Put(c, x + i, y + j, EDGE);
             if (capSide == CAP_LEFT ? i >= capW : i < w - capW) cap.m[j][i] = 0;
             if (!in.m[j][i]) continue;
             Put(c, x + i, y + j, j <= glass ? Gradient(top, 2, j) : Gradient(low, 2, j));
@@ -287,11 +287,11 @@ static void Plate(Canvas *c, int x, int y, int w, int h, int left, int right, in
     Inset(&cap, &capIn);
     for (int j = 0; j < h; ++j)
         for (int i = 0; i < w; ++i)
-            if (cap.m[j][i])
-                Put(c, x + i, y + j, !capIn.m[j][i] ? FLAME_RING : Gradient(flame, 4, j));
+            if (cap.m[j][i] && !(strip && j >= strip))
+                Put(c, x + i, y + j, !capIn.m[j][i] ? EDGE : Gradient(flame, 4, j));
     for (int j = 1; j < h; ++j)
         for (int i = 0; i < w; ++i)
-            if (capIn.m[j][i] && !capIn.m[j - 1][i]) Put(c, x + i, y + j, (Rgb){255, 233, 168});
+            if (capIn.m[j][i] && !capIn.m[j - 1][i]) Put(c, x + i, y + j, (Rgb){255, 214, 208});
 }
 
 /* The thin flame line under a name: a horizontal run from deep orange to amber. */
@@ -300,7 +300,7 @@ static void FlameLine(Canvas *c, int x0, int x1, int y, int rows)
     for (int i = x0; i < x1; ++i)
     {
         float t = (float)(i - x0) / (float)(x1 - x0 > 1 ? x1 - x0 - 1 : 1);
-        Rgb v = {(uint8_t)(248 + 7 * t), (uint8_t)(100 + 76 * t), (uint8_t)(42 + 30 * t)};
+        Rgb v = {(uint8_t)(206 + 40 * t), (uint8_t)(40 + 70 * t), (uint8_t)(48 + 66 * t)};
         for (int j = 0; j < rows; ++j) Put(c, i, y + j, j ? v : Add(v, 0, 18, 10));
     }
 }
@@ -330,7 +330,7 @@ static void Ball(Canvas *c, int x, int y, bool caught)
 
 static void Level(Canvas *c, int right, int base, unsigned level)
 {
-    static const Rgb red = {224, 56, 40}, redShadow = {248, 200, 184};
+    static const Rgb red = {214, 40, 48}, redShadow = {248, 200, 196};
     char digits[4];
     unsigned n = 0;
     uint8_t codes[4];
@@ -372,34 +372,47 @@ static void HpBar(Canvas *c, int x, int y, int w, unsigned pixels)
     const Rgb *fill = pixels > CTR_HUD_HP_PIXELS * 50 / 100 ? green : pixels > CTR_HUD_HP_PIXELS * 20 / 100 ? yellow : red;
     int tx = x + 16, tw = w - 19, ty = y + 2;
 
-    Pill(c, x, y, w, 10, SLATE, (Rgb){52, 58, 90}, true);
-    Ascii(c, true, x + 4, y + 7, CTR_TR("HP", "PS", "KP", "PV"), (Rgb){248, 176, 32}, &(Rgb){44, 50, 80});
+    Pill(c, x, y, w, 10, SLATE, (Rgb){22, 18, 20}, true);
+    Ascii(c, true, x + 4, y + 7, CTR_TR("HP", "PS", "KP", "PV"), (Rgb){255, 238, 232}, &(Rgb){0, 0, 0});
     Shape(&track, tw, 6, END_ROUND, END_ROUND, 3, 1);
     for (int j = 0; j < 6; ++j)
         for (int i = 0; i < tw; ++i)
-            if (track.m[j][i]) Put(c, tx + i, ty + j, j == 0 ? (Rgb){72, 80, 112} : (Rgb){88, 96, 128});
+            if (track.m[j][i]) Put(c, tx + i, ty + j, j == 0 ? (Rgb){14, 10, 12} : (Rgb){34, 28, 32});
     if (pixels > CTR_HUD_HP_PIXELS) pixels = CTR_HUD_HP_PIXELS;
     int fw = (int)lrintf((float)tw * (float)pixels / CTR_HUD_HP_PIXELS);
     if (pixels && !fw) fw = 1;
     Shape(&fillMask, fw, 6, END_ROUND, END_ROUND, fw >= 6 ? 3 : 0, 1);
     for (int j = 0; j < 6; ++j)
         for (int i = 0; i < fw; ++i)
-            if (fillMask.m[j][i]) Put(c, tx + i, ty + j, fill[rows[j]]);
+            if (fillMask.m[j][i])
+            {
+                Rgb v = fill[rows[j]];
+                /* Low HP is not only red: the fill is striped, so it reads without colour. */
+                if (fill == red && ((i + j) & 3) < 1 && j > 0 && j < 5) v = (Rgb){255, 214, 204};
+                Put(c, tx + i, ty + j, v);
+            }
+    /* Ticks at half and a fifth of the bar: where the colour changes, readable without it. */
+    static const int marks[2] = {50, 20};
+    for (int k = 0; k < 2; ++k)
+    {
+        int mx = tx + (int)lrintf((float)tw * (float)marks[k] / 100.0f);
+        for (int j = 1; j < 5; ++j) Put(c, mx, ty + j, (Rgb){255, 232, 228});
+    }
 }
 
 /* The EXP bar on the player's slate base (9 rows from y): "EXP" in light blue, a dark 3-pixel track and a glossy blue
  * fill. */
 static void ExpBar(Canvas *c, int x, int y, int w, unsigned pixels)
 {
-    static const Rgb blue[3] = {{168, 224, 255}, {64, 152, 240}, {52, 124, 212}};
+    static const Rgb blue[3] = {{176, 228, 255}, {72, 160, 244}, {52, 128, 216}};
     static Mask track, fillMask;
     int tx = x + (int)AsciiWidth(true, "EXP") + 3, tw = x + w - tx, ty = y + 3;
 
-    Ascii(c, true, x, y + 7, "EXP", (Rgb){112, 208, 248}, &(Rgb){28, 44, 92});
+    Ascii(c, true, x, y + 7, "EXP", (Rgb){150, 218, 255}, &(Rgb){30, 26, 40});
     Shape(&track, tw, 3, END_ROUND, END_ROUND, 2, 1);
     for (int j = 0; j < 3; ++j)
         for (int i = 0; i < tw; ++i)
-            if (track.m[j][i]) Put(c, tx + i, ty + j, j == 0 ? (Rgb){24, 28, 48} : (Rgb){32, 38, 63});
+            if (track.m[j][i]) Put(c, tx + i, ty + j, j == 0 ? (Rgb){12, 8, 10} : (Rgb){30, 24, 28});
     if (pixels > CTR_HUD_EXP_PIXELS) pixels = CTR_HUD_EXP_PIXELS;
     int fw = (int)lrintf((float)tw * (float)pixels / CTR_HUD_EXP_PIXELS);
     if (!fw) return;
@@ -409,7 +422,8 @@ static void ExpBar(Canvas *c, int x, int y, int w, unsigned pixels)
             if (fillMask.m[j][i]) Put(c, tx + i, ty + j, blue[j]);
 }
 
-/* A status as a pill: light top, the status colour, a darker base, an outline in its own dark, a white icon. */
+/* A status as a pill: light top, the status colour, a darker base, an outline in its own dark, a white icon; with
+ * `label`, its three letters after the icon. */
 static const struct {
     const char *label;
     Rgb light, base, dark, outline;
@@ -432,10 +446,10 @@ static const struct {
                       ".##...##.", "..#####.."}},
 };
 
-static int Status(Canvas *c, int x, int y, unsigned s)
+static int Status(Canvas *c, int x, int y, unsigned s, bool label)
 {
     static Mask m, in;
-    int w = 4 + 9 + 3 + (int)AsciiWidth(false, STATUS[s].label) + 4, h = 13;
+    int w = label ? 4 + 9 + 3 + (int)AsciiWidth(false, STATUS[s].label) + 4 : 4 + 9 + 4, h = 13;
     Stop stops[3] = {{1, STATUS[s].light}, {5, STATUS[s].base}, {h - 2, STATUS[s].dark}};
 
     Shape(&m, w, h, END_ROUND, END_ROUND, 5, 1);
@@ -460,7 +474,7 @@ static int Status(Canvas *c, int x, int y, unsigned s)
                 if (j == 8 || STATUS[s].icon[j + 1][k] != '#') Put(c, x + 4 + k + 1, y + 2 + j + 1, STATUS[s].dark);
                 Put(c, x + 4 + k, y + 2 + j, (Rgb){255, 255, 255});
             }
-    Ascii(c, false, x + 16, y + 10, STATUS[s].label, (Rgb){255, 255, 255}, &STATUS[s].dark);
+    if (label) Ascii(c, false, x + 16, y + 10, STATUS[s].label, (Rgb){255, 255, 255}, &STATUS[s].dark);
     return w;
 }
 
@@ -534,7 +548,7 @@ static void FoeBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 12, s);
     Level(c, w - 20, 12, s->level);
     int hx = nx;
-    if (HasStatus(s)) hx += Status(c, hx, 19, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 19, s->status, true) + 3;
     HpBar(c, hx, 21, w - 20 - hx, s->hpPixels);
 }
 
@@ -550,7 +564,7 @@ static void PlayerBox(Canvas *c, const CtrHudState *s)
     Name(c, nx, 10, s);
     Level(c, end - 2, 10, s->level);
     int hx = nx - 4;
-    if (HasStatus(s)) hx += Status(c, hx, 16, s->status) + 3;
+    if (HasStatus(s)) hx += Status(c, hx, 16, s->status, true) + 3;
     HpBar(c, hx, 17, end - hx, s->hpPixels);
     /* "hp/max", right-aligned to the bar's end, under it. */
     Numbers(s, numbers);
@@ -573,7 +587,8 @@ static void PlayerDoubleBox(Canvas *c, const CtrHudState *s)
     int nw = (int)AsciiWidth(false, numbers);
     Ascii(c, false, end - nw, 23, numbers, INK, &INK_SHADOW);
     int hx = 16;
-    if (HasStatus(s)) hx += Status(c, hx, 12, s->status) + 3;
+    /* The icon alone: with its label and "999/999" beside it, the bar would keep 2 pixels of track. */
+    if (HasStatus(s)) hx += Status(c, hx, 12, s->status, false) + 3;
     HpBar(c, hx, 14, end - nw - 4 - hx, s->hpPixels);
 }
 

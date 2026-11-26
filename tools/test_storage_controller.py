@@ -74,7 +74,10 @@ static int sEnabled=1,sInitDone=1,sStorageSession;
 static struct { int active; } sSession;
 static void *sPartyMenuCallback;
 static void *CtrBottom_CurrentCallback(void) { return NULL; }
-''' + modes + '\n' + stubs + '\n' + mode + '''
+''' + modes + '\n' + stubs + '''
+/* The wireless hold of 3ds_bottom_chat_impl.h: a choice is the CHOICE mode, nothing is OFF (no link is up in this test). */
+static int WlHoldMode(int open) { return open ? MODE_CHOICE : MODE_OFF; }
+''' + '\n' + mode + '''
 int main(void)
 {
     CtrBottom_HasSave_value=1; CtrBottom_IsFieldCallback_value=1;

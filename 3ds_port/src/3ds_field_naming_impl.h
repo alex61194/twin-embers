@@ -8,6 +8,9 @@
 #define FN_SLOT_BOT UI_RGB(42, 8, 9)
 #define FN_SLOT_EDGE UI_RGB(20, 3, 4)
 
+static void BallNameScreen(const CtrPokeTouchView *v);                 /* 3ds_ball_naming_impl.h: the Poke Ball style's keyboard */
+static int BallNameHit(const CtrPokeTouchView *v, int x, int y);
+
 static const CtrPokeTouchRect sFNBand = {4, 4, 312, 34};
 static const CtrPokeTouchRect sFNDelete = {193, 42, 60, 22};
 static const CtrPokeTouchRect sFNOk = {256, 42, 60, 22};
@@ -41,6 +44,8 @@ int CtrPokeTouch_NameHit(const CtrPokeTouchView *v, int x, int y)
 
     if (!n->on)
         return -1;
+    if (sStyleBall)
+        return BallNameHit(v, x, y);
     for (int p = 0; p < 3; ++p) {
         CtrPokeTouchRect r = FNTab(p);
         if (UiIn(&r, x, y))
@@ -232,8 +237,9 @@ static void FNKeys(const CtrPokeTouchName *n)
             else
                 EmLabel(FNChar(code, g), r.x, r.w, fy, r.h - FB_DEPTH, p);
         }
-    /* The chosen key's ring last: its neighbours are 2 px away and would cover it. */
-    if (n->curCol < n->cols && n->curCol < PT_NAME_COLS && n->curRow < PT_NAME_ROWS && n->key[n->curRow][n->curCol] != 0xff) {
+    /* The chosen key's ring last: its neighbours are 2 px away and would cover it. An empty cell gets it too, as an
+     * outline in the gap: FireRed's D-pad stops there (DOWN from ',', RIGHT from 's'), and no ring would lose the cursor. */
+    if (n->curCol < n->cols && n->curCol < PT_NAME_COLS && n->curRow < PT_NAME_ROWS) {
         CtrPokeTouchRect r = FNKey(n, n->curRow, n->curCol);
 
         LlSelectRing(r.x, r.y, r.w, r.h);
@@ -270,6 +276,10 @@ static void FNameNote(const CtrPokeTouchView *v, int w)
 
 static void FNameDraw(const CtrPokeTouchView *v)
 {
+    if (sStyleBall) {
+        BallNameScreen(v);
+        return;
+    }
     TsBackdrop();
     FNameFrame(v);
     FNameNote(v, 312);

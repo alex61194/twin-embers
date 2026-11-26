@@ -238,7 +238,8 @@ static int BLooksChanged(const CtrBattleView *a, const CtrBattleView *b, int i)
 {
     return (a->pressed == i) != (b->pressed == i)
         || (a->showCursor && a->cursor == i) != (b->showCursor && b->cursor == i)
-        || (b->state == BUI_ACTION && i == 0 && a->activeFrame != b->activeFrame);   /* the lead's icon bounces */
+        || (b->state == BUI_ACTION && (i == 0 || (i == 2 && b->nextIcon)) && a->activeFrame != b->activeFrame)   /* the lead's icon bounces, the next one's too */
+        || (b->state == BUI_ACTION && i == 2 && (a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot));
 }
 
 /* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here): the last line ends in "..." when
@@ -405,7 +406,7 @@ static int BPartyBarred(const CtrBattleParty *p, int i)
  * the HP capsule, a status badge and the numbers, a "1st" ribbon on the first and FireRed's ring of light behind the plate. An empty slot is a hollow. */
 static void BPartyPanel(int i, const CtrBattleView *v)
 {
-    static const char *const code[7] = {"", CTR_TR("Psn", "Env", "Gft", "Poi"), CTR_TR("Par", "Par", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf", "Dor"), CTR_TR("Frz", "Con", "Efr", "Gel"), CTR_TR("Brn", "Que", "Brn", "Br" "\xC3" "\xBB"), CTR_TR("PKRS", "PKRS", "PKRS", "PKRS")};
+    static const char *const code[7] = {"", CTR_TR("Psn", "Env", "Gft", "Poi"), CTR_TR("Par", "Par", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf", "Dor"), CTR_TR("Frz", "Con", "Efr", "Gel"), CTR_TR("Brn", "Que", "Brn", "Br\xC3\xBB"), CTR_TR("PKRS", "PKRS", "PKRS", "PKRS")};
     static const uint16_t tint[7] = {0, UI_RGB(170, 80, 190), UI_RGB(216, 168, 24), UI_RGB(120, 128, 150),
                                      UI_RGB(80, 170, 220), UI_RGB(226, 96, 48), UI_RGB(200, 90, 160)};
     const CtrBattleParty *p = &v->pty;
@@ -527,8 +528,8 @@ static void BPNoteCard(const CtrBattleView *v)
 {
     const CtrPokeTouchRect *n = &sBPNote;
     const char *text = v->pty.caption[0] ? v->pty.caption
-                     : v->pty.mode == BUI_PTY_FORCED ? CTR_TR("A Pok\xC3\xA9mon must be sent out.", "Tienes que sacar un Pok\xC3\xA9mon.", "Ein Pok\xC3\xA9mon muss antreten.", "Un Pok" "\xC3" "\xA9" "mon doit " "\xC3" "\xAA" "tre envoy" "\xC3" "\xA9" ".")
-                     : v->pty.mode == BUI_PTY_TARGET ? CTR_TR("Use on which one?", "\xC2\xBF" "En cu\xC3\xA1l lo usas?", "Auf welches anwenden?", "Sur lequel ?") : CTR_TR("Choose a Pok\xC3\xA9mon.", "Elige un Pok\xC3\xA9mon.", "W\xC3\xA4hle ein Pok\xC3\xA9mon.", "Choisissez un Pok" "\xC3" "\xA9" "mon.");
+                     : v->pty.mode == BUI_PTY_FORCED ? CTR_TR("A Pok\xC3\xA9mon must be sent out.", "Tienes que sacar un Pok\xC3\xA9mon.", "Ein Pok\xC3\xA9mon muss antreten.", "Un Pok\xC3\xA9mon doit \xC3\xAAtre envoy\xC3\xA9.")
+                     : v->pty.mode == BUI_PTY_TARGET ? CTR_TR("Use on which one?", "\xC2\xBF" "En cu\xC3\xA1l lo usas?", "Auf welches anwenden?", "Sur lequel ?") : CTR_TR("Choose a Pok\xC3\xA9mon.", "Elige un Pok\xC3\xA9mon.", "W\xC3\xA4hle ein Pok\xC3\xA9mon.", "Choisissez un Pok\xC3\xA9mon.");
 
     TsBgRect(n->x - 2, n->y - 2, n->w + 4, n->h + 4);
     LlWindow(n->x, n->y, n->w, n->h);
@@ -582,7 +583,7 @@ static void BPartyOverlay(const CtrBattleView *v)
  * CANCEL's place. Anywhere on the screen goes on (A). */
 static void BPLevelUp(const CtrBattleView *v)
 {
-    static const char *const sLabels[6] = {CTR_TR("Max HP", "PS m\xC3\xA1x.", "Max. KP", "PV max"), CTR_TR("Attack", "Ataque", "Angriff", "Attaque"), CTR_TR("Defense", "Defensa", "Vert.", "D" "\xC3" "\xA9" "fense"), CTR_TR("Sp. atk", "At. esp.", "Sp. Ang.", "Att. Sp" "\xC3" "\xA9" "."), CTR_TR("Sp. def", "Def. esp.", "Sp. Ver.", "D" "\xC3" "\xA9" "f. Sp" "\xC3" "\xA9" "."), CTR_TR("Speed", "Velocidad", "Init.", "Vitesse")};
+    static const char *const sLabels[6] = {CTR_TR("Max HP", "PS m\xC3\xA1x.", "Max. KP", "PV max"), CTR_TR("Attack", "Ataque", "Angriff", "Attaque"), CTR_TR("Defense", "Defensa", "Vert.", "D\xC3\xA9" "fense"), CTR_TR("Sp. atk", "At. esp.", "Sp. Ang.", "Att. Sp\xC3\xA9."), CTR_TR("Sp. def", "Def. esp.", "Sp. Ver.", "D\xC3\xA9" "f. Sp\xC3\xA9."), CTR_TR("Speed", "Velocidad", "Init.", "Vitesse")};
     const CtrBattleParty *p = &v->pty;
     const EmPal *flame = &kEmFlame;
     const CtrPokeTouchRect *n = &sBPNote, *ok = &sBPCancel;
@@ -1023,7 +1024,7 @@ static void BFightFace(const CtrPokeTouchRect *r, int fy, const CtrBattleView *v
             }
     } else
         BDiscIcon(BX_FIGHT, r->x + 41, fy + 36, 24, p);
-    UiText(word, left, fy + 7, EM_WHITE, p->inkSh, 2, r->x + r->w - 8);
+    UiText(word, left, fy + 7, sStyleBall ? p->ink : EM_WHITE, sStyleBall ? p->inkSh : p->inkSh, 2, r->x + r->w - 8);
     x = left + UiTextWidth(word, 2) + 12;
     for (int k = 0; k < 2; ++k)
         if (v->activeType[k] >= 0 && v->activeTypeName[k][0]) {
@@ -1055,8 +1056,8 @@ static void BActCard(int i, const CtrBattleView *v)
 {
     static const EmPal *const pal[4] = {&kEmFlame, &kEmBlue, &kEmGreen, &kEmPurple};
     static const int icon[4] = {BX_FIGHT, BX_BAG, BX_BALL, BX_SHOE};
-    static const char *const label[4] = {CTR_TR("Fight", "Luchar", "Kampf", "Combat"), CTR_TR("Bag", "Mochila", "Beutel", "Sac"), CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok" "\xC3" "\xA9" "mon"), CTR_TR("Run", "Huir", "Flucht", "Fuite")};
-    static const char *const sub[4] = {"", CTR_TR("Items", "Objetos", "Items", "Objets"), CTR_TR("Party", "Equipo", "Team", "\xC3" "\x89" "quipe"), CTR_TR("Escape", "Escapar", "Fliehen", "Fuite")};
+    static const char *const label[4] = {CTR_TR("Fight", "Luchar", "Kampf", "Combat"), CTR_TR("Bag", "Mochila", "Beutel", "Sac"), CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xC3\xA9mon"), CTR_TR("Run", "Huir", "Flucht", "Fuite")};
+    static const char *const sub[4] = {"", CTR_TR("Items", "Objetos", "Items", "Objets"), CTR_TR("Party", "Equipo", "Team", "\xC3\x89quipe"), CTR_TR("Escape", "Escapar", "Fliehen", "Fuite")};
     const CtrPokeTouchRect *r = BActRect(v, i);
     int off = i == BUI_ACT_RUN && v->runBlocked;
     const EmPal *p = off ? &kEmBallOff : pal[i];
@@ -1066,7 +1067,35 @@ static void BActCard(int i, const CtrBattleView *v)
         BFightFace(r, fy, v, p);
         return;
     }
-    BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    if (i == 2 && v->nextIcon && BPartyIcon(v->nextSlot, v->nextIcon)) {
+        /* POKEMON: the party icon of the next Pokemon that can fight (the one a switch would send), centred on its drawn pixels, bouncing a pixel. */
+        int minX = 32, maxX = -1, minY = 32, maxY = -1, x0, y0;
+
+        BDisc(r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px)
+                if (sBPIcon[v->nextSlot].pixels[y * 32 + px]) {
+                    minX = px < minX ? px : minX;
+                    maxX = px > maxX ? px : maxX;
+                    minY = y < minY ? y : minY;
+                    maxY = y > maxY ? y : maxY;
+                }
+        if (maxX < 0) {
+            minX = minY = 0;
+            maxX = maxY = 31;
+        }
+        x0 = r->x + r->w / 2 - (minX + maxX + 1) / 2;
+        y0 = fy + BACT_DISC_Y - (minY + maxY + 1) / 2 - (v->activeFrame & 1);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px) {
+                uint8_t index = sBPIcon[v->nextSlot].pixels[(y + (v->activeFrame & 1) * 32) * 32 + px];
+
+                if (index)
+                    Px(x0 + px, y0 + y, sBPIcon[v->nextSlot].pal[index]);
+            }
+    } else {
+        BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    }
     BRowLabel(label[i], r, fy, p);
     if (i == 2) {    /* POKEMON: how many are still able, not the word the card already says */
         char able[16];
@@ -1111,8 +1140,8 @@ static void BBallCard(const CtrBattleView *v)
     char qty[8];
 
     if (!ready) {
-        const char *why = v->ball == CTR_QUICK_BALL_FULL ? CTR_TR("Box full", "Caja llena", "Box voll", "Bo" "\xC3" "\xAE" "te pleine")
-                        : v->ball == CTR_QUICK_BALL_AREA ? CTR_TR("Area used", "Zona usada", "Gebiet belegt", "Zone utilis" "\xC3" "\xA9" "e") : CTR_TR("No balls", "Sin balls", "Kein Ball", "Aucune Pok" "\xC3" "\xA9" " Ball");
+        const char *why = v->ball == CTR_QUICK_BALL_FULL ? CTR_TR("Box full", "Caja llena", "Box voll", "Bo\xC3\xAEte pleine")
+                        : v->ball == CTR_QUICK_BALL_AREA ? CTR_TR("Area used", "Zona usada", "Gebiet belegt", "Zone utilis\xC3\xA9" "e") : CTR_TR("No balls", "Sin balls", "Kein Ball", "Aucune Pok\xC3\xA9 Ball");
 
         BDiscIcon(BX_BALL, cx, fy + BACT_DISC_Y, BACT_DISC_R, p);
         BRowLabel(why, r, fy, p);
@@ -1193,7 +1222,7 @@ static void BFxMark(int mark, int x, int y, uint16_t ink, uint16_t shadow)
  * edge at x; the words cut with "..." and the mark left out where it would be wider than `maxW`. Returns its width (0: a hit that needs none). */
 static int BFxBadge(uint8_t matchup, int x, int y, int maxW, int right)
 {
-    static const char *const kText[] = {"", CTR_TR("No effect", "No afecta", "Wirkungslos", "Aucun effet"), CTR_TR("Not very", "Poco efic.", "Nicht sehr", "Pas tr" "\xC3" "\xA8" "s"), CTR_TR("Not very", "Poco efic.", "Nicht sehr", "Pas tr" "\xC3" "\xA8" "s"), CTR_TR("Super", "S\xC3\xBAper", "Sehr", "Super"), CTR_TR("Super x4", "S\xC3\xBAper x4", "Sehr x4", "Super x4"), CTR_TR("Effective", "Eficaz", "Effektiv", "Efficace")};
+    static const char *const kText[] = {"", CTR_TR("No effect", "No afecta", "Wirkungslos", "Aucun effet"), CTR_TR("Not very", "Poco efic.", "Nicht sehr", "Pas tr\xC3\xA8s"), CTR_TR("Not very", "Poco efic.", "Nicht sehr", "Pas tr\xC3\xA8s"), CTR_TR("Super", "S\xC3\xBAper", "Sehr", "Super"), CTR_TR("Super x4", "S\xC3\xBAper x4", "Sehr x4", "Super x4"), CTR_TR("Effective", "Eficaz", "Effektiv", "Efficace")};
     static const uint8_t kMark[] = {BFX_MARK_NONE, BFX_MARK_CROSS, BFX_MARK_DOWN, BFX_MARK_DOWN, BFX_MARK_UP, BFX_MARK_UP, BFX_MARK_NONE};
     int mark, markW, w;
     uint16_t c, shadow;
@@ -1226,44 +1255,90 @@ static void BColorBand(int x, int y, int h, uint16_t c)
     LlGradSlab(x, y, 6, h, 0, 0, LL_TL | LL_BL, Em2Lerp(c, EM_WHITE, 72, 255), Em2Lerp(c, UI_RGB(0, 0, 0), 52, 255));
 }
 
+/* Poke Ball style, the move cards: the card is the colour of the move's type (flat, a darker lip and edge, a white edge while the cursor is on it),
+ * its words dark on a light type and cream on a dark one, and the type's pill is white with the type's own dark colour for its word. */
+static unsigned BLuma(uint16_t c)
+{
+    unsigned r = (c >> 11) & 31, g = (c >> 5) & 63, b = c & 31;
+
+    return (77 * (r * 255 / 31) + 150 * (g * 255 / 63) + 29 * (b * 255 / 31)) >> 8;
+}
+
+static EmPal BTypePal(uint16_t c, int focused, int dark)
+{
+    uint16_t black = UI_RGB(0, 0, 0);
+    EmPal p = EM_PAL(Em2Lerp(c, EM_WHITE, 20, 255), c, Em2Lerp(c, black, 8, 255), Em2Lerp(c, black, 16, 255), Em2Lerp(c, black, 72, 255),
+                     focused ? EM_WHITE : Em2Lerp(c, black, 100, 255), Em2Lerp(c, EM_WHITE, 60, 255), Em2Lerp(c, black, 40, 255),
+                     dark ? UI_RGB(255, 246, 232) : UI_RGB(42, 18, 8), dark ? Em2Lerp(c, black, 130, 255) : Em2Lerp(c, EM_WHITE, 90, 255));
+
+    return p;
+}
+
+/* A type's pill on a card of that type: white, the word in the type's colour darkened. */
+static int BTypePill(int x, int y, const char *text, uint16_t c)
+{
+    int w = UiTextWidth(text, 1) + 12;
+    uint16_t ink = Em2Lerp(c, UI_RGB(0, 0, 0), 120, 255);
+
+    UiRoundFill(x, y, w, 13, 4, Em2Lerp(c, UI_RGB(0, 0, 0), 90, 255));
+    UiRoundFill(x + 1, y + 1, w - 2, 11, 3, UI_RGB(250, 248, 244));
+    UiText(text, x + 6, y + 2, ink, UI_RGB(236, 232, 226), 1, x + w - 1);
+    return w;
+}
+
 static void BMoveCard(int i, const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleMove *m = &v->move[i];
-    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber;
-    uint16_t c;
+    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber, dark = 0;
+    uint16_t c, ink = EM_DARK, dim = EM_DIM, sh = EM_DARK_SH, low = UI_RGB(224, 56, 40), lowSh = UI_RGB(248, 200, 184);
+    EmPal typePal;
     char text[16];
 
     if (!m->present) {
         BHollow(r, BL_CARD_H - B_DEPTH, NULL);
         return;
     }
-    fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     c = UiTypeColor(m->type);
+    if (sStyleBall) {
+        dark = BLuma(c) < 120;
+        typePal = BTypePal(c, focused, dark);
+        ink = typePal.ink;
+        sh = typePal.inkSh;
+        dim = dark ? UI_RGB(236, 214, 190) : UI_RGB(96, 48, 22);
+        low = dark ? UI_RGB(255, 196, 184) : UI_RGB(160, 16, 16);
+        lowSh = sh;
+        fy = BLCard(r, BL_CARD_H, &typePal, focused, v->pressed == i, 1);
+    } else
+        fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     badgeW = UiTextWidth(m->typeName, 1) + 12;
     power = m->power[0] && m->power[0] != '-';
     accNumber = m->accuracy[0] && m->accuracy[0] != '-';
-    BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
+    if (!sStyleBall)
+        BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
     if (focused)
-        LlCursor(r->x + 11, fy + 6, LL_CURSOR);
-    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, EM_DARK, EM_DARK_SH, r->x + r->w - 5 - badgeW - 4);
-    LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+        LlCursor(r->x + 11, fy + 6, sStyleBall ? ink : LL_CURSOR);
+    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, ink, sh, r->x + r->w - 5 - badgeW - 4);
+    if (sStyleBall)
+        BTypePill(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+    else
+        LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
     if (power) {
-        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4", "Pui"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 40);
-        UiText(m->power, r->x + 35, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4", "Pui"), r->x + 13, fy + 22, dim, sh, 1, r->x + 40);
+        UiText(m->power, r->x + 35, fy + 22, ink, sh, 1, r->x + 64);
     } else
-        UiText(CTR_TR("Status", "Estado", "Status", "Statut"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Status", "Estado", "Status", "Statut"), r->x + 13, fy + 22, dim, sh, 1, r->x + 64);
     if (accNumber) {
-        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr" "\xC3" "\xA9"), r->x + 66, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 88);
-        UiText(m->accuracy, r->x + 88, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 120);
+        UiText(CTR_TR("Acc", "Pre", "Gen", "Pr\xC3\xA9"), r->x + 66, fy + 22, dim, sh, 1, r->x + 88);
+        UiText(m->accuracy, r->x + 88, fy + 22, ink, sh, 1, r->x + 120);
     }
     BFxBadge(m->matchup, r->x + 13, fy + 34, 70, 0);
-    UiText("PP", r->x + 88, fy + 36, EM_DIM, EM_DARK_SH, 1, r->x + 104);
+    UiText("PP", r->x + 88, fy + 36, dim, sh, 1, r->x + 104);
     snprintf(text, sizeof(text), "%u/%u", m->pp, m->maxPp);
     if (m->pp * 4 <= m->maxPp)       /* a quarter or less left, or none: the game's red */
-        UiText(text, r->x + 104, fy + 36, UI_RGB(224, 56, 40), UI_RGB(248, 200, 184), 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, low, lowSh, 1, r->x + r->w - 4);
     else
-        UiText(text, r->x + 104, fy + 36, EM_DARK, EM_DARK_SH, 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, ink, sh, 1, r->x + r->w - 4);
 }
 
 /* The text window under the cards (and CANCEL beside it): the move under FireRed's cursor, its name, "STAB" on a slanted ribbon when it gets the
@@ -1301,8 +1376,13 @@ static void BMoveNote(const CtrBattleView *v)
     }
     if (m->effectChance)
         snprintf(chance, sizeof(chance), "%s %u%%", CTR_TR("Effect", "Efecto", "Effekt", "Effet"), m->effectChance);
+    /* With move details off there is no description, so the note names the category; a move with
+       no power is a status move whatever its type, as the card beside it says. */
     BNoteWindow(n, m->name, m->stab, chance,
-                m->desc[0] ? m->desc : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff", "Capacit" "\xC3" "\xA9" " physique") : CTR_TR("Special move", "Ataque especial", "Spezialangriff", "Capacit" "\xC3" "\xA9" " sp" "\xC3" "\xA9" "ciale"));
+                m->desc[0] ? m->desc
+                : !m->power[0] || m->power[0] == '-' ? CTR_TR("Status move", "Movimiento de estado", "Statusattacke", "Statut")
+                : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff", "Capacit\xC3\xA9 physique")
+                : CTR_TR("Special move", "Ataque especial", "Spezialangriff", "Capacit\xC3\xA9 sp\xC3\xA9" "ciale"));
 }
 
 /* ---- A double battle's targets: the opposing battlers on top, the player's below, as the move cards ---- */
@@ -1312,7 +1392,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
     const CtrBattleTarget *t = &v->target[i];
     int focused = v->showCursor && v->cursor == i, fy, badgeW;
     uint16_t side = t->side ? UI_RGB(60, 120, 230) : UI_RGB(220, 60, 50);
-    const char *sideWord = t->side ? CTR_TR("Ally", "Aliado", "Partner", "Alli" "\xC3" "\xA9") : CTR_TR("Foe", "Rival", "Gegner", "Ennemi");
+    const char *sideWord = t->side ? CTR_TR("Ally", "Aliado", "Partner", "Alli\xC3\xA9") : CTR_TR("Foe", "Rival", "Gegner", "Ennemi");
     char text[20];
 
     if (!t->present) {
@@ -1339,7 +1419,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
 static void BTargetNote(void)
 {
     BNoteWindow(&sBMNote, CTR_TR("Target", "Objetivo", "ZIEL", "Cible"), 0, NULL,
-                CTR_TR("Which Pok\xC3\xA9mon should the move hit?", "\xC2\xBF" "A qu\xC3\xA9 Pok\xC3\xA9mon ataca?", "Welches Pok\xC3\xA9mon angreifen?", "Quel Pok" "\xC3" "\xA9" "mon viser ?"));
+                CTR_TR("Which Pok\xC3\xA9mon should the move hit?", "\xC2\xBF" "A qu\xC3\xA9 Pok\xC3\xA9mon ataca?", "Welches Pok\xC3\xA9mon angreifen?", "Quel Pok\xC3\xA9mon viser ?"));
 }
 
 /* ---- The Safari Zone: BALL, BAIT, ROCK, RUN (the words of FireRed's gText_SafariZoneMenu) ---- */
@@ -1347,7 +1427,7 @@ static void BSafariCard(int i, const CtrBattleView *v)
 {
     static const EmPal *const pal[4] = {&kEmFlame, &kEmGreen, &kEmBlue, &kEmPurple};
     static const int icon[4] = {BX_BALL, BX_BAIT, BX_ROCK, BX_SHOE};
-    static const char *const label[4] = {CTR_TR("Ball", "Ball", "Ball", "Ball"), CTR_TR("Bait", "Cebo", "K\xC3\xB6" "der", "App" "\xC3" "\xA2" "t"), CTR_TR("Rock", "Roca", "Stein", "Roche"), CTR_TR("Run", "Huir", "Flucht", "Fuite")};
+    static const char *const label[4] = {CTR_TR("Ball", "Ball", "Ball", "Ball"), CTR_TR("Bait", "Cebo", "K\xC3\xB6" "der", "App\xC3\xA2t"), CTR_TR("Rock", "Roca", "Stein", "Roche"), CTR_TR("Run", "Huir", "Flucht", "Fuite")};
     const CtrPokeTouchRect *r = &sBSafari[i];
     const EmPal *p = pal[i];
     int fy = BLCard(r, r->h, p, v->showCursor && v->cursor == i, v->pressed == i, 1);
@@ -1597,6 +1677,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         return 1;
     if (b->state == BUI_ACTION)
         return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon
+            || a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot
             || memcmp(a->activeType, b->activeType, sizeof(b->activeType)) || memcmp(a->activeTypeName, b->activeTypeName, sizeof(b->activeTypeName))
             || a->activeHp != b->activeHp || a->activeMaxHp != b->activeMaxHp
             || a->activeSlot != b->activeSlot || a->ball != b->ball || a->ballItem != b->ballItem

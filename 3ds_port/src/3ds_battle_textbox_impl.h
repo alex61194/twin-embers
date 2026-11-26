@@ -1,11 +1,10 @@
-/* The battle's message box in the port's design ("Llama", proposal A), included by 3ds_video.c, whose state and helpers
- * it uses.
+/* The battle's message box in the port's design, included by 3ds_video.c, whose state and helpers it uses.
  *
  * FireRed's text box is the last six tile rows of BG0: a frame of its own tiles (graphics/battle_interface/textbox.bin,
- * below BOX_FRAME_TILES) and, over it, the windows the game prints into. Here the frame is not drawn: a slate-blue panel
- * takes the bottom 48 lines of the screen, full width (a gradient face, FireRed's light-blue fillet round it, a flame
- * line fading out along its top edge), and the windows' tiles are drawn over it at 1:1, moved by BOX_TEXT_X and
- * BOX_TEXT_Y, with the message window's background (colour 15) left out and its text in white over a dark shadow.
+ * below BOX_FRAME_TILES) and, over it, the windows the game prints into. Here the frame is not drawn: a white panel
+ * takes the bottom 48 lines of the screen, full width (a gradient face, a red fillet round it inside a black line, a
+ * flame line fading out along its top edge), and the windows' tiles are drawn over it at 1:1, moved by BOX_TEXT_X and
+ * BOX_TEXT_Y, with the message window's background (colour 15) left out and its text in black over a light shadow.
  * FireRed's prompt arrow (colours 2, 4 and 9 of the box's palette) is drawn in the design's reds at the panel's right
  * end, at the height the game gives it, so it keeps its bounce. The panel fades with the box's palette.
  * The panel is computed, pixel by pixel, when the texture is made (BoxPanelPixel): there is no art for it.
@@ -65,7 +64,7 @@ static bool BoxFace(int x, int y, int grow)
 
 static uint32_t BoxPanelPixel(int x, int y)
 {
-    float r = 20, g = 24, b = 44;                                   /* the ground */
+    float r = 12, g = 8, b = 10;                                    /* the ground: black */
 
     if (BoxFace(x, y, 0))
     {
@@ -73,21 +72,20 @@ static uint32_t BoxPanelPixel(int x, int y)
         if (t < 0.55f)
         {
             t /= 0.55f;
-            r = BoxMix(70, 44, t), g = BoxMix(82, 52, t), b = BoxMix(126, 88, t);
+            r = BoxMix(255, 250, t), g = BoxMix(255, 248, t), b = BoxMix(255, 249, t);
         }
         else
         {
             t = (t - 0.55f) / 0.45f;
-            r = BoxMix(44, 37, t), g = BoxMix(52, 44, t), b = BoxMix(88, 76, t);
+            r = BoxMix(250, 236, t), g = BoxMix(248, 232, t), b = BoxMix(249, 234, t);
         }
-        if (y < BOX_FACE_Y + 3) r = BoxMix(r, 255, 0.07f), g = BoxMix(g, 255, 0.07f), b = BoxMix(b, 255, 0.07f);
-        if (!BoxFace(x, y, -1))                                      /* FireRed's light-blue fillet */
-            r = 122, g = 180, b = 216;
+        if (!BoxFace(x, y, -1))                                      /* the red fillet */
+            r = 214, g = 38, b = 46;
         else if (!BoxFace(x, y, -2))                                 /* and its faint second line */
-            r = BoxMix(r, 200, 0.35f), g = BoxMix(g, 228, 0.35f), b = BoxMix(b, 240, 0.35f);
+            r = BoxMix(r, 236, 0.35f), g = BoxMix(g, 120, 0.35f), b = BoxMix(b, 124, 0.35f);
     }
     else if (BoxFace(x, y, 1))
-        r = 10, g = 12, b = 24;                                      /* a dark line round the face */
+        r = 0, g = 0, b = 0;                                         /* a black line round the face */
 
     if (y >= 1 && y <= 3 && x >= BOX_FLAME_X && x < BOX_FLAME_X + BOX_FLAME_W && !(x == BOX_FLAME_X && y != 2))
     {
@@ -146,8 +144,8 @@ static uint32_t BoxColour(unsigned bank, unsigned c)
 {
     uint16_t rgb = sMemory.palette[bank * 16 + c];
 
-    if (bank == 0 && c == 1) return BoxRgba(250, 250, 252);
-    if (bank == 0 && c == 6) return BoxRgba(16, 20, 42);
+    if (bank == 0 && c == 1) return BoxRgba(20, 16, 18);           /* the text: black */
+    if (bank == 0 && c == 6) return BoxRgba(206, 198, 202);        /* over a light shadow */
     return BoxRgba((uint8_t)((rgb & 31) * 255 / 31), (uint8_t)(((rgb >> 5) & 31) * 255 / 31),
                    (uint8_t)(((rgb >> 10) & 31) * 255 / 31));
 }

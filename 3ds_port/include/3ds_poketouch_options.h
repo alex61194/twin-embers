@@ -52,6 +52,16 @@ int CtrOptions_EmbersLow(void);
 int CtrOptions_RepelAgain(void);    /* a Repel that wears off offers another (REPEL AGAIN) */
 int CtrOptions_Companion(void);     /* 0 none, 1 the first Pokemon follows, 2 the player is that Pokemon (COMPANION) */
 int CtrOptions_FreeHm(void);         /* FREE HMS: an HM in the Bag works in the field (with its badge) with no Pokemon that knows the move */
+/* TRUCOS (the Cheats page): what the game code asks. Each is off until chosen. */
+int CtrOptions_SureCatch(void);          /* every ball catches */
+int CtrOptions_NoEncounters(void);       /* no random wild encounters */
+int CtrOptions_WalkThroughWalls(void);   /* the player passes walls and objects (not the map edge) */
+int CtrOptions_InfinitePp(void);         /* the player's moves keep their PP */
+int CtrOptions_AlwaysFlee(void);         /* running away from a wild battle always works */
+int CtrOptions_ShinyOdds(void);          /* 0 the game's own, 1..6: 1/4096, 1/1024, 1/256, 1/64, 1/16, always */
+unsigned CtrOptions_ScaleExp(unsigned exp);   /* a won battle's experience times 1, 2, 4 or 8, at most 65535 */
+/* A shiny personality that keeps the gender, the ability's bit and the nature, with the chance the row says; else `personality` itself. */
+uint32_t CtrOptions_ShinyPersonality(uint32_t personality, uint32_t otId, uint32_t roll);
 int CtrOptions_Randomlocke(void);    /* RANDOMLOCKE: wild and trainer Pokemon are random species */
 int CtrOptions_RandomWild(void);     /* RANDOMLOCKE on and its target is not TRAINERS: wild Pokemon, gifts and the starter are random */
 int CtrOptions_RandomTrainers(void); /* RANDOMLOCKE on and its target is not WILD: the trainers' Pokemon are random */
@@ -83,5 +93,18 @@ int CtrOptions_ExpShare(void);      /* 0 the game's own, 1 the team shares by ha
 extern int CtrPokeTouch_OptionCount(int option);
 extern int CtrPokeTouch_OptionGet(int option);
 extern void CtrPokeTouch_OptionSet(int option, int value);
+
+/* Told when the player changes MULTIPLAYER (1: local play), so the radio takes it from the next session on (main_game_full.c sets it). */
+void CtrOptions_SetLocalPlayHook(void (*hook)(int local));
+/* The keypad of the private room's code (ONLINE ROOM): open, and a touch on it (the phase of the touch and the key under it, from
+ * CtrPokeTouch_PadHit, -1 for none): a key acts on release over it. A tap on a row's label: CtrOptions_Activate. */
+/* The private room's keypad's NEW key asks for random bytes: the console's generator by default; a test (or a host) gives a source, which returns 0
+ * when it has none. */
+void CtrOptions_SetRandomSource(int (*source)(uint8_t *out, size_t n));
+int CtrOptions_PadOn(void);
+/* Closes the keypad and forgets what was typed: OPTIONS opens without it, however it was last left. */
+void CtrOptions_PadClose(void);
+void CtrOptions_PadTouch(int touchDown, int touchActive, int key);
+void CtrOptions_Activate(int row);
 
 #endif

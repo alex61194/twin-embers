@@ -308,14 +308,36 @@ __attribute__((weak)) bool CtrNpc_Match(unsigned attr0, unsigned attr1, unsigned
     return false;
 }
 
-void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
+/* The Quest Log's replay (FireRed's "previously on your quest", gGlobalFieldTintMode) tints the field's palettes grey or sepia; a field NPC's
+ * picture has a palette of its own here, which the game does not know, so it is tinted as it is set, and again when the mode changes. */
+extern uint8_t gGlobalFieldTintMode __attribute__((weak));
+static uint16_t sNpcRaw[NPC_BANKS][16];
+static unsigned sNpcSet;                            /* the slots that hold a palette */
+static unsigned sNpcTint;                           /* 0 none, 1 grey, 2 sepia */
+
+static uint16_t NpcTinted(uint16_t c)
+{
+    unsigned r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31, gray;
+
+    if (sNpcTint == 0)
+        return c;
+    gray = (r * 76 + g * 151 + b * 29) >> 8;
+    if (sNpcTint == 2)
+    {
+        r = (307 * gray) >> 8;
+        b = (240 * gray) >> 8;
+        return (uint16_t)((r > 31 ? 31 : r) | gray << 5 | b << 10);
+    }
+    return (uint16_t)(gray | gray << 5 | gray << 10);
+}
+
+static void NpcPaletteWrite(unsigned slot)
 {
     unsigned id = NPC_BANK0 + slot, changed = 0;
 
-    if (slot >= NPC_BANKS) return;
     for (unsigned i = 0; i < 16; ++i)
     {
-        uint16_t v = i ? CtrVideo_RGBA5551(colours[i]) : 0;
+        uint16_t v = i ? CtrVideo_RGBA5551(NpcTinted(sNpcRaw[slot][i])) : 0;
         if (sTexturePalette[512 + slot * 16 + i] == v) continue;
         sTexturePalette[512 + slot * 16 + i] = v;
         changed |= 1u << i;
@@ -324,6 +346,27 @@ void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
     memset(sPaletteChanges[id], 0, sizeof(sPaletteChanges[id]));
     sPaletteChanges[id][0] = changed;
     ++sPaletteVersion[id];
+}
+
+/* Once a frame: the tint the game has on the field now, applied to the palettes already set when it changed. */
+static void NpcTintSync(void)
+{
+    unsigned mode = &gGlobalFieldTintMode ? gGlobalFieldTintMode : 0, tint = mode == 1 || mode == 3 ? 1 : mode == 2 ? 2 : 0;
+
+    if (tint == sNpcTint)
+        return;
+    sNpcTint = tint;
+    for (unsigned slot = 0; slot < NPC_BANKS; ++slot)
+        if (sNpcSet >> slot & 1)
+            NpcPaletteWrite(slot);
+}
+
+void CtrVideo_SetNpcPalette(unsigned slot, const uint16_t *colours)
+{
+    if (slot >= NPC_BANKS) return;
+    memcpy(sNpcRaw[slot], colours, sizeof(sNpcRaw[slot]));
+    sNpcSet |= 1u << slot;
+    NpcPaletteWrite(slot);
 }
 
 /* Forgets which tiles the cache holds (their atlas slots are decoded again on demand). Only the
@@ -781,6 +824,7 @@ static void DayNightUpdate(void)
 static void UpdatePalette(void)
 {
     bool bgChanged = false, objChanged = false;
+    NpcTintSync();
     for (unsigned bank = 0; bank < 32; ++bank)
         if (memcmp(sPalette + bank * 16, sMemory.palette + bank * 16, 32))
         {
@@ -5668,6 +5712,12 @@ static void DrawBuildLabel(C3D_RenderTarget *target)
 static bool sHoldTop;
 static bool sBottomPcField;
 void CtrVideo_SetBottomViewportPcField(bool on) { sBottomPcField = on; }
+static int sBottomPicX = PT_VIEW_X, sBottomPicY = PT_VIEW_Y;
+void CtrVideo_SetBottomViewportOrigin(int x, int y)
+{
+    sBottomPicX = x;
+    sBottomPicY = y;
+}
 
 bool CtrVideo_SetBottomViewport(bool on)
 {
@@ -5732,7 +5782,7 @@ static void RenderBottom(void)
     C2D_ViewReset();
     Blend(5, false, false);
     C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, PT_VIEW_X, PT_VIEW_Y, 0, NULL, 1, 1);
+    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, sBottomPicX, sBottomPicY, 0, NULL, 1, 1);
     C2D_Flush();
     C3D_FrameSplit(0);
 }

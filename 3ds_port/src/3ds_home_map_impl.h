@@ -53,9 +53,14 @@ static struct {
     uint8_t *lut;                               /* RGB565 -> palette index + 1 */
 } sHm = {HMS_FEED, 0, {0}, {0}, 0};
 
+/* The stage is the one word the worker and the game's thread share: the worker writes it (release: what a stage built is in memory before the stage
+ * is seen), the game's thread reads it (acquire). Every access goes through these two, so there is no plain read or write of it left to race. */
+#define HM_STAGE() __atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE)
+#define HM_SET_STAGE(s) __atomic_store_n(&sHm.stage, (s), __ATOMIC_RELEASE)
+
 static int HmDone(void)
 {
-    return __atomic_load_n(&sHm.stage, __ATOMIC_ACQUIRE) == HMS_DONE;
+    return HM_STAGE() == HMS_DONE;
 }
 
 static void HmRelease(void)
@@ -79,7 +84,7 @@ static int HmBegin(void)
     memset(sHmLevel, 255, sizeof(sHmLevel));
     memset(sHmAux, 0, sizeof(sHmAux));
     sHmPalN = sHmOrbN = 0;
-    sHm.stage = HMS_FEED;
+    HM_SET_STAGE(HMS_FEED);
     sHm.row = 0;
     return 1;
 }
@@ -240,7 +245,7 @@ static void HmStages(void)
     float *w0 = HmPlane(0), *w1 = HmPlane(1), *w2 = HmPlane(2), *w3 = HmPlane(3);
     const int n = HM_SW * HM_SH;
 
-    switch (sHm.stage) {
+    switch (HM_STAGE()) {
     case HMS_LAND:
         for (int i = 0; i < n; ++i)
             w0[i] = HmLand(i) ? 1.0f : 0.0f;
@@ -554,9 +559,11 @@ static void HmOrbDraw(int px, int py)
 /* One step (a frame's work) of building the image after the picture was fed; the image is usable once HmDone. */
 static void HmStep(void)
 {
-    if (sHm.stage == HMS_DONE || sHm.stage == HMS_FAILED)
+    int stage = HM_STAGE();                     /* only the thread that steps writes the stage, so this copy stays true through the step */
+
+    if (stage == HMS_DONE || stage == HMS_FAILED)
         return;
-    if (sHm.stage == HMS_FEED) {
+    if (stage == HMS_FEED) {
         HmOrbs();
         for (int i = 0; i < 4; ++i)
             sHm.plane[i] = (float *)malloc(HM_SW * HM_SH * sizeof(float));
@@ -571,29 +578,29 @@ static void HmStep(void)
                 sHm.lut = (free(sHm.lut), NULL);
         if (!sHm.lut) {
             HmRelease();
-            __atomic_store_n(&sHm.stage, HMS_FAILED, __ATOMIC_RELEASE);
+            HM_SET_STAGE(HMS_FAILED);
             return;
         }
         memset(sHmWorld, 0, sizeof(sHmWorld));
-        sHm.stage = HMS_LAND;
+        HM_SET_STAGE(HMS_LAND);
         return;
     }
-    if (sHm.stage < HMS_BANDS) {
+    if (stage < HMS_BANDS) {
         HmStages();
-        ++sHm.stage;
+        HM_SET_STAGE(stage + 1);
         return;
     }
-    if (sHm.stage == HMS_BANDS) {
+    if (stage == HMS_BANDS) {
         HmBand(sHm.row);
         sHm.row += HM_BAND;
         if (sHm.row >= HM_H)
-            sHm.stage = HMS_ORBS;
+            HM_SET_STAGE(HMS_ORBS);
         return;
     }
     for (int i = 0; i < sHmOrbN; ++i)
         HmOrbDraw(sHmOrb[i][0], sHmOrb[i][1]);
     HmRelease();
-    __atomic_store_n(&sHm.stage, HMS_DONE, __ATOMIC_RELEASE);   /* the image is complete before anyone can see it is */
+    HM_SET_STAGE(HMS_DONE);                     /* the image is complete before anyone can see it is */
 }
 
 /* ---- the picture's cells and the viewport ---- */
@@ -706,6 +713,6 @@ static __attribute__((noipa)) void HmDrawRect(int zoom, int cx, int cy, int x, i
             sr /= n * n;
             sg /= n * n;
             sb /= n * n;
-            Px(PT_VIEW_X + x + i, PT_VIEW_Y + y + j, (uint16_t)((sr >> 3) << 11 | (sg >> 2) << 5 | (sb >> 3)));
+            Px(PT_HOME_X + x + i, PT_HOME_Y + y + j, (uint16_t)((sr >> 3) << 11 | (sg >> 2) << 5 | (sb >> 3)));
         }
 }

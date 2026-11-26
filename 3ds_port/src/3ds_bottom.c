@@ -2,7 +2,7 @@
  * Party and Bag screens, shown in its viewport by the GPU, over the real
  * FireRed state.
  *
- * Architecture (Zallax 3ds_bottom_ui.c as reference, scoped to this milestone):
+ * Architecture (Zallax 3ds_bottom_ui.c as reference):
  * - FireRed is authoritative; this is a lower-screen view/controller.
  * - No Party/Bag rules duplicated: a touch in the viewport is mapped back to
  *   the GBA picture (0.85 inverse) and FireRed's own windows say what is
@@ -149,6 +149,7 @@ extern void CtrSummary_AskPage(int page);
 extern int CtrBattle_TargetLegal(int target);
 extern int CtrBattle_TargetPosition(int target);
 extern int CtrBattle_TargetCount(void);
+extern int CtrBattle_ChooserPartySlot(void);
 extern int CtrBattle_TargetInfo(int target, char *name, int size, int *level, int *hp, int *maxHp);
 extern int CtrBattle_BagPending(void);
 extern int CtrBattle_NickHold(void);
@@ -160,6 +161,7 @@ extern void CtrBattle_ChoiceAsk(int row);
 extern void CtrBattle_ChoicePrompt(char *out, int size);
 extern int CtrBattle_ChoiceWindowRect(int *x, int *y, int *w, int *h);
 extern int CtrOak_NamingHold(void);    /* the new game's naming screens (oak_speech.c, recipe 0263) */
+extern int CtrNaming_Hold(void);
 extern int CtrBattle_PartyPending(void);
 extern int CtrBottomParty_InBattle(void);
 extern int CtrBottomParty_Action(void);
@@ -195,6 +197,16 @@ extern int CtrPokeTouch_RunModeShown(void);
 extern void CtrPokeTouch_PlayerName(char *out, int size);
 extern int CtrPokeTouch_LeavingFor(int entry);
 extern void CtrPokeTouch_Location(char *out, int size);
+extern int CtrBottomProgress(int *caught);       /* wild_encounter.c (recipe 0269) */
+extern int CtrBottomRepel_Item(int kind);       /* wild_encounter.c (recipe 0269): the three Repels */
+extern int CtrBottomRepel_Have(int kind);
+extern int CtrBottomRepel_Steps(void);
+extern int CtrBottomRepel_Kind(void);
+extern int CtrBottomRepel_Length(int kind);
+extern int CtrBottomRepel_Use(int kind);
+extern void CtrGameBridge_SetTurbo(unsigned turbo);   /* 3ds_game_bridge.c: a speed chosen on HOME's panel */
+static int sHomePanel;                          /* HOME's status panel is open over the map */
+extern int CtrBottomWild_Zone(uint16_t *species, uint8_t *flags, uint8_t *how, int max);   /* wild_encounter.c (recipe 0269) */
 extern int CtrPokeTouch_MapGroup(void);
 extern int CtrPokeTouch_MapVersion(void);
 extern int CtrPokeTouch_MapOpen(int group);
@@ -273,6 +285,8 @@ extern unsigned CtrSave_DexCaught(void);
 extern unsigned CtrSave_PlayHours(void);
 extern unsigned CtrSave_PlayMinutes(void);
 extern unsigned CtrSave_Money(void);
+extern unsigned CtrSettings_Turbo(void);
+extern unsigned CtrNightWild_Second(void);
 extern int CtrField_TryOpenCard(void);
 extern int CtrBottomCard_IsOpen(void);
 extern int CtrBottomCard_State(void);
@@ -623,12 +637,12 @@ static int sSaveAfterMenu;         /* SAVE asked for with START open: frames lef
  * the live field, with no hidden FireRed menu behind it, so no session. sScreen
  * is PT_OPTIONS while it is up (a route that unwinds a real menu to the field
  * sets it there, and the session's end leaves it). `sel` is the row the bar
- * describes; `down` a touch that began on a row (`row`, `zone`), `inside` while
- * it is still on it. */
+ * describes; `down`: a touch began on a row (`row`, `zone`), `inside`: still on it. */
 static struct {
     int sel;
     int down, row, zone, inside;
     int pageDown, pageInside;
+    int pageTarget;             /* page dot touched, or -1 */
 } sOpt;
 /* The native roots: PokeTouch screens over the live field with no real menu
  * behind them. (The TRAINER CARD and the POKeDEX are real FireRed screens, sessions
@@ -785,19 +799,21 @@ extern int CtrBottomSummary_IsMoveSelection(void);
 static const char *GbaViewTitle(void)
 {
     if (CtrBottomView_FameChecker())
-        return CTR_TR("Fame checker", "Control fama", "Ruhmesdatei", "C" "\xC3" "\xA9" "l" "\xC3" "\xA9" "brit" "\xC3" "\xA9" "s");
+        return CTR_TR("Fame checker", "Control fama", "Ruhmesdatei");
     if (CtrBottomView_TeachyTv())
-        return CTR_TR("Teachy TV", "Tele escuela", "Kampf-Camp", "T" "\xC3" "\xA9" "l" "\xC3" "\xA9" " " "\xC3" "\x89" "cole");
+        return CTR_TR("Teachy TV", "Tele escuela", "Kampf-Camp");
     if (CtrBottomView_Mail())
-        return CTR_TR("Mail", "Carta", "Briefe", "Courrier");
+        return CTR_TR("Mail", "Carta", "Briefe");
     if (CtrBottomView_EasyChat())
-        return CTR_TR("Easy chat", "Chat f\xC3\xA1" "cil", "Leichter Chat", "Chat facile");
+        return CTR_TR("Easy chat", "Chat f\xC3\xA1" "cil", "Leichter Chat");
     if (CtrBottomView_HallOfFame())
-        return CTR_TR("Hall of Fame", "Hall de la Fama", "Ruhmeshalle", "Panth" "\xC3" "\xA9" "on");
+        return CTR_TR("Hall of Fame", "Hall de la Fama", "Ruhmeshalle");
     if (CtrBottomView_Relearner())
-        return CTR_TR("Remember", "Recordar", "Erinnern", "M" "\xC3" "\xA9" "moriser");
+        return CTR_TR("Remember", "Recordar", "Erinnern");
     return NULL;
 }
+
+static int WlHoldMode(int open);   /* 3ds_bottom_chat_impl.h */
 
 static int CurrentMode(void)
 {
@@ -846,7 +862,7 @@ static int CurrentMode(void)
         return MODE_MAILBOX;
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen() || CtrBattle_ChoiceIsOpen())
-        return MODE_CHOICE;
+        return WlHoldMode(1);
     /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
         || CtrBottomView_HallOfFame() || CtrBottomView_Relearner())
@@ -873,29 +889,29 @@ static int CurrentMode(void)
         return MODE_FIELD;
     if (sStorageSession)
         return MODE_STORAGE_CHILD; /* summary/box-name/PC item sub-screen */
-    return MODE_OFF;
+    return WlHoldMode(0);
 }
 
 /* The bar under the Party screen: the Pokemon under the cursor. */
 static void PartyBar(const Snapshot *s, CtrPokeTouchView *v)
 {
     /* GetMonAilment's AILMENT_* (constants/party_menu.h). */
-    static const char *const sStatus[] = {"", CTR_TR("Poisoned", "Envenenado", "Vergiftet", "Empoisonn" "\xC3" "\xA9"), CTR_TR("Paralyzed", "Paralizado", "Paralysiert", "Paralys" "\xC3" "\xA9"), CTR_TR("Asleep", "Dormido", "Schl\xC3\xA4" "ft", "Endormi"), CTR_TR("Frozen", "Congelado", "Eingefroren", "Gel" "\xC3" "\xA9"), CTR_TR("Burned", "Quemado", "Verbrannt", "Br" "\xC3" "\xBB" "l" "\xC3" "\xA9"),
-                                          "Pok\xc3\xa9rus", CTR_TR("Fainted", "Debilitado", "Besiegt", "K.O.")};
+    static const char *const sStatus[] = {"", CTR_TR("Poisoned", "Envenenado", "Vergiftet"), CTR_TR("Paralyzed", "Paralizado", "Paralysiert"), CTR_TR("Asleep", "Dormido", "Schl\xC3\xA4" "ft"), CTR_TR("Frozen", "Congelado", "Eingefroren"), CTR_TR("Burned", "Quemado", "Verbrannt"),
+                                          "Pok\xc3\xa9rus", CTR_TR("Fainted", "Debilitado", "Besiegt")};
     int slot = s->cursor;
 
     if (slot < 0 || slot >= PARTY_SIZE || !((s->presentMask >> slot) & 1)) {
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Choose a Pok\xc3\xa9mon.", "Elige un Pok\xc3\xa9mon.", "W\xC3\xA4hle ein Pok\xC3\xA9mon.", "Choisissez un Pok" "\xC3" "\xA9" "mon."));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Choose a Pok\xc3\xa9mon.", "Elige un Pok\xc3\xa9mon.", "W\xC3\xA4hle ein Pok\xC3\xA9mon."));
         return;
     }
     if (s->isEgg[slot]) {
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Egg", "Huevo", "Ei", "Oeuf"));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Egg", "Huevo", "Ei"));
         return;
     }
     snprintf(v->bar[0], PT_BAR_LEN, "%s  Lv%u", s->nick[slot], s->level[slot]);
-    snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("HP %u/%u", "PS %u/%u", "KP %u/%u", "PV %u/%u"), s->hp[slot], s->maxHp[slot]);
+    snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("HP %u/%u", "PS %u/%u", "KP %u/%u"), s->hp[slot], s->maxHp[slot]);
     if (s->hp[slot] == 0)
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Fainted", "Debilitado", "Besiegt", "K.O."));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Fainted", "Debilitado", "Besiegt"));
     else if (s->status[slot] < sizeof(sStatus) / sizeof(sStatus[0]))
         snprintf(v->bar[2], PT_BAR_LEN, "%s", sStatus[s->status[slot]]);
 }
@@ -903,14 +919,14 @@ static void PartyBar(const Snapshot *s, CtrPokeTouchView *v)
 /* The bar under the Summary screen: the Pokemon it shows. */
 static void SummaryBar(const CtrSummaryView *v, CtrPokeTouchView *t)
 {
-    static const char *const sCodes[] = {CTR_TR("Psn", "Env", "Gft", "Poi"), CTR_TR("Prz", "Par", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf", "Dor"), CTR_TR("Frz", "Con", "Efr", "Gel"), CTR_TR("Brn", "Que", "Brn", "Br" "\xC3" "\xBB"), CTR_TR("PKR", "PKR", "PKR", "PKR"), CTR_TR("Fnt", "Deb", "Bes", "K.O.")};
-    static const char *const sNames[] = {CTR_TR("Poisoned", "Envenenado", "Vergiftet", "Empoisonn" "\xC3" "\xA9"), CTR_TR("Paralyzed", "Paralizado", "Paralysiert", "Paralys" "\xC3" "\xA9"), CTR_TR("Asleep", "Dormido", "Schl\xC3\xA4" "ft", "Endormi"), CTR_TR("Frozen", "Congelado", "Eingefroren", "Gel" "\xC3" "\xA9"), CTR_TR("Burned", "Quemado", "Verbrannt", "Br" "\xC3" "\xBB" "l" "\xC3" "\xA9"),
-                                         "Pok\xc3\xa9rus", CTR_TR("Fainted", "Debilitado", "Besiegt", "K.O.")};
+    static const char *const sCodes[] = {CTR_TR("Psn", "Env", "Gft"), CTR_TR("Prz", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf"), CTR_TR("Frz", "Con", "Efr"), CTR_TR("Brn", "Que", "Brn"), CTR_TR("PKR", "PKR", "PKR"), CTR_TR("Fnt", "Deb", "Bes")};
+    static const char *const sNames[] = {CTR_TR("Poisoned", "Envenenado", "Vergiftet"), CTR_TR("Paralyzed", "Paralizado", "Paralysiert"), CTR_TR("Asleep", "Dormido", "Schl\xC3\xA4" "ft"), CTR_TR("Frozen", "Congelado", "Eingefroren"), CTR_TR("Burned", "Quemado", "Verbrannt"),
+                                         "Pok\xc3\xa9rus", CTR_TR("Fainted", "Debilitado", "Besiegt")};
 
     if (!v->species[0])
         return;
     if (v->egg) {
-        snprintf(t->bar[0], PT_BAR_LEN, CTR_TR("Egg", "Huevo", "Ei", "Oeuf"));
+        snprintf(t->bar[0], PT_BAR_LEN, CTR_TR("Egg", "Huevo", "Ei"));
         return;
     }
     const char *level = v->level;
@@ -933,11 +949,11 @@ static void BagBar(CtrPokeTouchView *v)
     if (item != 0)
         CtrBottomBag_ItemName(item, v->bar[1], PT_BAR_LEN);
     if (item != 0 && item == v->registeredItem)
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("On the X button", "En el bot\xc3\xb3n X", "Auf Taste X", "Sur le bouton X"));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("On the X button", "En el bot\xc3\xb3n X", "Auf Taste X"));
     else if (item != 0 && item == v->bikeItem)
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("On the Y button", "En el bot\xc3\xb3n Y", "Auf Taste Y", "Sur le bouton Y"));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("On the Y button", "En el bot\xc3\xb3n Y", "Auf Taste Y"));
     else
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Money  %u", "Dinero  %u", "Geld  %u", "Argent  %u"), CtrBottomBag_Money());
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Money  %u", "Dinero  %u", "Geld  %u"), CtrBottomBag_Money());
 }
 
 /* The field Bag drawn by the lower screen (3ds_field_bag_impl.h) rather than sampled from the GBA picture: the field's
@@ -1036,12 +1052,15 @@ static void FieldListName(const FieldList *f, unsigned item, char *out, int size
 /* The field Bag (or a case) as it is now: its pocket, the rows around the cursor (CLOSE the row after the last item),
  * the selected item's detail, and what it has open. While it is busy (a pocket sliding in, a message printing) the
  * picture last shown stays. */
+static void PlateFill(CtrPokeTouchView *t);
+
 static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
 {
     CtrPokeTouchBag *b = &v->bag;
     const ListScreen *list = f->list;
     int count, total, state = list->state();
 
+    PlateFill(v);
     if (state == BAG_BUSY && sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on) {
         *b = sShown.touch.bag;
         b->pressed = -1;
@@ -1233,6 +1252,9 @@ static void LearnSnapshot(Snapshot *s, int mode)
 #include "3ds_bottom_relearn_impl.h"
 #include "3ds_bottom_mail_impl.h"
 #include "3ds_bottom_easychat_impl.h"
+#include "3ds_bottom_union_impl.h"
+#include "3ds_bottom_trade_impl.h"
+#include "3ds_bottom_chat_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -1249,7 +1271,7 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
     c->pressed = (int16_t)(sChoiceTap.down && sChoiceTap.inside ? sChoiceTap.code : -1);
     for (int i = 0; i < c->count; ++i) {
         if (isBattle) {
-            const char *label = (i == 0) ? CTR_TR("Yes", "S\xC3\xAD", "Ja", "Oui") : CTR_TR("No", "No", "Nein", "Non");
+            const char *label = (i == 0) ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein");
             snprintf(c->label[i], sizeof(c->label[i]), "%s", label);
         } else {
             CtrFieldChoice_Label(i, c->label[i], sizeof(c->label[i]));
@@ -1261,6 +1283,14 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         CtrBottomStorage_PCMessage(c->prompt, sizeof(c->prompt));
     else
         CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
+    if (CtrUnionLeader_Active())
+        UnionLeaderFill(c);                 /* the Union Room's wait for the others: its own rows and note */
+    else if (CtrTrade_Active())
+        TradeFill(&s->touch);               /* the trade's choice of a Pokemon: both parties as cards */
+    else if (CtrChat_Active())
+        ChatFill(&s->touch);                /* the chat's keyboard */
+    else
+        WlHoldSnapshot(s, n);               /* a gap in the wireless screens: the last one stays */
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
     s->touch.backEnabled = (uint8_t)BackEnabled(mode);
@@ -1475,7 +1505,7 @@ static void PouchBar(CtrPokeTouchView *v)
     CtrBottomPouch_Title(v->bar[0], PT_BAR_LEN);
     if (item != 0) {
         CtrBottomBag_ItemName(item, v->bar[1], PT_BAR_LEN);
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Quantity  %u", "Cantidad  %u", "Anzahl  %u", "Quantit" "\xC3" "\xA9" "  %u"), CtrBottomPouch_Quantity(cursor));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Quantity  %u", "Cantidad  %u", "Anzahl  %u"), CtrBottomPouch_Quantity(cursor));
     }
 }
 
@@ -1502,6 +1532,7 @@ static struct {
     int centered;               /* the map has been centred since HOME came back (it starts at the overview, on the player's town) */
     int zoom, panX, panY;       /* the zoom (0..2) and the image point at the viewport's centre */
     int dragging, prevX, prevY; /* a touch that has moved: it pans the map instead of picking a town */
+    int panX0, panY0;           /* the pan when the drag began */
 } sHome;
 
 /* FLY chosen in the Party: FireRed's Fly map is not opened, the Party goes back to the field and HOME's map is where the
@@ -1615,9 +1646,9 @@ static void HomeZoom(int dir)
 static void HomeSelectionBar(CtrPokeTouchView *v)
 {
     static const char *const sWhy[] = {
-        [PT_FLY_UNVISITED] = CTR_TR("Not visited yet", "A\xc3\xban sin visitar", "Noch nicht besucht", "Lieu non visit" "\xC3" "\xA9"), [PT_FLY_NO_MON] = CTR_TR("No Pok\xc3\xa9mon knows Fly", "Ning\xC3\xBAn Pok\xC3\xA9mon sabe vuelo", "Kein Pok\xC3\xA9mon kann Fliegen", "Aucun Pok" "\xC3" "\xA9" "mon ne conna" "\xC3" "\xAE" "t Vol"),
-        [PT_FLY_NO_BADGE] = CTR_TR("A new Badge is needed", "Hace falta otra medalla", "Neuer Orden ben\xC3\xB6tigt", "Un nouveau Badge est requis"), [PT_FLY_NO_PLACE] = CTR_TR("Can't Fly here", "Aqu\xc3\xad no se puede volar", "Hier nicht m\xC3\xB6glich", "Vol impossible ici"),
-        [PT_FLY_BUSY] = CTR_TR("Not right now", "Ahora no", "Jetzt nicht", "Pas maintenant"),
+        [PT_FLY_UNVISITED] = CTR_TR("Not visited yet", "A\xc3\xban sin visitar", "Noch nicht besucht"), [PT_FLY_NO_MON] = CTR_TR("No Pok\xc3\xa9mon knows Fly", "Ning\xC3\xBAn Pok\xC3\xA9mon sabe vuelo", "Kein Pok\xC3\xA9mon kann Fliegen"),
+        [PT_FLY_NO_BADGE] = CTR_TR("A new Badge is needed", "Hace falta otra medalla", "Neuer Orden ben\xC3\xB6tigt"), [PT_FLY_NO_PLACE] = CTR_TR("Can't Fly here", "Aqu\xc3\xad no se puede volar", "Hier nicht m\xC3\xB6glich"),
+        [PT_FLY_BUSY] = CTR_TR("Not right now", "Ahora no", "Jetzt nicht"),
     };
     int status = sHome.mapsec != MAPSEC_NONE_VALUE ? CtrPokeTouch_FlyStatus((unsigned)sHome.mapsec) : PT_FLY_NONE;
 
@@ -1625,10 +1656,10 @@ static void HomeSelectionBar(CtrPokeTouchView *v)
                                 v->bar[0], PT_BAR_LEN);
     v->flyOk = status == PT_FLY_OK;
     if (status == PT_FLY_OK) {
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly available", "Puedes volar", "Fliegen m\xC3\xB6glich", "Vol possible"));
-        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Tap Fly, or the place again", "Toca Volar o el lugar otra vez", "Fliegen oder Ort erneut tippen", "Touchez Vol ou " "\xC3" "\xA0" " nouveau le lieu"));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly available", "Puedes volar", "Fliegen m\xC3\xB6glich"));
+        snprintf(v->bar[2], PT_BAR_LEN, CTR_TR("Tap Fly, or the place again", "Toca Volar o el lugar otra vez", "Fliegen oder Ort erneut tippen"));
     } else if (status != PT_FLY_NONE) {
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly unavailable", "No puedes volar", "Fliegen nicht m\xC3\xB6glich", "Vol indisponible"));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Fly unavailable", "No puedes volar", "Fliegen nicht m\xC3\xB6glich"));
         snprintf(v->bar[2], PT_BAR_LEN, "%s", sWhy[status]);
     } else if (sHome.mapsec != MAPSEC_NONE_VALUE && sHome.dungeon != MAPSEC_NONE_VALUE) {
         CtrPokeTouch_MapSectionName((unsigned)sHome.dungeon, v->bar[1], PT_BAR_LEN);
@@ -1639,9 +1670,26 @@ static void HomeSelectionBar(CtrPokeTouchView *v)
  * bar. The ribbon switches to another map the game has opened. */
 static unsigned sHomeOpen;                  /* the maps the ribbon leads to, as the last frame saw them */
 
+/* The status plate and the clock of the top band (HOME's and the menus' that share its layout): the money, the turbo chosen (START, kept
+ * in the settings), the time of day the outdoors shows, and the Repel in force. */
+static void PlateFill(CtrPokeTouchView *t)
+{
+    unsigned turbo = CtrSettings_Turbo();
+    int steps = CtrBottomRepel_Steps(), kind = CtrBottomRepel_Kind();
+
+    t->homeMoney = CtrSave_Money();
+    t->homeTurbo = (uint8_t)(turbo > 4 ? 4 : turbo);
+    t->homeClock = (int16_t)(CtrNightWild_Second() / 60u % 1440u);
+    t->homeRepelSteps = (uint16_t)(steps > 0 && steps < 65535 ? steps : 0);
+    t->homeRepelKind = (uint8_t)kind;
+    t->homeRepelTotal = (uint16_t)CtrBottomRepel_Length(kind);
+    for (int k = 0; k < 3; ++k)
+        t->homeRepelItem[k] = (uint16_t)CtrBottomRepel_Item(k);
+}
+
 static void HomeMapState(Snapshot *s)
 {
-    static const char *const sRegions[PT_MAP_COUNT] = {CTR_TR("Main region", "Regi\xc3\xb3n principal", "Kanto", "R" "\xC3" "\xA9" "gion principale"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande", "\xC3" "\x8E" "les Sevii"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande", "\xC3" "\x8E" "les Sevii"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande", "\xC3" "\x8E" "les Sevii")};
+    static const char *const sRegions[PT_MAP_COUNT] = {CTR_TR("Main region", "Regi\xc3\xb3n principal", "Kanto"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande"), CTR_TR("Island region", "Islas Sete", "Sevii-Eilande")};
     int group = CtrPokeTouch_MapGroup(), px, py, mapsec, version = CtrPokeTouch_MapVersion(), wx, wy;
     unsigned open = 0;
 
@@ -1660,6 +1708,10 @@ static void HomeMapState(Snapshot *s)
         sHome.centered = 0;
     }
     s->touch.home = 1;
+    PlateFill(&s->touch);
+    s->touch.homePanel = (uint8_t)(sHomePanel != 0);
+    for (int k = 0; k < 3; ++k)
+        s->touch.homeRepelHave[k] = (uint16_t)(sHomePanel ? CtrBottomRepel_Have(k) : 0);
     s->touch.mapGroup = (uint8_t)(sHome.view - 1);
     s->touch.mapVersion = (uint8_t)version;
     s->touch.mapOpen = (uint8_t)open;
@@ -1696,14 +1748,55 @@ static void HomeMapState(Snapshot *s)
         return;
     }
     if (sFlyPick) {
-        snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Fly", "Vuelo", "Fliegen", "Vol"));
-        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a town to go there.", "Toca un pueblo para ir.", "Ort antippen zum Hinfliegen.", "Touchez une ville pour vous y rendre."));
-        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Any button: cancel", "Cualquier bot\xc3\xb3n: cancelar", "Beliebige Taste: Zur\xC3\xBC" "ck", "Une touche : annuler"));
+        snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Fly", "Vuelo", "Fliegen"));
+        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a town to go there.", "Toca un pueblo para ir.", "Ort antippen zum Hinfliegen."));
+        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Any button: cancel", "Cualquier bot\xc3\xb3n: cancelar", "Beliebige Taste: Zur\xC3\xBC" "ck"));
         return;
     }
     CtrPokeTouch_Location(s->touch.bar[0], PT_BAR_LEN);
+    if (sHome.view - 1 == group) {
+        /* The map the player is on: the Pokemon its zone can give, with what the Pokedex knows of each. Read twice a second (and when the
+         * map changes), not every frame: the game's tables and the Pokedex are scanned. */
+        static struct { int map; unsigned age; uint8_t n, water, stage; uint16_t dex, species[PT_ZONE_MAX]; uint8_t flags[PT_ZONE_MAX]; } zone = {-1, 0, 0, 0, 0, 0, {0}, {0}};
+        int map = 1;
+
+        for (const char *c = s->touch.bar[0]; *c; ++c)
+            map = map * 31 + (unsigned char)*c;      /* the place's name changes with the map */
+
+        if (zone.map != map || ++zone.age >= 30) {
+            uint16_t species[16];
+            uint8_t flags[16], how[16];
+            int n = CtrBottomWild_Zone(species, flags, how, 16), water = n > 0;
+
+            for (int i = 0; i < n; ++i)
+                if (how[i] & 5)
+                    water = 0;          /* a land or rock one: not only water */
+            if (n > PT_ZONE_MAX)
+                n = PT_ZONE_MAX;
+            {
+                int caught = 0;
+
+                zone.stage = (uint8_t)CtrBottomProgress(&caught);
+                zone.dex = (uint16_t)(caught > 0 && caught < 65535 ? caught : 0);
+            }
+            zone.map = map;
+            zone.age = 0;
+            zone.n = (uint8_t)n;
+            zone.water = (uint8_t)water;
+            for (int i = 0; i < n; ++i) {
+                zone.species[i] = species[i];
+                zone.flags[i] = flags[i];
+            }
+        }
+        s->touch.zoneN = zone.n;
+        s->touch.homeStage = zone.stage;
+        s->touch.homeDex = zone.dex;
+        s->touch.zoneWater = zone.water;
+        memcpy(s->touch.zoneSpecies, zone.species, sizeof(zone.species));
+        memcpy(s->touch.zoneFlags, zone.flags, sizeof(zone.flags));
+    }
     snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", sRegions[s->touch.mapGroup]);
-    snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap a destination", "Toca un destino", "Ziel antippen", "Touchez une destination"));
+    snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Tap a destination", "Toca un destino", "Ziel antippen"));
 }
 
 /* The battle screen's touch: a button pressed under a finger (a BUI_ACT_* number); on the quick ball, where the
@@ -1717,14 +1810,17 @@ static unsigned sBatAnim;           /* counts the frames of a battle, for the le
 static int sBatHold, sBatHoldFrames; /* BAG was picked: the upper screen keeps the battle until the Bag shows */
 static int sPouchHold;              /* the battle Bag's Berry Pouch was opened: the upper screen keeps the battle until it is back */
 
-/* The party slot of the Pokemon in the field. The party keeps its order in a battle (a switch changes only which
- * slot the battle points at), so the slot is found by what the battle knows of its left battler: its level, its
- * maximum HP and its name; the closest HP breaks a tie. Slot 0 when nothing matches. */
+/* The party slot of the Pokemon in the field: the one choosing (a double battle's right one in its turn); else, as the
+ * party keeps its order in a battle, the one matching the left battler's level, maximum HP and name, the closest HP
+ * breaking a tie. Slot 0 when nothing matches. */
 static int BattleActiveSlot(void)
 {
     char name[32], mine[32];
-    int level = 0, hp = 0, maxHp = 0, best = 0, bestScore = -1;
+    int level = 0, hp = 0, maxHp = 0, best = CtrBattle_ChooserPartySlot(), bestScore = -1;
 
+    if (best >= 0 && best < 6)
+        return best;
+    best = 0;
     for (int b = 0; b < CtrBattle_TargetCount() && b < 4; ++b)
         if (CtrBattle_TargetPosition(b) == 0)
             if (CtrBattle_TargetInfo(b, name, (int)sizeof(name), &level, &hp, &maxHp))
@@ -1770,6 +1866,18 @@ static void BattleCommon(CtrBattleView *v)
             v->partyHp[i] = (uint8_t)(CtrBottomParty_IsEgg(i) || !max ? 100 : hp >= max ? 100 : hp ? (hp * 100 / max ? hp * 100 / max : 1) : 0);
             v->partyStatus[i] = (uint8_t)(st > 6 ? 0 : st);
         }
+    }
+    {                                   /* the next Pokemon that can fight: the POKEMON button shows its icon */
+        int active = BattleActiveSlot();
+
+        v->nextSlot = 0;
+        v->nextIcon = 0;
+        for (int k = 0; k < 6; ++k)
+            if (k != active && (v->party[k] == 1 || v->party[k] == 3) && !CtrBottomParty_IsEgg(k)) {
+                v->nextSlot = (uint8_t)k;
+                v->nextIcon = (uint16_t)CtrBottomParty_IconSpecies(k);
+                break;
+            }
     }
     {                                   /* the Pokemon in the field: the action screen's footer and icon */
         int slot = BattleActiveSlot();
@@ -1892,14 +2000,14 @@ static uint8_t PartyIconFrame(unsigned tick, unsigned hp, unsigned maxHp, int eg
  * are the game's own words, so the Spanish build matches the Spanish FireRed's (which has no "!" forms). */
 static uint8_t PartyTag(const char *text)
 {
-    static const char kNoUse[] = CTR_TR("No use", "No se usa", "Nutzlos", "Inutile");
+    static const char kNoUse[] = CTR_TR("No use", "No se usa", "Nutzlos");
 
     /* The text is the game's raw ALL CAPS (CtrBottomParty_Description does not case it), so compare without case. */
-    if (CtrTextCase_Eq(text, CTR_TR("Able", "Puede", "O.K.", "Oui")) || CtrTextCase_Eq(text, CTR_TR("Able!", "Puede!", "O.K.", "Oui !")))
+    if (CtrTextCase_Eq(text, CTR_TR("Able", "Puede", "O.K.")) || CtrTextCase_Eq(text, CTR_TR("Able!", "Puede!", "O.K.")))
         return BUI_PTY_TAG_ABLE;
-    if (CtrTextCase_Eq(text, CTR_TR("Not able", "No puede", "NEIN", "Non")) || CtrTextCase_Eq(text, CTR_TR("Not able!", "No puede!", "NEIN", "Non !")))
+    if (CtrTextCase_Eq(text, CTR_TR("Not able", "No puede", "NEIN")) || CtrTextCase_Eq(text, CTR_TR("Not able!", "No puede!", "NEIN")))
         return BUI_PTY_TAG_NOT_ABLE;
-    if (CtrTextCase_Eq(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.", "Apprise")))
+    if (CtrTextCase_Eq(text, CTR_TR("Learned", "Aprendido", "KENNT ATT.")))
         return BUI_PTY_TAG_LEARNED;
     if (CtrTextCase_EqN(text, kNoUse, sizeof(kNoUse) - 1))
         return BUI_PTY_TAG_NO_USE;
@@ -1975,7 +2083,7 @@ static void BattlePartyFill(Snapshot *s)
         if (sPlan.kind == PLAN_MENU && sPlan.target < n)
             p->menuCursor = (int8_t)sPlan.target;      /* the row touched, not the cursor on its way there */
         for (int i = 0; i < n; ++i)
-            BatCopy(p->menuName[i], sizeof(p->menuName[i]), s->panel == PANEL_YESNO ? (i == 0 ? CTR_TR("Yes", "S\xC3\xAD", "Ja", "Oui") : CTR_TR("No", "No", "Nein", "Non")) : s->actionNames[i]);
+            BatCopy(p->menuName[i], sizeof(p->menuName[i]), s->panel == PANEL_YESNO ? (i == 0 ? CTR_TR("Yes", "S\xC3\xAD", "Ja") : CTR_TR("No", "No", "Nein")) : s->actionNames[i]);
     } else if (s->panel == PANEL_MESSAGE) {
         p->panel = BUI_PTY_TEXT;
         BatCopy(p->message, sizeof(p->message), s->message);
@@ -2100,6 +2208,7 @@ static void SaveFill(CtrPokeTouchView *v)
     unsigned minutes = CtrSave_PlayMinutes();
 
     v->save = 1;
+    PlateFill(v);
     v->saveState = (uint8_t)sSave.state;
     v->saveSel = (uint8_t)sSave.sel;
     v->savePressed = (uint8_t)(sSave.down && sSave.inside ? sSave.down : PT_SAVE_NONE);
@@ -2113,22 +2222,22 @@ static void SaveFill(CtrPokeTouchView *v)
     v->saveMoney = CtrSave_Money();
     switch (sSave.state) {
     case SAVE_WRITING:
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Saving...", "Guardando...", "Speichern...", "Sauvegarde..."));
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Don't turn off the power.", "No apagues la consola.", "Nicht ausschalten.", "N'" "\xC3" "\xA9" "teignez pas la console."));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Saving...", "Guardando...", "Speichern..."));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Don't turn off the power.", "No apagues la consola.", "Nicht ausschalten."));
         break;
     case SAVE_SUCCESS:
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Game saved!", "\xc2\xa1Partida guardada!", "Spiel gespeichert!", "Partie sauvegard" "\xC3" "\xA9" "e !"));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Game saved!", "\xc2\xa1Partida guardada!", "Spiel gespeichert!"));
         break;
     case SAVE_ERROR:
-        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Could not save.", "No se pudo guardar.", "Speichern fehlgeschlagen.", "Sauvegarde impossible."));
-        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Try again.", "Prueba otra vez.", "Bitte erneut versuchen.", "R" "\xC3" "\xA9" "essayez."));
+        snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Could not save.", "No se pudo guardar.", "Speichern fehlgeschlagen."));
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Try again.", "Prueba otra vez.", "Bitte erneut versuchen."));
         break;
     default:
         if (CtrSave_IsDifferentFile()) {
-            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Another game is saved.", "Ya hay otra partida.", "Anderer Spielstand da.", "Une autre sauvegarde existe d" "\xC3" "\xA9" "j" "\xC3" "\xA0" "."));
-            snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Overwrite it?", "\xc2\xbfSobrescribirla?", "\xc3\x9c" "berschreiben?", "\xC3" "\x89" "craser ?"));
+            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Another game is saved.", "Ya hay otra partida.", "Anderer Spielstand da."));
+            snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Overwrite it?", "\xc2\xbfSobrescribirla?", "\xc3\x9c" "berschreiben?"));
         } else {
-            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Save your game?", "\xc2\xbfGuardar la partida?", "Spiel speichern?", "Sauvegarder la partie ?"));
+            snprintf(v->bar[0], PT_BAR_LEN, CTR_TR("Save your game?", "\xc2\xbfGuardar la partida?", "Spiel speichern?"));
             v->bar[1][0] = 0;
         }
         break;
@@ -2150,8 +2259,8 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
          * controls; sidebar routing must not unwind these modal callbacks. */
         s->touch.viewport = 1;
         s->touch.selected = sSession.active ? sSession.owner : PT_POKEMON;
-        snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Move / item", "Ataque / objeto", "Attacke / Item", "Capacit" "\xC3" "\xA9" " / objet"));
-        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use A and B to follow the prompts.", "Usa A y B para seguir las indicaciones.", "Nutze A und B gem\xc3\xa4\xc3\x9f Anweisung.", "Suivez les consignes avec A et B."));
+        snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Move / item", "Ataque / objeto", "Attacke / Item"));
+        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use A and B to follow the prompts.", "Usa A y B para seguir las indicaciones.", "Nutze A und B gem\xc3\xa4\xc3\x9f Anweisung."));
         LearnSnapshot(s, mode);
         return;
     }
@@ -2172,17 +2281,17 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
         CtrPokeTouch_PlayerName(s->touch.playerName, sizeof(s->touch.playerName));
         if (mode == MODE_STORAGE_PC) {
-            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9mon storage system", "Sistema almacenamiento", "Pok\xc3\xa9mon-Lagersystem", "Syst" "\xC3" "\xA8" "me de stockage Pok" "\xC3" "\xA9" "mon"));
-            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a PC option to confirm.", "Toca una opci\xc3\xb3n del PC para confirmar.", "PC-Option zum Best\xc3\xa4tigen antippen.", "Touchez une option pour confirmer."));
-            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Original PC rules apply.", "Se siguen las reglas del PC.", "Originale PC-Regeln gelten.", "Les r" "\xC3" "\xA8" "gles d'origine s'appliquent."));
+            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9mon storage system", "Sistema almacenamiento", "Pok\xc3\xa9mon-Lagersystem"));
+            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a PC option to confirm.", "Toca una opci\xc3\xb3n del PC para confirmar.", "PC-Option zum Best\xc3\xa4tigen antippen."));
+            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Original PC rules apply.", "Se siguen las reglas del PC.", "Originale PC-Regeln gelten."));
         } else if (mode == MODE_STORAGE_BOX) {
-            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Box %02d", "Caja %02d", "BOX %02d", "Bo" "\xC3" "\xAE" "te %02d"), StorageGetCurrentBox() + 1);
-            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a slot to open its menu.", "Toca un hueco para abrir su men\xc3\xba.", "Platz antippen f\xc3\xbcr Men\xc3\xbc.", "Touchez pour ouvrir le menu."));
-            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back returns to the PC.", "Atr\xC3\xA1s vuelve al PC.", "Zur\xC3\xBC" "ck kehrt zum PC zur\xc3\xbc" "ck.", "Retour revient au PC."));
+            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Box %02d", "Caja %02d", "BOX %02d"), StorageGetCurrentBox() + 1);
+            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Tap a slot to open its menu.", "Toca un hueco para abrir su men\xc3\xba.", "Platz antippen f\xc3\xbcr Men\xc3\xbc."));
+            snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back returns to the PC.", "Atr\xC3\xA1s vuelve al PC.", "Zur\xC3\xBC" "ck kehrt zum PC zur\xc3\xbc" "ck."));
             BoxSnapshot(s);
         } else {
-            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9mon storage system", "Sistema almacenamiento", "Pok\xc3\xa9mon-Lagersystem", "Syst" "\xC3" "\xA8" "me de stockage Pok" "\xC3" "\xA9" "mon"));
-            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung.", "Utilisez les commandes du jeu."));
+            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9mon storage system", "Sistema almacenamiento", "Pok\xc3\xa9mon-Lagersystem"));
+            snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung."));
         }
         return;
     }
@@ -2207,8 +2316,8 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         s->touch.backEnabled = (uint8_t)BackEnabled(mode);
         s->touch.backPressed = (uint8_t)(sBack.inside != 0);
         snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", title ? title : "");
-        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung.", "Utilisez les commandes du jeu."));
-        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back is the B button.", "Atr\xC3\xA1s es el bot\xC3\xB3n B.", "Zur\xC3\xBC" "ck entspricht Taste B.", "Retour est le bouton B."));
+        snprintf(s->touch.bar[1], PT_BAR_LEN, CTR_TR("Use the game's own controls.", "Usa los controles del juego.", "Nutze die Spielsteuerung."));
+        snprintf(s->touch.bar[2], PT_BAR_LEN, CTR_TR("Back is the B button.", "Atr\xC3\xA1s es el bot\xC3\xB3n B.", "Zur\xC3\xBC" "ck entspricht Taste B."));
         return;
     }
     if (mode == MODE_BATTLE) {
@@ -2295,9 +2404,9 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             /* The lower screen draws the Pokedex itself, but for its AREA page (FireRed's map in the viewport). */
             int state = CtrBottomDex_State();
 
-            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9""dex", "Pok" "\xC3" "\xA9" "dex"));
+            snprintf(s->touch.bar[0], PT_BAR_LEN, CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9""dex"));
             snprintf(s->touch.bar[1], PT_BAR_LEN, state == DEX_MENU || state == DEX_LIST
-                     ? CTR_TR("Tap to select, again to open.", "Toca para elegir, otra vez para abrir.", "Tippen zum W\xc3\xa4hlen, nochmal zum \xc3\x96" "ffnen.", "Touchez pour choisir, puis retouchez.") : CTR_TR("Back goes one step back.", "Atr\xC3\xA1s vuelve un paso atr\xC3\xA1s.", "Zur\xC3\xBC" "ck geht einen Schritt zur\xc3\xbc" "ck.", "Retour : une " "\xC3" "\xA9" "tape en arri" "\xC3" "\xA8" "re."));
+                     ? CTR_TR("Tap to select, again to open.", "Toca para elegir, otra vez para abrir.", "Tippen zum W\xc3\xa4hlen, nochmal zum \xc3\x96" "ffnen.") : CTR_TR("Back goes one step back.", "Atr\xC3\xA1s vuelve un paso atr\xC3\xA1s.", "Zur\xC3\xBC" "ck geht einen Schritt zur\xc3\xbc" "ck."));
             if (FieldDexFill(&s->touch, sFieldDex.down && sFieldDex.inside ? sFieldDex.code : -1))
                 s->touch.viewport = 0;
         }
@@ -2316,6 +2425,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
             s->touch.backEnabled = (uint8_t)BackEnabled(mode);
             s->touch.backPressed = (uint8_t)(sBack.inside != 0);
             CtrOptions_Fill(&s->touch, sOpt.sel);
+            PlateFill(&s->touch);
             s->touch.optPressed = (int8_t)(sOpt.down && sOpt.inside ? (sOpt.row - CtrOptions_PageBase(CtrOptions_PageOf(sOpt.row))) : -1);
             s->touch.optZone = (uint8_t)(sOpt.down && sOpt.inside ? sOpt.zone : PT_OPT_ZONE_NONE);
             s->touch.optPagePressed = (uint8_t)(sOpt.pageDown && sOpt.pageInside);
@@ -2806,13 +2916,10 @@ static int ProcessBagTouch(const ListScreen *list, const CtrInput *in)
     return HIT_NONE;
 }
 
-/* Summary plan: presses for the real Summary's input. PAGE flips pages one
- * LEFT/RIGHT at a time (B first out of the move details) toward a page, MOVE
- * walks the move cursor to a row (A first into the details from the moves
- * page), PRESS sends one button. Each press waits for the Summary to take
- * input again (no page flip running) and expects the page it leads to; a
- * different page, Pokemon or Summary, physical input or the step limit drops
- * the plan. */
+/* Summary plan: presses for the real Summary's input. PAGE flips one LEFT/RIGHT at a time (B first out of the move
+ * details) toward a page, MOVE walks the move cursor to a row (A first into the details), PRESS sends one button. Each
+ * press waits for the Summary to take input again and expects the page it leads to; a different page, Pokemon or
+ * Summary, physical input or the step limit drops the plan. */
 enum { SUMPLAN_NONE = 0, SUMPLAN_PAGE, SUMPLAN_MOVE, SUMPLAN_PRESS };
 #define SUMMARY_MOVES 2
 #define SUMMARY_MOVES_INFO 3
@@ -3293,6 +3400,7 @@ static void OpenDestination(int target)
         sScreen = target;
         sOpt.sel = 0;
         sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
+        CtrOptions_PadClose();
         CtrLog_Write(CTR_LOG_VIDEO, "bottom: route reached the field: %s", RootName(target));
         return;
     }
@@ -3580,6 +3688,7 @@ static void PokeTouchActivate(int id)
             sScreen = id;
             sOpt.sel = 0;
             sOpt.down = sOpt.inside = sOpt.pageDown = sOpt.pageInside = 0;
+            CtrOptions_PadClose();
             CtrLog_Write(CTR_LOG_VIDEO, "bottom: %s opened", RootName(id));
         }
         break;
@@ -3625,10 +3734,9 @@ static int FieldEnabled(int id)
     return 1;
 }
 
-/* A touch on an OPTIONS row or the PAGE switcher button (the viewport shows no map then): selected on
- * touch-down, one step on release over the same zone ("<" back, the value or
- * ">" forward; the label only selects; on a row of levels, the level touched). Moving off cancels it; a held
- * physical button cancels it too. */
+/* A touch on an OPTIONS row or the PAGE header: selected on touch-down, one step on release over the same zone
+ * ("<" back, the value or ">" forward; the label only selects; on levels, the level touched; a page dot: that
+ * page, the rest of the header: the next). Moving off or a held button cancels it. */
 static void ProcessOptionsTouch(const CtrInput *in)
 {
     int page = CtrOptions_PageOf(sOpt.sel);
@@ -3636,11 +3744,16 @@ static void ProcessOptionsTouch(const CtrInput *in)
     int pageCount = CtrOptions_PageCount();
     int pageRows = CtrOptions_PageRows(page);
     int hitPage = in->touchActive && pageCount > 1 && CtrPokeTouch_HitOptPage((int)in->touchX, (int)in->touchY);
+    int dot = hitPage ? CtrPokeTouch_OptPageDot((int)in->touchX, (int)in->touchY, pageCount) : -1;
     int relRow = 0, zone = PT_OPT_ZONE_NONE;
     int on = in->touchActive && CtrPokeTouch_OptionHit((int)in->touchX, (int)in->touchY,
                                                        pageRows, &relRow, &zone);
     int globalRow = base + relRow;
 
+    if (CtrOptions_PadOn()) {               /* the private room's keypad takes the touches while it is open */
+        CtrOptions_PadTouch(in->touchDown, in->touchActive, in->touchActive ? CtrPokeTouch_PadHit((int)in->touchX, (int)in->touchY) : -1);
+        return;
+    }
     if (on && CtrOptions_IsLevels(globalRow) && zone != PT_OPT_ZONE_LABEL)
         zone = PT_OPT_ZONE_SEG + CtrPokeTouch_OptionSegment((int)in->touchX, CtrOptions_Count(globalRow));
     if (in->held & 0x3ffu) {
@@ -3650,6 +3763,7 @@ static void ProcessOptionsTouch(const CtrInput *in)
     }
     if (in->touchDown) {
         sOpt.pageDown = sOpt.pageInside = hitPage;
+        sOpt.pageTarget = dot;
         sOpt.down = sOpt.inside = on;
         if (on) {
             sOpt.row = globalRow;
@@ -3660,14 +3774,13 @@ static void ProcessOptionsTouch(const CtrInput *in)
     }
     if (sOpt.pageDown) {
         if (in->touchActive) {
-            sOpt.pageInside = hitPage;
+            sOpt.pageInside = hitPage && dot == sOpt.pageTarget;
             return;
         }
         int pageInside = sOpt.pageInside;
         sOpt.pageDown = sOpt.pageInside = 0;
         if (pageInside) {
-            int next = CtrOptions_PageBase((page + 1) % pageCount);
-            sOpt.sel = next;
+            sOpt.sel = CtrOptions_PageBase(sOpt.pageTarget >= 0 && sOpt.pageTarget < pageCount ? sOpt.pageTarget : (page + 1) % pageCount);
         }
         return;
     }
@@ -3681,6 +3794,8 @@ static void ProcessOptionsTouch(const CtrInput *in)
         CtrOptions_Set(sOpt.row, sOpt.zone - PT_OPT_ZONE_SEG);
     else if (sOpt.inside && sOpt.zone != PT_OPT_ZONE_LABEL)
         CtrOptions_Step(sOpt.row, sOpt.zone == PT_OPT_ZONE_PREV ? -1 : 1);
+    else if (sOpt.inside)
+        CtrOptions_Activate(sOpt.row);
     sOpt.down = sOpt.inside = 0;
 }
 
@@ -3791,12 +3906,38 @@ static void UpdateSave(void)
  * release over it acts once. Holding never repeats. */
 static void ProcessPokeTouch(const CtrInput *in)
 {
+    if (sHomePanel && (in->physicalDown & (CTR_KEY_A | CTR_KEY_B | CTR_KEY_X | CTR_KEY_Y)))
+        sHomePanel = 0;                     /* a button of the console closes HOME's panel */
     if (OptionsActive())
         ProcessOptionsTouch(in);
     if (SaveActive())
         ProcessSaveInput(in);
     if (in->touchDown) {
         int id = CtrPokeTouch_HitTest((int)in->touchX, (int)in->touchY), gx, gy;
+        /* HOME's status plate opens a panel (the turbo, the Repels, the money); while it is open a tap acts on it or closes it. */
+        if (!NativeActive() && CtrPokeTouch_HomeLayout()) {
+            if (sHomePanel) {
+                int hit = CtrPokeTouch_HomePanelHit((int)in->touchX, (int)in->touchY);
+
+                if (hit >= PT_PANEL_TURBO && hit < PT_PANEL_TURBO + 4)
+                    CtrGameBridge_SetTurbo(hit == PT_PANEL_TURBO ? 0u : (unsigned)(hit - PT_PANEL_TURBO) + 1u);
+                else if (hit >= PT_PANEL_REPEL && hit < PT_PANEL_REPEL + 3 && CtrPokeTouch_Enabled(PT_BAG))
+                    CtrBottomRepel_Use(hit - PT_PANEL_REPEL);   /* as the Bag: not in a script */
+                else if (hit == PT_PANEL_OUT)
+                    sHomePanel = 0;
+                sPoke.id = PT_NONE;
+                sHome.down = 0;
+                return;
+            }
+            if (CtrPokeTouch_HomeStatusHit((int)in->touchX, (int)in->touchY)) {
+                sHomePanel = 1;
+                sPoke.id = PT_NONE;
+                sHome.down = 0;
+                return;
+            }
+        } else if (sHomePanel) {
+            sHomePanel = 0;                 /* another screen took over */
+        }
         /* HOME's FLY button: the selected place, asked of the game now (the same as tapping the place again). */
         if (!NativeActive() && sHome.valid && sHome.mapsec != MAPSEC_NONE_VALUE
             && CtrPokeTouch_FlyHit((int)in->touchX, (int)in->touchY)) {
@@ -3844,13 +3985,18 @@ static void ProcessPokeTouch(const CtrInput *in)
                 sHome.lastX = gx;
                 sHome.lastY = gy;
                 if (!sHome.dragging && (sHome.lastX - sHome.downX > MAP_TAP_SLOP || sHome.downX - sHome.lastX > MAP_TAP_SLOP
-                                        || sHome.lastY - sHome.downY > MAP_TAP_SLOP || sHome.downY - sHome.lastY > MAP_TAP_SLOP))
-                    sHome.dragging = 1;
-                if (sHome.dragging) {               /* the map follows the finger */
+                                        || sHome.lastY - sHome.downY > MAP_TAP_SLOP || sHome.downY - sHome.lastY > MAP_TAP_SLOP)) {
+                    sHome.dragging = 1;             /* down becomes the anchor */
+                    sHome.downX = sHome.prevX;
+                    sHome.downY = sHome.prevY;
+                    sHome.panX0 = sHome.panX;
+                    sHome.panY0 = sHome.panY;
+                }
+                if (sHome.dragging) {               /* the map follows the finger (from the anchor: steps lose small moves) */
                     int scale = CtrPokeTouch_HomeScale(sHome.zoom);
 
-                    sHome.panX -= (gx - sHome.prevX) * 256 / scale;
-                    sHome.panY -= (gy - sHome.prevY) * 256 / scale;
+                    sHome.panX = sHome.panX0 - (gx - sHome.downX) * 256 / scale;
+                    sHome.panY = sHome.panY0 - (gy - sHome.downY) * 256 / scale;
                     CtrPokeTouch_HomeClamp(sHome.zoom, &sHome.panX, &sHome.panY);
                 }
                 sHome.prevX = gx;
@@ -3882,7 +4028,7 @@ static void ProcessPokeTouch(const CtrInput *in)
 
 /* The battle screen's touch: press, track, release, one action. A button puts the controller's own cursor on
  * it (CtrBattle_AskCursor) and then sends its A; CANCEL sends its B. The buttons exist only while the controller
- * waits at the screen they belong to, so nothing is taken during a message, an animation, a command being taken or the battle's end; a held
+ * waits at the screen they belong to, so nothing is taken during a message, an animation or the battle's end; a held
  * physical button cancels it. */
 static struct {
     int active, target, state, steps, release;
@@ -4037,12 +4183,11 @@ static void ProcessBattleTouch(const CtrInput *in)
     sBat.down = sBat.inside = 0;
 }
 
-/* The battle Bag's touch: the same press, track, release, and the same Bag plans as every Bag (walk the Bag's own
- * list cursor to an item, send A / B, walk its menu), so FireRed's Bag decides everything: a tap on another item
- * selects it, a tap on the selected one sends A and then A again on the first row of the menu that opens (USE, or
- * CANCEL for an item with no use here); a tab presses LEFT / RIGHT until the Bag is in that pocket; CANCEL is B.
- * An invalid use stays in the Bag with the Bag's own message (shown, A to continue). A held physical button
- * cancels it all, except the horizontal D-pad that shares the pocket router. */
+/* The battle Bag's touch: the same press, track, release and Bag plans as every Bag, so FireRed's Bag decides
+ * everything: a tap on another item selects it, a tap on the selected one sends A and then A on the first row of the
+ * menu that opens (USE, or CANCEL for an item with no use here); a tab presses LEFT / RIGHT until the Bag is in that
+ * pocket; CANCEL is B. An invalid use stays in the Bag with its own message. A held physical button cancels it all,
+ * except the horizontal D-pad that shares the pocket router. */
 static struct {
     int pocketTarget, pocketWait;   /* the pocket the Bag is being walked to (-1 none), frames left to get there */
     int autoWait;                   /* frames left to confirm USE once the item's menu opens */
@@ -4056,8 +4201,8 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
-    /* The naming keyboard's buttons are a row above the keys here (the tabs, DELETE, OK), FireRed's a column beside
-     * them: the cursor crosses between keys and buttons only through NameDirection, never through FireRed's own D-pad. */
+    /* The naming keyboard's buttons are a row above the keys here, FireRed's a column beside them: the cursor
+     * crosses between keys and buttons only through NameDirection, not FireRed's D-pad. */
     if (CurrentMode() == MODE_NAMING && CtrBottomNaming_IsOpen()) {
         int col, row, cols = CtrBottomNaming_Columns();
 
@@ -4228,7 +4373,7 @@ static void ProcessBattleBagTouch(const CtrInput *in)
  * A row selects its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the
  * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
  * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
- * Bag's own keys, so FireRed decides what each does. A held physical button cancels it. */
+ * Bag's own keys, so FireRed decides. A held physical button cancels it. */
 static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
 {
     const ListScreen *list = f->list;
@@ -4511,10 +4656,9 @@ static void ProcessDexTouch(const CtrInput *in)
     sDexTap.down = sDexTap.inside = 0;
 }
 
-/* The habitat/group page (up to four Pokemon, "PAGE 01/10"): a tap on a slot (its picture, number and name)
- * puts FireRed's cursor on it and sends its A (CHECK); a swipe across the viewport flips the page with the same LEFT/RIGHT at the edge of the page (the page
- * flips by LEFT/RIGHT whatever the button mode, and L/R only in some modes), once, and only toward a page
- * that exists. A tap moves at most DEX_TAP_SLOP pixels; a swipe at least DEX_SWIPE_MIN, mostly sideways.
+/* The habitat/group page (up to four Pokemon, "PAGE 01/10"): a tap on a slot puts FireRed's cursor on it and
+ * sends A (CHECK); a swipe flips the page once with LEFT/RIGHT (L/R flip it only in some button modes), only toward
+ * a page that exists. A tap moves at most DEX_TAP_SLOP pixels; a swipe at least DEX_SWIPE_MIN, mostly sideways.
  * Nothing on touch-down or while held; sliding off the slot cancels; physical input wins. */
 #define DEX_TAP_SLOP 8
 #define DEX_SWIPE_MIN 24
@@ -4764,11 +4908,19 @@ static void ProcessChoiceTouch(const CtrInput *in)
         return;
     }
     if (sChoiceTap.inside) {
-        if (isBattle)
-            CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
-        else
-            CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
-        sRouteKey = K_A;
+        if (CtrUnionLeader_Active()) {
+            sRouteKey = UnionLeaderKey(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+        } else if (CtrTrade_Active()) {
+            sRouteKey = TradeTap(sChoiceTap.code);
+        } else if (CtrChat_Active()) {
+            sRouteKey = ChatTap(sChoiceTap.code);
+        } else {
+            if (isBattle)
+                CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+            else
+                CtrMenu_Ask(sChoiceTap.code - PT_CHOICE_HIT_ROW);
+            sRouteKey = K_A;
+        }
     }
     sChoiceTap.down = sChoiceTap.inside = 0;
 }
@@ -4835,9 +4987,9 @@ static void RunNamePlan(void)
     sNamePlan.release = 1;
 }
 
-/* The keyboard's cursor as the lower screen draws it: the keys, and above them the row of buttons (FireRed's button
- * column from the top: the page's tab, DELETE, OK, left to right). UP from the first row climbs to the buttons, LEFT and
- * RIGHT walk along them, DOWN returns to the key it left; LEFT and RIGHT at the keys' ends wrap to the other end. */
+/* The keyboard's cursor as the lower screen draws it: the keys, and above them FireRed's button column (tab, DELETE,
+ * OK) as a row. UP from the first row climbs to it, LEFT and RIGHT walk along it, DOWN returns to the key it left;
+ * at the keys' ends LEFT and RIGHT wrap, LEFT past empty cells. */
 static void NameDirection(const CtrInput *in)
 {
     static int sKeyCol;
@@ -4857,9 +5009,11 @@ static void NameDirection(const CtrInput *in)
     } else if (d & K_UP && row == 0) {
         sKeyCol = col;
         CtrBottomNaming_Touch(cols, 0);
-    } else if (d & K_LEFT && col == 0)
-        CtrBottomNaming_Touch(cols - 1, row);
-    else if (d & K_RIGHT && col == cols - 1)
+    } else if (d & K_LEFT && col == 0) {
+        while (--cols > 0 && CtrBottomNaming_Key(row, cols) == 0xff)
+            ;
+        CtrBottomNaming_Touch(cols, row);
+    } else if (d & K_RIGHT && col == cols - 1)
         CtrBottomNaming_Touch(0, row);
 }
 
@@ -5216,10 +5370,12 @@ static int ProcessTouch(int mode)
         ProcessBack(mode, in);
         ProcessRelearnTouch(in);
         /* A letter closes on a touch of the letter itself, as BACK does (the game's A or B, whichever it takes). */
-        if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)
-            && in->touchX >= PT_VIEW_X && in->touchX < PT_VIEW_X + PT_VIEW_W
-            && in->touchY >= PT_VIEW_Y && in->touchY < PT_VIEW_Y + PT_VIEW_H)
-            BackPress(mode);
+        if (CtrBottomView_Mail() && in->touchDown && !sBack.down && !(in->held & 0x3ffu) && BackEnabled(mode)) {
+            int mx, my;
+
+            if (CtrPokeTouch_ViewportToGba((int)in->touchX, (int)in->touchY, &mx, &my))
+                BackPress(mode);
+        }
         return HIT_NONE;
     }
     if (mode == MODE_CHOICE) {
@@ -5436,13 +5592,12 @@ static int ModePresentationReady(int mode)
     }
 }
 
-/* Between two screens of one session FireRed shows neither: the Party closing for its Summary (its exit callback), the
- * Summary returning to the Party (CB2_ReturnToPartyMenuFromSummaryScreen), a Bag, Party or Summary that is still setting
- * up, the battle that has not taken its action menu back. Those frames belong to the session, so the lower screen keeps
- * what it showed (the battle's UI, the Party, the Summary) rather than the PokeTouch frame, an empty screen or black, until
- * the screen that follows can be presented. The battle keeps its Party, Bag or Summary past the session's end (TOP is
- * the battle's again by then) until it has a state to show. One bound for all of it: BRIDGE_MAX frames, the session's own
- * grace; a field transition shows HOME as ever, and the field's own menus keep their setups as they were. */
+/* Between two screens of one session FireRed shows neither: the Party closing for its Summary, the Summary returning
+ * to the Party, a Bag, Party or Summary still setting up, the battle that has not taken its action menu back. Those
+ * frames belong to the session, so the lower screen keeps what it showed rather than the PokeTouch frame, an empty
+ * screen or black, until the next screen can be presented. The battle keeps its Party, Bag or Summary past the
+ * session's end until it has a state to show. One bound for all of it: BRIDGE_MAX frames, the session's own grace; a
+ * field transition shows HOME as ever, and the field's own menus keep their setups as they were. */
 /* The PC has a separate lifetime from the field Party/Bag session. Keep
  * its last lower picture through loading callbacks, fades and null VBlank;
  * display only the child whose own controller has finished setup. */
@@ -5657,6 +5812,7 @@ void CtrBottom_Frame(void)
         sHome.dragging = 0;
         sHome.centered = 0;             /* and HOME comes back at the overview, on the player's own map */
         sHome.view = 0;
+        sHomePanel = 0;                 /* and its status panel closed (a battle or a menu can start with it open) */
     } else {
         ++sHome.frames;
     }
@@ -5756,7 +5912,7 @@ void CtrBottom_Frame(void)
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold();   /* SAVE keeps TOP on the frozen frame */
+        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
@@ -5797,6 +5953,10 @@ void CtrBottom_Frame(void)
     } else
         SnapshotState(&state, mode == MODE_OFF && CtrBottom_HasSave() && sEnabled && CtrBottom_IsFieldTransition()
                               ? MODE_FIELD : mode, pressed);
+    if (!nav && !state.battleUi
+        && (state.touch.dex.on || state.touch.card.on || state.touch.learn.on || state.touch.relearn.on || state.touch.mail.on
+            || state.touch.choice.on || state.touch.box.on))
+        PlateFill(&state.touch);            /* the top band of the menus that share HOME's layout */
     /* Only the view that is drawn is cased (Render draws the battle's or the touch view, never both), and a held picture
      * (nav: state is sShown) was cased when it was first built. */
     if (!nav) {
@@ -5827,6 +5987,15 @@ void CtrBottom_Frame(void)
         }
         if (!gpu)
             state.touch.viewport = 0;
+        /* The Pokedex's own pages (the habitat map...) are the game's picture: shown in HOME's layout, in the middle. */
+        state.touch.pictureHome = (uint8_t)(state.touch.viewport && mode == MODE_DEX);
+        if (state.touch.pictureHome)
+            PlateFill(&state.touch);
+        CtrVideo_SetBottomViewportOrigin(state.touch.pictureHome ? PT_HOME_X : PT_VIEW_X, state.touch.pictureHome ? PT_HOME_Y : PT_VIEW_Y);
+    }
+    if (CtrPokeTouch_Style() != 1) {
+        CtrPokeTouch_SetStyle(1);                     /* the Poke Ball style: the only one */
+        sForceRedraw = 1;
     }
     if (sForceRedraw || !sHaveShown || memcmp(&state, &sShown, sizeof(state)) != 0) {
         int screenChange = sHaveShown && state.battleUi && sShown.battleUi && state.battle.state != sShown.battle.state
@@ -5894,11 +6063,10 @@ uint16_t CtrBottom_InjectedKeys(void)
 }
 
 /* The turbo runs in two places, each only while FireRed says it is stable. The plain field (its own CB2, nothing fading,
- * no battle or battle transition) with PokeTouch having no screen of its own up: no hidden session, no native OPTIONS or
- * SAVE (SAVE also locks the field), no route in flight. And the battle itself (its own main callback, nothing fading, no
- * transition) with the lower screen on the battle's own UI: its messages, animations, turns and choices; never the Bag,
- * the Party or the Summary opened from it (a session), a loading screen or a fade. The chosen multiplier is kept
- * everywhere else and comes back with the battle. */
+ * no battle or transition) with no PokeTouch screen of its own up: no hidden session, no native OPTIONS or SAVE, no
+ * route in flight. And the battle itself (its own main callback, nothing fading, no transition) with the lower screen on
+ * the battle's own UI; never a Bag, Party or Summary opened from it, a loading screen or a fade. The chosen multiplier
+ * is kept everywhere else and comes back with the battle. */
 bool CtrBottom_TurboApplies(void)
 {
     int battle = CtrTurbo_BattleStable();
