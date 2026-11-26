@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "b7d0141f6894470c84c110b9e7bcbf9013d83759acf6ea2b9ec29b22d728b83f",
+   "sha256": "2d2b8211e758cc340caa29e4cfb49cda88da83f4f9118998343924fe3a68d403",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
