@@ -325,6 +325,14 @@ bool CtrGen4_Picture80(unsigned nationalDex, bool back, bool female, uint8_t out
     return true;
 }
 
+/* How much of the box [start, start + 5) (quarters of a source pixel) lies over source pixel `s`, which is [4s, 4s + 4). */
+static unsigned Overlap5(unsigned start, unsigned s)
+{
+    unsigned lo = start > 4 * s ? start : 4 * s, hi = start + 5 < 4 * s + 4 ? start + 5 : 4 * s + 4;
+
+    return hi > lo ? hi - lo : 0;
+}
+
 bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out[0x800])
 {
     const uint8_t *entry = Entry(nationalDex);
@@ -332,14 +340,39 @@ bool CtrGen4_Picture64(unsigned nationalDex, bool back, bool female, uint8_t out
         return false;
     const uint8_t *linear = Shown(Picture(entry, back, female), nationalDex, back);
     memset(out, 0, 0x800);
-    /* Nearest pixel: 64 of the 80 rows and columns, every fifth one left out. */
+    /* 80 down to 64 (each destination pixel is 1.25 of the source's): the index that covers most of its box, the colours (not the clear
+     * ones) counting half as much again so that a thin outline stays; the source's pixel under its centre decides a tie. Taking the nearest
+     * pixel left every fifth row and column out, and the pictures read broken. */
     for (unsigned y = 0; y < 64; ++y)
         for (unsigned x = 0; x < 64; ++x)
         {
-            unsigned sx = x * CTR_GEN4_SIZE / 64, sy = y * CTR_GEN4_SIZE / 64;
-            uint8_t pair = linear[sy * (CTR_GEN4_SIZE / 2) + sx / 2];
-            unsigned index = (sx & 1) ? pair >> 4 : pair & 15;
-            out[((y / 8) * 8 + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2] |= (uint8_t)(index << ((x & 1) * 4));
+            unsigned weight[16] = {0}, best = 0, bestWeight = 0, centre;
+            unsigned cx = (2 * x + 1) * CTR_GEN4_SIZE / 128, cy = (2 * y + 1) * CTR_GEN4_SIZE / 128;
+            unsigned x0 = 5 * x, y0 = 5 * y;
+
+            for (unsigned sy = y0 / 4; sy <= (y0 + 4) / 4 && sy < CTR_GEN4_SIZE; ++sy)
+            {
+                unsigned oy = Overlap5(y0, sy);
+
+                for (unsigned sx = x0 / 4; sx <= (x0 + 4) / 4 && sx < CTR_GEN4_SIZE; ++sx)
+                {
+                    uint8_t pair = linear[sy * (CTR_GEN4_SIZE / 2) + sx / 2];
+                    unsigned index = (sx & 1) ? pair >> 4 : pair & 15;
+
+                    weight[index] += Overlap5(x0, sx) * oy * (index ? 3 : 2);
+                }
+            }
+            centre = linear[cy * (CTR_GEN4_SIZE / 2) + cx / 2];
+            centre = (cx & 1) ? centre >> 4 : centre & 15;
+            best = centre;
+            bestWeight = weight[centre];
+            for (unsigned k = 0; k < 16; ++k)
+                if (weight[k] > bestWeight)
+                {
+                    best = k;
+                    bestWeight = weight[k];
+                }
+            out[((y / 8) * 8 + x / 8) * 32 + (y % 8) * 4 + (x % 8) / 2] |= (uint8_t)(best << ((x & 1) * 4));
         }
     return true;
 }

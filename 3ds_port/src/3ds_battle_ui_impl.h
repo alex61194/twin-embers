@@ -238,7 +238,8 @@ static int BLooksChanged(const CtrBattleView *a, const CtrBattleView *b, int i)
 {
     return (a->pressed == i) != (b->pressed == i)
         || (a->showCursor && a->cursor == i) != (b->showCursor && b->cursor == i)
-        || (b->state == BUI_ACTION && i == 0 && a->activeFrame != b->activeFrame);   /* the lead's icon bounces */
+        || (b->state == BUI_ACTION && (i == 0 || (i == 2 && b->nextIcon)) && a->activeFrame != b->activeFrame)   /* the lead's icon bounces, the next one's too */
+        || (b->state == BUI_ACTION && i == 2 && (a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot));
 }
 
 /* Running text wrapped to `width` pixels, `maxLines` at most (FireRed's line breaks are spaces here): the last line ends in "..." when
@@ -1023,7 +1024,7 @@ static void BFightFace(const CtrPokeTouchRect *r, int fy, const CtrBattleView *v
             }
     } else
         BDiscIcon(BX_FIGHT, r->x + 41, fy + 36, 24, p);
-    UiText(word, left, fy + 7, EM_WHITE, p->inkSh, 2, r->x + r->w - 8);
+    UiText(word, left, fy + 7, sStyleBall ? p->ink : EM_WHITE, sStyleBall ? p->inkSh : p->inkSh, 2, r->x + r->w - 8);
     x = left + UiTextWidth(word, 2) + 12;
     for (int k = 0; k < 2; ++k)
         if (v->activeType[k] >= 0 && v->activeTypeName[k][0]) {
@@ -1066,7 +1067,35 @@ static void BActCard(int i, const CtrBattleView *v)
         BFightFace(r, fy, v, p);
         return;
     }
-    BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    if (i == 2 && v->nextIcon && BPartyIcon(v->nextSlot, v->nextIcon)) {
+        /* POKEMON: the party icon of the next Pokemon that can fight (the one a switch would send), centred on its drawn pixels, bouncing a pixel. */
+        int minX = 32, maxX = -1, minY = 32, maxY = -1, x0, y0;
+
+        BDisc(r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px)
+                if (sBPIcon[v->nextSlot].pixels[y * 32 + px]) {
+                    minX = px < minX ? px : minX;
+                    maxX = px > maxX ? px : maxX;
+                    minY = y < minY ? y : minY;
+                    maxY = y > maxY ? y : maxY;
+                }
+        if (maxX < 0) {
+            minX = minY = 0;
+            maxX = maxY = 31;
+        }
+        x0 = r->x + r->w / 2 - (minX + maxX + 1) / 2;
+        y0 = fy + BACT_DISC_Y - (minY + maxY + 1) / 2 - (v->activeFrame & 1);
+        for (int y = 0; y < 32; ++y)
+            for (int px = 0; px < 32; ++px) {
+                uint8_t index = sBPIcon[v->nextSlot].pixels[(y + (v->activeFrame & 1) * 32) * 32 + px];
+
+                if (index)
+                    Px(x0 + px, y0 + y, sBPIcon[v->nextSlot].pal[index]);
+            }
+    } else {
+        BDiscIcon(icon[i], r->x + r->w / 2, fy + BACT_DISC_Y, BACT_DISC_R, p);
+    }
     BRowLabel(label[i], r, fy, p);
     if (i == 2) {    /* POKEMON: how many are still able, not the word the card already says */
         char able[16];
@@ -1226,44 +1255,90 @@ static void BColorBand(int x, int y, int h, uint16_t c)
     LlGradSlab(x, y, 6, h, 0, 0, LL_TL | LL_BL, Em2Lerp(c, EM_WHITE, 72, 255), Em2Lerp(c, UI_RGB(0, 0, 0), 52, 255));
 }
 
+/* Poke Ball style, the move cards: the card is the colour of the move's type (flat, a darker lip and edge, a white edge while the cursor is on it),
+ * its words dark on a light type and cream on a dark one, and the type's pill is white with the type's own dark colour for its word. */
+static unsigned BLuma(uint16_t c)
+{
+    unsigned r = (c >> 11) & 31, g = (c >> 5) & 63, b = c & 31;
+
+    return (77 * (r * 255 / 31) + 150 * (g * 255 / 63) + 29 * (b * 255 / 31)) >> 8;
+}
+
+static EmPal BTypePal(uint16_t c, int focused, int dark)
+{
+    uint16_t black = UI_RGB(0, 0, 0);
+    EmPal p = EM_PAL(Em2Lerp(c, EM_WHITE, 20, 255), c, Em2Lerp(c, black, 8, 255), Em2Lerp(c, black, 16, 255), Em2Lerp(c, black, 72, 255),
+                     focused ? EM_WHITE : Em2Lerp(c, black, 100, 255), Em2Lerp(c, EM_WHITE, 60, 255), Em2Lerp(c, black, 40, 255),
+                     dark ? UI_RGB(255, 246, 232) : UI_RGB(42, 18, 8), dark ? Em2Lerp(c, black, 130, 255) : Em2Lerp(c, EM_WHITE, 90, 255));
+
+    return p;
+}
+
+/* A type's pill on a card of that type: white, the word in the type's colour darkened. */
+static int BTypePill(int x, int y, const char *text, uint16_t c)
+{
+    int w = UiTextWidth(text, 1) + 12;
+    uint16_t ink = Em2Lerp(c, UI_RGB(0, 0, 0), 120, 255);
+
+    UiRoundFill(x, y, w, 13, 4, Em2Lerp(c, UI_RGB(0, 0, 0), 90, 255));
+    UiRoundFill(x + 1, y + 1, w - 2, 11, 3, UI_RGB(250, 248, 244));
+    UiText(text, x + 6, y + 2, ink, UI_RGB(236, 232, 226), 1, x + w - 1);
+    return w;
+}
+
 static void BMoveCard(int i, const CtrBattleView *v)
 {
     const CtrPokeTouchRect *r = &sBCard[i];
     const CtrBattleMove *m = &v->move[i];
-    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber;
-    uint16_t c;
+    int focused = v->showCursor && v->cursor == i, fy, badgeW, power, accNumber, dark = 0;
+    uint16_t c, ink = EM_DARK, dim = EM_DIM, sh = EM_DARK_SH, low = UI_RGB(224, 56, 40), lowSh = UI_RGB(248, 200, 184);
+    EmPal typePal;
     char text[16];
 
     if (!m->present) {
         BHollow(r, BL_CARD_H - B_DEPTH, NULL);
         return;
     }
-    fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     c = UiTypeColor(m->type);
+    if (sStyleBall) {
+        dark = BLuma(c) < 120;
+        typePal = BTypePal(c, focused, dark);
+        ink = typePal.ink;
+        sh = typePal.inkSh;
+        dim = dark ? UI_RGB(236, 214, 190) : UI_RGB(96, 48, 22);
+        low = dark ? UI_RGB(255, 196, 184) : UI_RGB(160, 16, 16);
+        lowSh = sh;
+        fy = BLCard(r, BL_CARD_H, &typePal, focused, v->pressed == i, 1);
+    } else
+        fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     badgeW = UiTextWidth(m->typeName, 1) + 12;
     power = m->power[0] && m->power[0] != '-';
     accNumber = m->accuracy[0] && m->accuracy[0] != '-';
-    BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
+    if (!sStyleBall)
+        BColorBand(r->x + 1, fy + 1, BL_CARD_H - B_DEPTH - 2, c);
     if (focused)
-        LlCursor(r->x + 11, fy + 6, LL_CURSOR);
-    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, EM_DARK, EM_DARK_SH, r->x + r->w - 5 - badgeW - 4);
-    LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+        LlCursor(r->x + 11, fy + 6, sStyleBall ? ink : LL_CURSOR);
+    Em2Text(m->name, r->x + (focused ? 21 : 13), fy + 6, ink, sh, r->x + r->w - 5 - badgeW - 4);
+    if (sStyleBall)
+        BTypePill(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
+    else
+        LlTypeBadge(r->x + r->w - 5 - badgeW, fy + 5, m->typeName, c);
     if (power) {
-        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 40);
-        UiText(m->power, r->x + 35, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Pow", "Pot", "St\xC3\xA4"), r->x + 13, fy + 22, dim, sh, 1, r->x + 40);
+        UiText(m->power, r->x + 35, fy + 22, ink, sh, 1, r->x + 64);
     } else
-        UiText(CTR_TR("Status", "Estado", "Status"), r->x + 13, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 64);
+        UiText(CTR_TR("Status", "Estado", "Status"), r->x + 13, fy + 22, dim, sh, 1, r->x + 64);
     if (accNumber) {
-        UiText(CTR_TR("Acc", "Pre", "Gen"), r->x + 66, fy + 22, EM_DIM, EM_DARK_SH, 1, r->x + 88);
-        UiText(m->accuracy, r->x + 88, fy + 22, EM_DARK, EM_DARK_SH, 1, r->x + 120);
+        UiText(CTR_TR("Acc", "Pre", "Gen"), r->x + 66, fy + 22, dim, sh, 1, r->x + 88);
+        UiText(m->accuracy, r->x + 88, fy + 22, ink, sh, 1, r->x + 120);
     }
     BFxBadge(m->matchup, r->x + 13, fy + 34, 70, 0);
-    UiText("PP", r->x + 88, fy + 36, EM_DIM, EM_DARK_SH, 1, r->x + 104);
+    UiText("PP", r->x + 88, fy + 36, dim, sh, 1, r->x + 104);
     snprintf(text, sizeof(text), "%u/%u", m->pp, m->maxPp);
     if (m->pp * 4 <= m->maxPp)       /* a quarter or less left, or none: the game's red */
-        UiText(text, r->x + 104, fy + 36, UI_RGB(224, 56, 40), UI_RGB(248, 200, 184), 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, low, lowSh, 1, r->x + r->w - 4);
     else
-        UiText(text, r->x + 104, fy + 36, EM_DARK, EM_DARK_SH, 1, r->x + r->w - 4);
+        UiText(text, r->x + 104, fy + 36, ink, sh, 1, r->x + r->w - 4);
 }
 
 /* The text window under the cards (and CANCEL beside it): the move under FireRed's cursor, its name, "STAB" on a slanted ribbon when it gets the
@@ -1301,8 +1376,13 @@ static void BMoveNote(const CtrBattleView *v)
     }
     if (m->effectChance)
         snprintf(chance, sizeof(chance), "%s %u%%", CTR_TR("Effect", "Efecto", "Effekt"), m->effectChance);
+    /* With move details off there is no description, so the note names the category; a move with
+       no power is a status move whatever its type, as the card beside it says. */
     BNoteWindow(n, m->name, m->stab, chance,
-                m->desc[0] ? m->desc : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff") : CTR_TR("Special move", "Ataque especial", "Spezialangriff"));
+                m->desc[0] ? m->desc
+                : !m->power[0] || m->power[0] == '-' ? CTR_TR("Status move", "Movimiento de estado", "Statusattacke")
+                : m->type < 10 ? CTR_TR("Physical move", "Ataque f\xC3\xADsico", "Physischer Angriff")
+                : CTR_TR("Special move", "Ataque especial", "Spezialangriff"));
 }
 
 /* ---- A double battle's targets: the opposing battlers on top, the player's below, as the move cards ---- */
@@ -1597,6 +1677,7 @@ static int BScreenChanged(const CtrBattleView *a, const CtrBattleView *b)
         return 1;
     if (b->state == BUI_ACTION)
         return strcmp(a->activeName, b->activeName) || a->activeLevel != b->activeLevel || a->activeIcon != b->activeIcon
+            || a->nextIcon != b->nextIcon || a->nextSlot != b->nextSlot
             || memcmp(a->activeType, b->activeType, sizeof(b->activeType)) || memcmp(a->activeTypeName, b->activeTypeName, sizeof(b->activeTypeName))
             || a->activeHp != b->activeHp || a->activeMaxHp != b->activeMaxHp
             || a->activeSlot != b->activeSlot || a->ball != b->ball || a->ballItem != b->ballItem

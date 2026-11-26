@@ -175,6 +175,9 @@ static void TestSilent(void)
             break;
     }
     CHECK(lost == 2, "a silent node is reported lost (%u)", lost);
+    WlNet_Lose(&a.net, 3);
+    WlNet_Lose(&a.net, 0);                                  /* not a node: nothing */
+    CHECK(WlNet_PopLost(&a.net, &lost) && lost == 3 && !WlNet_PopLost(&a.net, &lost), "a node that left is reported lost at once");
     CHECK(!WlNet_Send(&a.net, 1, &m, 1) && WlNet_Pending(&a.net, 1) == 0, "no sending to oneself");
     for (unsigned i = 0; i < WL_WINDOW + 4; ++i)
     {
@@ -375,6 +378,30 @@ static void TestLink(unsigned children, unsigned loss)
             }
             CHECK(seen == (1u << children) - 1, "the host got every child's frame (mask %u)", seen);
         }
+    }
+
+    /* A burst: the host sends three frames before the child reads (as TCP may hand them over together); the child reads all three, in
+     * order, then nothing: a frame that comes while another is unread waits behind it instead of overwriting it. */
+    {
+        unsigned tries = 0;
+
+        for (unsigned f = 0; f < 3; ++f)
+        {
+            uint8_t body[12];
+
+            memset(body, 0xC0 + (int)f, sizeof(body));
+            p[0] = 9;
+            memcpy(&p[1], body, 12);
+            CHECK(Cmd(&host.rfu, WLC_DATA_TX, p, 4, ack) == 1, "the host sends frame %u", f);
+        }
+        while (kid[0].rfu.rxqCount[0] < 2 && tries++ < 600)
+            Tick(&air, all, 1 + (int)children, 5);
+        for (unsigned f = 0; f < 3; ++f)
+        {
+            words = (unsigned)Cmd(&kid[0].rfu, WLC_DATA_RX, NULL, 0, ack);
+            CHECK(words == 1 + 1 + 3 && ((const uint8_t *)(ack + 2))[0] == 0xC0 + f, "the child reads frame %u of the burst, in order", f);
+        }
+        CHECK(Cmd(&kid[0].rfu, WLC_DATA_RX, NULL, 0, ack) == 1 && kid[0].rfu.rxDropped == 0, "then nothing, and none was dropped");
     }
 
     /* A child leaves: the host, waiting as the slave, is told which slot and that it is gone. */

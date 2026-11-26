@@ -8,6 +8,9 @@
 
 int main(void)
 {
+    /* Settings are read once per process, so a file made here after the first read would not be read at all, and a file removed while the settings
+     * hold it open is gone on Linux and macOS (not on Windows): the older build's files, CR LF and every restart are in settings_reload_test.c, one
+     * process per session. This file starts from nothing, before the first read. */
     remove(CTR_SETTINGS_PATH);
 
     /* No file: the defaults. */
@@ -157,6 +160,32 @@ int main(void)
     fclose(file);
     assert(strstr(text, "visiblewilds") == NULL && strstr(text, "wildsil") == NULL && strstr(text, "wildaggro") == NULL);
 
+    /* TRUCOS: every cheat is off until chosen, kept as cheatN=value when not 0, clamped to what it has, and gone from the file when off. */
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        assert(CtrSettings_Cheat(i) == 0);
+    assert(CtrSettings_CheatMax(CTR_CHEAT_SHINY) == 6 && CtrSettings_CheatMax(CTR_CHEAT_EXP) == 3 && CtrSettings_CheatMax(CTR_CHEAT_CATCH) == 1
+           && CtrSettings_CheatMax(-1) == 0 && CtrSettings_CheatMax(CTR_CHEAT_COUNT) == 0);
+    CtrSettings_SetCheat(CTR_CHEAT_CATCH, 1);
+    CtrSettings_SetCheat(CTR_CHEAT_SHINY, 4);
+    CtrSettings_SetCheat(CTR_CHEAT_EXP, 99);                    /* past the last: the last */
+    CtrSettings_SetCheat(CTR_CHEAT_FLEE, -3);                   /* below the first: off */
+    CtrSettings_SetCheat(CTR_CHEAT_COUNT, 1);                   /* no such cheat: nothing */
+    assert(CtrSettings_Cheat(CTR_CHEAT_CATCH) == 1 && CtrSettings_Cheat(CTR_CHEAT_SHINY) == 4 && CtrSettings_Cheat(CTR_CHEAT_EXP) == 3
+           && CtrSettings_Cheat(CTR_CHEAT_FLEE) == 0 && CtrSettings_Cheat(-1) == 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "cheat0=1\n") != NULL && strstr(big, "cheat1=4\n") != NULL && strstr(big, "cheat4=3\n") != NULL && strstr(big, "cheat6") == NULL);
+    CtrSettings_SetCheat(CTR_CHEAT_CATCH, 0);
+    CtrSettings_SetCheat(CTR_CHEAT_SHINY, 0);
+    CtrSettings_SetCheat(CTR_CHEAT_EXP, 0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "cheat") == NULL);
+
     /* FREE HMS: off until chosen, written only when on. */
     assert(CtrSettings_FreeHm() == 0);
     CtrSettings_SetFreeHm(1);
@@ -173,6 +202,31 @@ int main(void)
     assert(file != NULL && fread(text, 1, sizeof(text) - 1, file) > 0);
     fclose(file);
     assert(strstr(text, "freehm") == NULL);
+
+    /* DAY/NIGHT, HOUR, TYPE MATCHUP and MOVE DETAILS: CLOCK, 12:00 and both shown until chosen, written only when not the default,
+     * and a value out of range is the default. */
+    assert(CtrSettings_DayNight() == 0 && CtrSettings_Hour() == 24 && CtrSettings_TypeMatchup() == 0 && CtrSettings_MoveDetails() == 0);
+    CtrSettings_SetDayNight(1);
+    CtrSettings_SetHour(40);
+    CtrSettings_SetTypeMatchup(1);
+    CtrSettings_SetMoveDetails(5);
+    assert(CtrSettings_DayNight() == 1 && CtrSettings_Hour() == 40 && CtrSettings_TypeMatchup() == 1 && CtrSettings_MoveDetails() == 1);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "daynight=1\n") != NULL && strstr(big, "hour=40\n") != NULL && strstr(big, "typematchup=1\n") != NULL
+           && strstr(big, "movedetails=1\n") != NULL);
+    CtrSettings_SetDayNight(3);
+    CtrSettings_SetHour(48);
+    assert(CtrSettings_DayNight() == 0 && CtrSettings_Hour() == 24);
+    CtrSettings_SetTypeMatchup(0);
+    CtrSettings_SetMoveDetails(0);
+    file = fopen(CTR_SETTINGS_PATH, "rb");
+    memset(big, 0, sizeof(big));
+    assert(file != NULL && fread(big, 1, sizeof(big) - 1, file) > 0);
+    fclose(file);
+    assert(strstr(big, "daynight") == NULL && strstr(big, "hour") == NULL && strstr(big, "typematchup") == NULL && strstr(big, "movedetails") == NULL);
 
     /* RANDOMLOCKE: off until chosen, written only when on. */
     assert(CtrSettings_Randomlocke() == 0);
@@ -217,11 +271,59 @@ int main(void)
                && strstr(big, "look_leaf") == NULL && strstr(big, "expshare=2\n") != NULL && strstr(big, "ball=3\n") != NULL);
     }
 
+    /* A private room's code: 16 digits with at least six different, made from random bytes without bias, kept in the file, and nothing else is a code. */
+    {
+        char code[CTR_ROOM_CODE_DIGITS + 1];
+        uint8_t run[20], few[20];
+        char read[256] = {0};
+
+        assert(CtrSettings_RoomCodeOk("4829137650218394") && CtrSettings_RoomCodeOk("0123456789012345") && CtrSettings_RoomCodeOk("1234567000000000"));
+        assert(!CtrSettings_RoomCodeOk("0000000000000000") && !CtrSettings_RoomCodeOk("1212121212121212") && !CtrSettings_RoomCodeOk("1234512345123451"));
+        assert(!CtrSettings_RoomCodeOk("482913765021839") && !CtrSettings_RoomCodeOk("48291376502183945") && !CtrSettings_RoomCodeOk("482913765021839x"));
+        assert(!CtrSettings_RoomCodeOk("123456") && !CtrSettings_RoomCodeOk("") && !CtrSettings_RoomCodeOk(NULL));
+        for (int i = 0; i < 20; ++i) {
+            run[i] = (uint8_t)(i % 2 ? 250 + i % 5 : (37 * i + 11) % 250);      /* every other byte is one a digit cannot be made of: skipped */
+            few[i] = (uint8_t)(i % 2);                                         /* 0101...: two different digits */
+        }
+        assert(!CtrSettings_MakeRoomCode(code, run, 20) && !CtrSettings_MakeRoomCode(code, few, 20));   /* ten digits from twenty bytes; and a plain one */
+        {
+            uint8_t more[40];
+            char want[CTR_ROOM_CODE_DIGITS + 1];
+            int d = 0;
+
+            for (int i = 0; i < 40; ++i)
+                more[i] = (uint8_t)(i % 3 == 2 ? 250 + i % 5 : (37 * i + 11) % 250);      /* every third byte is one a digit cannot be made of */
+            for (int i = 0; i < 40 && d < CTR_ROOM_CODE_DIGITS; ++i)
+                if (more[i] < 250)
+                    want[d++] = (char)('0' + more[i] % 10);
+            want[d] = 0;
+            code[0] = 'x';
+            assert(CtrSettings_MakeRoomCode(code, more, 40) && !strcmp(code, want) && CtrSettings_RoomCodeOk(code));
+        }
+        CtrSettings_SetRoomCode("4829137650218394");
+        CtrSettings_SetPrivateRoom(1);
+        assert(!strcmp(CtrSettings_RoomCode(), "4829137650218394") && CtrSettings_PrivateRoom());
+        file = fopen(CTR_SETTINGS_PATH, "rb");
+        assert(file != NULL);
+        assert(fread(read, 1, sizeof(read) - 1, file) > 0);
+        fclose(file);
+        assert(strstr(read, "roomcode=4829137650218394\n") != NULL);
+        CtrSettings_SetRoomCode("123456");                                      /* not a code: none is kept */
+        assert(!CtrSettings_RoomCode()[0] && !CtrSettings_PrivateRoom());
+        CtrSettings_SetRoomCode("4829137650218394");
+        CtrSettings_SetRoomCode("0000000000000000");
+        assert(!CtrSettings_RoomCode()[0]);
+    }
+
     /* The worst case (every key written, the longest values) must fit the fixed block with room to spare: Format stops
-     * silently at the block's end, which would drop the last keys. The block is 512 bytes; keep the text under 320. */
+     * silently at the block's end, which would drop the last keys. The block is 640 bytes; keep the text under 540. */
     CtrSettings_SetTurbo(4);
     CtrSettings_SetAutoRun(1);
     CtrSettings_SetEmbers(2);
+    assert(CtrSettings_Style() == 1);               /* Poke Ball is the default: no style= line is written for it */
+    CtrSettings_SetStyle(0);                        /* the choice of Ascuas is the one that is kept (style=0), so it is in the worst case */
+    CtrSettings_SetRoomCode("4829137650218394");
+    CtrSettings_SetPrivateRoom(1);
     CtrSettings_SetRepelAgain(1);
     CtrSettings_SetCompanion(2);
     CtrSettings_SetExpShare(2);
@@ -235,6 +337,10 @@ int main(void)
     CtrSettings_SetRandomTarget(2);
     CtrSettings_SetRandomNoLegendary(1);
     CtrSettings_SetFreeHm(1);
+    CtrSettings_SetDayNight(2);
+    CtrSettings_SetHour(47);
+    CtrSettings_SetTypeMatchup(1);
+    CtrSettings_SetMoveDetails(1);
     CtrSettings_SetWildDensity(3);
     CtrSettings_SetWildSilhouette(1);
     CtrSettings_SetWildAggro(4);
@@ -243,6 +349,8 @@ int main(void)
     CtrSettings_SetLook(CTR_LOOK_BLUE, "abcdefghijklmno");
     CtrSettings_SetLook(CTR_LOOK_SURF, "abcdefghijklmno");
     CtrSettings_SetLastBall(65535);
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        CtrSettings_SetCheat(i, CtrSettings_CheatMax(i));         /* the cheats are written too */
     {
         static char worst[4096];
         size_t n;
@@ -254,7 +362,8 @@ int main(void)
         while (n > 0 && worst[n - 1] == '\n' && (n < 2 || worst[n - 2] == '\n'))
             --n;                                                    /* the blank padding */
         printf("settings worst case: %u bytes of text\n", (unsigned)n);
-        assert(n < 360);   /* the file holds 512; the wild keys are before the looks and the ball */
+        assert(n < 540);   /* the file holds 640 (DAY/NIGHT and its three rows, 47 bytes, a private room's code and flag, 37 bytes, and the seven cheats, 63, are in this worst case); the wild keys are before the looks and the ball */
+        assert(strstr(worst, "daynight=2\n") && strstr(worst, "hour=47\n") && strstr(worst, "typematchup=1\n") && strstr(worst, "movedetails=1\n"));
         assert(strstr(worst, "nuzset=1\n") && strstr(worst, "randtarget=2\n") && strstr(worst, "randnolegend=1\n"));
         assert(strstr(worst, "visiblewilds=3\n") && strstr(worst, "wildsil=1\n") && strstr(worst, "wildaggro=4\n") && strstr(worst, "look_blue=abcdefghijklmno\n") && strstr(worst, "look_surf=abcdefghijklmno\n") && strstr(worst, "ball=65535\n"));
     }

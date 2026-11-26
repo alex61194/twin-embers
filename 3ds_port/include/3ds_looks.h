@@ -7,7 +7,7 @@
  * (b"G4L1", then a line "folder<TAB>name<TAB>boy or girl<TAB>credit" for each), read the first time it is asked for once the
  * pack is open. The OPTIONS' look rows (3ds_poketouch_options.c) list them, keep the choice for Red, Leaf and the rival Blue in
  * the settings (CtrSettings_Look) and show a preview of the look under them; the pictures themselves are 3ds_battle_gen4.c's. */
-#define CTR_LOOKS_MAX 24
+#define CTR_LOOKS_MAX 32
 #define CTR_LOOK_ID_LEN 16          /* a folder's name and its end (CtrSettings_Look keeps 15 characters) */
 #define CTR_LOOK_NAME_LEN 12        /* the name the options show, at most 11 characters and its end */
 #define CTR_LOOK_CREDIT_LEN 128     /* the artists named under the preview */

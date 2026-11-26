@@ -156,6 +156,16 @@ internet with no code of ours. Only real consoles need the relay.
 **Suggested order.** Finish local play (UDS) first, test it in Azahar, then add the internet backend and a reference
 relay; the relay's wire format is worth writing down early so other people can host compatible ones.
 
+## Status of the internet backend (2026-11-18)
+
+The wire format is written down in [`WL-RELAY-PROTOCOL.md`](WL-RELAY-PROTOCOL.md). Three pieces exist and are tested on a computer only:
+
+- `tools/wl_relay.py`, a reference relay (rooms of up to 16 nodes, a build id per room, joins and leaves, keep-alive; standard library only);
+- `3ds_port/src/3ds_wl_inet.c`, the console side as a `WlBackend` over a TCP socket;
+- `tools/test_wl_inet.py` with `3ds_port/tests/wl_inet_test.c`: the client against the relay (node numbers, build check, joins and leaves, a full room, and `WlNet`'s reliable stream across two real connections), plus byte-level checks of the relay.
+
+Frames are sealed between consoles with ChaCha20-Poly1305 (`3ds_port/src/3ds_wl_crypto.c`, from RFC 8439, SHA-256 and PBKDF2 for the key from the room's secret code; checked against the RFC's test vector, Python's hashlib and an independent Python implementation, and a Python console that talks to the C one and is refused when it changes, moves or forges a frame). The UDS backend (`3ds_port/src/3ds_wl_uds.c`: host, scan, join, frames, who is in the network) is written against libctru's own `uds.h`, compiles for the console with `-Wall -Wextra -Werror`, and is tested on a computer with a stand-in for the UDS functions (`3ds_port/tests/wl_uds_test.c`: this build's passphrase and beacon, only this build's hosts listed, joins and leaves as events, frames in order, a lost link, the send errors UDS allows); it has not touched a radio, and the real functions' behaviour (an empty `udsPullPacket`, the connection status values, how long a scan takes) is assumed from the header and 3dbrew until two consoles or two Azahar instances try it. Not done: the game side (librfu hook and the Cable Club and Pokémon Center scripts) and any menu to enter a room code. Nothing of it is linked into the game or has run on a console.
+
 ## Sources
 
 - Emerald 3DS pull request #76, "Local wireless play between 3DS systems":

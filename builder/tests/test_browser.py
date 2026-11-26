@@ -107,7 +107,7 @@ class SyntheticBuildTest(unittest.TestCase):
             info = browser.build(str(self.root / "rom.gba"), str(out), str(self.folder))
         self.assertEqual(out.read_bytes(), self.desktop(True))
         self.assertEqual(info["gen4"], {"species": 2, "missing": [], "icons": False, "trainers": 0, "backs": 0,
-                                       "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "player": 0, "downloaded": 0})
+                                       "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "skipped": [], "player": 0, "downloaded": 0})
         with PakReader(out, self.abi, bytes.fromhex(SUPPORTED_SHA1)) as reader:
             self.assertEqual(reader.verify(), 4)
 
@@ -116,7 +116,7 @@ class SyntheticBuildTest(unittest.TestCase):
         (self.folder / "001_male_front.png").unlink()
         info = browser.build(str(self.root / "rom.gba"), str(self.root / "web.pak"), str(self.folder))
         self.assertEqual(info["gen4"], {"species": 0, "missing": [1, 2], "icons": False, "trainers": 0, "backs": 0,
-                                       "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "player": 0, "downloaded": 0})
+                                       "npcs": 0, "followers": 0, "hd": 0, "looks": 0, "surfmons": 0, "skipped": [], "player": 0, "downloaded": 0})
         self.assertEqual(info["entries"], 2)
 
     def test_never_uses_the_network(self):

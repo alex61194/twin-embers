@@ -80,6 +80,7 @@ uint64_t CtrVideo_FrameStartTick(void);
 bool CtrVideo_SetBottomViewport(bool on);
 /* Only the PC field menu uses the lower-aligned GBA BG0 window as source. */
 void CtrVideo_SetBottomViewportPcField(bool on);
+void CtrVideo_SetBottomViewportOrigin(int x, int y);   /* where the GBA picture is put on the lower screen */
 /* The rectangle [x0, x1) x [y0, y1) of the bottom canvas changed (screen
  * coordinates, y down); only it is read, at the next Present. */
 void CtrVideo_BottomCanvasRect(const uint16_t *canvas, int x0, int y0, int x1, int y1);

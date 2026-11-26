@@ -34,9 +34,8 @@ static void FMailFrame(const CtrPokeTouchView *v)
 static void FMailNote(const CtrPokeTouchView *v, int w)
 {
     (void)v;
+    (void)w;
     EmSurface();
-    LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    Em2Text(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), NOTE_X + 13, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK,
-            EM_DARK_SH, NOTE_X + w - 13);
+    NoteTitleBody(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), "");
     sUiS = &sUiNavy;
 }

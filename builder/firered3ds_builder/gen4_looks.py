@@ -6,7 +6,7 @@ row of FILES: (the look's number in LOOKS, "look", the sheet's path in REPO at C
 of each Pokemon to surf on; a row of SURFMON_FILES: (its number, "surfmon", its blob sheet's path, size, SHA-256)."""
 
 REPO = 'ElvieBlooms/emerald_lens'
-COMMIT = '9a97879e5c82ea44e2acf7717fa94f864b382ceb'
+COMMIT = '67a25e2ef2328ab6a7ba0a733b28de0087464c5c'
 LOOKS = (
     ('ash', 'ASH', 'ASH', 'boy', 'Shared by kalarie on PokeCommunity'),
     ('ash_hgss', 'ASH HGSS', 'ASH', 'boy', 'Made by PKMNTrainerRick'),
@@ -29,6 +29,11 @@ LOOKS = (
     ('harmony_dp', 'HARMONY', 'HARMONY', 'girl', 'Art by xlia_chanx; Dive blob by Elvie'),
     ('peach_hgss', 'PEACH', 'PEACH', 'girl', 'From Slawter666; Dive blob by Elvie'),
     ('aang', 'AANG', 'AANG', 'boy', 'Commissioned by Slawter666 and made by iamtrine; Back and Front sprites made by waterpixelart'),
+    ('hilbert_hgss', 'HILBERT', 'HILBERT', 'boy', 'Made by DiegoWT; Dive blob by Elvie'),
+    ('hilda_hgss', 'HILDA', 'HILDA', 'girl', 'Made by DiegoWT; Dive blob by Elvie'),
+    ('nate_hgss', 'NATE', 'NATE', 'boy', 'Made by DiegoWT; Dive blob by Elvie'),
+    ('rosa_hgss', 'ROSA', 'ROSA', 'girl', 'Made by DiegoWT; Dive blob by Elvie'),
+    ('red_rgby', 'RED RGBY', 'RED', 'boy', "Sprites by hyo; Based on Poffin_Case's"),
 )
 FILES = (
     (0, 'look', 'assets/sprites/ash/gen3/frlg/walk.png', 2822, '09b884356200c50d3872cc81442607e38415b111d9b7f31db341c432af18fb55'),
@@ -230,6 +235,37 @@ FILES = (
     (20, 'look', 'assets/sprites/aang/gen3/frlg/back.png', 4875, '109302113b05fe9d55f2c3c1d97cc9d49120b15c1a7bca0b7303e42fec683e53'),
     (20, 'look', 'assets/sprites/aang/gen3/frlg/front.png', 1730, '3e4c153753bdafe1adffac832c44ab70172456ad6e43d6df5b6d400c88f283ca'),
     (20, 'look', 'assets/sprites/aang/gen3/frlg/intro.png', 2063, '91d214f11d716d9899fc94fc4f47805451027c31d44745cf9a9963525818abba'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/walk.png', 5142, '14e4805997c4376a897772d9501a0fb9d0ce5a0b15e4a0e832b51d70ac10fc2a'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/bike.png', 2535, '9b4bd846c656a68802c9eeaae208c9dd4c990d4d126961cdf4a3daa293db1141'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/surf.png', 2385, '4b144200624b947f2c5edf17ef1ae0c83e84e8f94e46c8dd17aaf7bf95784cd0'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/fieldMove.png', 1905, 'b22b9209effdaf81ccfe34d2f76d32d0aea10350a673458b9bfa46513af287ed'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/fishing.png', 3804, 'e45955faea769a53b999cabd2ba364f611f9c5ac5516c43ca1ab96c6c4f749fc'),
+    (21, 'look', 'assets/sprites/hilbert_hgss/gen3/frlg/vsSeekerBike.png', 862, 'ec055ac50c6b239bc2b385af31c49b0ce8ff2b460b1d5516150f8c2c23c08951'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/walk.png', 7130, '8e51af962d8806dc2ef07a3bd353c357296a8b71d0dfe02694bdbe4ab5479dae'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/bike.png', 3479, '2dcd8c8a8a31fa46537f3d510796510379d92e0a76b071b0e7e44a4d75bdefbf'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/surf.png', 2956, '45800e9dbeef83182435b2ddc9a1fc6897591845757c429ea003510a48f62f11'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/fieldMove.png', 2268, '026d4ef8bb25e96a76ebe3050dd6a1771ba9235116dfdef56e8bdb200068b037'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/fishing.png', 4310, '6504b17b2ae8dc7b95d1329b25e46cac7011a88b721c69bda1c9bd84e798995b'),
+    (22, 'look', 'assets/sprites/hilda_hgss/gen3/frlg/vsSeekerBike.png', 929, '592c9df5110a2cfb819c81cf5bd3f16ec6888d9ac0a308f4a938026406942527'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/walk.png', 6041, 'bb032cdea9a73acea5a03059d90042f9d0a05d262aa8f63460c4e99d9c7a3ab0'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/bike.png', 3104, '743a3a2734b385c99354707b50ceed29616d0c1507834e195d983c9d8979326e'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/surf.png', 2792, '6b846488e62e6d188d7be874dcb1457864c33ffae5834c7e12710130066bd4f5'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/fieldMove.png', 2231, 'a9c91fe9179f7476ecb6ece21823a5013440f79728abe81e6e025f43af01a91d'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/fishing.png', 4392, '7380c43d178c720ebe456b025f73918c150a8e0c32edc94d79923869433ac337'),
+    (23, 'look', 'assets/sprites/nate_hgss/gen3/frlg/vsSeekerBike.png', 955, '6cf4c40cf550f260f82261dc33e3a98b1bd68c5aa878561be149d6d1291187fb'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/walk.png', 6252, 'ff488f9a93c5a730df1929c3ca00ebbb0a5653e6b4ed5cc123f0ec334fe7c35c'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/bike.png', 3322, '6e62c32fc3740e55fca22ace48c9adaf807f9014d3f8929d06bfeace76a5e096'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/surf.png', 2837, '53bbb778f8ab4f86da0c88678af496211793e868a0f25399e239105eedbb74d3'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/fieldMove.png', 2061, '1816cefdaa9bd01bd4781926cdf0b2a374e980a538de17b9ab05cf47c3b6883e'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/fishing.png', 4330, '8bf1c30b8480b78b77b65b11aab7935a39ba04331560f4900bbd8ad95ca4457b'),
+    (24, 'look', 'assets/sprites/rosa_hgss/gen3/frlg/vsSeekerBike.png', 966, 'ce12e1325aaba015aea09fbe30e018cdbd9e88b60350d2309306aab36d623eac'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/walk.png', 4481, 'a37ffb0dae72f56800028d8a41612bccd3d289e14b1dbd3cb493b18c09866588'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/bike.png', 2425, 'dcad96d8776d3752f5b4a24085f15af4b67416b20f3e328999c30b4c06d98f9b'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/surf.png', 2216, '1a0dd1f19f1095e71d4a256123cad65ef9105f65d4fcdb75f218fab19e2dc335'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/fieldMove.png', 1778, '1a63531a3570abdc4ebc13a98ba7d42c14652ce0660598ef925cb7a0f1e6c4ff'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/fishing.png', 3261, 'b36bc70701c4c8aedff68a34e468c1cb50a9962bef8ede802ee04dc0fabba347'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/vsSeekerBike.png', 761, '4eeef017c8a68eaf3a5a0c04dfdcedc00226d9b3f3ee7ebd83e6844a316a28ee'),
+    (25, 'look', 'assets/sprites/red_rgby/gen3/frlg/mapIcon.png', 417, '8143aaddae5d10e04eb8924d6784212e64be546edd3c2d64c43c15ccd7ed1959'),
 )
 SURFMONS = (
     ('lapras', 'LAPRAS', 'Edited from HG/SS sprites, dynamic surf overworlds contributors'),

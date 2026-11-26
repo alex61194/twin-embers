@@ -5,6 +5,7 @@
  * logging goes once to sdmc:/3ds/twinembers/port.log (never per frame).
  */
 #include <3ds.h>
+#include <malloc.h>
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,10 @@
 #include "3ds_platform.h"
 #include "3ds_rex.h"
 #include "3ds_video.h"
+#include "3ds_wl_crypto.h"
+#include "3ds_wl_glue.h"
+#include "3ds_settings.h"
+#include "3ds_lang.h"
 #include "gba_shadow.h"
 #include "3ds_perf.h"
 #include "git_version.h"
@@ -69,6 +74,25 @@ void CtrPokeTouch_Shutdown(void);
 TRACED_EXIT(ExitAssets, CtrAssets_Shutdown())
 TRACED_EXIT(ExitPokeTouch, CtrPokeTouch_Shutdown())
 TRACED_EXIT(ExitAudio, CtrAudio_Shutdown())
+TRACED_EXIT(ExitWireless, CtrWl_Shutdown())
+TRACED_EXIT(ExitSockets, (CtrWl_Shutdown(), socExit()))   /* atexit runs this before ExitWireless: the socket is closed before the soc service goes (close() on it afterwards crashed) */
+
+/* The OPTIONS screen's MULTIPLAYER and ONLINE ROOM rows: the radio takes them from the next session on. */
+static void LocalPlayChanged(int local)
+{
+    CtrWl_SetLocal(local != 0);
+    CtrWl_SetPrivateRoom(CtrSettings_PrivateRoom() ? CtrSettings_RoomCode() : NULL);
+}
+
+/* Consoles link when they run the same release in the same language: that is what the link layer sends raw structures of. The optional
+ * pictures a player chose (looks, HD scenes) are not in it. */
+#if CTR_LANG_DE
+#define CTR_LINK_LANG "de"
+#elif CTR_LANG_ES
+#define CTR_LINK_LANG "es"
+#else
+#define CTR_LINK_LANG "en"
+#endif
 /* Leaving through the HOME Menu (aptMainLoop) is exit(0) from the VBlank bridge:
  * whatever is still pending reaches the card before the process ends. */
 TRACED_EXIT(ExitFlash, CtrFlash_Close())
@@ -225,6 +249,48 @@ int main(void)
     CtrAudio_Init();
     atexit(ExitAudio);
     CtrGameBridge_StartWatchdog();
+    {
+        static const char kLinkId[] = "TwinEmbers link v1|" CTR_BUILD_LABEL "|" CTR_LINK_LANG;
+        uint8_t digest[32];
+
+        WlSha256(kLinkId, sizeof(kLinkId) - 1, digest);
+        CtrWl_Setup(digest, (uint32_t)osGetTime() ^ (uint32_t)svcGetSystemTick());
+        atexit(ExitWireless);
+    }
+    /* Internet play: the relay built in (CTR_WL_DEFAULT_RELAY, "host:port", empty for none) and its public room, or a file
+     * `sdmc:/3ds/twinembers/online.cfg` with `relay=host[:port]` and `code=...` lines for another relay or a private room
+     * (docs/WL-RELAY-PROTOCOL.md). The MULTIPLAYER option picks between it and the local radio; without sockets the console stays on the
+     * local radio. */
+    LocalPlayChanged(CtrSettings_LocalPlay());     /* MULTIPLAYER and ONLINE ROOM as they were left */
+    CtrOptions_SetLocalPlayHook(LocalPlayChanged);
+    if (!CtrWl_LoadConfig("sdmc:/3ds/twinembers/online.cfg") && CTR_WL_DEFAULT_RELAY[0])
+    {
+        char host[64];
+        const char *colon = strrchr(CTR_WL_DEFAULT_RELAY, ':');
+        size_t n = colon ? (size_t)(colon - CTR_WL_DEFAULT_RELAY) : strlen(CTR_WL_DEFAULT_RELAY);
+
+        if (n < sizeof(host))
+        {
+            memcpy(host, CTR_WL_DEFAULT_RELAY, n);
+            host[n] = 0;
+            CtrWl_SetInternet(host, colon ? (uint16_t)strtoul(colon + 1, NULL, 10) : 0, CTR_WL_PUBLIC_ROOM);
+        }
+    }
+    if (CtrWl_HasRelay())
+    {
+        void *socBuffer = memalign(0x1000, 0x20000);
+
+        if (socBuffer != NULL && R_SUCCEEDED(socInit(socBuffer, 0x20000)))
+        {
+            atexit(ExitSockets);
+            CtrLog_Write(CTR_LOG_GAME, "internet play: relay configured%s", CtrSettings_LocalPlay() ? " (local play chosen)" : "");
+        }
+        else
+        {
+            CtrWl_SetInternet(NULL, 0, NULL);
+            CtrLog_Write(CTR_LOG_GAME, "internet play: sockets unavailable, local radio only");
+        }
+    }
     CtrPerf_SetMemory(gGbaShadow.vram, gGbaShadow.pltt, gGbaShadow.oam);
     CtrPerf_Init(SYSCLOCK_ARM11, (uintptr_t)AgbMain);
     KeepGameAtStart();

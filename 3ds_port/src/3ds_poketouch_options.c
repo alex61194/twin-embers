@@ -1,4 +1,7 @@
 /* The native OPTIONS screen's rows (see 3ds_poketouch_options.h). */
+#ifdef __DEVKITARM__
+#include <3ds.h>                                  /* ps:ps, the console's random generator, for NEW */
+#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -30,13 +33,16 @@ static const char *const sHourName[HOUR_COUNT] = {
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
     "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
 };
-static const char *const sEmbers[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Low", "Bajo", "Wenig"), CTR_TR("High", "Alto", "Viel")};     /* CTR_EMBERS_* */
 /* EXP SHARE: who gets experience (HALF: the whole team shares as if each held an EXP. SHARE; FULL: every Pokemon that can
  * still fight gets the share of one that fought). */
 static const char *const sRandTargetName[] = {CTR_TR("Both", "Ambos", "Beide"), CTR_TR("Wild", "Salvajes", "Wilde"), CTR_TR("Trainers", "Rivales", "Trainer")};
 static const char *const sExpShare[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Half", "Mitad", "Halb"), CTR_TR("Full", "Toda", "Voll")};
 /* COMPANION: the first Pokemon walks behind the player (FOLLOW), or the player is that Pokemon (BE IT). */
-static const char *const sCompanion[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
+/* MULTIPLAYER: online through the relay, or the console's own radio with someone nearby. */
+static const char *const sMultiplayer[] = {CTR_TR("Online", "Online", "Online"), CTR_TR("Local", "Local", "Lokal")};
+/* ONLINE ROOM: the relay's public room, or the private room of a six-digit code (typed on the keypad). */
+static const char *const sRoomKind[] = {CTR_TR("Public", "P\xC3\xBA" "blica", "\xC3\x96" "ffentlich"), CTR_TR("Private", "Privada", "Privat")};
+static const char *const sCompanion[] ={CTR_TR("Off", "No", "Aus"), CTR_TR("Follow", "Sigue", "Folgt"), CTR_TR("Be it", "Ser", "Selbst")};
 
 /* WILD POKEMON, WILD DISPLAY and AGGRESSIVE (the Wilds page): the visible wild Pokemon of the overworld (3ds_wilds_core.h). */
 static const char *const sWildDensity[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Few", "Pocos", "Wenig"), CTR_TR("Normal", "Normal", "Normal"), CTR_TR("Many", "Muchos", "Viele")};
@@ -44,28 +50,32 @@ static const char *const sWildDisplay[] = {CTR_TR("Pokemon", "Pok\xC3\xA9mon", "
 static const char *const sWildAggro[] = {CTR_TR("Off", "No", "Aus"), CTR_TR("Rare", "Raro", "Selten"), CTR_TR("Low", "Bajo", "Wenig"), CTR_TR("Moderate", "Medio", "Mittel"),
                                          CTR_TR("High", "Alto", "Viel")};
 
-static int sPortTypeMatchup;
-static int sPortMoveDetails;
-static int sPortDayNight;
-static int sPortHour = HOUR_DEFAULT;
+/* TRUCOS: the page of cheats. Each row is a small number kept by CtrSettings_Cheat (off until chosen). */
+static const char *const sShinyOdds[] = {CTR_TR("Normal", "Normal", "Normal"), "1/4096", "1/1024", "1/256", "1/64", "1/16", CTR_TR("Always", "Siempre", "Immer")};
+static const char *const sExpRate[] = {"x1", "x2", "x4", "x8"};
+/* The shiny odds a SHINY row value stands for, as the denominator of "1 in N" (the game's own are 8 in 65536, which is 1 in 8192). */
+static const unsigned kShinyDenominator[] = {0, 4096, 1024, 256, 64, 16, 1};
+
 static int sPortEmbers = CTR_EMBERS_HIGH;
 
 static int TwoCount(void) { return 2; }
-static int GetTypeMatchup(void) { return sPortTypeMatchup; }
-static void SetTypeMatchup(int v) { sPortTypeMatchup = v & 1; }
-static int GetMoveDetails(void) { return sPortMoveDetails; }
-static void SetMoveDetails(int v) { sPortMoveDetails = v & 1; }
-static int GetDayNight(void) { return sPortDayNight; }
+/* TYPE MATCHUP, MOVE DETAILS, DAY/NIGHT and HOUR are kept in settings.cfg as the other port rows are: a player who turned them off or
+ * fixed the hour must not find them back at their defaults on the next start. The values are the rows' own (0 is ON, as in the switches). */
+static int GetTypeMatchup(void) { return CtrSettings_TypeMatchup(); }
+static void SetTypeMatchup(int v) { CtrSettings_SetTypeMatchup(v & 1); }
+static int GetMoveDetails(void) { return CtrSettings_MoveDetails(); }
+static void SetMoveDetails(int v) { CtrSettings_SetMoveDetails(v & 1); }
+static int GetDayNight(void) { return CtrSettings_DayNight(); }
 static int DayNightCount(void) { return DAY_NIGHT_COUNT; }
-static void SetDayNight(int v) { sPortDayNight = v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v; }
-static int GetHour(void) { return sPortHour; }
+static void SetDayNight(int v) { CtrSettings_SetDayNight(v < 0 || v >= DAY_NIGHT_COUNT ? DAY_NIGHT_CLOCK : v); }
+static int GetHour(void) { return CtrSettings_Hour(); }
 static int HourCount(void) { return HOUR_COUNT; }
 /* Choosing an hour is choosing to use it: DAY/NIGHT moves to FIXED unless it is OFF. */
 static void SetHour(int v)
 {
-    sPortHour = v < 0 || v >= HOUR_COUNT ? HOUR_DEFAULT : v;
-    if (sPortDayNight == DAY_NIGHT_CLOCK)
-        sPortDayNight = DAY_NIGHT_FIXED;
+    CtrSettings_SetHour(v < 0 || v >= HOUR_COUNT ? HOUR_DEFAULT : v);
+    if (CtrSettings_DayNight() == DAY_NIGHT_CLOCK)
+        CtrSettings_SetDayNight(DAY_NIGHT_FIXED);
 }
 static int ThreeCount(void) { return 3; }
 /* 0 is ON, as in the other switches' tables; kept in settings.cfg. */
@@ -96,13 +106,146 @@ static void SurfNamesFill(void)
 {
     int n = CtrSurf_Count();
 
-    sSurfNames[0] = CTR_TR("Default", "Normal", "Standard");
+    /* A pack made without the Builder's surf blobs has none to choose: the row says so instead of looking as if a touch did nothing. */
+    sSurfNames[0] = n ? CTR_TR("Default", "Normal", "Standard") : CTR_TR("No data", "Sin datos", "Keine Daten");
     for (int i = 0; i < n; ++i)
         sSurfNames[1 + i] = CtrSurf_Name(i);
 }
 static int SurfCount(void) { SurfNamesFill(); return 1 + CtrSurf_Count(); }
 static int GetSurf(void) { SurfNamesFill(); return CtrSurf_Chosen() + 1; }
 static void SetSurf(int v) { CtrSurf_Choose(v - 1); }
+static void (*sLocalPlayHook)(int);
+void CtrOptions_SetLocalPlayHook(void (*hook)(int local)) { sLocalPlayHook = hook; }
+static int GetLocalPlay(void) { return CtrSettings_LocalPlay(); }
+static void SetLocalPlay(int v)
+{
+    CtrSettings_SetLocalPlay(v & 1);
+    if (sLocalPlayHook)
+        sLocalPlayHook(v & 1);              /* the radio takes it from the next session on */
+}
+/* The keypad of the private room's code (CtrPokeTouchPad): what is typed and the key under a held touch. */
+static struct {
+    int on, len, down, key, inside;
+    char code[PT_PAD_DIGITS + 1];
+} sPad;
+
+static void MultiplayerChanged(void)
+{
+    if (sLocalPlayHook)
+        sLocalPlayHook(CtrSettings_LocalPlay());    /* the radio takes the room (and the radio) from the next session on */
+}
+
+static void PadOpen(void)
+{
+    memset(&sPad, 0, sizeof(sPad));
+    sPad.on = 1;
+    sPad.key = -1;
+}
+
+static int GetRoomKind(void) { return CtrSettings_PrivateRoom(); }
+/* PRIVATE with no code yet asks for one first (the keypad; the room is private once it is OK'd); PUBLIC is at once. */
+static void SetRoomKind(int v)
+{
+    if ((v & 1) && !CtrSettings_RoomCode()[0]) {
+        PadOpen();
+        return;
+    }
+    CtrSettings_SetPrivateRoom(v & 1);
+    if (!(v & 1))
+        CtrSettings_AckRoomCodeDropped();       /* PUBLIC chosen on purpose: the note about the dropped code has been read */
+    MultiplayerChanged();
+}
+
+int CtrOptions_PadOn(void) { return sPad.on; }
+
+/* OPTIONS left without OK or CANCEL (the sidebar, a battle): the keypad must not come back with the old digits. */
+void CtrOptions_PadClose(void)
+{
+    memset(&sPad, 0, sizeof(sPad));
+    sPad.key = -1;
+}
+
+/* The random bytes of NEW: the console's generator (ps:ps); a test gives its own. None: no code is made (false). */
+static int (*sRandomSource)(uint8_t *out, size_t n);
+
+void CtrOptions_SetRandomSource(int (*source)(uint8_t *out, size_t n))
+{
+    sRandomSource = source;
+}
+
+static int RandomBytes(uint8_t *out, size_t n)
+{
+    if (sRandomSource)
+        return sRandomSource(out, n);
+#ifdef __DEVKITARM__
+    if (R_SUCCEEDED(psInit())) {
+        int ok = R_SUCCEEDED(PS_GenerateRandomBytes(out, n));
+
+        psExit();
+        return ok;
+    }
+#endif
+    return 0;
+}
+
+/* NEW: a code made of random bytes, put in the boxes (a few tries: the bytes can make a code that is refused, as rarely as one in a few hundred). */
+static void PadNewCode(void)
+{
+    for (int tries = 0; tries < 8; ++tries) {
+        uint8_t bytes[48];
+        char code[PT_PAD_DIGITS + 1];
+
+        if (!RandomBytes(bytes, sizeof(bytes)))
+            return;                                 /* no generator: the boxes stay as they were */
+        if (CtrSettings_MakeRoomCode(code, bytes, sizeof(bytes))) {
+            memcpy(sPad.code, code, sizeof(code));
+            sPad.len = PT_PAD_DIGITS;
+            memset(bytes, 0, sizeof(bytes));
+            return;
+        }
+    }
+}
+
+static void PadKey(int key)
+{
+    if (key >= 0 && key <= 9 && sPad.len < PT_PAD_DIGITS) {
+        sPad.code[sPad.len++] = (char)('0' + key);
+        sPad.code[sPad.len] = 0;
+    } else if (key == PT_PAD_KEY_DELETE && sPad.len > 0)
+        sPad.code[--sPad.len] = 0;
+    else if (key == PT_PAD_KEY_NEW)
+        PadNewCode();
+    else if (key == PT_PAD_KEY_OK && sPad.len == PT_PAD_DIGITS && CtrSettings_RoomCodeOk(sPad.code)) {
+        CtrSettings_SetRoomCode(sPad.code);
+        CtrSettings_SetPrivateRoom(1);
+        sPad.on = 0;
+        MultiplayerChanged();
+    } else if (key == PT_PAD_KEY_CANCEL)
+        sPad.on = 0;
+}
+
+void CtrOptions_PadTouch(int touchDown, int touchActive, int key)
+{
+    if (!sPad.on)
+        return;
+    if (touchDown) {
+        sPad.down = 1;
+        sPad.key = key;
+        sPad.inside = key >= 0;
+        return;
+    }
+    if (!sPad.down)
+        return;
+    if (touchActive) {
+        sPad.inside = key >= 0 && key == sPad.key;
+        return;
+    }
+    if (sPad.inside)
+        PadKey(sPad.key);           /* on release over the key that was touched, as the rows do */
+    sPad.down = sPad.inside = 0;
+    sPad.key = -1;
+}
+
 static int GetFreeHm(void) { return !CtrSettings_FreeHm(); }
 static void SetFreeHm(int v) { CtrSettings_SetFreeHm(!(v & 1)); }
 static int GetRandomlocke(void) { return !CtrSettings_Randomlocke(); }
@@ -129,21 +272,37 @@ static void SetWildDisplay(int v) { CtrSettings_SetWildSilhouette(v); }
 static int GetWildAggro(void) { return CtrSettings_WildAggro(); }
 static int WildAggroCount(void) { return CTRW_AGGROS; }
 static void SetWildAggro(int v) { CtrSettings_SetWildAggro(v); }
+static int CheatCount(int id) { return CtrSettings_CheatMax(id) + 1; }
+static int GetCheatCatch(void) { return !CtrSettings_Cheat(CTR_CHEAT_CATCH); }      /* 0 is ON, as in the other switches */
+static void SetCheatCatch(int v) { CtrSettings_SetCheat(CTR_CHEAT_CATCH, !(v & 1)); }
+static int CheatCatchCount(void) { return CheatCount(CTR_CHEAT_CATCH); }
+static int GetCheatShiny(void) { return CtrSettings_Cheat(CTR_CHEAT_SHINY); }
+static void SetCheatShiny(int v) { CtrSettings_SetCheat(CTR_CHEAT_SHINY, v); }
+static int CheatShinyCount(void) { return CheatCount(CTR_CHEAT_SHINY); }
+static int GetCheatNoEnc(void) { return !CtrSettings_Cheat(CTR_CHEAT_NOENC); }      /* 0 is ON, as in the other switches */
+static void SetCheatNoEnc(int v) { CtrSettings_SetCheat(CTR_CHEAT_NOENC, !(v & 1)); }
+static int CheatNoEncCount(void) { return CheatCount(CTR_CHEAT_NOENC); }
+static int GetCheatWalls(void) { return !CtrSettings_Cheat(CTR_CHEAT_WALLS); }      /* 0 is ON, as in the other switches */
+static void SetCheatWalls(int v) { CtrSettings_SetCheat(CTR_CHEAT_WALLS, !(v & 1)); }
+static int CheatWallsCount(void) { return CheatCount(CTR_CHEAT_WALLS); }
+static int GetCheatExp(void) { return CtrSettings_Cheat(CTR_CHEAT_EXP); }
+static void SetCheatExp(int v) { CtrSettings_SetCheat(CTR_CHEAT_EXP, v); }
+static int CheatExpCount(void) { return CheatCount(CTR_CHEAT_EXP); }
+static int GetCheatPp(void) { return !CtrSettings_Cheat(CTR_CHEAT_PP); }      /* 0 is ON, as in the other switches */
+static void SetCheatPp(int v) { CtrSettings_SetCheat(CTR_CHEAT_PP, !(v & 1)); }
+static int CheatPpCount(void) { return CheatCount(CTR_CHEAT_PP); }
+static int GetCheatFlee(void) { return !CtrSettings_Cheat(CTR_CHEAT_FLEE); }      /* 0 is ON, as in the other switches */
+static void SetCheatFlee(int v) { CtrSettings_SetCheat(CTR_CHEAT_FLEE, !(v & 1)); }
+static int CheatFleeCount(void) { return CheatCount(CTR_CHEAT_FLEE); }
 static int GetTmReuse(void) { return !CtrSettings_TmReuse(); }
 static void SetTmReuse(int v) { CtrSettings_SetTmReuse(!(v & 1)); }
 static int GetExpShare(void) { return CtrSettings_ExpShare(); }
 static void SetExpShare(int v) { CtrSettings_SetExpShare(v); }
-static int GetEmbers(void) { return sPortEmbers; }
-static void SetEmbers(int v)
-{
-    sPortEmbers = v < 0 || v >= CTR_EMBERS_COUNT ? CTR_EMBERS_HIGH : v;
-    CtrSettings_SetEmbers(sPortEmbers);     /* kept for the next session; the file is written only on a change */
-}
 
-int CtrOptions_TypeMatchup(void) { return sPortTypeMatchup == 0; }
-int CtrOptions_MoveDetails(void) { return sPortMoveDetails == 0; }
-int CtrOptions_DayNight(void) { return sPortDayNight != DAY_NIGHT_OFF; }
-int CtrOptions_DayNightSecond(void) { return sPortDayNight == DAY_NIGHT_FIXED ? sPortHour * HOUR_STEP_SECONDS : -1; }
+int CtrOptions_TypeMatchup(void) { return CtrSettings_TypeMatchup() == 0; }
+int CtrOptions_MoveDetails(void) { return CtrSettings_MoveDetails() == 0; }
+int CtrOptions_DayNight(void) { return CtrSettings_DayNight() != DAY_NIGHT_OFF; }
+int CtrOptions_DayNightSecond(void) { return CtrSettings_DayNight() == DAY_NIGHT_FIXED ? CtrSettings_Hour() * HOUR_STEP_SECONDS : -1; }
 int CtrOptions_Embers(void) { return sPortEmbers != CTR_EMBERS_OFF; }
 int CtrOptions_EmbersLow(void) { return sPortEmbers == CTR_EMBERS_LOW; }
 int CtrOptions_RepelAgain(void) { return CtrSettings_RepelAgain(); }
@@ -162,6 +321,47 @@ int CtrOptions_RandomWild(void) { return CtrSettings_Randomlocke() && CtrSetting
 int CtrOptions_RandomTrainers(void) { return CtrSettings_Randomlocke() && CtrSettings_RandomTarget() != 1; }
 int CtrOptions_NuzSetMode(void) { return CtrSettings_Nuzlocke() && CtrSettings_NuzSet(); }
 int CtrOptions_FreeHm(void) { return CtrSettings_FreeHm(); }
+int CtrOptions_SureCatch(void) { return CtrSettings_Cheat(CTR_CHEAT_CATCH); }
+int CtrOptions_NoEncounters(void) { return CtrSettings_Cheat(CTR_CHEAT_NOENC); }
+int CtrOptions_WalkThroughWalls(void) { return CtrSettings_Cheat(CTR_CHEAT_WALLS); }
+int CtrOptions_InfinitePp(void) { return CtrSettings_Cheat(CTR_CHEAT_PP); }
+int CtrOptions_AlwaysFlee(void) { return CtrSettings_Cheat(CTR_CHEAT_FLEE); }
+int CtrOptions_ShinyOdds(void) { return CtrSettings_Cheat(CTR_CHEAT_SHINY); }
+
+unsigned CtrOptions_ScaleExp(unsigned exp)
+{
+    unsigned scaled = exp << CtrSettings_Cheat(CTR_CHEAT_EXP);      /* x1, x2, x4, x8 */
+
+    return scaled > 0xFFFFu ? 0xFFFFu : scaled;                     /* the game keeps experience gains in 16 bits */
+}
+
+/* SHINY ODDS: a creature that was not shiny gets a personality that is, with the chance the row says. The game's own odds stay: a shiny one is
+ * left as it is. The new personality keeps the low byte (the gender and the ability's bit) and the nature (personality mod 25) of the old one, and
+ * is found by trying the 65536 high halves of the personality with the 8 low halves that make a shiny one of each; about 80 of the 524288 fit, so
+ * the first one is found after a few thousand tries. `roll` is 32 random bits, used both for the chance and for where the search starts. */
+uint32_t CtrOptions_ShinyPersonality(uint32_t personality, uint32_t otId, uint32_t roll)
+{
+    int odds = CtrSettings_Cheat(CTR_CHEAT_SHINY);
+    uint32_t ids = ((otId >> 16) ^ otId) & 0xFFFFu;
+
+    if (odds < 1 || odds >= (int)(sizeof(kShinyDenominator) / sizeof(kShinyDenominator[0])))
+        return personality;
+    if (((((personality >> 16) ^ personality) & 0xFFFFu) ^ ids) < 8)
+        return personality;                         /* already shiny */
+    if ((roll >> 16) % kShinyDenominator[odds] != 0)
+        return personality;
+    for (uint32_t n = 0; n < 0x10000u; ++n) {
+        uint32_t high = ((roll & 0xFFFFu) + n) & 0xFFFFu;
+
+        for (uint32_t k = 0; k < 8; ++k) {
+            uint32_t candidate = (high << 16) | ((high ^ ids ^ k) & 0xFFFFu);
+
+            if ((candidate & 0xFFu) == (personality & 0xFFu) && candidate % 25u == personality % 25u)
+                return candidate;
+        }
+    }
+    return personality;
+}
 
 /* The legendary and mythical species of the pool (FireRed's numbers): the birds, Mewtwo, Mew, the beasts, Lugia, Ho-Oh, Celebi and Hoenn's
  * Regis, Kyogre, Groudon, Rayquaza, Latias, Latios, Jirachi and Deoxys. */
@@ -208,15 +408,17 @@ static const CtrOptionRow sRows[] = {
     {CTR_TR("Sound", "Sonido", "Ton"), {CTR_TR("Mono or stereo sound.", "Sonido mono o est\xC3\xA9reo.", "Mono oder Stereo."), ""}, PT_OPT_SOUND, sSound, NULL, NULL, NULL, NULL},
     {CTR_TR("Button mode", "Modo botones", "Tastenmodus"), {CTR_TR("What L and R do:", "Qu\xC3\xA9 hacen L y R:", "Funktion von L und R:"), CTR_TR("Help, LR or L=A.", "Ayuda, LR o L=A.", "Hilfe, LR oder L=A.")}, PT_OPT_BUTTON_MODE, sButtonMode, NULL,
      NULL, NULL, NULL},
-    /* Graphics, page 1: the screen and what moves on it. */
+    {CTR_TR("Multiplayer", "Multijugador", "Mehrspieler"), {CTR_TR("Online: on the internet.", "Online: por internet.", "Online: \xC3\xBC" "bers Internet."),
+     CTR_TR("Local: someone nearby.", "Local: alguien cerca.", "Lokal: jemand nahebei.")}, 0, sMultiplayer, NULL, GetLocalPlay, TwoCount, SetLocalPlay},
+    {CTR_TR("Online room", "Sala online", "Online-Raum"), {CTR_TR("Public: everyone online.", "P\xC3\xBA" "blica: todos online.", "\xC3\x96" "ffentlich: alle online."),
+     CTR_TR("Private: a shared code.", "Privada: con un c\xC3\xB3" "digo.", "Privat: mit einem Code.")}, 0, sRoomKind, NULL, GetRoomKind, TwoCount, SetRoomKind},
+    /* Graphics, page 1: the screen and what moves on it (the Poke Ball style is the only one: no STYLE row, and no EMBERS, which only it had). */
     {CTR_TR("Frame", "Marco", "Fenster"), {CTR_TR("Menus, Yes/No", "Men\xC3\xBAs y S\xC3\xAD/No", "Men\xC3\xBC-Rahmen"), CTR_TR("box frame.", "su marco.", "und JA/NEIN.")}, PT_OPT_FRAME, NULL, CTR_TR("Type", "Tipo", "Typ"), NULL, NULL, NULL},
     {CTR_TR("FPS counter", "Contador FPS", "FPS-Anzeige"), {CTR_TR("Show the frames per", "Muestra las im\xC3\xA1genes por", "Bilder pro Sekunde"), CTR_TR("second up top.", "segundo arriba.", "oben anzeigen.")}, PT_OPT_FPS, sFps, NULL, NULL, NULL, NULL},
     {CTR_TR("Day/Night", "D\xC3\xAD" "a/Noche", "Tag/Nacht"), {CTR_TR("The 3DS clock, the Hour", "Hora de la 3DS, la Hora", "3DS-Uhrzeit, die Stunde"), CTR_TR("below, or Off.", "de abajo, u Off.", "unten, oder Aus.")}, 0, sDayNight, NULL,
      GetDayNight, DayNightCount, SetDayNight},
     {CTR_TR("Hour", "Hora", "Stunde"), {CTR_TR("The hour outdoors when", "La hora fuera si", "Uhrzeit in der Oberwelt,"), CTR_TR("Day/Night is Fixed.", "D\xC3\xAD" "a/Noche est\xC3\xA1 en Fija.", "bei TAG/NACHT FEST.")}, 0, sHourName, NULL,
      GetHour, HourCount, SetHour},
-    {CTR_TR("Embers", "Ascuas", "Funken"), {CTR_TR("Sparks behind the menus.", "Chispas tras los men\xC3\xBAs.", "Funken hinter den Men\xC3\xBCs."), CTR_TR("Low suits an Old 3DS.", "Bajo sirve en Old 3DS.", "Wenig passt f\xC3\xBCr Old 3DS.")}, 0, sEmbers, NULL,
-     GetEmbers, ThreeCount, SetEmbers},
     {CTR_TR("Companion", "Acompa\xC3\xB1" "ante", "Begleiter"), {CTR_TR("A Pokemon follows you,", "Un Pok\xC3\xA9mon te sigue,", "Ein Pok\xC3\xA9mon folgt dir,"), CTR_TR("or you become one.", "o t\xC3\xBA eres ese Pok\xC3\xA9mon.", "oder du bist es selbst.")}, 0, sCompanion, NULL,
      GetCompanion, ThreeCount, SetCompanion},
     /* Graphics, page 2: the looks (a preview card takes the rows it does not use). */
@@ -226,7 +428,7 @@ static const CtrOptionRow sRows[] = {
      GetLookLeaf, LookCount, SetLookLeaf},
     {CTR_TR("Rival look", "Aspecto rival", "Rivalen-Look"), {CTR_TR("Blue's look, from the", "El aspecto de Azul, de", "Blaus Aussehen, aus"), CTR_TR("alternative looks.", "los aspectos extra.", "aus den Builder-Looks.")}, 0, sLookNames, NULL,
      GetLookBlue, LookCount, SetLookBlue},
-    {CTR_TR("Surf Pokemon", "Pok\xC3\xA9mon surf", "Surf-Pok\xC3\xA9mon"), {CTR_TR("The Pokemon you surf on,", "El Pok\xC3\xA9mon sobre el que", "Das Pok\xC3\xA9mon, auf dem du"), CTR_TR("from the alternative ones.", "surfeas, de los extra.", "surfst, aus den Builder-Looks.")}, 0, sSurfNames, NULL,
+    {CTR_TR("Surf Pokemon", "Pok\xC3\xA9mon surf", "Surf-Pok\xC3\xA9mon"), {CTR_TR("The Pokemon you surf on,", "El Pok\xC3\xA9mon sobre el que", "Das Pok\xC3\xA9mon, auf dem du"), CTR_TR("from the extra ones.", "surfeas, de los extra.", "surfst, aus den Extras.")}, 0, sSurfNames, NULL,
      GetSurf, SurfCount, SetSurf},
     /* Graphics, page 3: the wild Pokemon that are seen in the overworld. */
     {CTR_TR("Wild Pokemon", "Salvajes", "Wilde Pok\xC3\xA9mon"), {CTR_TR("How many wild Pokemon", "Cu\xC3\xA1ntos Pok\xC3\xA9mon salvajes", "Wie viele wilde Pok\xC3\xA9mon"), CTR_TR("walk about the map.", "andan por el mapa.", "auf der Karte laufen.")}, 0,
@@ -261,25 +463,40 @@ static const CtrOptionRow sRows[] = {
      GetNuzSet, TwoCount, SetNuzSet},
     {CTR_TR("Randomlocke", "Randomlocke", "Randomlocke"), {CTR_TR("Wild and trainer Pokemon", "Salvajes y entrenadores", "Wilde und gegnerische"), CTR_TR("are random species.", "con especies al azar.", "Pok\xC3\xA9mon sind zuf\xC3\xA4llig.")}, 0, sFps, NULL,
      GetRandomlocke, TwoCount, SetRandomlocke},
-    {CTR_TR("Random for", "Azar en", "Zufall f\xC3\xBCr"), {CTR_TR("Who is random: both,", "Qui\xC3\xA9n es aleatorio:", "Wer zuf\xC3\xA4llig ist: beide,"), CTR_TR("wild or trainers.", "ambos, salvajes o rivales.", "Wilde oder Trainer.")}, 0, sRandTargetName, NULL,
+    {CTR_TR("Random for", "Azar en", "Zufall f\xC3\xBCr"), {CTR_TR("Who is random: both,", "Qui\xC3\xA9n es aleatorio:", "Wer zuf\xC3\xA4llig ist: beide,"), CTR_TR("wild or trainers.", "ambos, salvajes, rivales", "Wilde oder Trainer.")}, 0, sRandTargetName, NULL,
      GetRandTarget, ThreeCount, SetRandTarget},
     {CTR_TR("Legendaries", "Legendarios", "Legend\xC3\xA4re"), {CTR_TR("Allow legendary species", "Permite especies", "Legend\xC3\xA4re Arten sind"), CTR_TR("among the random ones.", "legendarias al azar.", "unter den zuf\xC3\xA4lligen.")}, 0, sFps, NULL,
      GetRandLegend, TwoCount, SetRandLegend},
+    /* Cheats: a page of its own, off until chosen. */
+    {CTR_TR("Sure catch", "Captura segura", "Sicherer Fang"), {CTR_TR("Every Poke Ball catches", "Toda bola captura al", "Jeder Ball f\xC3\xA4ngt das"), CTR_TR("the wild Pokemon.", "Pok\xC3\xA9mon salvaje.", "wilde Pok\xC3\xA9mon.")}, 0, sFps, NULL,
+     GetCheatCatch, CheatCatchCount, SetCheatCatch},
+    {CTR_TR("Shiny odds", "Prob. shiny", "Shiny-Chance"), {CTR_TR("The chance that a new", "La probabilidad de que", "Chance, dass ein neues"), CTR_TR("Pokemon is shiny.", "un Pok\xC3\xA9mon sea shiny.", "Pok\xC3\xA9mon schillert.")}, 0, sShinyOdds, NULL,
+     GetCheatShiny, CheatShinyCount, SetCheatShiny},
+    {CTR_TR("No encounters", "Sin encuentros", "Keine Begegn."), {CTR_TR("No wild Pokemon appear", "No aparecen Pok\xC3\xA9mon", "Keine wilden Pok\xC3\xA9mon"), CTR_TR("in grass or caves.", "en hierba ni cuevas.", "in Gras und H\xC3\xB6hlen.")}, 0, sFps, NULL,
+     GetCheatNoEnc, CheatNoEncCount, SetCheatNoEnc},
+    {CTR_TR("Through walls", "Atrav. paredes", "Durch W\xC3\xA4nde"), {CTR_TR("Walk through walls and", "Camina a trav\xC3\xA9s de", "Durch W\xC3\xA4nde und"), CTR_TR("objects, not the edge.", "paredes y objetos.", "Objekte laufen.")}, 0, sFps, NULL,
+     GetCheatWalls, CheatWallsCount, SetCheatWalls},
+    {CTR_TR("EXP rate", "Ritmo EXP", "EP-Rate"), {CTR_TR("The experience of a won", "La EXP de un combate", "Die EP eines Kampfes"), CTR_TR("battle, times 1 to 8.", "ganado, por 1 a 8.", "mal 1 bis 8.")}, 0, sExpRate, NULL,
+     GetCheatExp, CheatExpCount, SetCheatExp},
+    {CTR_TR("Infinite PP", "PP infinitos", "Unendl. PP"), {CTR_TR("Your moves never lose", "Tus ataques nunca", "Deine Attacken verlieren"), CTR_TR("PP in battle.", "pierden PP.", "keine AP.")}, 0, sFps, NULL,
+     GetCheatPp, CheatPpCount, SetCheatPp},
+    {CTR_TR("Always flee", "Huida segura", "Immer fliehen"), {CTR_TR("Running away from a wild", "Huir de un Pok\xC3\xA9mon", "Die Flucht vor einem"), CTR_TR("Pokemon always works.", "salvaje siempre sale.", "wilden Pok\xC3\xA9mon klappt.")}, 0, sFps, NULL,
+     GetCheatFlee, CheatFleeCount, SetCheatFlee},
 };
 
 #define ROWS ((int)(sizeof(sRows) / sizeof(sRows[0])))
 
 /* The pages: the first row of each, then the end. The looks page is short on purpose: the look preview is a card in the rows a page
  * does not use. Four sections hold them: Settings, Graphics (three pages: the screen, the looks, the wild Pokemon), QoL and Nuzlocke (two pages: the rules and the Randomlocke). */
-enum { PAGE1 = 0, PAGE2 = 5, PAGE3 = 11, PAGE4 = 15, PAGE5 = 18, PAGE6 = 24, PAGE7 = 29 };
-static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, ROWS};
-static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3};
+enum { PAGE1 = 0, PAGE2 = 7, PAGE3 = 12, PAGE4 = 16, PAGE5 = 19, PAGE6 = 25, PAGE7 = 30, PAGE8 = 33 };
+static const uint8_t sPageStart[] = {PAGE1, PAGE2, PAGE3, PAGE4, PAGE5, PAGE6, PAGE7, PAGE8, ROWS};
+static const uint8_t sPageSection[] = {0, 1, 1, 1, 2, 3, 3, 4};
 #define PAGES ((int)(sizeof(sPageStart) / sizeof(sPageStart[0])) - 1)
-#define SECTIONS 4
-_Static_assert(PAGE7 < ROWS, "the last page has rows");
+#define SECTIONS 5
+_Static_assert(PAGE8 < ROWS, "the last page has rows");
 _Static_assert(sizeof(sPageSection) == PAGES, "a section for each page");
 _Static_assert(PAGE2 - PAGE1 <= PT_OPT_MAX && PAGE3 - PAGE2 <= PT_OPT_MAX && PAGE4 - PAGE3 <= PT_OPT_MAX && PAGE5 - PAGE4 <= PT_OPT_MAX
-               && PAGE6 - PAGE5 <= PT_OPT_MAX && PAGE7 - PAGE6 <= PT_OPT_MAX && ROWS - PAGE7 <= PT_OPT_MAX,
+               && PAGE6 - PAGE5 <= PT_OPT_MAX && PAGE7 - PAGE6 <= PT_OPT_MAX && PAGE8 - PAGE7 <= PT_OPT_MAX && ROWS - PAGE8 <= PT_OPT_MAX,
                "a page holds up to PT_OPT_MAX rows");
 
 int CtrOptions_PageCount(void) { return PAGES; }
@@ -289,7 +506,7 @@ const char *CtrOptions_PageName(int page)
     /* A page's own short name (it has to fit the PAGE button's 64 px): the looks page is a page of the Graphics section, and says so with its dot. */
     static const char *const names[] = {CTR_TR("Settings", "Ajustes", "Optionen"), CTR_TR("Graphics", "Gr\xC3\xA1" "ficos", "Grafik"),
                                         CTR_TR("Looks", "Aspectos", "Looks"), CTR_TR("Wilds", "Salvajes", "Wilde"), CTR_TR("QoL", "QoL", "QoL"),
-                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Random", "Azar", "Zufall")};
+                                        CTR_TR("Nuzlocke", "Nuzlocke", "Nuzlocke"), CTR_TR("Random", "Azar", "Zufall"), CTR_TR("Cheats", "Trucos", "Cheats")};
 
     _Static_assert(sizeof(names) / sizeof(names[0]) == PAGES, "one name for each page");
     return page >= 0 && page < PAGES ? names[page] : "";
@@ -389,7 +606,7 @@ int CtrOptions_IsLevels(int row)
 {
     const CtrOptionRow *r = CtrOptions_Row(row);
 
-    return r != NULL && (r->names == sEmbers || r->names == sCompanion || r->names == sExpShare);
+    return r != NULL && (r->names == sCompanion || r->names == sExpShare);
 }
 
 void CtrOptions_Set(int row, int value)
@@ -483,6 +700,8 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     v->options = 1;
     v->optPage = (uint8_t)page;
     v->optPageCount = (uint8_t)PAGES;
+    for (int i = 0; i < PAGES && i < (int)sizeof(v->optDotSection); ++i)
+        v->optDotSection[i] = sPageSection[i];
     {
         v->optSection = (uint8_t)CtrOptions_SectionOf(page);
         v->optSectionCount = SECTIONS;
@@ -527,4 +746,34 @@ void CtrOptions_Fill(CtrPokeTouchView *v, int selected)
     snprintf(v->bar[0], PT_BAR_LEN, "%s", sRows[selected].label);
     snprintf(v->bar[1], PT_BAR_LEN, "%s", sRows[selected].description[0]);
     snprintf(v->bar[2], PT_BAR_LEN, "%s", sRows[selected].description[1]);
+    /* ONLINE ROOM in a private room: the note says its code, and that a tap on the row changes it. */
+    if (sRows[selected].get == GetRoomKind && CtrSettings_PrivateRoom()) {
+        const char *code = CtrSettings_RoomCode();
+
+        snprintf(v->bar[1], PT_BAR_LEN, CTR_TR("Code %.4s %.4s %.4s %.4s.", "C\xC3\xB3" "digo %.4s %.4s %.4s %.4s.", "Code %.4s %.4s %.4s %.4s."), code, code + 4, code + 8, code + 12);
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Tap the row to change it.", "Toca la fila para cambiarlo.", "Zeile antippen: neu."));
+    }
+    /* ONLINE ROOM after an older build's code was dropped: say so, so that the public room is never entered without the player knowing. */
+    if (sRows[selected].get == GetRoomKind && !CtrSettings_PrivateRoom() && CtrSettings_RoomCodeDropped()) {
+        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("Old code removed: now PUBLIC.", "C\xC3\xB3" "digo viejo quitado: P\xC3\x9A" "BLICA.", "Alter Code entfernt: \xC3\x96" "FFENTLICH."));
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("Pick PRIVATE for a new code.", "Elige PRIVADA: c\xC3\xB3" "digo nuevo.", "PRIVAT w\xC3\xA4" "hlen: neuer Code."));
+    }
+    memset(&v->optPad, 0, sizeof(v->optPad));
+    if (sPad.on) {
+        v->optPad.on = 1;
+        v->optPad.len = (uint8_t)sPad.len;
+        v->optPad.ok = (uint8_t)CtrSettings_RoomCodeOk(sPad.code);
+        v->optPad.pressed = (int8_t)(sPad.down && sPad.inside ? sPad.key : -1);
+        memcpy(v->optPad.code, sPad.code, sizeof(v->optPad.code));
+        snprintf(v->bar[0], PT_BAR_LEN, "%s", CTR_TR("Private room", "Sala privada", "Privater Raum"));
+        snprintf(v->bar[1], PT_BAR_LEN, "%s", CTR_TR("NEW makes a code; your friends", "NUEVO crea un c\xC3\xB3" "digo; tus amigos", "NEU macht einen Code; Freunde"));
+        snprintf(v->bar[2], PT_BAR_LEN, "%s", CTR_TR("type the same 16 digits.", "ponen las mismas 16 cifras.", "tippen dieselben 16 Ziffern."));
+    }
+}
+
+/* A tap on a row's label (it only selects it): ONLINE ROOM in a private room opens the keypad for a new code. */
+void CtrOptions_Activate(int row)
+{
+    if (row >= 0 && row < ROWS && sRows[row].get == GetRoomKind && CtrSettings_PrivateRoom())
+        PadOpen();
 }

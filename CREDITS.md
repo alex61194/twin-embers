@@ -43,9 +43,9 @@
   look, shared by **kalarie** on PokéCommunity. The characters belong to Nintendo,
   Game Freak and Creatures; credit is not a license grant.
   The alternative looks (the Builder's `--alt-looks`, for the player to pick in the game: Ash, Gary, Silver, Gold, Brendan, May,
-  Green and Kris in their versions, and Harmony, Peach and Aang) are downloaded the same way; each is by the artists named in its credit in
+  Green and Kris in their versions, Harmony, Peach and Aang, and Hilbert, Hilda, Nate, Rosa and Red RGBY from Emerald Lens 1.2.0) are downloaded the same way; each is by the artists named in its credit in
   `builder/firered3ds_builder/gen4_looks.py` (kalarie, PKMNTrainerRick, Alan_Flygon, lichenprincess, FourLeafSunny,
-  GregarLink10, DiegoWT, LouLilie, richardPT, eykav, ChromeValiant, xlia_chanx, Slawter666, iamtrine, waterpixelart and others), and Team Aqua's Asset Repo for some. They
+  GregarLink10, DiegoWT (also Hilbert, Hilda, Nate and Rosa, HGSS style), hyo with Poffin_Case's overworlds (Red RGBY), LouLilie, richardPT, eykav, ChromeValiant, xlia_chanx, Slawter666, iamtrine, waterpixelart and others), and Team Aqua's Asset Repo for some. They
   are used with Elvie's permission (see [docs/THIRD-PARTY-ART.md](docs/THIRD-PARTY-ART.md)). The Pokemon to surf on come from the same download,
   by eMMe97 (Blastoise), Nolo33LP (Latias, Pikachu), Avara (Tentacruel), Hestia (Wailmer), EduarPokeN (Whiscash), Jordank and the
   contributors of the dynamic surf overworlds (Lapras, Dewgong, Ludicolo, Mantine, Pelipper).

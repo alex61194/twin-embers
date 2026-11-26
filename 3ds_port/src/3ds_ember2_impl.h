@@ -65,6 +65,7 @@
 #define EM2_PAGE_B UI_RGB(56, 168, 104)
 #define EM2_PAGE_C UI_RGB(168, 112, 208)
 #define EM2_PAGE_D UI_RGB(216, 90, 80)
+#define EM2_PAGE_E UI_RGB(224, 160, 48)            /* the Cheats page */
 #define EM2_DEX UI_RGB(224, 72, 58)                 /* the sections: DEX, POKEMON, BAG, CARD, SAVE / PC, OPTIONS */
 #define EM2_MON UI_RGB(60, 174, 88)
 #define EM2_BAG UI_RGB(60, 126, 224)
@@ -598,6 +599,8 @@ UI_FN void Em2Tint(int section, int chosen, uint16_t *top, uint16_t *bottom)
  * from the backdrop, not blended onto the canvas, so drawing it again changes nothing). Only the 2 px a piece owns. */
 UI_FN void Em2CardShadow(int x, int y, int w, int h)
 {
+    if (sStyleBall)
+        return;                                     /* flat pieces throw no shadow */
     int x0 = x + 3 < 0 ? 0 : x + 3, x1 = x + w - 3 > W ? W : x + w - 3;
 
     if (!sTsBgReady)
@@ -779,6 +782,13 @@ UI_FN void LlGradSlab(int x, int y, int w, int h, int sl, int sr, int corners, u
  * throws under it (two rows, from the backdrop's own pixels: only where the backdrop shows under it); LlWindowPlain is without it. */
 UI_FN void LlWindowPlain(int x, int y, int w, int h)
 {
+    if (sStyleBall) {                               /* a white card with a thin dark-red edge */
+        if (w >= 14 && h >= 14 && h <= H) {
+            UiRoundFill(x, y, w, h, 5, UI_RGB(150, 22, 26));
+            UiRoundFill(x + 2, y + 2, w - 4, h - 4, 4, UI_RGB(250, 250, 248));
+        }
+        return;
+    }
     /* Five nested rounded shapes (slate, white, sky blue, light blue, the paper's gradient), the inner ones over the outer: each pixel is
      * painted once, a column at a time. A column is its rows' colours top to bottom, built from where each shape starts and ends in it; the
      * columns the corners do not reach (all but the six at each end) are one image. */
@@ -1046,6 +1056,8 @@ UI_FN void LlTrayBar(int x, int y, int w, unsigned cur, unsigned max)
  * (so 2 px beyond it), following its corners (radius 5). The mockup's soft glow would leave the 2 px a piece owns: it is left out. */
 UI_FN void LlSelectRing(int x, int y, int w, int h)
 {
+    if (sStyleBall)
+        return;                                     /* the chosen piece is a white pill: no ring */
     for (int k = 1; k <= 2; ++k) {
         uint16_t c = k == 1 ? LL_RING_IN : LL_RING_OUT;
         int ow = w + 2 * k, oh = h + 2 * k, ox = x - k, oy = y - k;

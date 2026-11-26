@@ -944,6 +944,11 @@ def surfmon_index(mons: list[tuple[str, str, str]]) -> bytes:
     return b"G4S1\n" + "".join(lines).encode("ascii", "replace")
 
 
+# The sheets of the looks that were left out of the last pack because they are not in a shape the game reads ("folder/sheet: why"): a look's
+# fishing sheet drawn on 44 x 44 frames, say. A look keeps FireRed's own picture for a sheet it lacks, so one such sheet does not stop the pack.
+looks_skipped: list[str] = []
+
+
 def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes]]:
     """The pack entries of one player look, for any of the game's player slots (Red, Leaf, the rival): each sheet it has, in
     the pack's formats, under graphics/gen4/look/<folder>/ with the sheet's own name: the walking family and the Fly bird as
@@ -952,22 +957,27 @@ def look_entries(folder: str, sheets: dict[str, bytes]) -> list[tuple[str, bytes
     base = LOOK_PREFIX + folder + "/"
     out: list[tuple[str, bytes]] = []
     for sheet, data in sheets.items():
-        if sheet in PLAYER_SHEETS:
-            out.append((base + sheet + ".bin", convert_npc(data, PLAYER_SHEETS[sheet][1])))
-        elif sheet == "flyBird":
-            out.append((base + "flyBird.bin", convert_npc(data, 2, 64)))
-        elif sheet == "back":
-            out.append((base + "back.bin", convert_back(data)))
-        elif sheet == "front":
-            out.append((base + "front.bin", convert_front(data)))
-            tiles, colours = convert_gba_sprite(data, 64)
-            out += [(base + "front.4bpp", tiles), (base + "front.gbapal", colours)]
-        elif sheet == "intro":
-            tiles, colours = convert_intro(data)
-            out += [(base + "intro.8bpp", tiles), (base + "intro.gbapal", colours)]
-        elif sheet == "mapIcon":
-            tiles, colours = convert_gba_sprite(data, 16)
-            out += [(base + "icon.4bpp", tiles), (base + "icon.gbapal", colours)]
+        try:
+            if sheet in PLAYER_SHEETS:
+                out.append((base + sheet + ".bin", convert_npc(data, PLAYER_SHEETS[sheet][1])))
+            elif sheet == "flyBird":
+                out.append((base + "flyBird.bin", convert_npc(data, 2, 64)))
+            elif sheet == "back":
+                out.append((base + "back.bin", convert_back(data)))
+            elif sheet == "front":
+                out.append((base + "front.bin", convert_front(data)))
+                tiles, colours = convert_gba_sprite(data, 64)
+                out += [(base + "front.4bpp", tiles), (base + "front.gbapal", colours)]
+            elif sheet == "intro":
+                tiles, colours = convert_intro(data)
+                out += [(base + "intro.8bpp", tiles), (base + "intro.gbapal", colours)]
+            elif sheet == "mapIcon":
+                tiles, colours = convert_gba_sprite(data, 16)
+                out += [(base + "icon.4bpp", tiles), (base + "icon.gbapal", colours)]
+        except Gen4Error as error:
+            if sheet == "walk":
+                raise                       # a look without its walking sheet is not a look: the caller leaves it out
+            looks_skipped.append("%s/%s: %s" % (folder, sheet, error))
     return out
 
 
@@ -1145,6 +1155,7 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
                groups: tuple = GROUPS) -> tuple[list[tuple[str, bytes]], dict]:
     """The pack entries of the groups asked (HeartGold's pictures, the field's people): every
     species whose files could be had, the icons if all could, and a summary."""
+    looks_skipped.clear()
     rows = list(all_files(groups))
     got: dict[tuple, bytes] = {}
     downloaded = done = 0
@@ -1270,7 +1281,12 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
                 if row[0] == at and row[:3] in got and sheet not in sheets and sheet != "mapIcon":
                     sheets[sheet] = got[row[:3]]
         if "walk" in sheets:
-            look_files += look_entries(folder, sheets)
+            try:
+                entries = look_entries(folder, sheets)
+            except Gen4Error as error:
+                looks_skipped.append("%s: left out, %s" % (folder, error))
+                continue
+            look_files += entries
             looks_made += 1
             made.append((folder, name, gender, credit))
     if looks_made:
@@ -1315,5 +1331,5 @@ def pack_files(downloader: Downloader, progress: Callable[[int, int], None] | No
     files += player_files
     return files, {"species": species, "missing": missing, "icons": bool(icons), "trainers": len(trainer_files),
                    "backs": len(back_files), "npcs": len(npc_files),
-                   "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made, "surfmons": len(surf_made),
+                   "followers": len(follower_files), "hd": len(hd_files), "looks": looks_made, "surfmons": len(surf_made), "skipped": list(looks_skipped),
                    "player": len(player_files), "downloaded": downloaded}

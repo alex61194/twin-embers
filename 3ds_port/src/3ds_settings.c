@@ -20,6 +20,7 @@
 static unsigned sTurbo;
 static int sAutoRun;
 static int sEmbers = -1;
+static int sStyle = 1;       /* the lower screen's look: 1 Pokeball (the default), 0 Ascuas; only the choice of Ascuas is written (style=0) */
 static int sRepelAgain = 1;
 static int sCompanion;
 static char sLook[4][16];     /* look_red, look_leaf, look_blue, look_surf (the Pokemon to surf on) */
@@ -34,6 +35,16 @@ static int sNuzSet;         /* SET MODE: the battle style is Set while NUZLOCKE 
 static int sRandTarget;     /* RANDOM: 0 wild and trainers, 1 wild only, 2 trainers only */
 static int sRandNoLegend;   /* NO LEGENDARIES: the random species are never legendary */
 static int sFreeHm;
+static int sDayNight;       /* DAY/NIGHT: 0 CLOCK, 1 FIXED, 2 OFF (daynight=) */
+static int sHour = 24;      /* HOUR: FIXED's half hour, 24 is 12:00 (hour=) */
+static int sTypeMatchup;    /* TYPE MATCHUP: 0 shown, 1 hidden (typematchup=) */
+static int sMoveDetails;    /* MOVE DETAILS: 0 shown, 1 hidden (movedetails=) */
+static int sCheat[CTR_CHEAT_COUNT];      /* TRUCOS: cheatN= */
+static const uint8_t kCheatMax[CTR_CHEAT_COUNT] = {1, 6, 1, 1, 3, 1, 1};
+static int sPrivateRoom;    /* ONLINE ROOM: 1 private (the room of the code below) (privroom=) */
+static int sRoomNote;       /* a code from an older build was dropped and the player was not told yet (roomnote=) */
+static char sRoomCode[CTR_ROOM_CODE_DIGITS + 1];   /* the private room's code: its digits, "" when none was set (roomcode=) */
+static int sLocalPlay;      /* MULTIPLAYER: 0 Online (the relay), 1 Local (the console's own radio) (localplay=) */
 static int sWildDensity;    /* WILD POKEMON: 0 OFF, 1 FEW, 2 NORMAL, 3 MANY (visiblewilds=; an old 1 meant on) */
 static int sWildSil;        /* WILD DISPLAY: 0 Pokemon, 1 silhouette (wildsil=) */
 static int sWildAggro;      /* AGGRESSIVE: 0 OFF to 4 HIGH (wildaggro=) */
@@ -44,7 +55,7 @@ static int sLoaded;
  * truncating it on the SD card is what took 3.4 to 6.9 s (0.2.6 and 0.2.7 Old 3DS port.log, one freeze per START that
  * cycled the turbo), and the game froze for the whole of it even with the write on a thread of its own. A missing file
  * is created here, on the first read, which happens while the game starts. */
-#define SETTINGS_FILE_BYTES 512     /* was 256: the file grew to about 232 bytes in the worst case; a shorter old file reads as before */
+#define SETTINGS_FILE_BYTES 640     /* was 256, then 512: the file grew to about 232 bytes in the worst case, then 430 with the cheats, about 480 with DAY/NIGHT and its rows; a shorter old file reads as before */
 static FILE *sFile;
 
 static const char *const kLookKey[4] = {"look_red=", "look_leaf=", "look_blue=", "look_surf="};
@@ -74,11 +85,51 @@ static int LookLine(const char *line)
     return 0;
 }
 
+/* A room code is CTR_ROOM_CODE_DIGITS digits, at least six of them different; anything else (an older six-digit code too) is no code. */
+int CtrSettings_RoomCodeOk(const char *code)
+{
+    unsigned seen = 0, different = 0;
+    size_t n = 0;
+
+    if (!code)
+        return 0;
+    while (n < CTR_ROOM_CODE_DIGITS && code[n] >= '0' && code[n] <= '9')
+        seen |= 1u << (code[n++] - '0');
+    for (; seen; seen >>= 1)
+        different += seen & 1;
+    return n == CTR_ROOM_CODE_DIGITS && code[n] == 0 && different >= 6;
+}
+
+int CtrSettings_MakeRoomCode(char out[CTR_ROOM_CODE_DIGITS + 1], const uint8_t *random, size_t n)
+{
+    char code[CTR_ROOM_CODE_DIGITS + 1];
+    size_t made = 0;
+
+    for (size_t i = 0; i < n && made < CTR_ROOM_CODE_DIGITS; ++i)
+        if (random[i] < 250)
+            code[made++] = (char)('0' + random[i] % 10);
+    code[made] = 0;
+    if (made < CTR_ROOM_CODE_DIGITS || !CtrSettings_RoomCodeOk(code))
+        return 0;
+    memcpy(out, code, sizeof(code));
+    return 1;
+}
+
+static void RoomCodeSet(const char *text)
+{
+    if (CtrSettings_RoomCodeOk(text))
+        memcpy(sRoomCode, text, CTR_ROOM_CODE_DIGITS + 1);
+    else
+        sRoomCode[0] = 0;
+}
+
+static void Save(void);
+
 static void Load(void)
 {
     char line[64];
     FILE *file;
-    int wildRaw = 0, haveSil = 0, haveAggro = 0;
+    int wildRaw = 0, haveSil = 0, haveAggro = 0, sawBadCode = 0;
 
     if (sLoaded)
         return;
@@ -99,6 +150,8 @@ static void Load(void)
             sAutoRun = value != 0;
         else if (sscanf(line, "embers=%u", &value) == 1)
             sEmbers = value <= 2 ? (int)value : -1;
+        else if (sscanf(line, "style=%u", &value) == 1)
+            sStyle = value <= 1 ? (int)value : 1;           /* a damaged value is the default */
         else if (sscanf(line, "repel=%u", &value) == 1)
             sRepelAgain = value != 0;
         else if (sscanf(line, "companion=%u", &value) == 1)
@@ -125,6 +178,33 @@ static void Load(void)
             sRandNoLegend = value != 0;
         else if (sscanf(line, "freehm=%u", &value) == 1)
             sFreeHm = value != 0;
+        else if (sscanf(line, "daynight=%u", &value) == 1)
+            sDayNight = value <= 2 ? (int)value : 0;
+        else if (sscanf(line, "hour=%u", &value) == 1)
+            sHour = value < 48 ? (int)value : 24;
+        else if (sscanf(line, "typematchup=%u", &value) == 1)
+            sTypeMatchup = value != 0;
+        else if (sscanf(line, "movedetails=%u", &value) == 1)
+            sMoveDetails = value != 0;
+        else if (strncmp(line, "cheat", 5) == 0 && line[5] >= '0' && line[5] < '0' + CTR_CHEAT_COUNT && sscanf(line + 6, "=%u", &value) == 1)
+            sCheat[line[5] - '0'] = value <= kCheatMax[line[5] - '0'] ? (int)value : 0;
+        else if (sscanf(line, "localplay=%u", &value) == 1)
+            sLocalPlay = value != 0;
+        else if (sscanf(line, "privroom=%u", &value) == 1)
+            sPrivateRoom = value != 0;
+        else if (strncmp(line, "roomcode=", 9) == 0)
+        {
+            /* fgets keeps the line end: LF, or CR LF in a file that was edited on a computer. Those are not part of the code. */
+            size_t n = strlen(line + 9);
+
+            while (n > 0 && (line[9 + n - 1] == '\n' || line[9 + n - 1] == '\r'))
+                line[9 + --n] = 0;
+            RoomCodeSet(line + 9);
+            if (n > 0 && !sRoomCode[0])
+                sawBadCode = 1;     /* a code was there and it is not one (the six digits of an older build, or damage) */
+        }
+        else if (sscanf(line, "roomnote=%u", &value) == 1)
+            sRoomNote = value != 0;
         else if (sscanf(line, "visiblewilds=%u", &value) == 1)
             wildRaw = value < 1000 ? (int)value : -1;       /* settled below: an old file's 1 is NORMAL */
         else if (sscanf(line, "wildsil=%u", &value) == 1)
@@ -143,6 +223,14 @@ static void Load(void)
             sBall = value <= 0xffff ? value : 0;
     }
     sWildDensity = CtrWildsCore_MigrateDensity(wildRaw, haveSil, haveAggro);
+    /* A private room whose code is gone (an older six-digit code, or a damaged line) must not turn into the public room unseen: the
+     * private mode is switched off in the file itself, and the OPTIONS screen says why until the player chooses a room again. */
+    if (sawBadCode || (sPrivateRoom && !sRoomCode[0]))
+    {
+        sPrivateRoom = 0;
+        sRoomNote = 1;
+        Save();
+    }
 }
 
 static void WriteText(const char *text)
@@ -170,6 +258,8 @@ static void Format(char *text, size_t size)
     {
         length += snprintf(text + length, size - (size_t)length, "embers=%d\n", sEmbers);
     }
+    if (!sStyle && length > 0 && (size_t)length < size)      /* Poke Ball is the default: only the choice of Ascuas is written */
+        length += snprintf(text + length, size - (size_t)length, "style=0\n");
     if (sCompanion && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "companion=%d\n", sCompanion);
     if (sExpShare && length > 0 && (size_t)length < size)
@@ -194,6 +284,25 @@ static void Format(char *text, size_t size)
         length += snprintf(text + length, size - (size_t)length, "randnolegend=1\n");
     if (sFreeHm && length > 0 && (size_t)length < size)
         length += snprintf(text + length, size - (size_t)length, "freehm=1\n");
+    if (sDayNight && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "daynight=%d\n", sDayNight);
+    if (sHour != 24 && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "hour=%d\n", sHour);
+    if (sTypeMatchup && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "typematchup=1\n");
+    if (sMoveDetails && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "movedetails=1\n");
+    for (int i = 0; i < CTR_CHEAT_COUNT; ++i)
+        if (sCheat[i] && length > 0 && (size_t)length < size)
+            length += snprintf(text + length, size - (size_t)length, "cheat%d=%d\n", i, sCheat[i]);
+    if (sLocalPlay && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "localplay=1\n");
+    if (sPrivateRoom && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "privroom=1\n");
+    if (sRoomCode[0] && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "roomcode=%s\n", sRoomCode);
+    if (sRoomNote && length > 0 && (size_t)length < size)
+        length += snprintf(text + length, size - (size_t)length, "roomnote=1\n");
     /* The wild keys come before the looks and the ball, which are the first to be cut if the text ever outgrows the file; wildsil and
      * wildaggro come first so that a visiblewilds that was read always had them (a lone 1 is the old format, NORMAL). */
     if ((sWildDensity || sWildSil) && length > 0 && (size_t)length < size)
@@ -419,6 +528,164 @@ void CtrSettings_SetFreeHm(int on)
     Save();
 }
 
+int CtrSettings_DayNight(void)
+{
+    Load();
+    return sDayNight;
+}
+
+void CtrSettings_SetDayNight(int mode)
+{
+    Load();
+    if (mode < 0 || mode > 2)
+        mode = 0;
+    if (mode == sDayNight)
+        return;
+    sDayNight = mode;
+    Save();
+}
+
+int CtrSettings_Hour(void)
+{
+    Load();
+    return sHour;
+}
+
+void CtrSettings_SetHour(int half)
+{
+    Load();
+    if (half < 0 || half >= 48)
+        half = 24;
+    if (half == sHour)
+        return;
+    sHour = half;
+    Save();
+}
+
+int CtrSettings_TypeMatchup(void)
+{
+    Load();
+    return sTypeMatchup;
+}
+
+void CtrSettings_SetTypeMatchup(int hidden)
+{
+    Load();
+    hidden = hidden != 0;
+    if (hidden == sTypeMatchup)
+        return;
+    sTypeMatchup = hidden;
+    Save();
+}
+
+int CtrSettings_MoveDetails(void)
+{
+    Load();
+    return sMoveDetails;
+}
+
+void CtrSettings_SetMoveDetails(int hidden)
+{
+    Load();
+    hidden = hidden != 0;
+    if (hidden == sMoveDetails)
+        return;
+    sMoveDetails = hidden;
+    Save();
+}
+
+int CtrSettings_CheatMax(int id)
+{
+    return id >= 0 && id < CTR_CHEAT_COUNT ? kCheatMax[id] : 0;
+}
+
+int CtrSettings_Cheat(int id)
+{
+    Load();
+    return id >= 0 && id < CTR_CHEAT_COUNT ? sCheat[id] : 0;
+}
+
+void CtrSettings_SetCheat(int id, int value)
+{
+    Load();
+    if (id < 0 || id >= CTR_CHEAT_COUNT)
+        return;
+    value = value < 0 ? 0 : value > kCheatMax[id] ? kCheatMax[id] : value;
+    if (value == sCheat[id])
+        return;
+    sCheat[id] = value;
+    Save();
+}
+
+int CtrSettings_PrivateRoom(void)
+{
+    Load();
+    return sPrivateRoom && sRoomCode[0];
+}
+
+void CtrSettings_SetPrivateRoom(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sPrivateRoom)
+        return;
+    sPrivateRoom = on;
+    Save();
+}
+
+const char *CtrSettings_RoomCode(void)
+{
+    Load();
+    return sRoomCode;
+}
+
+void CtrSettings_SetRoomCode(const char *code)
+{
+    char before[sizeof(sRoomCode)];
+    int wasNote;
+
+    Load();
+    wasNote = sRoomNote;
+    memcpy(before, sRoomCode, sizeof(before));
+    RoomCodeSet(code ? code : "");
+    if (sRoomCode[0])
+        sRoomNote = 0;      /* a new code: the player has chosen a room again */
+    if (strcmp(before, sRoomCode) || (!sRoomNote && wasNote))
+        Save();
+}
+
+int CtrSettings_RoomCodeDropped(void)
+{
+    Load();
+    return sRoomNote;
+}
+
+void CtrSettings_AckRoomCodeDropped(void)
+{
+    Load();
+    if (sRoomNote)
+    {
+        sRoomNote = 0;
+        Save();
+    }
+}
+
+int CtrSettings_LocalPlay(void)
+{
+    Load();
+    return sLocalPlay;
+}
+
+void CtrSettings_SetLocalPlay(int on)
+{
+    Load();
+    on = on != 0;
+    if (on == sLocalPlay)
+        return;
+    sLocalPlay = on;
+    Save();
+}
+
 int CtrSettings_Randomlocke(void)
 {
     Load();
@@ -620,6 +887,21 @@ void CtrSettings_SetEmbers(int level)
     if (level < 0 || level > 2 || level == sEmbers)
         return;
     sEmbers = level;
+    Save();
+}
+
+int CtrSettings_Style(void)
+{
+    Load();
+    return sStyle;
+}
+
+void CtrSettings_SetStyle(int style)
+{
+    Load();
+    if (style < 0 || style > 1 || style == sStyle)
+        return;
+    sStyle = style;
     Save();
 }
 

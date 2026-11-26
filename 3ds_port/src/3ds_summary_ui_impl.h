@@ -645,8 +645,8 @@ static void SFooter(const CtrSummaryUiView *v)
     Em2Text(hint, sSFooter.x + 12, sSFooter.y + (sSFooter.h - UI_TEXT_H) / 2, S_LABEL, EM_DARK_SH, sSFooter.x + sSFooter.w - 10);
     fy = EmButton(sSBack.x, sSBack.y, sSBack.w, sSBack.h, &kEmSlate, 2, pressed);
     x = sSBack.x + (sSBack.w - w - 12) / 2;
-    LlArrow(x, fy + (sSBack.h - 2 - 10) / 2, 6, 10, 2, EM_WHITE);
-    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, EM_WHITE, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
+    LlArrow(x, fy + (sSBack.h - 2 - 10) / 2, 6, 10, 2, kEmSlate.ink);   /* the palette's own ink: white on Embers' slate, dark on Poke Ball's white pill */
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), x + 12, fy + (sSBack.h - 2 - UI_TEXT_H) / 2, kEmSlate.ink, kEmSlate.inkSh, 1, sSBack.x + sSBack.w);
 }
 
 void CtrSummaryUi_Draw(uint16_t *canvas, const CtrSummaryUiView *v)

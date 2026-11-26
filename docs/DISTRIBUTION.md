@@ -38,6 +38,23 @@ its original review hash. Other whitespace/content differences fail. `--rom`
 compares nonuniform 64-byte aligned ROM windows with source blobs at every byte
 offset. Shorter, transformed or unaligned ROM fragments can be missed.
 
+**Historical manifest repair (one commit).** The merge `bbcb09cad4` (2026-11-12) was committed with four unresolved conflict hunks in
+`docs/review-manifest.json`, so that snapshot's own manifest is not JSON and no per-file review row can reach it (the audit reads the
+snapshot's manifest first). `historical_manifest_repairs` in the current manifest holds the owner's record for it, and `repair_manifest` in
+`tools/source_audit.py` applies it under these rules, tested in `tools/test_source_audit.py`:
+
+- the record names the full commit and the SHA-256 of that snapshot's exact manifest bytes; any other commit or other bytes are not repaired,
+  and a manifest that parses is never repaired;
+- it names, hunk by hunk, the entry's path and the hash that entry takes, which must be the real SHA-256 of that path in the snapshot's Git
+  tree; a hunk must be a plain disagreement about one `sha256` line (neither side held the hash of the bytes in that snapshot);
+- nothing else changes: the repaired manifest goes through the same audit as any other, so every file of the snapshot is still checked for path,
+  type, mode, size, encoded payloads, embedded-payload directives and ROM windows, and every other entry still has to prove its bytes;
+- the four entries of the hunks (`3ds_poketouch.h`, `3ds_bottom.c`, `3ds_poketouch.c`, `poketouch_render_test.c`) are accepted on those content
+  checks only. **No review of those exact bytes is claimed**; the record says so.
+
+It repairs the audit's reading of one snapshot and does not touch history, the other 800-odd entries, or the rows still missing for other
+revisions (`--history` reports those until the owner supplies them).
+
 `tools/audit_clean_release.py --release` inspects ELF/map, embedded RomFS,
 required runtime symbols, engine ABI and size/CRC coverage of every expected
 pack path. A local supported ROM and finished 3DSX are mandatory for release

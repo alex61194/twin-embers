@@ -132,6 +132,8 @@ player's PC, WITHDRAW ITEM, withdraw and leave, also from a Pokemon Center).
 
 ## The touch screen's ember look
 
+(History: this was the lower screen's look until 0.7.0. Since then the Poke Ball style is the only one: OPTIONS has no STYLE or EMBERS row, and the sparks are not drawn. The code below still draws pieces the Poke Ball style reuses.)
+
 The lower screen's field menus wear the owner's modern design (DS/3DS-era raised buttons on a red ember
 backdrop, from the mockups the owner approved): the START column as cream buttons with an icon
 and FireRed's lettering (amber and glowing for the screen shown), the X and Y tiles with their badge, RUN
@@ -246,6 +248,25 @@ the recipe chain applies from a pristine tree and the three game files compile w
 development any more. The owner played it on real hardware and its general operation is correct (2026-11-13). The individual
 cases listed in section 8 of the design document ("Validation status") are still to be checked one by one; none is recorded as
 done.
+
+## Cheats (OPTIONS, last page)
+
+A page of seven switches, off until chosen and kept in `settings.cfg` as `cheatN=value` (N is 0 to 6, a value of 0 is not written), so they follow the console and
+never touch the save. Each asks one accessor of `3ds_poketouch_options.c` from a few lines the recipe `0278-cheats.json` adds to the game:
+
+| Cheat | Values | Where it acts |
+| --- | --- | --- |
+| Sure catch | off, on | `Cmd_handleballthrow`: the caught branch is taken when the option is on, whatever the odds |
+| Shiny odds | Normal, 1/4096, 1/1024, 1/256, 1/64, 1/16, Always | `CreateBoxMon`, after the Trainer ID is known: for a Pokémon the player will own (not a trainer's, not Unown) that is not already shiny, with the chance chosen a new personality is searched that is shiny and keeps the low byte (gender, ability) and the nature; the game's own 1/8192 stays |
+| No encounters | off, on | `DoWildEncounterRateTest`: steps in grass, caves, water and Rock Smash give no encounter (the Safari Zone's too); fishing and scripted battles are not touched |
+| Through walls | off, on | `GetCollisionAtCoords`: for the player only, nothing blocks except the edge of the map |
+| EXP rate | x1, x2, x4, x8 | `Cmd_getexp`: the experience and the EXP. SHARE experience of a won battle, at most 65535 |
+| Infinite PP | off, on | `Cmd_ppreduce`: the player's moves lose nothing |
+| Always flee | off, on | `TryRunFromBattle`: the player's run always works (a trainer battle still forbids it before this is asked) |
+
+The shiny search keeps the first 16 bits of the personality free: of the 524288 pairs of halves (65536 high halves, the 8 low halves that make a shiny one of each) about 80
+keep the low byte and the nature, so the first is found after a few thousand tries. Random numbers are only drawn when the option is not Normal, so a game that never
+uses the page plays as before. `tools/test_cheats_recipe.py` reads the lines the recipe adds; `3ds_port/tests/poketouch_options_test.c` runs the page and the search.
 
 ## Not added, and why
 

@@ -17,12 +17,14 @@ OUT = Path(__file__).resolve().parents[1] / 'builder' / 'firered3ds_builder' / '
 # The looks offered, in the order the game lists them (the folder names of assets/sprites).
 LOOKS = ('ash', 'ash_hgss', 'ash_hatless', 'ash_backwards', 'gary_kanto', 'silver_hgss', 'gold', 'gold_hgss',
          'brendan_oras', 'brendan_hgss', 'green', 'green_hgss', 'green_lou', 'kris', 'kris_blue', 'kris_hgss',
-         'may_oras', 'may_hgss', 'harmony_dp', 'peach_hgss', 'aang')
+         'may_oras', 'may_hgss', 'harmony_dp', 'peach_hgss', 'aang',
+         'hilbert_hgss', 'hilda_hgss', 'nate_hgss', 'rosa_hgss', 'red_rgby')
 # What the game's options show for each look: at most 11 characters (the value's width).
 NAMES = {'ash': 'ASH', 'ash_hgss': 'ASH HGSS', 'ash_hatless': 'ASH NO CAP', 'ash_backwards': 'ASH BACKCAP',
          'gary_kanto': 'GARY', 'silver_hgss': 'SILVER', 'gold': 'GOLD', 'gold_hgss': 'GOLD HGSS', 'brendan_oras': 'BRENDAN',
          'brendan_hgss': 'BRENDAN HG', 'green': 'GREEN', 'green_hgss': 'GREEN HGSS', 'green_lou': 'GREEN LOU', 'kris': 'KRIS',
-         'kris_blue': 'KRIS BLUE', 'kris_hgss': 'KRIS LOU', 'may_oras': 'MAY', 'may_hgss': 'MAY HGSS', 'harmony_dp': 'HARMONY', 'peach_hgss': 'PEACH', 'aang': 'AANG'}
+         'kris_blue': 'KRIS BLUE', 'kris_hgss': 'KRIS LOU', 'may_oras': 'MAY', 'may_hgss': 'MAY HGSS', 'harmony_dp': 'HARMONY', 'peach_hgss': 'PEACH', 'aang': 'AANG',
+         'hilbert_hgss': 'HILBERT', 'hilda_hgss': 'HILDA', 'nate_hgss': 'NATE', 'rosa_hgss': 'ROSA', 'red_rgby': 'RED RGBY'}
 assert set(NAMES) == set(LOOKS) and all(len(name) <= 11 for name in NAMES.values())
 # The Pokemon the player may surf on (assets/surfmons/<folder>/frlg/surfBlob.png: six 32x32 frames) and the name the options show.
 SURFMONS = ('lapras', 'blastoise', 'dewgong', 'latias', 'ludicolo', 'mantine', 'pelipper', 'pikachu', 'tentacruel', 'wailmer',

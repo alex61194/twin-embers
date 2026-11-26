@@ -38,8 +38,9 @@ unsigned CtrTwinFontWidth(unsigned code) { return code < 256 && fontWidths[code]
 const uint8_t *CtrTwinJapaneseGlyph(unsigned code, uint8_t out[64]) { (void)code; memset(out, 0, 64); return out; }
 unsigned CtrTwinJapaneseFontWidth(unsigned code) { (void)code; return 8; }
 static uint8_t smallFont[256 * 32];
+static uint8_t smallWidths[256];   /* the game's small font and its widths with PT_PREVIEW_SMALLFONT / PT_PREVIEW_SMALLWIDTHS (a viewing aid); else blank glyphs 5 wide */
 const uint8_t *CtrTwinSmallFontData(void) { return smallFont; }
-unsigned CtrTwinSmallFontWidth(unsigned code) { (void)code; return 5; }
+unsigned CtrTwinSmallFontWidth(unsigned code) { return code < 256 && smallWidths[code] ? smallWidths[code] : 5; }
 
 /* Literal-only GBA LZ stream, freshly synthesized from the fixture bytes. */
 void *CtrData_Load(const char *path, uint32_t *len)
@@ -173,6 +174,16 @@ static void timing(const CtrPokeTouchView *old, const CtrPokeTouchView *v)
     fprintf(stderr,"TIMING %03d line %d update %8.1f draw %8.1f hash %08x\n",shot++,callLine,up,dr,h);
     memcpy(canvas,keep,sizeof(keep));
 }
+/* The Bag is drawn on the floor of HOME's layout, 36 px right and down of where its rectangles are: the tests give its own coordinates. */
+static int BagHit36(const CtrPokeTouchView *v,int x,int y) { return CtrPokeTouch_BagHit(v,x+36,y+36); }
+static int BagRail36(const CtrPokeTouchBag *b,int y) { return CtrPokeTouch_BagRailTarget(b,y+36); }
+/* The native screens are drawn on the floor of HOME's layout, 36 px right and down of where their rectangles are: the tests give the rectangles' own coordinates. */
+#define CtrPokeTouch_DexHit(v,x,y) (CtrPokeTouch_DexHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))   /* the Poke Ball Pokedex is in screen pixels */
+#define CtrPokeTouch_LearnHit(v,x,y) (CtrPokeTouch_LearnHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_RelearnHit(v,x,y) (CtrPokeTouch_RelearnHit)((v),(x)+36,(y)+36)
+#define CtrPokeTouch_ChoiceHit(v,x,y) (CtrPokeTouch_ChoiceHit)((v),(x)+36,(y)+(sBallFull&&((v)->trade.on||(v)->chat.on)?0:36))   /* the Poke Ball trade and chat sit 36 px right of their rectangles and no lower */
+#define CtrPokeTouch_BoxHit(v,x,y) (CtrPokeTouch_BoxHit)((v),(x)+36,(y)+(sBallFull?0:36))   /* so does the Poke Ball PC box */
+#define CtrPokeTouch_CardHit(v,x,y) (CtrPokeTouch_CardHit)((v),(x)+(sBallFull?0:36),(y)+(sBallFull?0:36))
 static void update_at(int line, CtrPokeTouchView *old, const CtrPokeTouchView *vRaw)
 {
     CtrDirtyList dirty; CtrDirty_Clear(&dirty);
@@ -302,6 +313,7 @@ static void decoder(void)
 }
 int main(int argc, char **argv)
 {
+    if (getenv("PT_STYLE")) CtrPokeTouch_SetStyle(atoi(getenv("PT_STYLE")));   /* a viewing aid: every state drawn in that style */
     decoder(); fixtureFail=1; /* Exercise original fallbacks for the UI. */
 #ifndef PT_BASELINE
     const char *packPath=getenv("FIRERED_TEST_PAK");
@@ -346,12 +358,13 @@ int main(int argc, char **argv)
         while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200);
         v.mapReady=1; v.mapZoom=HM_ZOOMS-1; v.mapCX=384; v.mapCY=288; v.mapOpen=1;
         CtrPokeTouch_Draw(canvas,&v);
-        for(int x=4;x<244;++x) for(int y=4;y<164;++y) {
-            int onRibbon=x<4+rib&&y<4+13;
-            if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_VIEW_X+PT_VIEW_W-26,PT_VIEW_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
+        for(int x=PT_HOME_X;x<PT_HOME_X+PT_VIEW_W;++x) for(int y=PT_HOME_Y;y<PT_HOME_Y+PT_VIEW_H;++y) {
+            int onRibbon=x<PT_HOME_X+rib&&y<PT_HOME_Y+13;
+            if(onRibbon || UiIn(&(CtrPokeTouchRect){PT_HOME_X+PT_VIEW_W-26,PT_HOME_Y+PT_VIEW_H/2-22,20,44},x,y)) continue;
             assert(at(x,y)==UI_RGB(164,180,255) || at(x,y)==UI_RGB(156,213,255));
         }
-        assert(at(4,4)==LL_RIB_TOP && at(4,4+13)!=LL_RIB_TOP);      /* the ribbon: red from its top, 13 rows */
+        { uint16_t top=sStyleBall?BL_WHITE:LL_RIB_TOP;   /* the ribbon: red from its top (white in the Poke Ball style), 13 rows */
+          assert(at(PT_HOME_X,PT_HOME_Y)==top && at(PT_HOME_X,PT_HOME_Y+13)!=top); }
         v.mapReady=0; v.mapZoom=0; sMap.group=-1; CtrPokeTouch_Draw(canvas,&v);
     }
     if(argc>1) { /* Synthetic render for visual QA, never a ROM screenshot. */
@@ -383,8 +396,13 @@ int main(int argc, char **argv)
     for(int state=SAVE_CONFIRM;state<=SAVE_ERROR;++state) {
         v.saveState=state; update(&old,&v);
         v.saveSel=1; update(&old,&v); v.savePressed=PT_SAVE_FIRST; update(&old,&v);
-        assert(CtrPokeTouch_SaveHit(180,state==SAVE_CONFIRM?180:200,state)==
+        /* The classic buttons (240, 157); in the Poke Ball style (a viewing aid, PT_STYLE) YES is at (277, 93) and NO at (277, 129). */
+        assert(CtrPokeTouch_SaveHit(getenv("PT_STYLE")?277:240,getenv("PT_STYLE")?93:157,state)==
                (state==SAVE_WRITING?PT_SAVE_NONE:PT_SAVE_FIRST));
+        if(getenv("PT_STYLE")) {
+            assert(CtrPokeTouch_SaveHit(277,129,state)==(state==SAVE_CONFIRM?PT_SAVE_SECOND:PT_SAVE_NONE));
+            assert(CtrPokeTouch_SaveHit(240,157,state)==PT_SAVE_NONE && CtrPokeTouch_SaveHit(277,170,state)==PT_SAVE_NONE);
+        }
         v.savePressed=PT_SAVE_NONE; update(&old,&v);
     }
 #ifndef PT_BASELINE
@@ -444,6 +462,8 @@ int main(int argc, char **argv)
         const char *dir=getenv("PT_PREVIEW_DIR"), *fp=getenv("PT_PREVIEW_FONT"), *wp=getenv("PT_PREVIEW_WIDTHS");
         if(dir && fp) { FILE *ff=fopen(fp,"rb"); assert(ff); assert(fread(font,1,sizeof(font),ff)==sizeof(font)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
         if(dir && wp) { FILE *ff=fopen(wp,"rb"); assert(ff); assert(fread(fontWidths,1,sizeof(fontWidths),ff)==sizeof(fontWidths)); fclose(ff); memset(sPtFontReady,0,sizeof(sPtFontReady)); }
+        if(dir && getenv("PT_PREVIEW_SMALLFONT")) { FILE *ff=fopen(getenv("PT_PREVIEW_SMALLFONT"),"rb"); assert(ff); assert(fread(smallFont,1,sizeof(smallFont),ff)==sizeof(smallFont)); fclose(ff); }
+        if(dir && getenv("PT_PREVIEW_SMALLWIDTHS")) { FILE *ff=fopen(getenv("PT_PREVIEW_SMALLWIDTHS"),"rb"); assert(ff); assert(fread(smallWidths,1,sizeof(smallWidths),ff)==sizeof(smallWidths)); fclose(ff); }
         CtrPokeTouchView s={0}; CtrPokeTouchView before; s.selected=s.pressed=PT_NONE; s.optPressed=-1;
         for(int i=0;i<PT_COUNT;++i) s.enabled[i]=1;
         s.registeredItem=1; s.bikeItem=2; strcpy(s.playerName,"Rick"); s.playerX=s.playerY=-1;
@@ -465,22 +485,72 @@ int main(int argc, char **argv)
             strcpy(b3.bag.selName,"Potion"); b3.bag.selItem=13; strcpy(b3.bag.selDesc,"Restores 20 HP.");
             update(&o3,&b3); if(dir) ppm(dir,"bag_list");
             /* The rail is a slider: the arrows are their buttons, the rail between them is hit anywhere, and its target never goes back. */
-            assert(CtrPokeTouch_BagHit(&b3,230,150)==PT_BAG_HIT_DOWN && CtrPokeTouch_BagHit(&b3,230,40)==-1);
-            assert(CtrPokeTouch_BagHit(&b3,230,70)==PT_BAG_HIT_RAIL && CtrPokeTouch_BagHit(&b3,230,130)==PT_BAG_HIT_RAIL);
-            { int last=-1; for(int y=50;y<=145;++y){ int t=CtrPokeTouch_BagRailTarget(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
-              assert(CtrPokeTouch_BagRailTarget(&b3.bag,40)==0 && CtrPokeTouch_BagRailTarget(&b3.bag,150)==b3.bag.count); }
+            if(!sStyleBall) {
+            assert( BagHit36(&b3,230,150)==PT_BAG_HIT_DOWN &&  BagHit36(&b3,230,40)==-1);
+            assert( BagHit36(&b3,230,70)==PT_BAG_HIT_RAIL &&  BagHit36(&b3,230,130)==PT_BAG_HIT_RAIL);
+            { int last=-1; for(int y=50;y<=145;++y){ int t= BagRail36(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
+              assert( BagRail36(&b3.bag,40)==0 &&  BagRail36(&b3.bag,150)==b3.bag.count); }
+            } else {
+              /* Poke Ball: the Bag on the whole lower screen, its own rectangles (raw lower-screen coordinates). */
+              assert(CtrPokeTouch_BagHit(&b3,20,40)==PT_BAG_HIT_ROW && CtrPokeTouch_BagHit(&b3,20,134)==PT_BAG_HIT_ROW+4 && CtrPokeTouch_BagHit(&b3,60,12)==PT_BAG_HIT_TAB);
+              assert(CtrPokeTouch_BagHit(&b3,150,12)==PT_BAG_HIT_TAB+1 && CtrPokeTouch_BagHit(&b3,270,170)==PT_BAG_HIT_QTY_CANCEL);
+              assert(CtrPokeTouch_BagHit(&b3,260,130)==PT_BAG_HIT_DOWN && CtrPokeTouch_BagHit(&b3,260,40)==-1 && CtrPokeTouch_BagHit(&b3,260,90)==PT_BAG_HIT_RAIL);
+              assert(CtrPokeTouch_HitTest(10,100)==PT_NONE && CtrPokeTouch_HitBack(270,170) && !CtrPokeTouch_HitBack(10,10) && sBallFull);
+              { int last=-1; for(int y=58;y<=121;++y){ int t=CtrPokeTouch_BagRailTarget(&b3.bag,y); assert(t>=last&&t>=0&&t<=b3.bag.count); last=t; }
+                assert(CtrPokeTouch_BagRailTarget(&b3.bag,58)==0 && CtrPokeTouch_BagRailTarget(&b3.bag,122)==b3.bag.count); }
+            }
+            /* A mart's BUY list, the key items with a shortcut, and an item's menu: more states to look at (and to keep drawing without a fault). */
+            { const CtrPokeTouchView base=b3; CtrPokeTouchView b4=b3; b4.bag.kind=PT_BAG_KIND_SHOP; strcpy(b4.bag.title,"BUY"); b4.bag.money=12400; b4.bag.use=PT_BAG_USE_FIELD; b4.bag.showOwned=1; b4.bag.owned=3;
+              for(int i=0;i<PT_BAG_ROWS;++i) b4.bag.row[i].price=(uint16_t)(300+i*400);
+              update(&b3,&b4); if(dir) ppm(dir,"bag_shop");
+              b4=base; b4.bag.pocket=1; b4.bag.regX=b4.bag.row[1].item; b4.bag.cursor=2; update(&b3,&b4); if(dir) ppm(dir,"bag_keys");
+              b4=base; b4.bag.state=PT_BAG_STATE_ACTIONS; b4.bag.menuCount=4; b4.bag.menuCursor=1; strcpy(b4.bag.menuName[0],"USE"); strcpy(b4.bag.menuName[1],"GIVE"); strcpy(b4.bag.menuName[2],"TOSS"); strcpy(b4.bag.menuName[3],"CANCEL");
+              update(&b3,&b4); if(dir) ppm(dir,"bag_menu");
+              b3=base; update(&b4,&b3); }
+            old=b3;      /* the canvas holds the Bag now: the next update's old view is the one on the screen */
         }
             b2.box.pos=6; update(&old,&b2); b2.box.area=ST_AREA_BOX; b2.box.pos=3;
-            b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
+            {   /* the box's menu with FireRed's words (the last row, EXIT, is the dark one), the cursor on a middle row and on the last */
+                static const char *const w[4]={"Move","Summary","Release","Exit"};
+                memset(b2.box.menu,0xff,sizeof(b2.box.menu));
+                for(int i=0;i<4;++i) for(int n=0;w[i][n];++n) b2.box.menu[i][n]=(uint8_t)(w[i][n]>='a'?0xD5+(w[i][n]-'a'):0xBB+(w[i][n]-'A'));
+                b2.box.state=PT_BOX_STATE_MENU; b2.box.menuCount=4; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_menu");
+                b2.box.menuCursor=3; update(&old,&b2); if(dir) ppm(dir,"box_menu_exit");
+                b2.box.pressed=ST_HIT_MENU_BASE+3; update(&old,&b2); if(dir) ppm(dir,"box_menu_exit_pressed"); b2.box.pressed=-1;
+            }
             b2.box.menuCursor=3; update(&old,&b2);
             b2.box.state=PT_BOX_STATE_YESNO; b2.box.menuCursor=1; update(&old,&b2); if(dir) ppm(dir,"box_yesno");
             b2.box.state=PT_BOX_STATE_CHOOSE; b2.box.chooseCount=12; update(&old,&b2); if(dir) ppm(dir,"box_choose");
             b2.box.state=PT_BOX_STATE_MARKS; b2.box.marks=5; b2.box.menuCursor=1; update(&old,&b2); b2.box.menuCursor=5; update(&old,&b2); if(dir) ppm(dir,"box_marks");
+            {   /* the box's own words in the note (what pressing CLOSE BOX asks, a message that waits for a tap): readable on the white under the band */
+                const char *q="Continue Box operations"; int n=0;
+                memset(b2.box.message,0xff,sizeof(b2.box.message));
+                for(;q[n];++n) b2.box.message[n]=(uint8_t)(q[n]==' '?0x00:q[n]>='a'?0xD5+(q[n]-'a'):0xBB+(q[n]-'A'));
+                b2.box.state=PT_BOX_STATE_MESSAGE; update(&old,&b2); if(dir) ppm(dir,"box_message");
+                b2.box.state=PT_BOX_STATE_YESNO; b2.box.menuCursor=0; update(&old,&b2); if(dir) ppm(dir,"box_message_yesno");
+                b2.box.message[0]=0xff;
+            }
             b2.box.state=PT_BOX_STATE_BOX; b2.box.on=0; b2.name.on=1; b2.name.page=1; b2.name.cols=8; b2.name.maxChars=7; b2.name.len=3; b2.name.curCol=4; b2.name.curRow=1; b2.name.pressed=-1;
             memset(b2.name.key,0xff,sizeof(b2.name.key)); memset(b2.name.text,0xff,sizeof(b2.name.text));
             for(int r=0;r<3;++r) for(int c=0;c<8;++c) b2.name.key[r][c]=(uint8_t)(0xbb+r*8+c);
             b2.name.text[0]=0xbb; b2.name.text[1]=0xc5; b2.name.text[2]=0xbf; memset(b2.name.title,0xff,sizeof(b2.name.title));
             update(&old,&b2); if(dir) ppm(dir,"naming");
+            {   /* the Poke Ball keyboard (3ds_ball_naming_impl.h): keys, tabs, DELETE and OK in screen pixels (cols 8: keys 37 wide from x 5, rows 22 apart from y 64) */
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&b2); if(dir && !getenv("PT_STYLE")) ppm(dir,"naming_ball");
+                assert(CtrPokeTouch_NameHit(&b2,10,70)==PT_NAME_HIT_KEY && CtrPokeTouch_NameHit(&b2,90,70)==PT_NAME_HIT_KEY+2);
+                assert(CtrPokeTouch_NameHit(&b2,285,115)==PT_NAME_HIT_KEY+2*PT_NAME_COLS+7 && CtrPokeTouch_NameHit(&b2,130,95)==PT_NAME_HIT_KEY+PT_NAME_COLS+3);
+                assert(CtrPokeTouch_NameHit(&b2,42,70)==-1 && CtrPokeTouch_NameHit(&b2,318,70)==-1 && CtrPokeTouch_NameHit(&b2,10,135)==-1);   /* a gap, past the last column, the empty fourth row */
+                assert(CtrPokeTouch_NameHit(&b2,30,45)==PT_NAME_HIT_TAB+1 && CtrPokeTouch_NameHit(&b2,100,45)==PT_NAME_HIT_TAB+2 && CtrPokeTouch_NameHit(&b2,160,45)==PT_NAME_HIT_TAB);
+                assert(CtrPokeTouch_NameHit(&b2,200,45)==PT_NAME_HIT_DELETE && CtrPokeTouch_NameHit(&b2,290,45)==PT_NAME_HIT_OK && CtrPokeTouch_NameHit(&b2,100,20)==-1);
+                {   /* an empty cell ("mnopqrs" leaves the eighth one EOS): FireRed's D-pad stops there, and the cursor must still show */
+                    uint16_t gap;
+                    b2.name.key[2][7]=0xff; b2.name.curCol=0; b2.name.curRow=0; update(&old,&b2); gap=at(296,118);
+                    b2.name.curCol=7; b2.name.curRow=2; update(&old,&b2); assert(at(296,118)!=gap);
+                    b2.name.key[2][7]=(uint8_t)(0xbb+2*8+7); b2.name.curCol=4; b2.name.curRow=1;
+                }
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&b2);
+            }
             b2.name.curCol=8; b2.name.curRow=0; update(&old,&b2); b2.name.curRow=2; update(&old,&b2); b2.name.pressed=PT_NAME_HIT_KEY; update(&old,&b2);
             b2.name.on=0; update(&old,&b2);
         }
@@ -499,6 +569,25 @@ int main(int argc, char **argv)
         s.optSelected=6; strcpy(s.bar[0],"Companion"); strcpy(s.bar[1],"A Pokemon follows you,"); strcpy(s.bar[2],"or you are that Pokemon.");
         s.backVisible=1; s.backEnabled=1;
         SHOT("options2");
+        /* The keypad of the private room's code over the rows: five digits typed, then a key held, then sixteen (OK lit) and a plain code (OK dead); each a redraw. Every
+         * key is where the hit test finds it, and nowhere else. */
+        {
+            CtrPokeTouchView p=s;
+            p.optPad.on=1; p.optPad.len=5; p.optPad.ok=0; p.optPad.pressed=-1; strcpy(p.optPad.code,"48291");
+            strcpy(p.bar[0],"Private room"); strcpy(p.bar[1],"NEW makes a code; your friends"); strcpy(p.bar[2],"type the same 16 digits.");
+            update(&old,&p); if(dir) ppm(dir,"opt_pad");
+            p.optPad.pressed=5; update(&old,&p); if(dir) ppm(dir,"opt_pad_pressed");
+            p.optPad.pressed=-1; p.optPad.len=16; p.optPad.ok=1; strcpy(p.optPad.code,"4829137650218394"); update(&old,&p); if(dir) ppm(dir,"opt_pad_full");
+            p.optPad.ok=0; strcpy(p.optPad.code,"7878787878787878"); update(&old,&p); if(dir) ppm(dir,"opt_pad_plain");
+            p.optPad.pressed=PT_PAD_KEY_NEW; update(&old,&p); if(dir) ppm(dir,"opt_pad_new_pressed"); p.optPad.pressed=-1;
+            for(int key=0;key<PT_PAD_KEYS;++key) {
+                int found=0;
+                for(int y=0;y<240 && !found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_PadHit(x,y)==key) { found=1; break; }
+                assert(found);
+            }
+            assert(CtrPokeTouch_PadHit(0,0)==-1 && CtrPokeTouch_PadHit(319,239)==-1);
+            update(&old,&s);
+        }
 #ifdef PT_WITH_OPTIONS
         /* The real OPTIONS pages (3ds_poketouch_options.c), for a look at the sections: each through the incremental path first. */
         for(int page=0;page<CtrOptions_PageCount();++page) {
@@ -551,14 +640,24 @@ int main(int argc, char **argv)
             strcpy(s.learn.desc,"A powerful fire attack that may burn the target.");
             s.learn.cursor=1; SHOT("learn");
             for(int i=0;i<PT_LEARN_ROWS;++i) { s.learn.cursor=(int8_t)i; update(&old,&s); s.learn.pressed=(int16_t)(PT_LEARN_HIT_ROW+i); update(&old,&s); s.learn.pressed=-1; update(&old,&s); }
-            s.learn.cursor=4; SHOT("learn_new"); s.learn.on=0;
+            s.learn.cursor=4; SHOT("learn_new");
+            {   /* the Poke Ball move to forget: rows in screen pixels */
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+                assert((CtrPokeTouch_LearnHit)(&s,150,40)==PT_LEARN_HIT_ROW && (CtrPokeTouch_LearnHit)(&s,150,34+25*4+5)==PT_LEARN_HIT_ROW+4);
+                assert((CtrPokeTouch_LearnHit)(&s,40,60)==-1 && (CtrPokeTouch_LearnHit)(&s,150,28)==-1 && (CtrPokeTouch_LearnHit)(&s,150,170)==-1);
+                s.learn.row[4].move=0; assert((CtrPokeTouch_LearnHit)(&s,150,34+25*4+5)==-1);   /* no new move, no row */
+                s.learn.row[4].move=5;
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+            }
+            s.learn.on=0;
         }
         /* The move relearner's list (Llama): eight moves and CANCEL, five rows shown; the cursor, the scroll and a press go through the incremental path. */
         {
             static const char *const mv[8]={"Ember","Flamethrower","Slash","Dragon Claw","Fire Spin","Wing Attack","Scary Face","Hyper Beam"};
             static const char *const ty[8]={"Fire","Fire","Normal","Dragon","Fire","Flying","Normal","Normal"};
             static const int8_t tn[8]={10,10,0,16,10,2,0,0};
-            CtrPokeTouchRelearn *r=&s.relearn;
+            CtrPokeTouchRelearn *r=&s.relearn; const int ball=getenv("PT_STYLE")!=NULL;   /* the rectangles below are the Embers ones; the Poke Ball ones are asserted after */
             s.options=0; s.backVisible=1; memset(&s.learn,0,sizeof(s.learn)); memset(r,0,sizeof(*r)); r->on=1; r->pressed=-1; r->species=6; r->count=8;
             strcpy(r->nickname,"Charizard"); strcpy(r->level,"50"); strcpy(r->question,"Teach which move to Charizard?");
             strcpy(r->desc,"A powerful fire attack that may burn the target.");
@@ -574,10 +673,10 @@ int main(int argc, char **argv)
                 if(first==2&&cur==4) SHOT("relearn_scroll");
                 if(first==4&&cur==8) SHOT("relearn_cancel");
             }
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==PT_RL_HIT_ROW && CtrPokeTouch_RelearnHit(&s,110,62)==PT_RL_HIT_ROW+1);
-            assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
-            assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
-            r->first=7; r->cursor=7; update(&old,&s); assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==PT_RL_HIT_ROW && CtrPokeTouch_RelearnHit(&s,110,62)==PT_RL_HIT_ROW+1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,210,10)==PT_RL_HIT_UP && CtrPokeTouch_RelearnHit(&s,230,10)==PT_RL_HIT_DOWN && CtrPokeTouch_RelearnHit(&s,10,60)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,30+27*4+3)==PT_RL_HIT_ROW+4);   /* first 4: rows 4..8 are listed, so row 4 (CANCEL) exists */
+            r->first=7; r->cursor=7; update(&old,&s); if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,30+27*2+3)==-1);   /* no list row past CANCEL */
             /* Everything else FireRed shows in the relearner is the port's own picture over the dimmed list, never its viewport: the questions
              * (the cursor on YES or NO, a press), a long one, a message that waits for A, one that does not, and the bare backdrop while it is set up. */
             r->first=0; r->cursor=1;
@@ -587,22 +686,46 @@ int main(int argc, char **argv)
             }
             r->pressed=-1; update(&old,&s);
             r->panel=PT_RL_PANEL_YESNO; strcpy(r->message,"Teach Flamethrower?"); r->menuCursor=0; update(&old,&s); SHOT("relearn_teach");
-            assert(CtrPokeTouch_RelearnHit(&s,75,108)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,108)==PT_RL_HIT_NO);   /* one line of question: the buttons just under its window */
-            assert(CtrPokeTouch_RelearnHit(&s,75,60)==-1 && CtrPokeTouch_RelearnHit(&s,75,126)==-1);
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,210,10)==-1 && CtrPokeTouch_RelearnHit(&s,75,60)==-1);   /* the list behind answers nothing */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,108)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,108)==PT_RL_HIT_NO);   /* one line of question: the buttons just under its window */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,60)==-1 && CtrPokeTouch_RelearnHit(&s,75,126)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,210,10)==-1 && CtrPokeTouch_RelearnHit(&s,75,60)==-1);   /* the list behind answers nothing */
             r->menuCursor=1; update(&old,&s); SHOT("relearn_teach_no");
             r->pressed=PT_RL_HIT_NO; update(&old,&s); r->pressed=PT_RL_HIT_YES; update(&old,&s); r->pressed=-1; update(&old,&s);
             strcpy(r->message,"Charizard is trying to learn Flamethrower. But Charizard can't learn more than four moves. Delete an older move to make room for Flamethrower?");
             r->menuCursor=0; update(&old,&s); SHOT("relearn_make_room");
-            assert(CtrPokeTouch_RelearnHit(&s,75,135)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,135)==PT_RL_HIT_NO && CtrPokeTouch_RelearnHit(&s,75,108)==-1);   /* five lines: lower */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,75,135)==PT_RL_HIT_YES && CtrPokeTouch_RelearnHit(&s,173,135)==PT_RL_HIT_NO && CtrPokeTouch_RelearnHit(&s,75,108)==-1);   /* five lines: lower */
             strcpy(r->message,"Stop learning Flamethrower?"); r->menuCursor=1; update(&old,&s); SHOT("relearn_stop");
             r->panel=PT_RL_PANEL_MESSAGE; r->tap=1; strcpy(r->message,"Charizard forgot Slash. And... Charizard learned Flamethrower."); update(&old,&s); SHOT("relearn_learned");
-            assert(CtrPokeTouch_RelearnHit(&s,100,100)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,247,0)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,100,170)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,100,100)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,247,0)==PT_RL_HIT_MESSAGE && CtrPokeTouch_RelearnHit(&s,100,170)==-1);
             r->pressed=PT_RL_HIT_MESSAGE; update(&old,&s); r->pressed=-1; update(&old,&s);
             r->tap=0; strcpy(r->message,"Which move should be forgotten?"); update(&old,&s); SHOT("relearn_which");
-            assert(CtrPokeTouch_RelearnHit(&s,100,100)==-1);                    /* nothing to answer while it prints or fades */
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,100,100)==-1);                    /* nothing to answer while it prints or fades */
             r->panel=PT_RL_PANEL_BLANK; r->message[0]=0; update(&old,&s); SHOT("relearn_blank");
-            assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,75,108)==-1);
+            if(!ball) assert(CtrPokeTouch_RelearnHit(&s,110,35)==-1 && CtrPokeTouch_RelearnHit(&s,75,108)==-1);
+            /* The Poke Ball relearner (3ds_ball_learn_impl.h): the whole screen, its hit zones in screen pixels (what the style in use is). */
+            {
+                int keep=getenv("PT_STYLE")?atoi(getenv("PT_STYLE")):0; CtrPokeTouchRect y0,n0;
+                CtrPokeTouch_SetStyle(1); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE;
+                r->on=1; r->panel=PT_RL_PANEL_LIST; r->first=0; r->cursor=1; r->count=8; r->pressed=-1; update(&old,&s);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,40)==PT_RL_HIT_ROW && (CtrPokeTouch_RelearnHit)(&s,150,62)==PT_RL_HIT_ROW+1);
+                assert((CtrPokeTouch_RelearnHit)(&s,270,10)==PT_RL_HIT_UP && (CtrPokeTouch_RelearnHit)(&s,300,10)==PT_RL_HIT_DOWN && (CtrPokeTouch_RelearnHit)(&s,40,60)==-1);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,34+25*4+5)==PT_RL_HIT_ROW+4 && (CtrPokeTouch_RelearnHit)(&s,150,30)==-1);
+                r->first=7; r->cursor=7; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,150,34+25*2+5)==-1 && (CtrPokeTouch_RelearnHit)(&s,150,34+25+5)==PT_RL_HIT_ROW+1);   /* CANCEL is the last row */
+                r->first=0; r->cursor=1;
+                strcpy(r->message,"Teach Flamethrower?"); r->panel=PT_RL_PANEL_YESNO; update(&old,&s);
+                y0=BlButton(r,0); n0=BlButton(r,1);
+                assert((CtrPokeTouch_RelearnHit)(&s,y0.x+5,y0.y+5)==PT_RL_HIT_YES && (CtrPokeTouch_RelearnHit)(&s,n0.x+5,n0.y+5)==PT_RL_HIT_NO);
+                assert((CtrPokeTouch_RelearnHit)(&s,150,40)==-1 && (CtrPokeTouch_RelearnHit)(&s,270,10)==-1 && (CtrPokeTouch_RelearnHit)(&s,y0.x-3,y0.y+5)==-1);   /* the list behind answers nothing */
+                strcpy(r->message,"Charizard is trying to learn Flamethrower. But Charizard can't learn more than four moves. Delete an older move to make room for Flamethrower?"); update(&old,&s);
+                y0=BlButton(r,0); n0=BlButton(r,1); assert(y0.y>BlAsk(r).y+BlAsk(r).h && y0.y+y0.h<176);                   /* a longer question: lower, still above the band */
+                assert((CtrPokeTouch_RelearnHit)(&s,y0.x+5,y0.y+5)==PT_RL_HIT_YES && (CtrPokeTouch_RelearnHit)(&s,n0.x+5,n0.y+5)==PT_RL_HIT_NO);
+                r->panel=PT_RL_PANEL_MESSAGE; r->tap=1; update(&old,&s);
+                assert((CtrPokeTouch_RelearnHit)(&s,100,100)==PT_RL_HIT_MESSAGE && (CtrPokeTouch_RelearnHit)(&s,300,170)==PT_RL_HIT_MESSAGE && (CtrPokeTouch_RelearnHit)(&s,100,185)==-1);
+                r->tap=0; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,100,100)==-1);
+                r->panel=PT_RL_PANEL_BLANK; update(&old,&s); assert((CtrPokeTouch_RelearnHit)(&s,150,40)==-1);
+                r->panel=PT_RL_PANEL_LIST; r->message[0]=0;
+                CtrPokeTouch_SetStyle(keep); memset(&old,0,sizeof(old)); old.selected=old.pressed=PT_NONE; update(&old,&s);
+            }
             r->panel=PT_RL_PANEL_LIST; r->message[0]=0; update(&old,&s);
             r->on=0; s.backVisible=0;
         }
@@ -729,23 +852,42 @@ int main(int argc, char **argv)
             d->menu[7].id=2; d->menu[7].locked=1; strcpy(d->menu[7].name,"WATER'S EDGE POK\xC3\xA9MON");
             strcpy(s.bar[0],"Kanto"); strcpy(s.bar[1],"Your Pokemon by number");
             SHOT("dex_menu");
+            if(getenv("PT_STYLE")) {   /* the Poke Ball Pokedex: tabs across the top, in screen pixels */
+                assert(CtrPokeTouch_DexHit(&s,50,15)==PT_DEX_HIT_TAB && CtrPokeTouch_DexHit(&s,160,15)==PT_DEX_HIT_TAB+1 && CtrPokeTouch_DexHit(&s,260,15)==PT_DEX_HIT_TAB+2);
+                assert(CtrPokeTouch_DexHit(&s,5,15)==-1 && CtrPokeTouch_DexHit(&s,160,175)==-1);
+            }
             d->menuCursor=2; update(&old,&s); d->pressed=PT_DEX_HIT_ITEM+2; update(&old,&s); d->pressed=-1; d->menuCursor=3; update(&old,&s); SHOT("dex_menu_close");
+            if(getenv("PT_STYLE"))
+                assert(CtrPokeTouch_DexHit(&s,100,148)==PT_DEX_HIT_ITEM+3 && CtrPokeTouch_DexHit(&s,260,148)==-1);   /* CLOSE: the bar under the cards */
             d->menuCursor=5; SHOT("dex_habitats"); d->menuCursor=7; update(&old,&s); d->menuCursor=6; update(&old,&s);
             d->state=PT_DEX_STATE_LIST; d->listCount=151; d->listFirst=1; d->listCursor=3; d->order=0;
             static const char *const nm[PT_DEX_ROWS]={"IVYSAUR","VENUSAUR","CHARMANDER","CHARMELEON","CHARIZARD"};
             for(int i=0;i<PT_DEX_ROWS;++i) { d->row[i].number=(uint16_t)(2+i); d->row[i].species=(uint16_t)(2+i); d->row[i].flags=(uint8_t)(i==4?1:3); strcpy(d->row[i].name,nm[i]); }
             d->sel=d->row[2]; d->type[0]=9; d->type[1]=-1; strcpy(d->typeName[0],"FIRE");
             SHOT("dex_list");
+            if(getenv("PT_STYLE")) {   /* five rows from y 32, 25 apart; the arrows beside them; the side panel is not a button */
+                assert(CtrPokeTouch_DexHit(&s,100,40)==PT_DEX_HIT_ROW && CtrPokeTouch_DexHit(&s,100,140)==PT_DEX_HIT_ROW+4);
+                assert(CtrPokeTouch_DexHit(&s,210,50)==PT_DEX_HIT_UP && CtrPokeTouch_DexHit(&s,210,120)==PT_DEX_HIT_DOWN && CtrPokeTouch_DexHit(&s,270,60)==-1);
+            }
             d->listCursor=4; d->type[1]=2; strcpy(d->typeName[1],"FLYING"); d->sel=d->row[3]; update(&old,&s);
             d->pressed=PT_DEX_HIT_ROW+1; update(&old,&s); d->pressed=-1; d->listFirst=0; update(&old,&s);
             d->state=PT_DEX_STATE_CATEGORY; d->slots=4; d->slot=1; d->canPrev=0; d->canNext=1; d->page=1; d->pages=2;
             for(int i=0;i<4;++i) { d->mon[i]=d->row[i]; }
-            SHOT("dex_category"); d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
+            SHOT("dex_category");
+            if(getenv("PT_STYLE")) {   /* four slots in two columns, the arrows at the right (PREV off here) */
+                assert(CtrPokeTouch_DexHit(&s,50,40)==PT_DEX_HIT_SLOT && CtrPokeTouch_DexHit(&s,180,40)==PT_DEX_HIT_SLOT+1);
+                assert(CtrPokeTouch_DexHit(&s,50,120)==PT_DEX_HIT_SLOT+2 && CtrPokeTouch_DexHit(&s,180,120)==PT_DEX_HIT_SLOT+3);
+                assert(CtrPokeTouch_DexHit(&s,270,120)==PT_DEX_HIT_NEXT && CtrPokeTouch_DexHit(&s,270,40)==-1);
+            }
+            d->slot=2; update(&old,&s); d->pressed=PT_DEX_HIT_SLOT+3; update(&old,&s); d->pressed=-1;
             d->state=PT_DEX_STATE_PAGE; d->sel=d->row[4]; d->sel.flags=3; d->height=17; d->weight=905; strcpy(d->kind,"FLAME POK\xC3\xA9MON");
             strcpy(d->desc,"Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.");
             SHOT("dex_page");
-            assert(CtrPokeTouch_DexHit(&s,170,132)==PT_DEX_HIT_AREA && CtrPokeTouch_DexHit(&s,215,132)==PT_DEX_HIT_CRY);
-            assert(CtrPokeTouch_DexHit(&s,170,150)==-1 && CtrPokeTouch_DexHit(&s,100,132)==-1 && CtrPokeTouch_DexHit(&s,170,176)==-1);
+            {   /* AREA and CRY: lower right of the card (the Poke Ball card is wider: its buttons are further right) */
+                int ax=getenv("PT_STYLE")?228:170, cx=getenv("PT_STYLE")?278:215, by=getenv("PT_STYLE")?135:132;
+                assert(CtrPokeTouch_DexHit(&s,ax,by)==PT_DEX_HIT_AREA && CtrPokeTouch_DexHit(&s,cx,by)==PT_DEX_HIT_CRY);
+                assert(CtrPokeTouch_DexHit(&s,ax,getenv("PT_STYLE")?160:150)==-1 && CtrPokeTouch_DexHit(&s,100,by)==-1 && CtrPokeTouch_DexHit(&s,ax,176)==-1);
+            }
             d->pressed=PT_DEX_HIT_CRY; update(&old,&s); d->pressed=PT_DEX_HIT_AREA; update(&old,&s); d->pressed=-1; d->added=1; update(&old,&s); d->added=0;
         }
         s.dex.on=0;
@@ -791,9 +933,66 @@ int main(int argc, char **argv)
         s.save=0; s.saveState=0; s.viewport=0; s.backVisible=0; s.choice.on=1; s.choice.count=2; s.choice.cols=0; s.choice.cursor=0; s.choice.pressed=-1;
         strcpy(s.choice.label[0],"YES"); strcpy(s.choice.label[1],"NO"); strcpy(s.choice.prompt,"Would you like to buy this?");
         strcpy(s.bar[0],""); s.bar[1][0]=0;
-        update(&old,&s); SHOT("choice_yesno"); s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
+        update(&old,&s); SHOT("choice_yesno"); if(sStyleBall) { assert(sBallFull); assert((CtrPokeTouch_ChoiceHit)(&s,150,50)==PT_CHOICE_HIT_ROW); assert((CtrPokeTouch_ChoiceHit)(&s,150,100)==PT_CHOICE_HIT_ROW+1); assert((CtrPokeTouch_ChoiceHit)(&s,150,150)==-1); assert((CtrPokeTouch_ChoiceHit)(&s,10,50)==-1);   /* raw lower-screen coordinates */ } s.choice.cursor=1; update(&old,&s); s.choice.pressed=PT_CHOICE_HIT_ROW; update(&old,&s); s.choice.pressed=-1; s.choice.cursor=0; update(&old,&s);
         s.choice.count=6; for(int k=0;k<6;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"CHOICE %d",k+1);
-        s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s); s.choice.on=0;
+        s.choice.cursor=3; update(&old,&s); SHOT("choice_six"); s.choice.cursor=5; update(&old,&s);
+        /* The Union Room's wait for the others (3ds_bottom_union_impl.h): START and CANCEL, then CANCEL alone; each text fits its button / the note. */
+        { const char *wait[2]={CTR_TR("START","EMPEZAR","START"),CTR_TR("CANCEL","CANCELAR","ABBRECHEN")}; s.choice.count=2; s.choice.cols=1; s.choice.cursor=0; s.choice.pressed=-1;
+          for(int k=0;k<2;++k) snprintf(s.choice.label[k],sizeof(s.choice.label[k]),"%s",wait[k]);
+          snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("Everyone is here. START begins.","Ya est\xC3\xA1n todos. EMPEZAR comienza.","Alle sind da. START beginnt.")); update(&old,&s); SHOT("union_wait_start");
+          s.choice.count=1; snprintf(s.choice.label[0],sizeof(s.choice.label[0]),"%s",CTR_TR("CANCEL","CANCELAR","ABBRECHEN")); snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("1 player is missing.","Falta 1 jugador.","Es fehlt 1 Spieler."));
+          update(&old,&s); SHOT("union_wait_cancel"); }
+        /* The trade's choice of a Pokemon (3ds_field_trade_impl.h): the two parties as cards, a tab each, CANCEL; every card and button is where its hit test finds it. */
+        {
+            static const char *const nm[6]={"GROUDON","CHARIZARD","PIKACHU","ONIX","LAPRAS","SNORLAX"};
+            CtrPokeTouchTrade *t=&s.trade;
+            memset(t,0,sizeof(*t)); t->on=1; t->side=0; t->cursor=0;
+            for(int side=0;side<2;++side) for(int i=0;i<6;++i) {
+                memset(t->name[side][i],0xff,sizeof(t->name[side][i]));
+                if(side==1 && i>=4) continue;                                    /* the partner has four Pokemon */
+                t->mon[side][i].species=(uint16_t)(1+i+side*20); t->mon[side][i].personality=1234u+i;
+                t->mon[side][i].egg=(side==1 && i==3);
+                t->level[side][i]=(uint8_t)(100-i*12); t->hp[side][i]=(uint8_t)(i==3?0:100-i*20);
+                for(int c=0;c<8 && nm[i][c];++c) t->name[side][i][c]=(uint8_t)(0xBB+(nm[i][c]-'A'));   /* FireRed's capital letters */
+            }
+            memset(t->partner,0xff,sizeof(t->partner)); t->partner[0]=(uint8_t)(0xBB+'R'-'A'); t->partner[1]=(uint8_t)(0xD5+'i'-'a'); t->partner[2]=(uint8_t)(0xD5+'c'-'a'); t->partner[3]=(uint8_t)(0xD5+'k'-'a');
+            snprintf(s.choice.prompt,sizeof(s.choice.prompt),"%s",CTR_TR("Choose a Pokemon to trade.","Elige un PokÃ©mon para el intercambio.","WÃ¤hle ein PokÃ©mon zum Tauschen."));
+            s.choice.count=0; s.choice.pressed=-1;
+            update(&old,&s); SHOT("trade_yours");
+            t->cursor=2; s.choice.pressed=PT_CHOICE_HIT_ROW+2; update(&old,&s); s.choice.pressed=-1;
+            t->side=1; t->cursor=7; update(&old,&s); SHOT("trade_theirs");
+            t->cursor=12; update(&old,&s); SHOT("trade_cancel");
+            t->side=0; t->cursor=0; update(&old,&s);
+            /* hit tests: the cards where the Pokemon are, the tabs, CANCEL, nothing elsewhere or on an empty place of the partner's party */
+            for(int k=0;k<6;++k) { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+k) { found=1; break; } assert(found); }
+            for(int code=PT_TRADE_TAB_YOURS;code<=PT_TRADE_CANCEL;++code) { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+code) { found=1; break; } assert(found); }
+            assert(CtrPokeTouch_ChoiceHit(&s,0,0)==-1);
+            t->side=1; { int found=0; for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+5) { found=1; break; } assert(!found); }
+            memset(&s.trade,0,sizeof(s.trade));
+        }
+        /* The chat's keyboard (3ds_field_chat_impl.h): FireRed's 5 x 10 grid on its side, tabs, the message, three buttons; every key and button is found by its hit test. */
+        {
+            CtrPokeTouchChat *t=&s.chat;
+            memset(t,0xff,sizeof(*t)); t->on=1; t->page=0; t->length=5; s.choice.pressed=-1; s.choice.count=0;
+            for(int i=0;i<5;++i) t->msg[i]=(uint8_t)(0xBB+i);
+            t->msg[5]=0xff;
+            for(int row=0;row<10;++row) for(int col=0;col<5;++col) {
+                if(row==5 && col>0) continue;                                      /* the Z row has one key */
+                t->key[row][col][0]=(uint8_t)(0xBB+(row*5+col)%26); t->key[row][col][1]=0xff; t->key[row][col][2]=0xff;
+            }
+            update(&old,&s); SHOT("chat_keys");
+            s.choice.pressed=PT_CHOICE_HIT_ROW+7; update(&old,&s); s.choice.pressed=-1;
+            t->page=3; for(int row=0;row<10;++row) { memset(t->reg[row],0xff,sizeof(t->reg[row])); if(row<7) { for(int c=0;c<9;++c) t->reg[row][c]=(uint8_t)(0xD5+(row+c)%26); } }
+            update(&old,&s); SHOT("chat_saved");
+            t->page=0; t->length=0; t->msg[0]=0xff; update(&old,&s); SHOT("chat_empty");
+            for(int code=0;code<=PT_CHAT_QUIT;++code) { int found=0; if(code>=50 && code<PT_CHAT_TAB) continue; if(code<50 && (code/5==5) && code%5>0) continue;
+                for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+code) { found=1; break; }
+                if(!found) printf("CHAT hit %d missing\n",code);
+                assert(found); }
+            assert(CtrPokeTouch_ChoiceHit(&s,0,0)==-1);
+            memset(&s.chat,0,sizeof(s.chat));
+        }
+        s.choice.on=0;
         (void)before;
     }
     v.save=0; v.home=1; v.backVisible=1; update(&old,&v);
@@ -813,14 +1012,40 @@ int main(int argc, char **argv)
         update(&old,&h);                                                                 /* the map is not built: the sea's blue and the ribbon */
         { int steps=0;  while(!CtrPokeTouch_MapPrepare(0,0)) assert(++steps<200); assert(steps>5 && HmDone() && sHmOrbN==5 && sHmPalN>20 && sHmPalN<=255); }
         h.mapReady=1; update(&old,&h);                                                   /* built: the picture appears */
-        assert(at(PT_VIEW_X+100,PT_VIEW_Y+80)!=C_MAP_WAIT);
+        assert(at(PT_HOME_X+100,PT_HOME_Y+80)!=C_MAP_WAIT);
         h.playerX=5; h.playerY=5; update(&old,&h);                                      /* the player appears */
         h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h);    /* a destination: ring, name */
         assert(RingRect(&h,&ring) && ring.w==ring.h && ring.w>=24 && (ring.w&1)==0 && LabelRect(&h,&label) && label.h==21 && label.w==UiTextWidth("VERMILION CITY",1)+18);
-        assert(label.y+label.h+3==ring.y || label.y==ring.y+ring.h+3 || label.y>=PT_VIEW_Y+3);
+        assert(label.y+label.h+3==ring.y || label.y==ring.y+ring.h+3 || label.y>=PT_HOME_Y+3);
         assert(at(ring.x+ring.w/2,ring.y)==UI_RGB(138,22,16) || at(ring.x+ring.w/2-1,ring.y)==UI_RGB(138,22,16));   /* the ring's dark edge at its top */
         if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_cursor");
         h.cursorFrame=1; update(&old,&h); h.cursorFrame=0; update(&old,&h);              /* the ring blinks */
+        /* The zone's Pokemon in the note: unseen, seen and caught slots (and the water-only wording), then gone again. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"ROUTE 24"); strcpy(z.bar[1],"KANTO"); update(&old,&z);
+          z.zoneN=PT_ZONE_MAX; for(int i=0;i<PT_ZONE_MAX;++i){ z.zoneSpecies[i]=(uint16_t)(16+i); z.zoneFlags[i]=(uint8_t)(i%3); } update(&old,&z);
+          if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_zone");
+          z.zoneWater=1; z.zoneN=3; update(&old,&z); z.flyOk=1; update(&old,&z); z.flyOk=0; z.zoneN=0; z.zoneWater=0; update(&old,&z);
+          h=z; h.cursorX=10; h.cursorY=8; strcpy(h.bar[0],"VERMILION CITY"); update(&old,&h); }
+        /* Nowhere wild after the League: each postgame step, then the national Pokedex bar. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"PALLET TOWN"); strcpy(z.bar[1],"KANTO"); update(&old,&z);
+          for(int st=1; st<=4; ++st) { z.homeStage=(uint8_t)st; z.homeDex=(uint16_t)(st*77); update(&old,&z); if(st==4 && getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_dexbar"); }
+          z.homeStage=0; z.homeDex=0; update(&old,&z); h=z; }
+        /* The status panel: opened, a speed chosen, a Repel used (the plate then shows it), closed. */
+        { CtrPokeTouchView z=h; z.cursorX=z.cursorY=-1; strcpy(z.bar[0],"ROUTE 24"); z.homeMoney=8200; z.homeTurbo=2;
+          for(int k=0;k<3;++k){ z.homeRepelItem[k]=(uint16_t)(1+k); z.homeRepelHave[k]=(uint16_t)(4-2*k); }
+          update(&old,&z); assert(CtrPokeTouch_HomeLayout());
+          assert(CtrPokeTouch_HomeStatusHit(70,10) && CtrPokeTouch_HomeStatusHit(10,10)==(sStyleBall!=0) && !CtrPokeTouch_HomeStatusHit(190,10));   /* the Poke Ball plate takes BACK's place on HOME */
+          z.homePanel=1; update(&old,&z); if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_panel");
+          assert(CtrPokeTouch_HomePanelHit(100,60)==PT_PANEL_NONE && CtrPokeTouch_HomePanelHit(20,120)==PT_PANEL_OUT);
+          { int seen[7]={0}; for(int y=44;y<192;++y) for(int x=44;x<276;++x){ int t=CtrPokeTouch_HomePanelHit(x,y);
+              if(t>=PT_PANEL_TURBO&&t<PT_PANEL_TURBO+4) { seen[t-PT_PANEL_TURBO]=1; }
+              else if(t>=PT_PANEL_REPEL&&t<PT_PANEL_REPEL+3) { seen[4+t-PT_PANEL_REPEL]=1; } }
+            for(int k=0;k<7;++k) assert(seen[k]); }
+          z.homeTurbo=3; update(&old,&z);
+          z.homeRepelSteps=87; z.homeRepelTotal=100; z.homeRepelKind=PT_REPEL_PLAIN; z.homeRepelHave[0]=3; update(&old,&z);
+          z.homePanel=0; update(&old,&z); if(getenv("PT_PREVIEW_DIR")) ppm(getenv("PT_PREVIEW_DIR"),"home_repel");
+          z.homeRepelSteps=0; update(&old,&z);
+          z.homeMoney=635271; z.homeTurbo=0; update(&old,&z); h=z; }
         for(int zoom=0; zoom<HM_ZOOMS; ++zoom) {                                          /* every zoom, at a few centres: pieces move with the map */
             int centres[][2]={{384,288},{100,100},{700,500},{240,380}};
             for(unsigned c=0;c<sizeof(centres)/sizeof(centres[0]);++c) {
@@ -832,7 +1057,7 @@ int main(int argc, char **argv)
                     h.cursorX=(int8_t)cells[i][0]; h.cursorY=(int8_t)cells[i][1]; update(&old,&h);
                     h.playerX=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][0]; h.playerY=(int8_t)cells[(i+2)%(sizeof(cells)/sizeof(cells[0]))][1]; update(&old,&h);
                     if(LabelRect(&h,&label)) { /* the name's window stays inside the map */
-                        assert(label.x>=PT_VIEW_X && label.y>=PT_VIEW_Y && label.x+label.w<=PT_VIEW_X+PT_VIEW_W && label.y+label.h<=PT_VIEW_Y+PT_VIEW_H);
+                        assert(label.x>=PT_HOME_X && label.y>=PT_HOME_Y && label.x+label.w<=PT_HOME_X+PT_VIEW_W && label.y+label.h<=PT_HOME_Y+PT_VIEW_H);
                     }
                 }
             }
@@ -847,9 +1072,9 @@ int main(int argc, char **argv)
         {
             CtrPokeTouchRect plus=ZoomRect(1), minus=ZoomRect(0);
             assert(CtrPokeTouch_HomeZoomHit(plus.x+10,plus.y+10)==1 && CtrPokeTouch_HomeZoomHit(minus.x+10,minus.y+10)==-1);
-            assert(CtrPokeTouch_HomeZoomHit(PT_VIEW_X+10,PT_VIEW_Y+PT_VIEW_H/2)==0 && !(plus.y+plus.h>minus.y));
-            assert(plus.x+plus.w<=PT_VIEW_X+PT_VIEW_W && minus.y+minus.h<=PT_VIEW_Y+PT_VIEW_H);
-            assert(CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6) && !CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+100,PT_VIEW_Y+60));
+            assert(CtrPokeTouch_HomeZoomHit(PT_HOME_X+10,PT_HOME_Y+PT_VIEW_H/2)==0 && !(plus.y+plus.h>minus.y));
+            assert(plus.x+plus.w<=PT_HOME_X+PT_VIEW_W && minus.y+minus.h<=PT_HOME_Y+PT_VIEW_H);
+            assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6) && !CtrPokeTouch_HomeRibbonHit(PT_HOME_X+100,PT_HOME_Y+60));
             for(int on=0; on<2; ++on) for(int p=0;p<2;++p) {
                 CtrPokeTouchRect r=ZoomRect(p);
                 sCanvas=canvas; for(int i=0;i<W*H;++i) canvas[i]=0x1357;
@@ -862,7 +1087,12 @@ int main(int argc, char **argv)
         { int steps=0; while(!CtrPokeTouch_MapPrepare(1,0)) assert(++steps<200); }
         h.mapGroup=PT_MAP_SEVII123; h.mapReady=1; h.cursorX=4; h.cursorY=4; update(&old,&h);   /* another map: SEVII on the ribbon */
         h.mapOpen=1; update(&old,&h);                                                    /* no other map: no arrow on the ribbon */
-        assert(!CtrPokeTouch_HomeRibbonHit(PT_VIEW_X+10,PT_VIEW_Y+6));
+        assert(!CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        h.mapOpen=3; update(&old,&h); assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        sMap.ok=0; CtrPokeTouch_Draw(canvas,&h);                                          /* the image failed: an empty panel, so neither ribbon nor zoom answers */
+        assert(!CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
+        { CtrPokeTouchRect plus=ZoomRect(1); assert(CtrPokeTouch_HomeZoomHit(plus.x+10,plus.y+10)==0); }
+        sMap.ok=1; CtrPokeTouch_Draw(canvas,&h); assert(CtrPokeTouch_HomeRibbonHit(PT_HOME_X+10,PT_HOME_Y+6));
         /* A pick: the town whose orb is near the touch, else the cell it is in. */
         {
             int gx, gy, wx = 0, wy = 0, vx, vy;
@@ -874,7 +1104,7 @@ int main(int argc, char **argv)
     }
 #endif
 #ifndef PT_BASELINE
-    {
+    if(!sStyleBall) {      /* the Embers pieces' spot checks: Poke Ball draws them flat */
         /* Llama (the owner's mockup, llama2_mockup.html): the shared pieces of 3ds_ember2_impl.h. Each is drawn on a canvas of a marker colour
          * and must stay inside its rectangle plus the 2 px a piece owns (the canvas redraws only what changed); the ones that do not blend
          * must draw the same twice; colours and shapes are spot-checked against the mockup's CSS. PT_PREVIEW_DIR gets a sheet of them. */
@@ -896,7 +1126,7 @@ int main(int argc, char **argv)
             {&kEmPartyRed,"party red",0xffd0c8,0xf8a498,0xe87c74,0xc85050,0x8a2c30,0xffe8e4,0x6a1c22},
         };
         /* The palettes are the mockup's .cr .fl .bl .go .gr .pu .sl .pb .pr, outline --o #2a2238 on every one. */
-        for(unsigned i=0;i<sizeof(pals)/sizeof(pals[0]);++i) {
+        for(unsigned i=0;i<sizeof(pals)/sizeof(pals[0]) && !sStyleBall;++i) {      /* the Embers palettes; Poke Ball swaps four of them */
             const EmPal *p=pals[i].p;
             if(pals[i].name[0]=='c' && pals[i].name[1]=='r') assert(p->inkSh==HEX(0xd0d0c8) && p->ink==HEX(0x484848));
             else assert(p->inkSh==HEX(pals[i].ts) && p->ink==EM_WHITE);
@@ -1170,6 +1400,42 @@ int main(int argc, char **argv)
     if(viewports) fclose(viewports);
     if(realPack) fclose(realPack);
     free(realIndex);
+    /* The game's own picture in HOME's layout (the Pokedex's habitat map): into it, a note that changes, and out of it. */
+    v.viewport=1; v.pictureHome=1; update(&old,&v); strcpy(v.bar[0],"Pokedex"); strcpy(v.bar[1],"Back goes a step."); update(&old,&v);
+    v.pictureHome=0; v.viewport=0; update(&old,&v);
+    /* Poke Ball OPTIONS: its hit zones (rows 20 apart from (8, 34), the value in the right half, the PAGE header, the exit piece). */
+    if (getenv("PT_STYLE")) {
+        int row = -1, zone = -1;
+
+        sBallFull = 1; sBallExitR = (CtrPokeTouchRect){240, 162, 74, 38};
+        assert(CtrPokeTouch_OptionHit(20, 40, 7, &row, &zone) && row == 0 && zone == PT_OPT_ZONE_LABEL);
+        assert(CtrPokeTouch_OptionHit(150, 95, 7, &row, &zone) && row == 3 && zone == PT_OPT_ZONE_PREV);
+        assert(CtrPokeTouch_OptionHit(200, 95, 7, &row, &zone) && row == 3 && zone == PT_OPT_ZONE_NEXT);
+        assert(!CtrPokeTouch_OptionHit(236, 40, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 53, 7, &row, &zone) && !CtrPokeTouch_OptionHit(20, 40, 0, &row, &zone));
+        assert(CtrPokeTouch_OptionSegment(130, 3) == 0 && CtrPokeTouch_OptionSegment(180, 3) == 1 && CtrPokeTouch_OptionSegment(230, 3) == 2);
+        assert(CtrPokeTouch_HitOptPage(100, 10) && !CtrPokeTouch_HitOptPage(100, 40) && CtrPokeTouch_HitBack(280, 180) && !CtrPokeTouch_HitBack(100, 10));
+        /* The page dots: 12 px zones, one for each page, at the right of the header; a tap elsewhere on the header is no dot (it goes to the next page). */
+        assert(CtrPokeTouch_OptPageDot(230,15,7)==0 && CtrPokeTouch_OptPageDot(237,15,7)==0 && CtrPokeTouch_OptPageDot(238,15,7)==1);
+        assert(CtrPokeTouch_OptPageDot(302,15,7)==6 && CtrPokeTouch_OptPageDot(309,15,7)==6 && CtrPokeTouch_OptPageDot(310,15,7)==-1);
+        assert(CtrPokeTouch_OptPageDot(100,15,7)==-1 && CtrPokeTouch_OptPageDot(230,40,7)==-1 && CtrPokeTouch_OptPageDot(230,2,7)==-1);
+        assert(CtrPokeTouch_OptPageDot(300,15,4)==3 && CtrPokeTouch_OptPageDot(260,15,4)==-1);   /* four pages: four dots from the right */
+        /* Eight pages: the zones are where the eight dots are drawn (312 - (8 - d) * 12), the first at 216, and a ninth count is still eight. */
+        assert(CtrPokeTouch_OptPageDot(216,15,8)==0 && CtrPokeTouch_OptPageDot(222,15,8)==0 && CtrPokeTouch_OptPageDot(228,15,8)==1);
+        assert(CtrPokeTouch_OptPageDot(302,15,8)==7 && CtrPokeTouch_OptPageDot(214,15,8)==-1 && CtrPokeTouch_OptPageDot(216,15,9)==0);
+        sBallFull = 0;
+        assert(CtrPokeTouch_OptPageDot(230,15,7)==-1);                              /* the classic header has the one PAGE button */
+    }
+    /* The Poke Ball style swaps the shared palettes and swaps them back exactly. */
+    if (!getenv("PT_STYLE")) {
+        EmPal flame = kEmFlame, cream = kEmCream, grey = kEmGrey, slate = kEmSlate;
+
+        CtrPokeTouch_SetStyle(1);
+        assert(CtrPokeTouch_Style() == 1 && kEmFlame.ink != flame.ink && kEmCream.ink == EM_WHITE && kEmSlate.edge != slate.edge && kEmGrey.top != grey.top);
+        CtrPokeTouch_SetStyle(1);
+        CtrPokeTouch_SetStyle(0);
+        assert(CtrPokeTouch_Style() == 0 && !memcmp(&kEmFlame, &flame, sizeof(flame)) && !memcmp(&kEmCream, &cream, sizeof(cream))
+               && !memcmp(&kEmGrey, &grey, sizeof(grey)) && !memcmp(&kEmSlate, &slate, sizeof(slate)));
+    }
     puts("PASS real renderer: decoder, 4bpp, geometry, viewport, incremental states, X/Y/RUN, save/back hit-tests");
     return 0;
 }
