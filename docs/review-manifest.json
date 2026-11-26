@@ -7962,7 +7962,7 @@
   },
   {
    "path": "patches/pokefirered/0284-german-keyboard-without-the-cartridge-table.json",
-   "sha256": "7f1215874dbf024a587c49d70c6de6fa6b939caeab8a5c06919aa7dd439a7a4a",
+   "sha256": "7d95827b66b027be0ab754b88619fa91df9a9b2a2a5d278d36acc741114a3e5f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
