@@ -1311,7 +1311,7 @@
   },
   {
    "path": "3ds_port/src/3ds_game_bridge.c",
-   "sha256": "e9d5a513259171ca11acf17ff7b89c3edaee6b7c5b6c7c3575caafc41f20d76f",
+   "sha256": "fdb538187e5798161ed84c3544a345b400e0ebb81285f82d034174dd4c9b5740",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -7289,7 +7289,7 @@
   },
   {
    "path": "tools/test_trade_cards_recipe.py",
-   "sha256": "db4d7442d0094865f2869f5d5fc2c13c835d511f3b5beec0ddc1808e1a66dfe1",
+   "sha256": "c4270f5f2ea4e5753527d6ce137dfb3744358dd4b0eb1be887682f93b35af3b9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7626,7 +7626,7 @@
   },
   {
    "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
-   "sha256": "c0cf156b64dbfa9093613ee0db131bf845f2583c5327e2726a364b10659999df",
+   "sha256": "28c4edfa7419cc8c7ab7ae4b7e983d3dbf855f4fd0fca3020b53fec112fe5934",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7634,7 +7634,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_chat_impl.h",
-   "sha256": "aedf899135514330e3f3fd676e38f54241738d448ae1af8da0a6bacc73295cf7",
+   "sha256": "10c753b2775ba9c5975a43863034f912bd5662d9e8bef1eccc2d67f73e2858b9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7666,7 +7666,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom_trade_impl.h",
-   "sha256": "82891d93de49ce612371cc8091d85dc55144d7e802512decc322d88a60b7dfde",
+   "sha256": "78729a33326291d13546356e6ef573fe7b71735d0d2de513c15fa39852c86f87",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7979,6 +7979,14 @@
   {
    "path": "patches/pokefirered/0286-trade-menu-stops-the-frame-after-it-is-freed.json",
    "sha256": "dc8ac4187e46077afd56a765bb3cc1323a092d837adbb5ce2f693b82dcb4b532",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0291-trade-menu-starts-clean.json",
+   "sha256": "ccad9317d65018e902f8efeef0287dbb612e60a932c7a2a8f5065f36ace70399",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
