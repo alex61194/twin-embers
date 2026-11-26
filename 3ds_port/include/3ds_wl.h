@@ -149,6 +149,8 @@ typedef struct WlRfu {
     bool dataReady;                 /* something to tell a slave console (command 0x28) */
     uint8_t ackBits;                /* children that answered, for the host's data ready */
     uint8_t lostSlots;              /* slots to report lost (command 0x29) */
+    uint16_t leaveNode;             /* a node that said goodbye while its last frame was unread: its leave waits (0 none) */
+    uint32_t leaveAt;               /* the latest moment (ms) the leave waits for the game to read */
     uint32_t nowMs;
     uint32_t txMs;                  /* when the console last sent a frame and handed over the clock */
     uint32_t members;               /* the nodes of the session, a bit for each (set by the layer above) */

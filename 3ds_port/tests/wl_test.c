@@ -419,6 +419,30 @@ static void TestLink(unsigned children, unsigned loss)
         Cmd(&host.rfu, WLC_SLOT_STATUS, NULL, 0, ack);
         CHECK(ack[1] == children - 1, "the host has %u children now", children - 1);
     }
+    /* A child's goodbye right behind its last frame (the last step of a trade's exit): the host still reads that frame, and is told the
+     * slot is gone only after it has. */
+    if (children >= 2)
+    {
+        uint8_t body[12];
+        unsigned tries = 0;
+        const uint8_t *got;
+
+        memset(body, 0xD7, sizeof(body));
+        p[0] = 3;
+        memcpy(&p[1], body, 12);
+        CHECK(Cmd(&kid[1].rfu, WLC_DATA_TX, p, 4, ack) == 1, "the last child sends its last frame");
+        CHECK(Cmd(&kid[1].rfu, WLC_DISCONNECT, NULL, 0, ack) == 1, "and leaves at once");
+        while (!(host.rfu.rxNew[1] || host.rfu.leaveNode) && tries++ < 600)
+            Tick(&air, all, 1 + (int)children, 5);
+        Tick(&air, all, 1 + (int)children, 5);
+        CHECK(host.rfu.childUsed[1], "its slot is kept while the frame is unread");
+        words = (unsigned)Cmd(&host.rfu, WLC_DATA_RX, NULL, 0, ack);
+        got = (const uint8_t *)(ack + 2);
+        CHECK(words > 1 && (ack[1] >> 13 & 0x1F) == 3 && got[0] == 0xD7 && got[2] == 0xD7, "the host reads the last frame (%u words, header 0x%08X)", words, ack[1]);
+        for (tries = 0; host.rfu.childUsed[1] && tries < 20; ++tries)
+            Tick(&air, all, 1 + (int)children, 5);
+        CHECK(!host.rfu.childUsed[1] && (host.rfu.lostSlots & 2), "then the slot is lost");
+    }
     printf("link with %u children and %u%% loss: ok\n", children, loss);
 }
 

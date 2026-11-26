@@ -19,7 +19,7 @@
 #include "3ds_wl.h"
 
 enum { M_BEACON = 1, M_CONNECT, M_ACCEPT, M_REJECT, M_DISCONNECT, M_FRAME };
-enum { BEACON_EVERY_MS = 200, HOST_LISTED_MS = 2000, EXCHANGE_WAIT_MS = 8, EMPTY_WAIT_MS = 16, SIGNAL = 0xA0 };
+enum { LEAVE_GRACE_MS = 500, BEACON_EVERY_MS = 200, HOST_LISTED_MS = 2000, EXCHANGE_WAIT_MS = 8, EMPTY_WAIT_MS = 16, SIGNAL = 0xA0 };
 enum { MAX_PARAM_WORDS = WL_RFU_ACK_WORDS - 1, RX_BYTES_MAX = MAX_PARAM_WORDS * 4 };
 
 static uint32_t Header(unsigned words, unsigned command)
@@ -110,6 +110,7 @@ static void DropLink(WlRfu *rfu)
     memset(rfu->rxqCount, 0, sizeof(rfu->rxqCount));
     rfu->txOwed = false;
     rfu->dataReady = false;
+    rfu->leaveNode = 0;
 }
 
 static void Reject(uint32_t *ack, uint32_t reason, int *words)
@@ -191,6 +192,43 @@ static void RxTaken(WlRfu *rfu, unsigned slot)
     }
 }
 
+/* A node leaves the link: its slot is lost (the child's own link, or the host's child). */
+static void Depart(WlRfu *rfu, uint16_t src)
+{
+    if (rfu->leaveNode == src)
+        rfu->leaveNode = 0;
+    if ((rfu->state == WL_STATE_CLIENT || rfu->state == WL_STATE_CONNECTING) && src == rfu->parentNode)
+    {
+        if (rfu->state == WL_STATE_CLIENT)
+            rfu->lostSlots |= (uint8_t)(1u << rfu->mySlot);
+        else
+            rfu->connectStatus = 3;
+        rfu->state = WL_STATE_IDLE;
+        rfu->parentNode = 0;
+    }
+    else
+        for (unsigned i = 0; i < WL_RFU_CHILD_MAX; ++i)
+            if (rfu->childUsed[i] && rfu->childNode[i] == src)
+            {
+                rfu->childUsed[i] = false;
+                RxClear(rfu, i);
+                rfu->lostSlots |= (uint8_t)(1u << i);
+            }
+}
+
+/* Frames from the node that the game has not read yet. A node that says goodbye right after its last frame (the last step of a
+ * trade's exit is such a frame) must not take that frame with it: the console that is a little behind reads it first. */
+static bool HasUnread(const WlRfu *rfu, uint16_t node)
+{
+    if (rfu->state == WL_STATE_CLIENT)
+        return node == rfu->parentNode && (rfu->rxNew[0] || rfu->rxqCount[0]);
+    if (rfu->state == WL_STATE_HOST_OPEN || rfu->state == WL_STATE_HOST_CLOSED)
+        for (unsigned i = 0; i < WL_RFU_CHILD_MAX; ++i)
+            if (rfu->childUsed[i] && rfu->childNode[i] == node)
+                return rfu->rxNew[i] || rfu->rxqCount[i];
+    return false;
+}
+
 static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
 {
     const uint8_t *m = msg->data;
@@ -251,23 +289,15 @@ static void OnMessage(WlRfu *rfu, uint16_t src, const WlMessage *msg)
         }
         break;
     case M_DISCONNECT:
-        if ((rfu->state == WL_STATE_CLIENT || rfu->state == WL_STATE_CONNECTING) && src == rfu->parentNode)
+        if (rfu->leaveNode && rfu->leaveNode != src)
+            Depart(rfu, rfu->leaveNode);            /* only one leave waits: the older one goes now */
+        if (HasUnread(rfu, src))
         {
-            if (rfu->state == WL_STATE_CLIENT)
-                rfu->lostSlots |= (uint8_t)(1u << rfu->mySlot);
-            else
-                rfu->connectStatus = 3;
-            rfu->state = WL_STATE_IDLE;
-            rfu->parentNode = 0;
+            rfu->leaveNode = src;                   /* what it sent last is still unread: it leaves once that is read (or a moment after) */
+            rfu->leaveAt = rfu->nowMs + LEAVE_GRACE_MS;
         }
         else
-            for (unsigned i = 0; i < WL_RFU_CHILD_MAX; ++i)
-                if (rfu->childUsed[i] && rfu->childNode[i] == src)
-                {
-                    rfu->childUsed[i] = false;
-                    RxClear(rfu, i);
-                    rfu->lostSlots |= (uint8_t)(1u << i);
-                }
+            Depart(rfu, src);
         break;
     case M_FRAME:
     {
@@ -327,6 +357,8 @@ void WlRfu_Step(WlRfu *rfu)
 
         OnMessage(rfu, lost, &gone);
     }
+    if (rfu->leaveNode && (!HasUnread(rfu, rfu->leaveNode) || (int32_t)(rfu->nowMs - rfu->leaveAt) >= 0))
+        Depart(rfu, rfu->leaveNode);
     if ((rfu->state == WL_STATE_HOST_OPEN || rfu->state == WL_STATE_HOST_CLOSED) && rfu->configured
         && rfu->nowMs - rfu->lastBeacon >= BEACON_EVERY_MS)
     {
