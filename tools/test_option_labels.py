@@ -10,7 +10,9 @@ HDR = (ROOT / '3ds_port/include/3ds_poketouch.h').read_text(encoding='utf-8')
 LIMIT = int(re.search(r'#define PT_OPT_LABEL_LEN (\d+)', HDR).group(1)) - 1
 LIT = r'"(?:[^"\\]|\\.)*"'
 STR = '((?:' + LIT + r'\s*)+)'
-ROW = re.compile(r'^\s*\{CTR_TR\(' + STR + r',\s*' + STR + r',\s*' + STR + r'\)', re.M)
+# CTR_TR takes three languages, and a fourth when the string was translated for French too.
+ROW = re.compile(r'^\s*\{CTR_TR\(' + STR + r',\s*' + STR + r',\s*' + STR + r'(?:,\s*' + STR + r')?\)', re.M)
+LANGS = ('en', 'es', 'de', 'fr')
 BS = chr(92)
 
 
@@ -37,7 +39,7 @@ class OptionLabels(unittest.TestCase):
             self.assertIn(label, labels)
         self.assertNotIn('Visible wilds', labels)
         for names in rows:
-            for lang, lit in zip(('en', 'es', 'de'), names):
+            for lang, lit in zip(LANGS, names):
                 label = decode(lit)
                 self.assertLessEqual(len(label.encode('utf-8')), LIMIT, f'{lang}: "{label}" is cut at {LIMIT} bytes')
 

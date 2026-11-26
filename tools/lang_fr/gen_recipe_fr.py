@@ -1,22 +1,22 @@
-"""Spanish recipe: map every USA recipe operation to the Spanish ROM (BPRS rev 0).
+"""French recipe: map every USA recipe operation to the French ROM (French ROM rev 0).
 
 Run on the machine that holds both ROMs:
-    python gen_recipe_es.py USA.gba ES.gba recipe_dir es_sizes2.json event_scripts_layout_es.json out_dir
+    python gen_recipe_fr.py USA.gba FR.gba recipe_dir fr_sizes2.json event_scripts_layout_fr.json out_dir
 
 recipe_dir holds the USA recipe parts (entries-*.json, units-*.json). The output
-is a recipe with Spanish offsets, sizes and CRC32s, plus a report. Like the USA
+is a recipe with French offsets, sizes and CRC32s, plus a report. Like the USA
 recipe it holds no ROM bytes, only positions, lengths and checksums.
 
 How each operation is placed:
   * text symbols (one 0xFF-terminated string): position and length found by
-    es_sizes.py / es_sizes2.py (pointers followed from the USA ROM);
-  * event_scripts.bin: the layout from es_events2.py;
+    fr_sizes.py / fr_sizes2.py (pointers followed from the USA ROM);
+  * event_scripts.bin: the layout from fr_events2.py;
   * everything else: the shift given by 16-byte anchors near the operation,
     checked by comparing the bytes with ROM pointers masked out; if that
     fails, a unique search of the whole block;
   * LZ77 data (Z operations and raw .lz copies): an LZ header with the same
     decompressed size at the shifted position; a localized graphic keeps its
-    size once decompressed, the compressed length is read from the Spanish ROM.
+    size once decompressed, the compressed length is read from the French ROM.
 Operations that cannot be placed are listed in the report and keep their USA
 position marked 'unplaced', so the recipe is refused until they are solved.
 """
@@ -30,24 +30,24 @@ import zlib
 from pathlib import Path
 
 US_SHA1 = '41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc'
-# English plural suffixes the Spanish game never appends (its code has no such call):
+# English plural suffixes the French game never appends (its code has no such call):
 # filled with 0xFF they are empty strings, so the English code appends nothing.
 EMPTY_IN_SPANISH = {
     (0x3a72a0, 2),   # scrcmd.c sText_S
     (0x3a72a2, 4),   # scrcmd.c sText_IES
     (0x46d94c, 4),   # pokemon_jump.c sPluralTxt
     # data/mystery_event_msg.s: e-Reader Mystery Event scripts, laid out differently in the
-    # Spanish ROM and unreachable from the game's menus; 0xFF everywhere ends any script at once
+    # French ROM and unreachable from the game's menus; 0xFF everywhere ends any script at once
     (0x488e28, 2877),
     (0x488c70, 50),  # mystery_event_msg.c gText_MysteryGiftBerry, shown only by those scripts
 }
-# Layout bytes the Spanish ROM has no copy of (its code uses other constants): these
+# Layout bytes the French ROM has no copy of (its code uses other constants): these
 # sections stay in the engine as pret compiles them, out of the recipe.
 KEEP_IN_ENGINE = {
     (0x3cd924, 2),   # trainer_card.c sTrainerCardIdXPositions
     (0x3cd926, 2),   # trainer_card.c sTrainerCardIdYPositions
 }
-# teachy_tv.c sBg1EndGraphic: the English closing banner is an 8x2 tilemap, the Spanish
+# teachy_tv.c sBg1EndGraphic: the English closing banner is an 8x2 tilemap, the French
 # one 4x2 (its code passes width 4). Its two rows go into the English 8x2 rectangle,
 # each followed by four blank tiles.
 SPANISH_LENGTH = {(0x479590, 32): 16}
@@ -69,7 +69,7 @@ PINNED_SPAN = {
 
 def teachy_end_ops(t):
     return [['C', t, 8], ['F', 0, 8], ['C', t + 8, 8], ['F', 0, 8]]
-ES_SHA1 = 'fc663907256f06a3a09e2d6b967bc9af4919f111'
+FR_SHA1 = 'fc663907256f06a3a09e2d6b967bc9af4919f111'
 
 
 def lz_span(rom, off):
@@ -133,9 +133,9 @@ def main():
     us_path, es_path, recipe_dir, sizes_path, events_path, out_dir = map(Path, sys.argv[1:7])
     us, es = us_path.read_bytes(), es_path.read_bytes()
     assert hashlib.sha1(us).hexdigest() == US_SHA1, 'not the USA 1.0 ROM'
-    assert hashlib.sha1(es).hexdigest() == ES_SHA1, "ce n'est pas la ROM francaise rev 0"
+    assert hashlib.sha1(es).hexdigest() == FR_SHA1, "ce n'est pas la ROM francaise rev 0"
 
-    # 16-byte anchors: USA position -> shift into the Spanish ROM
+    # 16-byte anchors: USA position -> shift into the French ROM
     idx = {}
     for p in range(0, len(es) - 16, 4):
         w = es[p:p + 16]
@@ -167,7 +167,7 @@ def main():
 
     path_of = {op[1]: e['path'] for e in entries for op in e['ops'] if op[0] == 'C'}
 
-    # text strings found by es_sizes: USA (offset, size) -> Spanish (offset, size)
+    # text strings found by es_sizes: USA (offset, size) -> French (offset, size)
     text, text_src = {}, {}      # how each string was found: 'ptr' (pointers) or 'run' (contiguous)
     for r in json.load(open(sizes_path))['rows']:
         uo, un, eo, en = r[5], r[4], r[6], r[7]
@@ -206,7 +206,7 @@ def main():
             if v in wanted:
                 sites[v].append(p)
     def find_strings(site_to_es, strict=True):
-        """Spanish position of strings by the pointers to them, then by contiguous runs."""
+        """French position of strings by the pointers to them, then by contiguous runs."""
         for o, n in wanted.items():
             votes = collections.Counter()
             for p in sites.get(o, ()):
@@ -224,7 +224,7 @@ def main():
                 t, v = votes.most_common(1)[0]
                 if v * 2 > sum(votes.values()) and strlen(t) and (o, n, t) not in banned:
                     text[(o, n)] = (t, strlen(t)); text_src[(o, n)] = 'ptr'
-        # contiguous runs: a string that follows another in the USA ROM follows it in the Spanish ROM
+        # contiguous runs: a string that follows another in the USA ROM follows it in the French ROM
         runs = sorted((o, n) for e in entries for op in e['ops'] if op[0] == 'C'
                       for o, n in [(op[1], op[2])] if is_string(us, o, n))
         for _ in range(64):
@@ -428,7 +428,7 @@ def main():
         return anchor_site(p)
 
     def pool_target(p):
-        """Spanish pointer at a literal-pool site whose surrounding code is the same in both
+        """French pointer at a literal-pool site whose surrounding code is the same in both
         games (at least two of the four words beside it agree), trying each nearby shift."""
         for d in shifts(p, 4):
             q = p + d
@@ -450,9 +450,9 @@ def main():
 
         find_strings(placed_site)
 
-        # Tables that moved and changed (records with localized fields, lists sorted by Spanish
+        # Tables that moved and changed (records with localized fields, lists sorted by French
         # word): follow the pointers to them from blocks already placed. The length stays the
-        # USA one unless the next block in the USA ROM, contiguous, starts elsewhere in Spain.
+        # USA one unless the next block in the USA ROM, contiguous, starts elsewhere in France.
         lost = {o: n for o, n in lost if not is_string(us, o, n)}
         for _round in range(8):
             before = len(pinned) + len(text)
@@ -502,7 +502,7 @@ def main():
                             votes[t] += 1
                 if not votes:
                     # sandwiched: the blocks just before and after it moved by the same amount
-                    # and the gap between them is as long in Spain, so it sits in that gap
+                    # and the gap between them is as long in France, so it sits in that gap
                     i = bisect.bisect_right(nstart, o)
                     if 0 < i < len(nb):
                         a, b = nb[i - 1], nb[i]
@@ -532,7 +532,7 @@ def main():
                     t, v = votes.most_common(1)[0]
                     lz_u = lz_span(us, o)
                     if lz_u and lz_u[1] <= n < lz_u[1] + 4:
-                        # an LZ stream, however it was found: the Spanish one must unpack to the
+                        # an LZ stream, however it was found: the French one must unpack to the
                         # same size, and its own compressed length is the one copied
                         # (a localized picture may unpack bigger or smaller: the game decompresses
                         # it to VRAM or through its 16 KiB buffer, so up to 16 KiB is accepted)
@@ -593,7 +593,7 @@ def main():
         banned.update(drop)
         print('dropped', len(drop), 'doubtful placements')
 
-    # CRCs from the Spanish ROM, with the Builder's own interpreter
+    # CRCs from the French ROM, with the Builder's own interpreter
     here = Path(__file__).resolve().parent
     for base in (here.parents[1] / 'builder', here / 'builder'):
         sys.path.insert(0, str(base))
@@ -610,7 +610,7 @@ def main():
         assert len(out) == ne['size'], ne['path']
         ne['crc32'] = zlib.crc32(out)
 
-    # units: USA position in the entry -> Spanish position and size
+    # units: USA position in the entry -> French position and size
     new_units, ustats = [], collections.Counter()
     for key, sec, ei, off, size in units:
         pm = posmaps[ei]
@@ -638,9 +638,9 @@ def main():
         report.append(f'UNIT-SPLIT\t{key}\t{sec}\t{off}\t{size}')
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    json.dump(dict(schema=2, rom_sha1=ES_SHA1, entries=new_entries, units=new_units),
-              open(out_dir / 'recipe-es.json', 'w'), separators=(',', ':'))
-    # placements that land on the same Spanish bytes as another one of a different length
+    json.dump(dict(schema=2, rom_sha1=FR_SHA1, entries=new_entries, units=new_units),
+              open(out_dir / 'recipe-fr.json', 'w'), separators=(',', ':'))
+    # placements that land on the same French bytes as another one of a different length
     trace.sort(key=lambda t: t[2])
     for a, b in zip(trace, trace[1:]):
         if b[2] < a[2] + a[3] and (a[2], a[3]) != (b[2], b[3]):
