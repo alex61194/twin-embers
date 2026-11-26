@@ -7642,7 +7642,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom_chat_impl.h",
-   "sha256": "f15a6b918148b136f007ffea7ec65d839eb6d3790ecf57242abcf1f680819c97",
+   "sha256": "36590849083c2f6590a39d1c46c01ec5444728d0867e0310d8fc4d03f006e83e",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

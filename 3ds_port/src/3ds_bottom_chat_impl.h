@@ -101,7 +101,15 @@ static int WlHoldMode(int open)
         return MODE_CHOICE;
     }
     if (sWlHold > 0 && sHaveShown && sShown.mode == MODE_CHOICE) {
-        --sWlHold;
+        /* CurrentMode runs several times in a frame: the hold counts frames, not calls (counted per call it ran out in about a
+         * fifth of its time, and the upper and lower screens flashed through the gap, worst online where the gaps are longer). */
+        static unsigned long lastFrame = (unsigned long)-1;
+        unsigned long frame = (unsigned long)CtrVideo_GetStats()->frames;
+
+        if (frame != lastFrame) {
+            lastFrame = frame;
+            --sWlHold;
+        }
         return MODE_CHOICE;
     }
     sWlHold = 0;
