@@ -35,7 +35,7 @@
   },
   {
    "path": ".github/workflows/pages.yml",
-   "sha256": "58c0eccf3cef77e8ef488fe20c9c42bfa7667cf9b89255c0754843cfce1f6e33",
+   "sha256": "10b37e15a2da6e68ac3962ad580eb93d4e0ecd22c20c824afc50dbc1df189119",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -43,7 +43,7 @@
   },
   {
    "path": ".github/workflows/private-windows-gui.yml",
-   "sha256": "783b9ecc59bb300989fe461ba43fa9162a8b2aafcbbae7c94514977f4608e93f",
+   "sha256": "bbc604a35b335b1c46c9c3153b22979599a8bb7564d3b4c23170e6f63502b06c",
    "review_status": "reviewed",
    "credit": "alex61194 (original reviewed builder packaging configuration with AI assistance)",
    "license": "MIT for owned workflow and explanatory source text; third-party runtime terms must be preserved",
@@ -54,7 +54,7 @@
   },
   {
    "path": ".github/workflows/source-audit.yml",
-   "sha256": "7e9cd592604eca8accf0864c05d1ef0d47c7ee19a3d328e86d7e6085d0a37d20",
+   "sha256": "0fbf82e6400793e7e5fb10980b8701e0ae67354bf9a1afb70a05d84c816ebbe7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

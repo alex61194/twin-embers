@@ -15,11 +15,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out reviewed source (no game data)
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Python 3.11 for the Windows GUI
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
       - name: Install GUI package and frozen application builder
@@ -51,7 +51,7 @@ jobs:
           python builder/package_notices.py --exe dist/TwinEmbersBuilder.exe --out dist/notices
           if ($LASTEXITCODE -ne 0) { throw "Unreviewed bundle content or missing license text" }
       - name: Upload GUI-only private testing artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: TwinEmbersBuilder-Windows-private
           path: |
