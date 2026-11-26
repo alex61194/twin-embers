@@ -305,16 +305,16 @@ static void FEHeader(const CtrPokeTouchEasy *e)
     int fy;
 
     if (e->screen == PT_EC_EDIT || e->ask) {
-        snprintf(right, sizeof(right), CTR_TR("Words %d of %d", "Palabras %d de %d", "W\xC3\xB6rter %d von %d"), FEFilled(e), e->numWords);
+        snprintf(right, sizeof(right), CTR_TR("Words %d of %d", "Palabras %d de %d", "W\xC3\xB6rter %d von %d", "Mots %d sur %d"), FEFilled(e), e->numWords);
         snprintf(left, sizeof(left), "%.47s", e->title);
     } else if (e->screen == PT_EC_GROUP) {
-        snprintf(right, sizeof(right), CTR_TR("%d groups", "%d grupos", "%d Gruppen"), e->groupCount);
-        snprintf(left, sizeof(left), "%s", CTR_TR("Pick a group", "Elige un grupo", "Gruppe w\xC3\xA4hlen"));
+        snprintf(right, sizeof(right), CTR_TR("%d groups", "%d grupos", "%d Gruppen", "%d groupes"), e->groupCount);
+        snprintf(left, sizeof(left), "%s", CTR_TR("Pick a group", "Elige un grupo", "Gruppe w\xC3\xA4hlen", "Choisissez un groupe"));
     } else if (e->screen == PT_EC_LETTER) {
         snprintf(right, sizeof(right), "A-Z");
-        snprintf(left, sizeof(left), "%s", CTR_TR("Pick a letter", "Elige una letra", "Buchstabe w\xC3\xA4hlen"));
+        snprintf(left, sizeof(left), "%s", CTR_TR("Pick a letter", "Elige una letra", "Buchstabe w\xC3\xA4hlen", "Choisissez une lettre"));
     } else {
-        snprintf(right, sizeof(right), "%s", CTR_TR("Order: A-Z", "Orden: A-Z", "Reihenfolge: A-Z"));
+        snprintf(right, sizeof(right), "%s", CTR_TR("Order: A-Z", "Orden: A-Z", "Reihenfolge: A-Z", "Ordre : A-Z"));
         snprintf(left, sizeof(left), "%.19s", e->listTitle);
     }
     fy = EmButton(4, 4, 312, 22, &kEmCream, FB_DEPTH, 0);
@@ -327,7 +327,7 @@ static void FEChips(const CtrPokeTouchEasy *e)
     int n = e->numWords < 1 ? 1 : e->numWords > PT_EC_WORDS ? PT_EC_WORDS : e->numWords, per = (n + 1) / 2;
 
     LlWindow(4, 30, 312, 78);
-    LlRibbon(5, 31, CTR_TR("Message", "Mensaje", "Nachricht"), LL_RIB_TOP, LL_RIB_BOT);
+    LlRibbon(5, 31, CTR_TR("Message", "Mensaje", "Nachricht", "Message"), LL_RIB_TOP, LL_RIB_BOT);
     for (int i = 0; i < 2 * per; ++i) {
         CtrPokeTouchRect r = FEChip(e, i);
         const char *word = i < n ? e->chip[i] : "";
@@ -337,15 +337,15 @@ static void FEChips(const CtrPokeTouchEasy *e)
             FESlot(&r);
             continue;
         }
-        FEButton(&r, sel ? &kEmFlame : &kEmCream, word[0] ? word : CTR_TR("(empty)", "(vac\xC3\xADo)", "(leer)"), e->pressed == PT_EC_HIT_CHIP + i, sel);
+        FEButton(&r, sel ? &kEmFlame : &kEmCream, word[0] ? word : CTR_TR("(empty)", "(vac\xC3\xADo)", "(leer)", "(vide)"), e->pressed == PT_EC_HIT_CHIP + i, sel);
     }
 }
 
 static void FEModes(const CtrPokeTouchEasy *e)
 {
-    FEButton(&sFEModeGroups, e->wantAlpha ? &kEmCream : &kEmFlame, CTR_TR("Pick by group", "Elegir por grupos", "Nach Gruppen"),
+    FEButton(&sFEModeGroups, e->wantAlpha ? &kEmCream : &kEmFlame, CTR_TR("Pick by group", "Elegir por grupos", "Nach Gruppen", "Par groupe"),
              e->pressed == PT_EC_HIT_MODE_GROUPS, 0);
-    FEButton(&sFEModeAlpha, e->wantAlpha ? &kEmFlame : &kEmCream, CTR_TR("Pick from A to Z", "Elegir de la A a la Z", "Von A bis Z"),
+    FEButton(&sFEModeAlpha, e->wantAlpha ? &kEmFlame : &kEmCream, CTR_TR("Pick from A to Z", "Elegir de la A a la Z", "Von A bis Z", "De A " "\xC3" "\xA0" " Z"),
              e->pressed == PT_EC_HIT_MODE_ALPHA, 0);
 }
 
@@ -354,12 +354,12 @@ static void FENote(const CtrPokeTouchEasy *e)
     const char *a, *b = NULL;
 
     if (e->screen == PT_EC_EDIT || e->ask) {
-        a = CTR_TR("Tap a box, then pick its word.", "Toca una casilla y elige la palabra.", "Tippe ein Feld und w\xC3\xA4hle das Wort.");
-        b = CTR_TR("Tap a word to change it.", "Toca una palabra para cambiarla.", "Tippe ein Wort, um es zu \xC3\xA4ndern.");
+        a = CTR_TR("Tap a box, then pick its word.", "Toca una casilla y elige la palabra.", "Tippe ein Feld und w\xC3\xA4hle das Wort.", "Touchez une case, puis choisissez un mot.");
+        b = CTR_TR("Tap a word to change it.", "Toca una palabra para cambiarla.", "Tippe ein Wort, um es zu \xC3\xA4ndern.", "Touchez un mot pour le changer.");
     } else if (e->screen == PT_EC_GROUP)
-        a = CTR_TR("Tap a group to see its words.", "Toca un grupo para ver sus palabras.", "Tippe eine Gruppe, um ihre W\xC3\xB6rter zu sehen.");
+        a = CTR_TR("Tap a group to see its words.", "Toca un grupo para ver sus palabras.", "Tippe eine Gruppe, um ihre W\xC3\xB6rter zu sehen.", "Touchez un groupe pour voir les mots associ" "\xC3" "\xA9" "s.");
     else
-        a = CTR_TR("Tap a letter to see its words.", "Toca una letra para ver sus palabras.", "Tippe einen Buchstaben, um die W\xC3\xB6rter zu sehen.");
+        a = CTR_TR("Tap a letter to see its words.", "Toca una letra para ver sus palabras.", "Tippe einen Buchstaben, um die W\xC3\xB6rter zu sehen.", "Touchez une lettre pour voir les mots associ" "\xC3" "\xA9" "s.");
     if (b) {
         LlWindow(4, 160, 312, 38);
         Em2Text(a, 16, 166, EM_DARK, EM_DARK_SH, 308);
@@ -373,8 +373,8 @@ static void FENote(const CtrPokeTouchEasy *e)
 static void FEFooter(const CtrPokeTouchEasy *e)
 {
     static const EmPal *const kPal[3] = {&kEmCream, &kEmSlate, &kEmGold};
-    const char *label[3] = {CTR_TR("Clear", "Borrar", "Leeren"), CTR_TR("Cancel", "Cancelar", "Abbrechen"),
-                            CTR_TR("Confirm", "Confirmar", "Best\xC3\xA4tigen")};
+    const char *label[3] = {CTR_TR("Clear", "Borrar", "Leeren", "Effacer"), CTR_TR("Cancel", "Cancelar", "Abbrechen", "Annuler"),
+                            CTR_TR("Confirm", "Confirmar", "Best\xC3\xA4tigen", "Confirmer")};
 
     for (int i = 0; i < 3; ++i)
         FEButton(&sFEFooter[i], kPal[i], label[i], e->pressed == PT_EC_HIT_DELETE + i, e->footer == i);
@@ -395,9 +395,9 @@ static void FEGrid(const CtrPokeTouchEasy *e)
                 continue;
             FEButton(&r, sel ? &kEmFlame : &kEmCream, letters ? one : e->group[i], e->pressed == PT_EC_HIT_CELL + i, sel);
         }
-    FEButton(&sFEToggle, &kEmBlue, letters ? CTR_TR("Groups", "Grupos", "Gruppen") : "A-Z", e->pressed == PT_EC_HIT_CELL + PT_EC_CELL_TOGGLE,
+    FEButton(&sFEToggle, &kEmBlue, letters ? CTR_TR("Groups", "Grupos", "Gruppen", "Groupes") : "A-Z", e->pressed == PT_EC_HIT_CELL + PT_EC_CELL_TOGGLE,
              e->cell == PT_EC_CELL_TOGGLE);
-    FEButton(&sFEBack, &kEmSlate, CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), e->pressed == PT_EC_HIT_CELL + PT_EC_CELL_BACK,
+    FEButton(&sFEBack, &kEmSlate, CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck", "Retour"), e->pressed == PT_EC_HIT_CELL + PT_EC_CELL_BACK,
              e->cell == PT_EC_CELL_BACK);
 }
 
@@ -445,10 +445,10 @@ static void FEStripDraw(const CtrPokeTouchEasy *e)
 
 static void FEButtons(const CtrPokeTouchEasy *e)
 {
-    FEButton(&sFEListBack, &kEmSlate, CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck"), e->pressed == PT_EC_HIT_BACK, 0);
-    FEButton(&sFEListToggle, &kEmCream, e->alpha ? CTR_TR("By groups", "Por grupos", "Nach Gruppen") : CTR_TR("A to Z", "De la A a la Z", "Von A bis Z"),
+    FEButton(&sFEListBack, &kEmSlate, CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xC3\xBC" "ck", "Retour"), e->pressed == PT_EC_HIT_BACK, 0);
+    FEButton(&sFEListToggle, &kEmCream, e->alpha ? CTR_TR("By groups", "Por grupos", "Nach Gruppen", "Par groupes") : CTR_TR("A to Z", "De la A a la Z", "Von A bis Z", "A " "\xC3" "\xA0" " Z"),
              e->pressed == PT_EC_HIT_TOGGLE, 0);
-    FEButton(&sFEListPlace, &kEmGold, CTR_TR("Use word", "Poner palabra", "Wort setzen"), e->pressed == PT_EC_HIT_PLACE, 0);
+    FEButton(&sFEListPlace, &kEmGold, CTR_TR("Use word", "Poner palabra", "Wort setzen", "Utiliser"), e->pressed == PT_EC_HIT_PLACE, 0);
 }
 
 static void FERegion(const CtrPokeTouchEasy *e, int id)
@@ -495,7 +495,7 @@ static void FEAsk(const CtrPokeTouchEasy *e)
 {
     const CtrPokeTouchRect *w = &sFEAskWin;
     char fit[PT_EC_ASK_LEN + 4];
-    const char *sub = e->ask2[0] ? e->ask2 : e->ask == PT_EC_ASK_QUIT ? CTR_TR("Your changes will be lost.", "Se perder\xC3\xA1n los cambios.", "\xC3\x84nderungen gehen verloren.") : "";
+    const char *sub = e->ask2[0] ? e->ask2 : e->ask == PT_EC_ASK_QUIT ? CTR_TR("Your changes will be lost.", "Se perder\xC3\xA1n los cambios.", "\xC3\x84nderungen gehen verloren.", "Vos modifications seront perdues.") : "";
 
     for (int y = 0; y < H; ++y)
         for (int x = 0; x < W; ++x)
@@ -507,8 +507,8 @@ static void FEAsk(const CtrPokeTouchEasy *e)
     LlRule(w->x + 16, w->y + 34, w->w - 32);
     Em2Fit(sub, w->w - 20, fit, sizeof(fit));
     Em2Text(fit, w->x + (w->w - UiTextWidth(fit, 1)) / 2, w->y + 42, EM_DIM, EM_DARK_SH, w->x + w->w - 6);
-    FEButton(&sFEYes, e->askCursor ? &kEmCream : &kEmFlame, CTR_TR("Yes", "S\xC3\xAD", "Ja"), e->pressed == PT_EC_HIT_YES, !e->askCursor);
-    FEButton(&sFENo, e->askCursor ? &kEmFlame : &kEmCream, CTR_TR("No", "No", "Nein"), e->pressed == PT_EC_HIT_NO, e->askCursor);
+    FEButton(&sFEYes, e->askCursor ? &kEmCream : &kEmFlame, CTR_TR("Yes", "S\xC3\xAD", "Ja", "Oui"), e->pressed == PT_EC_HIT_YES, !e->askCursor);
+    FEButton(&sFENo, e->askCursor ? &kEmFlame : &kEmCream, CTR_TR("No", "No", "Nein", "Non"), e->pressed == PT_EC_HIT_NO, e->askCursor);
     sUiS = &sUiNavy;
 }
 

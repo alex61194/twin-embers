@@ -40,6 +40,10 @@ static const uint8_t sSupportedRomSha1[20] = {
     /* Pokemon Edicion Rojo Fuego (Spain) 1.0 */
     0xab, 0x8f, 0x6b, 0xfe, 0x0c, 0xcd, 0xaf, 0x41, 0x18, 0x8c,
     0xd0, 0x15, 0xc8, 0xc7, 0x4c, 0x31, 0x4d, 0x02, 0x29, 0x6a,
+#elif CTR_LANG_FR
+    /* Pokemon Version Rouge Feu (France) 1.0 */
+    0xfc, 0x66, 0x39, 0x07, 0x25, 0x6f, 0x06, 0xa3, 0xa0, 0x9e,
+    0x2d, 0x6b, 0x96, 0x7b, 0xc9, 0xaf, 0x49, 0x19, 0xf1, 0x11,
 #else
     /* Pokemon FireRed (USA, Europe) 1.0 */
     0x41, 0xcb, 0x23, 0xd8, 0xdc, 0xcc, 0x8e, 0xbd, 0x7c, 0x64,
@@ -224,13 +228,11 @@ static bool OpenPak(void)
     case CTR_PAK_BAD_ROM:
         SetError("The data pack comes from another ROM.",
                  CTR_TR("Only Pokemon FireRed (USA, Europe) is\n"
-                        "supported. Run the builder with that ROM.",
-                        "This Spanish build needs a pack made\n"
+                        "supported. Run the builder with that ROM.", "This Spanish build needs a pack made\n"
                         "from Pokemon Rojo Fuego (Spain).\n"
-                        "Run the builder with that ROM.",
-                        "Diese deutsche Version ben\xC3\xB6tigt ein Pack,\n"
+                        "Run the builder with that ROM.", "Diese deutsche Version ben\xC3\xB6tigt ein Pack,\n"
                         "das aus Pok\xC3\xA9mon Feuerrot (Deutschland)\n"
-                        "erstellt wurde. Starte den Builder erneut."));
+                        "erstellt wurde. Starte den Builder erneut.", "Seule la ROM Pok" "\xC3" "\xA9" "mon Rouge Feu (France) est\nprise en charge. Lancez le builder avec cette ROM."));
         goto fail;
     default:
         SetError("The data pack is damaged.",

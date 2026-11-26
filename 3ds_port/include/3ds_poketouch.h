@@ -61,7 +61,7 @@ int CtrPokeTouch_HomeZoomHit(int x, int y);                            /* +1: th
  * OFF / LOW / HIGH) shows all its values side by side instead, the chosen one lit: a touch on one
  * picks it (zone PT_OPT_ZONE_SEG + its index). */
 #define PT_OPT_MAX 7
-#define PT_OPT_LABEL_LEN 16
+#define PT_OPT_LABEL_LEN 32   /* les libelles francais ne tiennent pas en 16 (Vitesse du texte) */
 #define PT_OPT_VALUE_LEN 12
 #define PT_OPT_SEGS 3
 #define PT_OPT_SEG_LEN 8

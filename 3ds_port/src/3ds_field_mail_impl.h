@@ -8,13 +8,13 @@
 static void FMailFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchMail *m = &v->mail;
-    const char *label = CTR_TR("From:", "De:", "Von:");
+    const char *label = CTR_TR("From:", "De:", "Von:", "De :");
     int x0 = PT_VIEW_X + 8, x1 = PT_VIEW_X + PT_VIEW_W - 8, nw = UiTextWidth(m->name, 1), lw = UiTextWidth(label, 1) + 5;
     int fw = UiTextWidth(m->from, 1), tw;
 
     EmSurface();
     LlWindow(PT_VIEW_X, PT_VIEW_Y, PT_VIEW_W, PT_VIEW_H);
-    LlRibbon(PT_VIEW_X + 8, PT_VIEW_Y + 8, CTR_TR("Mail", "Correo", "Brief"), LL_RIB_TOP, LL_RIB_BOT);
+    LlRibbon(PT_VIEW_X + 8, PT_VIEW_Y + 8, CTR_TR("Mail", "Correo", "Brief", "Courrier"), LL_RIB_TOP, LL_RIB_BOT);
     LlPlate(MAIL_CX - 22, PT_VIEW_Y + 36, 44, LL_SLATE, 0, 0);
     ItemArt(ICON_MAIL, m->item, MAIL_CX - 10, PT_VIEW_Y + 48, 1);
     if (nw > x1 - x0)
@@ -36,7 +36,7 @@ static void FMailNote(const CtrPokeTouchView *v, int w)
     (void)v;
     EmSurface();
     LlWindow(NOTE_X, NOTE_Y, w, NOTE_H);
-    Em2Text(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), NOTE_X + 13, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK,
+    Em2Text(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen", "Touchez pour fermer"), NOTE_X + 13, NOTE_Y + (NOTE_H - UI_TEXT_H) / 2, EM_DARK,
             EM_DARK_SH, NOTE_X + w - 13);
     sUiS = &sUiNavy;
 }

@@ -881,7 +881,7 @@ UI_FN void LlHpBar(int x, int y, int w, unsigned cur, unsigned max)
     if (w < 24)
         return;
     UiRoundFill(x, y, w, 9, 4, LL_SLATE);
-    LlMiniText(CTR_TR("HP", "PS", "KP"), x + 3, y + 2, UI_RGB(248, 176, 32));
+    LlMiniText(CTR_TR("HP", "PS", "KP", "PV"), x + 3, y + 2, UI_RGB(248, 176, 32));
     UiRoundFill(tx, ty, tw, 5, 2, UI_RGB(88, 96, 128));
     if (!cur || !max)
         return;

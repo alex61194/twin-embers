@@ -11,6 +11,7 @@ from pathlib import Path
 RECIPES = {
     'es': Path(__file__).resolve().parents[1] / 'builder/firered3ds_builder/recipes/firered-ab8f6bfe',
     'de': Path(__file__).resolve().parents[1] / 'builder/firered3ds_builder/recipes/firered-18a3758c',
+    'fr': Path(__file__).resolve().parents[1] / 'builder/firered3ds_builder/recipes/firered-fc663907',
 }
 
 

@@ -428,7 +428,7 @@ static void FBPosition(const CtrPokeTouchBag *b)
         last = b->count;
     if (first > last)
         first = last;
-    snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d"), first, last, b->count);
+    snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d", "%d-%d sur %d"), first, last, b->count);
     if (UiTextWidth(text, 1) > gCtrPokeTouchOptPage.w - 10)     /* "54-58 von 58" is wider than the card: the short form, never cut */
         snprintf(text, sizeof(text), "%d-%d/%d", first, last, b->count);
     fy = EmButton(gCtrPokeTouchOptPage.x, gCtrPokeTouchOptPage.y, gCtrPokeTouchOptPage.w, FB_FACE + FB_DEPTH, &kEmCream, FB_DEPTH, 0);

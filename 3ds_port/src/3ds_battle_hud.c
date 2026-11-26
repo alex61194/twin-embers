@@ -14,7 +14,7 @@
 #include "3ds_video.h"
 
 /* The level mark before the number: FireRed's "Lv", the Spanish game's "Nv". */
-#define LEVEL CTR_TR("Lv", "Nv", "Lv")
+#define LEVEL CTR_TR("Lv", "Nv", "Lv", "Nv")
 
 /* The game's fonts (text.c, recipes 0096 and 0120): 16x16 two-bit glyphs and 8x16 ones, and their widths. */
 extern const uint8_t *CtrTwinFontData(void);
@@ -373,7 +373,7 @@ static void HpBar(Canvas *c, int x, int y, int w, unsigned pixels)
     int tx = x + 16, tw = w - 19, ty = y + 2;
 
     Pill(c, x, y, w, 10, SLATE, (Rgb){52, 58, 90}, true);
-    Ascii(c, true, x + 4, y + 7, CTR_TR("HP", "PS", "KP"), (Rgb){248, 176, 32}, &(Rgb){44, 50, 80});
+    Ascii(c, true, x + 4, y + 7, CTR_TR("HP", "PS", "KP", "PV"), (Rgb){248, 176, 32}, &(Rgb){44, 50, 80});
     Shape(&track, tw, 6, END_ROUND, END_ROUND, 3, 1);
     for (int j = 0; j < 6; ++j)
         for (int i = 0; i < tw; ++i)
