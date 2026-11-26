@@ -7762,7 +7762,7 @@
   },
   {
    "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "aafe6ce8da5f4f94ee1454e16a0f31a1c812804db268f9a4370df184b105ac21",
+   "sha256": "2ff79146806744d700d44a9cf5fa6124729e5b4d5fcb3f05ac1ceab5fe60d031",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7979,6 +7979,22 @@
   {
    "path": "patches/pokefirered/0286-trade-menu-stops-the-frame-after-it-is-freed.json",
    "sha256": "dc8ac4187e46077afd56a765bb3cc1323a092d837adbb5ce2f693b82dcb4b532",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0293-trade-menu-state-follows-its-callback.json",
+   "sha256": "9ff2f9dae340a8a900dbc6de09a87a2814a8b0db27eaf259c42f1c5486eaa8d0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0294-union-chat-no-dangling-work-link-loss-exit.json",
+   "sha256": "e36f2464816b290cdf89e36e72b9b0ed21c96d5ce11b4ab1e7a155803e4d6c0b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
