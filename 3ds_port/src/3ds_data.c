@@ -222,14 +222,17 @@ static bool OpenPak(void)
         SetError("The data pack does not match this release.", detail);
         goto fail;
     case CTR_PAK_BAD_ROM:
+        /* Plain ASCII in every language: the libctru console draws each byte
+           as one CP437 glyph and the wrapper counts bytes, so UTF-8 letters
+           would come out as two garbage glyphs each. */
         SetError("The data pack comes from another ROM.",
                  CTR_TR("Only Pokemon FireRed (USA, Europe) is\n"
                         "supported. Run the builder with that ROM.",
                         "This Spanish build needs a pack made\n"
                         "from Pokemon Rojo Fuego (Spain).\n"
                         "Run the builder with that ROM.",
-                        "Diese deutsche Version ben\xC3\xB6tigt ein Pack,\n"
-                        "das aus Pok\xC3\xA9mon Feuerrot (Deutschland)\n"
+                        "Diese deutsche Version benoetigt ein Pack,\n"
+                        "das aus Pokemon Feuerrot (Deutschland)\n"
                         "erstellt wurde. Starte den Builder erneut."));
         goto fail;
     default:

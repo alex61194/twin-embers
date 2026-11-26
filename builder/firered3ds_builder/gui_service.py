@@ -140,10 +140,12 @@ def build_private_pack(
         _check_target(rom_path, output_path, overwrite)
         digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
         candidate_size = candidate.stat().st_size
-        # The pack is copied to the destination, and a pack it replaces is kept beside it until the copy is verified: the room
-        # that takes is known now (the early 32 MiB floor cannot know it, with the optional pictures the pack is about 28 MiB).
-        previous_size = output_path.stat().st_size if output_path.is_file() else 0
-        if shutil.disk_usage(output_path.parent).free < candidate_size + previous_size + 4 * 1024 * 1024:
+        # Only what each path still writes needs room (the early 32 MiB floor cannot know it, with the optional pictures the
+        # pack is about 28 MiB): a replacement writes just the backup of the old pack, because the candidate already sits on
+        # this volume and os.replace moves it for free; a new pack is copied, so it needs the candidate's size.
+        replacing = overwrite and output_path.is_file()
+        needed = (output_path.stat().st_size if replacing else candidate_size) + 4 * 1024 * 1024
+        if shutil.disk_usage(output_path.parent).free < needed:
             raise OSError(errno.ENOSPC, "Not enough free space for the pack",
                           str(output_path.parent))
         _stage(on_progress, "publish", "Saving the verified pack locally...")

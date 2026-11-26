@@ -212,9 +212,18 @@ static void FDNumber(unsigned n, char *out, int size)
     snprintf(out, (size_t)size, "No.%03u", n > 999 ? 999 : n);
 }
 
-/* FireRed's own conversions: feet and inches, pounds to the tenth. */
+/* FireRed's own conversions: feet and inches, pounds to the tenth. The
+ * Spanish and German releases print the raw metric data instead (height in
+ * decimetres, weight in hectograms) with a decimal comma, and their label
+ * already reads "kg", so a pound value would be shown 2.2 times too heavy. */
 static void FDHeight(const CtrPokeTouchDex *d, char *out, int size)
 {
+#if CTR_LANG_ES || CTR_LANG_DE
+    if (!(d->sel.flags & 2))
+        snprintf(out, (size_t)size, "??,? m");
+    else
+        snprintf(out, (size_t)size, "%u,%u m", (unsigned)d->height / 10, (unsigned)d->height % 10);
+#else
     unsigned inches, feet;
 
     if (!(d->sel.flags & 2)) {
@@ -227,10 +236,18 @@ static void FDHeight(const CtrPokeTouchDex *d, char *out, int size)
     feet = inches / 120;
     inches = (inches - feet * 120) / 10;
     snprintf(out, (size_t)size, "%u'%02u\"", feet, inches);
+#endif
 }
 
 static void FDWeight(const CtrPokeTouchDex *d, char *out, int size)
 {
+#if CTR_LANG_ES || CTR_LANG_DE
+    if (!(d->sel.flags & 2))
+        snprintf(out, (size_t)size, "???,? %s", CtrUiText(UIS_DEX_LBS));
+    else
+        snprintf(out, (size_t)size, "%u,%u %s", (unsigned)d->weight / 10, (unsigned)d->weight % 10,
+                 CtrUiText(UIS_DEX_LBS));
+#else
     unsigned lbs;
 
     if (!(d->sel.flags & 2)) {
@@ -241,6 +258,7 @@ static void FDWeight(const CtrPokeTouchDex *d, char *out, int size)
     if (lbs % 10 >= 5)
         lbs += 10;
     snprintf(out, (size_t)size, "%u.%u %s", lbs / 100, lbs % 100 / 10, CtrUiText(UIS_DEX_LBS));
+#endif
 }
 
 /* ---- The top menu: sections (the rows after each header), the one the cursor is in, its cards ---- */
