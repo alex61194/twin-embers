@@ -7989,6 +7989,7 @@
    "sha256": "4863e584d42be35292a8ea2385bc9e48bd66ada721dba9eb6552f544d7ff0fc9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
