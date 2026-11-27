@@ -7986,7 +7986,7 @@
   },
   {
    "path": "patches/pokefirered/0287-trade-on-the-lower-screen-over-the-room.json",
-   "sha256": "4863e584d42be35292a8ea2385bc9e48bd66ada721dba9eb6552f544d7ff0fc9",
+   "sha256": "33cc4261b2af14500ce1618e17c548ed3443ed972c69be0e9ebeda943514196a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
