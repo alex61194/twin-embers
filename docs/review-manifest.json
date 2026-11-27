@@ -7264,7 +7264,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "2598fe3ea29936050358dea07049a10f8dca26bbb611c37713189e2bf626b17a",
+   "sha256": "e6035d90ca8bf2b74e016e47257903d75753f67671c38eac1bd40614ffa7a257",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes",
    "modified_for_distribution": true,
    "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return"
