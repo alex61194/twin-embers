@@ -7296,6 +7296,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_trade_link_retry_recipe.py",
+   "sha256": "66632f3b917798e2a5d2ffb67b85cc05e22f7b58e84a3749e24a0a220936ecf8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_wilds_recipe.py",
    "sha256": "fa14e9e1f1a272fc84278357fbd14c79d86d860fffe0db1ab54664336d9e92e4",
    "review_status": "reviewed",
@@ -8051,6 +8059,14 @@
   {
    "path": "patches/pokefirered/0298-trade-hold-asks-overworld-if-field.json",
    "sha256": "56b4d6a99da2e0bab210636330c24edbc2fca83c29ce35fe0fb0c790e38a2129",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0299-trade-messages-retry-and-standby-waits-for-block.json",
+   "sha256": "30675da33b2915e87a2b064ea174c6fc0d7a0be18d4c0589ffdc302e6a28a1f4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
