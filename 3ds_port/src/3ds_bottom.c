@@ -134,6 +134,7 @@ extern int CtrBottomView_MailFrom(char *out, int size);
 extern int CtrBottomView_EasyChat(void);
 extern int CtrBottomView_HallOfFame(void);
 extern int CtrBottomView_Relearner(void);     /* the move relearner (learn_move.c, recipe 0244) */
+extern int CtrBottomView_TradeScene(void);    /* a link trade's animation (trade_scene.c, recipe 0287) */
 /* The PC's HALL OF FAME fading out of the field and back into it (hof_pc.c, recipe 0181). */
 extern int CtrBottomHof_HoldsTop(void);
 /* The item PC back from DEPOSIT ITEM's Bag or WITHDRAW ITEM's list to its menu (player_pc.c, recipe 0186). */
@@ -810,6 +811,8 @@ static const char *GbaViewTitle(void)
         return CTR_TR("Hall of Fame", "Hall de la Fama", "Ruhmeshalle");
     if (CtrBottomView_Relearner())
         return CTR_TR("Remember", "Recordar", "Erinnern");
+    if (CtrBottomView_TradeScene())
+        return CTR_TR("Trade", "Intercambio", "Tausch");
     return NULL;
 }
 
@@ -863,9 +866,9 @@ static int CurrentMode(void)
     /* A choice of the field (a script's multichoice or YES/NO, the PC's menus): its rows here, the field held above. */
     if (CtrFieldChoice_IsOpen() || CtrBattle_ChoiceIsOpen())
         return WlHoldMode(1);
-    /* The Fame Checker, the Teachy TV, a mail, Easy Chat, the PC's Hall of Fame: FireRed's own screen in the viewport. */
+    /* FireRed's own screen in the viewport (Fame Checker, Teachy TV, mail, Easy Chat, Hall of Fame, relearner, trade). */
     if (CtrBottomView_FameChecker() || CtrBottomView_TeachyTv() || CtrBottomView_Mail() || CtrBottomView_EasyChat()
-        || CtrBottomView_HallOfFame() || CtrBottomView_Relearner())
+        || CtrBottomView_HallOfFame() || CtrBottomView_Relearner() || CtrBottomView_TradeScene())
         return MODE_GBAVIEW;
     if (CtrBottomParty_UsesTopPresentation())
         return MODE_OFF;
@@ -5881,8 +5884,7 @@ void CtrBottom_Frame(void)
     if (sRouteKey && !(CtrInput_Get()->held & 0x3ffu))
         sInjected = sRouteKey;
     sRouteKey = 0;
-    /* A field menu drawn below stays out of the upper screen for as long as its GBA window is up: through its pick's
-     * message and fade, and beside the next menu (ITEM STORAGE beside WITHDRAW / DEPOSIT). */
+    /* A field menu drawn below stays out of the upper screen while its GBA window is up (its pick's message and fade too). */
     {
         int x, y, w, h;
 
@@ -5891,15 +5893,14 @@ void CtrBottom_Frame(void)
         else
             CtrVideo_HideBg0Rect(0, 0, 0, 0);
     }
-    /* A choice handing over to the next (the PC's ITEM STORAGE to WITHDRAW / DEPOSIT, a pick to its item list) has a
-     * few frames between them with neither open: released there, TOP drew the field with the first menu's window
-     * still up and froze on it for the second. The hold outlasts a choice by CHOICE_HOLD_GRACE frames. */
+    /* Between two choices (ITEM STORAGE to WITHDRAW / DEPOSIT) neither is open for a few frames: the hold outlasts a
+     * choice by CHOICE_HOLD_GRACE frames, or TOP froze on the field with the first menu's window up. */
     if (mode == MODE_CHOICE)
         sChoiceGrace = CtrBattle_InBattle() ? 0 : CHOICE_HOLD_GRACE;
     else if (sChoiceGrace)
         --sChoiceGrace;
     /* The battle Bag's Berry Pouch: the upper screen keeps the battle it had under the Bag, through the Pouch, its
-     * fades and the way back to the Bag (released there, TOP showed the fade's black until the battle came back). */
+     * fades and the way back to the Bag. */
     {
         static int sPouchGrace;
         int battleBag = (mode == MODE_POUCH && CtrBottomPouch_FromBattle()) || (mode == MODE_BAG && CtrBottomBag_InBattle());
@@ -5918,7 +5919,7 @@ void CtrBottom_Frame(void)
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
+        || CtrTrade_Hold() || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
