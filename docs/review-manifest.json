@@ -14445,6 +14445,26 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original contributions; external rights unchanged",
    "basis": "Retrospective review 2026-11-24, on the owner's permission: the manifest of this snapshot held the hash of an earlier version; text only, audited for size, payloads and ROM fragments."
+  },
+  {
+   "commit": "c95425e24efb5199097c0023f3c5a6362cdef396",
+   "path": "tools/test_storage_controller.py",
+   "sha256": "e6035d90ca8bf2b74e016e47257903d75753f67671c38eac1bd40614ffa7a257",
+   "supersedes": "2598fe3ea29936050358dea07049a10f8dca26bbb611c37713189e2bf626b17a",
+   "review_status": "reviewed",
+   "credit": "alex61194 with disclosed AI assistance",
+   "license": "MIT for original contributions; external rights unchanged",
+   "basis": "Retrospective review 2026-11-27, on the owner's permission: the manifest of this snapshot held the hash of an earlier version; text only, audited for size, payloads and ROM fragments."
+  },
+  {
+   "commit": "356d24daaf468d7bcd7c250bee0c43a588054dce",
+   "path": "CHANGELOG.md",
+   "sha256": "4c89ca53c10d0adb3e71939beabd46f5f4dd0d1cbb529bcf83b7a91e88687f31",
+   "supersedes": "2d2b8211e758cc340caa29e4cfb49cda88da83f4f9118998343924fe3a68d403",
+   "review_status": "reviewed",
+   "credit": "alex61194 with disclosed AI assistance",
+   "license": "MIT for original contributions; external rights unchanged",
+   "basis": "Retrospective review 2026-11-27, on the owner's permission: the manifest of this snapshot held the hash of an earlier version; text only, audited for size, payloads and ROM fragments."
   }
  ],
  "historical_exclusions": [
