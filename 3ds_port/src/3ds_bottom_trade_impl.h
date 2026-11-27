@@ -11,15 +11,22 @@ extern void CtrTrade_Ask(int position);
 extern int CtrTrade_Mon(int side, int index, uint16_t *species, uint8_t *level, uint8_t *hpPercent, uint8_t *egg, uint32_t *personality,
                         uint8_t *nickname);
 extern void CtrTrade_PartnerName(uint8_t *out);
+extern int CtrTrade_Session(void);   /* a new number for each trade menu (recipe 0291) */
 
 static int sTradeSide;              /* the party shown: 0 yours, 1 the partner's */
 static int sTradeCursorSide = -1;   /* the side FireRed's cursor was last on: the tab follows it when it moves to the other */
+static int sTradeSession = -1;      /* the trade menu these two belong to: a new one starts on your own party */
 
 static void TradeFill(CtrPokeTouchView *v)
 {
     CtrPokeTouchTrade *t = &v->trade;
     int cursor = CtrTrade_Cursor(), side = cursor < 6 ? 0 : cursor < 12 ? 1 : -1;
 
+    if (sTradeSession != CtrTrade_Session()) {
+        sTradeSession = CtrTrade_Session();
+        sTradeSide = 0;
+        sTradeCursorSide = -1;
+    }
     if (side >= 0 && side != sTradeCursorSide)
         sTradeSide = side;
     if (side >= 0)

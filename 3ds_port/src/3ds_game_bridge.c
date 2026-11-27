@@ -752,14 +752,23 @@ void CtrGameBridge_StopWatchdog(void)
  * goes to the radio and the emulated adapter, a turn a millisecond: on the GBA the adapter's requests came by interrupt while the game
  * waited, so a child answers its parent within the frame instead of at its next one (a parent that waited a frame ran at 20 to 30 fps). */
 static uint64_t sFrameShownTick;
+/* What Present costs the CPU once its wait for the screen is over (smoothed): the radio's turns must leave this much of the refresh. */
+static uint64_t sPresentWorkTicks = (uint64_t)SYSCLOCK_ARM11 / 200u;
 
 static void WirelessIdle(void)
 {
     const uint64_t budget = (uint64_t)SYSCLOCK_ARM11 / 1000u * 11u;
+    uint64_t until = sFrameShownTick + budget;
+    /* The 11 ms alone left a frame of 5 ms for the compositor: a map or a menu that took longer missed the refresh, the screen showed
+     * the frame before it every other time and the map and the interface blinked for as long as a session was on. The turns now end
+     * early enough for the compositor to finish (what the last one took) before the refresh after the one the last frame began on. */
+    uint64_t refreshEnd = CtrVideo_FrameStartTick() + TURBO_REFRESH_TICKS;
 
+    if (refreshEnd > sPresentWorkTicks + TURBO_SLACK_TICKS && (int64_t)(refreshEnd - sPresentWorkTicks - TURBO_SLACK_TICKS - until) < 0)
+        until = refreshEnd - sPresentWorkTicks - TURBO_SLACK_TICKS;
     if (CtrWl_State() == CTR_WL_OFF || CtrFastForward_Speed(&sFastForward) > 1)
         return;                         /* no session, or turbo: the frame has no time to spare */
-    while (svcGetSystemTick() - sFrameShownTick < budget)
+    while ((int64_t)(until - svcGetSystemTick()) > 0)
     {
         CtrWl_Idle();
         svcSleepThread(1000000LL);
@@ -916,10 +925,16 @@ void VBlankIntrWait(void)
     /* The lower screen swaps with the frames shown: a turbo frame not shown keeps drawing into the same hidden buffer
      * (a swap a frame would have written the shown one before the screen took the last). */
     if (shown) {
+        WirelessIdle();                 /* before the lower screen's swap: both screens then change at the same refresh */
         CtrBottom_BlitFrameEnd();
-        WirelessIdle();
         CtrVideo_Present();
         sFrameShownTick = svcGetSystemTick();
+        {
+            uint64_t work = sFrameShownTick - CtrVideo_FrameStartTick();
+
+            if (work < TURBO_REFRESH_TICKS)
+                sPresentWorkTicks = (sPresentWorkTicks * 3 + work) / 4;
+        }
     }
     CtrDma_RunVBlank();
     /* A failed flush keeps its sectors pending (3ds_flash.c), so a transient SD error is
