@@ -2372,7 +2372,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "e3e6456af3a0be09a347d5e4601d8e9062bce93fd987463e5ebdca0623b93d6f",
+   "sha256": "f25ac61b5bebce407a7ff6dc74217928706cc3614c20689ea0251928571c5eac",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6456,7 +6456,7 @@
   },
   {
    "path": "patches/pokefirered/0340-link-trainer-card-lower-screen.json",
-   "sha256": "4c2de21f487c3c84b93b952d7335850b55ff8f34a112955232efa7e415568d30",
+   "sha256": "448731aeb1368a6d6a8152a5041d742faa831687a3fe0190ccd305d255e89bb9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
