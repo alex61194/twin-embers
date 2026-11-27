@@ -169,6 +169,8 @@ int CtrBattleUi_Hit(const CtrBattleView *v, int x, int y)
     if (v->state == BUI_PARTY) {
         const CtrBattleParty *p = &v->pty;
 
+        if (p->mode == BUI_PTY_SHOWCASE)
+            return -1;                                      /* the two teams are only shown */
         if (p->panel == BUI_PTY_TEXT || p->panel == BUI_PTY_LEVELUP)
             return BUI_PTY_MESSAGE;                         /* anywhere: the message waits for A */
         if (p->panel == BUI_PTY_ACTIONS || p->panel == BUI_PTY_YESNO) {
@@ -264,6 +266,7 @@ static uint16_t BPpColor(unsigned pp, unsigned max)
 
 /* The battle Party: a header, the six Pokemon in two columns of three, CANCEL. */
 extern int CtrBottomParty_Icon(int slot, unsigned char *tilesOut, unsigned short *palOut);
+extern int CtrBottomParty_ShowcaseIcon(int card, unsigned char *tilesOut, unsigned short *palOut);   /* a multi battle's showcase: the card's own Pokemon */
 /* Party icons: FireRed's 32x32 icon of a slot with both its frames (the second under the first), decoded once per
  * species and slot. */
 static struct {
@@ -273,7 +276,7 @@ static struct {
     uint16_t pal[16];
 } sBPIcon[6];
 
-static int BPartyIcon(int slot, unsigned icon)
+static int BPartyIconOf(int slot, unsigned icon, int showcase)
 {
     static unsigned char tiles[1024];
     static unsigned short pal[16];
@@ -282,7 +285,7 @@ static int BPartyIcon(int slot, unsigned icon)
         return sBPIcon[slot].ok;
     memset(tiles, 0, sizeof(tiles));
     sBPIcon[slot].icon = icon + 1;
-    sBPIcon[slot].ok = CtrBottomParty_Icon(slot, tiles, pal);
+    sBPIcon[slot].ok = showcase ? CtrBottomParty_ShowcaseIcon(slot, tiles, pal) : CtrBottomParty_Icon(slot, tiles, pal);
     if (!sBPIcon[slot].ok)
         return 0;
     for (int y = 0; y < 64; ++y)
@@ -295,6 +298,11 @@ static int BPartyIcon(int slot, unsigned icon)
         sBPIcon[slot].pal[i] = GbaColor(c);
     }
     return 1;
+}
+
+static int BPartyIcon(int slot, unsigned icon)
+{
+    return BPartyIconOf(slot, icon, 0);
 }
 
 /* Text wrapped into `maxLines` lines of `width`, in `ink` over `shadow`, 16 apart; the last ends in "..." when there is more. */
@@ -424,7 +432,7 @@ static void BPartyPanel(int i, const CtrBattleView *v)
     BRingDecor(r.x, fy, r.w, fh, r.x + 20, fy + 18, 30, 38, 36);
     LlPlate(r.x + 5, fy + 4, 40, pal->inkSh, UI_RGB(232, 248, 255), 1);
     y0 = fy + 7 + BPartyBounce(p, i);
-    if (BPartyIcon(i, p->icon[i]))
+    if (BPartyIconOf(i, p->icon[i], p->mode == BUI_PTY_SHOWCASE))
         for (int y = 0; y < 32; ++y)
             for (int x = 0; x < 32; ++x) {
                 uint8_t index = sBPIcon[i].pixels[(y + (p->iconFrame[i] & 1) * 32) * 32 + x];
@@ -432,7 +440,7 @@ static void BPartyPanel(int i, const CtrBattleView *v)
                 if (index)
                     Px(r.x + 9 + x, y0 + y, fainted ? Tone(sBPIcon[i].pal[index], 0) : sBPIcon[i].pal[index]);
             }
-    if (i == 0 && p->mode != BUI_PTY_MULTI)                   /* the first, as FireRed's Party draws it big: its ribbon over the plate's foot */
+    if (i == 0 && p->mode != BUI_PTY_MULTI && p->mode != BUI_PTY_SHOWCASE)   /* the first, as FireRed's Party draws it big: its ribbon over the plate's foot */
         LlRibbonBox(r.x + 1, fy + 36, UiTextWidth(CTR_TR("1st", "1\xC2\xBA", "1."), 1) + 18, 11, 7, LL_BL, LL_RIB_TOP, LL_RIB_BOT, CTR_TR("1st", "1\xC2\xBA", "1."));
     if (!p->egg[i]) {
         snprintf(text, sizeof(text), CTR_TR("Lv%u", "Nv%u", "Lv%u"), p->level[i]);
@@ -526,7 +534,9 @@ static void BPCancelButton(const CtrBattleView *v)
  * hairline and, dim, how to answer. */
 static void BPNoteCard(const CtrBattleView *v)
 {
-    const CtrPokeTouchRect *n = &sBPNote;
+    /* The showcase has no buttons: its note takes their place too. */
+    const CtrPokeTouchRect wide = {7, 169, 306, 65}, *n = v->pty.mode == BUI_PTY_SHOWCASE ? &wide : &sBPNote;
+    char hint[96];
     const char *text = v->pty.caption[0] ? v->pty.caption
                      : v->pty.mode == BUI_PTY_FORCED ? CTR_TR("A Pok\xC3\xA9mon must be sent out.", "Tienes que sacar un Pok\xC3\xA9mon.", "Ein Pok\xC3\xA9mon muss antreten.")
                      : v->pty.mode == BUI_PTY_TARGET ? CTR_TR("Use on which one?", "\xC2\xBF" "En cu\xC3\xA1l lo usas?", "Auf welches anwenden?") : CTR_TR("Choose a Pok\xC3\xA9mon.", "Elige un Pok\xC3\xA9mon.", "W\xC3\xA4hle ein Pok\xC3\xA9mon.");
@@ -535,8 +545,14 @@ static void BPNoteCard(const CtrBattleView *v)
     LlWindow(n->x, n->y, n->w, n->h);
     Em2Text(text, n->x + 13, n->y + 11, EM_DARK, EM_DARK_SH, n->x + n->w - 14);
     LlRule(n->x + 13, n->y + 26, n->w - 26);
-    Em2Wrap(CTR_TR("Tap a card or use the D-pad and A.", "Toca una tarjeta o usa la cruceta y A.", "Tippe eine Karte an oder nutze Kreuz und A."),
-            n->x + 13, n->y + 31, n->w - 26, 2, 14, EM_DIM, EM_DARK_SH);
+    if (v->pty.mode == BUI_PTY_SHOWCASE)
+        snprintf(hint, sizeof(hint), "%s", CTR_TR("The battle is about to begin.", "El combate va a empezar.", "Der Kampf beginnt gleich."));
+    else if (v->pty.mode == BUI_PTY_MULTI && v->pty.entryLimit)
+        snprintf(hint, sizeof(hint), CTR_TR("%u of %u picked. Tap %s when ready.", "%u de %u elegidos. Toca %s al acabar.", "%u von %u gew\xC3\xA4hlt. Tippe auf %s, wenn du fertig bist."),
+                 v->pty.entryCount, v->pty.entryLimit, CtrUiText(UIS_PTY_CONFIRM));
+    else
+        snprintf(hint, sizeof(hint), "%s", CTR_TR("Tap a card or use the D-pad and A.", "Toca una tarjeta o usa la cruceta y A.", "Tippe eine Karte an oder nutze Kreuz und A."));
+    Em2Wrap(hint, n->x + 13, n->y + 31, n->w - 26, 2, 14, EM_DIM, EM_DARK_SH);
 }
 
 /* A message in FireRed's text window over the dimmed screen, with "tap to continue" and its arrow (the Party's and the Bag's). */
@@ -638,7 +654,7 @@ static void BParty(const CtrBattleView *v)
         BPartyKeepRing(v, i);
     }
     BPNoteCard(v);
-    if (v->pty.mode != BUI_PTY_FORCED)
+    if (v->pty.mode != BUI_PTY_FORCED && v->pty.mode != BUI_PTY_SHOWCASE)
         BPCancelButton(v);
     BPartyOverlay(v);
 }
@@ -1740,7 +1756,7 @@ void CtrBattleUi_Update(uint16_t *canvas, const CtrBattleView *old, const CtrBat
                     BPartyKeepRing(v, i);
                     BMark(dirty, &r);
                 }
-            if (v->pty.mode != BUI_PTY_FORCED && ((old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)
+            if (v->pty.mode != BUI_PTY_FORCED && v->pty.mode != BUI_PTY_SHOWCASE && ((old->pressed == BUI_PTY_CANCEL) != (v->pressed == BUI_PTY_CANCEL)
                                                  || (old->pressed == BUI_PTY_CONFIRM) != (v->pressed == BUI_PTY_CONFIRM))) {
                 CtrPokeTouchRect r = UiInset(&sBPCancel, -2);
 
