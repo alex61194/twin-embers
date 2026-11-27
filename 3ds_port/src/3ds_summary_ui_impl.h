@@ -125,7 +125,7 @@ static void SGender(char gender, int x, int y)
  * the key), the label drawn for it in this build's language and its colour. */
 static const struct { const char *code, *label; uint16_t color; } sSStatus[] = {
     {"PSN", CTR_TR("Psn", "Env", "Gft"), UI_RGB(170, 80, 190)}, {"PRZ", CTR_TR("Prz", "Par", "Par"), UI_RGB(214, 170, 30)}, {"SLP", CTR_TR("Slp", "Dor", "Slf"), UI_RGB(120, 128, 150)},
-    {"FRZ", CTR_TR("Frz", "Con", "Efr"), UI_RGB(80, 170, 220)}, {"BRN", CTR_TR("Brn", "Que", "Brn"), UI_RGB(226, 96, 48)}, {"PKR", "PKR", UI_RGB(200, 90, 160)}, {"FNT", CTR_TR("Fnt", "Deb", "Bes"), UI_DANGER},
+    {"FRZ", CTR_TR("Frz", "Con", "Efr"), UI_RGB(80, 170, 220)}, {"BRN", CTR_TR("Brn", "Que", "Vbr"), UI_RGB(226, 96, 48)}, {"PKR", "PKR", UI_RGB(200, 90, 160)}, {"FNT", CTR_TR("Fnt", "Deb", "Bes"), UI_DANGER},
 };
 
 /* The badge's row for the bridge's `status`, or -1 when it shows none. */

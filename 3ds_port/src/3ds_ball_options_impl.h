@@ -93,9 +93,10 @@ static void BallLookPanel(const CtrPokeTouchView *v)
 
 static void BallOptionsScreen(const CtrPokeTouchView *v)
 {
-    const char *body = v->bar[1][0] ? v->bar[1] : v->bar[2];
+    char body[2 * PT_BAR_LEN + 2];                                      /* both note lines: the second one finishes the sentence */
     int dots = v->optPageCount > 8 ? 8 : v->optPageCount;      /* eight pages now: the title keeps its 200 px, the dots start at 216 */
 
+    snprintf(body, sizeof(body), "%s%s%s", v->bar[1], v->bar[1][0] && v->bar[2][0] ? " " : "", v->bar[2]);
     sBallExitR = (CtrPokeTouchRect){240, 162, 74, 38};
     EmSurface();
     TsBallGround(BO_BAND_Y);
