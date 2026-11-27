@@ -176,7 +176,9 @@ static void BallShiftedScreen(const CtrPokeTouchView *v)
         sCanvas = base + BX_NOTE_UP;
         FBoxNote(v, 0);
         sCanvas = base;
-    } else
+    } else if (v->chat.on)
+        FChatNote(v);                                   /* the room's last messages */
+    else
         MenuWrap(v->choice.prompt, 14, BO_BAND_Y + 14, 292, 3, 14, BL_BAND, BL_WHITE);
     sUiS = &sUiNavy;
 }

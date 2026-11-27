@@ -49,8 +49,8 @@ class TradeCardsTest(unittest.TestCase):
         self.assertIn('sCtrTradeFrame = 0;', added)                        # no frame left by the last menu: the cards do not flash during the load
         self.assertIn('sCtrTradeSession++;', added)
         self.assertIn('int CtrTrade_Session(void)', added)
-        last = json.loads((PATCHES / '0286-trade-menu-stops-the-frame-after-it-is-freed.json').read_text(encoding='utf-8'))
-        self.assertEqual(doc['files'][0]['before_sha256'], last['files'][0]['after_sha256'])
+        last = json.loads((PATCHES / '0287-trade-on-the-lower-screen-over-the-room.json').read_text(encoding='utf-8'))
+        self.assertEqual(doc['files'][0]['before_sha256'], [f for f in last['files'] if f['path'] == 'src/trade.c'][0]['after_sha256'])
 
 
 if __name__ == '__main__':

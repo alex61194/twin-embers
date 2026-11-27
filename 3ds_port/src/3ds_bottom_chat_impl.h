@@ -12,6 +12,10 @@ extern void CtrChat_TapKey(int col, int row);
 extern void CtrChat_TapDelete(void);
 extern void CtrChat_TapSend(void);
 extern void CtrChat_TapPage(int page);
+extern int CtrChat_LogCount(void);
+extern int CtrChat_LogEntry(int i, uint8_t *kind, uint8_t *name, uint8_t *text);   /* recipe 0320: what everybody said, the oldest first */
+
+static int sChatLogOpen;                    /* the CHAT tab: the messages in place of the keys (the lower screen's own, the game is not told) */
 
 static void ChatFill(CtrPokeTouchView *v)
 {
@@ -22,6 +26,22 @@ static void ChatFill(CtrPokeTouchView *v)
     t->page = (uint8_t)CtrChat_PageNow();
     t->length = (uint8_t)CtrChat_Length();
     CtrChat_Message(t->msg);
+    t->logOpen = (uint8_t)sChatLogOpen;
+    t->logCount = 0;
+    for (int i = 0, n = CtrChat_LogCount(); i < n && t->logCount < PT_CHAT_LOG; ++i) {
+        uint8_t kind = 0, name[8], text[32];
+
+        memset(name, 0xff, sizeof(name));
+        memset(text, 0xff, sizeof(text));
+        if (!CtrChat_LogEntry(i, &kind, name, text))
+            continue;
+        t->logKind[t->logCount] = kind;
+        memcpy(t->logName[t->logCount], name, sizeof(name));
+        memcpy(t->logText[t->logCount], text, sizeof(text));
+        t->logName[t->logCount][7] = 0xff;
+        t->logText[t->logCount][31] = 0xff;
+        ++t->logCount;
+    }
     for (int row = 0; row < 10; ++row) {
         if (t->page == 3) {
             CtrChat_Registered(row, t->reg[row]);
@@ -40,7 +60,7 @@ static void ChatFill(CtrPokeTouchView *v)
     }
     v->choice.count = 0;
     snprintf(v->choice.prompt, sizeof(v->choice.prompt), "%s", CTR_TR("Chat with the others in the room.", "Chatea con los de la sala.",
-                                                                      "Chatte mit den anderen im Raum."));
+                                                                      "Chatte mit den anderen im Raum."));   /* the note while nobody has said anything */
 }
 
 static uint16_t ChatTap(int code)
@@ -48,11 +68,18 @@ static uint16_t ChatTap(int code)
     int k = code - PT_CHOICE_HIT_ROW;
 
     if (k >= 0 && k < 50) {
+        if (sChatLogOpen)
+            return 0;                       /* the keys are not on the screen */
         CtrChat_TapKey(k % 5, k / 5);
         return 0;
     }
     if (k >= PT_CHAT_TAB && k < PT_CHAT_TAB + PT_CHAT_PAGES) {
+        sChatLogOpen = 0;                   /* a page tab goes back to the keys */
         CtrChat_TapPage(k - PT_CHAT_TAB);
+        return 0;
+    }
+    if (k == PT_CHAT_LOG_TAB) {
+        sChatLogOpen = !sChatLogOpen;       /* the messages or the keys: nothing for the game */
         return 0;
     }
     if (k == PT_CHAT_DELETE)
@@ -105,6 +132,7 @@ static int WlHoldMode(int open)
         return MODE_CHOICE;
     }
     sWlHold = 0;
+    sChatLogOpen = 0;                       /* the next chat starts on the keys */
     return MODE_OFF;
 }
 
