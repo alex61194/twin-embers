@@ -122,7 +122,7 @@ static const char *const kCtrUiStrings[UIS_COUNT] = {
     [UIS_NAME_UPPER] = CTR_TR("ABC", "ABC", "ABC"),
     [UIS_NAME_LOWER] = CTR_TR("abc", "abc", "abc"),
     [UIS_NAME_SYMBOLS] = CTR_TR("123", "123", "123"),
-    [UIS_NAME_DELETE] = CTR_TR("Delete", "Borrar", "L\xC3\x96SCHEN"),
+    [UIS_NAME_DELETE] = CTR_TR("Delete", "Borrar", "L\xC3\xB6" "schen"),
     [UIS_NAME_OK] = CTR_TR("OK", "OK", "OK"),
     [UIS_NAME_HINT] = CTR_TR("Touch a key to write it, and OK when the name is ready.", "Toca una tecla para escribirla, y OK cuando el nombre est\xC3\xA9 listo.", "Taste ber\xC3\xBChren zum Schreiben, OK wenn fertig."),
 };

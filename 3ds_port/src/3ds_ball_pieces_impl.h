@@ -189,7 +189,7 @@ static void BallMailScreen(const CtrPokeTouchView *v)
     const char *label = CTR_TR("From:", "De:", "Von:");
     int nw = UiTextWidth(m->name, 1), lw = UiTextWidth(label, 1) + 5, fw = UiTextWidth(m->from, 1), tw, cx = 8 + 232 / 2;
 
-    BmFrame(NULL, CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), "", CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed,
+    BmFrame(NULL, CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schlie\xC3\x9F" "en"), "", CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed,
             v->backEnabled);
     BmCard(8, 8, 232, 148);                             /* inside the viewport's rectangle (4, 4, 240, 160): a touch of it closes the letter */
     BmStrip(10, 10, 228, CTR_TR("MAIL", "CORREO", "BRIEF"));

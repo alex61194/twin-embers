@@ -5936,8 +5936,11 @@ void CtrVideo_Present(void)
      * can be made (before the next frame, see sBandsWanted). */
     /* The battle scene is two passes of its own (RenderBattleScene), and cheap
      * enough to be composed per eye. */
-    bool planes = stereo && !overworld && !sStage && !sBattle && BandsUsable();
-    if (stereo && !overworld && !sStage && !sBattle && !planes) stereo = false;
+    /* A battle transition that bends the map (swirl, cuts, blend, waves) is composed per eye like a stage: the depth planes
+     * would show the field straight. */
+    const bool bent = sLineShiftKind != 0;
+    bool planes = stereo && !overworld && !sStage && !sBattle && !bent && BandsUsable();
+    if (stereo && !overworld && !sStage && !sBattle && !bent && !planes) stereo = false;
     if (stereo != sStereo) { gfxSet3D(stereo); sStereo = stereo; }
     sStats.stereo = stereo ? roundf(slider * CTR_STEREO_PIXELS) : 0;
     uint64_t perfLayers=CtrPerf_Begin();
