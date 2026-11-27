@@ -143,8 +143,8 @@ class BuilderWindow(tk.Tk):
         self.hd_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
         self.looks_check = ttk.Checkbutton(
             build_card, variable=self.alt_looks,
-            text="More characters to be: 18 looks (Ash, Gary, Silver, Gold, Brendan, May, Green, Kris...) for you, Leaf and your rival "
-                 "to pick in OPTIONS, from Emerald Lens (optional, needs internet: about 180 small files from GitHub)")
+            text="More characters to be: 26 looks (Ash, Gary, Silver, Gold, Brendan, May, Green, Kris...) for you, Leaf and your rival "
+                 "to pick in OPTIONS, and Pokemon to surf on, from Emerald Lens (optional, needs internet: small files from GitHub)")
         self.looks_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(build_card, style="Card.TFrame")
         buttons.grid(row=1, column=0, sticky="w", pady=(12, 8))
@@ -311,8 +311,10 @@ class BuilderWindow(tk.Tk):
     def _build(self) -> None:
         if self._busy:
             return
-        rom = self.rom_path.get().strip()
-        target = self.pack_path.get().strip()
+        # Explorer's "Copy as path" wraps the path in double quotes; strip them so a
+        # pasted path is not rejected as invalid syntax or as a non-.pak name.
+        rom = self.rom_path.get().strip().strip('"').strip()
+        target = self.pack_path.get().strip().strip('"').strip()
         if not rom or not target:
             messagebox.showwarning("Paths required", "Choose both a ROM and a pack destination.", parent=self)
             return

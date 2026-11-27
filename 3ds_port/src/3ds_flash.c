@@ -314,6 +314,28 @@ bool CtrFlash_Backup(const char *backupPath)
         ;
     if (i == sizeof(sImage))
         return false;
+
+    /* A start whose save is the same as the copy already there leaves .bak and .prev as
+     * they are. Otherwise two starts with no save in between would rotate the same image
+     * twice and push the last good copy out of .prev. Compared in chunks so no second
+     * 128 KiB buffer is needed. */
+    FILE *cur = fopen(backupPath, "rb");
+    if (cur)
+    {
+        static u8 sCmp[4096];
+        size_t off = 0, n;
+        bool same = true;
+
+        while (same && (n = fread(sCmp, 1, sizeof(sCmp), cur)) > 0)
+        {
+            if (off + n > sizeof(sImage) || memcmp(sCmp, sImage + off, n) != 0)
+                same = false;
+            off += n;
+        }
+        fclose(cur);
+        if (same && off == sizeof(sImage))
+            return true;
+    }
     if (snprintf(temp, sizeof(temp), "%s.tmp", backupPath) >= (int)sizeof(temp))
         return false;
     remove(temp);

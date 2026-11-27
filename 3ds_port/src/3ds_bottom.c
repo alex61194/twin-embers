@@ -920,8 +920,9 @@ static void PartyBar(const Snapshot *s, CtrPokeTouchView *v)
 /* The bar under the Summary screen: the Pokemon it shows. */
 static void SummaryBar(const CtrSummaryView *v, CtrPokeTouchView *t)
 {
-    const char *const sCodes[] = {BOTTOM_TR(16), BOTTOM_TR(17), BOTTOM_TR(18), BOTTOM_TR(19), BOTTOM_TR(20), BOTTOM_TR(21), BOTTOM_TR(22)};
-    const char *const sNames[] = {BOTTOM_TR(23), BOTTOM_TR(24), BOTTOM_TR(25), BOTTOM_TR(26), BOTTOM_TR(27),
+    /* The bridge's status codes are English in every language. */
+    static const char *const sCodes[] = {"PSN", "PRZ", "SLP", "FRZ", "BRN", "PKR", "FNT"};
+    static const char *const sNames[] = {BOTTOM_TR(23), BOTTOM_TR(24), BOTTOM_TR(25), BOTTOM_TR(26), BOTTOM_TR(27),
                                          "Pok\xc3\xa9rus", BOTTOM_TR(28)};
 
     if (!v->species[0])
@@ -1536,10 +1537,10 @@ static struct {
     int panX0, panY0;           /* the pan when the drag began */
 } sHome;
 
-/* FLY chosen in the Party: FireRed's Fly map is not opened, the Party goes back to the field and HOME's map is where the
- * destination is picked, with one tap (CtrBottom_BeginFlyPick, from party_menu.c). A button pressed in the field, a
- * battle, START or another screen gives it up. */
+/* FLY chosen in the Party: no Fly map, one tap on HOME's map is the destination (CtrBottom_BeginFlyPick, party_menu.c).
+ * A field button, a battle, START or another screen gives it up, and the Pokemon chosen. */
 static int sFlyPick;
+extern void CtrPartyMenu_ClearFlyChoice(void);
 
 void CtrBottom_BeginFlyPick(void)
 {
@@ -1574,8 +1575,8 @@ static int HomeFind(int group, int cx, int cy, int *fx, int *fy, int *mapsec, in
     return 1;
 }
 
-/* A tap at viewport pixel (gx, gy) of the map shown (which may be another region than the player's: Fly goes there too). It only selects; the
- * zoom stays, and the map scrolls only if the town is out of the window. */
+/* A tap at viewport pixel (gx, gy) of the map shown (any region: Fly goes there too). It only selects; the zoom
+ * stays, and the map scrolls only if the town is out of the window. */
 static void HomeTap(int gx, int gy)
 {
     int group = sHome.view - 1, version = CtrPokeTouch_MapVersion();
@@ -2985,7 +2986,7 @@ static void RunSumPlan(void)
         SumPlanClear();
         return;
     }
-    /* A page flip or redraw runs: nothing is pressed until it is over. */
+    /* Nothing is pressed while a page flip or redraw runs. */
     if (!CtrBottomSummary_Ready())
         return;
     page = CtrBottomSummary_Page();
@@ -3001,10 +3002,10 @@ static void RunSumPlan(void)
     case SUMPLAN_PAGE:
         if (page == sSumPlan.target)
             SumPlanClear();
-        else if (page == SUMMARY_MOVES_INFO)
-            SumPlanPress(K_B, SUMMARY_MOVES);
+        else if (page == SUMMARY_MOVES_INFO)    /* B may only cancel a swap: then B again */
+            SumPlanPress(K_B, CtrBottomSummary_Swapping() ? SUMMARY_MOVES_INFO : SUMMARY_MOVES);
         else {
-            /* One flip straight to the page, however many tabs away; the plan ends when the page has changed. */
+            /* One flip straight to the page; the plan ends once it has changed. */
             CtrSummary_AskPage(sSumPlan.target);
             sSumPlan.release = 1;
         }
@@ -3020,7 +3021,7 @@ static void RunSumPlan(void)
                 sInjected = K_A;
             SumPlanClear();
         } else {
-            CtrSummary_AskMove(sSumPlan.target);        /* the cursor goes straight to the row */
+            CtrSummary_AskMove(sSumPlan.target);    /* straight to the row */
             sSumPlan.release = 1;
         }
         return;
@@ -3065,9 +3066,9 @@ static void SummaryFill(CtrSummaryUiView *v)
     v->pressed = (int16_t)(sSum.down && sSum.inside ? sSum.btn : -1);
 }
 
-/* What a control does, through the Summary's own plans and keys: a tab turns FireRed's pages to its page (out of the
- * move details first), the previous and next Pokemon are its UP and DOWN, BACK is its B; a move card opens the details
- * on that move, a row there moves the cursor to it, and the selected row (or CANCEL) is chosen with A. */
+/* A control through the Summary's own plans and keys: a tab turns FireRed's pages to its page (out of the details
+ * first), the previous and next Pokemon are UP and DOWN, BACK is B; a move card opens the details on that move, a row
+ * there moves the cursor to it, and the selected row, CANCEL or, mid-swap, any row (FireRed swaps only on A) gets A. */
 static void SummaryAct(int hit)
 {
     int page = CtrBottomSummary_Page();
@@ -3092,7 +3093,8 @@ static void SummaryAct(int hit)
     else if (hit >= SUI_HIT_MOVE && hit <= SUI_HIT_CANCEL) {
         int row = hit - SUI_HIT_MOVE;
 
-        SumPlanStart(SUMPLAN_MOVE, row, page == SUMMARY_MOVES_INFO && (row == 4 || row == CtrBottomSummary_MoveCursor()), 0);
+        SumPlanStart(SUMPLAN_MOVE, row, page == SUMMARY_MOVES_INFO
+                     && (row == 4 || row == CtrBottomSummary_MoveCursor() || sShown.sum.data.swapping), 0);
     }
 }
 
@@ -3103,9 +3105,9 @@ static int ProcessSummaryTouch(const CtrInput *in)
     int hit = in->touchActive && sHaveShown && sShown.summaryUi
             ? CtrSummaryUi_Hit(&sShown.sum, (int)in->touchX, (int)in->touchY) : -1;
 
-    /* TRAINER, the last tab, is the port's (FireRed's first page shown as its memo), so the D-pad reaches it here: RIGHT
-     * on the moves page goes to it, LEFT from it back to the moves (on release, as the plan walks FireRed's pages with its
-     * own LEFT and RIGHT, which a held key would cancel). */
+    /* TRAINER, the last tab, is the port's (FireRed's first page as its memo), so the D-pad reaches it here: RIGHT on
+     * the moves page goes to it, LEFT back (on release: the plan walks FireRed's pages with its own LEFT and RIGHT, which
+     * a held key would cancel). */
     if (sSumPlan.kind == SUMPLAN_NONE && sHaveShown && sShown.summaryUi && !sShown.sum.loading && CtrBottomSummary_Ready()
         && !(in->held & 0x3ffu)) {
         int page = CtrBottomSummary_Page();
@@ -3148,12 +3150,10 @@ static int ProcessSummaryTouch(const CtrInput *in)
     return HIT_PANEL;
 }
 
-/* A touch in the Summary's viewport: what its header or move rows show there.
- * A page tab turns to that page; the page name to the previous page (out of
- * the move details: back); the controls hint's page part the way it points,
- * its A part presses A (CANCEL on the first page, DETAIL on the moves page);
- * a move row opens the details there, and in them moves the cursor (the
- * selected row, or CANCEL, is chosen). */
+/* A touch in the Summary's viewport: a page tab turns to that page; the page name
+ * to the previous one (out of the details: back); the hint's page part the way it
+ * points, its A part presses A; a move row opens the details there, and in them
+ * moves the cursor (the selected row, CANCEL or, mid-swap, any row gets A). */
 static int ProcessSummaryGbaTouch(const CtrInput *in)
 {
     int gx, gy, hit, page;
@@ -3178,8 +3178,11 @@ static int ProcessSummaryGbaTouch(const CtrInput *in)
         SumPlanStart(SUMPLAN_PRESS, 0, 0, K_A);
     else if (hit >= CTR_SUMMARY_HIT_MOVE && hit <= CTR_SUMMARY_HIT_MOVE + 4) {
         int row = hit - CTR_SUMMARY_HIT_MOVE;
+        CtrSummaryView v;
+
+        CtrBottomSummary_GetView(&v);           /* live: no panel needed */
         SumPlanStart(SUMPLAN_MOVE, row, page == SUMMARY_MOVES_INFO
-                     && (row == 4 || row == CtrBottomSummary_MoveCursor()), 0);
+                     && (row == 4 || row == CtrBottomSummary_MoveCursor() || v.swapping), 0);
     } else
         return HIT_NONE;
     return HIT_PANEL;
@@ -4185,10 +4188,9 @@ static void ProcessBattleTouch(const CtrInput *in)
 }
 
 /* The battle Bag's touch: the same press, track, release and Bag plans as every Bag, so FireRed's Bag decides
- * everything: a tap on another item selects it, a tap on the selected one sends A and then A on the first row of the
- * menu that opens (USE, or CANCEL for an item with no use here); a tab presses LEFT / RIGHT until the Bag is in that
- * pocket; CANCEL is B. An invalid use stays in the Bag with its own message. A held physical button cancels it all,
- * except the horizontal D-pad that shares the pocket router. */
+ * everything: a tap on another item selects it, one on the selected item sends A, then A on its menu's first row
+ * (USE, or CANCEL if no use here); a tab presses LEFT / RIGHT until that pocket shows; CANCEL is B. An invalid
+ * use stays in the Bag with its message. A held button cancels it all but the D-pad's pocket router keys. */
 static struct {
     int pocketTarget, pocketWait;   /* the pocket the Bag is being walked to (-1 none), frames left to get there */
     int autoWait;                   /* frames left to confirm USE once the item's menu opens */
@@ -4197,13 +4199,12 @@ static struct {
 
 uint16_t CtrBottom_FilterGameKeys(uint16_t held)
 {
-    /* Keep a held direction out during the router's busy frames too: it must neither
-     * cancel its own plan nor leak FireRed's internal pocket order to the game. */
+    /* Also in the router's busy frames: a held direction must not cancel its plan nor leak the pocket order. */
     if (CurrentMode() == MODE_BAG && CtrBottomBag_InBattle()
         && (CtrBottomBag_State() == BAG_LIST || sBatBag.pocketTarget >= 0))
         held &= ~(K_LEFT | K_RIGHT);
-    /* The naming keyboard's buttons are a row above the keys here, FireRed's a column beside them: the cursor
-     * crosses between keys and buttons only through NameDirection, not FireRed's D-pad. */
+    /* The naming buttons are a row above the keys here, FireRed's a column beside them: the cursor crosses
+     * between them only through NameDirection, not FireRed's D-pad. */
     if (CurrentMode() == MODE_NAMING && CtrBottomNaming_IsOpen()) {
         int col, row, cols = CtrBottomNaming_Columns();
 
@@ -4230,6 +4231,9 @@ uint16_t CtrBottom_FilterGameKeys(uint16_t held)
         held &= ~(K_LEFT | K_RIGHT | K_UP | K_DOWN);
         held |= (side & K_LEFT ? K_UP : 0) | (side & K_RIGHT ? K_DOWN : 0);
     }
+    /* This field Bag has no SELECT move mode: FireRed's reorder would run unseen and deaf to touch. */
+    if (CurrentMode() == MODE_BAG && FieldBagNative())
+        held &= ~K_SELECT;
     return held;
 }
 
@@ -4370,18 +4374,18 @@ static void ProcessBattleBagTouch(const CtrInput *in)
     sBat.down = sBat.inside = 0;
 }
 
-/* The field Bag's touch: press, track, release, one action, on what the lower screen showed (CtrPokeTouch_BagHit).
- * A row selects its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the
- * Bag is in that pocket; the arrows move the cursor a page; the menu's rows and YES / NO are walked to and taken; the
- * quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All through the
- * Bag's own keys, so FireRed decides. A held physical button cancels it. */
+/* The field Bag's touch: press, track, release, one action, on what was shown (CtrPokeTouch_BagHit). A row selects
+ * its item, a tap on the selected one (or on CLOSE BAG) sends A; a tab presses LEFT / RIGHT until the Bag is in that
+ * pocket (not at the item PC, whose Bag ignores them); the arrows page; menu rows and YES / NO are walked to and
+ * taken; the quantity box counts with UP / DOWN and takes A or B; a tap off the menu is B; a message takes A. All
+ * through the Bag's own keys, so FireRed decides. A held button cancels it. */
 static void ProcessFieldBagTouch(const FieldList *f, const CtrInput *in)
 {
     const ListScreen *list = f->list;
     int state = list->state(), hit = -1;
     int ready = sHaveShown && sShown.mode == f->mode && sShown.touch.bag.on && !CtrBottom_IsFading();
 
-    if (sFieldBag.pocketTarget >= 0 && f->kind == PT_BAG_KIND_BAG) {
+    if (sFieldBag.pocketTarget >= 0 && f->kind == PT_BAG_KIND_BAG && CtrBottomBag_Use() != PT_BAG_USE_DEPOSIT) {
         int pocket = CtrBottomBag_Pocket();
 
         if (pocket == sFieldBag.pocketTarget || --sFieldBag.pocketWait <= 0 || (state != BAG_LIST && state != BAG_BUSY))
@@ -5805,8 +5809,10 @@ void CtrBottom_Frame(void)
     }
     UpdateStorageOwner(mode);
     if (sFlyPick && (mode == MODE_BATTLE || NativeActive() || CtrPokeTouch_StartMenuOpen()
-                     || (mode == MODE_FIELD && (CtrInput_Get()->down & 0x3ffu))))
+                     || (mode == MODE_FIELD && (CtrInput_Get()->down & 0x3ffu)))) {
         sFlyPick = 0;                   /* the Party's FLY given up */
+        CtrPartyMenu_ClearFlyChoice();
+    }
     if (mode != MODE_FIELD && !(mode == MODE_OFF && CtrBottom_IsFieldTransition())) {
         sHome.valid = 0;                /* a menu or a battle has the screen: no selection */
         sHome.down = 0;
