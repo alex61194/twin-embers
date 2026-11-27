@@ -32,3 +32,27 @@ static uint16_t UnionLeaderKey(int row)
 {
     return CtrUnionLeader_CanStart() && row == 0 ? K_START : K_B;
 }
+
+/* The room's messages (invitations, "X has left", the link's notices): the game's message box is left out above and the page it is on is the
+ * note (the choice's prompt); while the box waits for A (the end of a page) there is one pill, OK, which gives the game that A (recipe 0310).
+ * Only when no row of a menu is up: a YES/NO or a list keeps its rows. */
+extern int CtrUnionMsg_Active(void);
+extern int CtrText_WaitsForButton(void);
+
+static int UnionMsgFill(CtrPokeTouchChoice *c)
+{
+    if (!CtrUnionMsg_Active() || c->count != 0)
+        return 0;
+    c->cursor = 0;
+    c->cols = 1;
+    if (CtrText_WaitsForButton()) {
+        snprintf(c->label[0], sizeof(c->label[0]), "%s", CTR_TR("OK", "OK", "OK"));
+        c->count = 1;
+    }
+    return 1;
+}
+
+static int UnionMsgTap(void)
+{
+    return CtrUnionMsg_Active() && CtrFieldChoice_Count() == 0;
+}

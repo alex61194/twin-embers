@@ -408,7 +408,7 @@ extern unsigned CtrBottomDex_Height(unsigned species);
 extern unsigned CtrBottomDex_Weight(unsigned species);
 extern void CtrBottomDex_Description(unsigned species, char *out, int size);
 extern int CtrBottomDex_Types(unsigned species, int *types, char *first, char *second, int size);
-/* Game names in proper case (3ds_text_case.h): the Bag's items and a case's moves as they are read (a mailbox shares the list), the Summary as it is reported. */
+/* Game names in proper case (3ds_text_case.h): the Bag's items, a case's moves. */
 #define CtrBottomBag_ItemName(i, o, n) (CtrBottomBag_ItemName((i), (o), (n)), CtrTextCase(o))
 #define CtrBottomTMCase_MoveName(i, o, n) (CtrBottomTMCase_MoveName((i), (o), (n)), CtrTextCase(o))
 /* The Summary's view is read at most once a frame (the session-ready check and the snapshot both ask, with nothing of the game
@@ -1293,7 +1293,7 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         TradeFill(&s->touch);               /* the trade's choice of a Pokemon: both parties as cards */
     else if (CtrChat_Active())
         ChatFill(&s->touch);                /* the chat's keyboard */
-    else
+    else if (!UnionMsgFill(c))              /* the Union Room's message: its text is the note */
         WlHoldSnapshot(s, n);               /* a gap in the wireless screens: the last one stays */
     s->touch.viewport = 0;
     s->touch.backVisible = 1;
@@ -2517,7 +2517,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
  * canvas at the next frame. Only those pixels move. */
 static int sGpu;
 static int sBridgeFrames;
-static int sBridging;               /* the last frame kept the picture between two screens: nothing is touchable meanwhile */           /* frames the lower screen has kept its picture between two screens of a session */
+static int sBridging;               /* the last frame kept the picture between two screens: nothing is touchable meanwhile */
 
 static void PresentRect(int x0, int y0, int x1, int y1)
 {
@@ -4921,6 +4921,8 @@ static void ProcessChoiceTouch(const CtrInput *in)
             sRouteKey = TradeTap(sChoiceTap.code);
         } else if (CtrChat_Active()) {
             sRouteKey = ChatTap(sChoiceTap.code);
+        } else if (UnionMsgTap()) {
+            sRouteKey = K_A;
         } else {
             if (isBattle)
                 CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
@@ -5872,7 +5874,7 @@ void CtrBottom_Frame(void)
     RunStoragePlan(mode);
     if (mode != MODE_BATTLE && !(mode == MODE_BAG && CtrBottomBag_InBattle()) && mode != MODE_PARTY)
         sBat.down = sBat.inside = 0;
-    /* The battle keeps the upper screen from the pick of BAG or POKeMON (or a replacement), before the Bag or Party exists (its fade and setup are never shown). */
+    /* The battle keeps the upper screen from the pick of BAG or POKeMON (or a replacement) until the Bag or Party exists. */
     if (mode == MODE_BATTLE)
         sBatHold = CtrBattle_BagPending() || CtrBattle_PartyPending() ? 1 : 0;
     else if (mode == MODE_BAG || mode == MODE_PARTY)
