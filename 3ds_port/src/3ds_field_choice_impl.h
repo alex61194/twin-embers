@@ -8,6 +8,7 @@
 static void FTradeFrame(const CtrPokeTouchView *v);
 static int FTradeHit(const CtrPokeTouchView *v, int x, int y);
 static void FChatFrame(const CtrPokeTouchView *v);
+static void FChatNote(const CtrPokeTouchView *v);
 static int FChatHit(const CtrPokeTouchView *v, int x, int y);
 
 static int FChColumns(const CtrPokeTouchChoice *c)

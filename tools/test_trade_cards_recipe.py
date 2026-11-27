@@ -42,6 +42,16 @@ class TradeCardsTest(unittest.TestCase):
         for f in self.doc['files']:
             self.assertEqual(f['before_sha256'], after[f['path']])
 
+    def test_a_new_trade_menu_starts_clean(self):
+        doc = json.loads((PATCHES / '0291-trade-menu-starts-clean.json').read_text(encoding='utf-8'))
+        added = ''.join(l['port'] for l in doc['files'][0]['lines'] if 'port' in l)
+        self.assertIn('        CtrTrade_Reset();', added)                    # called right after the menu is allocated
+        self.assertIn('sCtrTradeFrame = 0;', added)                        # no frame left by the last menu: the cards do not flash during the load
+        self.assertIn('sCtrTradeSession++;', added)
+        self.assertIn('int CtrTrade_Session(void)', added)
+        last = json.loads((PATCHES / '0287-trade-on-the-lower-screen-over-the-room.json').read_text(encoding='utf-8'))
+        self.assertEqual(doc['files'][0]['before_sha256'], [f for f in last['files'] if f['path'] == 'src/trade.c'][0]['after_sha256'])
+
 
 if __name__ == '__main__':
     unittest.main()
