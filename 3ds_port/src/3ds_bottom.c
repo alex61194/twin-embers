@@ -3242,7 +3242,7 @@ static int BackEnabled(int mode)
     if (mode == MODE_CHOICE)
         return CtrBattle_ChoiceIsOpen() ? CtrBattle_ChoiceReady() : CtrFieldChoice_Ready();
     if (mode == MODE_GBAVIEW)
-        return 1;
+        return !CtrBottomView_TradeScene();   /* a trade has no BACK */
     if (mode == MODE_DEX)
         return CtrBottomDex_State() != DEX_BUSY;
     if (mode == MODE_PARTY_CHILD)
@@ -3584,8 +3584,7 @@ static int UpdateSession(int mode, int planRunning)
         sSession.away = 0;
         return 1;
     }
-    /* A Fame Checker or Teachy TV opened from the session's Bag: still the session, which keeps TOP's picture through
-     * its fades and the Bag's return (counted as away, it ran out and TOP froze a black frame). */
+    /* A Fame Checker or Teachy TV opened from the session's Bag: still the session (TOP keeps its picture). */
     if (mode == MODE_GBAVIEW) {
         sSession.away = 0;
         return 1;

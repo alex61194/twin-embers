@@ -6,7 +6,7 @@ Twin Embers is a port of Pokémon FireRed (pret/pokefirered) to the Nintendo 3DS
 
 ### Changed
 
-- **Link trades on the lower screen (test)**: from the moment a trade starts (Trade Center, Wireless Club or the Union Room) the upper screen keeps the room with both players, and the whole trade is on the lower screen in the Poke Ball look: the choice of a Pokemon (as before), the Summary of your Pokemon or the partner's, the trade's animation in the lower viewport, and the evolution a trade can bring. The upper screen no longer shows the game's own trade screens (recipe 0287). Not played yet: checked by reading the code and the source audit only.
+- **Link trades on the lower screen (test)**: from the moment a trade starts (Trade Center, Wireless Club or the Union Room) the upper screen keeps the room with both players, and the whole trade is on the lower screen in the Poke Ball look: the choice of a Pokemon (as before), the Summary of your Pokemon or the partner's, the trade's animation over the whole lower screen, and the evolution a trade can bring. The upper screen no longer shows the game's own trade screens (recipe 0287). Not played yet: checked by reading the code and the source audit only.
 
 ## v0.7.0
 

@@ -5767,8 +5767,12 @@ static void UploadChrome(void)
 
 /* The bottom screen: the canvas, then the GBA picture (240x160 at the stage
  * position of the logical surface) over the viewport, pixel for pixel. */
+extern int CtrBottomView_TradeScene(void);
+
 static void RenderBottom(void)
 {
+    /* A link trade's animation fills the whole lower screen: the picture magnified by 4/3 (320x213), no HOME layout around it. */
+    const int full = CtrBottomView_TradeScene();
     const Tex3DS_SubTexture chrome = {320, 240, 0, 1, 320 / 512.0f, 1 - 240 / 256.0f};
     /* PC's first menu is drawn on BG0 of the field, aligned with its bottom
      * 160px. The actual box screens retain the original centred stage crop. */
@@ -5781,8 +5785,9 @@ static void RenderBottom(void)
     C2D_SceneBegin(sBottom);
     C2D_ViewReset();
     Blend(5, false, false);
-    C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, sBottomPicX, sBottomPicY, 0, NULL, 1, 1);
+    if (!full)
+        C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
+    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, full ? 0 : sBottomPicX, full ? 13 : sBottomPicY, 0, NULL, full ? 4.0f / 3 : 1, full ? 4.0f / 3 : 1);
     C2D_Flush();
     C3D_FrameSplit(0);
 }
