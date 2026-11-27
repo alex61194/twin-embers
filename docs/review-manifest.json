@@ -8002,7 +8002,7 @@
   },
   {
    "path": "patches/pokefirered/0291-trade-menu-starts-clean.json",
-   "sha256": "ccad9317d65018e902f8efeef0287dbb612e60a932c7a2a8f5065f36ace70399",
+   "sha256": "fc26234ec2aaed8b7552b7ef95d69025bebf149ea1dae031c603a75465630671",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8010,7 +8010,7 @@
   },
   {
    "path": "patches/pokefirered/0293-trade-menu-state-follows-its-callback.json",
-   "sha256": "9ff2f9dae340a8a900dbc6de09a87a2814a8b0db27eaf259c42f1c5486eaa8d0",
+   "sha256": "f27abd67a78368cfc685bea0c558b29abf02e5040532c6cffde4fa1e3b0f2055",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8018,7 +8018,7 @@
   },
   {
    "path": "patches/pokefirered/0294-union-chat-no-dangling-work-link-loss-exit.json",
-   "sha256": "e36f2464816b290cdf89e36e72b9b0ed21c96d5ce11b4ab1e7a155803e4d6c0b",
+   "sha256": "33fe327ea17135885603ba59000de7827d957730079b333bbc25a41ba3905ba1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8026,7 +8026,7 @@
   },
   {
    "path": "patches/pokefirered/0295-trade-lost-wireless-link-shows-the-error.json",
-   "sha256": "bd9eff17e450887e58b25ee684078affda6680427f8949a916697dd8da87fa69",
+   "sha256": "f553d4fbb8b292fcd556daa3aeaa3cf448980c2097050baa746040d5b4470d7a",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8034,7 +8034,7 @@
   },
   {
    "path": "patches/pokefirered/0296-trade-link-callback-needs-the-menu.json",
-   "sha256": "9d96169f2c77fa3245145d8d3fa051fd0834a5ad6a8d637f4906af27535eaa88",
+   "sha256": "46dcc10bf0d9a536700c24f1fd3995aa58655abd627234e779a62b637f98e7ff",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8042,14 +8042,14 @@
   },
   {
    "path": "patches/pokefirered/0297-return-to-field-waits-for-the-link-task.json",
-   "sha256": "859f4ae2d54f1cc9fe912e60ba4f27217303071677f51eb46a0098f3aaadc727",
+   "sha256": "da29e5280b813a5661f145dfbba2f0c9a8e56b0724efe83d99b390ecdae1552c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0287-trade-on-the-lower-screen-over-the-room.json",
+   "path": "patches/pokefirered/0288-trade-on-the-lower-screen-over-the-room.json",
    "sha256": "4863e584d42be35292a8ea2385bc9e48bd66ada721dba9eb6552f544d7ff0fc9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
