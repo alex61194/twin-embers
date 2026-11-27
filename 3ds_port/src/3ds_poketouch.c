@@ -1148,9 +1148,9 @@ static void OptPad(const CtrPokeTouchView *v)
         static const char *const digits[10] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
         CtrPokeTouchRect r = PadKeyRect(key);
         const EmPal *pal = key == PT_PAD_KEY_OK ? (p->ok ? &kEmFlame : &kEmGrey) : &kEmCream;
-        const char *label = key <= 9 ? digits[key] : key == PT_PAD_KEY_DELETE ? CTR_TR("Delete", "Borrar", "L\xC3\xB6schen")
-                          : key == PT_PAD_KEY_OK ? "OK" : key == PT_PAD_KEY_NEW ? CTR_TR("New code", "C\xC3\xB3" "digo nuevo", "Neuer Code")
-                          : CTR_TR("Cancel", "Cancelar", "Zur\xC3\xBC" "ck");
+        const char *label = key <= 9 ? digits[key] : key == PT_PAD_KEY_DELETE ? CTR_TR("Delete", "Borrar", "L\xC3\xB6schen", "Effacer")
+                          : key == PT_PAD_KEY_OK ? "OK" : key == PT_PAD_KEY_NEW ? CTR_TR("New code", "C\xC3\xB3" "digo nuevo", "Neuer Code", "Nouveau code")
+                          : CTR_TR("Cancel", "Cancelar", "Zur\xC3\xBC" "ck", "Annuler");
         int fy = EmButton(r.x, r.y, r.w, r.h, pal, COL_DEPTH, p->pressed == key);
 
         EmLabel(label, r.x, r.w, fy, r.h - COL_DEPTH, pal);
@@ -1201,7 +1201,7 @@ static void OptLookPanel(const CtrPokeTouchView *v)
     LlRule(textX, r.y + (r.h >= 56 ? 26 : 19), right - textX);
     {
         /* The artists behind an ART ribbon, as many lines as the window holds, up to three. */
-        const char *tag = CTR_TR("Art", "Arte", "Kunst");
+        const char *tag = CTR_TR("Art", "Arte", "Kunst", "Art");
         int y = r.y + (r.h >= 56 ? 31 : 22), pw, lines = big ? 3 : r.h >= 56 ? 2 : 1;
 
         pw = LlRibbon(textX, y, tag, LL_RIB_TOP, LL_RIB_BOT);
@@ -1217,7 +1217,7 @@ enum { SF_NAME, SF_BADGES, SF_DEX, SF_TIME, SF_COUNT };
 static const CtrPokeTouchRect sSaveYes = {204, 145, 72, 24};
 static const CtrPokeTouchRect sSaveNo = {204, 172, 72, 24};
 static const CtrPokeTouchRect sSaveButtons = {200, 142, 80, 58};   /* both, with the ring and the shadow */
-static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler"), CTR_TR("Badges", "Medallas", "Orden"), CTR_TR("Poké" "dex", "Poké" "dex", "Poké" "dex"), CTR_TR("Time", "Tiempo", "Zeit")};
+static const char *const sSaveLabel[SF_COUNT] = {CTR_TR("Player", "Jugador", "Spieler", "Joueur"), CTR_TR("Badges", "Medallas", "Orden", "Badges"), CTR_TR("Poké" "dex", "Poké" "dex", "Poké" "dex", "Pok\xC3\xA9" "dex"), CTR_TR("Time", "Tiempo", "Zeit", "Temps")};
 
 /* The dialogue's buttons: YES over NO, or a lone OK on YES's place. */
 static const CtrPokeTouchRect sBallSaveYes = {242, 78, 70, 30};   /* the Poke Ball SAVE's buttons (3ds_ball_menus_impl.h) */
@@ -1363,7 +1363,7 @@ static void Back(const CtrPokeTouchView *v)
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     LlArrow(r->x + 12, fy + (fh - 10) / 2, 6, 10, 2, EM_WHITE);
-    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck"), r->x + 24, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 3);
+    UiText(CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck", "Retour"), r->x + 24, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 3);
 }
 
 /* The dots of the PAGE button: one for each page up to 8 (a view that does not say its pages has one for each section), and the colour of the section
@@ -1476,12 +1476,12 @@ static int FrameSampleH(int type, int x, int y, int fh)
             Px(x + dx, y + dy, px[sy * 24 + sx]);
         }
     if (fh < FRAME_H) {                                 /* the low sample: both words on one line */
-        UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja"), x + 10, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
-        UiText(CTR_TR("No", "No", "Nein"), x + 32, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+        UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja", "Oui"), x + 10, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+        UiText(CTR_TR("No", "No", "Nein", "Non"), x + 32, y + (fh - UI_TEXT_H) / 2, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
         return 1;
     }
-    UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
-    UiText(CTR_TR("No", "No", "Nein"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("Yes", "S\xC3\xAD", "Ja", "Oui"), x + 14, y + 7, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
+    UiText(CTR_TR("No", "No", "Nein", "Non"), x + 14, y + 21, EM_DARK, EM_DARK_SH, 1, x + FRAME_W - 6);
     return 1;
 }
 
@@ -1543,7 +1543,7 @@ static void Bar(const CtrPokeTouchView *v)
                                                          NOTE_Y + (NOTE_H - FRAME_H) / 2 - 1))
             right -= FRAME_W + 4;
         /* HOME with a destination that can be Flown to: a FLY button beside the name says so, and the line that said the same goes. */
-        const char *fly = v->home && !v->viewport && !v->options && v->flyOk ? CTR_TR("Fly", "Volar", "Fliegen") : NULL;
+        const char *fly = v->home && !v->viewport && !v->options && v->flyOk ? CTR_TR("Fly", "Volar", "Fliegen", "Vol") : NULL;
         const char *shown[PT_BAR_LINES] = {NULL};
         int count = 0, titleRight = right;
 
@@ -1641,10 +1641,10 @@ static void Button(int id, const CtrPokeTouchView *v)
         break;
     default: {
         char name[16] = {0};
-        const char *label = id == PT_POKEDEX ? CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9" "dex")
-                          : id == PT_POKEMON ? CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xc3\xa9" "mon")
-                          : id == PT_BAG ? CTR_TR("Bag", "Mochila", "Beutel")
-                          : id == PT_SAVE ? CTR_TR("Save", "Guardar", "Sichern") : id == PT_OPTIONS ? CTR_TR("Option", "Ajustes", "Option") : name;
+        const char *label = id == PT_POKEDEX ? CTR_TR("Pok\xC3\xA9" "dex", "Pok\xC3\xA9" "dex", "Pok\xc3\xa9" "dex", "Pok\xC3\xA9" "dex")
+                          : id == PT_POKEMON ? CTR_TR("Pok\xC3\xA9mon", "Pok\xC3\xA9mon", "Pok\xc3\xa9" "mon", "Pok\xC3\xA9mon")
+                          : id == PT_BAG ? CTR_TR("Bag", "Mochila", "Beutel", "Sac")
+                          : id == PT_SAVE ? CTR_TR("Save", "Guardar", "Sichern", "Sauvegarder") : id == PT_OPTIONS ? CTR_TR("Option", "Ajustes", "Option", "Options") : name;
 
         if (id == PT_CARD) {
             /* The player's name, as typed. */
@@ -1833,7 +1833,7 @@ static void HomeBack(void)
         fy = EmButton(r->x, r->y, r->w, r->h, &kEmGrey, BTN_DEPTH, 0);
     {
         const uint16_t ink = sStyleBall ? UI_RGB(226, 160, 160) : kEmGrey.ink, inkSh = sStyleBall ? UI_RGB(156, 40, 44) : kEmGrey.inkSh;
-        const char *word = CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck");
+        const char *word = CTR_TR("Back", "Atr\xC3\xA1s", "Zur\xc3\xbc" "ck", "Retour");
         int x = sStyleBall ? r->x + (r->w - (10 + UiTextWidth(word, 1))) / 2 : r->x + 8;    /* Poke Ball: the arrow and the word centred */
 
         LlArrow(x, fy + (fh - 10) / 2, 6, 10, 2, ink);
@@ -1860,14 +1860,14 @@ static void HomeStatus(const CtrPokeTouchView *v)
     }
     if (v->homeRepelSteps) {
         /* What is in force: the Repel in use, the steps it has left and a bar of how much is left of its length. */
-        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
-                                              CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz")};
+        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz", "Repousse"), CTR_TR("Super Repel", "Superrep.", "Superschutz", "Superepousse"),
+                                              CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz", "Repousse Max")};
         int kind = v->homeRepelKind > 2 ? 0 : v->homeRepelKind, barW = r->w - 36;
         int total = v->homeRepelTotal ? v->homeRepelTotal : v->homeRepelSteps, fill;
 
         ItemArt(ICON_REPEL + kind, v->homeRepelItem[kind], r->x + 5, r->y + 6, 1);
         SmallText(kName[kind], r->x + 28, r->y + 1, EM_DIM, EM_DARK_SH, r->x + r->w - 4);
-        snprintf(money, sizeof(money), CTR_TR("%u steps", "%u pasos", "%u Schritte"), (unsigned)v->homeRepelSteps);
+        snprintf(money, sizeof(money), CTR_TR("%u steps", "%u pasos", "%u Schritte", "%u pas"), (unsigned)v->homeRepelSteps);
         Em2Text(money, r->x + 28, r->y + 13, EM_DARK, EM_DARK_SH, r->x + r->w - 4);
         fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
         if (fill > barW)
@@ -1883,7 +1883,7 @@ static void HomeStatus(const CtrPokeTouchView *v)
         snprintf(money, sizeof(money), "%u.%03u", m / 1000, m % 1000);
     else
         snprintf(money, sizeof(money), "%u", m);
-    SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 2);
+    SmallText(CTR_TR("Money", "Dinero", "Geld", "Argent"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 2);
     Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, chipX - 2);
     snprintf(turbo, sizeof(turbo), "x%u", v->homeTurbo > 1 ? (unsigned)v->homeTurbo : 1u);
     fy = EmButton(chipX, r->y + 9, chipW, 17, v->homeTurbo > 1 ? &kEmFlame : &kEmCream, 1, 0);
@@ -1913,11 +1913,11 @@ static void HomeStatusWide(const CtrPokeTouchView *v)
         snprintf(money, sizeof(money), "%u.%03u", m / 1000, m % 1000);
     else
         snprintf(money, sizeof(money), "%u", m);
-    SmallText(CTR_TR("Money", "Dinero", "Geld"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, moneyRight);
+    SmallText(CTR_TR("Money", "Dinero", "Geld", "Argent"), r->x + 7, r->y + 1, EM_DIM, EM_DARK_SH, moneyRight);
     Em2Text(money, r->x + 7, r->y + 18, EM_DARK, EM_DARK_SH, moneyRight);
     if (v->homeRepelSteps) {
-        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
-                                              CTR_TR("Max Repel", "M\xC3\xA1x. Rep.", "Top-Schutz")};
+        static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz", "Repousse"), CTR_TR("Super Repel", "Superrep.", "Superschutz", "Superepousse"),
+                                              CTR_TR("Max Repel", "M\xC3\xA1x. Rep.", "Top-Schutz", "Repousse Max")};
         int kind = v->homeRepelKind > 2 ? 0 : v->homeRepelKind, x = r->x + 68, textX = x + 24, barW = chipX - 4 - textX;
         int total = v->homeRepelTotal ? v->homeRepelTotal : v->homeRepelSteps, fill;
 
@@ -1925,7 +1925,7 @@ static void HomeStatusWide(const CtrPokeTouchView *v)
         ItemArt(ICON_REPEL + kind, v->homeRepelItem[kind], x, r->y + 6, 1);
         SmallText(kName[kind], textX, r->y + 1, EM_DIM, EM_DARK_SH, chipX - 4);
         /* German "Schritte" leaves no room beside the Repel's icon on this plate, so it is shortened there; English and Spanish fit whole. */
-        snprintf(steps, sizeof(steps), CTR_TR("%u steps", "%u pasos", "%u Schr."), (unsigned)v->homeRepelSteps);
+        snprintf(steps, sizeof(steps), CTR_TR("%u steps", "%u pasos", "%u Schr.", "%u pas"), (unsigned)v->homeRepelSteps);
         Em2Text(steps, textX, r->y + 13, EM_DARK, EM_DARK_SH, chipX - 4);
         fill = (int)((unsigned)barW * v->homeRepelSteps / (unsigned)(total > 0 ? total : 1));
         if (fill > barW)
@@ -2021,7 +2021,7 @@ static void HomeNote(const CtrPokeTouchView *v)
         if (v->bar[i][0] && !(v->flyOk && i == 1))
             line = v->bar[i];
     if (v->flyOk) {
-        const char *fly = CTR_TR("Fly", "Volar", "Fliegen");
+        const char *fly = CTR_TR("Fly", "Volar", "Fliegen", "Vol");
         int pw = UiTextWidth(fly, 1) + 16, px, fy;
 
         if (pw < 40)
@@ -2041,14 +2041,14 @@ static void HomeNote(const CtrPokeTouchView *v)
         for (int i = 0; i < zones; ++i)
             ZoneSlot(left + i * ZN_SLOT, v->zoneSpecies[i], v->zoneFlags[i]);
         titleRight = left - 4;
-        line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("Pokémon seen here", "Pokémon vistos aquí", "Hier gesehene Pokémon");
+        line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser", "Dans l'eau") : CTR_TR("Pokémon seen here", "Pokémon vistos aquí", "Hier gesehene Pokémon", "Pok\xC3\xA9mon vus ici");
     }
     if (!zones && !v->flyOk && v->homeStage && v->bar[1][0]) {
         /* Nothing wild here: after the League, the next step of the Sevii postgame, and once the gems are restored the national Pokedex. */
         static const char *const kHint[3] = {
-            CTR_TR("Postgame: explore the Sevii Islands", "Postgame: explora las Islas Sete", "Postgame: erkunde die Sevii-Inseln"),
-            CTR_TR("You have the Ruby: find the Sapphire", "Tienes el Rubí: busca el Zafiro", "Du hast den Rubin: finde den Saphir"),
-            CTR_TR("Both gems: go and see Celio", "Las dos gemas: ve a ver a Celio", "Beide Edelsteine: besuche Celio")};
+            CTR_TR("Postgame: explore the Sevii Islands", "Postgame: explora las Islas Sete", "Postgame: erkunde die Sevii-Inseln", "Apr\xC3\xA8s la Ligue : les \xC3\xAEles Sevii"),
+            CTR_TR("You have the Ruby: find the Sapphire", "Tienes el Rubí: busca el Zafiro", "Du hast den Rubin: finde den Saphir", "Rubis en poche : trouvez le Saphir"),
+            CTR_TR("Both gems: go and see Celio", "Las dos gemas: ve a ver a Celio", "Beide Edelsteine: besuche Celio", "Les deux gemmes : allez voir C\xC3\xA9lio")};
 
         if (v->homeStage < 4) {
             line = kHint[v->homeStage - 1];
@@ -2057,9 +2057,9 @@ static void HomeNote(const CtrPokeTouchView *v)
             int bx = HN_X + 140, bw = right - bx;
             unsigned dex = v->homeDex > 386 ? 386 : v->homeDex;
 
-            line = CTR_TR("National Poké" "dex", "Poké" "dex Nacional", "Nationaler Poké" "dex");
+            line = CTR_TR("National Poké" "dex", "Poké" "dex Nacional", "Nationaler Poké" "dex", "Pok\xC3\xA9" "dex National");
             snprintf(count, sizeof(count), "%u / 386", dex);
-            SmallText(CTR_TR("Caught", "Capturados", "Gefangen"), bx, HN_Y + 1 + dy, EM_DIM, EM_DARK_SH, right);
+            SmallText(CTR_TR("Caught", "Capturados", "Gefangen", "Captur\xC3\xA9s"), bx, HN_Y + 1 + dy, EM_DIM, EM_DARK_SH, right);
             SmallText(count, right - SmallWidth(count), HN_Y + 1 + dy, EM_DARK, EM_DARK_SH, right);
             UiRoundFill(bx, HN_Y + 20 + dy, bw, 6, 3, LL_SLATE);
             if (dex)
@@ -2127,8 +2127,8 @@ int CtrPokeTouch_HomePanelHit(int x, int y)
 
 static void HomePanel(const CtrPokeTouchView *v)
 {
-    static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz"), CTR_TR("Super Repel", "Superrep.", "Superschutz"),
-                                          CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz")};
+    static const char *const kName[3] = {CTR_TR("Repel", "Repelente", "Schutz", "Repousse"), CTR_TR("Super Repel", "Superrep.", "Superschutz", "Superepousse"),
+                                          CTR_TR("Max Repel", "Máx. Rep.", "Top-Schutz", "Repousse Max")};
     static const unsigned kSteps[3] = {100, 200, 250};
     char text[24];
     unsigned m = v->homeMoney;
@@ -2139,7 +2139,7 @@ static void HomePanel(const CtrPokeTouchView *v)
             if (x < PN_X - 3 || x >= PN_X + PN_W + 3 || y < PN_Y - 3 || y >= PN_Y + PN_H + 3)
                 Px(x, y, UiMix(sCanvas[(size_t)x * H + (H - 1 - (size_t)y)], UI_RGB(10, 6, 20), 3));
     LlWindow(PN_X, PN_Y, PN_W, PN_H);
-    SmallText(CTR_TR("Turbo", "Turbo", "Turbo"), PN_X + 10, PN_Y + 2, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    SmallText(CTR_TR("Turbo", "Turbo", "Turbo", "Turbo"), PN_X + 10, PN_Y + 2, EM_DIM, EM_DARK_SH, PN_X + PN_W);
     for (int k = 0; k < 4; ++k) {
         CtrPokeTouchRect r = PanelTurbo(k);
         unsigned speed = k == 0 ? 0 : (unsigned)k + 1;
@@ -2148,12 +2148,12 @@ static void HomePanel(const CtrPokeTouchView *v)
 
         snprintf(text, sizeof(text), "x%u", speed);
         fy = EmButton(r.x, r.y, r.w, r.h, pal, 1, 0);
-        EmLabel(k == 0 ? CTR_TR("Off", "No", "Aus") : text, r.x, r.w, fy, r.h - 1, pal);
+        EmLabel(k == 0 ? CTR_TR("Off", "No", "Aus", "Non") : text, r.x, r.w, fy, r.h - 1, pal);
     }
     Fill(PN_X + 8, PN_Y + 46, PN_W - 16, 1, UI_RGB(214, 206, 190));
-    SmallText(CTR_TR("Repel", "Repelente", "Schutz"), PN_X + 10, PN_Y + 46, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    SmallText(CTR_TR("Repel", "Repelente", "Schutz", "Repousse"), PN_X + 10, PN_Y + 46, EM_DIM, EM_DARK_SH, PN_X + PN_W);
     if (v->homeRepelSteps) {
-        snprintf(text, sizeof(text), CTR_TR("%u steps left", "Quedan %u pasos", "Noch %u Schritte"), (unsigned)v->homeRepelSteps);
+        snprintf(text, sizeof(text), CTR_TR("%u steps left", "Quedan %u pasos", "Noch %u Schritte", "%u pas restants"), (unsigned)v->homeRepelSteps);
         SmallText(text, PN_X + PN_W - 10 - UiTextWidth(text, 1), PN_Y + 46, EM_DIM, EM_DARK_SH, PN_X + PN_W - 2);
     }
     for (int k = 0; k < 3; ++k) {
@@ -2165,12 +2165,12 @@ static void HomePanel(const CtrPokeTouchView *v)
         ItemArt(ICON_REPEL + k, v->homeRepelItem[k], r.x + 4, fy + 3, can);
         snprintf(text, sizeof(text), "x%u", (unsigned)v->homeRepelHave[k]);
         SmallText(text, r.x + 27, fy - 1, pal->ink, pal->inkSh, r.x + r.w - 2);
-        snprintf(text, sizeof(text), CTR_TR("%u st.", "%u p.", "%u S."), kSteps[k]);
+        snprintf(text, sizeof(text), CTR_TR("%u st.", "%u p.", "%u S.", "%u p."), kSteps[k]);
         SmallText(text, r.x + 27, fy + 10, EM_DIM, pal->inkSh, r.x + r.w - 2);
         SmallText(kName[k], r.x + 4, fy + 24, pal->ink, pal->inkSh, r.x + r.w - 2);
     }
     Fill(PN_X + 8, PN_Y + 112, PN_W - 16, 1, UI_RGB(214, 206, 190));
-    SmallText(CTR_TR("Money", "Dinero", "Geld"), PN_X + 10, PN_Y + 112, EM_DIM, EM_DARK_SH, PN_X + PN_W);
+    SmallText(CTR_TR("Money", "Dinero", "Geld", "Argent"), PN_X + 10, PN_Y + 112, EM_DIM, EM_DARK_SH, PN_X + PN_W);
     if (m >= 1000000)
         snprintf(text, sizeof(text), "%u.%03u.%03u", m / 1000000, m / 1000 % 1000, m % 1000);
     else if (m >= 1000)
@@ -2348,7 +2348,7 @@ static void BackTop(const CtrPokeTouchView *v)
     Em2CardShadow(r->x, r->y, r->w, r->h);
     fy = EmButton(r->x, r->y, r->w, r->h, pal, BTN_DEPTH, v->backEnabled && v->backPressed);
     LlArrow(r->x + 8, fy + (fh - 10) / 2, 6, 10, 2, v->backEnabled ? EM_WHITE : pal->ink);
-    UiText(CTR_TR("Back", "Atrás", "Zurück"), r->x + 18, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 2);
+    UiText(CTR_TR("Back", "Atrás", "Zurück", "Retour"), r->x + 18, fy + (fh - UI_TEXT_H) / 2, pal->ink, pal->inkSh, 1, r->x + r->w - 2);
 }
 
 bool CtrPokeTouch_HitBack(int x, int y)
@@ -2551,7 +2551,7 @@ static void SaveButtons(const CtrPokeTouchView *v)
         if (sel)
             LlSelectRing(r.x, r.y, r.w, r.h);
         fy = EmButton(r.x, r.y, r.w, r.h, pal, 2, press);
-        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("Yes", "Sí", "Ja") : CTR_TR("No", "No", "Nein"), r.x, r.w, fy, r.h - 2, pal);
+        EmLabel(!confirm ? "OK" : which == PT_SAVE_FIRST ? CTR_TR("Yes", "Sí", "Ja", "Oui") : CTR_TR("No", "No", "Nein", "Non"), r.x, r.w, fy, r.h - 2, pal);
     }
 }
 
@@ -2570,7 +2570,7 @@ static void SaveScreen(const CtrPokeTouchView *v)
     EmFillRows(SV_X + 1, SV_Y + 1, SV_W - 2, 20, 4, band, 0, 10);
     for (int row = 10; row < 20; ++row)
         Fill(SV_X + 1, SV_Y + 1 + row, SV_W - 2, 1, band[row]);
-    Em2Text(CTR_TR("Save", "Guardar", "Sichern"), SV_X + 11, SV_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh, SV_X + SV_W - 6);
+    Em2Text(CTR_TR("Save", "Guardar", "Sichern", "Sauvegarder"), SV_X + 11, SV_Y + 1 + (20 - UI_TEXT_H) / 2, EM_WHITE, kEmFlame.inkSh, SV_X + SV_W - 6);
     for (int f = 0; f < SF_COUNT; ++f) {
         int y = SV_Y + 24 + f * 18;
 
@@ -2586,7 +2586,7 @@ static void SaveScreen(const CtrPokeTouchView *v)
     Em2Wrap(v->bar[0], MN_X + 14, 155, 130, 2, 17, EM_DARK, EM_DARK_SH);
     SaveButtons(v);
     MenuNoteBegin();
-    MenuNote(CTR_TR("Save", "Guardar", "Sichern"), v->bar[1], -1);
+    MenuNote(CTR_TR("Save", "Guardar", "Sichern", "Sauvegarder"), v->bar[1], -1);
     sKeepBg = 0;
 }
 

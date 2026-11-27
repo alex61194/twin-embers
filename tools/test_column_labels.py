@@ -33,7 +33,8 @@ def decode(lits):
 class ColumnLabels(unittest.TestCase):
     def test_words_fit_beside_the_icon(self):
         block = SRC[SRC.index('const char *label = id == PT_POKEDEX'):SRC.index(': name;')]
-        words = re.findall(r'CTR_TR\(' + STR + r',\s*' + STR + r',\s*' + STR + r'\)', block)
+        # CTR_TR takes three languages, and a fourth when the word is translated for French too.
+        words = re.findall(r'CTR_TR\(' + STR + r',\s*' + STR + r',\s*' + STR + r'(?:,\s*' + STR + r')?\)', block)
         self.assertEqual(len(words), 5)
         col = re.search(r'\[PT_POKEDEX\]\s*=\s*\{(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\}', SRC)
         width = int(col.group(3))
@@ -41,7 +42,7 @@ class ColumnLabels(unittest.TestCase):
         start, margin = int(draw.group(1)), int(draw.group(2))
         room = width - margin - start
         for names in words:
-            for lang, lit in zip(('en', 'es', 'de'), names):
+            for lang, lit in zip(('en', 'es', 'de', 'fr'), names):
                 word = decode(lit)
                 w = sum(WIDTH[ch] for ch in word)
                 self.assertLessEqual(w, room, f'{lang}: "{word}" is {w} px, the room beside the icon is {room}')

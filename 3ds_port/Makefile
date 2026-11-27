@@ -49,8 +49,10 @@ ifeq ($(TWIN_LANG),es)
 CFLAGS += -DCTR_LANG_ES=1
 else ifeq ($(TWIN_LANG),de)
 CFLAGS += -DCTR_LANG_DE=1
+else ifeq ($(TWIN_LANG),fr)
+CFLAGS += -DCTR_LANG_FR=1
 else ifneq ($(TWIN_LANG),en)
-$(error TWIN_LANG must be en, es or de)
+$(error TWIN_LANG must be en, es, de or fr)
 endif
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -L$(CTRULIB)/lib
 # Every link that has src/3ds_video.c and src/3ds_gpu_flush.c, which routes the GPU data cache flushes past the GSP service.
@@ -325,11 +327,11 @@ ifeq ($(CLEAN_RELEASE),1)
 override EMBED_DATA := 0
 override FIRERED_ROM :=
 RUNTIME_ROMFS := build/runtime-romfs-clean
-IMAGE_3DSX := $(if $(filter es,$(TWIN_LANG)),twinembers-es.3dsx,$(if $(filter de,$(TWIN_LANG)),twinembers-de.3dsx,twinembers.3dsx))
+IMAGE_3DSX := $(if $(filter es,$(TWIN_LANG)),twinembers-es.3dsx,$(if $(filter de,$(TWIN_LANG)),twinembers-de.3dsx,$(if $(filter fr,$(TWIN_LANG)),twinembers-fr.3dsx,twinembers.3dsx)))
 STAGE_PROFILE := clean
 else
 RUNTIME_ROMFS := build/runtime-romfs
-IMAGE_3DSX := $(if $(filter es,$(TWIN_LANG)),twinembers-es.3dsx,$(if $(filter de,$(TWIN_LANG)),twinembers-de.3dsx,twinembers.3dsx))
+IMAGE_3DSX := $(if $(filter es,$(TWIN_LANG)),twinembers-es.3dsx,$(if $(filter de,$(TWIN_LANG)),twinembers-de.3dsx,$(if $(filter fr,$(TWIN_LANG)),twinembers-fr.3dsx,twinembers.3dsx)))
 STAGE_PROFILE := development
 endif
 .PHONY: runtime-data private-pack
@@ -606,6 +608,13 @@ REX_TOOLS := ../tools/rex.py ../tools/rex_objects.py $(REX_RECIPE) $(wildcard ..
 DE_EVENT_LAYOUT := $(sort $(wildcard ../builder/firered3ds_builder/recipes/firered-18a3758c/event_scripts-*.json))
 DE_BATTLE_LAYOUT := $(sort $(wildcard ../builder/firered3ds_builder/recipes/firered-18a3758c/battle_scripts_1-*.json))
 GAMEFLAGS += -DCTR_LANG_DE=1
+else ifeq ($(TWIN_LANG),fr)
+# La VF charge les donnees de Rouge Feu (France), SHA-1 fc663907.
+REX_RECIPE := ../builder/firered3ds_builder/recipes/firered-fc663907.json
+REX_TOOLS := ../tools/rex.py ../tools/rex_objects.py $(REX_RECIPE) $(wildcard ../builder/firered3ds_builder/recipes/firered-fc663907/*.json)
+FR_EVENT_LAYOUT := $(sort $(wildcard ../builder/firered3ds_builder/recipes/firered-fc663907/event_scripts-*.json))
+FR_BATTLE_LAYOUT := $(sort $(wildcard ../builder/firered3ds_builder/recipes/firered-fc663907/battle_scripts_1-*.json))
+GAMEFLAGS += -DCTR_LANG_FR=1
 endif
 GAMEFLAGS += -iquote $(abspath include) -iquote $(abspath ../include) -iquote $(abspath ../include/constants) -iquote $(abspath ..)
 
@@ -740,6 +749,26 @@ build/game_data/$(1).o: ../data/$(1).s $$(PREPROC) Makefile $$(REX_TOOLS) $(2) \
 endef
 $(eval $(call DE_SCRIPTS_RULE,event_scripts,$(DE_EVENT_LAYOUT)))
 $(eval $(call DE_SCRIPTS_RULE,battle_scripts_1,$(DE_BATTLE_LAYOUT)))
+else ifeq ($(TWIN_LANG),fr)
+# Meme mecanique que l'espagnol : les scripts sont reecrits avec la disposition
+# francaise (tools/lang_es/gen_event_scripts_es.py, pilote par le layout FR).
+define FR_SCRIPTS_RULE
+build/game_data/$(1).o: ../data/$(1).s $$(PREPROC) Makefile $$(REX_TOOLS) $(2) \
+		../tools/lang_es/event_layout_us.py ../tools/lang_es/gen_event_scripts_es.py
+	@mkdir -p $$(dir $$@)
+	cd .. && $$(PREPROC) data/$(1).s charmap.txt \
+		| $$(DEVKITARM)/bin/arm-none-eabi-cpp -Iinclude -I. - \
+		| sed 's/\r$$$$//' \
+		| $$(PREPROC) -ie data/$(1).s charmap.txt \
+		| sed -e 's/\.4byte/\.int/g;s/\.2byte/\.short/g' \
+		| $$(DEVKITARM)/bin/arm-none-eabi-as -mcpu=mpcore --defsym MODERN=1 --defsym FIRERED=1 --defsym ENGLISH=1 --defsym REVISION=0 -I. -o $$(CURDIR)/build/game_data/$(1).us.o -
+	$$(PYTHON) ../tools/lang_es/event_layout_us.py build/game_data/$(1).us.o build/game_data/$(1).us.json
+	$$(PYTHON) ../tools/lang_es/gen_event_scripts_es.py build/game_data/$(1).us.json $(2) build/game_data/$(1)_fr.s
+	$$(DEVKITARM)/bin/arm-none-eabi-as -mcpu=mpcore -o $$@ build/game_data/$(1)_fr.s
+	$$(PYTHON) ../tools/rex_objects.py --manifest $$(REX_RECIPE) --object $$@
+endef
+$(eval $(call FR_SCRIPTS_RULE,event_scripts,$(FR_EVENT_LAYOUT)))
+$(eval $(call FR_SCRIPTS_RULE,battle_scripts_1,$(FR_BATTLE_LAYOUT)))
 endif
 
 build/game_data/sound_data.o: build/sound_assets.stamp

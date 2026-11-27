@@ -534,7 +534,7 @@ static void FBBallRail(const CtrPokeTouchBag *b)
 /* Poke Ball: the exit piece, straddling the band; white with a dark outline, the one with the cursor on it ringed in red when the Bag's cursor is on CLOSE. */
 static void FBBallExit(const CtrPokeTouchBag *b)
 {
-    const char *label = CTR_TR("EXIT", "SALIR", "ZURÃ" "CK");     /* short: the piece is 76 px wide */
+    const char *label = CTR_TR("EXIT", "SALIR", "ZURÃ" "CK", "SORTIR");     /* short: the piece is 76 px wide */
     int on = b->cursor >= b->count && b->state == PT_BAG_STATE_LIST, tw = UiTextWidth(label, 1);
 
     UiRoundFill(sBLExit.x, sBLExit.y, sBLExit.w, sBLExit.h, 5, BL_BAND);
@@ -663,7 +663,7 @@ static void FBPositionTop(const CtrPokeTouchBag *b)
         last = b->count;
     if (first > last)
         first = last;
-    snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d"), first, last, b->count);
+    snprintf(text, sizeof(text), CTR_TR("%d-%d of %d", "%d-%d de %d", "%d-%d von %d", "%d-%d sur %d"), first, last, b->count);
     if (UiTextWidth(text, 1) > r->w - 10)               /* "54-58 von 58" would be cut: the short form */
         snprintf(text, sizeof(text), "%d-%d/%d", first, last, b->count);
     Em2CardShadow(r->x, r->y, r->w, r->h);

@@ -81,7 +81,7 @@
   },
   {
    "path": "3ds_port/Makefile",
-   "sha256": "0d1868793db12b2cbc0724efe4e9ca6a45f998d6324cfeab72f6bcec06403951",
+   "sha256": "d1e95742e0f824bcd2a296f24ceda5aa29053c6276fbc3b523941078b0a0a4e3",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -543,7 +543,7 @@
   },
   {
    "path": "3ds_port/include/3ds_lang.h",
-   "sha256": "9a08815aa78c22a4c4b23d9968bbd0226095f8b8066dcd1dea4be890ff1c5dd1",
+   "sha256": "e6efbb2f915b36c78b8dbe04fe63071c9d20644c3048c37b05f72da0d05d45b7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -666,7 +666,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "6ac2d6aefdfa2469d53ab3e4866a277de1650268cab618c7cc1c70f0daea6ed8",
+   "sha256": "f0dd2641f29d101ff4fc601342e62a34aa972ddc46c552d1dcf2eaac9d9a43e0",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -798,7 +798,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "5d7b46dd9a85f205e7b08a81b7bbe629ac76e9915b8bd57dbb5db939e75c4c52",
+   "sha256": "2f6fa08e62388c448b493f22f1be8b07ec47ff0893e6dcbb84dab37a083c38b4",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -849,6 +849,46 @@
   {
    "path": "3ds_port/include/3ds_wilds_core.h",
    "sha256": "144d2aa00ae259e40056ae411889182ba8686e13ea02441114107bc29a1fc7f2",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl.h",
+   "sha256": "72993006051ed58ef4f4a5344f5943d22a898be3700271dffd50238c775b08f0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_crypto.h",
+   "sha256": "8b2e1141e8f8a3fdd64b8b82b46e6ddd4f4eb2633140e9e63383b9f52cbf2683",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_glue.h",
+   "sha256": "dcc87763f8847a9b9dcbcb3891d409a083926c990e14080a66ec867313e36e61",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_inet.h",
+   "sha256": "f67d178f18f7071532f93f7c8a1fc9f1cb56fa136a1ec36028a852b2bb16e564",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/include/3ds_wl_uds.h",
+   "sha256": "79e2990a85a38dd4607032ec066ef1e45677b44af26b91541a50a0d46d90289c",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1002,6 +1042,46 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/src/3ds_ball_learn_impl.h",
+   "sha256": "1d628fce74a2442a89c604c92747436b1f3cb36dc748e21ee5eafc9e4204506a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_menus_impl.h",
+   "sha256": "ea23b7f287d5fa33b8cf1e9b02be1de5dd68149cff6754117ac6888b00fe5f80",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_naming_impl.h",
+   "sha256": "1db422788826bb5110473f83baf6c7bcbe67daa20209fc3336fb1583d6a78cdd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_options_impl.h",
+   "sha256": "40af9e3d2b373f8234ec37e3968d091c370b75332ecf220b296908e95babe239",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_ball_pieces_impl.h",
+   "sha256": "c2eb70525fee385975862d5b487116778c888b36c9d97155681467dedf32eda8",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/src/3ds_battle_backdrop_impl.h",
    "sha256": "20706dcf3d4124a840dee1dfc7f7b9f530ea82ddaaee3752787de6e6785e8f52",
    "review_status": "reviewed",
@@ -1019,7 +1099,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_hud.c",
-   "sha256": "fb58fba6627e9d856c6e54546b432caecb1ddf4297ae0b2fd99c75d08c4ef70b",
+   "sha256": "46edf7ccc0d931054830d4020b2d39acc311b959fbddd54cd62c8a955d91a639",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1043,7 +1123,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "c273f64fdb7494ff6ff850928e00818011fac2456c900581c4ab1fa0b44baec4",
+   "sha256": "4ab8e31badc6e055b5612446240702f64099ffa3e61e283b4a4605e851a59560",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1082,7 +1162,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "9f09bbc7f7c7cefe1f7cb5c67ba93b6c90de99cd415d687dfeb1ccf17514f647",
+   "sha256": "a63dc0e654d1c7dbd93561bb4dd122a02a20d8e6816782ddf94ad183368bd93a",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1096,6 +1176,14 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_chat_impl.h",
+   "sha256": "f15a6b918148b136f007ffea7ec65d839eb6d3790ecf57242abcf1f680819c97",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/src/3ds_bottom_easychat_impl.h",
@@ -1135,6 +1223,30 @@
    "modified_for_distribution": true
   },
   {
+   "path": "3ds_port/src/3ds_bottom_tr.h",
+   "sha256": "49dc2f42259e9e94df47c10e8b32e41d565319320b3fbef43087a2803724f6cd",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_trade_impl.h",
+   "sha256": "82891d93de49ce612371cc8091d85dc55144d7e802512decc322d88a60b7dfde",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_union_impl.h",
+   "sha256": "5745020868678b8268292ff70c84126a783aefee4bba13d53569ecda780b4dcc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/src/3ds_cgb_audio.c",
    "sha256": "92ff379bfc5bc6a0a567804a1ca8a6b5bc0b380db04fcc2d51bc3ff9e45e0dac",
    "review_status": "reviewed",
@@ -1149,7 +1261,7 @@
   },
   {
    "path": "3ds_port/src/3ds_data.c",
-   "sha256": "54f87d7168f5e639f448a63c6cda0880df2ea40de82baeb3fb71795dcb4b83f2",
+   "sha256": "154b70264e36a8d2be3fec2fd9fe4087d0a624764fe2b9acbf603e48f1bc44d6",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1192,7 +1304,7 @@
   },
   {
    "path": "3ds_port/src/3ds_ember2_impl.h",
-   "sha256": "1df6146dbe81e8b0a9de5a262eb7a8071ec15a408cf257e3049267be3cc45154",
+   "sha256": "07b9b4bd74fe7aae93a4ec1eddd812e22718e6df36f784df1d6060a2cbeef25b",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1208,7 +1320,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_bag_impl.h",
-   "sha256": "62b399b36ac106288291f2a2a5ebe19207354568161c3afefd1ddbf2d6bfd4a9",
+   "sha256": "42613e96041fc281279224e18b4146c9455587c47f6f51faa9d15179bd2bab14",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1225,6 +1337,14 @@
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
    "sha256": "c44299ac89a8bca98ae8dd79c3f201c613758361dc500266bfd5f117fe4eea9f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_field_chat_impl.h",
+   "sha256": "aedf899135514330e3f3fd676e38f54241738d448ae1af8da0a6bacc73295cf7",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1248,7 +1368,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_easychat_impl.h",
-   "sha256": "92ee73f240b2d864678de1d8425a813a3bce775d2b7463c8ad0a4810dd676df3",
+   "sha256": "da48c4f63aac5f7fb6df09ad476bd8db88ad0a6e235f5eee7004f9c977592b25",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1264,7 +1384,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_mail_impl.h",
-   "sha256": "542a1c68080969b457ca9c12f377c542cce681fa821f19149021c7ec0f27457f",
+   "sha256": "2bb440e22ba6225bc35dfe73db81646d15262a4ca9075d146e00a26e658d8be5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1281,6 +1401,14 @@
   {
    "path": "3ds_port/src/3ds_field_relearn_impl.h",
    "sha256": "2ad36eca5cdea25b3a1b729960f9202f20c38474cad2e958eba1d9fc170bf3aa",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_field_trade_impl.h",
+   "sha256": "2cbb917c2d39175bed0d1e965994267e48fa9fb37a861867646d2f8a59498223",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1356,6 +1484,14 @@
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only",
    "source_blob": "59a9749fecc2e4bb76888720350233ec8d86acbb"
+  },
+  {
+   "path": "3ds_port/src/3ds_home_map_job_impl.h",
+   "sha256": "b49e8dac2ce008dcc795e1d9094bfec8afecde79ae91e4de0e88dacf0966caba",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/src/3ds_icons.h",
@@ -1453,38 +1589,6 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "3ds_port/tests/wl_test.c",
-   "sha256": "ac245c09979a4ca1769b625450142bf15b26f5460cd77ff17303972eb2661384",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_rfu.c",
-   "sha256": "f78acbe512c0c7f0dc3cfe55ddde3778daa6bdffdc920b2a8bd14ee6a2a7a431",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_net.c",
-   "sha256": "b58962d89502c9a6410704fa680ab36a32dd826a67a765a45d00714f41276487",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_wl.h",
-   "sha256": "72993006051ed58ef4f4a5344f5943d22a898be3700271dffd50238c775b08f0",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
    "path": "3ds_port/src/3ds_night_wild.c",
    "sha256": "ceb7d92f1fb0b72aa924910148ed22be1eeae65aaec9bc101945de093ad4cedf",
    "review_status": "reviewed",
@@ -1545,7 +1649,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "e3fad4c9a705c9ea3856886755dbf1eedfdaf9639fddc1971b239053a93d4785",
+   "sha256": "3a26f300923324652a756fc377754235b43c0abbb27438612ef0f9f7e1983064",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1559,7 +1663,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch_options.c",
-   "sha256": "068ee72b193d8c8b0d078bed227f8dd232863a8e49ae7f66d5c8e2a56c25eced",
+   "sha256": "6ce20cde85111638de3777ad43ab6046ed725f10201e6ebba09f6de39b9d9399",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1636,7 +1740,7 @@
   },
   {
    "path": "3ds_port/src/3ds_summary_ui_impl.h",
-   "sha256": "9c4df6c81f8c364c81b735bafa92943a1b6d7130bb86b3176d12051b08387677",
+   "sha256": "62c65f5419f0a3fd87db10d67338156697b6144e3252933534a857e06d113669",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1721,6 +1825,54 @@
   {
    "path": "3ds_port/src/3ds_wilds_core.c",
    "sha256": "557873fc7cd063d9302ff0a6e79870def50be15b3bdfa372ffd3bd0aa8735a99",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_crypto.c",
+   "sha256": "ca98d5994f4b323951cead54072072423957128ffb70f5e6303fdfc677e8b452",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_glue.c",
+   "sha256": "aafe6ce8da5f4f94ee1454e16a0f31a1c812804db268f9a4370df184b105ac21",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_inet.c",
+   "sha256": "8da1345e17dd7593b2d4b8e2d76e662b8f56f4948ad8e2d95d9a76a118336475",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_net.c",
+   "sha256": "b58962d89502c9a6410704fa680ab36a32dd826a67a765a45d00714f41276487",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_rfu.c",
+   "sha256": "f78acbe512c0c7f0dc3cfe55ddde3778daa6bdffdc920b2a8bd14ee6a2a7a431",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_wl_uds.c",
+   "sha256": "cec56e90b8572cf376149cd4fdd6b5b49f3463636155b9651d9e235d428273ea",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2141,6 +2293,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "3ds_port/tests/map_worker_test.c",
+   "sha256": "fac0efe81f5041b253eb9ac308a91c5791f8d74cecdcccfd1af2d322a5c95c1b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/night_wild_test.c",
    "sha256": "d9c82ae84788f08f1246d20dae52cc54bdd4bc56a7b7e6b5d52ef8bdb3a8f192",
    "review_status": "reviewed",
@@ -2215,6 +2375,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/tests/rfu_game_test.c",
+   "sha256": "1765dc55a00449f276de5db223ee8a0b1edd6ff8ee88f0e5e082ec101866abdc",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/rng_test_main.c",
    "sha256": "fbeb686d1a6756758f01b68ee858087e70c674cc70e0bb42bec87c7d2e3691e5",
    "review_status": "reviewed",
@@ -2245,6 +2413,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "3ds_port/tests/settings_reload_test.c",
+   "sha256": "1db7a7eec71ab00e02010b056a86bff2ae83cd389030ca924b8fe3dee20e87f4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/settings_test.c",
    "sha256": "e868ee34601e60a3eceed8091d6f8854a4c8b934cd9b423503ed9cabd37463b9",
    "review_status": "reviewed",
@@ -2255,6 +2431,14 @@
   {
    "path": "3ds_port/tests/shake_pointer_test.c",
    "sha256": "9f3230b33d745b58c6fcd3be53cde491c20192bde301f3dbca7e9f89f6087215",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/shim/3ds/thread.h",
+   "sha256": "9a87c3de36817c65f756c2875fd2849fbe8a138b75850c709294a0ecb2732a02",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2303,6 +2487,22 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "3ds_port/tests/uds_mock.h",
+   "sha256": "699f1369f8fc98083c092e4e75317ca24094509eeea173270deb0543f5134a57",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/uds_mock_unit.c",
+   "sha256": "3963e4b65007bc24386bd8d2c0b140d464bfd6894025e190c5d22633883af181",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "3ds_port/tests/video_decode_test.c",
    "sha256": "28e990fe41912374ae14e0b2b172c8bc2c2fc32ea6bab1e54304b546ae9f3fd2",
    "review_status": "reviewed",
@@ -2339,6 +2539,46 @@
   {
    "path": "3ds_port/tests/wilds_settings_test.c",
    "sha256": "cdf2d3c0d445b90e0d7557b276f2e522fa6bdfd1880d88e917afdad5de49a20a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_crypto_test.c",
+   "sha256": "f59daf8a71fa447ba6364035a9ec570cc39e4fbcbdd91698bcf04f81683a0e63",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_glue_test.c",
+   "sha256": "5342b3380b95fa05cc058c690c88b73acb486f24bd1397a55173f8d5d2f4cdef",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_inet_test.c",
+   "sha256": "7bf54d22ae4aa60171955e20844ecbd45e65be1bdabcd83e544927ebc9603358",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_test.c",
+   "sha256": "ac245c09979a4ca1769b625450142bf15b26f5460cd77ff17303972eb2661384",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/tests/wl_uds_test.c",
+   "sha256": "dcedc879557576ed7652c46fd071df5b00abf599733816a77c991432772166ec",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3082,6 +3322,150 @@
    "basis": "Generated offsets, lengths and CRC32s only (tools/lang_es); no ROM/game payloads"
   },
   {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907.json",
+   "sha256": "1a88c77d07def4f1f587dc313184b08d27669f5f30a4d4ba5978110e79d8e537",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/battle_scripts_1-00.json",
+   "sha256": "85ed9bbcafe945a60210cbdd7a342a441b27ef4ae7a2448c886a01fb8218e1e2",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/engine_units-00.json",
+   "sha256": "713bc7bf49799cad18103f7bfb5f12c507ba7a6623ff988a50a78af6d5dc7ff5",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-00.json",
+   "sha256": "277bb42afd0055c9f85f4bf04074e9b80d9fb21e44c238ad39fa7cd179bfb76e",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-01.json",
+   "sha256": "f38f4807745b436d3fd57e734d481396d01839121386c9fe4074463895dfb369",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-02.json",
+   "sha256": "eb7e01d9397ae0e4a48f3ff4273b2529a9145bf32104cb61cdc92b6d141b3504",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-03.json",
+   "sha256": "8dccc5d4d526850fc5cf6ddb1d3bf581962409e8d4603a271a9a701ff7e455f2",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-04.json",
+   "sha256": "5ea9a567eae00c644f529dc2cb3ba4ff2b8684841df404fc4b97f30263ce6eeb",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/entries-05.json",
+   "sha256": "0fa38dff41055d1f3c7dfcea0d543155483b79ef94b504c9741d449e994e5c60",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/event_scripts-00.json",
+   "sha256": "481510ba15615874bf201cf7740fa211cd8aa659c686ddfbe3183228a153f0b0",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/event_scripts-01.json",
+   "sha256": "b3e03fe8884b1cbc9716904b2025344c4550cd424969e5542d406948c501dbc3",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/event_scripts-02.json",
+   "sha256": "0861d2ba2fda14208bab0dd40026c3b706fb69146b4b82fa0f4d2aba2ef4eb05",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/pending.json",
+   "sha256": "ecb22f79ca6fa6ef64081790aafb1d8e4ad00199a0ad027a60906030652e53fe",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/units-00.json",
+   "sha256": "462341f7df79620a3aba66c2cdb0c1e1e744e816f30c16fd6cdafc8280698a00",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/units-01.json",
+   "sha256": "b7c58ea46a6357d039205869714294df5c1daa8589ee8ef277c84291ff2f8ae9",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/units-02.json",
+   "sha256": "dfabd9320f4e8e9d18097e91bcfeed282f7ac8b4891cc715968237d21b52832c",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/units-03.json",
+   "sha256": "e5c8ae625dde74d9f66eacb85451433dd1931efaafa31df0760057c850d4397e",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
+   "path": "builder/firered3ds_builder/recipes/firered-fc663907/units-04.json",
+   "sha256": "dd07aec0da4967583e1357ec095fff3c76efa63842042db191d0aee1b1a23a8e",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port recipe)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Generated offsets, lengths and CRC32s only (tools/lang_fr); no ROM/game payloads"
+  },
+  {
    "path": "builder/firered3ds_builder/rom.py",
    "sha256": "f06d4ab04bcf5394c0f8357482fd9a1cd1e6d5af597ec8d96e631e31bfa2ab00",
    "review_status": "reviewed",
@@ -3328,8 +3712,24 @@
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
   },
   {
+   "path": "docs/LOCAL-WIRELESS-RESEARCH.md",
+   "sha256": "b031845a7a0b7266199ca17a6eb08567c26b276adbed4c2891c559dd6916de15",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "docs/MAP-EDGE-VALIDATION.md",
    "sha256": "82c21bb905a77ca7f47443bb166cef2c665be86259784f2c10e342995b274d20",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/MAP-WORKER.md",
+   "sha256": "f25ea0f507b2b83199412b27b2c614fdc49e787af2fcdc1165e49f9ca091db96",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3348,6 +3748,14 @@
   {
    "path": "docs/QUALITY-OF-LIFE.md",
    "sha256": "55d31707cb3252b492eba806ce63022d66f0630b2a85b90234e28bb226776226",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/RELAY-SERVER.md",
+   "sha256": "d2b03bcbf3ae4eb8d898cb1349c07d0c0fe84e766a4eb15e3d749ea83a9a0337",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3415,6 +3823,14 @@
   {
    "path": "docs/WEB-BUILDER.md",
    "sha256": "e690540f6e278709e81879970e7ac3ece41f90f3d3a4fdd36916d256d3bdcab6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "docs/WL-RELAY-PROTOCOL.md",
+   "sha256": "465d91f26cd18804c9a4d7b0dc5b66dfaa76c2a0d210edbfaa0ec4aa17eb11e8",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -3793,14 +4209,6 @@
   {
    "path": "docs/overworld-wilds-research.md",
    "sha256": "a8a253d2f8bd18835c4341e77f2826f7319c16ab95f93452cd4fb4a11fad147f",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "docs/LOCAL-WIRELESS-RESEARCH.md",
-   "sha256": "b031845a7a0b7266199ca17a6eb08567c26b276adbed4c2891c559dd6916de15",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6439,6 +6847,174 @@
    "basis": "Reviewed context-free edit recipe for Pokedex top-screen hold, caught nickname touch prompt, German 9-column naming keyboard, and visible wild spawn/chase tuning; no game assets, strings, sprite bytes or literal payloads; existing upstream lines referenced locally"
   },
   {
+   "path": "patches/pokefirered/0263-oak-naming-keeps-the-top-screen.json",
+   "sha256": "9e6d86b4d1bcb254171d8246d4ae8c0c7df4404a08bf777e14e1ae61eac1b6b3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0264-eggs-no-exp-german-keys-long-titles.json",
+   "sha256": "bcfa2042fd1b9aa74be4ac71feb38aa9fabce5e6abae180a7855b9943e7c144f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0265-nuzlocke-never-leaves-only-eggs.json",
+   "sha256": "4d07261ed26b64b85a7989a73587a2a3e187003047614837834cd940a7c48add",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0266-randomlocke-target-nuzlocke-set-mode.json",
+   "sha256": "c839cae12ae01a85af021ef796d31d4601f3453b0265c5b2e46482178b521553",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0267-surf-blob-from-the-pack.json",
+   "sha256": "a13b811bfd8325e98b5cd11f6cb51bfcef254465ee37abb3385b29e6214b4f77",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0269-home-zone-wild-list.json",
+   "sha256": "369f3262e79da430d4b2719cd8beaae055763b115b5bf26c73ad742250a7e934",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0270-party-icon-deoxys-forme.json",
+   "sha256": "f3456728af496104fd26c4f66805363063319a48b7975c9af21e6e90c55b42e9",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0271-repel-kind-after-load.json",
+   "sha256": "008cbf6a30a88226df7aa750ee0032c2f026e3ebd78bcb4c2b26cf552c3a59b0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0272-rfu-emulated-adapter.json",
+   "sha256": "31c8f5076b7618cb81dcd7f8de57a17d0c49592b78c094618b31fad7e1da13e3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0273-union-room-lists-as-field-choices.json",
+   "sha256": "53338d0251e01d29ec120c71e40247d33b332d0dd35690cc45200f97cd5a796b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0274-union-room-leader-wait-for-lower-screen.json",
+   "sha256": "2e2bdc0b76518a4328f6df3abffe9f9ef1599ace7adeeda601a452f1f67a1a55",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0275-trade-pokemon-choice-for-lower-screen.json",
+   "sha256": "37ba6f1edd8dda369e0e2aeac3f963ef7b1329b6927efb32888cec56252d0b46",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
+   "sha256": "c0cf156b64dbfa9093613ee0db131bf845f2583c5327e2726a364b10659999df",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0277-trade-animation-native-view.json",
+   "sha256": "70f0dd1136b447c9ddf7d4886522a64d32db61d90a54d3c2bd34bbda2535fa3b",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0278-cheats.json",
+   "sha256": "7c62bccbc5031cdb6156880f907cb586bc76f7c906e3c4aef48c4500a2e3f465",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0279-naming-screen-holds-the-top.json",
+   "sha256": "f5b2a855ca7f904c506933c5ad5e18f82c4c9af7361bd7b1d85d150f2e96cff3",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0280-trade-cards-stay-up-while-the-link-is-slow.json",
+   "sha256": "5a0f4cb7512a26fc8c21d1a6f9f96ebb35a421f22dcad2e0839298606bca3b0a",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0281-trade-menu-pointer-cleared-when-freed.json",
+   "sha256": "0449e19b5b21eb518e3fdb1fba2939d2554caa3366149d168b2b2963d48a6f2e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0282-link-menu-frame-age-read-signed.json",
+   "sha256": "942bf6dae08ee1ad001f867e82b5fe4b49b99b9f3205bc85d9b85a85cdad56a0",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0283-review-fixes-double-battle-chooser-menu-age-randomlocke-wilds.json",
+   "sha256": "38aded5ac5b4b08177d00f03a161d98fc0f3c1fb4c4533658276b3fcdb855c50",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0284-german-keyboard-without-the-cartridge-table.json",
+   "sha256": "7d95827b66b027be0ab754b88619fa91df9a9b2a2a5d278d36acc741114a3e5f",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -6505,6 +7081,14 @@
    "modified_for_distribution": false
   },
   {
+   "path": "tools/check_release_relay.py",
+   "sha256": "ea4a85b265d0840fac191ecdc827bbbdf8a07af39e45d682fdb98d5ff1f62e66",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/dev_hd_battlefields.py",
    "sha256": "6f9710e3d0f53d5cffbe7aa67a529e9173e0389db0f809c6deae80ca11bd5845",
    "review_status": "reviewed",
@@ -6514,7 +7098,7 @@
   },
   {
    "path": "tools/es_assets.py",
-   "sha256": "f2929e18a92a1305f2a5028b982bc957ce605f84243ad25532a2444ea218a7ea",
+   "sha256": "f670592944b9389c07d928d7b2cbdfe730a8f6db95da3ad30186506d88fa61bc",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6782,6 +7366,78 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/lang_fr/README.md",
+   "sha256": "6b14206bfd490337d2ee300b271688ea810d9aaf9250b8011010e3e57c3e85c4",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/event_layout_us.py",
+   "sha256": "ae6005429b3ef91a79308207d5e1403388b74b3a2b3233441ab43a6b570f6ff6",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/finish_recipe_fr.py",
+   "sha256": "926b99015512a2fd3778a7b3d8bc35f837ba0545a51b24bf3cc8446f059df2f9",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/fr_events2.py",
+   "sha256": "3aeb1b7af043443b9a4f85f5a58f401c34c6b52c1ed83017e4ed601a137f21fd",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/fr_sizes.py",
+   "sha256": "007bdeee8546749716e23f7132af87fed43b972ec871eeaf367b15402260bca0",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/fr_sizes2.py",
+   "sha256": "ec04d33d1c43e87554773e31d5b8efa9618024142d83c0695565f87c5e0e5059",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/gen_recipe_fr.py",
+   "sha256": "70c8b097706a086d6c893e3a5e058052209f1eb6b65ae00d609b337a17cff8e9",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/scrdis.py",
+   "sha256": "64f50a074a9a7e70742053de83949406552d21cf4fd796c92c78813aff9ac91d",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/lang_fr/script_ops.json",
+   "sha256": "b67ed9da08f8e02aa41a09fa566fed54d682af0a09dae48059899f3d664a337c",
+   "review_status": "reviewed",
+   "credit": "andyst-dev (French port work, tools and touch-screen strings)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/make_battle_icons.py",
    "sha256": "a0735110f0657978ef2630d6c531e43ae863bf585957f007f77f60d2ac097da9",
    "review_status": "reviewed",
@@ -6911,6 +7567,14 @@
    "source_blob": "17a519effc9c5fdc3b805fd3336b5285029d495b",
    "source_sha256": "7930b339b1d33e7d5740924366e0e1f078c5cdfabd3a64b86f2182bccf3a5429",
    "modified_for_distribution": false
+  },
+  {
+   "path": "tools/relay-server/install.py",
+   "sha256": "a1ae98e210892e6f9d6974b3e1ab7512bdb5bff6b74ee75665c32c2a74487db5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "tools/rex.py",
@@ -7057,8 +7721,16 @@
    "baseline_review": "Battle UI geometry baseline is 587c748 (same battle, summary and theme sources as before the restyle); comparison re-run and passing; baseline step skips with a reason in a checkout without that history"
   },
   {
+   "path": "tools/test_cheats_recipe.py",
+   "sha256": "91017a8f71d6c75abb158e744e30b8fb78db3f455644ffaedc65f5dbc6e6fd4e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_column_labels.py",
-   "sha256": "d73f88ea538b146715be141a5bc90dc53f53cbe124996f807182f019d1fef318",
+   "sha256": "f35df4d81c90fadc4d7609c04aa43353e23e60b6d5154b39f8333ae564688fd5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7174,6 +7846,22 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_map_worker.py",
+   "sha256": "25ed7217fbc415a81fab21e1094ea436ee4ef667b25d7f92901c25d4849d5547",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_naming_recipe.py",
+   "sha256": "ea02ec92faaa42b28e8874caf2a8f92346b8273b5b06e1ba96378104ebd455cd",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_oak_presentation.py",
    "sha256": "2535020e1bc12f83f9111dbb70fff69a2150bb43a2a8d32b34551efee43ab052",
    "review_status": "reviewed",
@@ -7191,7 +7879,7 @@
   },
   {
    "path": "tools/test_option_labels.py",
-   "sha256": "449c86f14a2186ab86f24607a6b02adcb9b8d537bc8f0f0ca092fa54d44452d0",
+   "sha256": "f3bc1873b721a18646ea96c8d4f5b1e69e1f0ecfb0bced230ed8f01a2fa26b37",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7213,6 +7901,14 @@
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
    "sha256": "459d69ab35459a95d91e309aee1e51dc3e46d7ce5d31470630c3cb488c5423d6",
    "baseline_review": "Baseline viewport comparison against 579726e skips with a reason, after the current-state checks, in a checkout without that commit"
+  },
+  {
+   "path": "tools/test_release_relay.py",
+   "sha256": "1230f65867e886841e4932c98e629ef648cc125081bd6dd3d2f7fbcfa142005e",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "tools/test_rex_pipeline.py",
@@ -7280,14 +7976,6 @@
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
-   "path": "tools/test_web_builder.py",
-   "sha256": "702b0871669cb3507cb85692a4cd87f11f48599cb2c64575240948e55eeeb273",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
    "path": "tools/test_trade_cards_recipe.py",
    "sha256": "db4d7442d0094865f2869f5d5fc2c13c835d511f3b5beec0ddc1808e1a66dfe1",
    "review_status": "reviewed",
@@ -7296,8 +7984,40 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "tools/test_web_builder.py",
+   "sha256": "702b0871669cb3507cb85692a4cd87f11f48599cb2c64575240948e55eeeb273",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/test_wilds_recipe.py",
    "sha256": "fa14e9e1f1a272fc84278357fbd14c79d86d860fffe0db1ab54664336d9e92e4",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_wl_crypto.py",
+   "sha256": "197cdc5a36b36c9d85b2149b5c023381f5c2b49fb13f7472aafb155af1b5f763",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_wl_e2e.py",
+   "sha256": "a9fe53d800b766d29b88675253cd7d703690b2bafce0fcf62ad07d2a61e6b146",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "tools/test_wl_inet.py",
+   "sha256": "67e607707e57a73831a3926b6e332401aba1c31563cb81dfc44939967396e784",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7409,6 +8129,14 @@
    "modified_for_distribution": true
   },
   {
+   "path": "tools/wl_relay.py",
+   "sha256": "0038d416f4f0dcbdfcb9b0ef19ab2d8d1c07b2b5f5f2d1955889f787059b22d5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "upstream.lock",
    "sha256": "8254f971bd9e536aa4ef22e849df8126e5ec1b94bc548768bfc0a5c865f520f7",
    "review_status": "reviewed",
@@ -7473,502 +8201,6 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
-   "path": "patches/pokefirered/0263-oak-naming-keeps-the-top-screen.json",
-   "sha256": "9e6d86b4d1bcb254171d8246d4ae8c0c7df4404a08bf777e14e1ae61eac1b6b3",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0264-eggs-no-exp-german-keys-long-titles.json",
-   "sha256": "bcfa2042fd1b9aa74be4ac71feb38aa9fabce5e6abae180a7855b9943e7c144f",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0265-nuzlocke-never-leaves-only-eggs.json",
-   "sha256": "4d07261ed26b64b85a7989a73587a2a3e187003047614837834cd940a7c48add",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0266-randomlocke-target-nuzlocke-set-mode.json",
-   "sha256": "c839cae12ae01a85af021ef796d31d4601f3453b0265c5b2e46482178b521553",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0267-surf-blob-from-the-pack.json",
-   "sha256": "a13b811bfd8325e98b5cd11f6cb51bfcef254465ee37abb3385b29e6214b4f77",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0269-home-zone-wild-list.json",
-   "sha256": "369f3262e79da430d4b2719cd8beaae055763b115b5bf26c73ad742250a7e934",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0270-party-icon-deoxys-forme.json",
-   "sha256": "f3456728af496104fd26c4f66805363063319a48b7975c9af21e6e90c55b42e9",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0271-repel-kind-after-load.json",
-   "sha256": "008cbf6a30a88226df7aa750ee0032c2f026e3ebd78bcb4c2b26cf552c3a59b0",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "docs/MAP-WORKER.md",
-   "sha256": "f25ea0f507b2b83199412b27b2c614fdc49e787af2fcdc1165e49f9ca091db96",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_map_worker.py",
-   "sha256": "25ed7217fbc415a81fab21e1094ea436ee4ef667b25d7f92901c25d4849d5547",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_ball_menus_impl.h",
-   "sha256": "ea23b7f287d5fa33b8cf1e9b02be1de5dd68149cff6754117ac6888b00fe5f80",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/check_release_relay.py",
-   "sha256": "ea4a85b265d0840fac191ecdc827bbbdf8a07af39e45d682fdb98d5ff1f62e66",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_release_relay.py",
-   "sha256": "1230f65867e886841e4932c98e629ef648cc125081bd6dd3d2f7fbcfa142005e",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/shim/3ds/thread.h",
-   "sha256": "9a87c3de36817c65f756c2875fd2849fbe8a138b75850c709294a0ecb2732a02",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/map_worker_test.c",
-   "sha256": "fac0efe81f5041b253eb9ac308a91c5791f8d74cecdcccfd1af2d322a5c95c1b",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/settings_reload_test.c",
-   "sha256": "1db7a7eec71ab00e02010b056a86bff2ae83cd389030ca924b8fe3dee20e87f4",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_home_map_job_impl.h",
-   "sha256": "b49e8dac2ce008dcc795e1d9094bfec8afecde79ae91e4de0e88dacf0966caba",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_ball_options_impl.h",
-   "sha256": "40af9e3d2b373f8234ec37e3968d091c370b75332ecf220b296908e95babe239",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0277-trade-animation-native-view.json",
-   "sha256": "70f0dd1136b447c9ddf7d4886522a64d32db61d90a54d3c2bd34bbda2535fa3b",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0276-union-room-chat-for-lower-screen.json",
-   "sha256": "c0cf156b64dbfa9093613ee0db131bf845f2583c5327e2726a364b10659999df",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_field_chat_impl.h",
-   "sha256": "aedf899135514330e3f3fd676e38f54241738d448ae1af8da0a6bacc73295cf7",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_bottom_chat_impl.h",
-   "sha256": "f15a6b918148b136f007ffea7ec65d839eb6d3790ecf57242abcf1f680819c97",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0275-trade-pokemon-choice-for-lower-screen.json",
-   "sha256": "37ba6f1edd8dda369e0e2aeac3f963ef7b1329b6927efb32888cec56252d0b46",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_field_trade_impl.h",
-   "sha256": "2cbb917c2d39175bed0d1e965994267e48fa9fb37a861867646d2f8a59498223",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_bottom_trade_impl.h",
-   "sha256": "82891d93de49ce612371cc8091d85dc55144d7e802512decc322d88a60b7dfde",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0274-union-room-leader-wait-for-lower-screen.json",
-   "sha256": "2e2bdc0b76518a4328f6df3abffe9f9ef1599ace7adeeda601a452f1f67a1a55",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_bottom_union_impl.h",
-   "sha256": "5745020868678b8268292ff70c84126a783aefee4bba13d53569ecda780b4dcc",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/relay-server/install.py",
-   "sha256": "a1ae98e210892e6f9d6974b3e1ab7512bdb5bff6b74ee75665c32c2a74487db5",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0273-union-room-lists-as-field-choices.json",
-   "sha256": "53338d0251e01d29ec120c71e40247d33b332d0dd35690cc45200f97cd5a796b",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "docs/RELAY-SERVER.md",
-   "sha256": "d2b03bcbf3ae4eb8d898cb1349c07d0c0fe84e766a4eb15e3d749ea83a9a0337",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_wl_e2e.py",
-   "sha256": "a9fe53d800b766d29b88675253cd7d703690b2bafce0fcf62ad07d2a61e6b146",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/uds_mock_unit.c",
-   "sha256": "3963e4b65007bc24386bd8d2c0b140d464bfd6894025e190c5d22633883af181",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/rfu_game_test.c",
-   "sha256": "1765dc55a00449f276de5db223ee8a0b1edd6ff8ee88f0e5e082ec101866abdc",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0272-rfu-emulated-adapter.json",
-   "sha256": "31c8f5076b7618cb81dcd7f8de57a17d0c49592b78c094618b31fad7e1da13e3",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/wl_glue_test.c",
-   "sha256": "5342b3380b95fa05cc058c690c88b73acb486f24bd1397a55173f8d5d2f4cdef",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/uds_mock.h",
-   "sha256": "699f1369f8fc98083c092e4e75317ca24094509eeea173270deb0543f5134a57",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_glue.c",
-   "sha256": "aafe6ce8da5f4f94ee1454e16a0f31a1c812804db268f9a4370df184b105ac21",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_wl_glue.h",
-   "sha256": "dcc87763f8847a9b9dcbcb3891d409a083926c990e14080a66ec867313e36e61",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "docs/WL-RELAY-PROTOCOL.md",
-   "sha256": "465d91f26cd18804c9a4d7b0dc5b66dfaa76c2a0d210edbfaa0ec4aa17eb11e8",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/wl_relay.py",
-   "sha256": "0038d416f4f0dcbdfcb9b0ef19ab2d8d1c07b2b5f5f2d1955889f787059b22d5",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_wl_inet.py",
-   "sha256": "67e607707e57a73831a3926b6e332401aba1c31563cb81dfc44939967396e784",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_wl_inet.h",
-   "sha256": "f67d178f18f7071532f93f7c8a1fc9f1cb56fa136a1ec36028a852b2bb16e564",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_inet.c",
-   "sha256": "8da1345e17dd7593b2d4b8e2d76e662b8f56f4948ad8e2d95d9a76a118336475",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/wl_inet_test.c",
-   "sha256": "7bf54d22ae4aa60171955e20844ecbd45e65be1bdabcd83e544927ebc9603358",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_wl_crypto.h",
-   "sha256": "8b2e1141e8f8a3fdd64b8b82b46e6ddd4f4eb2633140e9e63383b9f52cbf2683",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_crypto.c",
-   "sha256": "ca98d5994f4b323951cead54072072423957128ffb70f5e6303fdfc677e8b452",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/wl_crypto_test.c",
-   "sha256": "f59daf8a71fa447ba6364035a9ec570cc39e4fbcbdd91698bcf04f81683a0e63",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_wl_crypto.py",
-   "sha256": "197cdc5a36b36c9d85b2149b5c023381f5c2b49fb13f7472aafb155af1b5f763",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/include/3ds_wl_uds.h",
-   "sha256": "79e2990a85a38dd4607032ec066ef1e45677b44af26b91541a50a0d46d90289c",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_wl_uds.c",
-   "sha256": "cec56e90b8572cf376149cd4fdd6b5b49f3463636155b9651d9e235d428273ea",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/tests/wl_uds_test.c",
-   "sha256": "dcedc879557576ed7652c46fd071df5b00abf599733816a77c991432772166ec",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0278-cheats.json",
-   "sha256": "7c62bccbc5031cdb6156880f907cb586bc76f7c906e3c4aef48c4500a2e3f465",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_cheats_recipe.py",
-   "sha256": "91017a8f71d6c75abb158e744e30b8fb78db3f455644ffaedc65f5dbc6e6fd4e",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_ball_learn_impl.h",
-   "sha256": "1d628fce74a2442a89c604c92747436b1f3cb36dc748e21ee5eafc9e4204506a",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_ball_naming_impl.h",
-   "sha256": "1db422788826bb5110473f83baf6c7bcbe67daa20209fc3336fb1583d6a78cdd",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "3ds_port/src/3ds_ball_pieces_impl.h",
-   "sha256": "c2eb70525fee385975862d5b487116778c888b36c9d97155681467dedf32eda8",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0279-naming-screen-holds-the-top.json",
-   "sha256": "f5b2a855ca7f904c506933c5ad5e18f82c4c9af7361bd7b1d85d150f2e96cff3",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0280-trade-cards-stay-up-while-the-link-is-slow.json",
-   "sha256": "5a0f4cb7512a26fc8c21d1a6f9f96ebb35a421f22dcad2e0839298606bca3b0a",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0281-trade-menu-pointer-cleared-when-freed.json",
-   "sha256": "0449e19b5b21eb518e3fdb1fba2939d2554caa3366149d168b2b2963d48a6f2e",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0282-link-menu-frame-age-read-signed.json",
-   "sha256": "942bf6dae08ee1ad001f867e82b5fe4b49b99b9f3205bc85d9b85a85cdad56a0",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0283-review-fixes-double-battle-chooser-menu-age-randomlocke-wilds.json",
-   "sha256": "38aded5ac5b4b08177d00f03a161d98fc0f3c1fb4c4533658276b3fcdb855c50",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "patches/pokefirered/0284-german-keyboard-without-the-cartridge-table.json",
-   "sha256": "7d95827b66b027be0ab754b88619fa91df9a9b2a2a5d278d36acc741114a3e5f",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
    "path": "patches/pokefirered/0285-summary-swap-tabs-fly-mon-companion-after-surf.json",
    "sha256": "39df7fe411ca9f1cc50c00f082d71e9abec1dbd40aedd8b58a02751d5f7d1ecb",
    "review_status": "reviewed",
@@ -7979,14 +8211,6 @@
   {
    "path": "patches/pokefirered/0286-trade-menu-stops-the-frame-after-it-is-freed.json",
    "sha256": "dc8ac4187e46077afd56a765bb3cc1323a092d837adbb5ce2f693b82dcb4b532",
-   "review_status": "reviewed",
-   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
-   "license": "MIT only for original owned contributions; third-party rights unchanged",
-   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
-  },
-  {
-   "path": "tools/test_naming_recipe.py",
-   "sha256": "ea02ec92faaa42b28e8874caf2a8f92346b8273b5b06e1ba96378104ebd455cd",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
