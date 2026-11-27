@@ -7289,7 +7289,7 @@
   },
   {
    "path": "tools/test_trade_cards_recipe.py",
-   "sha256": "c4270f5f2ea4e5753527d6ce137dfb3744358dd4b0eb1be887682f93b35af3b9",
+   "sha256": "b02266f440441c8a5f5831faeba52a187d85d5850b1722c2101217f8cd76fb50",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

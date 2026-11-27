@@ -77,6 +77,7 @@ static void *CtrBottom_CurrentCallback(void) { return NULL; }
 ''' + modes + '\n' + stubs + '''
 /* The wireless hold of 3ds_bottom_chat_impl.h: a choice is the CHOICE mode, nothing is OFF (no link is up in this test). */
 static int WlHoldMode(int open) { return open ? MODE_CHOICE : MODE_OFF; }
+static int WlBlipMode(int mode) { return mode; }   /* no wireless blip in this test: the mode is kept */
 ''' + '\n' + mode + '''
 int main(void)
 {
