@@ -666,7 +666,7 @@
   },
   {
    "path": "3ds_port/include/3ds_poketouch.h",
-   "sha256": "6ac2d6aefdfa2469d53ab3e4866a277de1650268cab618c7cc1c70f0daea6ed8",
+   "sha256": "5b5f455dbded1ac8159061623d8c6c8d2862589437e169b59564906080680111",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -798,7 +798,7 @@
   },
   {
    "path": "3ds_port/include/3ds_ui_strings.h",
-   "sha256": "5d7b46dd9a85f205e7b08a81b7bbe629ac76e9915b8bd57dbb5db939e75c4c52",
+   "sha256": "ee2bce0a29c1b20d37bde0685f2c39d11faa7bdc5dbe285faf408c4f4a9b1754",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "d30f19c368875ba675b464e89002c1bdd8c0d55a437fcb90e358bba9087b1ef7",
+   "sha256": "d23e4b68c379a01a0fc77f4acc26ab2526f77210859e0dd153fdfec862664d68",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1096,6 +1096,22 @@
    "sd_layout_review": "Reviewed Twin Embers SD paths, output names, safe save migration and regression coverage",
    "field_ui_review": "Lower viewport owns move selection and item learning across child callbacks, preserving physical controls and releasing TOP on field return",
    "stability_review": "Reviewed owned stability work: visible fatal/save error screen until A, persistent SD flush failure stops on that screen, startup save backup via temporary file, flash closed at exit, tile cache index reset instead of a fatal stop, Pokedex route gated on the Pokedex flag, touch wording for the MENU tips (context-free hash-pinned recipe, no upstream context), host map-edge test built with the fill on and run in CI; save layout, pack ABI, audio and binary release policy unchanged."
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_card_link_impl.h",
+   "sha256": "1c5e965f7e485ed52a2dff8046900d19b86b0541a2fd95ad61b3182d0e3e44da",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "3ds_port/src/3ds_bottom_counter_impl.h",
+   "sha256": "0b52e0fd063e83169fd2ced468a2fc0f60309da444ed752ba3a77484748411f5",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "3ds_port/src/3ds_bottom_easychat_impl.h",
@@ -1224,7 +1240,7 @@
   },
   {
    "path": "3ds_port/src/3ds_field_card_impl.h",
-   "sha256": "c44299ac89a8bca98ae8dd79c3f201c613758361dc500266bfd5f117fe4eea9f",
+   "sha256": "e4aedc7f6a4b22241ad764a5a5380b0edd9afab1d829a5439d20a78e8dd215ce",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -2199,7 +2215,7 @@
    "credit": "alex61194 with disclosed AI assistance",
    "license": "MIT for original port/test contributions; external game rights unchanged",
    "basis": "Original chrome rendering and synthetic fixtures; runtime pack assets remain external; geometry and viewport preserved",
-   "sha256": "421b24668a73f3f138a5b883d7212a7b5f51bda7b76931c4456e0a05064a09f0"
+   "sha256": "8f6457366c4dfb91c9c36dda839388c33e7c7df514385b25b6a1632bf991ed9f"
   },
   {
    "path": "3ds_port/tests/rex_test.c",
@@ -2356,7 +2372,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "4c89ca53c10d0adb3e71939beabd46f5f4dd0d1cbb529bcf83b7a91e88687f31",
+   "sha256": "e3e6456af3a0be09a347d5e4601d8e9062bce93fd987463e5ebdca0623b93d6f",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -6439,6 +6455,22 @@
    "basis": "Reviewed context-free edit recipe for Pokedex top-screen hold, caught nickname touch prompt, German 9-column naming keyboard, and visible wild spawn/chase tuning; no game assets, strings, sprite bytes or literal payloads; existing upstream lines referenced locally"
   },
   {
+   "path": "patches/pokefirered/0340-link-trainer-card-lower-screen.json",
+   "sha256": "4c2de21f487c3c84b93b952d7335850b55ff8f34a112955232efa7e415568d30",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0341-cable-club-counter-lower-screen.json",
+   "sha256": "1dfafcb69ff01f6c28084e38a0706a0fa911fda4187949a246ffd7fbda133d14",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "tools/apply_edits.py",
    "sha256": "63c497a1a9c1e61b796f89b9eddbca8fe06948f79e918aefcd6dcb880ff0f254",
    "review_status": "reviewed",
@@ -6836,6 +6868,14 @@
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Port-authored development tool that reduces the project's own banner (docs/media/twin-embers-banner.png) to the idle logo header; no ROM/game data read or written."
+  },
+  {
+   "path": "tools/make_recipe.py",
+   "sha256": "fff96bc3867cb261341463f046d3d86a4a5831f51008393796831c68d4f723f7",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
    "path": "tools/map_edge_world.py",
@@ -7554,7 +7594,7 @@
   },
   {
    "path": "3ds_port/src/3ds_ball_menus_impl.h",
-   "sha256": "ea23b7f287d5fa33b8cf1e9b02be1de5dd68149cff6754117ac6888b00fe5f80",
+   "sha256": "8f772dc8a7601116641f62f30febdcd8b022f19c12c79a51e4168a54e83b2347",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

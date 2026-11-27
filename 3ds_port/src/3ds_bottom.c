@@ -783,6 +783,7 @@ static struct {
 #define K_DOWN (1u << 7)
 #define K_LEFT (1u << 5)
 #define K_RIGHT (1u << 4)
+#include "3ds_bottom_card_link_impl.h"   /* another player's Trainer Card (recipe 0340) */
 
 /* Party-owned callback remembered while Task_HandleChooseMonInput runs.
  * The action/context menu, switch, item and field-move substates run under
@@ -1181,35 +1182,6 @@ static void FieldBagFill(CtrPokeTouchView *v, int pressed, const FieldList *f)
         f->message(b->prompt, sizeof(b->prompt));
 }
 
-/* The player's Trainer Card as the card shows it: its side, FireRed's labels and numbers, and its back's records. */
-static void FieldCardFill(CtrPokeTouchView *v, int pressed)
-{
-    CtrPokeTouchCard *c = &v->card;
-    unsigned n[8];
-    int rows = 0;
-
-    memset(c, 0, sizeof(*c));
-    c->on = 1;
-    c->back = (uint8_t)(CtrBottomCard_OnBack() != 0);
-    c->pressed = (uint8_t)(pressed != 0);
-    CtrBottomCard_Name(c->name, sizeof(c->name));
-    for (int i = 0; i < 6; ++i)
-        CtrBottomCard_Label(i, c->label[i], sizeof(c->label[i]));
-    CtrBottomCard_Numbers(n);
-    c->id = n[0];
-    c->money = n[1];
-    c->hasDex = (uint8_t)n[2];
-    c->caught = (uint16_t)n[3];
-    c->hours = (uint16_t)n[4];
-    c->minutes = (uint8_t)n[5];
-    c->stars = (uint8_t)n[6];
-    c->badges = (uint8_t)n[7];
-    while (rows < PT_CARD_ROWS && CtrBottomCard_BackRow(rows, c->row[rows].label, sizeof(c->row[rows].label),
-                                                         c->row[rows].value, sizeof(c->row[rows].value)))
-        ++rows;
-    c->rows = (uint8_t)rows;
-}
-
 /* The Summary choosing the move to forget, as it is now. While it does not take a key the picture last shown stays. */
 static void FieldLearnFill(CtrPokeTouchView *v, int pressed)
 {
@@ -1259,6 +1231,7 @@ static void LearnSnapshot(Snapshot *s, int mode)
 #include "3ds_bottom_union_impl.h"
 #include "3ds_bottom_trade_impl.h"
 #include "3ds_bottom_chat_impl.h"
+#include "3ds_bottom_counter_impl.h"
 
 /* The field's choice as FireRed's menu has it: its rows' labels, the cursor, the message box's question. */
 static void ChoiceSnapshot(Snapshot *s, int mode)
@@ -1289,6 +1262,8 @@ static void ChoiceSnapshot(Snapshot *s, int mode)
         CtrFieldChoice_Prompt(c->prompt, sizeof(c->prompt));
     if (CtrUnionLeader_Active())
         UnionLeaderFill(c);                 /* the Union Room's wait for the others: its own rows and note */
+    else if (CtrLinkup_Active())
+        LinkupFill(c);                      /* the Cable Club counter's wait for the others */
     else if (CtrTrade_Active())
         TradeFill(&s->touch);               /* the trade's choice of a Pokemon: both parties as cards */
     else if (CtrChat_Active())
@@ -2398,7 +2373,7 @@ static void SnapshotState(Snapshot *s, int mode, int pressed)
         if (mode == MODE_CARD) {
             /* The card itself shows its statistics: the bar only says how to turn it. */
             snprintf(s->touch.bar[0], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TITLE));
-            snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", CtrUiText(UIS_CARD_TURN));
+            snprintf(s->touch.bar[1], PT_BAR_LEN, "%s", CtrUiText(CardHintId()));
             if (CtrBottomCard_TouchDrawn()) {
                 FieldCardFill(&s->touch, sCardTap.down && sCardTap.inside);
                 s->touch.viewport = 0;
@@ -4541,7 +4516,7 @@ static void ProcessCardTouch(const CtrInput *in)
         return;
     }
     if (sCardTap.inside)
-        sRouteKey = CtrBottomCard_State() == CARD_BACK ? K_B : K_A;
+        sRouteKey = CardTapKey();
     sCardTap.down = sCardTap.inside = 0;
 }
 
@@ -4921,6 +4896,8 @@ static void ProcessChoiceTouch(const CtrInput *in)
             sRouteKey = TradeTap(sChoiceTap.code);
         } else if (CtrChat_Active()) {
             sRouteKey = ChatTap(sChoiceTap.code);
+        } else if (CtrLinkup_Active()) {
+            sRouteKey = K_B;                /* its only row: CANCEL */
         } else {
             if (isBattle)
                 CtrBattle_ChoiceAsk(sChoiceTap.code - PT_CHOICE_HIT_ROW);
@@ -5919,7 +5896,7 @@ void CtrBottom_Frame(void)
         || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
-        || CtrTrade_Hold() || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
+        || CtrTrade_Hold() || CtrBottomCard_LinkHold() || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */
     if (hold != sHeldTop) {
         CtrVideo_HoldTop(hold != 0);
         sHeldTop = hold;
