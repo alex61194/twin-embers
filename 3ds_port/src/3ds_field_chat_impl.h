@@ -73,7 +73,7 @@ static void FChatFrame(const CtrPokeTouchView *v)
 {
     const CtrPokeTouchChat *t = &v->chat;
     int pressed = v->choice.pressed;
-    char text[64];
+    char text[128];                 /* 15 glyphs of up to 3 UTF-8 bytes (the hearts, the symbols) must not be cut */
 
     EmSurface();
     if (!sBallFull)
