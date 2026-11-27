@@ -1082,7 +1082,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "d30f19c368875ba675b464e89002c1bdd8c0d55a437fcb90e358bba9087b1ef7",
+   "sha256": "e9b7f4bc7939c9ac7edf6277ac0fbddac76e9a4faee2d0e1856143a2f4d46ac8",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2356,7 +2356,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "4c89ca53c10d0adb3e71939beabd46f5f4dd0d1cbb529bcf83b7a91e88687f31",
+   "sha256": "1aab3b8b3c1f75f38d99399668604345c44c80773b8a0d9b4374728a02771aa9",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7682,7 +7682,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom_union_impl.h",
-   "sha256": "5745020868678b8268292ff70c84126a783aefee4bba13d53569ecda780b4dcc",
+   "sha256": "721b6359d52f80dabd1a3bb5af6dc03ac2247fac233e65b57180e43f09e63591",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7987,6 +7987,14 @@
   {
    "path": "patches/pokefirered/0287-trade-on-the-lower-screen-over-the-room.json",
    "sha256": "4863e584d42be35292a8ea2385bc9e48bd66ada721dba9eb6552f544d7ff0fc9",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0310-union-room-messages-for-lower-screen.json",
+   "sha256": "9c5de98ecc2af84671b4dd38611562ededaefa758d99c8ef531ca70812483ca5",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
