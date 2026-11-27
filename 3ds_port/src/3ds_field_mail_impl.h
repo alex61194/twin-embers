@@ -36,6 +36,6 @@ static void FMailNote(const CtrPokeTouchView *v, int w)
     (void)v;
     (void)w;
     EmSurface();
-    NoteTitleBody(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), "");
+    NoteTitleBody(CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schlie\xC3\x9F" "en"), "");
     sUiS = &sUiNavy;
 }
