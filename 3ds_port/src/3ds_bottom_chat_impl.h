@@ -90,10 +90,33 @@ static void WlTrace(int open)
     CtrWl_Trace("open/hold/leader/trade/cursor/chat", now[0], now[1], now[2], now[3] * 100 + now[4], now[5]);
 }
 
+/* A field choice (the Cable Club's rooms, its YES/NO, the Union Room's) is reported closed for a frame now and then while the link runs
+ * (the game redraws the window or changes its callback for a frame), and the lower screen showed the map for that frame in the middle of
+ * the choice. The choice stays up for WL_BLIP_FRAMES frames after the game last had it open. */
+#define WL_BLIP_FRAMES 4
+static int sWlBlip;
+
+/* `mode` (the field) unless the choice that was up a frame ago is only blipping. */
+static int WlBlipMode(int mode)
+{
+    static unsigned long lastFrame = (unsigned long)-1;
+    unsigned long frame;
+
+    if (sWlBlip <= 0 || !sHaveShown || sShown.mode != MODE_CHOICE || CtrBattle_InBattle())
+        return mode;
+    frame = (unsigned long)CtrVideo_GetStats()->frames;
+    if (frame != lastFrame) {
+        lastFrame = frame;
+        --sWlBlip;
+    }
+    return MODE_CHOICE;
+}
+
 static int WlHoldMode(int open)
 {
     WlTrace(open);
     if (open) {
+        sWlBlip = WL_BLIP_FRAMES;
         if (CtrUnionLeader_Active() || CtrTrade_Active() || CtrChat_Active())
             sWlHold = WL_HOLD_FRAMES;
         else
@@ -119,7 +142,7 @@ static int WlHoldMode(int open)
 /* The held frame of the snapshot: what was shown last, taps ignored (the game's choice is not open, so nothing is ready). */
 static void WlHoldSnapshot(Snapshot *s, int rows)
 {
-    if (rows == 0 && sWlHold > 0 && sHaveShown && sShown.mode == MODE_CHOICE) {
+    if (rows == 0 && (sWlHold > 0 || sWlBlip > 0) && sHaveShown && sShown.mode == MODE_CHOICE) {
         s->touch.choice = sShown.touch.choice;
         s->touch.trade = sShown.touch.trade;
         s->touch.chat = sShown.touch.chat;

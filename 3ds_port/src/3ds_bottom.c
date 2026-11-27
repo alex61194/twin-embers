@@ -813,7 +813,7 @@ static const char *GbaViewTitle(void)
     return NULL;
 }
 
-static int WlHoldMode(int open);   /* 3ds_bottom_chat_impl.h */
+static int WlHoldMode(int open), WlBlipMode(int);   /* 3ds_bottom_chat_impl.h */
 
 static int CurrentMode(void)
 {
@@ -883,10 +883,9 @@ static int CurrentMode(void)
      * from the first one so TOP never flashes the GBA Party screen. */
     if (CtrBottomParty_IsPartyCallback())
         return MODE_PARTY;
-    /* True field CB2 only: Summary/Fly/map flows use other CB2 values, so the
-     * session stays alive across them instead of dropping to FIELD. */
+    /* True field CB2 only (Summary/Fly/map use others: the session stays alive). */
     if (CtrBottom_IsFieldCallback())
-        return MODE_FIELD;
+        return WlBlipMode(MODE_FIELD);
     if (sStorageSession)
         return MODE_STORAGE_CHILD; /* summary/box-name/PC item sub-screen */
     return WlHoldMode(0);
