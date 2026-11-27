@@ -896,6 +896,10 @@ int main(int argc, char **argv)
             strcpy(c->label[3],"\xC2\xA5"); strcpy(c->label[4],"POK\xC3\xA9" "DEX"); strcpy(c->label[5],"TIME"); c->id=12345; c->money=128450; c->hasDex=1; c->caught=118; c->hours=47; c->minutes=5; c->stars=2; c->badges=0x1f;
             strcpy(s.bar[0],"TRAINER CARD"); strcpy(s.bar[1],"Tap the card to turn it.");
             SHOT("card_front"); c->pressed=1; update(&old,&s); c->pressed=0; c->back=1; c->rows=2; strcpy(c->row[0].label,"HALL OF FAME"); strcpy(c->row[0].value,"3"); strcpy(c->row[1].label,"LINK BATTLES"); strcpy(c->row[1].value,"0/0"); update(&old,&s);
+            /* Another player's card (a link): its back asks to be closed, and the Union Room's wait shows FireRed's text as the note. */
+            c->link=1; c->back=0; strcpy(c->name,"LEAF"); SHOT("card_link_front");
+            c->back=1; SHOT("card_link_back");
+            strcpy(c->note,"Waiting for the other TRAINER to finish reading..."); SHOT("card_link_wait"); c->note[0]=0; c->link=0;
             c->on=0;
         }
         s=keepOpt;

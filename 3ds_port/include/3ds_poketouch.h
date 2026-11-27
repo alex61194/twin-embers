@@ -392,12 +392,14 @@ typedef struct {
 
 /* The player's Trainer Card drawn by the port (3ds_field_card_impl.h), a remote for FireRed's own card: its front
  * (name, ID, money, Pokedex, time, the trainer's picture, stars and badges) or its back (FireRed's records). A touch
- * on it turns it over with the card's own key. A link card stays FireRed's picture. */
+ * on it turns it over with the card's own key. A link card (another player's) is drawn the same; a Ruby/Sapphire/Emerald type card stays FireRed's picture. */
 #define PT_CARD_ROWS 5
 typedef struct {
     uint8_t on;                     /* the viewport shows this card (no GBA picture) */
     uint8_t back;                   /* its back is up */
     uint8_t pressed;                /* the card is held */
+    uint8_t link;                   /* another player's card (or the own one in a link): its back closes it */
+    char note[56];                  /* FireRed's "waiting for the trainer to finish reading" (empty: the hint) */
     char name[16];
     char label[6][16];              /* FireRed's NAME, IDNo., MONEY, yen sign, POKeDEX, TIME */
     uint32_t id, money;
