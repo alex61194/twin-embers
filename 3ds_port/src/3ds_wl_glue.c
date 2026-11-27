@@ -580,6 +580,24 @@ void CtrWl_Tick(void)
     WL_TICKED();
     WL_WHERE(WL_WHERE_TICK);
     now = NowMs();
+#ifdef __DEVKITARM__
+    {
+        /* Diagnostics for the "map and lower screen blink when ONLINE is chosen" report: a frame that took long while a session is
+         * up or starting is written down with the state, so a stall in the radio or the relay shows in port.log (first 40 only). */
+        static uint32_t lastTickMs;
+        static int lastState = -1, gapLines;
+
+        if (sState != CTR_WL_OFF && lastTickMs && (int32_t)(now - lastTickMs) > 120 && gapLines++ < 40)
+            CtrLog_Write(CTR_LOG_GAME, "wireless: slow frame %ld ms (state %d, internet %d, job %d)", (long)(int32_t)(now - lastTickMs), sState,
+                         (int)sInternet, sJobState);
+        if (sState != lastState)
+        {
+            CtrLog_Write(CTR_LOG_GAME, "wireless: state %d -> %d (internet %d, local %d)", lastState, sState, (int)sInternet, (int)sLocal);
+            lastState = sState;
+        }
+        lastTickMs = now;
+    }
+#endif
     if (sState == CTR_WL_SEARCH)
     {
         if (sJobState == 0 && (!sInternet || (int32_t)(now - sInetRetryAt) >= 0))
