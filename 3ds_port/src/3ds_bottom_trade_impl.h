@@ -4,6 +4,7 @@
  * FireRed's cancel prompt. The game says what it has (CtrTrade_*, recipe 0275). */
 
 extern int CtrTrade_Active(void);
+extern int CtrTrade_Hold(void);              /* the upper screen keeps the room for the whole trade (recipe 0287) */
 extern int CtrTrade_Cursor(void);
 extern int CtrTrade_Count(int side);
 extern void CtrTrade_Ask(int position);
