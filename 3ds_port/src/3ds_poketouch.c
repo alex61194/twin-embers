@@ -2043,7 +2043,7 @@ static void HomeNote(const CtrPokeTouchView *v)
         titleRight = left - 4;
         line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("Pokémon seen here", "Pokémon vistos aquí", "Hier gesehene Pokémon");
     }
-    char safari[48];
+    char safari[72];
 
     if (v->homeSafari) {
         snprintf(safari, sizeof(safari), CTR_TR("Steps left %u   Balls %u", "Pasos %u   Bolas %u", "Schritte %u   B\xC3\xA4" "lle %u"), (unsigned)v->homeSafariSteps, (unsigned)v->homeSafariBalls);
