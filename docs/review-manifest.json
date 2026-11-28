@@ -8065,6 +8065,14 @@
    "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
   },
   {
+   "path": "patches/pokefirered/0300-fly-actors-on-native-field-camera.json",
+   "sha256": "8da5a5c3cb7a1951766acd7516a0079860ff8bb4a50e296b766c6daa547c2cf6",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
    "path": "patches/pokefirered/0288-trade-on-the-lower-screen-over-the-room.json",
    "sha256": "b3b07ae9bc9a2adedc9b0a5c1109171645f98c78e66cd55ff9bee00b4e03ceaa",
    "review_status": "reviewed",
