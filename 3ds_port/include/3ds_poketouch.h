@@ -474,6 +474,9 @@ typedef struct {
     uint8_t zoneFlags[PT_ZONE_MAX];     /* what the Pokedex knows: seen (1), caught (2); none: a question mark */
     uint8_t homeStage;          /* HOME's note where no wild Pokemon live: the postgame's step (1-4; 0 none) */
     uint16_t homeDex;           /* and the national Pokedex's caught count for the last */
+    uint8_t homeSafari;         /* in the Safari Zone: HOME's note shows the steps left and the balls */
+    uint16_t homeSafariSteps;
+    uint8_t homeSafariBalls;
     uint8_t homePanel;          /* HOME's status panel is open over the map: the turbo, the Repels and the money */
     uint16_t homeRepelSteps;    /* a Repel in force: its steps left (0: none) */
     uint16_t homeRepelTotal;    /* and the length it began with */
