@@ -2483,7 +2483,7 @@
    "credit": "alex61194 (original port work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
    "basis": "Reviewed authored controller/prototype/regression text; synthetic fixtures only, no game payloads or generated media",
-   "sha256": "67fb3115988b2fd7f17e31595062ce89b913fad9c691e60172eab5f0b5379046",
+   "sha256": "9d3f159f18c2bf870aa5234d2550210423bb8ce69ef51a22f3e8550a3b0533ac",
    "storage_review": "Read-only PC controller integration, lifecycle and touch regression review; no storage/save layouts or asset ABI changes"
   },
   {
@@ -7016,7 +7016,7 @@
   },
   {
    "path": "patches/pokefirered/0310-union-room-messages-for-lower-screen.json",
-   "sha256": "9c5de98ecc2af84671b4dd38611562ededaefa758d99c8ef531ca70812483ca5",
+   "sha256": "73127e69dd205b394b4547bee3287ed0cc327bb3a100695f1de319d5c47227ea",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7024,7 +7024,7 @@
   },
   {
    "path": "patches/pokefirered/0320-union-room-chat-log-and-hold.json",
-   "sha256": "ceac5afa6df26a30ad0747ed143ade96b40f757fbb63ce60bc12c04b02d11c47",
+   "sha256": "95167f41ed435975c01202d7c540586afe3539345f02cca3b5eeff6a03dad4de",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7048,7 +7048,7 @@
   },
   {
    "path": "patches/pokefirered/0341-cable-club-counter-lower-screen.json",
-   "sha256": "1dfafcb69ff01f6c28084e38a0706a0fa911fda4187949a246ffd7fbda133d14",
+   "sha256": "a95f66366fc129ee22403b3a30557db420a1969bd88ece00b3e62dab5ac1bfde",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7744,7 +7744,7 @@
   },
   {
    "path": "tools/test_field_presentation.py",
-   "sha256": "ddfa4d42b7815dd87beed46cd233b4b5e45b5e41d11099527ccf2607ca6563d7",
+   "sha256": "f135e79e41a6da74ca4e6c9d1b49d851c97caa91aecdcb901d460117c4668b0b",
    "review_status": "reviewed",
    "credit": "alex61194; Twin Embers Port contributors; inherited/adapted upstream portions as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; external game/dependency rights excluded",
