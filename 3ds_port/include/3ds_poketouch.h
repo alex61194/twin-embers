@@ -349,9 +349,17 @@ typedef struct {
 /* The Union Room chat's keyboard (3ds_field_chat_impl.h), drawn instead of the choice's rows while the chat waits for input. FireRed's keys are
  * 5 columns by 10 rows a page; here they are laid on their side (10 across, 5 down). A key's hit code is PT_CHOICE_HIT_ROW + row * 5 + column
  * of FireRed's grid (0-49; on the registered page, row * 5), then the page tabs, Delete, Send and Quit. Texts are FireRed's codes, 0xff ended. */
-enum { PT_CHAT_TAB = 50, PT_CHAT_DELETE = 54, PT_CHAT_SEND = 55, PT_CHAT_QUIT = 56, PT_CHAT_PAGES = 4 };
+enum { PT_CHAT_TAB = 50, PT_CHAT_DELETE = 54, PT_CHAT_SEND = 55, PT_CHAT_QUIT = 56, PT_CHAT_PAGES = 4, PT_CHAT_LOG_TAB = 57, PT_CHAT_LOG = 6 };
+/* The room's messages (what everybody said, the last PT_CHAT_LOG, the oldest first): kind 0 a message, 1 someone joined, 2 someone left; the name and
+ * the text are FireRed's codes, 0xff ended. They are the note under the keyboard (the last three), and the CHAT tab opens all of them in place of the keys. */
+enum { PT_CHAT_SAID, PT_CHAT_JOINED, PT_CHAT_LEFT };
 typedef struct {
     uint8_t on, page;               /* page 3: the registered phrases */
+    uint8_t logOpen;                /* the CHAT tab is on: the messages take the place of the keys */
+    uint8_t logCount;
+    uint8_t logKind[PT_CHAT_LOG];
+    uint8_t logName[PT_CHAT_LOG][8];
+    uint8_t logText[PT_CHAT_LOG][32];
     uint8_t length;                 /* characters typed */
     uint8_t msg[32];
     uint8_t key[10][5][3];          /* [row][column]: 1 or 2 codes, then 0xff; 0xff first: no key */

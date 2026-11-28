@@ -989,6 +989,24 @@ int main(int argc, char **argv)
             t->page=3; for(int row=0;row<10;++row) { memset(t->reg[row],0xff,sizeof(t->reg[row])); if(row<7) { for(int c=0;c<9;++c) t->reg[row][c]=(uint8_t)(0xD5+(row+c)%26); } }
             update(&old,&s); SHOT("chat_saved");
             t->page=0; t->length=0; t->msg[0]=0xff; update(&old,&s); SHOT("chat_empty");
+            /* What everybody said: the last three in the note under the keyboard, all of them behind the CHAT tab in place of the keys (which are then no hit). */
+            t->logOpen=0; t->logCount=0; update(&old,&s); SHOT("chat_log_none");
+            for(int i=0;i<PT_CHAT_LOG;++i) {
+                memset(t->logName[i],0xff,sizeof(t->logName[i])); memset(t->logText[i],0xff,sizeof(t->logText[i]));
+                t->logKind[i]=(uint8_t)(i==0?PT_CHAT_JOINED:i==4?PT_CHAT_LEFT:PT_CHAT_SAID);
+                for(int c=0;c<4;++c) t->logName[i][c]=(uint8_t)(0xBB+i+c);
+                for(int c=0;c<12;++c) t->logText[i][c]=(uint8_t)(0xD5+(i*3+c)%26);
+            }
+            t->logCount=1; update(&old,&s); SHOT("chat_log_one");
+            t->logCount=PT_CHAT_LOG; update(&old,&s); SHOT("chat_log_note");
+            t->logOpen=1; update(&old,&s); SHOT("chat_log_open");
+            { int tab=0,key=0; for(int y=0;y<240;++y) for(int x=0;x<320;++x) { int h=CtrPokeTouch_ChoiceHit(&s,x,y); if(h==PT_CHOICE_HIT_ROW+PT_CHAT_LOG_TAB) tab=1; if(h>=PT_CHOICE_HIT_ROW && h<PT_CHOICE_HIT_ROW+50) key=1; }
+              assert(tab && !key); }
+            s.choice.pressed=PT_CHOICE_HIT_ROW+PT_CHAT_LOG_TAB; update(&old,&s); s.choice.pressed=-1;
+            t->logCount=0; update(&old,&s); SHOT("chat_log_open_none");
+            t->logOpen=0; t->logCount=PT_CHAT_LOG; update(&old,&s);
+            { int key=0; for(int y=0;y<240;++y) for(int x=0;x<320;++x) { int h=CtrPokeTouch_ChoiceHit(&s,x,y); if(h>=PT_CHOICE_HIT_ROW && h<PT_CHOICE_HIT_ROW+50) key=1; } assert(key); }
+            t->logCount=0;
             for(int code=0;code<=PT_CHAT_QUIT;++code) { int found=0; if(code>=50 && code<PT_CHAT_TAB) continue; if(code<50 && (code/5==5) && code%5>0) continue;
                 for(int y=0;y<240&&!found;++y) for(int x=0;x<320;++x) if(CtrPokeTouch_ChoiceHit(&s,x,y)==PT_CHOICE_HIT_ROW+code) { found=1; break; }
                 if(!found) printf("CHAT hit %d missing\n",code);
