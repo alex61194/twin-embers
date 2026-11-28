@@ -152,11 +152,18 @@ static void FCardFrame(const CtrPokeTouchView *v)
     sUiS = &sUiNavy;
 }
 
+/* The card's hint: FireRed's wait for the other trainer, else how to turn it (a link card's back is closed, not turned back). */
+static const char *CardNoteText(const CtrPokeTouchCard *c)
+{
+    if (c->note[0])
+        return c->note;
+    return CtrUiText(c->link && c->back ? UIS_CARD_CLOSE : UIS_CARD_TURN);
+}
+
 static void FCardNote(const CtrPokeTouchView *v, int w)
 {
-    (void)v;
     (void)w;
     EmSurface();
-    NoteTitleBody(CtrUiText(UIS_CARD_TITLE), CtrUiText(UIS_CARD_TURN));
+    NoteTitleBody(CtrUiText(UIS_CARD_TITLE), CardNoteText(&v->card));
     sUiS = &sUiNavy;
 }

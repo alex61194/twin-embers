@@ -174,7 +174,7 @@ static void BallCardScreen(const CtrPokeTouchView *v)
     char text[24], label[24];
     int stars = c->stars < 5 ? c->stars : 5;
 
-    BmFrame(NULL, CtrUiText(UIS_CARD_TITLE), CtrUiText(UIS_CARD_TURN), CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed, v->backEnabled);
+    BmFrame(NULL, CtrUiText(UIS_CARD_TITLE), CardNoteText(c), CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed, v->backEnabled);
     BmCard(sBallCardR.x, sBallCardR.y, sBallCardR.w, sBallCardR.h);
     if (c->pressed) {                                   /* held: the edge turns white */
         UiRoundFill(sBallCardR.x, sBallCardR.y, sBallCardR.w, sBallCardR.h, 6, BL_WHITE);
