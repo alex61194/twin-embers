@@ -4514,15 +4514,16 @@ static void FlashWindowSpan(unsigned limits, int *first, int *last)
 {
     unsigned a = Min(limits >> 8, 240u), b = Min(limits & 255, 240u);
     if ((limits >> 8) > (limits & 255)) b = 240;
-    *first = (int)((a * CTR_GAME_WIDTH + 120) / 240);
-    *last = b > a ? (int)((b * CTR_GAME_WIDTH + 120) / 240) : *first;
+    *first = a == 0 ? 0 : 200 + ((int)a - 120) * 3 / 2;
+    *last = b > a ? (b >= 240 ? CTR_GAME_WIDTH : 200 + ((int)b - 120) * 3 / 2) : *first;
 }
 
 static unsigned WindowRuns(int y, const WindowSpans *spans, int left, int right, WindowRun *runs)
 {
     WindowSpans flashSpans;
     if (sFieldLayers && sFlashWindowCount && spans->on[0]) {
-        unsigned line = (unsigned)(y > 0 ? y : 0) * 160 / CTR_GAME_HEIGHT;
+        int rel = y - 112, g = 80 + (rel >= 0 ? (rel * 2 + 1) / 3 : -((-rel * 2 + 1) / 3));
+        unsigned line = g < 0 ? 0 : (unsigned)g;
         if (line >= sFlashWindowCount) line = sFlashWindowCount - 1;
         flashSpans = *spans;
         FlashWindowSpan(sFlashWindow[line], &flashSpans.x0[0], &flashSpans.x1[0]);
