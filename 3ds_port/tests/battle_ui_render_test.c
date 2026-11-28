@@ -95,6 +95,14 @@ int CtrBottomParty_Icon(int slot, unsigned char *tiles, unsigned short *pal)
     return 1;
 }
 
+int CtrBottomParty_ShowcaseIcon(int card, unsigned char *tiles, unsigned short *pal)
+{
+    /* The partner's cards (odd) in another colour than the player's, so the two columns tell apart. */
+    memset(tiles, 0x11, 512); memset(pal, 0, 32);
+    pal[1] = (unsigned short)((card & 1) ? 31 << 10 | 8 << 5 : 6 | 28 << 5);
+    return 1;
+}
+
 unsigned CtrBottomSummary_IconSpecies(void) { return 0; }
 int CtrBottomSummary_Icon(unsigned char *tiles, unsigned short *pal)
 { (void)tiles; (void)pal; return 0; }
@@ -716,14 +724,23 @@ int main(int argc, char **argv)
     v.pressed = BUI_PTY_MESSAGE; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
     v.pty.panel = BUI_PTY_NONE; v.pty.mode = BUI_PTY_FORCED; settle(&old, &v); old = v;
     /* Picking several (a link battle): CONFIRM over CANCEL, the order on the picked cards; the cursor on each button in turn. */
-    v.pty.mode = BUI_PTY_MULTI; v.pty.button = 0;
+    v.pty.mode = BUI_PTY_MULTI; v.pty.button = 0; v.pty.entryLimit = 3; v.pty.entryCount = 2;
     for (k = 0; k < 6; ++k) v.pty.entry[k] = BUI_PTY_ABLE;
     v.pty.entry[1] = BUI_PTY_FIRST; v.pty.entry[2] = BUI_PTY_FIRST + 1; v.pty.entry[3] = BUI_PTY_NOT_ABLE;
     settle(&old, &v); old = v; put(out, "15c_party_multi");
     v.pty.button = 1; settle(&old, &v); old = v;
     v.pressed = BUI_PTY_CONFIRM; settle(&old, &v); old = v; v.pressed = BUI_PTY_CANCEL; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
     assert(CtrBattleUi_Hit(&v, 270, 185) == BUI_PTY_CONFIRM && CtrBattleUi_Hit(&v, 270, 220) == BUI_PTY_CANCEL);
-    v.pty.mode = BUI_PTY_FORCED; v.pty.button = -1; memset(v.pty.entry, 0, sizeof(v.pty.entry)); settle(&old, &v); old = v;
+    /* A multi battle's two teams before it starts: six cards, nothing to touch, the note over the place of the buttons. */
+    v.pty.mode = BUI_PTY_SHOWCASE; v.pty.button = -1; v.pty.cursor = -1; memset(v.pty.entry, 0, sizeof(v.pty.entry));
+    for (k = 0; k < 6; ++k) { v.pty.present[k] = 1; v.pty.level[k] = (uint8_t)(50 + k); v.pty.maxHp[k] = 100; v.pty.hp[k] = (uint16_t)(100 - 17 * k); }
+    v.pty.hp[5] = 0;
+    names(v.pty.caption, sizeof(v.pty.caption), "Your team and Rick's.");
+    settle(&old, &v); old = v; put(out, "15d_party_showcase");
+    assert(CtrBattleUi_Hit(&v, 8 + 75, 6 + 25) == -1 && CtrBattleUi_Hit(&v, 162 + 75, 59 + 25) == -1);
+    assert(CtrBattleUi_Hit(&v, 270, 185) == -1 && CtrBattleUi_Hit(&v, 270, 220) == -1 && CtrBattleUi_Hit(&v, 100, 200) == -1);
+    v.pressed = BUI_PTY_SLOT; settle(&old, &v); old = v; v.pressed = -1; settle(&old, &v); old = v;
+    v.pty.mode = BUI_PTY_FORCED; v.pty.button = -1; v.pty.entryLimit = v.pty.entryCount = 0; settle(&old, &v); old = v;
 #endif
     v.state = BUI_ACTION; settle(&old, &v); old = v;
     v.state = BUI_IDLE; settle(&old, &v);
