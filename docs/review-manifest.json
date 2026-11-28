@@ -1162,7 +1162,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom.c",
-   "sha256": "b971876e030a5830851c95d8de7338033b264030b0fa160bb1307149182c9e16",
+   "sha256": "750188ae635ae3e18945386dda312b7f44c39c7b6928162c6299505badeb424e",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1195,7 +1195,7 @@
   },
   {
    "path": "3ds_port/src/3ds_bottom_chat_impl.h",
-   "sha256": "4405240ac23dc5e2526f8dfcae31d749c407a4a781b1f26212d1f1488889f64e",
+   "sha256": "c68cf54a1c38f46023f0b1f22a9bf18c550470bfcb9796b54c6eb05c12505bc1",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -1673,7 +1673,7 @@
   },
   {
    "path": "3ds_port/src/3ds_poketouch.c",
-   "sha256": "120ed1459afa611d8abec0c2df28be24eee599dea86667d78d6d0e87227c57d7",
+   "sha256": "6900b087e760dbaf8a814aee1de390217ac012082084152c24ff92148705b729",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -2620,7 +2620,7 @@
   },
   {
    "path": "CHANGELOG.md",
-   "sha256": "89790bb9fbff2907d297df72e80708274426db40e0c30857da2538be6b0e8283",
+   "sha256": "1d4f4701f25428800f746770237ab9e0034f90ddf3068abd5acb9fec15c42321",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8187,6 +8187,22 @@
   {
    "path": "web/worker.js",
    "sha256": "6648c71a2e43cecb34c7f997c681fcff673e67dd22ce4e14a5fac63e802991e1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0350-safari-retire-from-the-lower-screen.json",
+   "sha256": "e1faae47989669576f169b34756fd89b9c1c59a292b6d4239c662058e72a7bd1",
+   "review_status": "reviewed",
+   "credit": "alex61194 (original distribution work with disclosed AI assistance)",
+   "license": "MIT only for original owned contributions; third-party rights unchanged",
+   "basis": "Reviewed text-only source/documentation; no ROM/game payloads or generated media; synthetic fixtures only"
+  },
+  {
+   "path": "patches/pokefirered/0351-receptionist-messages-on-the-lower-screen.json",
+   "sha256": "628dad05761fef072b9fb5bf5700e626125578c92eb109ea0bb1f20adb20bc1d",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",

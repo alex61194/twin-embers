@@ -3620,6 +3620,8 @@ static void PokeTouchActivate(int id)
     case PT_CARD:
         /* The real Trainer Card, opened directly (no START menu). From the native
          * OPTIONS the bottom keeps showing it until the card is ready. */
+        if (!menu && SafariRetireTap())
+            break;
         if (!menu && CtrField_TryOpenCard())
             BeginSessionPending(PT_CARD);
         break;

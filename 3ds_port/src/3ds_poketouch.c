@@ -1655,6 +1655,13 @@ static void Button(int id, const CtrPokeTouchView *v)
             }
             name[n] = 0;
         }
+        if (sLayoutHome && id == PT_CARD && v->homeSafari) {
+            /* In the Safari Zone the card's key is RETIRE (the START menu's entry): its word, centred, in place of the icon. */
+            const char *retire = CTR_TR("Retire", "Salir", "Ende");
+
+            SmallText(retire, r->x + (r->w - SmallWidth(retire)) / 2, fy + (fh - 8) / 2, pal->ink, pal->inkSh, r->x + r->w - 1);
+            break;
+        }
         if (sLayoutHome) {
             /* No label: the icon alone, centred on the key's face. */
             EmIcon(ColumnIcon(id), r->x + (r->w - EMBER_ICON) / 2, fy + (fh - EMBER_ICON) / 2, on);

@@ -180,6 +180,15 @@ static void WlHoldSnapshot(Snapshot *s, int rows)
 
 /* The Safari Zone's steps left and balls for HOME's note (safari_zone.c). */
 extern int CtrSafari_Get(int *steps, int *balls);
+/* In the Safari Zone HOME's Trainer Card key is RETIRE: the START menu's own prompt (its YES/NO is a field choice). */
+extern int CtrField_TryRetire(void);
+static int SafariRetireTap(void)
+{
+    int steps, balls;
+
+    return CtrSafari_Get(&steps, &balls) != 0 && CtrField_TryRetire();
+}
+
 static void SafariFill(CtrPokeTouchView *v)
 {
     int steps = 0, balls = 0;
