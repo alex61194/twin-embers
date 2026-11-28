@@ -149,3 +149,14 @@ static void WlHoldSnapshot(Snapshot *s, int rows)
         s->touch.choice.pressed = -1;
     }
 }
+
+/* The Safari Zone's steps left and balls for HOME's note (safari_zone.c). */
+extern int CtrSafari_Get(int *steps, int *balls);
+static void SafariFill(CtrPokeTouchView *v)
+{
+    int steps = 0, balls = 0;
+
+    v->homeSafari = (uint8_t)(CtrSafari_Get(&steps, &balls) != 0);
+    v->homeSafariSteps = (uint16_t)steps;
+    v->homeSafariBalls = (uint8_t)balls;
+}
