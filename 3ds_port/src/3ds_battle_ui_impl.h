@@ -1308,7 +1308,9 @@ static void BMoveCard(int i, const CtrBattleView *v)
         dim = dark ? UI_RGB(236, 214, 190) : UI_RGB(96, 48, 22);
         low = dark ? UI_RGB(255, 196, 184) : UI_RGB(160, 16, 16);
         lowSh = sh;
+        sBallTypeCard = 1;
         fy = BLCard(r, BL_CARD_H, &typePal, focused, v->pressed == i, 1);
+        sBallTypeCard = 0;
     } else
         fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     badgeW = UiTextWidth(m->typeName, 1) + 12;

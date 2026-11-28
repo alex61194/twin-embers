@@ -1043,7 +1043,7 @@
   },
   {
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "c273f64fdb7494ff6ff850928e00818011fac2456c900581c4ab1fa0b44baec4",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
    "license": "Owned port contributions MIT; inherited Zallax portions original MIT scope; external game/dependency rights excluded",
@@ -1649,7 +1649,7 @@
   },
   {
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "f5cefbc8377f8ad5d3ff74a40292a13d122495afa871cbeb3c9c7f59f0e2947d",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -7914,7 +7914,7 @@
   },
   {
    "path": "3ds_port/src/3ds_ball_pieces_impl.h",
-   "sha256": "c2eb70525fee385975862d5b487116778c888b36c9d97155681467dedf32eda8",
+   "sha256": "adcea3f623a23deebff2396c6aff7baf78952c5ebd6da94fde3e75bfe6747858",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
@@ -8594,7 +8594,7 @@
   {
    "commit": "a0561429ee83f05c6ab37fb63dba5b032c618a5e",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "27af8f26b43c897103cd255dfd97ff74fb4cc19c85ff9b574b0a2e3ed7290c08",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "6b60476a521518a3b5950b086a371f4e3871cc31e96fe633bd090d303b8229a1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9282,7 +9282,7 @@
   {
    "commit": "91c0a2a02f17e556f9f6117cf2c81547769d8d35",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "2b1f5e927199ff0b01f9dfd4207cff3c54302ff817e20e682979fc285731ae82",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "3948036196171d7a67ad9d171477adcda6a4729ef3c149998f67e48dd6a9c162",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9322,7 +9322,7 @@
   {
    "commit": "6266267740d61728575ea6e21c641078fe40e073",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "3948036196171d7a67ad9d171477adcda6a4729ef3c149998f67e48dd6a9c162",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "f72bc43609c731527dafd313a661417de4764c6557f935309b77da3127547ab7",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9372,7 +9372,7 @@
   {
    "commit": "4e822c329b7332d6d25e0277903ca9764bb0fb95",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "c5349187a7207a77b45905f8546416b5cf80ca42e11db7ddca373095108df456",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "6b60476a521518a3b5950b086a371f4e3871cc31e96fe633bd090d303b8229a1",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9422,7 +9422,7 @@
   {
    "commit": "e63ff6214a3e99c48c7878fb69e189a0ba55e174",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "8335dd25630b9a431c1ea79f934fe6f789418d9193d32aec2d26b3a5c118d5b3",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "95ad1fd193ad9ad579c1909615eebdd1ad7e2d43bcd048f43094b7d5f60d4483",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9442,7 +9442,7 @@
   {
    "commit": "e2c11981c007f954eb8252d8b2d42f8589f68978",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "8335dd25630b9a431c1ea79f934fe6f789418d9193d32aec2d26b3a5c118d5b3",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "95ad1fd193ad9ad579c1909615eebdd1ad7e2d43bcd048f43094b7d5f60d4483",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -9632,7 +9632,7 @@
   {
    "commit": "f4236cb9b6e1ad91ddff8557ca459f5287daa460",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "4284bd3f54366a64eda0a19a8091d3a20605dc969674674e1c2e7564c662bcd7",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "cd1959273404308cd0076cee7f7a2b7529e4463d62da91b5f5f73d95e4ae9558",
    "review_status": "reviewed",
    "credit": "alex61194; ZallaxDev and PokÃ©mon Emerald 3Ds Dual Screen contributors for inherited/adapted portions, as scoped in NOTICE.md",
@@ -10220,7 +10220,7 @@
   {
    "commit": "758a3786f5ca38390881b6a786133b1eff4bb9bb",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -10446,7 +10446,7 @@
   {
    "commit": "e49f6692c36adb6cc1eb8cbc55904a84e0542750",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -10614,7 +10614,7 @@
   {
    "commit": "3d84ded9aa9b2d7e5ad9e3e236c49c35821a32f9",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -10753,7 +10753,7 @@
   {
    "commit": "72bb518cb621b7b94b1c209a02d118b98fc7b52d",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -10882,7 +10882,7 @@
   {
    "commit": "69277ca6e220f5731ea0b12fa3929ffcc6544d60",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11001,7 +11001,7 @@
   {
    "commit": "bce60920a77c50aaa4f654bac4198fb33820a65e",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11168,7 +11168,7 @@
   {
    "commit": "d77a9a09aeac113ae77f86c796a2a7f96c477483",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11237,7 +11237,7 @@
   {
    "commit": "8e53833e90e9fec887ed18ed6c0b042ab1ae58a6",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11297,7 +11297,7 @@
   {
    "commit": "293b56bc3c0112a455ae6e0f3402eec09551a118",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "6406a3101ff839caf5902150d07f789d4988303eb0923423fd29dab4ae40c82e",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11426,7 +11426,7 @@
   {
    "commit": "9b41b02b45be1052a4e7f98a1f6913516445da2c",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "b277aab38dda5cd1252d892ccceac2d731a0f55ed629e91cdda898eb74ae5adb",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "dfa54f8605882fd90f599bed119303582844bc08e5ad72af903eceb528463047",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11574,7 +11574,7 @@
   {
    "commit": "d31b033dcfcf87c8337f22e164b4ad6aafaa692d",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "dfa54f8605882fd90f599bed119303582844bc08e5ad72af903eceb528463047",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "1a2b835a0688279898e10a37f97b3055b1dff1d7d407e85c3979c7a35ab24ee2",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11662,7 +11662,7 @@
   {
    "commit": "d31b033dcfcf87c8337f22e164b4ad6aafaa692d",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11806,7 +11806,7 @@
   {
    "commit": "000f725a3f8364149c2b9aa6d734dad38585a288",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "bc6579504fa4ef7cee2d950c154661805940400f6e16db62d6c275bdf3f06696",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -11884,7 +11884,7 @@
   {
    "commit": "000f725a3f8364149c2b9aa6d734dad38585a288",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12096,7 +12096,7 @@
   {
    "commit": "e39507e1b001dd452b2bf6bf7b63e6b2ecc86449",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "bc6579504fa4ef7cee2d950c154661805940400f6e16db62d6c275bdf3f06696",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12174,7 +12174,7 @@
   {
    "commit": "e39507e1b001dd452b2bf6bf7b63e6b2ecc86449",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12300,7 +12300,7 @@
   {
    "commit": "1dee997ef8dbfda757c3275c2ab323ebe6998682",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "bc6579504fa4ef7cee2d950c154661805940400f6e16db62d6c275bdf3f06696",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12378,7 +12378,7 @@
   {
    "commit": "1dee997ef8dbfda757c3275c2ab323ebe6998682",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12484,7 +12484,7 @@
   {
    "commit": "fb534f5fcea4cef231dbdc62829a3df169b674ac",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "1a2b835a0688279898e10a37f97b3055b1dff1d7d407e85c3979c7a35ab24ee2",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12564,7 +12564,7 @@
   {
    "commit": "2dc9450525afc81c6752677b1a86301b0444dcee",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "1a2b835a0688279898e10a37f97b3055b1dff1d7d407e85c3979c7a35ab24ee2",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12674,7 +12674,7 @@
   {
    "commit": "a7ea7e5f135f222fe3b99fc87e1226d5bdbb4995",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "bc6579504fa4ef7cee2d950c154661805940400f6e16db62d6c275bdf3f06696",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12732,7 +12732,7 @@
   {
    "commit": "a7ea7e5f135f222fe3b99fc87e1226d5bdbb4995",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12848,7 +12848,7 @@
   {
    "commit": "b1de736ca091dbb2dba4731a503addc8195ee504",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -12967,7 +12967,7 @@
   {
    "commit": "071fa2903f182ef19d0f3531b52b104f0b5ce8a2",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "06a0de0dba3f3978a36e33c9b949275085134f59ddd3e84e28511e4fb614ec14",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "27fe253bc1f1055c6a2bc2ef9cf6ea4a8168c4d87c7e88a931a49d76a0d2c8f4",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13067,7 +13067,7 @@
   {
    "commit": "97e957ba0764f624e8aeba5bc5a9f8303a00515e",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13157,7 +13157,7 @@
   {
    "commit": "f195b08e7972811e9cbc851d399e3c3fd4eb9f3f",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13237,7 +13237,7 @@
   {
    "commit": "79a5f121566e84fb55dcb4ee82220ffb983c0789",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13327,7 +13327,7 @@
   {
    "commit": "b46456e08414866ece0a6755ac01266e31a03feb",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "712b0e7b4866d3eee0f896868d67744e5a6113271c74d91de9f5fe2212d4c89c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13467,7 +13467,7 @@
   {
    "commit": "94f4b51d546fa8092423470a033508abd8652dfb",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8342754e2200aafcb47619c53cd589df7279bd0efff17b6b040edecaf5eebc30",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13547,7 +13547,7 @@
   {
    "commit": "0b88b5d1b3cc0663c3b860709440e3eeb6e9e85b",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8342754e2200aafcb47619c53cd589df7279bd0efff17b6b040edecaf5eebc30",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13617,7 +13617,7 @@
   {
    "commit": "ca1578e04a719920f8c2acb5f44c9e6b7d9593fe",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8342754e2200aafcb47619c53cd589df7279bd0efff17b6b040edecaf5eebc30",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13687,7 +13687,7 @@
   {
    "commit": "ac42c885f837d967d865ddb80050f683c3f90d7e",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8342754e2200aafcb47619c53cd589df7279bd0efff17b6b040edecaf5eebc30",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13727,7 +13727,7 @@
   {
    "commit": "dc682e73d19d6f22466dbf3ae361ff8afac7ca77",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "fde867e6419c842bc786840718ce554ada60334ca3d553c45585610f7f47616f",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8342754e2200aafcb47619c53cd589df7279bd0efff17b6b040edecaf5eebc30",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13927,7 +13927,7 @@
   {
    "commit": "fc98c848bcc5c3e3c738f69872ce4e8613b74cff",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "899cdcfe2d0a795427a4564691a1154df6ee26d05152a93bf2ba0ea8d3e969bf",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8cc63da1298db3331dec7dd5b3f5c478337571ca11d715d41a870ca5adb5e973",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -13957,7 +13957,7 @@
   {
    "commit": "fc98c848bcc5c3e3c738f69872ce4e8613b74cff",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14045,7 +14045,7 @@
   {
    "commit": "9f334e6808dc6ed4f09e35df2a3960687a767b61",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "aff06270d067a16f4e83f92160311f6b137cdd9ed9d7a7cf1c1e7f980a2098a4",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8cc63da1298db3331dec7dd5b3f5c478337571ca11d715d41a870ca5adb5e973",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14075,7 +14075,7 @@
   {
    "commit": "9f334e6808dc6ed4f09e35df2a3960687a767b61",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14143,7 +14143,7 @@
   {
    "commit": "bb122de87a8cf4b738092e4955abf91a45041475",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "aff06270d067a16f4e83f92160311f6b137cdd9ed9d7a7cf1c1e7f980a2098a4",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "8cc63da1298db3331dec7dd5b3f5c478337571ca11d715d41a870ca5adb5e973",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14173,7 +14173,7 @@
   {
    "commit": "bb122de87a8cf4b738092e4955abf91a45041475",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14242,7 +14242,7 @@
   {
    "commit": "2b9fce0d8fa3051eeadc694d98258a7c6ab0a891",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14311,7 +14311,7 @@
   {
    "commit": "c500c5f4b63bebf2c2b8efe3178a5f03f5498ab4",
    "path": "3ds_port/src/3ds_touch_skin_impl.h",
-   "sha256": "4f65ddfb2a9601d317d3d566926e12eabb2cca7e551da6d0d831c1f6cacd7a4e",
+   "sha256": "52f9ef2c5ab75c5370220be4d8b3cdbb0d15168e42be36346a7795dbc106b239",
    "supersedes": "2f4a7df7a664f35ed34a48eb1c4cfd204563d1c86df7c20d532e429d3b4c1888",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -14661,7 +14661,7 @@
   {
    "commit": "624972456612071c1349c7e72e969490d7aad6a4",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "eb7913f88d5153269f51d1f90dcbd0eba333df6b71e4b5e0e0a2129b92e6cab3",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -15089,7 +15089,7 @@
   {
    "commit": "8080e9d9ba8ee5e57c0ea02f280859ebffe5ae89",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "eb7913f88d5153269f51d1f90dcbd0eba333df6b71e4b5e0e0a2129b92e6cab3",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -15517,7 +15517,7 @@
   {
    "commit": "17b1bc6d31cb9dae09d0010922d86890095545f5",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "e5641e676792ce88775970d3874b91441da09ebd8c66405b2d3449ec7d0b865c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -15936,7 +15936,7 @@
   {
    "commit": "33290b8ac92d9f243e35784c2d6d69447ae8f0b3",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "e5641e676792ce88775970d3874b91441da09ebd8c66405b2d3449ec7d0b865c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -16346,7 +16346,7 @@
   {
    "commit": "cfed1c94ed1281c773c9fb700d565c6ac7626441",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "e5641e676792ce88775970d3874b91441da09ebd8c66405b2d3449ec7d0b865c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -16756,7 +16756,7 @@
   {
    "commit": "c83931a2ac670f1d898a687bda993bb81ca90fc6",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "e5641e676792ce88775970d3874b91441da09ebd8c66405b2d3449ec7d0b865c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",
@@ -17157,7 +17157,7 @@
   {
    "commit": "0240cdd7c8f419d1821ff7fd0e064c0ce7953cbf",
    "path": "3ds_port/src/3ds_battle_ui_impl.h",
-   "sha256": "e5641e676792ce88775970d3874b91441da09ebd8c66405b2d3449ec7d0b865c",
+   "sha256": "116b587c561c73321c230ef9c7e3f145480eec207fc3416adc78bc704a43e0ab",
    "supersedes": "0fdf737dded521a9eb2364f2881646ebdf12b7aa4fbf4aa78ae0d59c196d7147",
    "review_status": "reviewed",
    "credit": "alex61194 with disclosed AI assistance",

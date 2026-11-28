@@ -13,6 +13,7 @@ static uint16_t TsGet(int x, int y)
  * it is then a copy per column instead of a lookup per pixel, which every screen pays more than once a redraw. */
 static uint16_t sTsBg[W * H];
 static int sTsBgReady;
+static int sBallTypeCard;                           /* 1 while a move card of the Poke Ball style is drawn: BallHomeButton keeps its own palette's colours */
 static int sStyleBall;                              /* 1: the Poke Ball style (TsApplyStyle) */
 static CtrPokeTouchRect sBallExitR = {238, 146, 76, 38};   /* the exit piece of the whole-screen view shown (it is the view's BACK) */
 static int sBallFull;                               /* 1: a Poke Ball view of the whole lower screen is up: no HOME layout, no side columns, its own BACK */
