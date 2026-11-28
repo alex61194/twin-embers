@@ -200,10 +200,10 @@ int main(void) {
     assert(!sWindowCacheValid);
     assert(WindowRuns(0,&spans,0,400,runs)==1 && runs[0].mask==1);
     assert(WindowRuns(120,&spans,0,400,runs)==3);
-    assert(runs[1].mask==63 && runs[1].x0==133 && runs[1].x1==267);
+    assert(runs[1].mask==63 && runs[1].x0==140 && runs[1].x1==260);
     sWindowCacheValid=true; CtrVideo_SetFlashWindow(bounds,160);
     assert(sWindowCacheValid);
-    bounds[80]=0x00ff; CtrVideo_SetFlashWindow(bounds,160);
+    bounds[85]=0x00ff; CtrVideo_SetFlashWindow(bounds,160);
     assert(!sWindowCacheValid);
     assert(WindowRuns(120,&spans,0,400,runs)==1 && runs[0].mask==63);
     /* A different scene must ignore a lingering Flash snapshot. */

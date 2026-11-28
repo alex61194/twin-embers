@@ -5,6 +5,7 @@
 #include "3ds_poketouch.h"
 enum { MODE_STORAGE_PC=1,MODE_STORAGE_BOX,MODE_STORAGE_CHILD,MODE_SUMMARY,MODE_BAG,MODE_FIELD,MODE_NAMING,BAG_BUSY=9,MODE_CHOICE };
 static int sStorageSession, fading, pcMenu, pcReady, boxPresented, namePresented, summaryReady, bagState;
+static int CtrBottomView_TradeScene(void) { return 0; }   /* no link trade in this test */
 static int CtrBottom_IsFading(void) { return fading; }
 static int CtrBottomStorage_PCMenu(void) { return pcMenu; }
 static int CtrBottomStorage_PCMenuReady(void) { return pcReady; }
