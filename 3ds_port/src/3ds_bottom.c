@@ -114,6 +114,7 @@ extern void CtrListMenu_Ask(int row);
 extern void CtrMenu_Ask(int row);
 /* menu.c: the field's choice the lower screen draws (MODE_CHOICE). */
 extern int CtrFieldChoice_IsOpen(void);
+extern int CtrChoice_TopLive(void);
 extern int CtrFieldChoice_Ready(void);
 extern int CtrFieldChoice_Count(void);
 extern int CtrFieldChoice_Columns(void);
@@ -1711,6 +1712,7 @@ static void HomeMapState(Snapshot *s)
         sHome.centered = 0;
     }
     s->touch.home = 1;
+    SafariFill(&s->touch);
     PlateFill(&s->touch);
     s->touch.homePanel = (uint8_t)(sHomePanel != 0);
     for (int k = 0; k < 3; ++k)
@@ -5894,7 +5896,7 @@ void CtrBottom_Frame(void)
     /* Between two choices (ITEM STORAGE to WITHDRAW / DEPOSIT) neither is open for a few frames: the hold outlasts a
      * choice by CHOICE_HOLD_GRACE frames, or TOP froze on the field with the first menu's window up. */
     if (mode == MODE_CHOICE)
-        sChoiceGrace = CtrBattle_InBattle() ? 0 : CHOICE_HOLD_GRACE;
+        sChoiceGrace = CtrBattle_InBattle() || CtrChoice_TopLive() ? 0 : CHOICE_HOLD_GRACE;
     else if (sChoiceGrace)
         --sChoiceGrace;
     /* The battle Bag's Berry Pouch: the upper screen keeps the battle it had under the Bag, through the Pouch, its
@@ -5914,7 +5916,7 @@ void CtrBottom_Frame(void)
             sPouchHold = 0;
     }
     hold = UpdateSession(mode, sPlan.kind != PLAN_NONE) || SaveActive() || sBatHold || sPouchHold || StorageHoldTop() || CtrBottomShop_HoldsTop() || CtrBottomItemPc_HoldsTop() || CtrBottomMailbox_HoldsTop()
-        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
+        || CtrBottomHof_HoldsTop() || CtrPlayerPc_ItemStorageReturnHoldsTop() || CtrBottomBag_ShopOrPCHoldsTop() || (mode == MODE_CHOICE && !CtrBattle_InBattle() && !CtrChoice_TopLive()) || sChoiceGrace || mode == MODE_GBAVIEW || mode == MODE_MAILBOX
         /* The naming screen is its keyboard below, wherever it comes from (a catch, the Name Rater, an egg, a new
          * game): TOP keeps the frame it had when the keyboard opened, after FireRed's fade, not FireRed's GBA screen. */
         || CtrTrade_Hold() || mode == MODE_NAMING || CtrBattle_NickHold() || CtrBattle_DexHold() || CtrOak_NamingHold() || CtrNaming_Hold();   /* SAVE keeps TOP on the frozen frame */

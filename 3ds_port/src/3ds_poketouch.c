@@ -2043,6 +2043,12 @@ static void HomeNote(const CtrPokeTouchView *v)
         titleRight = left - 4;
         line = v->zoneWater ? CTR_TR("In the water", "En el agua", "Im Wasser") : CTR_TR("Pokémon seen here", "Pokémon vistos aquí", "Hier gesehene Pokémon");
     }
+    char safari[72];
+
+    if (v->homeSafari) {
+        snprintf(safari, sizeof(safari), CTR_TR("Steps left %u   Balls %u", "Pasos %u   Bolas %u", "Schritte %u   B\xC3\xA4" "lle %u"), (unsigned)v->homeSafariSteps, (unsigned)v->homeSafariBalls);
+        line = safari;
+    }
     if (!zones && !v->flyOk && v->homeStage && v->bar[1][0]) {
         /* Nothing wild here: after the League, the next step of the Sevii postgame, and once the gems are restored the national Pokedex. */
         static const char *const kHint[3] = {
@@ -2237,7 +2243,8 @@ static void HomeUpdate(const CtrPokeTouchView *old, const CtrPokeTouchView *v, C
         HomeOverlay(v);
     }
     if (memcmp(old->bar, v->bar, sizeof(v->bar)) || old->flyOk != v->flyOk || old->zoneN != v->zoneN || old->zoneWater != v->zoneWater
-        || old->homeStage != v->homeStage || old->homeDex != v->homeDex
+        || old->homeStage != v->homeStage || old->homeDex != v->homeDex || old->homeSafari != v->homeSafari
+        || old->homeSafariSteps != v->homeSafariSteps || old->homeSafariBalls != v->homeSafariBalls
         || memcmp(old->zoneSpecies, v->zoneSpecies, sizeof(v->zoneSpecies)) || memcmp(old->zoneFlags, v->zoneFlags, sizeof(v->zoneFlags))) {
         HomeNote(v);
         Mark(dirty, &sHomeNote);
