@@ -68,6 +68,12 @@ static int BallHomeButton(int x, int y, int w, int h, const EmPal *p, int depth,
     uint16_t face = BxFaceColour(p);
     int bright = BxBright(p), radius = h < 20 ? 6 : 8;
 
+    if (sBallTypeCard) {                                /* a move card: the colour of its type (its palette's own), not the dark red of a pill */
+        face = pressed ? p->bottom : p->top;
+        UiRoundFill(x, y, w, h, radius, p->edge);
+        UiRoundFill(x + 2, y + 2, w - 4, h - 4, radius - 2, face);
+        return y + depth / 2;
+    }
     if (pressed)
         face = bright ? BM_PRESSED : BM_CARD_EDGE;
     UiRoundFill(x, y, w, h, radius, bright ? BM_CARD_EDGE : BM_PILL_EDGE);
