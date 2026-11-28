@@ -7040,7 +7040,7 @@
   },
   {
    "path": "patches/pokefirered/0340-link-trainer-card-lower-screen.json",
-   "sha256": "448731aeb1368a6d6a8152a5041d742faa831687a3fe0190ccd305d255e89bb9",
+   "sha256": "397579d7a070e37efe2855631feeb92ffeff95d547d81f3ae8a201f705fe3927",
    "review_status": "reviewed",
    "credit": "alex61194 (original distribution work with disclosed AI assistance)",
    "license": "MIT only for original owned contributions; third-party rights unchanged",
