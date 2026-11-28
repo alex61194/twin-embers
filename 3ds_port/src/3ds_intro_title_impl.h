@@ -89,15 +89,15 @@ static bool DrawTitleBand(unsigned bg)
  * The title's flames on the canvas's sides. FireRed spawns them across its 240 columns only (Task_FlameSpawner), from
  * behind the black band, and they rise into the teal; the canvas is 80 columns wider on each side. A flame is a plain
  * 16x16 sprite of priority 3 (the blank ones are too, and draw nothing). Each one in columns 0-79 is drawn again 240 to
- * the right, and each one in columns 80-144 again 160 to the left, so both sides burn with FireRed's own flames, in the
+ * the right, and each one in columns 80-159 again 160 to the left, so both sides burn with FireRed's own flames, in the
  * same frame of the same animation and behind the same band, and FireRed has no more sprites to keep.
  */
 static void DrawTitleFlameCopies(unsigned attr0, unsigned attr1, unsigned attr2, int x, int y, bool effects)
 {
-    int shifts[2] = {x < 80 ? 240 : 0, x >= 80 && x <= 144 ? -160 : 0};
+    int shifts[2] = {x < 80 ? 240 : 0, x >= 80 && x < 160 ? -160 : 0};
 
     if (!sIntro || NativeIntroActive() || sNativeIntroScene != CTR_INTRO_TITLE || (attr0 & 0x300) || (attr0 >> 14) != 0
-        || (attr1 >> 14) != 1 || ((attr0 >> 10) & 3) != 0 || x < 0)
+        || (attr1 >> 14) != 1 || ((attr0 >> 10) & 3) != 0 || x < -16)
         return;
     for (int c = 0; c < 2; ++c)
     {

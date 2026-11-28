@@ -623,9 +623,18 @@ CTR_GBA_CENTRED_NAMES := region_map main_menu naming_screen pokemon_summary_scre
     trainer_card option_menu learn_move help_system mail shop teachy_tv fame_checker \
     berry_pouch pokemon_special_anim hall_of_fame diploma seagallop slot_machine \
     trade trade_scene battle_records \
-    party_menu item_menu tm_case evolution_scene
+    party_menu item_menu tm_case evolution_scene daycare \
+    wireless_communication_status_screen clear_save_data_screen mystery_gift_menu \
+    berry_crush dodrio_berry_picking pokemon_jump
 # evolution_scene: a 240x160 battle-style screen (battle BGs, text box, the mon at
 # 120,64) that registered no callback class and was drawn as the 400x240 field.
+# daycare: only the egg hatch scene registers a VBlank (VBlankCB_EggHatch); the
+# rest of daycare.c is field code and never touches the callback.
+# wireless_communication_status_screen, clear_save_data_screen, mystery_gift_menu,
+# berry_crush, dodrio_berry_picking, pokemon_jump: full-screen 240x160 screens that
+# register their own VBlank, so they were drawn as the 400x240 field (off centre,
+# background cut). link.c's error screens are left out: link.c is shared with the
+# field-side Union Room code.
 CTR_GBA_CENTRED_OBJS := $(addprefix build/game/,$(addsuffix .o,$(CTR_GBA_CENTRED_NAMES)))
 # The native 400x240 TOP Party/Bag/TM attempt (d88c94b) is abandoned: those
 # menus use the stable centred 240x160 fallback while the bottom screen owns

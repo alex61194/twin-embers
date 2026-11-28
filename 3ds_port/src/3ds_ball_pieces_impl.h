@@ -68,6 +68,12 @@ static int BallHomeButton(int x, int y, int w, int h, const EmPal *p, int depth,
     uint16_t face = BxFaceColour(p);
     int bright = BxBright(p), radius = h < 20 ? 6 : 8;
 
+    if (sBallTypeCard) {                                /* a move card: the colour of its type (its palette's own), not the dark red of a pill */
+        face = pressed ? p->bottom : p->top;
+        UiRoundFill(x, y, w, h, radius, p->edge);
+        UiRoundFill(x + 2, y + 2, w - 4, h - 4, radius - 2, face);
+        return y + depth / 2;
+    }
     if (pressed)
         face = bright ? BM_PRESSED : BM_CARD_EDGE;
     UiRoundFill(x, y, w, h, radius, bright ? BM_CARD_EDGE : BM_PILL_EDGE);
@@ -189,7 +195,7 @@ static void BallMailScreen(const CtrPokeTouchView *v)
     const char *label = CTR_TR("From:", "De:", "Von:");
     int nw = UiTextWidth(m->name, 1), lw = UiTextWidth(label, 1) + 5, fw = UiTextWidth(m->from, 1), tw, cx = 8 + 232 / 2;
 
-    BmFrame(NULL, CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schliessen"), "", CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed,
+    BmFrame(NULL, CTR_TR("Tap to close", "Toca para cerrar", "Tippen zum Schlie\xC3\x9F" "en"), "", CTR_TR("BACK", "ATR\xC3\x81S", "ZUR\xC3\x9C" "CK"), v->backPressed,
             v->backEnabled);
     BmCard(8, 8, 232, 148);                             /* inside the viewport's rectangle (4, 4, 240, 160): a touch of it closes the letter */
     BmStrip(10, 10, 228, CTR_TR("MAIL", "CORREO", "BRIEF"));

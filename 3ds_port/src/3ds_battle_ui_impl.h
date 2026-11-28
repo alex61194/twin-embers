@@ -406,7 +406,7 @@ static int BPartyBarred(const CtrBattleParty *p, int i)
  * the HP capsule, a status badge and the numbers, a "1st" ribbon on the first and FireRed's ring of light behind the plate. An empty slot is a hollow. */
 static void BPartyPanel(int i, const CtrBattleView *v)
 {
-    static const char *const code[7] = {"", CTR_TR("Psn", "Env", "Gft"), CTR_TR("Par", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf"), CTR_TR("Frz", "Con", "Efr"), CTR_TR("Brn", "Que", "Brn"), CTR_TR("PKRS", "PKRS", "PKRS")};
+    static const char *const code[7] = {"", CTR_TR("Psn", "Env", "Gft"), CTR_TR("Par", "Par", "Par"), CTR_TR("Slp", "Dor", "Slf"), CTR_TR("Frz", "Con", "Efr"), CTR_TR("Brn", "Que", "Vbr"), CTR_TR("PKRS", "PKRS", "PKRS")};
     static const uint16_t tint[7] = {0, UI_RGB(170, 80, 190), UI_RGB(216, 168, 24), UI_RGB(120, 128, 150),
                                      UI_RGB(80, 170, 220), UI_RGB(226, 96, 48), UI_RGB(200, 90, 160)};
     const CtrBattleParty *p = &v->pty;
@@ -1308,7 +1308,9 @@ static void BMoveCard(int i, const CtrBattleView *v)
         dim = dark ? UI_RGB(236, 214, 190) : UI_RGB(96, 48, 22);
         low = dark ? UI_RGB(255, 196, 184) : UI_RGB(160, 16, 16);
         lowSh = sh;
+        sBallTypeCard = 1;
         fy = BLCard(r, BL_CARD_H, &typePal, focused, v->pressed == i, 1);
+        sBallTypeCard = 0;
     } else
         fy = BLCard(r, BL_CARD_H, &kEmCream, focused, v->pressed == i, 1);
     badgeW = UiTextWidth(m->typeName, 1) + 12;
@@ -1418,7 +1420,7 @@ static void BTargetCard(int i, const CtrBattleView *v)
 
 static void BTargetNote(void)
 {
-    BNoteWindow(&sBMNote, CTR_TR("Target", "Objetivo", "ZIEL"), 0, NULL,
+    BNoteWindow(&sBMNote, CTR_TR("Target", "Objetivo", "Ziel"), 0, NULL,
                 CTR_TR("Which Pok\xC3\xA9mon should the move hit?", "\xC2\xBF" "A qu\xC3\xA9 Pok\xC3\xA9mon ataca?", "Welches Pok\xC3\xA9mon angreifen?"));
 }
 

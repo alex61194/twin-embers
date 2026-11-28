@@ -4514,15 +4514,16 @@ static void FlashWindowSpan(unsigned limits, int *first, int *last)
 {
     unsigned a = Min(limits >> 8, 240u), b = Min(limits & 255, 240u);
     if ((limits >> 8) > (limits & 255)) b = 240;
-    *first = (int)((a * CTR_GAME_WIDTH + 120) / 240);
-    *last = b > a ? (int)((b * CTR_GAME_WIDTH + 120) / 240) : *first;
+    *first = a == 0 ? 0 : 200 + ((int)a - 120) * 3 / 2;
+    *last = b > a ? (b >= 240 ? CTR_GAME_WIDTH : 200 + ((int)b - 120) * 3 / 2) : *first;
 }
 
 static unsigned WindowRuns(int y, const WindowSpans *spans, int left, int right, WindowRun *runs)
 {
     WindowSpans flashSpans;
     if (sFieldLayers && sFlashWindowCount && spans->on[0]) {
-        unsigned line = (unsigned)(y > 0 ? y : 0) * 160 / CTR_GAME_HEIGHT;
+        int rel = y - 112, g = 80 + (rel >= 0 ? (rel * 2 + 1) / 3 : -((-rel * 2 + 1) / 3));
+        unsigned line = g < 0 ? 0 : (unsigned)g;
         if (line >= sFlashWindowCount) line = sFlashWindowCount - 1;
         flashSpans = *spans;
         FlashWindowSpan(sFlashWindow[line], &flashSpans.x0[0], &flashSpans.x1[0]);
@@ -5767,8 +5768,12 @@ static void UploadChrome(void)
 
 /* The bottom screen: the canvas, then the GBA picture (240x160 at the stage
  * position of the logical surface) over the viewport, pixel for pixel. */
+extern int CtrBottomView_TradeScene(void);
+
 static void RenderBottom(void)
 {
+    /* A link trade's animation fills the whole lower screen: the picture magnified by 4/3 (320x213), no HOME layout around it. */
+    const int full = CtrBottomView_TradeScene();
     const Tex3DS_SubTexture chrome = {320, 240, 0, 1, 320 / 512.0f, 1 - 240 / 256.0f};
     /* PC's first menu is drawn on BG0 of the field, aligned with its bottom
      * 160px. The actual box screens retain the original centred stage crop. */
@@ -5781,8 +5786,9 @@ static void RenderBottom(void)
     C2D_SceneBegin(sBottom);
     C2D_ViewReset();
     Blend(5, false, false);
-    C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
-    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, sBottomPicX, sBottomPicY, 0, NULL, 1, 1);
+    if (!full)
+        C2D_DrawImageAt((C2D_Image){&sChrome, &chrome}, 0, 0, 0, NULL, 1, 1);
+    C2D_DrawImageAt((C2D_Image){&sSurface, &gba}, full ? 0 : sBottomPicX, full ? 13 : sBottomPicY, 0, NULL, full ? 4.0f / 3 : 1, full ? 4.0f / 3 : 1);
     C2D_Flush();
     C3D_FrameSplit(0);
 }
@@ -5936,8 +5942,11 @@ void CtrVideo_Present(void)
      * can be made (before the next frame, see sBandsWanted). */
     /* The battle scene is two passes of its own (RenderBattleScene), and cheap
      * enough to be composed per eye. */
-    bool planes = stereo && !overworld && !sStage && !sBattle && BandsUsable();
-    if (stereo && !overworld && !sStage && !sBattle && !planes) stereo = false;
+    /* A battle transition that bends the map (swirl, cuts, blend, waves) is composed per eye like a stage: the depth planes
+     * would show the field straight. */
+    const bool bent = sLineShiftKind != 0;
+    bool planes = stereo && !overworld && !sStage && !sBattle && !bent && BandsUsable();
+    if (stereo && !overworld && !sStage && !sBattle && !bent && !planes) stereo = false;
     if (stereo != sStereo) { gfxSet3D(stereo); sStereo = stereo; }
     sStats.stereo = stereo ? roundf(slider * CTR_STEREO_PIXELS) : 0;
     uint64_t perfLayers=CtrPerf_Begin();

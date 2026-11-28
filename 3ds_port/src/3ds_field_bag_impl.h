@@ -534,7 +534,7 @@ static void FBBallRail(const CtrPokeTouchBag *b)
 /* Poke Ball: the exit piece, straddling the band; white with a dark outline, the one with the cursor on it ringed in red when the Bag's cursor is on CLOSE. */
 static void FBBallExit(const CtrPokeTouchBag *b)
 {
-    const char *label = CTR_TR("EXIT", "SALIR", "ZURÃ" "CK");     /* short: the piece is 76 px wide */
+    const char *label = CTR_TR("EXIT", "SALIR", "ZUR\xC3\x9C" "CK");     /* short: the piece is 76 px wide */
     int on = b->cursor >= b->count && b->state == PT_BAG_STATE_LIST, tw = UiTextWidth(label, 1);
 
     UiRoundFill(sBLExit.x, sBLExit.y, sBLExit.w, sBLExit.h, 5, BL_BAND);
